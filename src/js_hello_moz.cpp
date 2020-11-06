@@ -304,6 +304,17 @@ return -1;
 return length;
 }
 
+JSObject *get_array_element_object_o(JS::HandleObject parent, int idx)
+{
+JS::RootedValue v(cxa);
+if(!JS_GetElement(cxa, parent, idx, &v) ||
+!v.isObject())
+return NULL;
+JS::RootedObject o(cxa);
+JS_ValueToObject(cxa, v, &o);
+return o;
+}
+
 /*********************************************************************
 This returns the string equivalent of the js value, but use with care.
 It's only good til the next call to stringize, then it will be trashed.
@@ -645,6 +656,75 @@ JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD,
 getter, setter);
 #endif
 JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
+}
+
+void set_array_element_object_o(JS::HandleObject parent, int idx, JS::HandleObject child)
+{
+bool found;
+JS::RootedValue v(cxa);
+v = JS::ObjectValue(*child);
+JS_HasElement(cxa, parent, idx, &found);
+if(found)
+JS_SetElement(cxa, parent, idx, v);
+else
+JS_DefineElement(cxa, parent, idx, v, JSPROP_STD);
+}
+
+// I don't think this really works
+JSObject *instantiate_o(JS::HandleObject parent, const char *name,
+			      const char *classname)
+{
+	JS::RootedValue v(cxa);
+	JS::RootedObject a(cxa);
+bool found;
+	JS_HasProperty(cxa, parent, name, &found);
+	if (found) {
+		if (v.isObject()) {
+// I'm going to assume it is of the proper class
+JS_ValueToObject(cxa, v, &a);
+			return a;
+		}
+		JS_DeleteProperty(cxa, parent, name);
+	}
+if(!classname || !*classname) {
+a = JS_NewObject(cxa, nullptr);
+} else {
+// find the class for classname
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+if(!JS_GetProperty(cxa, g, classname, &v) ||
+!v.isObject())
+return 0;
+JS::RootedObject co(cxa); // class object
+JS_ValueToObject(cxa, v, &co);
+const JSClass *c = JS_GetClass(co);
+  printf("class %p\n", c);
+a = JS_NewObject(cxa, c);
+}
+v = JS::ObjectValue(*a);
+	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
+	return a;
+}
+
+JSObject *instantiate_array_o(JS::HandleObject parent, const char *name)
+{
+	JS::RootedValue v(cxa);
+	JS::RootedObject a(cxa);
+bool found, isarray;
+	JS_HasProperty(cxa, parent, name, &found);
+	if (found) {
+		if (v.isObject()) {
+JS_IsArrayObject(cxa, v, &isarray);
+if(isarray) {
+JS_ValueToObject(cxa, v, &a);
+			return a;
+		}
+		}
+		JS_DeleteProperty(cxa, parent, name);
+	}
+a = JS_NewArrayObject(cxa, 0);
+v = JS::ObjectValue(*a);
+	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
+	return a;
 }
 
 void connectTagObject(Tag *t, JS::HandleObject o)
@@ -1176,15 +1256,13 @@ static void append0(JSContext *cx, unsigned argc, JS::Value *vp, bool side)
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 	unsigned i, length;
 	const char *thisname, *childname;
-	char *e;
 bool isarray;
 
-args.rval().setUndefined();
+	debugPrint(5, "append 1");
 // we need one argument that is an object
 if(argc != 1 || !args[0].isObject())
-		return;
+goto fail;
 
-	debugPrint(5, "append 1");
 	{ // scope
 JS::RootedObject child(cx);
 JS_ValueToObject(cx, args[0], &child);
@@ -1192,14 +1270,14 @@ JS_ValueToObject(cx, args[0], &child);
       JS::RootedValue v(cx);
         if (!JS_GetProperty(cx, thisobj, "childNodes", &v) ||
 !v.isObject())
-		goto done;
+		goto fail;
 JS_IsArrayObject(cx, v, &isarray);
 if(!isarray)
-goto done;
+goto fail;
 JS::RootedObject cna(cx); // child nodes array
 JS_ValueToObject(cx, v, &cna);
 if(!JS_GetArrayLength(cx, cna, &length))
-goto done;
+goto fail;
 // see if child is already there.
 	for (i = 0; i < length; ++i) {
 if(!JS_GetElement(cx, cna, i, &v))
@@ -1232,6 +1310,13 @@ domSetsLinkage('a', thisobj, thisname, child, childname);
 
 done:
 	debugPrint(5, "append 2");
+// return the child that was appended
+args.rval().set(args[0]);
+return;
+
+fail:
+	debugPrint(5, "append 3");
+args.rval().setNull();
 }
 
 static bool nat_apch1(JSContext *cx, unsigned argc, JS::Value *vp)
@@ -1243,6 +1328,77 @@ append0(cx, argc, vp, false);
 static bool nat_apch2(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 append0(cx, argc, vp, true);
+  return true;
+}
+
+static bool nat_removeChild(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	unsigned i, length;
+	const char *thisname, *childname;
+	char *e;
+int mark;
+bool isarray;
+
+// we need one argument that is an object
+if(argc != 1 || !args[0].isObject())
+		goto fail;
+
+	debugPrint(5, "remove 1");
+	{ // scope
+JS::RootedObject child(cx);
+JS_ValueToObject(cx, args[0], &child);
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+      JS::RootedValue v(cx);
+        if (!JS_GetProperty(cx, thisobj, "childNodes", &v) ||
+!v.isObject())
+		goto fail;
+JS_IsArrayObject(cx, v, &isarray);
+if(!isarray)
+goto fail;
+JS::RootedObject cna(cx); // child nodes array
+JS_ValueToObject(cx, v, &cna);
+if(!JS_GetArrayLength(cx, cna, &length))
+goto fail;
+// see if child is already there.
+mark = -1;
+	for (i = 0; i < length; ++i) {
+if(!JS_GetElement(cx, cna, i, &v))
+continue; // should never happen
+if(!v.isObject())
+continue; // should never happen
+JS::RootedObject elem(cx);
+JS_ValueToObject(cx, v, &elem);
+// overloaded == compares the object pointers inside the rooted structures
+if(elem == child) {
+mark = i;
+break;
+}
+	}
+if(mark < 0)
+goto fail;
+
+// pull the other elements down
+	for (i = mark + 1; i < length; ++i) {
+JS_GetElement(cx, cna, i, &v);
+JS_SetElement(cx, cna, i-1, v);
+}
+JS_SetArrayLength(cx, cna, length-1);
+// missing parentnode must always be null
+v.setNull();
+JS_SetProperty(cx, child, "parentNode", v);
+
+// mutFixup, not yet implemented
+
+// return the child upon success
+args.rval().set(args[0]);
+	debugPrint(5, "remove 2");
+return true;
+	}
+
+fail:
+	debugPrint(5, "remove 3");
+args.rval().setNull();
   return true;
 }
 
@@ -1276,7 +1432,7 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FN("eb$apch1", nat_apch1, 1, 0),
   JS_FN("eb$apch2", nat_apch2, 1, 0),
   JS_FN("eb$insbf", nat_stub, 1, 0),
-  JS_FN("removeChild", nat_stub, 1, 0),
+  JS_FN("removeChild", nat_removeChild, 1, 0),
   JS_FS_END
 };
 
@@ -1355,7 +1511,7 @@ return false;
 
 // Link back to the master window.
 objval = JS::ObjectValue(**mw0);
-if(!JS_DefineProperty(cxa, global, "mw0", objval,
+if(!JS_DefineProperty(cxa, global, "mw$", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT)))
 return false;
 
@@ -1391,7 +1547,7 @@ v.setString(m);
 JS_DefineProperty(cxa, global, "eb$url", v,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
-execFile("compartment.js");
+execFile("startwindow.js");
 return true;
 }
 
@@ -1442,7 +1598,7 @@ JS_DefineFunctions(cxa, *mw0, nativeMethodsWindow);
 // Link yourself to the master window.
 JS::RootedValue objval(cxa); // object as value
 objval = JS::ObjectValue(**mw0);
-JS_DefineProperty(cxa, *mw0, "mw0", objval,
+JS_DefineProperty(cxa, *mw0, "mw$", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 // need document, just for its native methods
 JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));

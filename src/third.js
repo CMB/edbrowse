@@ -7,7 +7,7 @@ snapshot, as the software evolves.
 
 Being huge, these functions are compiled once in the master window,
 then referenced from every other window.
-Large blocks of code are inside an if(mw0.compiled == false) block,
+Large blocks of code are inside an if(mw$.compiled == false) block,
 so it only recompiles the first time; then the links are at the bottom.
 Sometimes I have to change the functions just a bit to support this,
 e.g. replacing document with my$doc().
@@ -28,7 +28,7 @@ License for Esprima: found below, at the top of the esprima.js source
 *********************************************************************/
 
 
-if(!mw0.compiled) {
+if(!mw$.compiled) {
 
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -11867,14 +11867,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   });
   require('/tools/entry-point.js');
 }.call(this, this));
-mw0.esprima = esprima;
-mw0.escodegen = escodegen;
+mw$.esprima = esprima;
+mw$.escodegen = escodegen;
 } else { // master compile
-esprima = mw0.esprima;
-escodegen = mw0.escodegen;
+esprima = mw$.esprima;
+escodegen = mw$.escodegen;
 }
 
 // This should be the last line of this file.
 // It indicates all functions have been compiled.
-mw0.compiled = true;
+mw$.compiled = true;
 

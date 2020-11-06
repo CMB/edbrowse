@@ -451,7 +451,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 		duk_push_heapptr(cx, c1);
 		duk_call(cx, 4);
 	}
-// stack is this mw0 retval
+// stack is this mw$ retval
 	duk_pop_2(cx);
 	duk_del_prop_string(cx, -1, "old$cn");
 	duk_pop(cx);
@@ -1520,9 +1520,13 @@ void createJavaContext_0(Frame *f)
 	duk_pop(cx); // document
 
 // Link to the master context, i.e. the master window.
-// This is denoted mw0 throughout.
+// This is denoted mw$ throughout.
+// For security reasons, it is only used for third party deminimization
+// and other debugging tools.
+// It is a huge security risk to share dom classes via this mechanism,
+// even though it would be more efficient.
 	duk_push_global_object(cx);
-	duk_push_string(cx, "mw0");
+	duk_push_string(cx, "mw$");
 	duk_push_heapptr(cx, context0_obj);
 	duk_def_prop(cx, -3,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
