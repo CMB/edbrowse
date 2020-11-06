@@ -220,6 +220,7 @@ Tag *findOpenTag(Tag *t, int action) { return NULL; }
 const char *getProtURL(const char *url)  { return "http"; }
 void sendCookies(char **s, int *l, const char *url, bool issecure)  { }
 bool receiveCookie(const char *url, const char *str)  { return true; }
+void writeShortCache(void) { }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -237,8 +238,14 @@ static JS::RootedObject *rw0;
 // from a class in the same window.    idk
 static JS::RootedObject *mw0;
 
-// The _o methods are the lowest level, calling upon the engine.
-// They take JSObject as parameter, thus _o
+/*********************************************************************
+The _o methods are the lowest level, calling upon the engine.
+They take JSObject as parameter, thus the _o nomenclature.
+These have to be in this file and have to understand the moz js objects
+and values, and the calls to the js engine.
+Each of these functions assumes you are already in a compartment.
+If you're not, something will seg fault somewhere along the line!
+*********************************************************************/
 
 // Convert engine property type to an edbrowse property type.
 static enum ej_proptype top_proptype(JS::HandleValue v)
@@ -415,6 +422,42 @@ if(!JS_ObjectIsFunction(cxa, obj))
 return NULL;
 JSObject *j = obj; // This pulls the object pointer out for us
 return j;
+}
+
+// Return href for a url. This string is allocated.
+// Could be form.action, image.src, a.href; so this isn't a trivial routine.
+// This isn't inline efficient, but it is rarely called.
+char *get_property_url_o(JS::HandleObject parent, bool action)
+{
+	enum ej_proptype t;
+JS::RootedObject uo(cxa);	/* url object */
+	if (action) {
+		t = typeof_property_o(parent, "action");
+		if (t == EJ_PROP_STRING)
+			return get_property_string_o(parent, "action");
+		if (t != EJ_PROP_OBJECT)
+			return 0;
+		uo = get_property_object_o(parent, "action");
+	} else {
+		t = typeof_property_o(parent, "href");
+		if (t == EJ_PROP_STRING)
+			return get_property_string_o(parent, "href");
+		if (t == EJ_PROP_OBJECT)
+			uo = get_property_object_o(parent, "href");
+		else if (t)
+			return 0;
+		if (!uo) {
+			t = typeof_property_o(parent, "src");
+			if (t == EJ_PROP_STRING)
+				return get_property_string_o(parent, "src");
+			if (t == EJ_PROP_OBJECT)
+				uo = get_property_object_o(parent, "src");
+		}
+	}
+if(!uo)
+		return 0;
+/* should this be href$val? */
+	return get_property_string_o(uo, "href");
 }
 
 int get_property_number_o(JS::HandleObject parent, const char *name)
@@ -1076,7 +1119,7 @@ ab:
 		break;
 
 	}			/* switch */
-}				/* domSetsLinkage */
+}
 
 // as above, with fewer parameters
 static void domSetsLinkage(char type,
@@ -1336,15 +1379,14 @@ static bool nat_removeChild(JSContext *cx, unsigned argc, JS::Value *vp)
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 	unsigned i, length;
 	const char *thisname, *childname;
-	char *e;
 int mark;
 bool isarray;
 
+	debugPrint(5, "remove 1");
 // we need one argument that is an object
 if(argc != 1 || !args[0].isObject())
 		goto fail;
 
-	debugPrint(5, "remove 1");
 	{ // scope
 JS::RootedObject child(cx);
 JS_ValueToObject(cx, args[0], &child);
@@ -1388,6 +1430,11 @@ JS_SetArrayLength(cx, cna, length-1);
 v.setNull();
 JS_SetProperty(cx, child, "parentNode", v);
 
+// pass this linkage information back to edbrowse, to update its dom tree
+	thisname = embedNodeName(thisobj);
+	childname = embedNodeName(child);
+domSetsLinkage('r', thisobj, thisname, child, childname);
+
 // mutFixup, not yet implemented
 
 // return the child upon success
@@ -1400,6 +1447,128 @@ fail:
 	debugPrint(5, "remove 3");
 args.rval().setNull();
   return true;
+}
+
+// low level insert before
+static bool nat_insbf(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	unsigned i, length;
+	const char *thisname, *childname, *itemname;
+int mark;
+bool isarray;
+
+	debugPrint(5, "before 1");
+// we need two objects
+if(argc != 2 || !args[0].isObject() || !args[1].isObject())
+		goto fail;
+
+	{ // scope
+JS::RootedObject child(cx);
+JS_ValueToObject(cx, args[0], &child);
+JS::RootedObject item(cx);
+JS_ValueToObject(cx, args[1], &item);
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+      JS::RootedValue v(cx);
+        if (!JS_GetProperty(cx, thisobj, "childNodes", &v) ||
+!v.isObject())
+		goto fail;
+JS_IsArrayObject(cx, v, &isarray);
+if(!isarray)
+goto fail;
+JS::RootedObject cna(cx); // child nodes array
+JS_ValueToObject(cx, v, &cna);
+if(!JS_GetArrayLength(cx, cna, &length))
+goto fail;
+// see if child or item is already there.
+mark = -1;
+	for (i = 0; i < length; ++i) {
+if(!JS_GetElement(cx, cna, i, &v))
+continue; // should never happen
+if(!v.isObject())
+continue; // should never happen
+JS::RootedObject elem(cx);
+JS_ValueToObject(cx, v, &elem);
+if(elem == child) {
+// already there; should we move it?
+// I don't know, so I just don't do anything.
+goto done;
+}
+if(elem == item)
+mark = i;
+	}
+if(mark < 0)
+goto fail;
+
+// push the other elements up
+JS_SetArrayLength(cx, cna, length+1);
+        for (i = length; i > (unsigned)mark; --i) {
+JS_GetElement(cx, cna, i-1, &v);
+JS_SetElement(cx, cna, i, v);
+}
+
+// add child in position
+JS_DefineElement(cx, cna, mark, args[0], JSPROP_STD);
+v = JS::ObjectValue(*thisobj);
+JS_DefineProperty(cx, child, "parentNode", v, JSPROP_STD);
+
+// pass this linkage information back to edbrowse, to update its dom tree
+	thisname = embedNodeName(thisobj);
+	childname = embedNodeName(child);
+	itemname = embedNodeName(item);
+domSetsLinkage('b', thisobj, thisname, child, childname, item, itemname);
+	}
+
+done:
+// return the child upon success
+args.rval().set(args[0]);
+	debugPrint(5, "before 2");
+return true;
+
+fail:
+	debugPrint(5, "remove 3");
+args.rval().setNull();
+  return true;
+}
+
+// This is for the snapshot() feature; write a local file
+static bool nat_wlf(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+if(argc != 2 ||
+!args[0].isString() || !args[1].isString())
+return true;
+const char *filename = stringize(args[1]);
+	int fh;
+	bool safe = false;
+	if (stringEqual(filename, "from") || stringEqual(filename, "jslocal"))
+		safe = true;
+	else if (filename[0] == 'f') {
+int i;
+		for (i = 1; isdigit(filename[i]); ++i) ;
+		if (i > 1 && (stringEqual(filename + i, ".js") ||
+			      stringEqual(filename + i, ".css")))
+			safe = true;
+	}
+	if (!safe)
+		return true;
+	fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, MODE_rw);
+	if (fh < 0) {
+		fprintf(stderr, "cannot create file %s\n", filename);
+		return true;
+	}
+// save filename before the next stringize call
+char *filecopy = cloneString(filename);
+const char *s = stringize(args[0]);
+	int len = strlen(s);
+	if (write(fh, s, len) < len)
+		fprintf(stderr, "cannot write file %s\n", filecopy);
+	close(fh);
+	if (stringEqual(filecopy, "jslocal"))
+		writeShortCache();
+free(filecopy);
+	return true;
 }
 
 // just stubs from here on out.
@@ -1418,6 +1587,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$setcook", nat_setcook, 1, 0),
   JS_FN("eb$formSubmit", nat_formSubmit, 1, 0),
   JS_FN("eb$formReset", nat_formReset, 1, 0),
+  JS_FN("eb$wlf", nat_wlf, 2, 0),
   JS_FN("querySelectorAll", nat_qsa, 1, 0),
   JS_FN("querySelector", nat_stub, 1, 0),
   JS_FN("querySelector0", nat_stub, 1, 0),
@@ -1431,7 +1601,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
 static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FN("eb$apch1", nat_apch1, 1, 0),
   JS_FN("eb$apch2", nat_apch2, 1, 0),
-  JS_FN("eb$insbf", nat_stub, 1, 0),
+  JS_FN("eb$insbf", nat_insbf, 1, 0),
   JS_FN("removeChild", nat_removeChild, 1, 0),
   JS_FS_END
 };
