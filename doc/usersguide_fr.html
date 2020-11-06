@@ -226,7 +226,7 @@ ou du braille.
 Les fonctionnalités de Edbrowse:
 <ul>
 <li><p> Edbrowse peut éditer de multiples fichiers ou naviguer dans de multiples sites web simultanément, et 
-transférer des portions de texte entre eux à la maniède d'un copier-coller. 
+transférer des portions de texte entre eux à la manière d'un copier-coller. 
 Par exemple, <code>edbrowse *.c</code> accède à tous les fichiers sources C du répertoire courant. 
 <li><p> Les expressions régulières de ed ont été remplacées par les expressions régulières compatibles Perl, plus puissantes et plus flexibles. Ceci facilite les opérations de recherche/remplacement de texte dans un document long. Vous pouvez, par exemple, remplacer chaque instance du mot foo, mais pas food ou foot, seulement foo, en majuscles ou en minuscules, avec le mot bar, tant que foo n'est pas suivi d'un point d'exclamation ou d'interrogation. Ces modifications dans les expressions régulières indiquent que Edbrowse n'est pas à 100% Ccompatible avec ed, bien que très proche. 
 <li><p> Edbrowse peut récupérer une page web de l'internet aussi facilement qu'il ouvre un fichier de 
@@ -567,6 +567,11 @@ dr : le répertoire est en lecture seule
 <br>sort-t : tri par ordre inverse des dates de modification
 <br>sort-s : tri par ordre inverse de taille
 <br>rf : réactualise l'affichage du répertoire, utile si vous avez modifié les paramètres de ls ou de tri
+<br>M : déplace le répertoire dans une nouvelle session et sauvegarde
+<br> d : efface le fichier ou le met dans la corbeille; il n'y a pas d'annulation
+<br>g/\.o$/d : efface tous les fichiers .o 
+<br>.m3 : déplace ce fichier dans le répertoire en session 3 : il n'y a pas d'annulation 
+<br>.t3 : copie ce fichier dans le répertoire en session 3 : il n'y a pas d'annulation 
 <p>
 Parcourir un fichier html ou une page web
 <p>
@@ -1090,6 +1095,7 @@ Assurez-vous que tout est correct avant de changer de session.
 
 <p>
 Utilisez la commande bflist (buffer list) pour lister toutes les sessions d'édition ouvertes. 
+Edbrowse affiche le numéro de session, et le titre si c'est une page web, ou le nom du fichier.
 
 <p>
 Voyons un exemple de copier/coller. 
@@ -1377,6 +1383,13 @@ de ce répertoire, dans l'ordre alphabétique, selon votre locale.
 Ce classement est le même qu'avec /bin/ls, et il est déterminé par la variable 
 d'environnement LC_COLLATE. 
 mettez LC_COLLATE=C pour un classement ascii traditionnel. 
+Note: le Raspberry Pi (raspbian) semble avoir un bug, où LC_ALL l'emporte sur LC_COLLATE. Cela ne devriat pas se produire.
+Donc, désactivez LC_ALL et activez les individuellement les autres variables LC, selon vos préférences.
+Assurez-vous d'avoir activé LC_MESSAGES, pour interagir avec linux dans votre langue.
+
+<P>
+Use the `hf' option to see the hidden files, on Windows or Unix.
+
 (Employer l'option «hf» si vous voulez également voir les fichiers cachés). 
 (Ceci inclut le répertoire parent... )
 Tapez «g» pour aller à un de ces fichiers ou sous-répertoires. 
@@ -1395,6 +1408,18 @@ ne voulez pas de ce comportement automatique.
 Nous reviendrons sur les plugins plus tard. 
 
 <p>
+
+La commande M majuscule (move) déplace ce répertoire dans une autre session et le sauvegarde.
+Encore une fois, nous retrouvons la même commande dans le navigateur.
+Si vous étiez dans le répertoire foo, et descendu dans le répertoire bar, et que vous souhaitez les consulter tous les deux en parallèle, tapez M 
+et bar est déplacé dans une nouvelle session, vous revenez dans foo, à la ligne contenant bar.
+Vous pouvez désormais basculer entre les 2 répertoires; foo n'est pas caché sur la pile.
+Utilisez M6 pour déplacer le répertoire en session 6; ceci effacera la session 6.
+En cas doute, tapez M.
+Note : cette commande fonctionne aussi bien avec les fichiers.
+
+<p>
+
 Comme «ls -F», un sous-répertoire est indiqué par un slash de fin. 
 Ce slash ne fait pas partie du nom de fichier. 
 De même, le caractère appelé pipe est indiqué par «|», le lien symbolique par «@», 
@@ -1461,6 +1486,21 @@ puis le supprimer, en utilisant cp -r et rm - r.
 est le seul moyen de faire de la place sur le disque. Les liens symboliques 
 et les fichiers spéciaux sont toujours supprimés : il n'y a pas beaucoup 
 de sens à déplacer un lien symbolique dans la corbeille. 
+
+<p>
+Si les sessions 1 et 5 contiennent toutes deux des répertoires, vous pouvez déplacer le fichier courant du premier répertoire dans le second par la commande .m5.
+Ceci ne déplace pas les lignes; ceci dépalce le fichier de la session courante à l'autre.
+La fonction de renommage du noyau est utilisée si c'est possible, afin de préserver l'arborescence, le propriétaire, les permissions ou les attributs spéciaux
+Ceci ne peut être garanti si le fichier est déplacé.
+Le fichier doit être copié, puis effacé, pour que vous en soyez propriétaire et qu'il soit à date courante.    
+Dans certains cas, edbrowse peut appeler /bin/mv pour effectuer cette opération.
+Vous pouvez déplacer un ensemble de fichiers par 'a,'bm5, ou bien avec une expression régulière par g/re/ .m5.
+You can move a range of files by 'a,'bm5, or files matching a regular expression by 
+
+<p>
+Use .t5 to copy the file to the directory in session 5.
+Small files are copied by edbrowse; large files or special files or directory trees are copied by /bin/cp.
+As with move, this will not overwrite an existing file.
 
 <p>
 «Pourquoi tout ceci ?» pourriez-vous demander. 
@@ -1545,13 +1585,15 @@ dans votre commande shell.
 Je ne sais pas pourquoi vous voudriez le faire, mais c'est possible. 
 
 <p>
-En mode répertoire, la commande ls affiche différents attributs du ficheirt sue la ligne courante. 
+En mode répertoire, la commande ls affiche différents attributs du fichier sur la ligne courante. 
 Tapez lsl pour la longueur, lss pour la taille approximative, lst pour la date de modification,
-lsp pour les permissions, lsi pour l'inode, lsk pour le nombre de liens durs, lsy por le chmein 
+lsp pour les permissions, lsi pour l'inode, lsk pour le nombre de liens durs, lsy pour le chemin 
 associé à ce lien symbolique, ou lsm pour les nombres majeurs et mineurs. 
 (les 5 derniers ne s'appliquent pas à Windows). 
 Ceux-ci peuvent être combinés : par ex. lspk affiche les permissions et le nombre de liens en dur. 
 ls est identique à lsst, taille et date de modification. 
+Edbrowe affiche ~, si les attributs ne sont accessibles, par ex. la demande de la taille d'un lien symbolique. 
+Le symbole original était un point d'interrogation, mais cela pouvait entraîner une confusion avec le résultat d'une commande invalide.
 
 <p>
 Si vous voulez afficher la longueur et la date pour chaque fichier dans un listing de répertoire, 
@@ -4356,6 +4398,7 @@ Tapez u ou U pour enregistrer le mail non formaté.
 Tapez a pour enregistrer les pièces attachées. 
 Tapez l pour modifier la limite de récupération, c'est-à-dire le nombre de mails affichés 
 simultanément. 
+Utilisez un nombre négatif pour récupérer les mails les plus anciens, plutôt que les plus récents.
 Tapez / pour rechercher dans les mails par sujet, expéditeur ou dans le corps
 Finalement tapez h pour l'aide, qui ressemble à ceci :
 
