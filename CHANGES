@@ -1,7 +1,7 @@
 Here are some changes introduced by recent versions of edbrowse.
 
 3.7.7
-Fix a potential security hole, where one website can bleed into another.
+Fix a potential security hole, where one website can bleed into another. Worth making a release just for this.
 
 Move or copy files from one directory to another.
 
