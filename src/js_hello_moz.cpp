@@ -199,15 +199,18 @@ void debugPrint(int lev, const char *msg, ...)
 puts(msg);
 }
 
-void i_printfExit(int crap, ...) { printf(" print exit %d\n"); exit(4); }
-void i_printf(int crap, ...) { printf(" print %d\n"); }
+void i_printfExit(int crap, ...) { printf(" i_printfExit %d\n", crap); exit(4); }
+void i_printf(int crap, ...) { printf(" i_printf %d\n", crap); }
+void i_puts(int crap) { printf(" i_puts %d\n", crap); }
 
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname) { puts("side buffer"); return 0; }
 
 static struct ebWindow win0;
 struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
-int context = 0, debugLevel = 1;
+int context = 0, debugLevel = 3;
+FILE *debugFile;
+volatile bool intFlag;
 struct ebSession sessionList[10];
 
 Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
@@ -713,7 +716,6 @@ else
 JS_DefineElement(cxa, parent, idx, v, JSPROP_STD);
 }
 
-// I don't think this really works
 JSObject *instantiate_o(JS::HandleObject parent, const char *name,
 			      const char *classname)
 {
@@ -722,6 +724,7 @@ JSObject *instantiate_o(JS::HandleObject parent, const char *name,
 bool found;
 	JS_HasProperty(cxa, parent, name, &found);
 	if (found) {
+JS_GetProperty(cxa, parent, name, &v);
 		if (v.isObject()) {
 // I'm going to assume it is of the proper class
 JS_ValueToObject(cxa, v, &a);
@@ -737,14 +740,49 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 if(!JS_GetProperty(cxa, g, classname, &v) ||
 !v.isObject())
 return 0;
-JS::RootedObject co(cxa); // class object
-JS_ValueToObject(cxa, v, &co);
-const JSClass *c = JS_GetClass(co);
-  printf("class %p\n", c);
-a = JS_NewObject(cxa, c);
+// I could extract the object and verify with
+// JS_ObjectIsFunction(), but I'll just assume it is.
+JS::Construct(cxa, v, JS::HandleValueArray::empty(), &a);
 }
 v = JS::ObjectValue(*a);
 	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
+	return a;
+}
+
+JSObject *instantiate_array_element_o(JS::HandleObject parent,
+int idx, 			      const char *classname)
+{
+	JS::RootedValue v(cxa);
+	JS::RootedObject a(cxa);
+bool found;
+	JS_HasElement(cxa, parent, idx, &found);
+	if (found) {
+JS_GetElement(cxa, parent, idx, &v);
+		if (v.isObject()) {
+// I'm going to assume it is of the proper class
+JS_ValueToObject(cxa, v, &a);
+			return a;
+		}
+v.setUndefined();
+JS_SetElement(cxa, parent, idx, v);
+	}
+if(!classname || !*classname) {
+a = JS_NewObject(cxa, nullptr);
+} else {
+// find the class for classname
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+if(!JS_GetProperty(cxa, g, classname, &v) ||
+!v.isObject())
+return 0;
+// I could extract the object and verify with
+// JS_ObjectIsFunction(), but I'll just assume it is.
+JS::Construct(cxa, v, JS::HandleValueArray::empty(), &a);
+}
+v = JS::ObjectValue(*a);
+if(found)
+JS_SetElement(cxa, parent, idx, v);
+else
+JS_DefineElement(cxa, parent, idx, v, JSPROP_STD);
 	return a;
 }
 
@@ -768,6 +806,140 @@ a = JS_NewArrayObject(cxa, 0);
 v = JS::ObjectValue(*a);
 	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
 	return a;
+}
+
+/*********************************************************************
+Node has encountered an error, perhaps in its handler.
+Find the location of this node within the dom tree.
+As you climb up the tree, check for parentNode = null.
+null is an object so it passes the object test.
+This should never happen, but does in http://4x4dorogi.net
+Also check for recursion.
+If there is an error fetching nodeName or class, e.g. when the node is null,
+(if we didn't check for parentNode = null in the above),
+then asking for nodeName causes yet another runtime error.
+This invokes our machinery again, including uptrace if debug is on,
+and it invokes the js engine again as well.
+The resulting core dump has the stack so corrupted, that gdb is hopelessly confused.
+*********************************************************************/
+
+static void uptrace(JS::HandleObject start)
+{
+	static bool infunction = false;
+	int t;
+	if (debugLevel < 3)
+		return;
+	if(infunction) {
+		debugPrint(3, "uptrace recursion; this is unrecoverable!");
+		exit(1);
+	}
+	infunction = true;
+JS::RootedValue v(cxa);
+JS::RootedObject node(cxa);
+node = start;
+	while (true) {
+		const char *nn, *cn;	// node name class name
+		char nnbuf[MAXTAGNAME];
+if(JS_GetProperty(cxa, node, "nodeName", &v) && v.isString())
+nn = stringize(v);
+		else
+			nn = "?";
+		strncpy(nnbuf, nn, MAXTAGNAME);
+		nnbuf[MAXTAGNAME - 1] = 0;
+		if (!nnbuf[0])
+			strcpy(nnbuf, "?");
+if(JS_GetProperty(cxa, node, "class", &v) && v.isString())
+cn = stringize(v);
+		else
+			cn = emptyString;
+		debugPrint(3, "%s.%s", nnbuf, (cn[0] ? cn : "?"));
+if(!JS_GetProperty(cxa, node, "parentNode", &v) || !v.isObject()) {
+// we're done.
+			break;
+		}
+		t = top_proptype(v);
+		if(t == EJ_PROP_NULL) {
+			debugPrint(3, "null");
+			break;
+		}
+		if(t != EJ_PROP_OBJECT) {
+			debugPrint(3, "parentNode not object, type %d", t);
+			break;
+		}
+JS_ValueToObject(cxa, v, &node);
+	}
+	debugPrint(3, "end uptrace");
+	infunction = false;
+}
+
+static void processError(void)
+{
+if(!JS_IsExceptionPending(cxa))
+return;
+JS::RootedValue exception(cxa);
+if(JS_GetPendingException(cxa,&exception) &&
+exception.isObject()) {
+// I don't think we need this line.
+// JS::AutoSaveExceptionState savedExc(cxa);
+JS::RootedObject exceptionObject(cxa,
+&exception.toObject());
+JSErrorReport *what = JS_ErrorFromException(cxa,exceptionObject);
+if(what) {
+	if (debugLevel >= 3) {
+/* print message, this will be in English, and mostly for our debugging */
+		if (what->filename && !stringEqual(what->filename, "noname")) {
+			if (debugFile)
+				fprintf(debugFile, "%s line %d: ", what->filename, what->lineno);
+			else
+				printf("%s line %d: ", what->filename, what->lineno);
+		}
+		debugPrint(3, "%s", what->message().c_str());
+	}
+}
+}
+JS_ClearPendingException(cxa);
+}
+
+// run a function with no arguments, that returns bool
+bool run_function_bool_o(JS::HandleObject parent, const char *name)
+{
+bool rc = false;
+	int dbl = 3;		// debug level
+	int seqno = -1;
+	if (stringEqual(name, "ontimer")) {
+// even at debug level 3, I don't want to see
+// the execution messages for each timer that fires
+		dbl = 4;
+seqno = get_property_number_o(parent, "tsn");
+}
+	if (seqno > 0)
+		debugPrint(dbl, "exec %s timer %d", name, seqno);
+	else
+		debugPrint(dbl, "exec %s", name);
+JS::RootedValue retval(cxa);
+bool ok = JS_CallFunctionName(cxa, parent, name, JS::HandleValueArray::empty(), &retval);
+		debugPrint(dbl, "exec complete");
+if(!ok) {
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError();
+	debugPrint(3, "failure on %s()", name);
+	uptrace(parent);
+	debugPrint(3, "exec complete");
+return false;
+} // error
+if(retval.isBoolean())
+return retval.toBoolean();
+if(retval.isInt32())
+return !!retval.toInt32();
+if(!retval.isString())
+return false;
+const char *s = stringize(retval);
+// anything but false or the empty string is considered true
+if(!*s || stringEqual(s, "false"))
+return false;
+return true;
 }
 
 void connectTagObject(Tag *t, JS::HandleObject o)
@@ -1606,57 +1778,7 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FS_END
 };
 
-// I don't understand any of this. Code from:
-// http://mozilla.6506.n7.nabble.com/what-is-the-replacement-of-JS-SetErrorReporter-in-spidermonkey-60-td379888.html
-// I assume all these variables are somehow on stack
-// and get freed when the function returns.
-static void ReportJSException(void)
-{
-if(JS_IsExceptionPending(cxa)) {
-JS::RootedValue exception(cxa);
-if(JS_GetPendingException(cxa,&exception) &&
-exception.isObject()) {
-// I don't think we need this line.
-// JS::AutoSaveExceptionState savedExc(cxa);
-JS::RootedObject exceptionObject(cxa,
-&exception.toObject());
-JSErrorReport *what =
-JS_ErrorFromException(cxa,exceptionObject);
-if(what) {
-if(!stringEqual(what->filename, "noname"))
-printf("%s line %d: ", what->filename, what->lineno);
-puts(what->message().c_str());
-// what->filename what->lineno
-}
-}
-JS_ClearPendingException(cxa);
-}
-}
-
-// This assumes you are in the compartment where you want to exec the file
-static void execFile(const char *filename)
-{
-        JS::CompileOptions opts(cxa);
-        opts.setFileAndLine(filename, 1);
-JS::RootedValue v(cxa);
-        bool ok = JS::Evaluate(cxa, opts, filename, &v);
-if(!ok) {
-ReportJSException();
-exit(2);
-}
-}
-
-static void execScript(const char *script)
-{
-        JS::CompileOptions opts(cxa);
-        opts.setFileAndLine("noname", 0);
-JS::RootedValue v(cxa);
-        bool ok = JS::Evaluate(cxa, opts, script, strlen(script), &v);
-if(!ok)
-ReportJSException();
-else
-puts(stringize(v));
-}
+static void execFile(const char *filename);
 
 // This is an edbrowse context, in a frame,
 // nothing like the Mozilla js context.
@@ -1728,6 +1850,60 @@ sprintf(buf, "g%d", sn);
 debugPrint(3, "remove js context", sn);
         JSAutoCompartment ac(cxa, *rw0);
 JS_DeleteProperty(cxa, *rw0, buf);
+}
+
+// Now we go back to the stand alone hello program.
+
+// I don't understand any of this. Code from:
+// http://mozilla.6506.n7.nabble.com/what-is-the-replacement-of-JS-SetErrorReporter-in-spidermonkey-60-td379888.html
+// I assume all these variables are somehow on stack
+// and get freed when the function returns.
+static void ReportJSException(void)
+{
+if(JS_IsExceptionPending(cxa)) {
+JS::RootedValue exception(cxa);
+if(JS_GetPendingException(cxa,&exception) &&
+exception.isObject()) {
+// I don't think we need this line.
+// JS::AutoSaveExceptionState savedExc(cxa);
+JS::RootedObject exceptionObject(cxa,
+&exception.toObject());
+JSErrorReport *what =
+JS_ErrorFromException(cxa,exceptionObject);
+if(what) {
+if(!stringEqual(what->filename, "noname"))
+printf("%s line %d: ", what->filename, what->lineno);
+puts(what->message().c_str());
+// what->filename what->lineno
+}
+}
+JS_ClearPendingException(cxa);
+}
+}
+
+// This assumes you are in the compartment where you want to exec the file
+static void execFile(const char *filename)
+{
+        JS::CompileOptions opts(cxa);
+        opts.setFileAndLine(filename, 1);
+JS::RootedValue v(cxa);
+        bool ok = JS::Evaluate(cxa, opts, filename, &v);
+if(!ok) {
+ReportJSException();
+exit(2);
+}
+}
+
+static void execScript(const char *script)
+{
+        JS::CompileOptions opts(cxa);
+        opts.setFileAndLine("noname", 0);
+JS::RootedValue v(cxa);
+        bool ok = JS::Evaluate(cxa, opts, script, strlen(script), &v);
+if(!ok)
+ReportJSException();
+else
+puts(stringize(v));
 }
 
 int main(int argc, const char *argv[])
