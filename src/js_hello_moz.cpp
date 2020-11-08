@@ -1800,7 +1800,7 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FS_END
 };
 
-static void execFile(const char *filename);
+static void execFile(const char *filename, bool stop);
 
 // This is an edbrowse context, in a frame,
 // nothing like the Mozilla js context.
@@ -1861,7 +1861,7 @@ v.setString(m);
 JS_DefineProperty(cxa, global, "eb$url", v,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
-execFile("startwindow.js");
+execFile("startwindow.js", true);
 return true;
 }
 
@@ -1904,7 +1904,7 @@ JS_ClearPendingException(cxa);
 }
 
 // This assumes you are in the compartment where you want to exec the file
-static void execFile(const char *filename)
+static void execFile(const char *filename, bool stop)
 {
         JS::CompileOptions opts(cxa);
         opts.setFileAndLine(filename, 1);
@@ -1912,7 +1912,7 @@ JS::RootedValue v(cxa);
         bool ok = JS::Evaluate(cxa, opts, filename, &v);
 if(!ok) {
 ReportJSException();
-exit(2);
+if(stop) exit(2);
 }
 }
 
@@ -1977,8 +1977,8 @@ objval = JS::ObjectValue(*docroot);
 JS_DefineProperty(cxa, *mw0, "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
-execFile("master.js");
-execFile("third.js");
+execFile("master.js", true);
+execFile("third.js", true);
 	}
 
 for(c=0; c<top; ++c) {
@@ -2026,6 +2026,10 @@ c = line[1] - '1';
 continue;
 }
 
+// chomp
+int l = strlen(line);
+if(l && line[l-1] == '\n') line[--l] = 0;
+
 JS::RootedValue v(cxa);
 JS::RootedObject co(cxa); // current object
 sprintf(buf, "g%d", c);
@@ -2039,9 +2043,13 @@ continue;
 JS_ValueToObject(cxa, v, &co);
 	}
         JSAutoCompartment ac(cxa, co);
+if(line[0] == '<') {
+execFile(line+1, false);
+} else {
 //execScript(line);
 const char *res = run_script_o(line, "noname", 0);
 if(res) puts(res);
+}
 }
 }
 
