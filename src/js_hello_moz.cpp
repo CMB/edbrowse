@@ -7,8 +7,6 @@
 #include <jsapi.h>
 #include <js/Initialization.h>
 
-#include <ctype.h>
-
 static JSClassOps global_ops = {
 // different members in different versions, so specfiy explicitly
     trace : JS_GlobalObjectTraceHook
@@ -65,165 +63,31 @@ args.rval().setUndefined();
 
 #include "eb.h"
 
-void caseShift(char *s, char action) { }
-
-char emptyString[] = "";
-char *initString(int *l)
-{
-	*l = 0;
-	return emptyString;
-}
-void stringAndString(char **s, int *l, const char *t)  { }
-
-void nzFree(void *s)
-{
-	if (s && s != emptyString)
-		free(s);
-}
-void cnzFree(const void *v)
-{
-	nzFree((void *)v);
-}
-
-void *allocMem(size_t n)
-{
-	void *s;
-	if (!n)
-		return emptyString;
-	if (!(s = malloc(n)))
-		i_printfExit(MSG_MemAllocError, n);
-	return s;
-}				/* allocMem */
-
-char *allocString(size_t n)
-{
-	return (char *)allocMem(n);
-}				/* allocString */
-
-void *reallocMem(void *p, size_t n)
-{
-	void *s;
-	if (!n)
-		i_printfExit(MSG_ReallocP);
-	if (!p)
-		i_printfExit(MSG_Realloc0, n);
-	if (p == emptyString) {
-		p = allocMem(n);
-// keep the null byte that was present in emptyString.
-// fileIntoMemory() needs this to keep null on the end of an empty file
-// that was just read into memory.
-		*(char *)p = 0;
-	}
-	if (!(s = realloc(p, n)))
-		i_printfExit(MSG_ErrorRealloc, n);
-	return s;
-}				/* reallocMem */
-
-bool stringEqual(const char *s, const char *t)
-{
-	if (s == t)
-		return true;
-	if (!s || !t)
-		return false;
-	if (strcmp(s, t))
-		return false;
-	return true;
-}
-
-bool stringEqualCI(const char *s, const char *t)
-{
-	char c, d;
-/* if two pointers are equal we can return */
-	if (s == t)
-		return true;
-/* if one is NULL then the strings can't be equal */
-	if (!s || !t)
-		return false;
-	while ((c = *s) && (d = *t)) {
-		if (islower(c))
-			c = toupper(c);
-		if (islower(d))
-			d = toupper(d);
-		if (c != d)
-			return false;
-		++s, ++t;
-	}
-	if (*s)
-		return false;
-	if (*t)
-		return false;
-	return true;
-}				/* stringEqualCI */
-
-bool memEqualCI(const char *s, const char *t, int len)
-{
-	char c, d;
-	if (s == t)
-		return true;
-	if (!s || !t)
-		return false;
-	while (len--) {
-		c = *s, d = *t;
-		if (islowerByte(c))
-			c = toupper(c);
-		if (islowerByte(d))
-			d = toupper(d);
-		if (c != d)
-			return false;
-		++s, ++t;
-	}
-	return true;
-}				/* memEqualCI */
-
-char *strmove(char *dest, const char *src)
-{
-	return (char *)memmove(dest, src, strlen(src) + 1);
-}				/* strmove */
-
-char *cloneString(const char *s)
-{
-	char *t;
-	unsigned len;
-	if (!s)
-		return 0;
-	if (!*s)
-		return emptyString;
-	len = strlen(s) + 1;
-	t = allocString(len);
-	strcpy(t, s);
-	return t;
-}				/* cloneString */
-
-void debugPrint(int lev, const char *msg, ...)
-{
-puts(msg);
-}
-
-void i_printfExit(int crap, ...) { printf(" i_printfExit %d\n", crap); exit(4); }
-void i_printf(int crap, ...) { printf(" i_printf %d\n", crap); }
-void i_puts(int crap) { printf(" i_puts %d\n", crap); }
-
+void ebClose(int n) { exit(n); }
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname) { puts("side buffer"); return 0; }
 
 static struct ebWindow win0;
 struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
-int context = 0, debugLevel = 3;
-FILE *debugFile;
+int context = 0;
+char whichproc = 'e';
+struct MACCOUNT accounts[MAXACCOUNT];
+int maxAccount;
 volatile bool intFlag;
+bool sqlPresent = false;
 struct ebSession sessionList[10];
-
 Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
-
 void domSubmitsForm(JSObject *form, bool reset) { }
-void prepareForField(char *h) { }
 void htmlInputHelper(Tag *t) { }
 void formControl(Tag *t, bool namecheck) { }
 Tag *findOpenTag(Tag *t, int action) { return NULL; }
-const char *getProtURL(const char *url)  { return "http"; }
 void sendCookies(char **s, int *l, const char *url, bool issecure)  { }
 bool receiveCookie(const char *url, const char *str)  { return true; }
 void writeShortCache(void) { }
+bool cxQuit(int cx, int action)  { return false; }
+void cxSwitch(int cx, bool interactive)  { }
+bool browseCurrentBuffer(void) { return false; }
+void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash = false; }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -293,6 +157,9 @@ if(!JS_GetProperty(cxa, parent, name, &v))
 return EJ_PROP_NONE;
 return top_proptype(v);
 }
+
+static void uptrace(JS::HandleObject start);
+static void processError(void);
 
 bool has_property_o(JS::HandleObject parent, const char *name)
 {
@@ -742,7 +609,11 @@ if(!JS_GetProperty(cxa, g, classname, &v) ||
 return 0;
 // I could extract the object and verify with
 // JS_ObjectIsFunction(), but I'll just assume it is.
-JS::Construct(cxa, v, JS::HandleValueArray::empty(), &a);
+if(!JS::Construct(cxa, v, JS::HandleValueArray::empty(), &a)) {
+		debugPrint(3, "failure on %s = new %s", name,    classname);
+		uptrace(parent);
+return 0;
+}
 }
 v = JS::ObjectValue(*a);
 	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
@@ -776,7 +647,11 @@ if(!JS_GetProperty(cxa, g, classname, &v) ||
 return 0;
 // I could extract the object and verify with
 // JS_ObjectIsFunction(), but I'll just assume it is.
-JS::Construct(cxa, v, JS::HandleValueArray::empty(), &a);
+if(!JS::Construct(cxa, v, JS::HandleValueArray::empty(), &a)) {
+		debugPrint(3, "failure on [%d] = new %s", idx,    classname);
+		uptrace(parent);
+return 0;
+}
 }
 v = JS::ObjectValue(*a);
 if(found)
@@ -806,6 +681,91 @@ a = JS_NewArrayObject(cxa, 0);
 v = JS::ObjectValue(*a);
 	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
 	return a;
+}
+
+// run a function with no arguments, that returns bool
+bool run_function_bool_o(JS::HandleObject parent, const char *name)
+{
+bool rc = false;
+	int dbl = 3;		// debug level
+	int seqno = -1;
+	if (stringEqual(name, "ontimer")) {
+// even at debug level 3, I don't want to see
+// the execution messages for each timer that fires
+		dbl = 4;
+seqno = get_property_number_o(parent, "tsn");
+}
+	if (seqno > 0)
+		debugPrint(dbl, "exec %s timer %d", name, seqno);
+	else
+		debugPrint(dbl, "exec %s", name);
+JS::RootedValue retval(cxa);
+bool ok = JS_CallFunctionName(cxa, parent, name, JS::HandleValueArray::empty(), &retval);
+		debugPrint(dbl, "exec complete");
+if(!ok) {
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError();
+	debugPrint(3, "failure on %s()", name);
+	uptrace(parent);
+	debugPrint(3, "exec complete");
+return false;
+} // error
+if(retval.isBoolean())
+return retval.toBoolean();
+if(retval.isInt32())
+return !!retval.toInt32();
+if(!retval.isString())
+return false;
+const char *s = stringize(retval);
+// anything but false or the empty string is considered true
+if(!*s || stringEqual(s, "false"))
+return false;
+return true;
+}
+
+int run_function_onearg_o(JS::HandleObject parent, const char *name,
+JS::HandleObject a)
+{
+JS::RootedValue retval(cxa);
+JS::RootedValue v(cxa);
+JS::AutoValueArray<1> args(cxa);
+v = JS::ObjectValue(*a);
+args[0].set(v);
+bool ok = JS_CallFunctionName(cxa, parent, name, args, &retval);
+if(!ok) {
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError();
+	debugPrint(3, "failure on %s(object)", name);
+	uptrace(parent);
+return -1;
+} // error
+if(retval.isBoolean())
+return retval.toBoolean();
+if(retval.isInt32())
+return retval.toInt32();
+return -1;
+}
+
+void run_function_onestring_o(JS::HandleObject parent, const char *name,
+const char *a)
+{
+JS::RootedValue retval(cxa);
+JS::AutoValueArray<1> args(cxa);
+JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, a));
+args[0].setString(m);
+bool ok = JS_CallFunctionName(cxa, parent, name, args, &retval);
+if(!ok) {
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError();
+	debugPrint(3, "failure on %s(%s)", name, a);
+	uptrace(parent);
+} // error
 }
 
 /*********************************************************************
@@ -900,47 +860,58 @@ if(what) {
 JS_ClearPendingException(cxa);
 }
 
-// run a function with no arguments, that returns bool
-bool run_function_bool_o(JS::HandleObject parent, const char *name)
+// Returns the result of the script as a string, from stringize(), not allocated,
+// copy it if you want to keep it any longer then the next call to stringize.
+const char *run_script_o(const char *s, const char *filename, int lineno)
 {
-bool rc = false;
-	int dbl = 3;		// debug level
-	int seqno = -1;
-	if (stringEqual(name, "ontimer")) {
-// even at debug level 3, I don't want to see
-// the execution messages for each timer that fires
-		dbl = 4;
-seqno = get_property_number_o(parent, "tsn");
-}
-	if (seqno > 0)
-		debugPrint(dbl, "exec %s timer %d", name, seqno);
-	else
-		debugPrint(dbl, "exec %s", name);
-JS::RootedValue retval(cxa);
-bool ok = JS_CallFunctionName(cxa, parent, name, JS::HandleValueArray::empty(), &retval);
-		debugPrint(dbl, "exec complete");
-if(!ok) {
-// error in execution
+	char *s2 = 0;
+
+// special debugging code to replace bp@ and trace@ with expanded macros.
+	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
+		int l;
+		const char *u, *v1, *v2;
+		s2 = initString(&l);
+		u = s;
+		while (true) {
+			v1 = strstr(u, "bp@(");
+			v2 = strstr(u, "trace@(");
+			if (v1 && v2 && v2 < v1)
+				v1 = v2;
+			if (!v1)
+				v1 = v2;
+			if (!v1)
+				break;
+			stringAndBytes(&s2, &l, u, v1 - u);
+			stringAndString(&s2, &l, (*v1 == 'b' ?
+						  ";(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\""
+						  :
+						  ";(function(arg$,l$ne){ if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\""));
+			v1 = strchr(v1, '(') + 1;
+			v2 = strchr(v1, ')');
+			stringAndBytes(&s2, &l, v1, v2 - v1);
+			stringAndString(&s2, &l, "\");");
+			u = ++v2;
+		}
+		stringAndString(&s2, &l, u);
+	}
+
+        JS::CompileOptions opts(cxa);
+        opts.setFileAndLine(filename, lineno);
+JS::RootedValue v(cxa);
+if(s2) s = s2;
+        bool ok = JS::Evaluate(cxa, opts, s, strlen(s), &v);
+	nzFree(s2);
 	if (intFlag)
 		i_puts(MSG_Interrupted);
-	processError();
-	debugPrint(3, "failure on %s()", name);
-	uptrace(parent);
-	debugPrint(3, "exec complete");
-return false;
-} // error
-if(retval.isBoolean())
-return retval.toBoolean();
-if(retval.isInt32())
-return !!retval.toInt32();
-if(!retval.isString())
-return false;
-const char *s = stringize(retval);
-// anything but false or the empty string is considered true
-if(!*s || stringEqual(s, "false"))
-return false;
-return true;
+	if (ok) {
+s = stringize(v);
+		if (s && !*s)
+			s = 0;
+return s;
 }
+		processError();
+return 0;
+	}
 
 void connectTagObject(Tag *t, JS::HandleObject o)
 {
@@ -1335,6 +1306,45 @@ args.rval().setUndefined();
   return true;
 }
 
+static bool nat_prompt(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	char *msg = 0;
+	const char *answer = 0;
+	char inbuf[80];
+	if (argc > 0) {
+		msg = cloneString(stringize(args[0]));
+		if (argc > 1)
+			answer = stringize(args[1]);
+	}
+	if (msg && *msg) {
+		char c, *s;
+		printf("%s", msg);
+/* If it doesn't end in space or question mark, print a colon */
+		c = msg[strlen(msg) - 1];
+		if (!isspace(c)) {
+			if (!ispunct(c))
+				printf(":");
+			printf(" ");
+		}
+		if (answer && *answer)
+			printf("[%s] ", answer);
+		fflush(stdout);
+		if (!fgets(inbuf, sizeof(inbuf), stdin))
+			exit(5);
+		s = inbuf + strlen(inbuf);
+		if (s > inbuf && s[-1] == '\n')
+			*--s = 0;
+		if (inbuf[0])
+			answer = inbuf;
+	}
+nzFree(msg);
+if(!answer) answer = emptyString;
+JS::RootedString m(cx, JS_NewStringCopyZ(cx, answer));
+args.rval().setString(m);
+return true;
+}
+
 static char *cookieCopy;
 static int cook_l;
 
@@ -1607,11 +1617,22 @@ JS_SetProperty(cx, child, "parentNode", v);
 	childname = embedNodeName(child);
 domSetsLinkage('r', thisobj, thisname, child, childname);
 
-// mutFixup, not yet implemented
-
 // return the child upon success
 args.rval().set(args[0]);
 	debugPrint(5, "remove 2");
+
+// mutFixup(this, false, mark, child);
+// This illustrates why most of our dom is writtten in javascript.
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+JS::AutoValueArray<4> ma(cxa); // mutfix arguments
+// what's wrong with assigning this directly to ma[0]?
+v = JS::ObjectValue(*thisobj);
+ma[0].set(v);
+ma[1].setBoolean(false);
+ma[2].setInt32(mark);
+ma[3].set(args[0]);
+JS_CallFunctionName(cxa, g, "mutFixup", ma, &v);
+
 return true;
 	}
 
@@ -1755,6 +1776,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("letterInc", nat_letterInc, 1, 0),
   JS_FN("letterDec", nat_letterDec, 1, 0),
   JS_FN("eb$puts", nat_puts, 1, 0),
+  JS_FN("prompt", nat_prompt, 1, 0),
   JS_FN("eb$getcook", nat_getcook, 0, 0),
   JS_FN("eb$setcook", nat_setcook, 1, 0),
   JS_FN("eb$formSubmit", nat_formSubmit, 1, 0),
@@ -1786,7 +1808,7 @@ bool createJSContext(int sn)
 {
 char buf[16];
 sprintf(buf, "g%d", sn);
-debugPrint(3, "create js context", sn);
+debugPrint(3, "create js context %d", sn);
       JS::CompartmentOptions options;
 JSObject *g = JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options);
 if(!g)
@@ -1847,7 +1869,7 @@ void destroyJSContext(int sn)
 {
 char buf[16];
 sprintf(buf, "g%d", sn);
-debugPrint(3, "remove js context", sn);
+debugPrint(3, "remove js context %d", sn);
         JSAutoCompartment ac(cxa, *rw0);
 JS_DeleteProperty(cxa, *rw0, buf);
 }
@@ -1912,6 +1934,9 @@ bool iaflag = false; // interactive
 int c; // compartment
 int top; // number of windows
 char buf[16];
+
+// It's a test program, let's see the stuff.
+debugLevel = 5;
 
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
 top = iaflag ? 3 : 1;
@@ -1996,7 +2021,7 @@ while(fgets(line, sizeof(line), stdin)) {
 if(line[0] == 'e' &&
 line[1] >= '1' && line[1] <= '3' &&
 isspace(line[2])) {
-printf("context %c\n", line[1]);
+printf("session %c\n", line[1]);
 c = line[1] - '1';
 continue;
 }
@@ -2014,7 +2039,9 @@ continue;
 JS_ValueToObject(cxa, v, &co);
 	}
         JSAutoCompartment ac(cxa, co);
-execScript(line);
+//execScript(line);
+const char *res = run_script_o(line, "noname", 0);
+if(res) puts(res);
 }
 }
 
