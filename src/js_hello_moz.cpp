@@ -73,6 +73,10 @@ int context = 0;
 char whichproc = 'e';
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxAccount;
+struct MIMETYPE mimetypes[MAXMIME];
+int maxMime;
+const char *version = "3.7.7";
+char *currentAgent;
 volatile bool intFlag;
 bool sqlPresent = false;
 struct ebSession sessionList[10];
@@ -1800,7 +1804,7 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FS_END
 };
 
-static void execFile(const char *filename, bool stop);
+static void setup_window_2(void);
 
 // This is an edbrowse context, in a frame,
 // nothing like the Mozilla js context.
@@ -1861,8 +1865,113 @@ v.setString(m);
 JS_DefineProperty(cxa, global, "eb$url", v,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
-execFile("startwindow.js", true);
+setup_window_2();
 return true;
+}
+
+#ifdef DOSLIKE			// port of uname(p), and struct utsname
+struct utsname {
+	char sysname[32];
+	char machine[32];
+};
+int uname(struct utsname *pun)
+{
+	memset(pun, 0, sizeof(struct utsname));
+	// TODO: WIN32: maybe fill in sysname, and machine...
+	return 0;
+}
+#else // !DOSLIKE - // port of uname(p), and struct utsname
+#include <sys/utsname.h>
+#endif // DOSLIKE y/n // port of uname(p), and struct utsname
+
+static void setup_window_2(void)
+{
+JS::RootedObject nav(cxa); // navigator object
+JS::RootedObject navpi(cxa); // navigator plugins
+JS::RootedObject navmt(cxa); // navigator mime types
+JS::RootedObject hist(cxa); // history object
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	struct MIMETYPE *mt;
+	struct utsname ubuf;
+	int i;
+	char save_c;
+	static const char *const languages[] = { 0,
+		"english", "french", "portuguese", "polish",
+		"german", "russian", "italian",
+	};
+	extern const char startWindowJS[];
+
+// startwindow.js stored as an internal string
+run_script_o(startWindowJS, "startwindow.js", 1);
+
+	nav = get_property_object_o(g, "navigator");
+	if (!nav)
+		return;
+// some of the navigator is in startwindow.js; the runtime properties are here.
+	set_property_string_o(nav, "userLanguage", languages[eb_lang]);
+	set_property_string_o(nav, "language", languages[eb_lang]);
+	set_property_string_o(nav, "appVersion", version);
+	set_property_string_o(nav, "vendorSub", version);
+	set_property_string_o(nav, "userAgent", currentAgent);
+	uname(&ubuf);
+	set_property_string_o(nav, "oscpu", ubuf.sysname);
+	set_property_string_o(nav, "platform", ubuf.machine);
+
+/* Build the array of mime types and plugins,
+ * according to the entries in the config file. */
+	navpi = get_property_object_o(nav, "plugins");
+	navmt = get_property_object_o(nav, "mimeTypes");
+	if (!navpi || !navmt)
+		return;
+	mt = mimetypes;
+	for (i = 0; i < maxMime; ++i, ++mt) {
+		int len;
+/* po is the plugin object and mo is the mime object */
+JS::RootedObject 		po(cxa, instantiate_array_element_o(navpi, i, 0));
+JS::RootedObject 		mo(cxa, instantiate_array_element_o(navmt, i, 0));
+if(!po || !mo)
+			return;
+		set_property_object_o(mo, "enabledPlugin", po);
+		set_property_string_o(mo, "type", mt->type);
+		set_property_object_o(navmt, mt->type, mo);
+		set_property_string_o(mo, "description", mt->desc);
+		set_property_string_o(mo, "suffixes", mt->suffix);
+/* I don't really have enough information from the config file to fill
+ * in the attributes of the plugin object.
+ * I'm just going to fake it.
+ * Description will be the same as that of the mime type,
+ * and the filename will be the program to run.
+ * No idea if this is right or not. */
+		set_property_string_o(po, "description", mt->desc);
+		set_property_string_o(po, "filename", mt->program);
+/* For the name, how about the program without its options? */
+		len = strcspn(mt->program, " \t");
+		save_c = mt->program[len];
+		mt->program[len] = 0;
+		set_property_string_o(po, "name", mt->program);
+		mt->program[len] = save_c;
+	}
+
+	hist = get_property_object_o(g, "history");
+	if (!hist)
+		return;
+	set_property_string_o(hist, "current", cf->fileName);
+
+JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+	set_property_string_o(doc, "referrer", cw->referrer);
+	set_property_string_o(doc, "URL", cf->fileName);
+	set_property_string_o(doc, "location", cf->fileName);
+	set_property_string_o(g, "location", cf->fileName);
+run_script_o(
+		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
+		    "locreplace", 1);
+	set_property_string_o(doc, "domain", getHostURL(cf->fileName));
+	if (debugClone)
+		set_property_bool_o(g, "cloneDebug", true);
+	if (debugEvent)
+		set_property_bool_o(g, "eventDebug", true);
+	if (debugThrow)
+		set_property_bool_o(g, "throwDebug", true);
 }
 
 void destroyJSContext(int sn)
@@ -1937,6 +2046,7 @@ char buf[16];
 
 // It's a test program, let's see the stuff.
 debugLevel = 5;
+selectLanguage();
 
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
 top = iaflag ? 3 : 1;
@@ -1959,6 +2069,7 @@ rw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nul
 	}
 
 	{
+	extern const char thirdJS[];
       JS::CompartmentOptions options;
 mw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
       if (!mw0)
@@ -1977,8 +2088,8 @@ objval = JS::ObjectValue(*docroot);
 JS_DefineProperty(cxa, *mw0, "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
-execFile("master.js", true);
-execFile("third.js", true);
+//execFile("master.js", true);
+run_script_o(thirdJS, "third.js", 1);
 	}
 
 for(c=0; c<top; ++c) {

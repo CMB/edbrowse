@@ -108,7 +108,7 @@ endif
 #  I added -Wno-psabi to supress warning   changed in GCC 7.1
 #  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
 js_hello_moz : js_hello_moz.cpp
-	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) js_hello_moz.cpp -lmozjs-$(SMV) stringfile.o messages.o msg-strings.o ebrc.o format.o url.o -lstdc++ -o js_hello_moz
+	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) js_hello_moz.cpp -lmozjs-$(SMV) stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o url.o -lstdc++ -o js_hello_moz
 
 hello: js_hello_duk js_hello_v8 js_hello_moz
 
