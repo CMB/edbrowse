@@ -71,6 +71,9 @@ struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
 int context = 0;
 char whichproc = 'e';
+bool pluginsOn = true;
+const char *jsSourceFile;
+int jsLineno;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxAccount;
 struct MIMETYPE mimetypes[MAXMIME];
@@ -82,6 +85,7 @@ bool sqlPresent = false;
 struct ebSession sessionList[10];
 Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
 void domSubmitsForm(JSObject *form, bool reset) { }
+void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
 void htmlInputHelper(Tag *t) { }
 void formControl(Tag *t, bool namecheck) { }
 Tag *findOpenTag(Tag *t, int action) { return NULL; }
@@ -92,6 +96,8 @@ bool cxQuit(int cx, int action)  { return false; }
 void cxSwitch(int cx, bool interactive)  { }
 bool browseCurrentBuffer(void) { return false; }
 void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash = false; }
+void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
+int frameExpandLine(int ln, jsobjtype fo) { puts("expand frame"); return 0; }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -164,6 +170,7 @@ return top_proptype(v);
 
 static void uptrace(JS::HandleObject start);
 static void processError(void);
+static void jsInterruptCheck(void);
 
 bool has_property_o(JS::HandleObject parent, const char *name)
 {
@@ -399,17 +406,6 @@ else
 JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
 }
 
-void set_property_object_o(JS::HandleObject parent, const char *name,  JS::HandleObject child)
-{
-JS::RootedValue v(cxa, JS::ObjectValue(*child));
-	bool found;
-	JS_HasProperty(cxa, parent, name, &found);
-	if (found)
-JS_SetProperty(cxa, parent, name, v);
-else
-JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
-}
-
 // Before we can approach set_property_string, we need some setters.
 // Example: the value property, when set, uses a setter to push that value
 // through to edbrowse, where you can see it.
@@ -474,9 +470,11 @@ return true;
 
 static bool setter_value(JSContext *cx, unsigned argc, JS::Value *vp)
 {
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+// should we be setting result to anything?
+args.rval().setUndefined();
 if(argc != 1)
 return true; // should never happen
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
 const char *h = stringize(args[0]);
 if(!h)
 h = emptyString;
@@ -491,11 +489,71 @@ int esn = get_property_number_o(thisobj, "eb$seqno");
 }
 	domSetsTagValue(thisobj, k);
 	nzFree(k);
-// should we be setting result to anything?
-args.rval().setUndefined();
 	debugPrint(5, "setter v 2");
 	return true;
 }
+
+static void forceFrameExpand(JS::HandleObject thisobj)
+{
+	Frame *save_cf = cf;
+	const char *save_src = jsSourceFile;
+	int save_lineno = jsLineno;
+	bool save_plug = pluginsOn;
+set_property_bool_o(thisobj, "eb$auto", true);
+	pluginsOn = false;
+	whichproc = 'e';
+	frameExpandLine(0, thisobj);
+	whichproc = 'j';
+	cf = save_cf;
+	jsSourceFile = save_src;
+	jsLineno = save_lineno;
+	pluginsOn = save_plug;
+}
+
+// contentDocument getter setter; this is a bit complicated.
+static bool getter_cd(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	bool found;
+	jsInterruptCheck();
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+JS_HasProperty(cx, thisobj, "eb$auto", &found);
+	if (!found)
+		forceFrameExpand(thisobj);
+JS::RootedValue v(cx);
+JS_GetProperty(cx, thisobj, "content$Document", &v);
+args.rval().set(v);
+return true;
+}
+
+// You can't really change contentDocument; we'll use
+// nat_stub for the setter instead.
+static bool nat_stub(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+  return true;
+}
+
+
+// contentWindow getter setter; this is a bit complicated.
+static bool getter_cw(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	bool found;
+	jsInterruptCheck();
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+JS_HasProperty(cx, thisobj, "eb$auto", &found);
+	if (!found)
+		forceFrameExpand(thisobj);
+JS::RootedValue v(cx);
+JS_GetProperty(cx, thisobj, "content$Window", &v);
+args.rval().set(v);
+return true;
+}
+
+// You can't really change contentWindow; we'll use
+// nat_stub for the setter instead.
 
 static bool getter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 {
@@ -510,6 +568,8 @@ args.rval().set(newv);
 return true;
 }
 
+JSObject *instantiate_array_o(JS::HandleObject parent, const char *name); // temporary, should be in ebprot.h
+int run_function_onearg_o(JS::HandleObject parent, const char *name, JS::HandleObject a); // also temporary
 static bool setter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 if(argc != 1)
@@ -518,10 +578,64 @@ return true; // should never happen
 const char *h = stringize(args[0]);
 if(!h)
 h = emptyString;
+jsInterruptCheck();
 	debugPrint(5, "setter h 1");
+
+	{ // scope
+bool isarray;
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+// remove the preexisting children.
+      JS::RootedValue v(cx);
+        if (!JS_GetProperty(cx, thisobj, "childNodes", &v) ||
+!v.isObject())
+		goto fail;
+JS_IsArrayObject(cx, v, &isarray);
+if(!isarray)
+goto fail;
+JS::RootedObject cna(cx); // child nodes array
+JS_ValueToObject(cx, v, &cna);
+// hold this away from garbage collection
+JS_SetProperty(cxa, thisobj, "old$cn", v);
+JS_DeleteProperty(cxa, thisobj, "childNodes");
+// make new childNodes array
+JS::RootedObject cna2(cxa, instantiate_array_o(thisobj, "childNodes"));
 JS_SetProperty(cx, thisobj, "inner$HTML", args[0]);
+
+// Put some tags around the html, so tidy can parse it.
+	char *run;
+	int run_l;
+	run = initString(&run_l);
+	stringAndString(&run, &run_l, "<!DOCTYPE public><body>\n");
+	stringAndString(&run, &run_l, h);
+	if (*h && h[strlen(h) - 1] != '\n')
+		stringAndChar(&run, &run_l, '\n');
+	stringAndString(&run, &run_l, "</body>");
+
+// now turn the html into objects
+	html_from_setter(thisobj, run);
+	nzFree(run);
 	debugPrint(5, "setter h 2");
+
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+run_function_onearg_o(g, "textarea$html$crossover", thisobj);
+
+// mutFixup(this, false, cna2, cna);
+JS::AutoValueArray<4> ma(cxa); // mutfix arguments
+ma[3].set(v);
+v = JS::ObjectValue(*thisobj);
+ma[0].set(v);
+ma[1].setBoolean(false);
+v = JS::ObjectValue(*cna2);
+ma[2].set(v);
+JS_CallFunctionName(cxa, g, "mutFixup", ma, &v);
+
+JS_DeleteProperty(cxa, thisobj, "old$cn");
+args.rval().setUndefined();
+return true;
+	}
+
+fail:
+	debugPrint(5, "setter h 3");
 args.rval().setUndefined();
 return true;
 }
@@ -575,6 +689,41 @@ getter, setter);
 JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
 }
 
+void set_property_object_o(JS::HandleObject parent, const char *name,  JS::HandleObject child)
+{
+JS::RootedValue cv(cxa, JS::ObjectValue(*child));
+JS::RootedValue v(cxa);
+	bool found;
+
+	JS_HasProperty(cxa, parent, name, &found);
+
+// Special code for frame.contentDocument
+	if (stringEqual(name, "contentDocument")) {
+// Is it really a Frame object?
+JS_GetProperty(cxa, parent, "dom$class", &v);
+if(stringEqual(stringize(v), "Frame")) {
+JS_DefineProperty(cxa, parent, name, getter_cd, nat_stub, JSPROP_STD);
+name = "content$Document";
+found = false;
+}
+}
+
+	if (stringEqual(name, "contentWindow")) {
+// Is it really a Frame object?
+JS_GetProperty(cxa, parent, "dom$class", &v);
+if(stringEqual(stringize(v), "Frame")) {
+JS_DefineProperty(cxa, parent, name, getter_cw, nat_stub, JSPROP_STD);
+name = "content$Window";
+found = false;
+}
+}
+
+	if (found)
+JS_SetProperty(cxa, parent, name, v);
+else
+JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
+}
+
 void set_array_element_object_o(JS::HandleObject parent, int idx, JS::HandleObject child)
 {
 bool found;
@@ -585,6 +734,32 @@ if(found)
 JS_SetElement(cxa, parent, idx, v);
 else
 JS_DefineElement(cxa, parent, idx, v, JSPROP_STD);
+}
+
+static bool nat_null(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().setNull();
+	return true;
+}
+
+void set_property_function_o(JS::HandleObject parent, const char *name, const char *body)
+{
+JS::RootedFunction f(cxa);
+	if (!body || !*body) {
+// null or empty function, function will return null.
+f = JS_NewFunction(cxa, nat_null, 0, 0, name);
+} else {
+JS::AutoObjectVector envChain(cxa);
+JS::CompileOptions opts(cxa);
+if(!JS::CompileFunction(cxa, envChain, opts, name, 0, nullptr, body, strlen(body), &f)) {
+		processError();
+		debugPrint(3, "compile error for %s(){%s}", name, body);
+f = JS_NewFunction(cxa, nat_null, 0, 0, name);
+}
+	}
+JS::RootedObject fo(cxa, JS_GetFunctionObject(f));
+set_property_object_o(parent, name, fo);
 }
 
 JSObject *instantiate_o(JS::HandleObject parent, const char *name,
@@ -864,6 +1039,18 @@ if(what) {
 JS_ClearPendingException(cxa);
 }
 
+static void jsInterruptCheck(void)
+{
+if(intFlag) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+JS::RootedValue v(cxa);
+// this next line should fail and stop the script!
+// Assuming we aren't in a try{} block.
+JS_CallFunctionName(cxa, g, "eb$stopexec", JS::HandleValueArray::empty(), &v);
+// It didn't stop the script, oh well.
+}
+}
+
 // Returns the result of the script as a string, from stringize(), not allocated,
 // copy it if you want to keep it any longer then the next call to stringize.
 const char *run_script_o(const char *s, const char *filename, int lineno)
@@ -1102,6 +1289,8 @@ JS::HandleObject b_j, const char *b_name)
 	if (!cw->tags)
 		return;
 
+jsInterruptCheck();
+
 	if (type == 'c') {	/* create */
 		parent = tagFromObject2(p_j, p_name);
 		if (parent) {
@@ -1288,6 +1477,7 @@ domSetsLinkage(type, p_j, p_name, a_j, emptyString, b_j, emptyString);
 static bool nat_logElement(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
 if(argc != 2 ||
 !args[0].isObject() || !args[1].isString())
 return true;
@@ -1346,6 +1536,28 @@ nzFree(msg);
 if(!answer) answer = emptyString;
 JS::RootedString m(cx, JS_NewStringCopyZ(cx, answer));
 args.rval().setString(m);
+return true;
+}
+
+static bool nat_newloc(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc == 1) {
+	const char *s = stringize(args[0]);
+	if (s && *s) {
+		char *t = cloneString(s);
+// url on one line, name of window on next line
+		char *u = strchr(t, '\n');
+if(u)
+		*u++ = 0;
+else
+u = emptyString;
+		debugPrint(4, "window %s|%s", t, u);
+		domOpensWindow(t, u);
+		nzFree(t);
+	}
+	}
+args.rval().setUndefined();
 return true;
 }
 
@@ -1444,6 +1656,7 @@ JS_ValueToObject(cx, args[1], &start);
 } else {
 start = JS_THIS_OBJECT(cx, vp);
 }
+jsInterruptCheck();
 //` call querySelectorAll in css.c
 free(selstring);
 // return empty array for now. I don't understand this, But I guess it works.
@@ -1768,19 +1981,12 @@ free(filecopy);
 	return true;
 }
 
-// just stubs from here on out.
-static bool nat_stub(JSContext *cx, unsigned argc, JS::Value *vp)
-{
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-args.rval().setUndefined();
-  return true;
-}
-
 static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("letterInc", nat_letterInc, 1, 0),
   JS_FN("letterDec", nat_letterDec, 1, 0),
   JS_FN("eb$puts", nat_puts, 1, 0),
   JS_FN("prompt", nat_prompt, 1, 0),
+  JS_FN("eb$newLocation", nat_newloc, 1, 0),
   JS_FN("eb$getcook", nat_getcook, 0, 0),
   JS_FN("eb$setcook", nat_setcook, 1, 0),
   JS_FN("eb$formSubmit", nat_formSubmit, 1, 0),
@@ -1793,6 +1999,8 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("my$win", nat_mywin, 0, 0),
   JS_FN("my$doc", nat_mydoc, 0, 0),
   JS_FN("eb$logElement", nat_logElement, 2, 0),
+  JS_FN("eb$getter_cd", getter_cd, 0, 0),
+  JS_FN("eb$getter_cw", getter_cw, 1, 0),
   JS_FS_END
 };
 

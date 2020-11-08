@@ -919,7 +919,7 @@ which is another setter, writtten in C.
 If all this works I'll be amazed.
 *********************************************************************/
 
-dom$.textarea$html$crossover = function(t) {
+textarea$html$crossover = function(t) {
 if(!t || t.dom$class != "Element" || t.type != "textarea")
 return;
 t.value = "";
