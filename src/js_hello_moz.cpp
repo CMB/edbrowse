@@ -681,12 +681,10 @@ return;
 // but that causes a seg fault.
 #if MOZJS_MAJOR_VERSION >= 60
 if(setter)
-JS_DefineProperty(cxa, parent, name, getter, setter,
-JSPROP_STD);
+JS_DefineProperty(cxa, parent, name, getter, setter, JSPROP_STD);
 #else
 if(setter)
-JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD,
-getter, setter);
+JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD, getter, setter);
 #endif
 JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
 }
@@ -703,7 +701,11 @@ JS::RootedValue v(cxa);
 // Is it really a Frame object?
 JS_GetProperty(cxa, parent, "dom$class", &v);
 if(stringEqual(stringize(v), "Frame")) {
+#if MOZJS_MAJOR_VERSION >= 60
 JS_DefineProperty(cxa, parent, name, getter_cd, nat_stub, JSPROP_STD);
+#else
+JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD, getter_cd, nat_stub);
+#endif
 name = "content$Document";
 found = false;
 }
@@ -713,7 +715,11 @@ found = false;
 // Is it really a Frame object?
 JS_GetProperty(cxa, parent, "dom$class", &v);
 if(stringEqual(stringize(v), "Frame")) {
+#if MOZJS_MAJOR_VERSION >= 60
 JS_DefineProperty(cxa, parent, name, getter_cw, nat_stub, JSPROP_STD);
+#else
+JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD, getter_cw, nat_stub);
+#endif
 name = "content$Window";
 found = false;
 }
