@@ -1826,6 +1826,28 @@ args.rval().setUndefined();
 return true;
 }
 
+static bool nat_resolve(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc == 2 && args[0].isString() && args[1].isString()) {
+char * base = cloneString(stringize(args[0]));
+const char * rel = stringize(args[1]);
+	if (!base)
+		base = emptyString;
+	if (!rel)
+		rel = emptyString;
+	char *outgoing_url = resolveURL(base, rel);
+	if (outgoing_url == NULL)
+		outgoing_url = emptyString;
+JS::RootedString m(cx, JS_NewStringCopyZ(cx, outgoing_url));
+args.rval().setString(m);
+	nzFree(outgoing_url);
+return true;
+}
+args.rval().setUndefined();
+return true;
+}
+
 static bool nat_mywin(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -2152,6 +2174,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$media", nat_media, 1, 0),
   JS_FN("eb$unframe", nat_unframe, 2, 0),
   JS_FN("eb$unframe2", nat_unframe2, 1, 0),
+  JS_FN("eb$resolveURL", nat_resolve, 2, 0),
   JS_FN("setTimeout", nat_timer, 2, 0),
   JS_FN("setInterval", nat_interval, 2, 0),
   JS_FN("clearTimeout", nat_cleartimer, 1, 0),
