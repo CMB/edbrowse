@@ -98,6 +98,10 @@ bool browseCurrentBuffer(void) { return false; }
 void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash = false; }
 void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
 int frameExpandLine(int ln, jsobjtype fo) { puts("expand frame"); return 0; }
+bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
+void unframe(jsobjtype fobj, jsobjtype newdoc) { puts("unframe stub"); }
+void unframe2(jsobjtype fobj) { puts("unframe2 stub"); }
+void domSetsTimeout(int n, const char *linkname, jsobjtype to, bool isInterval) { printf("%s link to %s, %d ms\n", (isInterval ? "interval" : "timer"), linkname, n); }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -622,11 +626,9 @@ run_function_onearg_o(g, "textarea$html$crossover", thisobj);
 // mutFixup(this, false, cna2, cna);
 JS::AutoValueArray<4> ma(cxa); // mutfix arguments
 ma[3].set(v);
-v = JS::ObjectValue(*thisobj);
-ma[0].set(v);
+ma[0].setObject(*thisobj);
 ma[1].setBoolean(false);
-v = JS::ObjectValue(*cna2);
-ma[2].set(v);
+ma[2].setObject(*cna);
 JS_CallFunctionName(cxa, g, "mutFixup", ma, &v);
 
 JS_DeleteProperty(cxa, thisobj, "old$cn");
@@ -691,7 +693,6 @@ JS_DefineProperty(cxa, parent, altname, ourval, JSPROP_STD);
 
 void set_property_object_o(JS::HandleObject parent, const char *name,  JS::HandleObject child)
 {
-JS::RootedValue cv(cxa, JS::ObjectValue(*child));
 JS::RootedValue v(cxa);
 	bool found;
 
@@ -718,6 +719,7 @@ found = false;
 }
 }
 
+v = JS::ObjectValue(*child);
 	if (found)
 JS_SetProperty(cxa, parent, name, v);
 else
@@ -910,8 +912,7 @@ JS::HandleObject a)
 JS::RootedValue retval(cxa);
 JS::RootedValue v(cxa);
 JS::AutoValueArray<1> args(cxa);
-v = JS::ObjectValue(*a);
-args[0].set(v);
+args[0].setObject(*a);
 bool ok = JS_CallFunctionName(cxa, parent, name, args, &retval);
 if(!ok) {
 // error in execution
@@ -1539,6 +1540,42 @@ args.rval().setString(m);
 return true;
 }
 
+static bool nat_confirm(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	const char *msg = 0;
+	bool answer = false, first = true;
+	char c = 'n';
+	char inbuf[80];
+	if (argc > 0) {
+		msg = stringize(args[0]);
+	if (msg && *msg) {
+		while (true) {
+			printf("%s", msg);
+			c = msg[strlen(msg) - 1];
+			if (!isspace(c)) {
+				if (!ispunct(c))
+					printf(":");
+				printf(" ");
+			}
+			if (first)
+				printf("[y|n] ");
+			first = false;
+			fflush(stdout);
+			if (!fgets(inbuf, sizeof(inbuf), stdin))
+				exit(5);
+			c = *inbuf;
+			if (c && strchr("nNyY", c))
+				break;
+		}
+	}
+	}
+	if (c == 'y' || c == 'Y')
+		answer = true;
+args.rval().setBoolean(answer);
+return true;
+}
+
 static bool nat_newloc(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -1642,6 +1679,99 @@ args.rval().setUndefined();
   return true;
 }
 
+static bool nat_media(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+bool rc = false;
+if(argc == 1 && args[0].isString()) {
+		char *t = cloneString(stringize(args[0]));
+		rc = matchMedia(t);
+		nzFree(t);
+	}
+args.rval().setBoolean(rc);
+return true;
+}
+
+const char *fakePropName(void)
+{
+	static char fakebuf[24];
+	static int idx = 0;
+	++idx;
+	sprintf(fakebuf, "gc$$%d", idx);
+	return fakebuf;
+}
+
+static void set_timer(JSContext *cx, unsigned argc, JS::Value *vp, bool isInterval)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+JS::RootedObject to(cx); // timer object
+JS::RootedObject fo(cx); // function object
+	int n = 1000;		/* default number of milliseconds */
+if(!argc)
+return;
+	debugPrint(5, "timer 1");
+// if second parameter is missing, leave milliseconds at 1000.
+if(argc >= 2 && args[1].isInt32())
+n = args[1].toInt32();
+if(args[0].isObject()) {
+// it's an object, should be a function, I'll check this time.
+JS_ValueToObject(cx, args[0], &fo);
+if(!JS_ObjectIsFunction(cx, fo))
+return;
+} else if(args[0].isString()) {
+const char *source = stringize(args[0]);
+JS::AutoObjectVector envChain(cx);
+JS::CompileOptions opts(cx);
+JS::RootedFunction f(cxa);
+if(!JS::CompileFunction(cx, envChain, opts, "timer", 0, nullptr, source, strlen(source), &f)) {
+		processError();
+		debugPrint(3, "compile error for timer(){%s}", source);
+	debugPrint(5, "timer 3");
+return;
+}
+fo = JS_GetFunctionObject(f);
+} else return;
+
+JS::RootedObject g(cx, JS::CurrentGlobalOrNull(cx));
+const char *	fpn = fakePropName();
+// create the timer object and also protect it from gc
+// by linking it to window, through the fake property name.
+to = instantiate_o(g, fpn, "Timer");
+// classs is milliseconds, for debugging
+set_property_number_o(to, "class", n);
+set_property_object_o(to, "ontimer", fo);
+set_property_string_o(to, "backlink", fpn);
+args.rval().setObject(*to);
+	debugPrint(5, "timer 2");
+	domSetsTimeout(n, fpn, to, isInterval);
+}
+
+static bool nat_timer(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+set_timer(cx, argc, vp, false);
+  return true;
+}
+
+static bool nat_interval(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+set_timer(cx, argc, vp, true);
+  return true;
+}
+
+static bool nat_cleartimer(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc >= 1 && args[0].isObject()) {
+JS::RootedObject to(cx);
+JS_ValueToObject(cx, args[0], &to);
+// this call will unlink from the global, so gc can get rid of the timer object
+	domSetsTimeout(0, "-", to, false);
+}
+args.rval().setUndefined();
+  return true;
+}
+
 static bool nat_qsa(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 char *selstring = NULL;
@@ -1661,18 +1791,39 @@ jsInterruptCheck();
 free(selstring);
 // return empty array for now. I don't understand this, But I guess it works.
 // Is there an easier or safer way?
-JS::RootedValue aov(cx); // array object value
-aov = JS::ObjectValue(*JS_NewArrayObject(cx, 0));
-args.rval().set(aov);
+args.rval().setObject(*JS_NewArrayObject(cx, 0));
   return true;
+}
+
+static bool nat_unframe(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc == 2 && args[0].isObject() && args[1].isObject()) {
+JS::RootedObject fobj(cx), newdoc(cx);
+JS_ValueToObject(cx, args[0], &fobj);
+JS_ValueToObject(cx, args[1], &newdoc);
+unframe(fobj, newdoc);
+}
+args.rval().setUndefined();
+return true;
+}
+
+static bool nat_unframe2(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc == 1 && args[0].isObject()) {
+JS::RootedObject fobj(cx);
+JS_ValueToObject(cx, args[0], &fobj);
+unframe2(fobj);
+}
+args.rval().setUndefined();
+return true;
 }
 
 static bool nat_mywin(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
-JS::RootedValue v(cx);
-v = JS::ObjectValue(*JS::CurrentGlobalOrNull(cx));
-args.rval().set(v);
+args.rval().setObject(*JS::CurrentGlobalOrNull(cx));
   return true;
 }
 
@@ -1843,8 +1994,7 @@ args.rval().set(args[0]);
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 JS::AutoValueArray<4> ma(cxa); // mutfix arguments
 // what's wrong with assigning this directly to ma[0]?
-v = JS::ObjectValue(*thisobj);
-ma[0].set(v);
+ma[0].setObject(*thisobj);
 ma[1].setBoolean(false);
 ma[2].setInt32(mark);
 ma[3].set(args[0]);
@@ -1986,12 +2136,20 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("letterDec", nat_letterDec, 1, 0),
   JS_FN("eb$puts", nat_puts, 1, 0),
   JS_FN("prompt", nat_prompt, 1, 0),
+  JS_FN("confirm", nat_confirm, 1, 0),
   JS_FN("eb$newLocation", nat_newloc, 1, 0),
   JS_FN("eb$getcook", nat_getcook, 0, 0),
   JS_FN("eb$setcook", nat_setcook, 1, 0),
   JS_FN("eb$formSubmit", nat_formSubmit, 1, 0),
   JS_FN("eb$formReset", nat_formReset, 1, 0),
   JS_FN("eb$wlf", nat_wlf, 2, 0),
+  JS_FN("eb$media", nat_media, 1, 0),
+  JS_FN("eb$unframe", nat_unframe, 2, 0),
+  JS_FN("eb$unframe2", nat_unframe2, 1, 0),
+  JS_FN("setTimeout", nat_timer, 2, 0),
+  JS_FN("setInterval", nat_interval, 2, 0),
+  JS_FN("clearTimeout", nat_cleartimer, 1, 0),
+  JS_FN("clearInterval", nat_cleartimer, 1, 0),
   JS_FN("querySelectorAll", nat_qsa, 1, 0),
   JS_FN("querySelector", nat_stub, 1, 0),
   JS_FN("querySelector0", nat_stub, 1, 0),
