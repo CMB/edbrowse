@@ -99,7 +99,7 @@ static Tag *locateOptionByName(const Tag *sel,
 		}
 		if (exact)
 			continue;
-		if (strstrCI(s, name)) {
+		if (strcasestr(s, name)) {
 			pm = t;
 			++pmcount;
 		}
@@ -1189,7 +1189,7 @@ void infShow(int tagno, const char *search)
 		if (!v->textval)
 			continue;
 		++cnt;
-		if (*search && !strstrCI(v->textval, search))
+		if (*search && !strcasestr(v->textval, search))
 			continue;
 		show = true;
 		printf("%3d %s\n", cnt, v->textval);

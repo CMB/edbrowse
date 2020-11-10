@@ -552,18 +552,76 @@ static duk_ret_t setter_cw(duk_context * cx)
 	return 0;
 }
 
+static bool remember_contracted;
+
 static duk_ret_t native_unframe(duk_context * cx)
 {
-	if (duk_is_object(cx, 0))
-		unframe(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1));
+	if (duk_is_object(cx, 0)) {
+		jsobjtype fobj = duk_get_heapptr(cx, 0);
+		jsobjtype newdoc = duk_get_heapptr(cx, 1);
+		int i, n;
+		Tag *t, *cdt;
+		Frame *f, *f1;
+		t = tagFromJavaVar(fobj);
+		if (!t) {
+			debugPrint(1, "unframe couldn't find tag");
+			goto done;
+		}
+		if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC ||
+		cdt->sibling || !(cdt->jv)) {
+			debugPrint(1, "unframe child tag isn't right");
+			goto done;
+		}
+		underKill(cdt);
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, newdoc);
+		f1 = t->f1;
+		t->f1 = 0;
+		remember_contracted = t->contracted;
+		if (f1 == cf) {
+			debugPrint(1, "deleting the current frame, this shouldn't happen");
+			goto done;
+		}
+		for (f = &(cw->f0); f; f = f->next)
+			if (f->next == f1)
+				break;
+		if (!f) {
+			debugPrint(1, "unframe can't find prior frame to relink");
+			goto done;
+		}
+		f->next = f1->next;
+		delTimers(f1);
+		freeJavaContext(f1);
+		nzFree(f1->dw);
+		nzFree(f1->hbase);
+		nzFree(f1->fileName);
+		nzFree(f1->firstURL);
+		free(f1);
+	// cdt use to belong to f1, which no longer exists.
+		cdt->f0 = f;		// back to its parent frame
+	// A running frame could create nodes in its parent frame, or any other frame.
+		n = 0;
+		for (i = 0; i < cw->numTags; ++i) {
+			t = tagList[i];
+			if (t->f0 == f1)
+				t->f0 = f, ++n;
+		}
+		if (n)
+			debugPrint(3, "%d nodes pushed up to the parent frame", n);
+	}
+done:
 	duk_pop_2(cx);
 	return 0;
 }
 
 static duk_ret_t native_unframe2(duk_context * cx)
 {
-	if (duk_is_object(cx, 0))
-		unframe2(duk_get_heapptr(cx, 0));
+	if (duk_is_object(cx, 0)) {
+		jsobjtype fobj = duk_get_heapptr(cx, 0);
+		Tag *t = tagFromJavaVar(fobj);
+		if(t)
+			t->contracted = remember_contracted;
+	}
 	duk_pop(cx);
 	return 0;
 }

@@ -31,7 +31,7 @@ char *tidyPreprocess(const char *h)
 	char *ns;		/* the new string */
 	int l;
 	char *inside, *expanded;
-	const char *lg, *s = strstrCI(h, "<textarea");
+	const char *lg, *s = strcasestr(h, "<textarea");
 /* most web pages don't have textareas */
 	if (!s)
 		return NULL;
@@ -40,7 +40,7 @@ char *tidyPreprocess(const char *h)
 	h = s;
 	while (true) {
 /* next textarea */
-		s = strstrCI(h, "<textarea");
+		s = strcasestr(h, "<textarea");
 		if (!s)
 			break;
 		s = strchr(s, '>');
@@ -49,7 +49,7 @@ char *tidyPreprocess(const char *h)
 		++s;
 		stringAndBytes(&ns, &l, h, s - h);
 		h = s;
-		s = strstrCI(h, "</textarea");
+		s = strcasestr(h, "</textarea");
 		if (!s)
 			break;
 		lg = strpbrk(h, "<>");

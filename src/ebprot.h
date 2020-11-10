@@ -223,9 +223,6 @@ bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, jsobjtype fo);
 Tag *line2frame(int ln);
 bool reexpandFrame(void);
-bool frameSecurityFile(const char *thisfile);
-void unframe(jsobjtype fobj, jsobjtype newdoc);
-void unframe2(jsobjtype fobj);
 
 /* sourcefile=main.c */
 void eb_curl_global_init(void);
@@ -314,7 +311,7 @@ int stringIsNum(const char *s) ;
 bool stringIsDate(const char *s) ;
 bool stringIsFloat(const char *s, double *dp) ;
 bool memEqualCI(const char *s, const char *t, int len) ;
-char *strstrCI(const char *base, const char *search) ;
+const char *stringInBufLine(const char *s, const char *t);
 bool stringEqual(const char *s, const char *t) ;
 bool stringEqualCI(const char *s, const char *t) ;
 int stringInList(const char *const *list, const char *s) ;
@@ -403,6 +400,7 @@ char *encodePostData(const char *s, const char *keep_chars) ;
 char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 bool patternMatchURL(const char *url, const char *pattern);
+bool frameSecurityFile(const char *thisfile);
 
 /* sourcefile=css.c */
 void writeShortCache(void);

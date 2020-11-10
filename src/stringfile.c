@@ -421,17 +421,6 @@ bool memEqualCI(const char *s, const char *t, int len)
 	return true;
 }				/* memEqualCI */
 
-char *strstrCI(const char *base, const char *search)
-{
-	int l = strlen(search);
-	while (*base) {
-		if (memEqualCI(base, search, l))
-			return (char *)base;
-		++base;
-	}
-	return 0;
-}				/* strstrCI */
-
 bool stringEqual(const char *s, const char *t)
 {
 /* check equality of strings with handling of null pointers */
@@ -468,6 +457,18 @@ bool stringEqualCI(const char *s, const char *t)
 		return false;
 	return true;
 }				/* stringEqualCI */
+
+// a text line in the buffer isn't a string; you can't use strstr.
+// It ends in \n
+const char *stringInBufLine(const char *s, const char *t)
+{
+	int n = strlen(t);
+	for (; *s != '\n'; ++s) {
+		if (!strncmp(s, t, n))
+			return s;
+	}
+	return 0;
+}
 
 int stringInList(const char *const *list, const char *s)
 {

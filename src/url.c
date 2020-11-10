@@ -1237,3 +1237,16 @@ bool patternMatchURL(const char *url, const char *pattern)
 	}			/* domain/path was specified */
 	return hl == dl || host[hl - dl - 1] == '.';
 }
+
+// Make sure a web page is not trying to read a local file through a frame
+bool frameSecurityFile(const char *thisfile)
+{
+	Frame *f = &cf->owner->f0;
+	for (; f != cf; f = f->next) {
+		if (!isURL(f->fileName))
+			continue;
+		setError(MSG_NoAccessSecure, thisfile);
+		return false;
+	}
+	return true;
+}

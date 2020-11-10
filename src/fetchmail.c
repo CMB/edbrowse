@@ -304,7 +304,7 @@ static struct FOLDER *folderByName(char *line)
 
 	f = topfolders;
 	for (i = 0; i < n_folders; ++i, ++f)
-		if (strstrCI(f->path, line))
+		if (strcasestr(f->path, line))
 			++cnt, j = i;
 	if (cnt == 1)
 		return topfolders + j;

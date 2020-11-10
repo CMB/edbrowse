@@ -39,7 +39,7 @@ void selectLanguage(void)
 	if (!*s)
 		return;
 
-	if (strstrCI(s, "utf8") || strstrCI(s, "utf-8"))
+	if (strcasestr(s, "utf8") || strcasestr(s, "utf-8"))
 		cons_utf8 = true;
 
 /* We roll our own international messages in this file, so you wouldn't think

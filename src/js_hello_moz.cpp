@@ -62,8 +62,6 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash 
 void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
 int frameExpandLine(int ln, jsobjtype fo) { puts("expand frame"); return 0; }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
-void unframe(jsobjtype fobj, jsobjtype newdoc) { puts("unframe stub"); }
-void unframe2(jsobjtype fobj) { puts("unframe2 stub"); }
 void domSetsTimeout(int n, const char *linkname, jsobjtype to, bool isInterval) { printf("%s link to %s, %d ms\n", (isInterval ? "interval" : "timer"), linkname, n); }
 bool httpConnect(struct i_get *g) {
 puts("httpConnect not implemented");
@@ -73,6 +71,9 @@ return false;
 void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"); }
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
+void underKill(Tag *t) { }
+void delTimers(Frame *f) { }
+void cssFree(Frame *f) { }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -545,6 +546,8 @@ return true;
 
 JSObject *instantiate_array_o(JS::HandleObject parent, const char *name); // temporary, should be in ebprot.h
 int run_function_onearg_o(JS::HandleObject parent, const char *name, JS::HandleObject a); // also temporary
+void freeJSContext(Frame *f); // also temporary
+
 static bool setter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 if(argc != 1)
@@ -1557,7 +1560,7 @@ static bool nat_winclose(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 	i_puts(MSG_PageDone);
-// I should probably freeJavaContext and close down javascript,
+// I should probably free the window and close down the script,
 // but not sure I can do that while the js function is still running.
 args.rval().setUndefined();
 return true;
@@ -1869,15 +1872,66 @@ args.rval().setBoolean(rc);
 return true;
 }
 
+static bool remember_contracted;
+
 static bool nat_unframe(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
-if(argc == 2 && args[0].isObject() && args[1].isObject()) {
+	if(argc == 2 && args[0].isObject() && args[1].isObject()) {
 JS::RootedObject fobj(cx), newdoc(cx);
 JS_ValueToObject(cx, args[0], &fobj);
 JS_ValueToObject(cx, args[1], &newdoc);
-unframe(fobj, newdoc);
-}
+		int i, n;
+		Tag *t, *cdt;
+		Frame *f, *f1;
+		t = tagFromObject(fobj);
+		if (!t) {
+			debugPrint(1, "unframe couldn't find tag");
+			goto done;
+		}
+		if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC ||
+		cdt->sibling || !(tagToObject(cdt))) {
+			debugPrint(1, "unframe child tag isn't right");
+			goto done;
+		}
+		underKill(cdt);
+		disconnectTagObject1(cdt);
+		connectTagObject1(cdt, newdoc);
+		f1 = t->f1;
+		t->f1 = 0;
+		remember_contracted = t->contracted;
+		if (f1 == cf) {
+			debugPrint(1, "deleting the current frame, this shouldn't happen");
+			goto done;
+		}
+		for (f = &(cw->f0); f; f = f->next)
+			if (f->next == f1)
+				break;
+		if (!f) {
+			debugPrint(1, "unframe can't find prior frame to relink");
+			goto done;
+		}
+		f->next = f1->next;
+		delTimers(f1);
+		freeJSContext(f1);
+		nzFree(f1->dw);
+		nzFree(f1->hbase);
+		nzFree(f1->fileName);
+		nzFree(f1->firstURL);
+		free(f1);
+	// cdt use to belong to f1, which no longer exists.
+		cdt->f0 = f;		// back to its parent frame
+	// A running frame could create nodes in its parent frame, or any other frame.
+		n = 0;
+		for (i = 0; i < cw->numTags; ++i) {
+			t = tagList[i];
+			if (t->f0 == f1)
+				t->f0 = f, ++n;
+		}
+		if (n)
+			debugPrint(3, "%d nodes pushed up to the parent frame", n);
+	}
+done:
 args.rval().setUndefined();
 return true;
 }
@@ -1888,7 +1942,9 @@ static bool nat_unframe2(JSContext *cx, unsigned argc, JS::Value *vp)
 if(argc == 1 && args[0].isObject()) {
 JS::RootedObject fobj(cx);
 JS_ValueToObject(cx, args[0], &fobj);
-unframe2(fobj);
+	Tag *t = tagFromObject(fobj);
+if(t)
+	t->contracted = remember_contracted;
 }
 args.rval().setUndefined();
 return true;
@@ -2601,14 +2657,25 @@ run_script_o(
 		set_property_bool_o(g, "throwDebug", true);
 }
 
-void destroyJSContext(int sn)
+// the garbage collector can eat this window
+static void unlinkJSContext(int sn)
 {
 char buf[16];
 sprintf(buf, "g%d", sn);
 debugPrint(3, "remove js context %d", sn);
+// I think we're already in a compartment, but just to be safe...
         JSAutoCompartment ac(cxa, *rw0);
 JS_DeleteProperty(cxa, *rw0, buf);
 }
+
+void freeJSContext(Frame *f)
+{
+	debugPrint(5, "> free frame %d", f->gsn);
+	unlinkJSContext(f->gsn);
+	f->cx = f->winobj = f->docobj = 0;
+	debugPrint(5, "< ok");
+	cssFree(f);
+}				/* freeJSContext */
 
 // Now we go back to the stand alone hello program.
 
@@ -2788,7 +2855,7 @@ if(res) puts(res);
 
 // I should be able to remove globals in any order, need not be a stack
 for(c=0; c<top; ++c)
-destroyJSContext(c);
+unlinkJSContext(c);
 
 // rooted objects have to free in the reverse (stack) order.
 delete mw0;

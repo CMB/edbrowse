@@ -107,7 +107,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 	}
 
 	if (!g->cdfn && (v = find_http_header(g, "content-disposition"))) {
-		char *s = strstrCI(v, "filename=");
+		char *s = strcasestr(v, "filename=");
 		if (s && !strncmp(v, "attachment", 10)) {
 			s += 9;
 			if (*s == '"') {
@@ -166,7 +166,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 	}
 	if (!g->auth_realm[0] && (v = find_http_header(g, "WWW-Authenticate"))) {
 		char *realm, *end;
-		if ((realm = strstrCI(v, "realm="))) {
+		if ((realm = strcasestr(v, "realm="))) {
 			realm += 6;
 			if (realm[0] == '"' || realm[0] == '\'') {
 				end = strchr(realm + 1, realm[0]);
@@ -2676,7 +2676,6 @@ CURLcode setCurlURL(CURL * h, const char *url)
  * Return false if there is a problem fetching a web page,
  * or if none of the lines are frames. */
 static int frameContractLine(int lineNumber);
-static const char *stringInBufLine(const char *s, const char *t);
 bool frameExpand(bool expand, int ln1, int ln2)
 {
 	int ln;			/* line number */
@@ -2965,17 +2964,6 @@ Tag *line2frame(int ln)
 	return 0;
 }				/* line2frame */
 
-/* a text line in the buffer isn't a string; you can't use strstr */
-static const char *stringInBufLine(const char *s, const char *t)
-{
-	int n = strlen(t);
-	for (; *s != '\n'; ++s) {
-		if (!strncmp(s, t, n))
-			return s;
-	}
-	return 0;
-}				/* stringInBufLine */
-
 bool reexpandFrame(void)
 {
 	int j, start;
@@ -3098,84 +3086,3 @@ bool reexpandFrame(void)
 
 	return true;
 }				/* reexpandFrame */
-
-// Make sure a web page is not trying to read a local file.
-bool frameSecurityFile(const char *thisfile)
-{
-	Frame *f = &cf->owner->f0;
-	for (; f != cf; f = f->next) {
-		if (!isURL(f->fileName))
-			continue;
-		setError(MSG_NoAccessSecure, thisfile);
-		return false;
-	}
-	return true;
-}
-
-static bool remember_contracted;
-
-// Undo the above,as though the frame were never expanded.
-void unframe(jsobjtype fobj, jsobjtype newdoc)
-{
-	int i, n;
-	Tag *t, *cdt;
-	jsobjtype cdo;
-	Frame *f, *f1;
-
-	t = tagFromJavaVar(fobj);
-	if (!t) {
-		debugPrint(1, "unframe couldn't find tag");
-		return;
-	}
-	if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC || cdt->sibling
-	    || !(cdo = cdt->jv)) {
-		debugPrint(1, "unframe child tag isn't right");
-		return;
-	}
-	underKill(cdt);
-	disconnectTagObject(cdt);
-	connectTagObject(cdt, newdoc);
-
-	f1 = t->f1;
-	t->f1 = 0;
-	remember_contracted = t->contracted;
-	if (f1 == cf) {
-		debugPrint(1,
-			   "deleting the current frame, this shouldn't happen, edbrowse is corrupt");
-		return;
-	}
-	for (f = &(cw->f0); f; f = f->next)
-		if (f->next == f1)
-			break;
-	if (!f) {
-		debugPrint(1, "unframe can't find prior frame to relink");
-		return;
-	}
-	f->next = f1->next;
-	delTimers(f1);
-	freeJavaContext(f1);
-	nzFree(f1->dw);
-	nzFree(f1->hbase);
-	nzFree(f1->fileName);
-	nzFree(f1->firstURL);
-	free(f1);
-
-// cdt use to belong to f1, which no longer exists.
-	cdt->f0 = f;		// back to its parent frame
-
-// A running frame could create nodes in its parent frame, or any other frame.
-	n = 0;
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (t->f0 == f1)
-			t->f0 = f, ++n;
-	}
-	if (n)
-		debugPrint(3, "%d nodes pushed up to the parent frame", n);
-}
-
-void unframe2(jsobjtype fobj)
-{
-	Tag *t = tagFromJavaVar(fobj);
-	t->contracted = remember_contracted;
-}
