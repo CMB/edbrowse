@@ -19,44 +19,6 @@ static JSClass global_class = {
     &global_ops
 };
 
-// couple of native methods.
-// increment the ascii letters of a string.  "hat" becomes "ibu"
-static bool nat_letterInc(JSContext *cx, unsigned argc, JS::Value *vp)
-{
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-// This only works for strings
-if(argc >= 1 && args[0].isString()) {
-JSString *s = args[0].toString();
-// believe s is implicitly inside args[0], thus delete s isn't necessary, and blows up.
-char *es = JS_EncodeString(cx, s);
-for(int i = 0; es[i]; ++i) ++es[i];
-JS::RootedString m(cx, JS_NewStringCopyZ(cx, es));
-args.rval().setString(m);
-free(es);
-} else {
-args.rval().setUndefined();
-}
-  return true;
-}
-
-// decrement the ascii letters of a string.
-static bool nat_letterDec(JSContext *cx, unsigned argc, JS::Value *vp)
-{
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-// This only works for strings
-if(argc >= 1 && args[0].isString()) {
-JSString *s = args[0].toString();
-char *es = JS_EncodeString(cx, s);
-for(int i = 0; es[i]; ++i) --es[i];
-JS::RootedString m(cx, JS_NewStringCopyZ(cx, es));
-args.rval().setString(m);
-free(es);
-} else {
-args.rval().setUndefined();
-}
-  return true;
-}
-
 // A few functions from the edbrowse world, so I can write and test
 // some other functions that rely on those functions.
 // Jump in with both feet and see if we can swallow the edbrowse header files.
@@ -72,6 +34,7 @@ Frame *cf = &win0.f0;
 int context = 0;
 char whichproc = 'e';
 bool pluginsOn = true;
+bool down_jsbg = false;
 const char *jsSourceFile;
 int jsLineno;
 struct MACCOUNT accounts[MAXACCOUNT];
@@ -102,6 +65,14 @@ bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
 void unframe(jsobjtype fobj, jsobjtype newdoc) { puts("unframe stub"); }
 void unframe2(jsobjtype fobj) { puts("unframe2 stub"); }
 void domSetsTimeout(int n, const char *linkname, jsobjtype to, bool isInterval) { printf("%s link to %s, %d ms\n", (isInterval ? "interval" : "timer"), linkname, n); }
+bool httpConnect(struct i_get *g) {
+puts("httpConnect not implemented");
+g->code = 403; // forbidden
+return false;
+}
+void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"); }
+void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
+void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -1111,7 +1082,7 @@ return s;
 return 0;
 	}
 
-void connectTagObject(Tag *t, JS::HandleObject o)
+void connectTagObject1(Tag *t, JS::HandleObject o)
 {
 char buf[16];
 sprintf(buf, "o%d", t->gsn);
@@ -1126,7 +1097,7 @@ JS_DefineProperty(cxa, o, "eb$gsn", t->gsn,
 t->jslink = true;
 }
 
-void disconnectTagObject(Tag *t)
+void disconnectTagObject1(Tag *t)
 {
 char buf[16];
 sprintf(buf, "o%d", t->gsn);
@@ -1199,7 +1170,7 @@ static Tag *tagFromObject2(JS::HandleObject o, const char *tagname)
 		debugPrint(3, "cannot create tag node %s", tagname);
 		return 0;
 	}
-	connectTagObject(t, o);
+	connectTagObject1(t, o);
 // this node now has a js object, don't decorate it again.
 	t->step = 2;
 // and don't render it unless it is linked into the active tree.
@@ -1582,6 +1553,23 @@ args.rval().setBoolean(answer);
 return true;
 }
 
+static bool nat_winclose(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	i_puts(MSG_PageDone);
+// I should probably freeJavaContext and close down javascript,
+// but not sure I can do that while the js function is still running.
+args.rval().setUndefined();
+return true;
+}
+
+static bool nat_hasFocus(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setBoolean(foregroundWindow);
+return true;
+}
+
 static bool nat_newloc(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -1778,27 +1766,107 @@ args.rval().setUndefined();
   return true;
 }
 
+static bool nat_cssStart(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+JS::RootedObject start(cx);
+JS_ValueToObject(cx, args[0], &start);
+// cssDocLoad is a lot of code, and it may well call get_property_string,
+// which calls stringize, so just to be safe, I'll copy it.
+char *s = cloneString(stringize(args[1]));
+bool r = args[2].toBoolean();
+cssDocLoad(start, s, r);
+nzFree(s);
+return true;
+}
+
+static bool nat_cssApply(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+JS::RootedObject top(cx);
+JS_ValueToObject(cx, args[0], &top);
+JS::RootedObject node(cx);
+JS_ValueToObject(cx, args[1], &node);
+JS::RootedObject dest(cx);
+JS_ValueToObject(cx, args[2], &dest);
+cssApply(top, node, dest);
+return true;
+}
+
+static bool nat_cssText(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+const char *rules = emptyString;
+if(argc >= 1)
+rules = stringize(args[0]);
+cssText(thisobj, rules);
+return true;
+}
+
 static bool nat_qsa(JSContext *cx, unsigned argc, JS::Value *vp)
 {
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
 char *selstring = NULL;
 JS::RootedObject start(cx);
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
 if(argc >= 1 && args[0].isString()) {
 JSString *s = args[0].toString();
 selstring = JS_EncodeString(cx, s);
 }
-if(argc >= 2 && args[1].isObject()) {
+if(argc >= 2 && args[1].isObject())
 JS_ValueToObject(cx, args[1], &start);
-} else {
+if(!start)
 start = JS_THIS_OBJECT(cx, vp);
-}
 jsInterruptCheck();
 //` call querySelectorAll in css.c
 free(selstring);
-// return empty array for now. I don't understand this, But I guess it works.
-// Is there an easier or safer way?
+// return empty array for now
 args.rval().setObject(*JS_NewArrayObject(cx, 0));
   return true;
+}
+
+static bool nat_qs(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+char *selstring = NULL;
+JS::RootedObject start(cx);
+if(argc >= 1 && args[0].isString()) {
+JSString *s = args[0].toString();
+selstring = JS_EncodeString(cx, s);
+}
+if(argc >= 2 && args[1].isObject())
+JS_ValueToObject(cx, args[1], &start);
+if(!start)
+start = JS_THIS_OBJECT(cx, vp);
+jsInterruptCheck();
+//` call querySelector in css.c
+free(selstring);
+// return undefined for now
+args.rval().setUndefined();
+return true;
+}
+
+static bool nat_qs0(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+char *selstring = NULL;
+bool rc = false;
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+if(argc >= 1 && args[0].isString()) {
+JSString *s = args[0].toString();
+selstring = JS_EncodeString(cx, s);
+}
+jsInterruptCheck();
+/*
+if(selstring && *selstring)
+	rc = querySelector0(selstring, root);
+*/
+free(selstring);
+args.rval().setBoolean(rc);
+return true;
 }
 
 static bool nat_unframe(JSContext *cx, unsigned argc, JS::Value *vp)
@@ -2159,12 +2227,170 @@ free(filecopy);
 	return true;
 }
 
+static bool nat_fetch(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	struct i_get g;
+	char *incoming_url = cloneString(stringize(args[0]));
+	char *incoming_method = cloneString(stringize(args[1]));
+	char *incoming_headers = cloneString(stringize(args[2]));
+	char *incoming_payload = cloneString(stringize(args[3]));
+	char *outgoing_xhrheaders = NULL;
+	char *outgoing_xhrbody = NULL;
+	char *a = NULL, methchar = '?';
+	bool rc, async = false;
+
+	debugPrint(5, "xhr 1");
+JS::RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	if (down_jsbg)
+async = get_property_bool_o(thisobj, "async");
+
+// asynchronous xhr before browse and after browse go down different paths.
+// So far I can't get the before browse path to work,
+// at least on nasa.gov, which has lots of xhrs in its onload code.
+// It pushes things over to timers, which work, but the page is rendered
+// shortly after browse time instead of at browse time, which is annoying.
+	if (!cw->browseMode)
+		async = false;
+
+	if (!incoming_url)
+		incoming_url = emptyString;
+	if (incoming_payload && *incoming_payload) {
+		if (incoming_method && stringEqualCI(incoming_method, "post"))
+			methchar = '\1';
+		if (asprintf(&a, "%s%c%s",
+			     incoming_url, methchar, incoming_payload) < 0)
+			i_printfExit(MSG_MemAllocError, 50);
+nzFree(incoming_url);
+		incoming_url = a;
+	}
+
+	debugPrint(3, "xhr send %s", incoming_url);
+
+// async and sync are completely different
+	if (async) {
+		const char *fpn = fakePropName();
+// I'm going to put the tag in cf, the current frame, and hope that's right,
+// hope that xhr runs in a script that runs in the current frame.
+		Tag *t =     newTag(cf, cw->browseMode ? "object" : "script");
+		t->deleted = true;	// do not render this tag
+		t->step = 3;
+		t->async = true;
+		t->inxhr = true;
+		t->f0 = cf;
+		connectTagObject1(t, thisobj);
+// This routine will return, and javascript might stop altogether; do we need
+// to protect this object from garbage collection?
+set_property_object_o(global, fpn, thisobj);
+set_property_string_o(thisobj, "backlink", fpn);
+
+t->href = incoming_url;
+// overloading the innerHTML field
+		t->innerHTML = incoming_headers;
+nzFree(incoming_payload);
+nzFree(incoming_method);
+/* WARNING: thread stuff not yet implemented.
+		if (cw->browseMode)
+			scriptSetsTimeout(t);
+		pthread_create(&t->loadthread, NULL, httpConnectBack3,
+			       (void *)t);
+*/
+args.rval().setBoolean(async);
+return true;
+}
+
+// no async stuff, do the xhr now
+	memset(&g, 0, sizeof(g));
+	g.thisfile = cf->fileName;
+	g.uriEncoded = true;
+	g.url = incoming_url;
+	g.custom_h = incoming_headers;
+	g.headers_p = &outgoing_xhrheaders;
+	rc = httpConnect(&g);
+	outgoing_xhrbody = g.buffer;
+jsInterruptCheck();
+	if (outgoing_xhrheaders == NULL)
+		outgoing_xhrheaders = emptyString;
+	if (outgoing_xhrbody == NULL)
+		outgoing_xhrbody = emptyString;
+asprintf(&a, "%d\r\n%d\r\n%s%s",
+rc, g.code, outgoing_xhrheaders, outgoing_xhrbody);
+	nzFree(outgoing_xhrheaders);
+	nzFree(outgoing_xhrbody);
+nzFree(incoming_url);
+nzFree(incoming_method);
+nzFree(incoming_headers);
+nzFree(incoming_payload);
+
+	debugPrint(5, "xhr 2");
+JS::RootedString m(cx, JS_NewStringCopyZ(cx, a));
+args.rval().setString(m);
+nzFree(a);
+return true;
+}
+
+static Frame *thisFrame(JS::HandleObject thisobj)
+{
+int my_sn = get_property_number_o(thisobj, "eb$ctx");
+	Frame *f;
+	for (f = &(cw->f0); f; f = f->next)
+if(f->gsn == my_sn)
+break;
+	return f;
+}
+
+/* start a document.write */
+void dwStart(void)
+{
+	if (cf->dw)
+		return;
+	cf->dw = initString(&cf->dw_l);
+	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
+}				/* dwStart */
+
+static void dwrite(JSContext *cx, unsigned argc, JS::Value *vp, bool newline)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+args.rval().setUndefined();
+        JS::RootedObject thisobj(cxa, JS_THIS_OBJECT(cxa, vp));
+int a_l;
+char *a = initString(&a_l);
+for(int i=0; i<argc; ++i)
+stringAndString(&a, &a_l, stringize(args[i]));
+	Frame *f, *save_cf = cf;
+	f = thisFrame(thisobj);
+	if (!f)
+		debugPrint(3,    "no frame found for document.write, using the default");
+	else {
+		if (f != cf)
+			debugPrint(3, "document.write on a different frame");
+		cf = f;
+	}
+	dwStart();
+	stringAndString(&cf->dw, &cf->dw_l, a);
+	if (newline)
+		stringAndChar(&cf->dw, &cf->dw_l, '\n');
+	cf = save_cf;
+}
+
+static bool nat_write(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+dwrite(cx, argc, vp, false);
+  return true;
+}
+
+static bool nat_writeln(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+dwrite(cx, argc, vp, true);
+  return true;
+}
+
 static JSFunctionSpec nativeMethodsWindow[] = {
-  JS_FN("letterInc", nat_letterInc, 1, 0),
-  JS_FN("letterDec", nat_letterDec, 1, 0),
   JS_FN("eb$puts", nat_puts, 1, 0),
   JS_FN("prompt", nat_prompt, 1, 0),
   JS_FN("confirm", nat_confirm, 1, 0),
+  JS_FN("close", nat_winclose, 0, 0),
   JS_FN("eb$newLocation", nat_newloc, 1, 0),
   JS_FN("eb$getcook", nat_getcook, 0, 0),
   JS_FN("eb$setcook", nat_setcook, 1, 0),
@@ -2179,23 +2405,29 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("setInterval", nat_interval, 2, 0),
   JS_FN("clearTimeout", nat_cleartimer, 1, 0),
   JS_FN("clearInterval", nat_cleartimer, 1, 0),
-  JS_FN("querySelectorAll", nat_qsa, 1, 0),
-  JS_FN("querySelector", nat_stub, 1, 0),
-  JS_FN("querySelector0", nat_stub, 1, 0),
-  JS_FN("eb$cssText", nat_stub, 1, 0),
+  JS_FN("eb$cssDocLoad", nat_cssStart, 3, 0),
+  JS_FN("eb$cssApply", nat_cssApply, 3, 0),
+  JS_FN("eb$cssText", nat_cssText, 1, 0),
+  JS_FN("querySelectorAll", nat_qsa, 2, 0),
+  JS_FN("querySelector", nat_qs, 2, 0),
+  JS_FN("querySelector0", nat_qs0, 1, 0),
   JS_FN("my$win", nat_mywin, 0, 0),
   JS_FN("my$doc", nat_mydoc, 0, 0),
   JS_FN("eb$logElement", nat_logElement, 2, 0),
   JS_FN("eb$getter_cd", getter_cd, 0, 0),
   JS_FN("eb$getter_cw", getter_cw, 1, 0),
+  JS_FN("eb$fetchHTTP", nat_fetch, 4, 0),
   JS_FS_END
 };
 
 static JSFunctionSpec nativeMethodsDocument[] = {
+  JS_FN("hasFocus", nat_hasFocus, 0, 0),
   JS_FN("eb$apch1", nat_apch1, 1, 0),
   JS_FN("eb$apch2", nat_apch2, 1, 0),
   JS_FN("eb$insbf", nat_insbf, 1, 0),
   JS_FN("removeChild", nat_removeChild, 1, 0),
+  JS_FN("write", nat_write, 0, 0),
+  JS_FN("writeln", nat_writeln, 0, 0),
   JS_FS_END
 };
 
@@ -2248,8 +2480,8 @@ if(!JS_DefineProperty(cxa, global, "document", objval,
 return false;
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 
-set_property_number_o(global, "eb$ctx", sn);
 set_property_number_o(docroot, "eb$seqno", 0);
+set_property_number_o(docroot, "eb$ctx", sn);
 // Sequence is to set cf->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
@@ -2408,18 +2640,6 @@ JS_ClearPendingException(cxa);
 }
 
 // This assumes you are in the compartment where you want to exec the file
-static void execFile(const char *filename, bool stop)
-{
-        JS::CompileOptions opts(cxa);
-        opts.setFileAndLine(filename, 1);
-JS::RootedValue v(cxa);
-        bool ok = JS::Evaluate(cxa, opts, filename, &v);
-if(!ok) {
-ReportJSException();
-if(stop) exit(2);
-}
-}
-
 static void execScript(const char *script)
 {
         JS::CompileOptions opts(cxa);
@@ -2483,7 +2703,7 @@ objval = JS::ObjectValue(*docroot);
 JS_DefineProperty(cxa, *mw0, "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
-//execFile("master.js", true);
+// Do we need anything in the master window, besides our third party debugging tools?
 run_script_o(thirdJS, "third.js", 1);
 	}
 
@@ -2514,7 +2734,7 @@ exit(3);
 JS_ValueToObject(cxa, v, &co);
 }
         JSAutoCompartment ac(cxa, co);
-execScript("letterInc('gdkkn')+letterDec('!xpsme') + ', it is '+new Date()");
+execScript("'hello world, it is '+new Date()");
 }
 
 if(iaflag) {
@@ -2550,9 +2770,16 @@ JS_ValueToObject(cxa, v, &co);
 	}
         JSAutoCompartment ac(cxa, co);
 if(line[0] == '<') {
-execFile(line+1, false);
+char *data;
+int datalen;
+if(fileIntoMemory(line+1, &data, &datalen)) {
+run_script_o(data, line+1, 1);
+nzFree(data);
+puts("ok");
 } else {
-//execScript(line);
+printf("cannot open %s\n", line+1);
+}
+} else {
 const char *res = run_script_o(line, "noname", 0);
 if(res) puts(res);
 }
