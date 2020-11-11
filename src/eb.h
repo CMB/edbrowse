@@ -395,6 +395,8 @@ struct ebFrame {
 	bool render1b;
 	bool baseset; // <base> tag has been seen
 	bool uriEncoded; // filename is url encoded
+	bool jslink; // linke to javascript
+	short jtmin;
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */
 // document.writes go under the body.
@@ -407,7 +409,6 @@ struct ebFrame {
 	jsobjtype docobj;	/* window.document */
 	const struct MIMETYPE *mt;
 	void *cssmaster;
-	short jtmin;
 };
 
 typedef struct ebFrame Frame;
@@ -537,7 +538,8 @@ struct htmlTag {
 	struct ebFrame *f1; /* subordinate frame if this is a <frame> tag */
 	jsobjtype jv;		/* corresponding javascript variable */
 	jsobjtype style; // style object
-	int seqno;
+	int ssn; // style sequence number for the object
+	int seqno; // tag sequence number in this window
 	int gsn; // global sequence number, for rooting
 	char *js_file;
 	int js_ln;			/* line number of javascript */

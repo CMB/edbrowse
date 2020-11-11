@@ -126,6 +126,7 @@ void createJavaContext(void)
 	createJavaContext_0(cf);
 	if (cf->cx) {
 		debugPrint(5, "< ok");
+		cf->jslink = true;
 		setupJavaDom();
 	} else {
 		debugPrint(5, "< error");

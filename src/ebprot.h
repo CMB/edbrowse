@@ -30,6 +30,7 @@ void cxSwitch(int cx, bool interactive) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) ;
 void delText(int start, int end) ;
 bool readFileArgv(const char *filename, int fromframe);
+Tag *line2frame(int ln);
 bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len) ;
 bool unfoldBuffer(int cx, bool cr, char **data, int *len) ;
 bool runCommand(const char *line) ;
@@ -205,6 +206,8 @@ void killTag(Tag *t);
 void html_from_setter( jsobjtype innerParent, const char *h);
 
 /* sourcefile=http.c */
+void eb_curl_global_init(void);
+void eb_curl_global_cleanup(void);
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g) ;
 time_t parseHeaderDate(const char *date) ;
 bool parseRefresh(char *ref, int *delay_p) ;
@@ -219,13 +222,8 @@ int prompt_and_read(int prompt, char *buffer, int buffer_length, int error_messa
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, struct i_get *g);
 int bg_jobs(bool iponly);
 CURLcode setCurlURL(CURL * h, const char *url);
-bool frameExpand(bool expand, int ln1, int ln2);
-int frameExpandLine(int ln, jsobjtype fo);
-Tag *line2frame(int ln);
-bool reexpandFrame(void);
 
 /* sourcefile=main.c */
-void eb_curl_global_init(void);
 void ebClose(int n);
 void setDataSource(char *v);
 bool javaOK(const char *url);
@@ -421,6 +419,8 @@ void cssText(jsobjtype node, const char *rulestring);
 void connectTagObject(Tag *t, jsobjtype p);
 void disconnectTagObject(Tag *t);
 int js_main(void);
+bool frameExpand(bool expand, int ln1, int ln2);
+bool reexpandFrame(void);
 // the native versions of the api functions in ebjs.c
 void createJavaContext_0(Frame *f);
 void freeJavaContext_0(jsobjtype cx);

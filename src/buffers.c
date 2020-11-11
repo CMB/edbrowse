@@ -4147,6 +4147,38 @@ static char *lessFile(const char *line)
 	return line2;
 }
 
+// Find the frame for the current line.
+// jdb wants to debug in the frame of the current line.
+// Also used when frames are expanded and contracted.
+Tag *line2frame(int ln)
+{
+	const char *line;
+	int n, opentag = 0, ln1 = ln;
+	const char *s;
+	for (; ln; --ln) {
+		line = (char *)fetchLine(ln, -1);
+		if (!opentag && ln < ln1
+		    && (s = stringInBufLine(line, "*--`\n"))) {
+			for (--s; s > line && *s != InternalCodeChar; --s) ;
+			if (*s == InternalCodeChar)
+				opentag = atoi(s + 1);
+			continue;
+		}
+		s = stringInBufLine(line, "*`--\n");
+		if (!s)
+			continue;
+		for (--s; s > line && *s != InternalCodeChar; --s) ;
+		if (*s != InternalCodeChar)
+			continue;
+		n = atoi(s + 1);
+		if (!opentag)
+			return tagList[n];
+		if (n == opentag)
+			opentag = 0;
+	}
+	return 0;
+}
+
 static int twoLetter(const char *line, const char **runThis)
 {
 	static char shortline[60];

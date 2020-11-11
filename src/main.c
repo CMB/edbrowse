@@ -39,7 +39,6 @@ static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
 time_t intStart;
-bool curlActive;
 bool ismc, isimap, passMail;
 char whichproc = 'e';		// edbrowse
 bool inInput, listNA;
@@ -54,7 +53,6 @@ int context = 1;
 pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;
 int maxSession;
-static pthread_mutex_t share_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*********************************************************************
 Redirect the incoming mail into a file, based on the subject or the sender.
@@ -174,93 +172,6 @@ void setDataSource(char *v)
 	*v++ = 0;
 	dbpw = v;
 }				/* setDataSource */
-
-/*
- * Libcurl allows some really fine-grained access to data.  We could
- * have multiple mutexes if we want, and that might lead to less
- * blocking.  For now, we just use one mutex.
- */
-
-static void lock_share(CURL * handle, curl_lock_data data,
-		       curl_lock_access access, void *userptr)
-{
-/* TODO error handling. */
-	pthread_mutex_lock(&share_mutex);
-}				/* lock_share */
-
-static void unlock_share(CURL * handle, curl_lock_data data, void *userptr)
-{
-	pthread_mutex_unlock(&share_mutex);
-}				/* unlock_share */
-
-void eb_curl_global_init(void)
-{
-	const unsigned int major = 7;
-	const unsigned int minor = 29;
-	const unsigned int patch = 0;
-	const unsigned int least_acceptable_version =
-	    (major << 16) | (minor << 8) | patch;
-	curl_version_info_data *version_data = NULL;
-	CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
-	if (curl_init_status != 0)
-		goto libcurl_init_fail;
-	version_data = curl_version_info(CURLVERSION_NOW);
-	if (version_data->version_num < least_acceptable_version)
-		i_printfExit(MSG_CurlVersion, major, minor, patch);
-
-// Initialize the global handle, to manage the cookie space.
-	global_share_handle = curl_share_init();
-	if (global_share_handle == NULL)
-		goto libcurl_init_fail;
-
-	curl_share_setopt(global_share_handle, CURLSHOPT_LOCKFUNC, lock_share);
-	curl_share_setopt(global_share_handle, CURLSHOPT_UNLOCKFUNC,
-			  unlock_share);
-	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE,
-			  CURL_LOCK_DATA_COOKIE);
-	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE,
-			  CURL_LOCK_DATA_DNS);
-	curl_share_setopt(global_share_handle, CURLSHOPT_SHARE,
-			  CURL_LOCK_DATA_SSL_SESSION);
-
-	global_http_handle = curl_easy_init();
-	if (global_http_handle == NULL)
-		goto libcurl_init_fail;
-	if (cookieFile && !ismc) {
-		curl_init_status =
-		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEFILE,
-				     "");
-		if (curl_init_status != CURLE_OK) {
-			goto libcurl_init_fail;
-		}
-		curl_init_status =
-		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
-				     cookieFile);
-		if (curl_init_status != CURLE_OK)
-			goto libcurl_init_fail;
-	}
-	curl_init_status =
-	    curl_easy_setopt(global_http_handle, CURLOPT_ENCODING, "");
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
-
-	curl_init_status =
-	    curl_easy_setopt(global_http_handle, CURLOPT_SHARE,
-			     global_share_handle);
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
-	curlActive = true;
-	return;
-
-libcurl_init_fail:
-	i_printfExit(MSG_LibcurlNoInit);
-}				/* eb_curl_global_init */
-
-static void eb_curl_global_cleanup(void)
-{
-	curl_easy_cleanup(global_http_handle);
-	curl_global_cleanup();
-}				/* eb_curl_global_cleanup */
 
 void ebClose(int n)
 {

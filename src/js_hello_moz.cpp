@@ -33,47 +33,79 @@ struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
 int context = 0;
 char whichproc = 'e';
-bool pluginsOn = true;
-bool down_jsbg = false;
+bool allowJS = true;
+bool sendReferrer, allowRedirection, curlAuthNegotiate, ftpActive;
+bool htmlGenerated;
+uchar browseLocal;
+char *changeFileName;
+char *sslCerts;
+char *configFile, *addressFile, *cookieFile;
+char *recycleBin, *sigFile, *sigFileEnd;
+char *ebUserDir;
+char *cacheDir;
+int cacheSize, cacheCount;
+int fileSize;
+char *newlocation;
+Frame *newloc_f;
 const char *jsSourceFile;
 int jsLineno;
+int gfsn;
 struct MACCOUNT accounts[MAXACCOUNT];
-int maxAccount;
+int localAccount, maxAccount;
 struct MIMETYPE mimetypes[MAXMIME];
 int maxMime;
 const char *version = "3.7.7";
 char *currentAgent;
 volatile bool intFlag;
-bool sqlPresent = false;
-struct ebSession sessionList[10];
+bool sqlPresent;
+bool ismc, isimap, passMail;
+char *mailDir, *mailUnread, *mailStash, *mailReply;
+struct ebSession sessionList[10], *cs;
+int webTimeout = 30, mailTimeout = 30;
 Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
 void domSubmitsForm(JSObject *form, bool reset) { }
 void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
 void htmlInputHelper(Tag *t) { }
 void formControl(Tag *t, bool namecheck) { }
 Tag *findOpenTag(Tag *t, int action) { return NULL; }
-void sendCookies(char **s, int *l, const char *url, bool issecure)  { }
-bool receiveCookie(const char *url, const char *str)  { return true; }
 void writeShortCache(void) { }
 bool cxQuit(int cx, int action)  { return false; }
+bool cxCompare(int cx)  { return false; }
+bool cxActive(int cx) { return false; }
 void cxSwitch(int cx, bool interactive)  { }
 bool browseCurrentBuffer(void) { return false; }
 void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash = false; }
 void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
-int frameExpandLine(int ln, jsobjtype fo) { puts("expand frame"); return 0; }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
 void domSetsTimeout(int n, const char *linkname, jsobjtype to, bool isInterval) { printf("%s link to %s, %d ms\n", (isInterval ? "interval" : "timer"), linkname, n); }
-bool httpConnect(struct i_get *g) {
-puts("httpConnect not implemented");
-g->code = 403; // forbidden
-return false;
-}
 void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"); }
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
 void underKill(Tag *t) { }
 void delTimers(Frame *f) { }
 void cssFree(Frame *f) { }
+Tag *line2frame(int ln) { return 0; }
+void rebuildSelectors(void) { puts("rebuild selectors"); }
+void runScriptsPending(bool something) { puts("run scripts pending"); }
+void runOnload(void) { puts("run onload"); }
+void set_basehref(const char *b) { printf("base %s\n", b); }
+void decorate(int start) { puts("decorate"); }
+void prerender(int start) { puts("prerender"); }
+void htmlNodesIntoTree(int start, Tag *attach) { puts("tags into tree"); }
+void html2nodes(const char *htmltext, bool startpage) { puts("htnl 2 nodes"); }
+bool javaOK(const char *url) { return true; }
+bool readFileArgv(const char *filename, int fromframe) { printf("reading %s %d\n", filename, fromframe); return true; }
+pst fetchLine(int n, int show)  { return 0; }
+void scriptSetsTimeout( Tag *t) { }
+bool mustVerifyHost(const char *url) { return false; }
+const char *findAgentForURL(const char *url) { return 0; }
+const char eol[] = "\r\n";
+const char *findProxyForURL(const char *url) { return 0; }
+bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) { return true; }
+void delText(int start, int end)  { }
+bool unfoldBuffer(int cx, bool cr, char **data, int *len)  { return true; }
+const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
+void runningError(int msg, ...) { }
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -469,6 +501,9 @@ int esn = get_property_number_o(thisobj, "eb$seqno");
 	return true;
 }
 
+static int frameExpandLine(int ln, JS::HandleObject fo);
+static int frameContractLine(int lineNumber);
+
 static void forceFrameExpand(JS::HandleObject thisobj)
 {
 	Frame *save_cf = cf;
@@ -544,9 +579,11 @@ args.rval().set(newv);
 return true;
 }
 
-JSObject *instantiate_array_o(JS::HandleObject parent, const char *name); // temporary, should be in ebprot.h
-int run_function_onearg_o(JS::HandleObject parent, const char *name, JS::HandleObject a); // also temporary
-void freeJSContext(Frame *f); // also temporary
+// These are temporary declarations, as they should live in ebprot.h
+JSObject *instantiate_array_o(JS::HandleObject parent, const char *name);
+int run_function_onearg_o(JS::HandleObject parent, const char *name, JS::HandleObject a);
+bool createJSContext(Frame *f);
+void freeJSContext(Frame *f);
 
 static bool setter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 {
@@ -929,6 +966,32 @@ if(!ok) {
 }
 
 /*********************************************************************
+The _t functions take a tag and bounce through the object
+linked to that tag. These correspond to the _o functions but we may not
+need all of them.
+Like the _o functions, the _t functions assume we are in some compartment.
+If we're not creating or instantiating a class, I don't think it matters
+which compartment, as long as we are in some compartment.
+*********************************************************************/
+
+static JSObject *tagToObject(const Tag *t);
+
+char *get_property_url_t(const Tag *t, bool action)
+{
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return 0;
+return get_property_url_o(obj, action);
+}
+
+void delete_property_t(const Tag *t, const char *name)
+{
+JS::RootedObject obj(cxa, tagToObject(t));
+if(obj)
+delete_property_o(obj, name);
+}
+
+/*********************************************************************
 Node has encountered an error, perhaps in its handler.
 Find the location of this node within the dom tree.
 As you climb up the tree, check for parentNode = null.
@@ -1034,9 +1097,14 @@ JS_CallFunctionName(cxa, g, "eb$stopexec", JS::HandleValueArray::empty(), &v);
 
 // Returns the result of the script as a string, from stringize(), not allocated,
 // copy it if you want to keep it any longer then the next call to stringize.
-const char *run_script_o(const char *s, const char *filename, int lineno)
+const char *run_script(const char *s, const char *filename, int lineno)
 {
 	char *s2 = 0;
+
+if(!allowJS || !cf->jslink)
+return 0;
+if(!s || !*s)
+return 0;
 
 // special debugging code to replace bp@ and trace@ with expanded macros.
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
@@ -1085,6 +1153,52 @@ return s;
 return 0;
 	}
 
+JSObject *create_event_o(JS::HandleObject parent, const char *evname)
+{
+JS::RootedObject e(cxa);
+	const char *evname1 = evname;
+	if (evname[0] == 'o' && evname[1] == 'n')
+		evname1 += 2;
+// gc$event protects from garbage collection
+	e = instantiate_o(parent, "gc$event", "Event");
+	set_property_string_o(e, "type", evname1);
+	return e;
+}
+
+void unlink_event_o(JS::HandleObject parent)
+{
+	delete_property_o(parent, "gc$event");
+}
+
+#undef handlerPresent
+#define handlerPresent(obj, name) (typeof_property_o(obj, name) == EJ_PROP_FUNCTION)
+
+bool run_event_bool_o(JS::HandleObject obj, const char *pname, const char *evname)
+{
+	int rc;
+	JS::RootedObject eo(cxa);	// created event object
+	if (!handlerPresent(obj, evname))
+		return true;
+	if (debugLevel >= 3) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+		bool evdebug = get_property_bool_o(g, "eventDebug");
+		if (evdebug) {
+			int seqno = get_property_number_o(obj, "eb$seqno");
+			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
+		}
+	}
+	eo = create_event_o(obj, evname);
+	set_property_object_o(eo, "target", obj);
+	set_property_object_o(eo, "currentTarget", obj);
+	set_property_number_o(eo, "eventPhase", 2);
+	rc = run_function_onearg_o(obj, evname, eo);
+	unlink_event_o(obj);
+// no return or some other return is treated as true in this case
+	if (rc < 0)
+		rc = true;
+	return rc;
+}
+
 void connectTagObject1(Tag *t, JS::HandleObject o)
 {
 char buf[16];
@@ -1110,6 +1224,7 @@ t->jslink = false;
 
 // I don't have any reverse pointers, so I'm just going to scan the list.
 // This doesn't come up all that often.
+// I assume we are in a compartment.
 static Tag *tagFromObject(JS::HandleObject o)
 {
 	Tag *t;
@@ -1134,6 +1249,8 @@ if(t->gsn == gsn)
 // inverse of the above
 static JSObject *tagToObject(const Tag *t)
 {
+if(!t->jslink)
+return 0;
 char buf[16];
 sprintf(buf, "o%d", t->gsn);
 JS::RootedValue v(cxa);
@@ -1147,19 +1264,34 @@ return o;
 return 0;
 }
 
-static JSObject *frameToObject(int sn)
+/*********************************************************************
+This function is usually called to set a compartment for a frame.
+Unlike most functions in this file, I am not assuming a preexisting compartment.
+Therefore, I link to the root window before doing anything.
+And I always return some compartment, because any compartment
+is better than none.
+*********************************************************************/
+
+static JSObject *frameToCompartment(const Frame *f)
+{
+if(!f->jslink)
+goto fail;
 {
 char buf[16];
-sprintf(buf, "g%d", sn);
+sprintf(buf, "g%d", f->gsn);
 JS::RootedValue v(cxa);
 JS::RootedObject o(cxa);
+	        JSAutoCompartment ac(cxa, *rw0);
 if(JS_GetProperty(cxa, *rw0, buf, &v) &&
 v.isObject()) {
 JS_ValueToObject(cxa, v, &o);
 // cast from rooted object to JSObject *
 return o;
 }
-return 0;
+}
+fail:
+debugPrint(1, "Warning: no compartment for frame %d", f->gsn);
+return *rw0;
 }
 
 // Create a new tag for this pointer, only called from document.createElement().
@@ -1872,6 +2004,447 @@ args.rval().setBoolean(rc);
 return true;
 }
 
+/*********************************************************************
+I'm putting the frame expand stuff here cause there really isn't a good place
+to put it, and it sort of goes with the unframe native methods below.
+Plus forceFrameExpand() when you access contentDocument or contentWindow
+through the getters above. So I think it belongs here.
+frameExpand(expand, start, end)
+Pass a range of lines; you can expand all the frames in one go.
+Return false if there is a problem fetching a web page,
+or if none of the lines are frames.
+If first argument expand is false then we are contracting.
+Call either frameExpandLine or frameContractLine on each line in the range.
+frameExpandLine takes a line number or an object, not both.
+One or the other will be 0.
+If a line number, it comes from a user command, you asked to expand the frame.
+If the object is not null, it is from a getter,
+javascript is trying to access objects within that frame,
+and now we need to expand it.
+We're in a compartment, but who knows which one.
+If you're expanding all the frames on the page, and some are in the top frame
+and some are in lower frames, then the compartment will not be right for all of them.
+If from a getter, the compartment is probably for the containing frame,
+and will be wrong when you expand this frame.
+For reading properties it doesn't matter, but when you expand
+the frame, fetch the web page, create the dom, convert html into objects,
+all that, the compartment MUST correspond to the global object of that frame.
+*********************************************************************/
+
+bool frameExpand(bool expand, int ln1, int ln2)
+{
+	int ln;			/* line number */
+	int problem = 0, p;
+	bool something_worked = false;
+
+// make sure we're in a compartment
+	        JSAutoCompartment ac(cxa, *rw0);
+
+	for (ln = ln1; ln <= ln2; ++ln) {
+		if (expand)
+			p = frameExpandLine(ln, NULL);
+		else
+			p = frameContractLine(ln);
+		if (p > problem)
+			problem = p;
+		if (p == 0)
+			something_worked = true;
+	}
+
+	if (something_worked && problem < 3)
+		problem = 0;
+	if (problem == 1)
+		setError(expand ? MSG_NoFrame1 : MSG_NoFrame2);
+	if (problem == 2)
+		setError(MSG_FrameNoURL);
+	return (problem == 0);
+}				/* frameExpand */
+
+/* Problems: 0, frame expanded successfully.
+ 1 line is not a frame.
+ 2 frame doesn't have a valid url.
+ 3 Problem fetching the rul or rendering the page.  */
+
+// We're in some compartment, the root compartment if t is nonzero
+static int frameExpandLine(int ln, JS::HandleObject fo)
+{
+	bool fromget = !ln;
+	pst line;
+	int tagno, start;
+	const char *s, *jssrc = 0;
+	char *a;
+	Tag *t;
+	Frame *save_cf, *new_cf, *last_f;
+	uchar save_local;
+	Tag *cdt;	// contentDocument tag
+	bool jslink; // frame tag is linked to objects
+	JSObject *comp; // compartment
+
+	if (fromget) {
+		t = tagFromObject(fo);
+		if (!t)
+			return 1;
+		jslink = true;
+	} else {
+		line = fetchLine(ln, -1);
+		s = stringInBufLine((char *)line, "Frame ");
+		if (!s)
+			return 1;
+		if ((s = strchr(s, InternalCodeChar)) == NULL)
+			return 2;
+		tagno = strtol(s + 1, (char **)&s, 10);
+		if (tagno < 0 || tagno >= cw->numTags || *s != '{')
+			return 2;
+		t = tagList[tagno];
+		jslink = t->jslink;
+	}
+
+	if (t->action != TAGACT_FRAME)
+		return 1;
+
+// the easy case is if it's already been expanded before, we just unhide it.
+// Remember that f1 is the subordinate frame, if t is a <frame> tag.
+	if (t->f1) {
+// If js is accessing objects in this frame, that doesn't mean we unhide it.
+		if (!fromget)
+			t->contracted = false;
+		return 0;
+	}
+
+// Check with js first, in case it changed.
+	if ((a = get_property_url_t(t, false)) && *a) {
+		nzFree(t->href);
+		t->href = a;
+	}
+	s = t->href;
+
+// javascript in the src, what is this for?
+	if (s && !strncmp(s, "javascript:", 11)) {
+		jssrc = s;
+		s = 0;
+	}
+
+	if (!s) {
+// No source. If this is your request then return an error.
+// But if we're dipping into the objects then it needs to expand
+// into a separate window, a separate js space, with an empty body.
+		if (!fromget && !jssrc)
+			return 2;
+// After expansion we need to be able to expand it,
+// because there's something there, well maybe.
+		t->href = cloneString("#");
+// jssrc is the old href and now we are responsible for it
+	}
+
+	save_cf = cf = t->f0;
+/* have to push a new frame before we read the web page */
+	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
+	last_f->next = cf = (Frame *)allocZeroMem(sizeof(Frame));
+	cf->owner = cw;
+	cf->frametag = t;
+	cf->gsn = ++gfsn;
+	debugPrint(2, "fetch frame %s",
+		   (s ? s : (jssrc ? "javascript" : "empty")));
+
+	if (s) {
+		bool rc = readFileArgv(s, (fromget ? 2 : 1));
+		if (!rc) {
+/* serverData was never set, or was freed do to some other error. */
+/* We just need to pop the frame and return. */
+			fileSize = -1;	/* don't print 0 */
+			nzFree(cf->fileName);
+			free(cf);
+			last_f->next = 0;
+			cf = save_cf;
+			return 3;
+		}
+
+       /*********************************************************************
+readFile could return success and yet serverData is null.
+This happens if httpConnect did something other than fetching data,
+like playing a stream. Does that happen, even in a frame?
+It can, if the frame is a youtube video, which is not unusual at all.
+So check for serverData null here. Once again we pop the frame.
+*********************************************************************/
+
+		if (serverData == NULL) {
+			nzFree(cf->fileName);
+			free(cf);
+			last_f->next = 0;
+			cf = save_cf;
+			fileSize = -1;
+			return 0;
+		}
+	} else {
+		serverData = cloneString("<body></body>");
+		serverDataLen = strlen(serverData);
+	}
+
+	new_cf = cf;
+	if (changeFileName) {
+		nzFree(cf->fileName);
+		cf->fileName = changeFileName;
+		cf->uriEncoded = true;
+		changeFileName = 0;
+	} else {
+		cf->fileName = cloneString(s);
+	}
+
+/* don't print the size of what we just fetched */
+	fileSize = -1;
+
+/* If we got some data it has to be html.
+ * I should check for that, something like htmlTest(),
+ * but I'm too lazy to do that right now, so I'll just assume it's good.
+ * Also, we have verified content-type = text/html, so that's pretty good. */
+
+	cf->hbase = cloneString(cf->fileName);
+	save_local = browseLocal;
+	browseLocal = !isURL(cf->fileName);
+	prepareForBrowse(serverData, serverDataLen);
+	if (javaOK(cf->fileName))
+		createJSContext(cf);
+	nzFree(newlocation);	/* should already be 0 */
+	newlocation = 0;
+
+	start = cw->numTags;
+/* call the tidy parser to build the html nodes */
+	html2nodes(serverData, true);
+	nzFree(serverData);	/* don't need it any more */
+	serverData = 0;
+	htmlGenerated = false;
+// in the edbrowse world, the only child of the frame tag
+// is the contentDocument tag.
+	cdt = t->firstchild;
+// the placeholder document node will soon be orphaned.
+	delete_property_t(cdt, "parentNode");
+	htmlNodesIntoTree(start, cdt);
+	cdt->step = 0;
+	prerender(0);
+
+/*********************************************************************
+At this point cdt->step is 1; the html tree is built, but not decorated.
+I already put the object on cdt manually. Besides, we don't want to set up
+the fake cdt object and the getter that auto-expands the frame,
+we did that before and now it's being expanded. So bump step up to 2.
+*********************************************************************/
+	cdt->step = 2;
+
+JS::RootedObject cwo(cxa); // the content window object
+JS::RootedObject cdo(cxa); // the content document object
+JS::RootedObject prev(cxa); // the previous frame
+JS::RootedObject fto(cxa); // the frame tag object
+
+	if (cf->jslink) {
+// global for the current frame becomes the content window object
+cwo = frameToCompartment(cf);
+JSAutoCompartment ac(cxa, cwo);
+// and for the previous frame
+prev = frameToCompartment(save_cf);
+		decorate(0);
+		set_basehref(cf->hbase);
+// parent points to the containing frame.
+		set_property_object_o(cwo, "parent", prev);
+// And top points to the top.
+JS::RootedObject top(cxa, get_property_object_o(prev, "top"));
+set_property_object_o(cwo, "top", top);
+// frame tag object
+fto = tagToObject(t);
+		set_property_object_o(cwo, "frameElement", fto);
+		run_function_bool_o(cwo, "eb$qs$start");
+		if(jssrc)
+			run_script(jssrc, "frame.src", 1);
+		runScriptsPending(true);
+		runOnload();
+		runScriptsPending(false);
+// get current document object from current window object
+cdo = get_property_object_o(cwo, "document");
+		set_property_string_o(cdo, "readyState", "complete");
+		run_event_bool_o(cdo, "document", "onreadystatechange");
+		runScriptsPending(false);
+		rebuildSelectors();
+	}
+	cnzFree(jssrc);
+
+	if (cf->fileName) {
+		int j = strlen(cf->fileName);
+		cf->fileName = (char *)reallocMem(cf->fileName, j + 8);
+		strcat(cf->fileName, ".browse");
+	}
+
+	t->f1 = cf;
+	cf = save_cf;
+	browseLocal = save_local;
+	if (fromget)
+		t->contracted = true;
+	if (new_cf->jslink) {
+// Be in the compartment of the higher frame.
+JSAutoCompartment(cxa, prev);
+		disconnectTagObject1(cdt);
+		connectTagObject1(cdt, cdo);
+		cdt->style = 0;
+		cdt->ssn = 0;
+// Should I switch this tag into the new frame? I don't really know.
+		cdt->f0 = new_cf;
+		set_property_object_o(fto, "content$Window", cwo);
+		set_property_object_o(fto, "content$Document", cdo);
+JS::RootedObject cna(cxa);	// childNodes array
+		cna = get_property_object_o(fto, "childNodes");
+		set_array_element_object_o(cna, 0, cdo);
+		set_property_object_o(cdo, "parentNode", fto);
+// run the frame onload function if it is there.
+// I assume it should run in the higher frame.
+// Hope so cause that is the current compartment.
+		run_event_bool_o(fto, t->info->name, "onload");
+	}
+
+// success, frame is expanded
+	return 0;
+}
+
+// This is called when js runs window.location = new_url
+// which replaces the page but the page is in a frame.
+bool reexpandFrame(void)
+{
+	int j, start;
+	Tag *frametag;
+	Tag *cdt;	// contentDocument tag
+	uchar save_local;
+	bool rc;
+	JS::RootedObject save_top(cxa), save_parent(cxa), save_fe(cxa);
+
+	cf = newloc_f;
+	frametag = cf->frametag;
+	cdt = frametag->firstchild;
+// I think we can do this part in any compartment
+	JS::RootedObject g(cxa, frameToCompartment(cf));
+JS::RootedObject doc(cxa);
+	save_top = get_property_object_o(g, "top");
+	save_parent = get_property_object_o(g, "parent");
+	save_fe = get_property_object_o(g, "frameElement");
+
+// Cut away our tree nodes from the previous document, which are now inaccessible.
+	underKill(cdt);
+
+// the previous document node will soon be orphaned.
+	delete_property_t(cdt, "parentNode");
+	delTimers(cf);
+	freeJSContext(cf);
+	nzFree(cf->dw);
+	cf->dw = 0;
+	nzFree(cf->hbase);
+	cf->hbase = 0;
+	nzFree(cf->fileName);
+	cf->fileName = newlocation;
+	newlocation = 0;
+	cf->uriEncoded = false;
+	nzFree(cf->firstURL);
+	cf->firstURL = 0;
+	rc = readFileArgv(cf->fileName, 2);
+	if (!rc) {
+/* serverData was never set, or was freed do to some other error. */
+		fileSize = -1;	/* don't print 0 */
+		return false;
+	}
+
+	if (serverData == NULL) {
+/* frame replaced itself with a playable stream, what to do? */
+		fileSize = -1;
+		return true;
+	}
+
+	if (changeFileName) {
+		nzFree(cf->fileName);
+		cf->fileName = changeFileName;
+		cf->uriEncoded = true;
+		changeFileName = 0;
+	}
+
+	/* don't print the size of what we just fetched */
+	fileSize = -1;
+
+	cf->hbase = cloneString(cf->fileName);
+	save_local = browseLocal;
+	browseLocal = !isURL(cf->fileName);
+	prepareForBrowse(serverData, serverDataLen);
+	if (javaOK(cf->fileName))
+		createJSContext(cf);
+
+	start = cw->numTags;
+/* call the tidy parser to build the html nodes */
+	html2nodes(serverData, true);
+	nzFree(serverData);	/* don't need it any more */
+	serverData = 0;
+	htmlGenerated = false;
+	htmlNodesIntoTree(start, cdt);
+	cdt->step = 0;
+	prerender(0);
+	cdt->step = 2;
+
+	if (cf->jslink) {
+// we better be in the compartment of the new web page
+g = frameToCompartment(cf);
+JSAutoCompartment ac(cxa, g);
+		decorate(0);
+		set_basehref(cf->hbase);
+		set_property_object_o(g, "top", save_top);
+		set_property_object_o(g, "parent", save_parent);
+		set_property_object_o(g, "frameElement", save_fe);
+		run_function_bool_o(g, "eb$qs$start");
+		runScriptsPending(true);
+		runOnload();
+		runScriptsPending(false);
+doc = get_property_object_o(g, "document");
+		set_property_string_o(doc, "readyState", "complete");
+		run_event_bool_o(doc, "document", "onreadystatechange");
+		runScriptsPending(false);
+		rebuildSelectors();
+	}
+
+	j = strlen(cf->fileName);
+	cf->fileName = (char *)reallocMem(cf->fileName, j + 8);
+	strcat(cf->fileName, ".browse");
+	browseLocal = save_local;
+
+	if (cf->jslink) {
+// Remember, g is the new content window object,
+// and doc is the new content document object.
+		Frame *save_cf;
+		disconnectTagObject1(cdt);
+		connectTagObject1(cdt, doc);
+		cdt->style = 0;
+		cdt->ssn = 0;
+// it should already be set to cf, since this is a replacement
+		cdt->f0 = cf;
+JS::RootedObject cna(cxa);	// childNodes array
+// have to point contentDocument to the new document object,
+// but that requires a change of context.
+		save_cf = cf;
+		cf = frametag->f0;
+{
+JSAutoCompartment(cxa, frameToCompartment(cf));
+// save_fe is conveniently the object that goes with frametag
+		set_property_object_o(save_fe, "content$Window", g);
+		set_property_object_o(save_fe, "content$Document", doc);
+		cna = get_property_object_o(save_fe, "childNodes");
+		set_array_element_object_o(cna, 0, doc);
+		set_property_object_o(doc, "parentNode", save_fe);
+}
+		cf = save_cf;
+	}
+
+	return true;
+}
+
+static int frameContractLine(int ln)
+{
+	Tag *t = line2frame(ln);
+	if (!t)
+		return 1;
+	t->contracted = true;
+	return 0;
+}
+
 static bool remember_contracted;
 
 static bool nat_unframe(JSContext *cx, unsigned argc, JS::Value *vp)
@@ -2346,12 +2919,10 @@ t->href = incoming_url;
 		t->innerHTML = incoming_headers;
 nzFree(incoming_payload);
 nzFree(incoming_method);
-/* WARNING: thread stuff not yet implemented.
 		if (cw->browseMode)
 			scriptSetsTimeout(t);
 		pthread_create(&t->loadthread, NULL, httpConnectBack3,
 			       (void *)t);
-*/
 args.rval().setBoolean(async);
 return true;
 }
@@ -2491,8 +3062,9 @@ static void setup_window_2(void);
 
 // This is an edbrowse context, in a frame,
 // nothing like the Mozilla js context.
-bool createJSContext(int sn)
+bool createJSContext(Frame *f)
 {
+int sn = f->gsn;
 char buf[16];
 sprintf(buf, "g%d", sn);
 debugPrint(3, "create js context %d", sn);
@@ -2509,6 +3081,7 @@ JS::RootedValue objval(cxa); // object as value
 objval = JS::ObjectValue(*global);
 if(!JS_DefineProperty(cxa, *rw0, buf, objval, JSPROP_STD))
 return false;
+f->jslink = true;
 
 // Link back to the master window.
 objval = JS::ObjectValue(**mw0);
@@ -2585,7 +3158,7 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	extern const char startWindowJS[];
 
 // startwindow.js stored as an internal string
-run_script_o(startWindowJS, "startwindow.js", 1);
+run_script(startWindowJS, "startwindow.js", 1);
 
 	nav = get_property_object_o(g, "navigator");
 	if (!nav)
@@ -2645,7 +3218,7 @@ JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
 	set_property_string_o(doc, "URL", cf->fileName);
 	set_property_string_o(doc, "location", cf->fileName);
 	set_property_string_o(g, "location", cf->fileName);
-run_script_o(
+run_script(
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string_o(doc, "domain", getHostURL(cf->fileName));
@@ -2671,7 +3244,10 @@ JS_DeleteProperty(cxa, *rw0, buf);
 void freeJSContext(Frame *f)
 {
 	debugPrint(5, "> free frame %d", f->gsn);
-	unlinkJSContext(f->gsn);
+	if(f->jslink) {
+		unlinkJSContext(f->gsn);
+		 f->jslink = false;
+	}
 	f->cx = f->winobj = f->docobj = 0;
 	debugPrint(5, "< ok");
 	cssFree(f);
@@ -2771,13 +3347,14 @@ JS_DefineProperty(cxa, *mw0, "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 // Do we need anything in the master window, besides our third party debugging tools?
-run_script_o(thirdJS, "third.js", 1);
+run_script(thirdJS, "third.js", 1);
 	}
 
 for(c=0; c<top; ++c) {
 sprintf(buf, "session %d", c+1);
 cf->fileName = buf;
-if(!createJSContext(c))
+cf->gsn = c+1;
+if(!createJSContext(cf))
 printf("create failed on %d\n", c+1);
 }
 
@@ -2785,22 +3362,10 @@ c = 0; // back to the first window
 //  puts("after loop");
 
 {
-JS::RootedValue v(cxa);
-JS::RootedObject co(cxa); // current object
-sprintf(buf, "g%d", c);
-// WARNING! You have to be in a compartment to do the next GetProperty.
-// If you're not, it will work, but something will seg fault later on,
-// and it will be near impossible to debug.
-	{
-        JSAutoCompartment bc(cxa, *rw0);
-if(!JS_GetProperty(cxa, *rw0, buf, &v) ||
-!v.isObject()) {
-printf("can't find global %s\n", buf);
-exit(3);
-}
-JS_ValueToObject(cxa, v, &co);
-}
-        JSAutoCompartment ac(cxa, co);
+static char tempname[] = "session 1";
+cf->gsn = 1;
+cf->fileName = tempname;
+        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 execScript("'hello world, it is '+new Date()");
 }
 
@@ -2809,53 +3374,53 @@ char line[500];
 // end with control d, EOF
 while(fgets(line, sizeof(line), stdin)) {
 // should check for line too long here
-
-// change context?
-if(line[0] == 'e' &&
-line[1] >= '1' && line[1] <= '3' &&
-isspace(line[2])) {
-printf("session %c\n", line[1]);
-c = line[1] - '1';
-continue;
-}
-
 // chomp
 int l = strlen(line);
 if(l && line[l-1] == '\n') line[--l] = 0;
 
-JS::RootedValue v(cxa);
-JS::RootedObject co(cxa); // current object
-sprintf(buf, "g%d", c);
-	{
-        JSAutoCompartment bc(cxa, *rw0);
-if(!JS_GetProperty(cxa, *rw0, buf, &v) ||
-!v.isObject()) {
-printf("can't find global %s\n", buf);
+// show context
+if(stringEqual(line, "e")) {
+puts(cf->fileName);
 continue;
 }
-JS_ValueToObject(cxa, v, &co);
-	}
-        JSAutoCompartment ac(cxa, co);
+
+// change context?
+if(line[0] == 'e' &&
+line[1] >= '1' && line[1] <= '3' &&
+!line[2]) {
+static char tempname[16];
+sprintf(tempname, "session %c", line[1]);
+puts(tempname);
+cf->fileName = tempname;
+c = line[1] - '1';
+cf->gsn = c+1;
+continue;
+}
+
+	{
+        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+JS::RootedValue v(cxa);
 if(line[0] == '<') {
 char *data;
 int datalen;
 if(fileIntoMemory(line+1, &data, &datalen)) {
-run_script_o(data, line+1, 1);
+run_script(data, line+1, 1);
 nzFree(data);
 puts("ok");
 } else {
 printf("cannot open %s\n", line+1);
 }
 } else {
-const char *res = run_script_o(line, "noname", 0);
+const char *res = run_script(line, "noname", 0);
 if(res) puts(res);
+}
 }
 }
 }
 
 // I should be able to remove globals in any order, need not be a stack
 for(c=0; c<top; ++c)
-unlinkJSContext(c);
+unlinkJSContext(c+1);
 
 // rooted objects have to free in the reverse (stack) order.
 delete mw0;
