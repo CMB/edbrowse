@@ -321,6 +321,8 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	int len, inlen, outlen;
 	bool has_o = false;
 
+	*outdata = 0, *outlength = 0;
+
 	if (indata) {
 // calling function has gathered the data for us,
 // maybe we could pipe it to the program but for now
@@ -459,6 +461,7 @@ fail:
 		cnzFree(indata);
 	}
 	unlink(tempout);
+	*outdata = 0, *outlength = 0;
 	return false;
 }
 
