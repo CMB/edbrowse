@@ -10,13 +10,6 @@ we need to indicate that all the other functions are straight C.
 extern "C" {
 #endif
 
-/* sourcefile=auth.c */
-bool getUserPass(const char *url, char *creds, bool find_proxy) ;
-bool getUserPassRealm(const char *url, char *creds, const char *realm);
-// Add authorization entries only in the foreground, but it's an
-// atomic operation, so the previous routines can run from other threads.
-bool addWebAuthorization(const char *url, const char *credentials, bool proxy, const char *realm);
-
 /* sourcefile=buffers.c */
 void removeHiddenNumbers(pst p, uchar terminate);
 pst fetchLine(int n, int show) ;
@@ -41,20 +34,6 @@ bool browseCurrentBuffer(void) ;
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
 char *getFieldFromBuffer(int tagno);
 int fieldIsChecked(int tagno);
-
-/* sourcefile=cookies.c */
-bool domainSecurityCheck(const char *server, const char *domain) ;
-bool receiveCookie(const char *url, const char *str) ;
-void cookiesFromJar(void) ;
-void sendCookies(char **s, int *l, const char *url, bool issecure) ;
-void mergeCookies(void);
-
-/* sourcefile=cache.c */
-void setupEdbrowseCache(void);
-void clearCache(void) ;
-bool fetchCache(const char * url, const char *etag, time_t modtime, char **data, int *data_len) ;
-void storeCache(const char *url, const char *etag, time_t modtime, const char *data, int datalen) ;
-bool presentInCache(const char *url) ;
 
 /* sourcefile=dbodbc.c (and others) */
 bool fetchForeign(char *tname) ;
@@ -365,7 +344,7 @@ void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 int eb_system(const char *cmd, bool print_on_success);
 
-/* sourcefile=url.c */
+/* sourcefile=isup.c */
 void unpercentURL(char *url) ;
 void unpercentString(char *s) ;
 char *percentURL(const char *start, const char *end);
@@ -397,6 +376,21 @@ char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 bool patternMatchURL(const char *url, const char *pattern);
 bool frameSecurityFile(const char *thisfile);
+bool domainSecurityCheck(const char *server, const char *domain) ;
+bool receiveCookie(const char *url, const char *str) ;
+void cookiesFromJar(void) ;
+void sendCookies(char **s, int *l, const char *url, bool issecure) ;
+void mergeCookies(void);
+void setupEdbrowseCache(void);
+void clearCache(void) ;
+bool fetchCache(const char * url, const char *etag, time_t modtime, char **data, int *data_len) ;
+bool presentInCache(const char *url) ;
+void storeCache(const char *url, const char *etag, time_t modtime, const char *data, int datalen) ;
+bool getUserPass(const char *url, char *creds, bool find_proxy) ;
+bool getUserPassRealm(const char *url, char *creds, const char *realm);
+// Add authorization entries only in the foreground, but it's an
+// atomic operation, so the previous routines can run from other threads.
+bool addWebAuthorization(const char *url, const char *credentials, bool proxy, const char *realm);
 
 /* sourcefile=css.c */
 void writeShortCache(void);

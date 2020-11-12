@@ -39,10 +39,10 @@ LDLIBS = -lpcre -lcurl -lreadline -ltidy -lduktape -lpthread -lm
 all: edbrowse
 
 #  edbrowse objects
-EBOBJS = main.o buffers.o sendmail.o fetchmail.o cache.o \
-	html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
-	messages.o url.o stringfile.o html-tidy.o decorate.o \
-	msg-strings.o http.o auth.o css.o jseng-duk.o
+EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
+	html.o format.o ebjs.o plugin.o ebrc.o \
+	messages.o stringfile.o html-tidy.o decorate.o \
+	msg-strings.o http.o isup.o css.o jseng-duk.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
 LDLIBS += -lodbc
@@ -107,7 +107,7 @@ SMV=52
 endif
 #  I added -Wno-psabi to supress warning   changed in GCC 7.1
 #  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
-HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o url.o cookies.o cache.o auth.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o
+HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o isup.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o
 js_hello_moz : js_hello_moz.cpp
 	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) js_hello_moz.cpp -lmozjs-$(SMV) $(HELLOEXTRA) -lstdc++ -lpthread -lreadline -lpcre -lcurl -o js_hello_moz
 

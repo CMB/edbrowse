@@ -22,10 +22,10 @@ LDFLAGS +=	-L${PREFIX}/lib
 all: edbrowse
 
 #  edbrowse objects
-EBOBJS =	main.o buffers.o sendmail.o fetchmail.o cache.o \
-		html.o format.o cookies.o ebjs.o plugin.o ebrc.o \
-		messages.o url.o stringfile.o html-tidy.o decorate.o \
-		msg-strings.o http.o auth.o css.o jseng-duk.o startwindow.o
+EBOBJS =	main.o buffers.o sendmail.o fetchmail.o \
+		html.o format.o ebjs.o plugin.o ebrc.o \
+		messages.o stringfile.o html-tidy.o decorate.o \
+		msg-strings.o http.o isup.o css.o jseng-duk.o startwindow.o
 
 .if ${BUILD_EDBR_ODBC:L:Mon}
 EBOBJS +=	dbodbc.o dbinfx.o dbops.o
