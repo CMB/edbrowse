@@ -1019,10 +1019,10 @@ char *htmlParse(char *buf, int remote)
 	if (isJSAlive) {
 // the "create handlers" messages aren't helpful here.
 		if (debugEvent && debugLevel >= 3)
-			set_property_bool(cf, cf->winobj, "eventDebug", false);
+			set_master_bool("eventDebug", false);
 		decorate(0);
 		if (debugEvent && debugLevel >= 3)
-			set_property_bool(cf, cf->winobj, "eventDebug", true);
+			set_master_bool("eventDebug", true);
 		set_basehref(cf->hbase);
 		run_function_bool(cf, cf->winobj, "eb$qs$start");
 		runScriptsPending(true);
@@ -1043,7 +1043,7 @@ so no impact on performance if we invoke a script,
 so for now I'm taking the easy way out.
 jsRunScript is protected.
 *********************************************************************/
-		jsRunScript(cf, cf->winobj, "document.readyState='complete'",
+		jsRunScriptWin("document.readyState='complete'",
 			    "readyState", 1);
 
 		run_event_bool(cf, cf->docobj, "document", "onreadystatechange");
@@ -1985,7 +1985,7 @@ bool infPush(int tagno, char **post_string)
 			setError(MSG_NJNoForm);
 			return false;
 		}
-		jsRunScript(f, form->jv, action, 0, 0);
+		jsRunScript_t(form, action, 0, 0);
 		return true;
 	}
 

@@ -438,11 +438,11 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	nzFree(run);
 	debugPrint(5, "setter h 2");
 
-	run_function_onearg_0(cx, context0_obj, "textarea$html$crossover",
+	run_function_onearg_0(cx, cf->winobj, "textarea$html$crossover",
 				thisobj);
 
 // mutation fix up from native code
-	duk_push_heapptr(cx, context0_obj);
+	duk_push_heapptr(cx, cf->winobj);
 	duk_get_prop_string(cx, -1, "mutFixup");
 	if (duk_is_function(cx, -1)) {
 		duk_push_heapptr(cx, thisobj);
@@ -643,7 +643,7 @@ static int frameExpandLine(int ln, jsobjtype fo)
 		return 0;
 	}
 // Check with js first, in case it changed.
-	if (t->jv && (a = get_property_url(t->f0, t->jv, false)) && *a) {
+	if ((a = get_property_url_t(t, false)) && *a) {
 		nzFree(t->href);
 		t->href = a;
 	}
@@ -748,7 +748,7 @@ So check for serverData null here. Once again we pop the frame.
 // is the contentDocument tag.
 	cdt = t->firstchild;
 // the placeholder document node will soon be orphaned.
-	delete_property(cdt->f0, cdt->jv, "parentNode");
+	delete_property_t(t, "parentNode");
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
 	prerender(0);
@@ -775,7 +775,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		set_property_object(cf, cf->winobj, "frameElement", t->jv);
 		run_function_bool(cf, cf->winobj, "eb$qs$start");
 		if (jssrc) {
-			jsRunScript(cf, cf->winobj, jssrc, "frame.src", 1);
+			jsRunScriptWin(jssrc, "frame.src", 1);
 		}
 		runScriptsPending(true);
 		runOnload();
@@ -852,7 +852,7 @@ bool reexpandFrame(void)
 	underKill(cdt);
 
 // the previous document node will soon be orphaned.
-	delete_property(cf, cdt->jv, "parentNode");
+	delete_property_t(cdt, "parentNode");
 
 	delTimers(cf);
 	freeJavaContext(cf);
@@ -1525,7 +1525,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 
 	debugPrint(5, "remove 2");
 // mutation fix up from native code
-	duk_push_heapptr(cx, context0_obj);
+	duk_push_heapptr(cx, cf->winobj);
 	duk_get_prop_string(cx, -1, "mutFixup");
 	if (duk_is_function(cx, -1)) {
 		duk_push_heapptr(cx, thisobj);
@@ -2838,3 +2838,71 @@ void run_data_0(jsobjtype cx0, jsobjtype o)
 		duk_gc(cx, 0);
 }
 
+void set_master_bool(const char *name, bool v)
+{
+	set_property_bool_0(cf->cx, context0_obj, name, v);
+}
+
+char *get_property_url_t(const Tag *t, bool action)
+{
+if(!t->jslink || !allowJS)
+return 0;
+return get_property_url(t->f0, t->jv, action);
+}
+
+void delete_property_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return;
+delete_property_0(t->f0->cx, t->jv, name);
+}
+
+void set_win_string(const char *name, const char *v)
+{
+	set_property_string_0(cf->cx, cf->winobj, name, v);
+}
+
+// Run some javascript code under the named object, usually window.
+// Pass the return value of the script back as a string.
+static char *jsRunScriptResult(const Frame *f, jsobjtype obj, const char *str,
+const char *filename, 			int lineno)
+{
+	char *result;
+// this never runs from the j process.
+	if (whichproc != 'e') {
+		debugPrint(1, "jsRunScript run from the js process");
+		return NULL;
+	}
+	if (!allowJS || !f->winobj)
+		return NULL;
+	if (!str || !str[0])
+		return NULL;
+	debugPrint(5, "> script:");
+	jsSourceFile = filename;
+	jsLineno = lineno;
+	whichproc = 'j';
+	result = run_script_0(f->cx, str);
+	whichproc = 'e';
+	jsSourceFile = NULL;
+	debugPrint(5, "< ok");
+	return result;
+}				/* jsRunScriptResult */
+
+/* like the above but throw away the result */
+void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
+{
+	char *s = jsRunScriptResult(cf, cf->winobj, str, filename, lineno);
+	nzFree(s);
+}
+
+void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
+{
+	char *s = jsRunScriptResult(t->f0, t->f0->winobj, str, filename, lineno);
+	nzFree(s);
+}
+
+char *jsRunScriptWinResult(const char *str,
+const char *filename, 			int lineno)
+{
+return jsRunScriptResult(cf, cf->winobj, str, filename, lineno);
+}

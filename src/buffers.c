@@ -646,7 +646,7 @@ addchar:
 				while (isspace(*resfile))
 					++resfile;
 			}
-			result = jsRunScriptResult(cf, cf->winobj, s, "jdb", 1);
+			result = jsRunScriptWinResult(s, "jdb", 1);
 			if (resfile)
 				f = fopen(resfile, "w");
 			if (result) {
@@ -3644,9 +3644,9 @@ findField(const char *line, int ftype, int n,
 		    t->action == TAGACT_MUSIC) {
 			if (href)
 				*href = cloneString(t->href);
-			if (href && isJSAlive && t->jv) {
+			if (href) {
 /* defer to the js variable for the reference */
-				char *jh = get_property_url(cf, t->jv, false);
+				char *jh = get_property_url_t(t, false);
 				if (jh) {
 					if (!*href || !stringEqual(*href, jh)) {
 						nzFree(*href);
@@ -4975,7 +4975,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugClone + MSG_DebugCloneOff);
 		if (isJSAlive)
-			set_property_bool(cf, cf->winobj, "cloneDebug", debugClone);
+			set_master_bool("cloneDebug", debugClone);
 		return true;
 	}
 
@@ -4984,7 +4984,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugClone + MSG_DebugCloneOff);
 		if (isJSAlive)
-			set_property_bool(cf, cf->winobj, "cloneDebug", debugClone);
+			set_master_bool("cloneDebug", debugClone);
 		return true;
 	}
 
@@ -4993,7 +4993,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugEvent + MSG_DebugEventOff);
 		if (isJSAlive)
-			set_property_bool(cf, cf->winobj, "eventDebug", debugEvent);
+			set_master_bool("eventDebug", debugEvent);
 		return true;
 	}
 
@@ -5002,7 +5002,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugEvent + MSG_DebugEventOff);
 		if (isJSAlive)
-			set_property_bool(cf, cf->winobj, "eventDebug", debugEvent);
+			set_master_bool("eventDebug", debugEvent);
 		return true;
 	}
 
@@ -5011,7 +5011,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugThrow + MSG_DebugThrowOff);
 		if (isJSAlive)
-			set_property_bool(cf, cf->winobj, "throwDebug", debugThrow);
+			set_master_bool("throwDebug", debugThrow);
 		return true;
 	}
 
@@ -5020,7 +5020,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugThrow + MSG_DebugThrowOff);
 		if (isJSAlive)
-			set_property_bool(cf, cf->winobj, "throwDebug", debugThrow);
+			set_master_bool("throwDebug", debugThrow);
 		return true;
 	}
 
@@ -6333,7 +6333,7 @@ replaceframe:
 // edbrowse is more like a touchscreen, and there are such devices, so just go.
 // No mouseEnter, mouseOver, mouseExit, etc.
 			if (!jsdead)
-				set_property_string(cf, cf->winobj, "status", h);
+				set_win_string("status", h);
 			if (jsgo) {
 				jSyncup(false);
 				rc = bubble_event(tag, "onclick");
@@ -6348,7 +6348,7 @@ replaceframe:
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
 				cf = tag->f0;
-				jsRunScript(cf, cf->winobj, h, "a.href", 1);
+				jsRunScriptWin(h, "a.href", 1);
 				jSideEffects();
 				if (newlocation)
 					goto redirect;

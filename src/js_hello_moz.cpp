@@ -25,15 +25,17 @@ static JSClass global_class = {
 
 #include "eb.h"
 
-void ebClose(int n) { exit(n); }
-int sideBuffer(int cx, const char *text, int textlen, const char *bufname) { puts("side buffer"); return 0; }
-
 static struct ebWindow win0;
 struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
 int context = 0;
 char whichproc = 'e';
 bool allowJS = true;
+bool showHover, doColors;
+char *dbarea, *dblogin, *dbpw;	/* to log into the database */
+bool fetchBlobColumns;
+void setDataSource(char *v){}
+bool binaryDetect = true;
 bool sendReferrer, allowRedirection, curlAuthNegotiate, ftpActive;
 bool htmlGenerated;
 uchar browseLocal;
@@ -44,9 +46,18 @@ char *recycleBin, *sigFile, *sigFileEnd;
 char *ebUserDir;
 char *cacheDir;
 int cacheSize, cacheCount;
+bool inInput, listNA;
+pst linePending;
 int fileSize;
+int displayLength = 500;
 char *newlocation;
 Frame *newloc_f;
+bool newloc_r;
+int newloc_d;
+bool runEbFunction(const char *line){ return true; }
+bool bubble_event(const Tag *t, const char *name) {return true; }
+bool inputReadLine;
+bool caseInsensitive, searchStringsAll, searchWrap = true;
 const char *jsSourceFile;
 int jsLineno;
 int gfsn;
@@ -55,13 +66,18 @@ int localAccount, maxAccount;
 struct MIMETYPE mimetypes[MAXMIME];
 int maxMime;
 const char *version = "3.7.7";
-char *currentAgent;
 volatile bool intFlag;
-bool sqlPresent;
+time_t intStart;
 bool ismc, isimap, passMail;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
 struct ebSession sessionList[10], *cs;
+int maxSession;
 int webTimeout = 30, mailTimeout = 30;
+int rr_interval;
+int verifyCertificates = 1;
+char *userAgents[MAXAGENT + 1];
+char *currentAgent;
+void ebClose(int n) { exit(n); }
 Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
 void domSubmitsForm(JSObject *form, bool reset) { }
 void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
@@ -69,11 +85,6 @@ void htmlInputHelper(Tag *t) { }
 void formControl(Tag *t, bool namecheck) { }
 Tag *findOpenTag(Tag *t, int action) { return NULL; }
 void writeShortCache(void) { }
-bool cxQuit(int cx, int action)  { return false; }
-bool cxCompare(int cx)  { return false; }
-bool cxActive(int cx) { return false; }
-void cxSwitch(int cx, bool interactive)  { }
-bool browseCurrentBuffer(void) { return false; }
 void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash = false; }
 void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
@@ -83,29 +94,41 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
 void underKill(Tag *t) { }
 void delTimers(Frame *f) { }
+void delTags(int startRange, int endRange){}
+bool htmlTest(void) {return true; }
+char *htmlParse(char *buf, int remote) {return 0;}
+void createJavaContext(void) {puts("old style create"); }
 void cssFree(Frame *f) { }
-Tag *line2frame(int ln) { return 0; }
 void rebuildSelectors(void) { puts("rebuild selectors"); }
 void runScriptsPending(bool something) { puts("run scripts pending"); }
 void runOnload(void) { puts("run onload"); }
 void set_basehref(const char *b) { printf("base %s\n", b); }
 void decorate(int start) { puts("decorate"); }
+void freeTags(struct ebWindow *w) {}
 void prerender(int start) { puts("prerender"); }
 void htmlNodesIntoTree(int start, Tag *attach) { puts("tags into tree"); }
 void html2nodes(const char *htmltext, bool startpage) { puts("htnl 2 nodes"); }
 bool javaOK(const char *url) { return true; }
-bool readFileArgv(const char *filename, int fromframe) { printf("reading %s %d\n", filename, fromframe); return true; }
-pst fetchLine(int n, int show)  { return 0; }
 void scriptSetsTimeout( Tag *t) { }
 bool mustVerifyHost(const char *url) { return false; }
 const char *findAgentForURL(const char *url) { return 0; }
 const char eol[] = "\r\n";
 const char *findProxyForURL(const char *url) { return 0; }
-bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) { return true; }
-void delText(int start, int end)  { }
-bool unfoldBuffer(int cx, bool cr, char **data, int *len)  { return true; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
 void runningError(int msg, ...) { }
+bool timerWait(int *delay_sec, int *delay_ms) { return false; }
+void jSideEffects(void) { }
+void jClearSync(void) { }
+void rerender(bool notify) { }
+void runTimer(void) { }
+void jSyncup(bool fromtimer) { }
+void readConfigFile(void) { }
+void infShow(int tagno, const char *search) {}
+void itext(void){}
+bool infReplace(int tagno, const char *newtext, bool notify){return true;}
+bool infPush(int tagno, char **post_string){return true;}
+bool tagHandler(int seqno, const char *name) { return false; }
+bool js_redirects;
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -584,6 +607,7 @@ JSObject *instantiate_array_o(JS::HandleObject parent, const char *name);
 int run_function_onearg_o(JS::HandleObject parent, const char *name, JS::HandleObject a);
 bool createJSContext(Frame *f);
 void freeJSContext(Frame *f);
+void freeJavaContext(Frame *f) { freeJSContext(f); }
 
 static bool setter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 {
@@ -969,15 +993,18 @@ if(!ok) {
 The _t functions take a tag and bounce through the object
 linked to that tag. These correspond to the _o functions but we may not
 need all of them.
-Like the _o functions, the _t functions assume we are in some compartment.
-If we're not creating or instantiating a class, I don't think it matters
-which compartment, as long as we are in some compartment.
+Unlike the _o functions, the _t functions set the compartment
+according to t->f0.
 *********************************************************************/
 
 static JSObject *tagToObject(const Tag *t);
+static JSObject *frameToCompartment(const Frame *f);
 
 char *get_property_url_t(const Tag *t, bool action)
 {
+if(!t->jslink || !allowJS)
+return 0;
+JSAutoCompartment(cxa, frameToCompartment(t->f0));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
@@ -986,6 +1013,9 @@ return get_property_url_o(obj, action);
 
 void delete_property_t(const Tag *t, const char *name)
 {
+if(!t->jslink || !allowJS)
+return;
+JSAutoCompartment(cxa, frameToCompartment(t->f0));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(obj)
 delete_property_o(obj, name);
@@ -1097,11 +1127,12 @@ JS_CallFunctionName(cxa, g, "eb$stopexec", JS::HandleValueArray::empty(), &v);
 
 // Returns the result of the script as a string, from stringize(), not allocated,
 // copy it if you want to keep it any longer then the next call to stringize.
-const char *run_script(const char *s, const char *filename, int lineno)
+// This function nad it's duktape counterpart ignores obj
+static const char *run_script_o(const Frame *f, JS::HandleObject obj, const char *s, const char *filename, int lineno)
 {
 	char *s2 = 0;
 
-if(!allowJS || !cf->jslink)
+if(!allowJS || !f->jslink)
 return 0;
 if(!s || !*s)
 return 0;
@@ -1135,6 +1166,7 @@ return 0;
 		stringAndString(&s2, &l, u);
 	}
 
+JSAutoCompartment(cxa, frameToCompartment(f));
         JS::CompileOptions opts(cxa);
         opts.setFileAndLine(filename, lineno);
 JS::RootedValue v(cxa);
@@ -1152,6 +1184,38 @@ return s;
 		processError();
 return 0;
 	}
+
+/* like the above but throw away the result */
+void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
+{
+if(!cf->jslink || !allowJS)
+return;
+JSAutoCompartment(cxa, frameToCompartment(cf));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+	run_script_o(cf, g, str, filename, lineno);
+}
+
+void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
+{
+if(!t->jslink || !allowJS)
+return;
+JSAutoCompartment(cxa, frameToCompartment(t->f0));
+JS::RootedObject tojb(cxa, tagToObject(t));
+	run_script_o(t->f0, tojb, str, filename, lineno);
+}
+
+char *jsRunScriptWinResult(const char *str,
+const char *filename, 			int lineno)
+{
+if(!cf->jslink || !allowJS)
+return 0;
+JSAutoCompartment(cxa, frameToCompartment(cf));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+const char *s = run_script_o(cf, g, str, filename, lineno);
+// This is and has to be copied in the duktape world,
+// so we do the same here for consistency.
+return cloneString(s);
+}
 
 JSObject *create_event_o(JS::HandleObject parent, const char *evname)
 {
@@ -1181,8 +1245,7 @@ bool run_event_bool_o(JS::HandleObject obj, const char *pname, const char *evnam
 		return true;
 	if (debugLevel >= 3) {
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
-		bool evdebug = get_property_bool_o(g, "eventDebug");
-		if (evdebug) {
+		if (debugEvent) {
 			int seqno = get_property_number_o(obj, "eb$seqno");
 			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
 		}
@@ -1197,6 +1260,19 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
 	if (rc < 0)
 		rc = true;
 	return rc;
+}
+
+void set_master_bool(const char *name, bool v)
+{
+JSAutoCompartment(cxa, *mw0);
+	set_property_bool_o(*mw0, name, v);
+}
+
+void set_win_string(const char *name, const char *v)
+{
+JSAutoCompartment(cxa, frameToCompartment(cf));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	set_property_string_o(g, name, v);
 }
 
 void connectTagObject1(Tag *t, JS::HandleObject o)
@@ -2253,7 +2329,7 @@ fto = tagToObject(t);
 		set_property_object_o(cwo, "frameElement", fto);
 		run_function_bool_o(cwo, "eb$qs$start");
 		if(jssrc)
-			run_script(jssrc, "frame.src", 1);
+			jsRunScriptWin(jssrc, "frame.src", 1);
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
@@ -3158,7 +3234,7 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	extern const char startWindowJS[];
 
 // startwindow.js stored as an internal string
-run_script(startWindowJS, "startwindow.js", 1);
+jsRunScriptWin(startWindowJS, "startwindow.js", 1);
 
 	nav = get_property_object_o(g, "navigator");
 	if (!nav)
@@ -3218,16 +3294,16 @@ JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
 	set_property_string_o(doc, "URL", cf->fileName);
 	set_property_string_o(doc, "location", cf->fileName);
 	set_property_string_o(g, "location", cf->fileName);
-run_script(
+jsRunScriptWin(
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string_o(doc, "domain", getHostURL(cf->fileName));
 	if (debugClone)
-		set_property_bool_o(g, "cloneDebug", true);
+		set_master_bool("cloneDebug", true);
 	if (debugEvent)
-		set_property_bool_o(g, "eventDebug", true);
+		set_master_bool("eventDebug", true);
 	if (debugThrow)
-		set_property_bool_o(g, "throwDebug", true);
+		set_master_bool("throwDebug", true);
 }
 
 // the garbage collector can eat this window
@@ -3347,7 +3423,7 @@ JS_DefineProperty(cxa, *mw0, "document", objval,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 // Do we need anything in the master window, besides our third party debugging tools?
-run_script(thirdJS, "third.js", 1);
+jsRunScriptWin(thirdJS, "third.js", 1);
 	}
 
 for(c=0; c<top; ++c) {
@@ -3404,15 +3480,16 @@ if(line[0] == '<') {
 char *data;
 int datalen;
 if(fileIntoMemory(line+1, &data, &datalen)) {
-run_script(data, line+1, 1);
+jsRunScriptWin(data, line+1, 1);
 nzFree(data);
 puts("ok");
 } else {
 printf("cannot open %s\n", line+1);
 }
 } else {
-const char *res = run_script(line, "noname", 0);
+char *res = jsRunScriptWinResult(line, "noname", 0);
 if(res) puts(res);
+nzFree(res);
 }
 }
 }

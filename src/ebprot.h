@@ -79,8 +79,6 @@ void javaSetsTagVar(jsobjtype v, const char *newtext);
 void dwStart(void);
 void createJavaContext(void) ;
 void freeJavaContext(Frame *f) ;
-char *jsRunScriptResult(const Frame *f, jsobjtype obj, const char *str, const char *filename, int lineno) ;
-void jsRunScript(const Frame *f, jsobjtype obj, const char *str, const char *filename, int lineno) ;
 void jsRunData(const Frame *f, jsobjtype obj, const char *filename, int lineno);
 enum ej_proptype typeof_property(const Frame *f, jsobjtype obj, const char *name) ;
 #define handlerPresent(f, obj, name) (typeof_property(f, obj, name) == EJ_PROP_FUNCTION)
@@ -411,10 +409,6 @@ bool querySelector0(const char *selstring, jsobjtype topobj);
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
 
-#ifdef __cplusplus
-}
-#endif
-
 /* sourcefile=jseng-duk.c */
 void connectTagObject(Tag *t, jsobjtype p);
 void disconnectTagObject(Tag *t);
@@ -450,4 +444,14 @@ int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, jsobjty
 void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
 char *run_script_0(jsobjtype cx, const char *s);
 void run_data_0(jsobjtype cx, jsobjtype o);
+void set_master_bool(const char *name, bool v);
+char *get_property_url_t(const Tag *t, bool action);
+void delete_property_t(const Tag *t, const char *name);
+void set_win_string(const char *name, const char *v);
+void jsRunScriptWin(const char *str, const char *filename, 		 int lineno);
+void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno);
+char *jsRunScriptWinResult(const char *str, const char *filename, int lineno) ;
 
+#ifdef __cplusplus
+}
+#endif

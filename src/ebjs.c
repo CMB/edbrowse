@@ -152,43 +152,6 @@ void freeJavaContext(Frame *f)
 	cssFree(f);
 }				/* freeJavaContext */
 
-/* Run some javascript code under the current window */
-/* Pass the return value of the script back as a string. */
-char *jsRunScriptResult(const Frame *f, jsobjtype obj, const char *str,
-const char *filename, 			int lineno)
-{
-	char *result;
-
-// this never runs from the j process.
-	if (whichproc != 'e') {
-		debugPrint(1, "jsRunScript run from the js process");
-		return NULL;
-	}
-
-	if (!allowJS || !f->winobj)
-		return NULL;
-	if (!str || !str[0])
-		return NULL;
-
-	debugPrint(5, "> script:");
-	jsSourceFile = filename;
-	jsLineno = lineno;
-	whichproc = 'j';
-	result = run_script_0(f->cx, str);
-	whichproc = 'e';
-	jsSourceFile = NULL;
-	debugPrint(5, "< ok");
-	return result;
-}				/* jsRunScriptResult */
-
-/* like the above but throw away the result */
-void jsRunScript(const Frame *f, jsobjtype obj, const char *str,
-const char *filename, 		 int lineno)
-{
-	char *s = jsRunScriptResult(f, obj, str, filename, lineno);
-	nzFree(s);
-}				/* jsRunScript */
-
 void jsRunData(const Frame *f, jsobjtype obj,
 const char *filename, int lineno)
 {
@@ -626,8 +589,7 @@ bool run_event_bool(const Frame *f, jsobjtype obj, const char *pname, const char
 	if (!handlerPresent(f, obj, evname))
 		return true;
 	if (debugLevel >= 3) {
-		bool evdebug = get_property_bool(f, f->winobj, "eventDebug");
-		if (evdebug) {
+		if (debugEvent) {
 			int seqno = get_property_number(f, obj, "eb$seqno");
 			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
 		}
@@ -751,8 +713,8 @@ void setupJavaDom(void)
 /* the js window/document setup script.
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
-	jsRunScript(cf, w, startWindowJS, "StartWindow", 1);
-	jsRunScript(cf, w, thirdJS, "Third", 1);
+	jsRunScriptWin(startWindowJS, "StartWindow", 1);
+	jsRunScriptWin(thirdJS, "Third", 1);
 
 	nav = get_property_object_0(cx, w, "navigator");
 	if (nav == NULL)
@@ -811,16 +773,17 @@ void setupJavaDom(void)
 	set_property_string_0(cx, d, "URL", cf->fileName);
 	set_property_string_0(cx, d, "location", cf->fileName);
 	set_property_string_0(cx, w, "location", cf->fileName);
-	jsRunScript(cf, w,
+	jsRunScriptWin(
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
+// These calls are redundent unless this is the first window
 	if (debugClone)
-		set_property_bool_0(cx, w, "cloneDebug", true);
+		set_master_bool("cloneDebug", true);
 	if (debugEvent)
-		set_property_bool_0(cx, w, "eventDebug", true);
+		set_master_bool("eventDebug", true);
 	if (debugThrow)
-		set_property_bool_0(cx, w, "throwDebug", true);
+		set_master_bool("throwDebug", true);
 }				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.
