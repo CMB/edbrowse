@@ -140,7 +140,7 @@ void disconnectTagObject(Tag *t)
 	t->jslink = false;
 }
 
-int js_main(void)
+static int js_main(void)
 {
 	effects = initString(&eff_l);
 	context0 =
@@ -156,7 +156,7 @@ int js_main(void)
 	context0_obj = duk_get_heapptr(context0, -1);
 	duk_pop(context0);
 	return 0;
-}				/* js_main */
+}
 
 // base64 encode
 static duk_ret_t native_btoa(duk_context * cx)
@@ -734,7 +734,7 @@ So check for serverData null here. Once again we pop the frame.
 	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
-		createJavaContext();
+		createJSContext(cf);
 	nzFree(newlocation);	/* should already be 0 */
 	newlocation = 0;
 
@@ -855,7 +855,7 @@ bool reexpandFrame(void)
 	delete_property_t(cdt, "parentNode");
 
 	delTimers(cf);
-	freeJavaContext(cf);
+	freeJSContext(cf);
 	nzFree(cf->dw);
 	cf->dw = 0;
 	nzFree(cf->hbase);
@@ -894,7 +894,7 @@ bool reexpandFrame(void)
 	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
-		createJavaContext();
+		createJSContext(cf);
 
 	start = cw->numTags;
 /* call the tidy parser to build the html nodes */
@@ -994,7 +994,7 @@ static duk_ret_t native_unframe(duk_context * cx)
 		}
 		f->next = f1->next;
 		delTimers(f1);
-		freeJavaContext(f1);
+		freeJSContext(f1);
 		nzFree(f1->dw);
 		nzFree(f1->hbase);
 		nzFree(f1->fileName);
@@ -1209,7 +1209,7 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 static duk_ret_t native_win_close(duk_context * cx)
 {
 	i_puts(MSG_PageDone);
-// I should probably freeJavaContext and close down javascript,
+// I should probably freeJSContext and close down javascript,
 // but not sure I can do that while the js function is still running.
 	return 0;
 }
@@ -1863,11 +1863,10 @@ static duk_ret_t native_cssText(duk_context * cx)
 	return 0;
 }
 
-void createJavaContext_0(Frame *f)
+static void createJSContext_0(Frame *f)
 {
 	static int seqno;
 	duk_context * cx;
-
 	duk_push_thread_new_globalenv(context0);
 	cx = f->cx = duk_get_context(context0, -1);
 	if (!cx)
@@ -1995,23 +1994,151 @@ void createJavaContext_0(Frame *f)
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	duk_pop(cx);
 
-// Sequence is to set cf->fileName, then createContext(), so for a short time,
+// Sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
 	duk_push_global_object(cx);
 	duk_push_string(cx, "eb$url");
-	duk_push_string(cx, cf->fileName);
+	duk_push_string(cx, f->fileName);
 	duk_def_prop(cx, -3,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	duk_pop(cx);
+}
 
-// setupJavaDom() in ebjs.c does the rest.
-}				/* createJavaContext_0 */
+static void setup_window_2(void);
+static bool js_running;
+void createJSContext(Frame *f)
+{
+	if (!allowJS)
+		return;
+	if (!js_running) {
+		if (js_main())
+			i_puts(MSG_JSEngineRun);
+		else
+			js_running = true;
+	}
+	createJSContext_0(f);
+	if (f->cx) {
+		f->jslink = true;
+		setup_window_2();
+	} else {
+		i_puts(MSG_JavaContextError);
+	}
+}
 
-void freeJavaContext_0(jsobjtype cx)
+#ifdef DOSLIKE			// port of uname(p), and struct utsname
+struct utsname {
+	char sysname[32];
+	char machine[32];
+};
+int uname(struct utsname *pun)
+{
+	memset(pun, 0, sizeof(struct utsname));
+	// TODO: WIN32: maybe fill in sysname, and machine...
+	return 0;
+}
+#else // !DOSLIKE - // port of uname(p), and struct utsname
+#include <sys/utsname.h>
+#endif // DOSLIKE y/n // port of uname(p), and struct utsname
+
+static void setup_window_2(void)
+{
+	jsobjtype w = cf->winobj;	// window object
+	jsobjtype d = cf->docobj;	// document object
+	jsobjtype cx = cf->cx;	// current context
+	jsobjtype nav;		// navigator object
+	jsobjtype navpi;	// navigator plugins
+	jsobjtype navmt;	// navigator mime types
+	jsobjtype hist;		// history object
+	struct MIMETYPE *mt;
+	struct utsname ubuf;
+	int i;
+	char save_c;
+	extern const char startWindowJS[];
+	extern const char thirdJS[];
+
+	set_property_object_0(cx, w, "window", w);
+
+/* the js window/document setup script.
+ * These are all the things that do not depend on the platform,
+ * OS, configurations, etc. */
+	jsRunScriptWin(startWindowJS, "StartWindow", 1);
+	jsRunScriptWin(thirdJS, "Third", 1);
+
+	nav = get_property_object_0(cx, w, "navigator");
+	if (nav == NULL)
+		return;
+/* some of the navigator is in startwindow.js; the runtime properties are here. */
+	set_property_string_0(cx, nav, "userLanguage", supported_languages[eb_lang]);
+	set_property_string_0(cx, nav, "language", supported_languages[eb_lang]);
+	set_property_string_0(cx, nav, "appVersion", version);
+	set_property_string_0(cx, nav, "vendorSub", version);
+	set_property_string_0(cx, nav, "userAgent", currentAgent);
+	uname(&ubuf);
+	set_property_string_0(cx, nav, "oscpu", ubuf.sysname);
+	set_property_string_0(cx, nav, "platform", ubuf.machine);
+
+/* Build the array of mime types and plugins,
+ * according to the entries in the config file. */
+	navpi = get_property_object_0(cx, nav, "plugins");
+	navmt = get_property_object_0(cx, nav, "mimeTypes");
+	if (navpi == NULL || navmt == NULL)
+		return;
+	mt = mimetypes;
+	for (i = 0; i < maxMime; ++i, ++mt) {
+		int len;
+/* po is the plugin object and mo is the mime object */
+		jsobjtype po = instantiate_array_element_0(cx, navpi, i, 0);
+		jsobjtype mo = instantiate_array_element_0(cx, navmt, i, 0);
+		if (po == NULL || mo == NULL)
+			return;
+		set_property_object_0(cx, mo, "enabledPlugin", po);
+		set_property_string_0(cx, mo, "type", mt->type);
+		set_property_object_0(cx, navmt, mt->type, mo);
+		set_property_string_0(cx, mo, "description", mt->desc);
+		set_property_string_0(cx, mo, "suffixes", mt->suffix);
+/* I don't really have enough information from the config file to fill
+ * in the attributes of the plugin object.
+ * I'm just going to fake it.
+ * Description will be the same as that of the mime type,
+ * and the filename will be the program to run.
+ * No idea if this is right or not. */
+		set_property_string_0(cx, po, "description", mt->desc);
+		set_property_string_0(cx, po, "filename", mt->program);
+/* For the name, how about the program without its options? */
+		len = strcspn(mt->program, " \t");
+		save_c = mt->program[len];
+		mt->program[len] = 0;
+		set_property_string_0(cx, po, "name", mt->program);
+		mt->program[len] = save_c;
+	}
+
+	hist = get_property_object_0(cx, w, "history");
+	if (hist == NULL)
+		return;
+	set_property_string_0(cx, hist, "current", cf->fileName);
+
+	set_property_string_0(cx, d, "referrer", cw->referrer);
+	set_property_string_0(cx, d, "URL", cf->fileName);
+	set_property_string_0(cx, d, "location", cf->fileName);
+	set_property_string_0(cx, w, "location", cf->fileName);
+	jsRunScriptWin(
+		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
+		    "locreplace", 1);
+	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
+// These calls are redundent unless this is the first window
+	if (debugClone)
+		set_master_bool("cloneDebug", true);
+	if (debugEvent)
+		set_master_bool("eventDebug", true);
+	if (debugThrow)
+		set_master_bool("throwDebug", true);
+}
+
+static void freeJSContext_0(jsobjtype cx)
 {
 	int i, top = duk_get_top(context0);
 	for (i = 0; i < top; ++i) {
@@ -2021,7 +2148,17 @@ void freeJavaContext_0(jsobjtype cx)
 			break;
 		}
 	}
-}				/* freeJavaContext_0 */
+}
+
+void freeJSContext(Frame *f)
+{
+	if (!f->jslink)
+		return;
+	freeJSContext_0(f->cx);
+	f->cx = f->winobj = f->docobj = 0;
+f->jslink = false;
+	cssFree(f);
+}
 
 // determine the type of the element on the top of the stack.
 static enum ej_proptype top_proptype(duk_context * cx)

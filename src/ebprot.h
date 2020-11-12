@@ -56,8 +56,8 @@ int goSelect(int *startLine, char **rbuf) ;
 /* sourcefile=ebjs.c */
 void javaSetsTagVar(jsobjtype v, const char *newtext);
 void dwStart(void);
-void createJavaContext(void) ;
-void freeJavaContext(Frame *f) ;
+void createJSContext(Frame *f) ;
+void freeJSContext(Frame *f) ;
 void jsRunData(const Frame *f, jsobjtype obj, const char *filename, int lineno);
 enum ej_proptype typeof_property(const Frame *f, jsobjtype obj, const char *name) ;
 #define handlerPresent(f, obj, name) (typeof_property(f, obj, name) == EJ_PROP_FUNCTION)
@@ -81,7 +81,6 @@ jsobjtype instantiate_array_element(const Frame *f, jsobjtype array, int idx, co
 jsobjtype instantiate(const Frame *f, jsobjtype parent, const char *name, const char *classname) ;
 int set_property_function(const Frame *f, jsobjtype parent, const char *name, const char *body) ;
 int get_arraylength(const Frame *f, jsobjtype a);
-void setupJavaDom(void) ;
 char *get_property_url(const Frame *f, jsobjtype owner, bool action) ;
 void rebuildSelectors(void);
 bool run_function_bool(const Frame *f, jsobjtype obj, const char *name);
@@ -406,12 +405,9 @@ void cssText(jsobjtype node, const char *rulestring);
 /* sourcefile=jseng-duk.c */
 void connectTagObject(Tag *t, jsobjtype p);
 void disconnectTagObject(Tag *t);
-int js_main(void);
 bool frameExpand(bool expand, int ln1, int ln2);
 bool reexpandFrame(void);
 // the native versions of the api functions in ebjs.c
-void createJavaContext_0(Frame *f);
-void freeJavaContext_0(jsobjtype cx);
 enum ej_proptype typeof_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 bool has_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 void delete_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;

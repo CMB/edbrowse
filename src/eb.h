@@ -299,6 +299,7 @@ extern bool down_jsbg;		// download javascript in background
 extern char whichproc; // which edbrowse-xx process
 extern char showProgress; // feedback as a file is downloaded
 extern char eb_language[];		/* edbrowse language, determined by $LANG */
+extern  const char *const supported_languages[];
 extern int eb_lang; // encoded version of the above, for languages that we recognize
 extern bool cons_utf8;		/* does the console expect utf8? */
 extern bool iuConvert;		/* perform iso utf8 conversions automatically */

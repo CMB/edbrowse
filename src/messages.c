@@ -13,6 +13,10 @@
 static const char **messageArray;
 char eb_language[8];
 int eb_lang;
+const char *const supported_languages[] = { 0,
+	"english", "french", "portuguese", "polish",
+	"german", "russian", "italian",
+};
 /* startup .ebrc files in various languages */
 const char *ebrc_string;
 static const char *qrg_string;

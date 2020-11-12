@@ -1014,7 +1014,7 @@ char *htmlParse(char *buf, int remote)
  * This is typical of generated html, from pdf for instance,
  * or the html that is in email. */
 	if (cf->cx && !jsDoorway())
-		freeJavaContext(cf);
+		freeJSContext(cf);
 
 	if (isJSAlive) {
 // the "create handlers" messages aren't helpful here.

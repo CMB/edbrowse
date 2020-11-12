@@ -11,47 +11,6 @@
 
 #include <stdarg.h>
 
-/* If connection is lost, mark all js sessions as dead. */
-static void markAllDead(void)
-{
-	int cx;			/* edbrowse context */
-	struct ebWindow *w;
-	Frame *f;
-	bool killed = false;
-
-	for (cx = 1; cx <= maxSession; ++cx) {
-		w = sessionList[cx].lw;
-		while (w) {
-			for (f = &w->f0; f; f = f->next) {
-				if (!f->winobj)
-					continue;
-				f->winobj = 0;
-				f->docobj = 0;
-				f->cx = 0;
-				killed = true;
-			}
-			w = w->prev;
-		}
-	}
-
-	if (killed)
-		i_puts(MSG_JSCloseSessions);
-}				/* markAllDead */
-
-static int js_pid;
-
-/* Start the js process. */
-static void js_start(void)
-{
-	debugPrint(5, "setting of communication channels for javascript");
-	if (js_main()) {
-		i_puts(MSG_JSEngineRun);
-		markAllDead();
-	} else {
-		js_pid = 1;
-	}
-}				/* js_start */
-
 /* Javascript has changed an input field */
 static void javaSetsInner(jsobjtype v, const char *newtext);
 void javaSetsTagVar(jsobjtype v, const char *newtext)
@@ -111,46 +70,12 @@ static const char *debugString(const char *v)
 	return v;
 }				/* debugString */
 
-// Create a js context for the current frame.
-// The corresponding js context will be stored in cf->cx.
-// We don't pass frame as a parameter, cf (current frame) is assumed.
-void createJavaContext(void)
-{
-	if (!allowJS)
-		return;
-
-	if (!js_pid)
-		js_start();
-
-	debugPrint(5, "> create context for session %d", context);
-	createJavaContext_0(cf);
-	if (cf->cx) {
-		debugPrint(5, "< ok");
-		cf->jslink = true;
-		setupJavaDom();
-	} else {
-		debugPrint(5, "< error");
-		i_puts(MSG_JavaContextError);
-	}
-}				/* createJavaContext */
-
 /*********************************************************************
 This is unique among all the wrappered calls in that it can be made for
 a window that is not the current window.
 You can free another window, or a whole stack of windows, by typeing
 q2 while in session 1.
 *********************************************************************/
-
-void freeJavaContext(Frame *f)
-{
-	if (!f->cx)
-		return;
-	debugPrint(5, "> free frame %p", f);
-	freeJavaContext_0(f->cx);
-	f->cx = f->winobj = f->docobj = 0;
-	debugPrint(5, "< ok");
-	cssFree(f);
-}				/* freeJavaContext */
 
 void jsRunData(const Frame *f, jsobjtype obj,
 const char *filename, int lineno)
@@ -674,117 +599,15 @@ struct utsname {
 	char sysname[32];
 	char machine[32];
 };
-
 int uname(struct utsname *pun)
 {
 	memset(pun, 0, sizeof(struct utsname));
 	// TODO: WIN32: maybe fill in sysname, and machine...
 	return 0;
 }
-
 #else // !DOSLIKE - // port of uname(p), and struct utsname
 #include <sys/utsname.h>
 #endif // DOSLIKE y/n // port of uname(p), and struct utsname
-
-/* After createJavaContext, set up the document object and other variables
- * and methods that are base for client side DOM. */
-void setupJavaDom(void)
-{
-	jsobjtype w = cf->winobj;	// window object
-	jsobjtype d = cf->docobj;	// document object
-	jsobjtype cx = cf->cx;	// current context
-	jsobjtype nav;		// navigator object
-	jsobjtype navpi;	// navigator plugins
-	jsobjtype navmt;	// navigator mime types
-	jsobjtype hist;		// history object
-	struct MIMETYPE *mt;
-	struct utsname ubuf;
-	int i;
-	char save_c;
-	static const char *const languages[] = { 0,
-		"english", "french", "portuguese", "polish",
-		"german", "russian", "italian",
-	};
-	extern const char startWindowJS[];
-	extern const char thirdJS[];
-
-	set_property_object_0(cx, w, "window", w);
-
-/* the js window/document setup script.
- * These are all the things that do not depend on the platform,
- * OS, configurations, etc. */
-	jsRunScriptWin(startWindowJS, "StartWindow", 1);
-	jsRunScriptWin(thirdJS, "Third", 1);
-
-	nav = get_property_object_0(cx, w, "navigator");
-	if (nav == NULL)
-		return;
-/* some of the navigator is in startwindow.js; the runtime properties are here. */
-	set_property_string_0(cx, nav, "userLanguage", languages[eb_lang]);
-	set_property_string_0(cx, nav, "language", languages[eb_lang]);
-	set_property_string_0(cx, nav, "appVersion", version);
-	set_property_string_0(cx, nav, "vendorSub", version);
-	set_property_string_0(cx, nav, "userAgent", currentAgent);
-	uname(&ubuf);
-	set_property_string_0(cx, nav, "oscpu", ubuf.sysname);
-	set_property_string_0(cx, nav, "platform", ubuf.machine);
-
-/* Build the array of mime types and plugins,
- * according to the entries in the config file. */
-	navpi = get_property_object_0(cx, nav, "plugins");
-	navmt = get_property_object_0(cx, nav, "mimeTypes");
-	if (navpi == NULL || navmt == NULL)
-		return;
-	mt = mimetypes;
-	for (i = 0; i < maxMime; ++i, ++mt) {
-		int len;
-/* po is the plugin object and mo is the mime object */
-		jsobjtype po = instantiate_array_element_0(cx, navpi, i, 0);
-		jsobjtype mo = instantiate_array_element_0(cx, navmt, i, 0);
-		if (po == NULL || mo == NULL)
-			return;
-		set_property_object_0(cx, mo, "enabledPlugin", po);
-		set_property_string_0(cx, mo, "type", mt->type);
-		set_property_object_0(cx, navmt, mt->type, mo);
-		set_property_string_0(cx, mo, "description", mt->desc);
-		set_property_string_0(cx, mo, "suffixes", mt->suffix);
-/* I don't really have enough information from the config file to fill
- * in the attributes of the plugin object.
- * I'm just going to fake it.
- * Description will be the same as that of the mime type,
- * and the filename will be the program to run.
- * No idea if this is right or not. */
-		set_property_string_0(cx, po, "description", mt->desc);
-		set_property_string_0(cx, po, "filename", mt->program);
-/* For the name, how about the program without its options? */
-		len = strcspn(mt->program, " \t");
-		save_c = mt->program[len];
-		mt->program[len] = 0;
-		set_property_string_0(cx, po, "name", mt->program);
-		mt->program[len] = save_c;
-	}
-
-	hist = get_property_object_0(cx, w, "history");
-	if (hist == NULL)
-		return;
-	set_property_string_0(cx, hist, "current", cf->fileName);
-
-	set_property_string_0(cx, d, "referrer", cw->referrer);
-	set_property_string_0(cx, d, "URL", cf->fileName);
-	set_property_string_0(cx, d, "location", cf->fileName);
-	set_property_string_0(cx, w, "location", cf->fileName);
-	jsRunScriptWin(
-		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
-		    "locreplace", 1);
-	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
-// These calls are redundent unless this is the first window
-	if (debugClone)
-		set_master_bool("cloneDebug", true);
-	if (debugEvent)
-		set_master_bool("eventDebug", true);
-	if (debugThrow)
-		set_master_bool("throwDebug", true);
-}				/* setupJavaDom */
 
 /* Get the url from a url object, special wrapper.
  * Owner object is passed, look for obj.href, obj.src, or obj.action.

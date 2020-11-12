@@ -896,7 +896,7 @@ static void freeWindow(struct ebWindow *w)
 	for (f = &w->f0; f; f = fnext) {
 		fnext = f->next;
 		delTimers(f);
-		freeJavaContext(f);
+		freeJSContext(f);
 		nzFree(f->dw);
 		nzFree(f->hbase);
 		nzFree(f->fileName);
@@ -4519,7 +4519,7 @@ et_go:
 		for (f = &cw->f0; f; f = fnext) {
 			fnext = f->next;
 			delTimers(f);
-			freeJavaContext(f);
+			freeJSContext(f);
 			nzFree(f->dw);
 			nzFree(f->hbase);
 			nzFree(f->firstURL);
@@ -7012,7 +7012,7 @@ bool browseCurrentBuffer(void)
 
 	if (bmode == 2) {
 		if (javaOK(cf->fileName))
-			createJavaContext();
+			createJSContext(cf);
 		nzFree(newlocation);	/* should already be 0 */
 		newlocation = 0;
 		newbuf = htmlParse(rawbuf, remote);

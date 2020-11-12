@@ -16,6 +16,7 @@ STRIP=-s
 ifneq ($(EBDEBUG),)
 STRIP=
 CFLAGS += -g -ggdb
+CXXFLAGS += -g -ggdb
 endif
 
 #  check for errors and mid level warnings.
@@ -109,7 +110,7 @@ endif
 #  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
 HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o isup.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o
 js_hello_moz : js_hello_moz.cpp
-	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) js_hello_moz.cpp -lmozjs-$(SMV) $(HELLOEXTRA) -lstdc++ -lpthread -lreadline -lpcre -lcurl -o js_hello_moz
+	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) $(CXXFLAGS) js_hello_moz.cpp -lmozjs-$(SMV) $(HELLOEXTRA) -lstdc++ -lpthread -lreadline -lpcre -lcurl -o js_hello_moz
 
 hello: js_hello_duk js_hello_v8 js_hello_moz
 

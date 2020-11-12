@@ -605,9 +605,8 @@ return true;
 // These are temporary declarations, as they should live in ebprot.h
 JSObject *instantiate_array_o(JS::HandleObject parent, const char *name);
 int run_function_onearg_o(JS::HandleObject parent, const char *name, JS::HandleObject a);
-bool createJSContext(Frame *f);
+void createJSContext(Frame *f);
 void freeJSContext(Frame *f);
-void freeJavaContext(Frame *f) { freeJSContext(f); }
 
 static bool setter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 {
@@ -3017,7 +3016,7 @@ jsInterruptCheck();
 		outgoing_xhrheaders = emptyString;
 	if (outgoing_xhrbody == NULL)
 		outgoing_xhrbody = emptyString;
-asprintf(&a, "%d\r\n%d\r\n%s%s",
+asprintf(&a, "%d\r\n\r\n%d\r\n\r\n%s%s",
 rc, g.code, outgoing_xhrheaders, outgoing_xhrbody);
 	nzFree(outgoing_xhrheaders);
 	nzFree(outgoing_xhrbody);
@@ -3138,7 +3137,7 @@ static void setup_window_2(void);
 
 // This is an edbrowse context, in a frame,
 // nothing like the Mozilla js context.
-bool createJSContext(Frame *f)
+void createJSContext(Frame *f)
 {
 int sn = f->gsn;
 char buf[16];
@@ -3147,7 +3146,7 @@ debugPrint(3, "create js context %d", sn);
       JS::CompartmentOptions options;
 JSObject *g = JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options);
 if(!g)
-return false;
+return;
 JS::RootedObject global(cxa, g);
         JSAutoCompartment ac(cxa, g);
         JS_InitStandardClasses(cxa, global);
@@ -3156,14 +3155,13 @@ JS_DefineFunctions(cxa, global, nativeMethodsWindow);
 JS::RootedValue objval(cxa); // object as value
 objval = JS::ObjectValue(*global);
 if(!JS_DefineProperty(cxa, *rw0, buf, objval, JSPROP_STD))
-return false;
+return;
 f->jslink = true;
 
 // Link back to the master window.
 objval = JS::ObjectValue(**mw0);
-if(!JS_DefineProperty(cxa, global, "mw$", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT)))
-return false;
+JS_DefineProperty(cxa, global, "mw$", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT));
 
 // Link to root window, debugging only.
 // Don't do this in production; it's a huge security risk!
@@ -3173,32 +3171,29 @@ JS_DefineProperty(cxa, global, "rw0", objval,
 
 // window
 objval = JS::ObjectValue(*global);
-if(!JS_DefineProperty(cxa, global, "window", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT)))
-return false;
+JS_DefineProperty(cxa, global, "window", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT));
 
 // time for document under window
 JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
 objval = JS::ObjectValue(*docroot);
-if(!JS_DefineProperty(cxa, global, "document", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT)))
-return false;
+JS_DefineProperty(cxa, global, "document", objval,
+(JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 
 set_property_number_o(docroot, "eb$seqno", 0);
 set_property_number_o(docroot, "eb$ctx", sn);
-// Sequence is to set cf->fileName, then createContext(), so for a short time,
+// Sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
 JS::RootedValue v(cxa);
-JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, cf->fileName));
+JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, f->fileName));
 v.setString(m);
 JS_DefineProperty(cxa, global, "eb$url", v,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
 setup_window_2();
-return true;
 }
 
 #ifdef DOSLIKE			// port of uname(p), and struct utsname
@@ -3227,10 +3222,6 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	struct utsname ubuf;
 	int i;
 	char save_c;
-	static const char *const languages[] = { 0,
-		"english", "french", "portuguese", "polish",
-		"german", "russian", "italian",
-	};
 	extern const char startWindowJS[];
 
 // startwindow.js stored as an internal string
@@ -3240,8 +3231,8 @@ jsRunScriptWin(startWindowJS, "startwindow.js", 1);
 	if (!nav)
 		return;
 // some of the navigator is in startwindow.js; the runtime properties are here.
-	set_property_string_o(nav, "userLanguage", languages[eb_lang]);
-	set_property_string_o(nav, "language", languages[eb_lang]);
+	set_property_string_o(nav, "userLanguage", supported_languages[eb_lang]);
+	set_property_string_o(nav, "language", supported_languages[eb_lang]);
 	set_property_string_o(nav, "appVersion", version);
 	set_property_string_o(nav, "vendorSub", version);
 	set_property_string_o(nav, "userAgent", currentAgent);
@@ -3382,6 +3373,9 @@ char buf[16];
 debugLevel = 5;
 selectLanguage();
 
+static char myhome[] = "/snork";
+home = myhome;
+
 if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
 top = iaflag ? 3 : 1;
 
@@ -3430,8 +3424,12 @@ for(c=0; c<top; ++c) {
 sprintf(buf, "session %d", c+1);
 cf->fileName = buf;
 cf->gsn = c+1;
-if(!createJSContext(cf))
-printf("create failed on %d\n", c+1);
+cf->jslink = false;
+createJSContext(cf);
+if(!cf->jslink) {
+printf("create failed on %d\n", c+1); 
+return 3;
+}
 }
 
 c = 0; // back to the first window
