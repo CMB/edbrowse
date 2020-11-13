@@ -1029,11 +1029,231 @@ static duk_ret_t native_unframe2(duk_context * cx)
 	return 0;
 }
 
+/* I don't have any reverse pointers, so I'm just going to scan the list */
+/* This doesn't come up all that often. */
+Tag *tagFromJavaVar(jsobjtype v)
+{
+	Tag *t = 0;
+	int i;
+
+	if (!tagList)
+		i_printfExit(MSG_NullListInform);
+
+	for (i = 0; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (t->jv == v && !t->dead)
+			return t;
+	}
+	return 0;
+}				/* tagFromJavaVar */
+
+// Create a new tag for this pointer, only from document.createElement().
+static Tag *tagFromJavaVar2(jsobjtype v, const char *tagname)
+{
+	Tag *t;
+	if (!tagname)
+		return 0;
+	t = newTag(cf, tagname);
+	if (!t) {
+		debugPrint(3, "cannot create tag node %s", tagname);
+		return 0;
+	}
+	connectTagObject(t, v);
+/* this node now has a js object, don't decorate it again. */
+	t->step = 2;
+/* and don't render it unless it is linked into the active tree */
+	t->deleted = true;
+	return t;
+}				/* tagFromJavaVar2 */
+
+void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
+{
+	Tag *parent, *add, *before, *c, *t;
+	jsobjtype *a_j, *b_j;
+	jsobjtype cx;
+	char p_name[MAXTAGNAME], a_name[MAXTAGNAME], b_name[MAXTAGNAME];
+	int action;
+	char *jst;		// javascript string
+
+// Some functions in third.js create, link, and then remove nodes, before
+// there is a document. Don't run any side effects in this case.
+	if (!cw->tags)
+		return;
+
+	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
+	if (type == 'c') {	/* create */
+		parent = tagFromJavaVar2(p_j, p_name);
+		if (parent) {
+			debugPrint(4, "linkage, %s %d created",
+				   p_name, parent->seqno);
+			if (parent->action == TAGACT_INPUT) {
+// we need to establish the getter and setter for value
+				set_property_string_0(parent->f0->cx,
+				parent->jv, "value", emptyString);
+			}
+		}
+		return;
+	}
+
+	parent = tagFromJavaVar(p_j);
+/* options are relinked by rebuildSelectors, not here. */
+	if (stringEqual(p_name, "option"))
+		return;
+
+	if (stringEqual(a_name, "option"))
+		return;
+
+	add = tagFromJavaVar(a_j);
+	if (!parent || !add)
+		return;
+
+	if (type == 'r') {
+/* add is a misnomer here, it's being removed */
+		add->deleted = true;
+		debugPrint(4, "linkage, %s %d removed from %s %d",
+			   a_name, add->seqno, p_name, parent->seqno);
+		add->parent = NULL;
+		if (parent->firstchild == add)
+			parent->firstchild = add->sibling;
+		else {
+			c = parent->firstchild;
+			if (c) {
+				for (; c->sibling; c = c->sibling) {
+					if (c->sibling != add)
+						continue;
+					c->sibling = add->sibling;
+					break;
+				}
+			}
+		}
+		add->sibling = NULL;
+		return;
+	}
+
+/* check and see if this link would turn the tree into a circle, whence
+ * any subsequent traversal would fall into an infinite loop.
+ * Child node must not have a parent, and, must not link into itself.
+ * Oddly enough the latter seems to happen on acid3.acidtests.org,
+ * linking body into body, and body at the top has no parent,
+ * so passes the "no parent" test, whereupon I had to add the second test. */
+	if (add->parent || add == parent) {
+		if (debugLevel >= 3) {
+			debugPrint(3,
+				   "linkage cycle, cannot link %s %d into %s %d",
+				   a_name, add->seqno, p_name, parent->seqno);
+			if (type == 'b') {
+				before = tagFromJavaVar(b_j);
+				debugPrint(3, "before %s %d", b_name,
+					   (before ? before->seqno : -1));
+			}
+			if (add->parent)
+				debugPrint(3,
+					   "the child already has parent %s %d",
+					   add->parent->info->name,
+					   add->parent->seqno);
+			debugPrint(3,
+				   "Aborting the link, some data may not be rendered.");
+		}
+		return;
+	}
+
+	if (type == 'b') {	/* insertBefore */
+		before = tagFromJavaVar(b_j);
+		if (!before)
+			return;
+		debugPrint(4, "linkage, %s %d linked into %s %d before %s %d",
+			   a_name, add->seqno, p_name, parent->seqno,
+			   b_name, before->seqno);
+		c = parent->firstchild;
+		if (!c)
+			return;
+		if (c == before) {
+			parent->firstchild = add;
+			add->sibling = before;
+			goto ab;
+		}
+		while (c->sibling && c->sibling != before)
+			c = c->sibling;
+		if (!c->sibling)
+			return;
+		c->sibling = add;
+		add->sibling = before;
+		goto ab;
+	}
+
+/* type = a, appendchild */
+	debugPrint(4, "linkage, %s %d linked into %s %d",
+		   a_name, add->seqno, p_name, parent->seqno);
+	if (!parent->firstchild)
+		parent->firstchild = add;
+	else {
+		c = parent->firstchild;
+		while (c->sibling)
+			c = c->sibling;
+		c->sibling = add;
+	}
+
+ab:
+	add->parent = parent;
+	add->deleted = false;
+
+	t = add;
+	debugPrint(4, "fixup %s %d", a_name, t->seqno);
+	action = t->action;
+	cx = t->f0->cx;
+	t->name = get_property_string_0(cx, t->jv, "name");
+	t->id = get_property_string_0(cx, t->jv, "id");
+	t->jclass = get_property_string_t(t, "class");
+
+	switch (action) {
+	case TAGACT_INPUT:
+		jst = get_property_string_t(t, "type");
+		setTagAttr(t, "type", jst);
+		t->value = get_property_string_t(t, "value");
+		htmlInputHelper(t);
+		break;
+
+	case TAGACT_OPTION:
+		if (!t->value)
+			t->value = emptyString;
+		if (!t->textval)
+			t->textval = emptyString;
+		break;
+
+	case TAGACT_TA:
+		t->action = TAGACT_INPUT;
+		t->itype = INP_TA;
+		t->value = get_property_string_t(t, "value");
+		if (!t->value)
+			t->value = emptyString;
+// Need to create the side buffer here.
+		formControl(t, true);
+		break;
+
+	case TAGACT_SELECT:
+		t->action = TAGACT_INPUT;
+		t->itype = INP_SELECT;
+		if (typeof_property_0(cx, t->jv, "multiple"))
+			t->multiple = true;
+		formControl(t, true);
+		break;
+
+	case TAGACT_TR:
+		t->controller = findOpenTag(t, TAGACT_TABLE);
+		break;
+
+	case TAGACT_TD:
+		t->controller = findOpenTag(t, TAGACT_TR);
+		break;
+
+	}			/* switch */
+}
+
 static void linkageNow(duk_context * cx, char linkmode, jsobjtype o)
 {
 	jsInterruptCheck(cx);
 	debugPrint(4, "linkset %s", effects + 2);
-	javaSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
+	domSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
 	nzFree(effects);
 	effects = initString(&eff_l);
 }
@@ -1685,23 +1905,35 @@ static duk_ret_t native_resolveURL(duk_context * cx)
 
 static duk_ret_t native_formSubmit(duk_context * cx)
 {
+Tag *t;
 	jsobjtype thisobj;
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
+t = tagFromJavaVar(thisobj);
 	duk_pop(cx);
-	debugPrint(4, "submit %p", thisobj);
-	javaSubmitsForm(thisobj, false);
+	if(t && t->action == TAGACT_FORM) {
+		debugPrint(3, "submit form tag %d", t->seqno);
+		domSubmitsForm(t, false);
+	} else {
+		debugPrint(3, "submit form tag not found");
+	}
 	return 0;
 }
 
 static duk_ret_t native_formReset(duk_context * cx)
 {
 	jsobjtype thisobj;
+	Tag *t;
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
+t = tagFromJavaVar(thisobj);
 	duk_pop(cx);
-	debugPrint(4, "reset %p", thisobj);
-	javaSubmitsForm(thisobj, true);
+	if(t && t->action == TAGACT_FORM) {
+		debugPrint(3, "reset form tag %d", t->seqno);
+		domSubmitsForm(t, true);
+	} else {
+		debugPrint(3, "reset form tag not found");
+	}
 	return 0;
 }
 
@@ -2156,7 +2388,7 @@ void freeJSContext(Frame *f)
 		return;
 	freeJSContext_0(f->cx);
 	f->cx = f->winobj = f->docobj = 0;
-f->jslink = false;
+	f->jslink = false;
 	cssFree(f);
 }
 
@@ -3123,32 +3355,41 @@ return 0;
 return get_property_url_0(t->f0->cx, t->jv, action);
 }
 
+char *get_style_string_t(const Tag *t, const char *name)
+{
+	jsobjtype so; // style object
+	if(!t->jslink || !allowJS)
+		return 0;
+	so = get_property_object_0(t->f0->cx, t->jv, "style");
+	return so ? get_property_string_0(t->f0->cx, so, name) : 0;
+}
+
 void delete_property_t(const Tag *t, const char *name)
 {
-if(!t->jslink || !allowJS)
-return;
-delete_property_0(t->f0->cx, t->jv, name);
+	if(!t->jslink || !allowJS)
+		return;
+	delete_property_0(t->f0->cx, t->jv, name);
 }
 
 void set_property_bool_t(const Tag *t, const char *name, bool v)
 {
-if(!t->jslink || !allowJS)
-return;
-set_property_bool_0(t->f0->cx, t->jv, name, v);
+	if(!t->jslink || !allowJS)
+		return;
+	set_property_bool_0(t->f0->cx, t->jv, name, v);
 }
 
 void set_property_number_t(const Tag *t, const char *name, int v)
 {
-if(!t->jslink || !allowJS)
-return;
-set_property_number_0(t->f0->cx, t->jv, name, v);
+	if(!t->jslink || !allowJS)
+		return;
+	set_property_number_0(t->f0->cx, t->jv, name, v);
 }
 
 void set_property_string_t(const Tag *t, const char *name, const char * v)
 {
-if(!t->jslink || !allowJS)
-return;
-set_property_string_0(t->f0->cx, t->jv, name, v);
+	if(!t->jslink || !allowJS)
+		return;
+	set_property_string_0(t->f0->cx, t->jv, name, v);
 }
 
 void set_win_string(const char *name, const char *v)

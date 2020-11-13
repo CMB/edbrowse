@@ -2527,7 +2527,7 @@ eval(
 if(this["' + evorig + '"] && e.eventPhase < 3) { \
 var ehsn = this["' + evorig + '"].ehsn; \
 if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
-alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = this["' + evorig + '"](e); alert3("endfire handler " + ehsn); \
+alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = this["' + evorig + '"](e); alert3("endfire orig" + (ehsn.length ? " handler " + ehsn : "")); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) { var h = a[i];if(h.did$run) continue; \

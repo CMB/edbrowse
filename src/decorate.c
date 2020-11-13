@@ -87,13 +87,48 @@ const char *attribVal(const Tag *t, const char *name)
 		return 0;
 	v = t->atvals[j];
 	return v;
-}				/* attribVal */
+}
 
 static bool attribPresent(const Tag *t, const char *name)
 {
 	int j = stringInListCI(t->attributes, name);
 	return (j >= 0);
-}				/* attribPresent */
+}
+
+// Push an attribute onto an html tag.
+// Value is already allocated, name is not.
+// So far only used by domSetsLinkage.
+void setTagAttr(Tag *t, const char *name, char *val)
+{
+	int nattr = 0;		/* number of attributes */
+	int i = -1;
+	if (!val)
+		return;
+	if (t->attributes) {
+		for (nattr = 0; t->attributes[nattr]; ++nattr)
+			if (stringEqualCI(name, t->attributes[nattr]))
+				i = nattr;
+	}
+	if (i >= 0) {
+		cnzFree(t->atvals[i]);
+		t->atvals[i] = val;
+		return;
+	}
+/* push */
+	if (!nattr) {
+		t->attributes = allocMem(sizeof(char *) * 2);
+		t->atvals = allocMem(sizeof(char *) * 2);
+	} else {
+		t->attributes =
+		    reallocMem(t->attributes, sizeof(char *) * (nattr + 2));
+		t->atvals = reallocMem(t->atvals, sizeof(char *) * (nattr + 2));
+	}
+	t->attributes[nattr] = cloneString(name);
+	t->atvals[nattr] = val;
+	++nattr;
+	t->attributes[nattr] = 0;
+	t->atvals[nattr] = 0;
+}
 
 static void linkinTree(Tag *parent, Tag *child)
 {

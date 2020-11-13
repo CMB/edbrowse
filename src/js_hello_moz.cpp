@@ -78,7 +78,6 @@ char *userAgents[MAXAGENT + 1];
 char *currentAgent;
 void ebClose(int n) { exit(n); }
 Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
-void domSubmitsForm(JSObject *form, bool reset) { }
 void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
 void htmlInputHelper(Tag *t) { }
 void formControl(Tag *t, bool namecheck) { }
@@ -128,6 +127,8 @@ bool infReplace(int tagno, const char *newtext, bool notify){return true;}
 bool infPush(int tagno, char **post_string){return true;}
 bool tagHandler(int seqno, const char *name) { return false; }
 bool js_redirects;
+void setTagAttr(Tag *t, const char *name, char *val) { nzFree(val); }
+void domSubmitsForm(Tag *t, bool reset){}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -1009,6 +1010,20 @@ return 0;
 return get_property_url_o(obj, action);
 }
 
+char *get_style_string_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return 0;
+JSAutoCompartment(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return 0;
+JS::RootedObject style(cxa, get_property_object_o(obj, "style"));
+if(!style)
+return 0;
+return get_property_string_o(style, name);
+}
+
 void delete_property_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
@@ -1428,39 +1443,6 @@ static Tag *tagFromObject2(JS::HandleObject o, const char *tagname)
 	t->deleted = true;
 	return t;
 }
-
-// Value is already allocated, name is not.
-// So far only used by domSetsLinkage.
-static void setTagAttr(Tag *t, const char *name, char *val)
-{
-	int nattr = 0;		/* number of attributes */
-	int i = -1;
-	if (!val)
-		return;
-	if (t->attributes) {
-		for (nattr = 0; t->attributes[nattr]; ++nattr)
-			if (stringEqualCI(name, t->attributes[nattr]))
-				i = nattr;
-	}
-	if (i >= 0) {
-		cnzFree(t->atvals[i]);
-		t->atvals[i] = val;
-		return;
-	}
-/* push */
-	if (!nattr) {
-		t->attributes = (const char**) allocMem(sizeof(char *) * 2);
-		t->atvals = (const char**) allocMem(sizeof(char *) * 2);
-	} else {
-		t->attributes = (const char**) reallocMem(t->attributes, sizeof(char *) * (nattr + 2));
-		t->atvals = (const char**) reallocMem(t->atvals, sizeof(char *) * (nattr + 2));
-	}
-	t->attributes[nattr] = cloneString(name);
-	t->atvals[nattr] = val;
-	++nattr;
-	t->attributes[nattr] = 0;
-	t->atvals[nattr] = 0;
-}				/* setTagAttr */
 
 // We need to call and remember up to 3 node names, to carry dom changes
 // across to html. As in parent.insertBefore(newChild, existingChild);
@@ -1924,7 +1906,13 @@ static bool nat_formSubmit(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-domSubmitsForm(thisobj, false);
+Tag *t = tagFromObject(thisobj);
+	if(t && t->action == TAGACT_FORM) {
+		debugPrint(3, "submit form tag %d", t->seqno);
+		domSubmitsForm(t, false);
+	} else {
+		debugPrint(3, "submit form tag not found");
+	}
 args.rval().setUndefined();
   return true;
 }
@@ -1933,7 +1921,13 @@ static bool nat_formReset(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-domSubmitsForm(thisobj, true);
+Tag *t = tagFromObject(thisobj);
+	if(t && t->action == TAGACT_FORM) {
+		debugPrint(3, "reset form tag %d", t->seqno);
+		domSubmitsForm(t, true);
+	} else {
+		debugPrint(3, "reset form tag not found");
+	}
 args.rval().setUndefined();
   return true;
 }

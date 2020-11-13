@@ -3125,7 +3125,7 @@ in fact it's easier to list the tags that allow it.
 					    "TextNode");
 			if (!textobj)	// should never happen
 				return;
-			javaSetsLinkage(false, 'c', textobj, jl);
+			domSetsLinkage(false, 'c', textobj, jl);
 			run_function_onearg_0(cx, obj, "prependChild", textobj);
 // It is now linked in and safe from gc
 			delete_property_0(cx, cf->winobj, "eb$inject");
@@ -3142,7 +3142,7 @@ in fact it's easier to list the tags that allow it.
 					    "TextNode");
 			if (!textobj)	// should never happen
 				return;
-			javaSetsLinkage(false, 'c', textobj, jl);
+			domSetsLinkage(false, 'c', textobj, jl);
 			run_function_onearg_0(cx, obj, "appendChild", textobj);
 // It is now linked in and safe from gc
 			delete_property_0(cx, cf->winobj, "eb$inject");

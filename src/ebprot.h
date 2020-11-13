@@ -138,7 +138,8 @@ void itext(void);
 bool infReplace(int tagno, const char *newtext, bool notify);
 bool infPush(int tagno, char **post_string);
 Tag *tagFromJavaVar(jsobjtype v);
-void javaSubmitsForm(jsobjtype v, bool reset);
+void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest);
+void domSubmitsForm(Tag *t, bool reset);
 void runningError(int msg, ...);
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
@@ -149,7 +150,6 @@ bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(Frame *f);
 void runTimer(void);
 void javaOpensWindow(const char *href, const char *name) ;
-void javaSetsLinkage(bool after, char type, jsobjtype p, const char *rest);
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);
@@ -157,6 +157,7 @@ void html2nodes(const char *htmltext, bool startpage);
 /* sourcefile=decorate.c */
 void traverseAll(int start);
 const char *attribVal(const Tag *t, const char *name);
+void setTagAttr(Tag *t, const char *name, char *val);
 Tag *findOpenTag(Tag *t, int action);
 Tag *findOpenList(Tag *t);
 void formControl(Tag *t, bool namecheck);
@@ -435,6 +436,7 @@ bool run_event_doc(const Frame *f, const char *pname, const char *evname);
 bool bubble_event_t(const Tag *t, const char *name);
 void set_master_bool(const char *name, bool v);
 char *get_property_url_t(const Tag *t, bool action);
+char *get_style_string_t(const Tag *t, const char *name);
 void delete_property_t(const Tag *t, const char *name);
 bool get_property_bool_t(const Tag *t, const char *name);
 int get_property_number_t(const Tag *t, const char *name);
