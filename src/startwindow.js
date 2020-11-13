@@ -2417,7 +2417,7 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 document.createEvent = function(unused) { return new Event; }
 
 document.dispatchEvent = function (e) {
-if(mw$.eventDebug) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno?this.eb$seqno:"?") + " " + e.type);
+if(mw$.eventDebug) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno:"?") + " " + e.type);
 e.target = this;
 var t = this;
 var pathway = [];
@@ -2507,7 +2507,7 @@ if(once) handler.do$once = true;
 if(passive) handler.do$passive = true;
 // event handler serial number, for debugging
 if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
-if(mw$.eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
+if(mw$.eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 
@@ -2527,14 +2527,14 @@ eval(
 if(this["' + evorig + '"] && e.eventPhase < 3) { \
 var ehsn = this["' + evorig + '"].ehsn; \
 if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
-alert3("fire orig tag " + (this.eb$seqno ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = this["' + evorig + '"](e); alert3("endfire handler " + ehsn); \
+alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = this["' + evorig + '"](e); alert3("endfire handler " + ehsn); \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) { var h = a[i];if(h.did$run) continue; \
 if(e.eventPhase== 1 && !h.do$capture || e.eventPhase == 3 && !h.do$bubble) continue; \
 var ehsn = h.ehsn; \
 if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
-h.did$run = true; alert3("fire tag " + (this.eb$seqno ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = h.call(this,e); alert3("endfire handler " + ehsn); \
+h.did$run = true; alert3("fire tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = h.call(this,e); alert3("endfire handler " + ehsn); \
 if(h.do$once) { alert3("once"); this.removeEventListener(e.type, h, h.do$capture); } \
 if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
@@ -2552,7 +2552,7 @@ this[evarray].push(handler);
 eb$unlisten = document.eb$unlisten = function(ev, handler, iscapture, addon) {
 var ehsn = (handler.ehsn ? handler.ehsn : 0);
 if(addon) ev = "on" + ev;
-if(mw$.eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno ? this.eb$seqno : -1) + " handler " + ehsn);
+if(mw$.eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
 
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html

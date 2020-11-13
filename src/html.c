@@ -140,7 +140,6 @@ locateOptions(const Tag *sel, const char *input,
 	int n, pmc;
 	const char *s, *e;	/* start and end of an option */
 	char *iopt;		/* individual option */
-	Frame *f = sel->f0;
 
 	iopt = (char *)allocMem(len + 1);
 	disp = initString(&disp_l);
@@ -149,12 +148,12 @@ locateOptions(const Tag *sel, const char *input,
 	if (setcheck) {
 /* Uncheck all existing options, then check the ones selected. */
 		if (sel->jv && allowJS)
-			set_property_number(f, sel->jv, "selectedIndex", -1);
+			set_property_number_t(sel, "selectedIndex", -1);
 		for (t = cw->optlist; t; t = t->same) {
 			if (t->controller == sel && t->textval) {
 				t->checked = false;
 				if (t->jv && allowJS)
-					set_property_bool(f, t->jv, "selected",   false);
+					set_property_bool_t(t, "selected",   false);
 			}
 		}
 	}
@@ -209,11 +208,9 @@ locateOptions(const Tag *sel, const char *input,
 		if (setcheck) {
 			t->checked = true;
 			if (t->jv && allowJS) {
-				set_property_bool(f, t->jv, "selected", true);
+				set_property_bool_t(t, "selected", true);
 				if (sel->jv && allowJS)
-					set_property_number(f, sel->jv,
-							    "selectedIndex",
-							    t->lic);
+					set_property_number_t(sel, "selectedIndex", t->lic);
 			}
 		}
 	}			/* loop over multiple options */
@@ -252,7 +249,6 @@ void jSyncup(bool fromtimer)
 	Tag *t;
 	int itype, j, cx;
 	char *value, *cxbuf;
-	Frame *f;
 
 	if (!cw->browseMode)
 		return;		/* not necessary */
@@ -270,19 +266,12 @@ void jSyncup(bool fromtimer)
 		if (itype <= INP_HIDDEN)
 			continue;
 
-/*********************************************************************
-You could change input fields in several frames, and each item should be
-passed down to its corresponding js context.
-This line sets the frame, then we're ready to roll.
-*********************************************************************/
-		f = t->f0;
-
 		if (itype >= INP_RADIO) {
 			int checked = fieldIsChecked(t->seqno);
 			if (checked < 0)
 				continue;
 			t->checked = checked;
-			set_property_bool(f, t->jv, "checked", checked);
+			set_property_bool_t(t, "checked", checked);
 			continue;
 		}
 
@@ -306,7 +295,7 @@ This line sets the frame, then we're ready to roll.
 
 		if (itype == INP_TA) {
 			if (!value) {
-				set_property_string(f, t->jv, "value", 0);
+				set_property_string_t(t, "value", 0);
 				continue;
 			}
 /* Now value is just <buffer 3>, which is meaningless. */
@@ -317,13 +306,13 @@ This line sets the frame, then we're ready to roll.
 // unfoldBuffer could fail if we have quit that session.
 			if (!unfoldBuffer(cx, false, &cxbuf, &j))
 				continue;
-			set_property_string(f, t->jv, "value", cxbuf);
+			set_property_string_t(t, "value", cxbuf);
 			nzFree(cxbuf);
 			continue;
 		}
 
 		if (value) {
-			set_property_string(f, t->jv, "value", value);
+			set_property_string_t(t, "value", value);
 			nzFree(t->value);
 			t->value = value;
 		}
@@ -498,7 +487,7 @@ void prepareScript(Tag *t)
 
 	if (t->jv) {
 // js might have set, or changed, the source url.
-		char *new_url = get_property_url(f, t->jv, false);
+		char *new_url = get_property_url_t(t, false);
 		if (new_url && *new_url) {
 			if (t->href && !stringEqual(t->href, new_url))
 				debugPrint(3, "js replaces script %s with %s",
@@ -506,7 +495,7 @@ void prepareScript(Tag *t)
 			nzFree(t->href);
 			t->href = new_url;
 		}
-		t->async = get_property_bool(f, t->jv, "async");
+		t->async = get_property_bool_t(t, "async");
 // A side effect of tidy + edbrowse is that the text of the script is a
 // childNode of script, but I don't think it should be.
 		if (t->firstchild && t->firstchild->action == TAGACT_TEXT)
@@ -609,7 +598,7 @@ void prepareScript(Tag *t)
 // Such code cannot be deminimized.
 		goto success;
 	}
-	set_property_string(f, t->jv, "text", js_text);
+	set_property_string_t(t, "text", js_text);
 	nzFree(js_text);
 
 	filepart = getFileURL(js_file, true);
@@ -827,7 +816,7 @@ passes:
 				t->step = 6;
 				continue;
 			}
-			set_property_string(cf, t->jv,
+			set_property_string_t(t,
 					    (t->inxhr ? "$entire" : "text"),
 					    t->value);
 			nzFree(t->value);
@@ -858,7 +847,7 @@ I will disconnect here, and also check for inxhr in runOnload().
 		}
 
 // If no language is specified, javascript is default.
-		a = get_property_string(cf, t->jv, "language");
+		a = get_property_string_t(t, "language");
 		if (a && *a && (!memEqualCI(a, "javascript", 10) || isalphaByte(a[10]))) {
 			debugPrint(3, "script tag %d language %s not executed", t->seqno, a);
 			cnzFree(a);
@@ -867,7 +856,7 @@ I will disconnect here, and also check for inxhr in runOnload().
 		cnzFree(a);
 // Also reject a script if a type is specified and it is not JS.
 // For instance, some JSON pairs in script tags on amazon.com
-		a = get_property_string(cf, t->jv, "type");
+		a = get_property_string_t(t, "type");
 		if (a && *a && (!memEqualCI(a, "javascript", 10))
 		    && (!memEqualCI(a, "text/javascript", 15))) {
 			debugPrint(3, "script tag %d type %s not executed", t->seqno, a);
@@ -898,7 +887,7 @@ I will disconnect here, and also check for inxhr in runOnload().
 // If so that's a problem, cause we already jumped ahead to afterscript:
 
 		if (t->js_file && !isDataURI(t->href) && handlerPresent(cf, t->jv, "onload"))
-			run_event_bool(cf, t->jv, "script", "onload");
+			run_event_t(t, "script", "onload");
 		delete_property(cf, cf->docobj, "currentScript");
 		debugPrint(3, "exec complete");
 
@@ -925,7 +914,7 @@ afterscript:
 	for (t = cw->linklist; t; t = t->same) {
 		if(t->lic == 1 && t->jv && !t->dead) {
 			if(handlerPresent(t->f0, t->jv, "onload")) {
-				run_event_bool(t->f0, t->jv, "link", "onload");
+				run_event_t(t, "link", "onload");
 				change = true;
 			}
 t->lic = 0;
@@ -935,7 +924,7 @@ t->lic = 0;
 	if (!async) {
 		if(startbrowse)
 // I think it's ok to use cf here, but let's be safe.
-			run_event_bool(save_cf, save_cf->docobj, "document", "onDOMContentLoaded");
+			run_event_doc(save_cf, "document", "onDOMContentLoaded");
 		startbrowse = false;
 		async = true;
 		goto passes;
@@ -1046,9 +1035,9 @@ jsRunScript is protected.
 		jsRunScriptWin("document.readyState='complete'",
 			    "readyState", 1);
 
-		run_event_bool(cf, cf->docobj, "document", "onreadystatechange");
-		run_event_bool(cf, cf->winobj, "window", "onfocus");
-		run_event_bool(cf, cf->docobj, "document", "onfocus");
+		run_event_doc(cf, "document", "onreadystatechange");
+		run_event_win(cf, "window", "onfocus");
+		run_event_doc(cf, "document", "onfocus");
 
 		runScriptsPending(false);
 		rebuildSelectors();
@@ -1205,7 +1194,7 @@ void infShow(int tagno, const char *search)
 static bool inputDisabled(const Tag *t)
 {
 	if (allowJS && t->jv)
-		return get_property_bool(t->f0, t->jv, "disabled");
+		return get_property_bool_t(t, "disabled");
 	return t->disabled;
 }
 
@@ -1368,15 +1357,15 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		if (itype >= INP_RADIO) {
 // The change has already been made;
 // if onclick returns false, should that have prevented the change??
-			bubble_event(t, "onclick");
+			bubble_event_t(t, "onclick");
 			if (js_redirects)
 				return true;
 		}
 		if (itype != INP_SELECT)
-			bubble_event(t, "oninput");
+			bubble_event_t(t, "oninput");
 		if (js_redirects)
 			return true;
-		bubble_event(t, "onchange");
+		bubble_event_t(t, "onchange");
 		if (js_redirects)
 			return true;
 		jSideEffects();
@@ -1397,7 +1386,6 @@ back to the text buffer, and over to javascript.
 static void resetVar(Tag *t)
 {
 	int itype = t->itype;
-	Frame *f = t->f0;
 	const char *w = t->rvalue;
 	bool bval;
 
@@ -1430,15 +1418,15 @@ static void resetVar(Tag *t)
 		return;
 
 	if (itype >= INP_RADIO) {
-		set_property_bool(f, t->jv, "checked", bval);
+		set_property_bool_t(t, "checked", bval);
 	} else if (itype == INP_SELECT) {
 /* remember this means option */
-		set_property_bool(f, t->jv, "selected", bval);
+		set_property_bool_t(t, "selected", bval);
 		if (bval && !t->controller->multiple && t->controller->jv)
-			set_property_number(f, t->controller->jv,
+			set_property_number_t(t->controller,
 					    "selectedIndex", t->lic);
 	} else
-		set_property_string(f, t->jv, "value", w);
+		set_property_string_t(t, "value", w);
 }				/* resetVar */
 
 static void formReset(const Tag *form)
@@ -1446,7 +1434,6 @@ static void formReset(const Tag *form)
 	Tag *t;
 	int i, itype;
 	char *display;
-	Frame *f = form->f0;
 
 	rebuildSelectors();
 
@@ -1467,7 +1454,7 @@ static void formReset(const Tag *form)
 			continue;
 		}
 		if (t->jv && allowJS)
-			set_property_number(f, t->jv, "selectedIndex", -1);
+			set_property_number_t(t, "selectedIndex", -1);
 	}			/* loop over tags */
 
 /* loop again to look for select, now that options are set */
@@ -1497,7 +1484,7 @@ static char *fetchTextVar(const Tag *t)
 // js must not muck with the value of a file field
 	if (t->itype != INP_FILE) {
 		if (t->jv && allowJS)
-			return get_property_string(t->f0, t->jv, "value");
+			return get_property_string_t(t, "value");
 	}
 
 	if (t->itype > INP_HIDDEN) {
@@ -1515,10 +1502,8 @@ static bool fetchBoolVar(const Tag *t)
 	int checked;
 
 	if (t->jv && isJSAlive)
-		return get_property_bool(t->f0, t->jv,
-					 (t->action ==
-					  TAGACT_OPTION ? "selected" :
-					  "checked"));
+		return get_property_bool_t(t,
+					 (t->action == TAGACT_OPTION ? "selected" : "checked"));
 
 	checked = fieldIsChecked(t->seqno);
 	if (checked < 0)
@@ -1883,7 +1868,7 @@ bool infPush(int tagno, char **post_string)
 			runningError(itype ==
 				     INP_BUTTON ? MSG_NJNoAction :
 				     MSG_NJNoOnclick);
-		bubble_event(t, "onclick");
+		bubble_event_t(t, "onclick");
 		if (js_redirects)
 			return true;
 // At this point onclick has run, be it button or submit or reset
@@ -1915,8 +1900,7 @@ bool infPush(int tagno, char **post_string)
 			else {
 				rc = true;
 				if (form->jv)
-					rc = run_event_bool(f, form->jv,
-							    "form", "onreset");
+					rc = run_event_t(form, "form", "onreset");
 				if (!rc)
 					return true;
 				if (js_redirects)
@@ -1941,7 +1925,7 @@ bool infPush(int tagno, char **post_string)
 		else {
 			rc = true;
 			if (form->jv)
-				rc = bubble_event(form, "onsubmit");
+				rc = bubble_event_t(form, "onsubmit");
 			if (!rc)
 				return true;
 			if (js_redirects)
@@ -1952,7 +1936,7 @@ bool infPush(int tagno, char **post_string)
 	action = form->href;
 /* But we defer to the js variable */
 	if (form->jv && allowJS) {
-		char *jh = get_property_url(f, form->jv, true);
+		char *jh = get_property_url_t(form, true);
 		if (jh && (!action || !stringEqual(jh, action))) {
 			nzFree(form->href);
 			action = form->href = jh;
@@ -2121,21 +2105,6 @@ void javaSubmitsForm(jsobjtype v, bool reset)
 	else
 		js_submit = v;
 }				/* javaSubmitsForm */
-
-bool bubble_event(const Tag *t, const char *name)
-{
-	Frame *f = t->f0;
-	jsobjtype e;		// the event object
-	bool rc;
-	if (!allowJS || !t->jv)
-		return true;
-	e = create_event(f, t->jv, name);
-	rc = run_function_onearg(f, t->jv, "dispatchEvent", e);
-	if (rc && get_property_bool(f, e, "prev$default"))
-		rc = false;
-	unlink_event(f, t->jv);
-	return rc;
-}				/* bubble_event */
 
 /* Javascript errors, we need to see these no matter what. */
 void runningError(int msg, ...)
@@ -2722,10 +2691,10 @@ void runOnload(void)
 		return;
 
 /* window and document onload */
-	run_event_bool(cf, cf->winobj, "window", "onload");
+	run_event_win(cf, "window", "onload");
 	if (intFlag)
 		return;
-	run_event_bool(cf, cf->docobj, "document", "onload");
+	run_event_doc(cf, "document", "onload");
 	if (intFlag)
 		return;
 
@@ -2744,11 +2713,11 @@ void runOnload(void)
 		if (!t->jv)
 			continue;
 		if (action == TAGACT_BODY && handlerPresent(cf, t->jv, "onload"))
-			run_event_bool(cf, t->jv, "body", "onload");
+			run_event_t(t, "body", "onload");
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
 		if (action == TAGACT_FORM && handlerPresent(cf, t->jv, "onload"))
-			run_event_bool(cf, t->jv, "form", "onload");
+			run_event_t(t, "form", "onload");
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];
@@ -2757,7 +2726,7 @@ void runOnload(void)
 			unloadHyperlink(formfunction, "Form");
 		}
 		if (action == TAGACT_H && handlerPresent(cf, t->jv, "onload"))
-			run_event_bool(cf, t->jv, "h1", "onload");
+			run_event_t(t, "h1", "onload");
 	}
 }				/* runOnload */
 
@@ -3001,9 +2970,7 @@ We need to fix this someday, though it is a very rare low runner case.
 						t->step = 6;
 					} else {
 						if (t->action == TAGACT_SCRIPT) {
-							set_property_string(cf, 
-							    t->jv, "text",
-							     t->value);
+							set_property_string_t(t->jv, "text", t->value);
 							nzFree(t->value);
 							t->value = 0;
 						}
@@ -3031,13 +2998,13 @@ We need to fix this someday, though it is a very rare low runner case.
 						    t->jv);
 				jsRunData(cf, t->jv, js_file, ln);
 				if (t->js_file && !isDataURI(t->href) && handlerPresent(cf, t->jv, "onload"))
-					run_event_bool(cf, t->jv, "script", "onload");
+					run_event_t(t, "script", "onload");
 				delete_property(cf, cf->docobj, "currentScript");
 				debugPrint(3, "async exec complete");
 			}
 			if (t->step == 4 && t->action != TAGACT_SCRIPT) {
 				t->step = 5;
-				set_property_string(cf, t->jv, "$entire", t->value);
+				set_property_string_t(t, "$entire", t->value);
 // could be large; it's worth freeing
 				nzFree(t->value);
 				t->value = 0;
@@ -3293,13 +3260,13 @@ ab:
 	cx = t->f0->cx;
 	t->name = get_property_string_0(cx, t->jv, "name");
 	t->id = get_property_string_0(cx, t->jv, "id");
-	t->jclass = get_property_string_0(cx, t->jv, "class");
+	t->jclass = get_property_string_t(t, "class");
 
 	switch (action) {
 	case TAGACT_INPUT:
-		jst = get_property_string_0(cx, t->jv, "type");
+		jst = get_property_string_t(t, "type");
 		setTagAttr(t, "type", jst);
-		t->value = get_property_string_0(cx, t->jv, "value");
+		t->value = get_property_string_t(t, "value");
 		htmlInputHelper(t);
 		break;
 
@@ -3313,7 +3280,7 @@ ab:
 	case TAGACT_TA:
 		t->action = TAGACT_INPUT;
 		t->itype = INP_TA;
-		t->value = get_property_string_0(cx, t->jv, "value");
+		t->value = get_property_string_t(t, "value");
 		if (!t->value)
 			t->value = emptyString;
 // Need to create the side buffer here.
@@ -3542,7 +3509,7 @@ nocolorend:
 			return;
 		}
 		if (action == TAGACT_TEXT && t->jv &&
-		    get_property_bool(f, t->jv, "inj$css")) {
+		    get_property_bool_t(t, "inj$css")) {
 			++injcount;
 			if (!showHover) {
 				inv2 = t;
@@ -3633,7 +3600,7 @@ nocolor:
 // defer to the javascript text.
 // either we query js every time, on every piece of text, as we do now,
 // or we include a setter so that TextNode.data assignment has a side effect.
-			char *u = get_property_string(f, t->jv, "data");
+			char *u = get_property_string_t(t, "data");
 			if (u) {
 				nzFree(t->textval);
 				t->textval = u;
@@ -3655,7 +3622,7 @@ nocolor:
 			break;
 // Javascript might have set or changed this url.
 		if (opentag && t->jv) {
-			char *new_url = get_property_url(f, t->jv, false);
+			char *new_url = get_property_url_t(t, false);
 			if (new_url && *new_url) {
 				nzFree(t->href);
 				t->href = new_url;
@@ -3671,7 +3638,7 @@ nocolor:
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 				if (t->jv
 				    && (a =
-					get_property_string(f, t->jv, "title"))) {
+					get_property_string_t(t, "title"))) {
 					++hovcount;
 					if (showHover) {
 						stringAndString(&ns, &ns_l, a);
@@ -3700,7 +3667,7 @@ nocolor:
 		if (!t->firstchild && opentag) {
 			a = attribVal(t, "title");
 			if (allowJS && t->jv)
-				u = get_property_string(f, t->jv, "title");
+				u = get_property_string_t(t, "title");
 		}
 // If an onclick function, then turn this into a hyperlink, thus clickable.
 // At least one site adds the onclick function via javascript, not html.
@@ -3874,7 +3841,7 @@ nop:
 // in case js checked or unchecked
 			if (allowJS && t->jv)
 				t->checked =
-				    get_property_bool(f, t->jv, "checked");
+				    get_property_bool_t(t, "checked");
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
 		}
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
@@ -4059,7 +4026,7 @@ unparen:
 /* see if js has changed the alt tag */
 				if (allowJS && t->jv) {
 					char *aa =
-					    get_property_string(f, t->jv, "alt");
+					    get_property_string_t(t, "alt");
 					if (aa)
 						u = altText(aa);
 					nzFree(aa);

@@ -6336,7 +6336,7 @@ replaceframe:
 				set_win_string("status", h);
 			if (jsgo) {
 				jSyncup(false);
-				rc = bubble_event(tag, "onclick");
+				rc = bubble_event_t(tag, "onclick");
 				jSideEffects();
 				if (newlocation)
 					goto redirect;

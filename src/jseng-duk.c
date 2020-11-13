@@ -781,7 +781,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		runOnload();
 		runScriptsPending(false);
 		set_property_string(cf, cf->docobj, "readyState", "complete");
-		run_event_bool(cf, cf->docobj, "document", "onreadystatechange");
+		run_event_doc(cf, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -817,7 +817,7 @@ we did that before and now it's being expanded. So bump step up to 2.
 		set_property_object(new_cf, t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
-		run_event_bool(t->f0, t->jv, t->info->name, "onload");
+		run_event_t(t, t->info->name, "onload");
 	}
 
 	return 0;
@@ -917,7 +917,7 @@ bool reexpandFrame(void)
 		runOnload();
 		runScriptsPending(false);
 		set_property_string(cf, cf->docobj, "readyState", "complete");
-		run_event_bool(cf, cf->docobj, "document", "onreadystatechange");
+		run_event_doc(cf, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -2278,6 +2278,43 @@ char *get_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	return s0;
 }				/* get_property_string_0 */
 
+/* Get the url from a url object, special wrapper.
+ * Owner object is passed, look for obj.href, obj.src, or obj.action.
+ * Return that if it's a string, or its member href if it is a url.
+ * The result, coming from get_property_string, is allocated. */
+char *get_property_url_0(jsobjtype cx, jsobjtype owner, bool action)
+{
+	enum ej_proptype mtype;	/* member type */
+	jsobjtype uo = 0;	/* url object */
+	if (action) {
+		mtype = typeof_property_0(cx, owner, "action");
+		if (mtype == EJ_PROP_STRING)
+			return get_property_string_0(cx, owner, "action");
+		if (mtype != EJ_PROP_OBJECT)
+			return 0;
+		uo = get_property_object_0(cx, owner, "action");
+	} else {
+		mtype = typeof_property_0(cx, owner, "href");
+		if (mtype == EJ_PROP_STRING)
+			return get_property_string_0(cx, owner, "href");
+		if (mtype == EJ_PROP_OBJECT)
+			uo = get_property_object_0(cx, owner, "href");
+		else if (mtype)
+			return 0;
+		if (!uo) {
+			mtype = typeof_property_0(cx, owner, "src");
+			if (mtype == EJ_PROP_STRING)
+				return get_property_string_0(cx, owner, "src");
+			if (mtype == EJ_PROP_OBJECT)
+				uo = get_property_object_0(cx, owner, "src");
+		}
+	}
+	if (uo == NULL)
+		return 0;
+/* should this be href$val? */
+	return get_property_string_0(cx, uo, "href");
+}
+
 jsobjtype get_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
@@ -2975,16 +3012,115 @@ void run_data_0(jsobjtype cx0, jsobjtype o)
 		duk_gc(cx, 0);
 }
 
+static jsobjtype create_event_0(jsobjtype cx, jsobjtype parent, const char *evname)
+{
+	jsobjtype e;
+	const char *evname1 = evname;
+	if (evname[0] == 'o' && evname[1] == 'n')
+		evname1 += 2;
+// gc$event protects from garbage collection
+	e = instantiate_0(cx, parent, "gc$event", "Event");
+	set_property_string_0(cx, e, "type", evname1);
+	return e;
+}
+
+static void unlink_event_0(jsobjtype cx, jsobjtype parent)
+{
+	delete_property_0(cx, parent, "gc$event");
+}
+
+static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname)
+{
+	int rc;
+	jsobjtype eo;	// created event object
+	if(typeof_property_0(cx, obj, evname) != EJ_PROP_FUNCTION)
+		return true;
+	if (debugLevel >= 3) {
+		if (debugEvent) {
+			int seqno = get_property_number_0(cx, obj, "eb$seqno");
+			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
+		}
+	}
+	eo = create_event_0(cx, obj, evname);
+	set_property_object_0(cx, eo, "target", obj);
+	set_property_object_0(cx, eo, "currentTarget", obj);
+	set_property_number_0(cx, eo, "eventPhase", 2);
+	rc = run_function_onearg_0(cx, obj, evname, eo);
+	unlink_event_0(cx, obj);
+// no return or some other return is treated as true in this case
+	if (rc < 0)
+		rc = true;
+	return rc;
+}
+
+bool run_event_t(const Tag *t, const char *pname, const char *evname)
+{
+	if (!allowJS || !t->jslink)
+		return true;
+	return run_event_0(t->f0->cx, t->jv, pname, evname);
+}
+
+bool run_event_win(const Frame *f, const char *pname, const char *evname)
+{
+	if (!allowJS || !f->jslink)
+		return true;
+	return run_event_0(f->cx, f->winobj, pname, evname);
+}
+
+bool run_event_doc(const Frame *f, const char *pname, const char *evname)
+{
+	if (!allowJS || !f->jslink)
+		return true;
+	return run_event_0(f->cx, f->docobj, pname, evname);
+}
+
+bool bubble_event_t(const Tag *t, const char *name)
+{
+	jsobjtype cx;
+	jsobjtype e;		// the event object
+	bool rc;
+	if (!allowJS || !t->jslink)
+		return true;
+	cx = t->f0->cx;
+	e = create_event_0(cx, t->jv, name);
+	rc = run_function_onearg_0(cx, t->jv, "dispatchEvent", e);
+	if (rc && get_property_bool_0(cx, e, "prev$default"))
+		rc = false;
+	unlink_event_0(cx, t->jv);
+	return rc;
+}
+
 void set_master_bool(const char *name, bool v)
 {
 	set_property_bool_0(cf->cx, context0_obj, name, v);
+}
+
+bool get_property_bool_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return false;
+return get_property_bool_0(t->f0->cx, t->jv, name);
+}
+
+int get_property_number_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return -1;
+return get_property_number_0(t->f0->cx, t->jv, name);
+}
+
+char *get_property_string_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return 0;
+return get_property_string_0(t->f0->cx, t->jv, name);
 }
 
 char *get_property_url_t(const Tag *t, bool action)
 {
 if(!t->jslink || !allowJS)
 return 0;
-return get_property_url(t->f0, t->jv, action);
+return get_property_url_0(t->f0->cx, t->jv, action);
 }
 
 void delete_property_t(const Tag *t, const char *name)
@@ -2992,6 +3128,27 @@ void delete_property_t(const Tag *t, const char *name)
 if(!t->jslink || !allowJS)
 return;
 delete_property_0(t->f0->cx, t->jv, name);
+}
+
+void set_property_bool_t(const Tag *t, const char *name, bool v)
+{
+if(!t->jslink || !allowJS)
+return;
+set_property_bool_0(t->f0->cx, t->jv, name, v);
+}
+
+void set_property_number_t(const Tag *t, const char *name, int v)
+{
+if(!t->jslink || !allowJS)
+return;
+set_property_number_0(t->f0->cx, t->jv, name, v);
+}
+
+void set_property_string_t(const Tag *t, const char *name, const char * v)
+{
+if(!t->jslink || !allowJS)
+return;
+set_property_string_0(t->f0->cx, t->jv, name, v);
 }
 
 void set_win_string(const char *name, const char *v)
@@ -3005,11 +3162,6 @@ static char *jsRunScriptResult(const Frame *f, jsobjtype obj, const char *str,
 const char *filename, 			int lineno)
 {
 	char *result;
-// this never runs from the j process.
-	if (whichproc != 'e') {
-		debugPrint(1, "jsRunScript run from the js process");
-		return NULL;
-	}
 	if (!allowJS || !f->winobj)
 		return NULL;
 	if (!str || !str[0])

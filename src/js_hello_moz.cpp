@@ -55,7 +55,6 @@ Frame *newloc_f;
 bool newloc_r;
 int newloc_d;
 bool runEbFunction(const char *line){ return true; }
-bool bubble_event(const Tag *t, const char *name) {return true; }
 bool inputReadLine;
 bool caseInsensitive, searchStringsAll, searchWrap = true;
 const char *jsSourceFile;
@@ -1216,7 +1215,8 @@ const char *s = run_script_o(cf, g, str, filename, lineno);
 return cloneString(s);
 }
 
-JSObject *create_event_o(JS::HandleObject parent, const char *evname)
+// Like any JSObject * return, you must put it directly into a rooted object.
+static JSObject *create_event_o(JS::HandleObject parent, const char *evname)
 {
 JS::RootedObject e(cxa);
 	const char *evname1 = evname;
@@ -1228,22 +1228,18 @@ JS::RootedObject e(cxa);
 	return e;
 }
 
-void unlink_event_o(JS::HandleObject parent)
+static void unlink_event_o(JS::HandleObject parent)
 {
 	delete_property_o(parent, "gc$event");
 }
 
-#undef handlerPresent
-#define handlerPresent(obj, name) (typeof_property_o(obj, name) == EJ_PROP_FUNCTION)
-
-bool run_event_bool_o(JS::HandleObject obj, const char *pname, const char *evname)
+static bool run_event_o(JS::HandleObject obj, const char *pname, const char *evname)
 {
 	int rc;
 	JS::RootedObject eo(cxa);	// created event object
-	if (!handlerPresent(obj, evname))
+	if(typeof_property_o(obj, evname) != EJ_PROP_FUNCTION)
 		return true;
 	if (debugLevel >= 3) {
-JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
 		if (debugEvent) {
 			int seqno = get_property_number_o(obj, "eb$seqno");
 			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
@@ -1258,6 +1254,51 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
 // no return or some other return is treated as true in this case
 	if (rc < 0)
 		rc = true;
+	return rc;
+}
+
+bool run_event_t(const Tag *t, const char *pname, const char *evname)
+{
+	if (!allowJS || !t->jslink)
+		return true;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject tagobj(cxa, tagToObject(t));
+	return run_event_o(tagobj, pname, evname);
+}
+
+bool run_event_win(const Frame *f, const char *pname, const char *evname)
+{
+	if (!allowJS || !f->jslink)
+		return true;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	return run_event_o(g, pname, evname);
+}
+
+bool run_event_doc(const Frame *f, const char *pname, const char *evname)
+{
+	if (!allowJS || !f->jslink)
+		return true;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+	return run_event_o(doc, pname, evname);
+}
+
+bool bubble_event_t(const Tag *t, const char *name)
+{
+JS::RootedObject e(cxa); // the event object
+	bool rc;
+	if (!allowJS || !t->jslink)
+		return true;
+Frame *f = t->f0;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject tagobj(cxa, tagToObject(t));
+	e = create_event_o(tagobj, name);
+	rc = run_function_onearg_o(tagobj, "dispatchEvent", e);
+	if (rc && get_property_bool_o(e, "prev$default"))
+		rc = false;
+	unlink_event_o(tagobj);
 	return rc;
 }
 
@@ -1684,6 +1725,20 @@ static bool nat_puts(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 if(argc >= 1) puts(stringize(args[0]));
+args.rval().setUndefined();
+  return true;
+}
+
+static bool nat_logputs(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+if(argc >= 2 && args[0].isInt32() && args[1].isString()) {
+int lev = args[0].toInt32();
+const char *s = stringize(args[1]);
+	if (debugLevel >= lev && s && *s)
+		debugPrint(3, "%s", s);
+	jsInterruptCheck();
+}
 args.rval().setUndefined();
   return true;
 }
@@ -2335,7 +2390,7 @@ fto = tagToObject(t);
 // get current document object from current window object
 cdo = get_property_object_o(cwo, "document");
 		set_property_string_o(cdo, "readyState", "complete");
-		run_event_bool_o(cdo, "document", "onreadystatechange");
+		run_event_o(cdo, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -2370,7 +2425,7 @@ JS::RootedObject cna(cxa);	// childNodes array
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
 // Hope so cause that is the current compartment.
-		run_event_bool_o(fto, t->info->name, "onload");
+		run_event_o(fto, t->info->name, "onload");
 	}
 
 // success, frame is expanded
@@ -2471,7 +2526,7 @@ JSAutoCompartment ac(cxa, g);
 		runScriptsPending(false);
 doc = get_property_object_o(g, "document");
 		set_property_string_o(doc, "readyState", "complete");
-		run_event_bool_o(doc, "document", "onreadystatechange");
+		run_event_o(doc, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -3090,6 +3145,7 @@ dwrite(cx, argc, vp, true);
 
 static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$puts", nat_puts, 1, 0),
+  JS_FN("eb$logputs", nat_logputs, 2, 0),
   JS_FN("prompt", nat_prompt, 1, 0),
   JS_FN("confirm", nat_confirm, 1, 0),
   JS_FN("close", nat_winclose, 0, 0),

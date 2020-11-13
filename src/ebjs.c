@@ -490,47 +490,6 @@ bool run_function_bool(const Frame *f, jsobjtype obj, const char *name)
 	return rc;
 }				/* run_function_bool */
 
-jsobjtype create_event(const Frame *f, jsobjtype parent, const char *evname)
-{
-	jsobjtype e;
-	const char *evname1 = evname;
-	if (evname[0] == 'o' && evname[1] == 'n')
-		evname1 += 2;
-// gc$event protects from garbage collection
-	e = instantiate(f, parent, "gc$event", "Event");
-	set_property_string(f, e, "type", evname1);
-	return e;
-}
-
-void unlink_event(const Frame *f, jsobjtype parent)
-{
-	delete_property(f, parent, "gc$event");
-}
-
-bool run_event_bool(const Frame *f, jsobjtype obj, const char *pname, const char *evname)
-{
-	int rc;
-	jsobjtype eo;	// created event object
-	if (!handlerPresent(f, obj, evname))
-		return true;
-	if (debugLevel >= 3) {
-		if (debugEvent) {
-			int seqno = get_property_number(f, obj, "eb$seqno");
-			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
-		}
-	}
-	eo = create_event(f, obj, evname);
-	set_property_object(f, eo, "target", obj);
-	set_property_object(f, eo, "currentTarget", obj);
-	set_property_number(f, eo, "eventPhase", 2);
-	rc = run_function_onearg(f, obj, evname, eo);
-	unlink_event(f, obj);
-// no return or some other return is treated as true in this case
-	if (rc < 0)
-		rc = true;
-	return rc;
-}
-
 int run_function_onearg(const Frame *f, jsobjtype obj, const char *name, jsobjtype a)
 {
 	int rc;
@@ -608,44 +567,6 @@ int uname(struct utsname *pun)
 #else // !DOSLIKE - // port of uname(p), and struct utsname
 #include <sys/utsname.h>
 #endif // DOSLIKE y/n // port of uname(p), and struct utsname
-
-/* Get the url from a url object, special wrapper.
- * Owner object is passed, look for obj.href, obj.src, or obj.action.
- * Return that if it's a string, or its member href if it is a url.
- * The result, coming from get_property_string, is allocated. */
-char *get_property_url(const Frame *f, jsobjtype owner, bool action)
-{
-	enum ej_proptype mtype;	/* member type */
-	jsobjtype uo = 0;	/* url object */
-	if (action) {
-		mtype = typeof_property(f, owner, "action");
-		if (mtype == EJ_PROP_STRING)
-			return get_property_string(f, owner, "action");
-		if (mtype != EJ_PROP_OBJECT)
-			return 0;
-		uo = get_property_object(f, owner, "action");
-	} else {
-		mtype = typeof_property(f, owner, "href");
-		if (mtype == EJ_PROP_STRING)
-			return get_property_string(f, owner, "href");
-		if (mtype == EJ_PROP_OBJECT)
-			uo = get_property_object(f, owner, "href");
-		else if (mtype)
-			return 0;
-		if (!uo) {
-			mtype = typeof_property(f, owner, "src");
-			if (mtype == EJ_PROP_STRING)
-				return get_property_string(f, owner, "src");
-			if (mtype == EJ_PROP_OBJECT)
-				uo = get_property_object(f, owner, "src");
-		}
-	}
-
-	if (uo == NULL)
-		return 0;
-/* should this be href$val? */
-	return get_property_string(f, uo, "href");
-}				/* get_property_url */
 
 /*********************************************************************
 See if a tag object is still rooted on the js side.
