@@ -1292,7 +1292,7 @@ static const char *fakePropName(void)
 	static char fakebuf[24];
 	static int idx = 0;
 	++idx;
-	sprintf(fakebuf, "cg$$%d", idx);
+	sprintf(fakebuf, "gc$$%d", idx);
 	return fakebuf;
 }
 
@@ -1397,9 +1397,11 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	duk_push_string(cx, fpn);
 	duk_put_prop_string(cx, -2, "backlink");
+	duk_push_number(cx, ++timer_sn);
+	duk_put_prop_string(cx, -2, "tsn");
 // leaves just the timer object on the stack, which is what we want.
 
-	javaSetsTimeout(n, fname, to, isInterval);
+	domSetsTimeout(n, fname, fpn, isInterval);
 
 done:
 	debugPrint(5, "timer 2");
@@ -1419,10 +1421,15 @@ static duk_ret_t native_setInterval(duk_context * cx)
 
 static duk_ret_t native_clearTimeout(duk_context * cx)
 {
+	int tsn;
+	char *fpn; // fake prop name
 	jsobjtype obj = duk_get_heapptr(cx, 0);
 	if (!obj)
 		return 0;
-	javaSetsTimeout(0, "-", obj, false);
+	tsn = get_property_number_0(cx, obj, "tsn");
+	fpn = get_property_string_0(cx, obj, "backlink");
+	domSetsTimeout(tsn, "-", fpn, false);
+	nzFree(fpn);
 	return 0;
 }
 
@@ -2792,8 +2799,7 @@ int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name,
 Error object is at the top of the duktape stack.
 Extract the line number, call stack, and error message,
 the latter being error.toString().
-Leave the result in errorMessage, which is sent to edbrowse in the 2 process
-model, or printed right now if JS1 is set.
+Print the message if debugLevel is 3 or higher.
 Pop the error object when done.
 *********************************************************************/
 
@@ -2950,7 +2956,7 @@ bool run_function_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 			asprintf(&errorMessage, "no such function %s", name);
 #endif
 		duk_pop_2(cx);
-		return (debugLevel < 3);
+		return false;
 	}
 	duk_insert(cx, -2);
 	if (seqno > 0)
@@ -2979,8 +2985,38 @@ bool run_function_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	debugPrint(3, "failure on %p.%s()", parent, name);
 	uptrace(cx, parent);
 	debugPrint(3, "exec complete");
-	return (debugLevel < 3);
-}				/* run_function_bool_0 */
+	return false;
+}
+
+bool run_function_bool_t(const Tag *t, const char *name)
+{
+	if (!allowJS || !t->jslink)
+		return false;
+	return run_function_bool_0(t->f0->cx, t->jv, name);
+}
+
+bool run_function_bool_win(const Frame *f, const char *name)
+{
+	if (!allowJS || !f->jslink)
+		return false;
+	return run_function_bool_0(f->cx, f->winobj, name);
+}
+
+static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
+
+void run_ontimer(const Frame *f, const char *backlink)
+{
+	jsobjtype cx = f->cx;
+	jsobjtype to; // timer object
+	if(!duk_get_global_string(cx, backlink)) {
+  debugPrint(3, "could not find timer backlink %s", backlink);
+		duk_pop(cx);
+		return;
+	}
+	to = duk_get_heapptr(cx, -1);
+	run_event_0(cx, to, "timer", "ontimer");
+	duk_pop(cx);
+}
 
 // The single argument to the function has to be an object.
 // Returns -1 if the return is not int or bool
@@ -3016,7 +3052,21 @@ int run_function_onearg_0(jsobjtype cx0, jsobjtype parent, const char *name, jso
 	debugPrint(3, "failure on %p.%s[]", parent, name);
 	uptrace(cx, parent);
 	return rc;
-}				/* run_function_onearg_0 */
+}
+
+int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2)
+{
+	if (!allowJS || !t->jslink || !t2->jslink)
+		return -1;
+	return run_function_onearg_0(t->f0->cx, t->jv, name, t2->jv);
+}
+
+int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2)
+{
+	if (!allowJS || !f->jslink || !t2->jslink)
+		return -1;
+	return run_function_onearg_0(f->cx, f->winobj, name, t2->jv);
+}
 
 // The single argument to the function has to be a string.
 void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char *name,
@@ -3150,12 +3200,11 @@ jsobjtype get_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx)
 	return a;
 }
 
-char *run_script_0(jsobjtype cx0, const char *s)
+static char *run_script_0(jsobjtype cx0, const char *s)
 {
 	duk_context * cx = cx0;
 	char *result = 0;
 	bool rc;
-	const char *gc;
 	char *s2 = 0;
 
 // special debugging code to replace bp@ and trace@ with expanded macros.
@@ -3203,45 +3252,62 @@ char *run_script_0(jsobjtype cx0, const char *s)
 	} else {
 		processError(cx);
 	}
-	gc = getenv("JSGC");
-	if (gc && *gc)
-		duk_gc(cx, 0);
 	return result;
 }
 
 // execute script.text code; more efficient than the above.
-void run_data_0(jsobjtype cx0, jsobjtype o)
+void jsRunData(const Tag *t, const char *filename, int lineno)
 {
-	duk_context * cx = cx0;
 	bool rc;
-	const char *s, *gc;
-	duk_push_heapptr(cx, o);
+	const char *s;
+	jsobjtype cx;
+	if (!allowJS || !t->jslink)
+		return;
+	debugPrint(5, "> script:");
+	cx = t->f0->cx;
+	jsSourceFile = filename;
+	jsLineno = lineno;
+	duk_push_heapptr(cx, t->jv);
 	if (!duk_get_prop_string(cx, -1, "text")) {
 // no data
+fail:
 		duk_pop_2(cx);
+	jsSourceFile = 0;
 		return;
 	}
 	s = duk_safe_to_string(cx, -1);
 	if (!s || !*s)
-		return;
+		goto fail;
+// have to set currentScript
+	duk_push_heapptr(cx, t->f0->docobj);
+	duk_push_heapptr(cx, t->jv);
+	duk_put_prop_string(cx, -2, "currentScript");
+	duk_pop(cx);
 // defer to the earlier routine if there are breakpoints
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
-		run_script_0(cx, s);
-		duk_pop_2(cx);
-		return;
-	}
+		char *result = run_script_0(cx, s);
+		nzFree(result);
+	} else {
 	rc = duk_peval_string(cx, s);
 	if (intFlag)
 		i_puts(MSG_Interrupted);
 	if (!rc) {
-		duk_pop_n(cx, 3);
+		duk_pop(cx);
 	} else {
 		processError(cx);
-		duk_pop_2(cx);
 	}
-	gc = getenv("JSGC");
-	if (gc && *gc)
-		duk_gc(cx, 0);
+}
+	jsSourceFile = NULL;
+	duk_push_heapptr(cx, t->f0->docobj);
+	duk_del_prop_string(cx, -1, "currentScript");
+	duk_pop(cx);
+// onload handler? Should this run even if the script fails?
+// Right now it does.
+	if (t->js_file && !isDataURI(t->href) &&
+	typeof_property_0(cx, t->jv, "onload") == EJ_PROP_FUNCTION)
+		run_event_0(cx, t->jv, "script", "onload");
+	debugPrint(5, "< ok");
+	duk_pop_2(cx);
 }
 
 static jsobjtype create_event_0(jsobjtype cx, jsobjtype parent, const char *evname)
@@ -3334,6 +3400,13 @@ return false;
 return get_property_bool_0(t->f0->cx, t->jv, name);
 }
 
+enum ej_proptype typeof_property_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return EJ_PROP_NONE;
+return typeof_property_0(t->f0->cx, t->jv, name);
+}
+
 int get_property_number_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
@@ -3371,6 +3444,20 @@ void delete_property_t(const Tag *t, const char *name)
 	delete_property_0(t->f0->cx, t->jv, name);
 }
 
+void delete_property_win(const Frame *f, const char *name)
+{
+	if(!f->jslink || !allowJS)
+		return;
+	delete_property_0(f->cx, f->winobj, name);
+}
+
+void delete_property_doc(const Frame *f, const char *name)
+{
+	if(!f->jslink || !allowJS)
+		return;
+	delete_property_0(f->cx, f->docobj, name);
+}
+
 void set_property_bool_t(const Tag *t, const char *name, bool v)
 {
 	if(!t->jslink || !allowJS)
@@ -3392,9 +3479,14 @@ void set_property_string_t(const Tag *t, const char *name, const char * v)
 	set_property_string_0(t->f0->cx, t->jv, name, v);
 }
 
-void set_win_string(const char *name, const char *v)
+void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
-	set_property_string_0(cf->cx, cf->winobj, name, v);
+	set_property_bool_0(f->cx, f->winobj, name, v);
+}
+
+void set_property_string_win(const Frame *f, const char *name, const char *v)
+{
+	set_property_string_0(f->cx, f->winobj, name, v);
 }
 
 // Run some javascript code under the named object, usually window.

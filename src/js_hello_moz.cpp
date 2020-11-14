@@ -72,7 +72,6 @@ char *mailDir, *mailUnread, *mailStash, *mailReply;
 struct ebSession sessionList[10], *cs;
 int maxSession;
 int webTimeout = 30, mailTimeout = 30;
-int rr_interval;
 int verifyCertificates = 1;
 char *userAgents[MAXAGENT + 1];
 char *currentAgent;
@@ -82,53 +81,40 @@ void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n"
 void htmlInputHelper(Tag *t) { }
 void formControl(Tag *t, bool namecheck) { }
 Tag *findOpenTag(Tag *t, int action) { return NULL; }
+Tag *findOpenList(Tag *t){return 0;}
 void writeShortCache(void) { }
-void preFormatCheck(int tagno, bool * pretag, bool * slash) { 	*pretag = *slash = false; }
 void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
-void domSetsTimeout(int n, const char *linkname, jsobjtype to, bool isInterval) { printf("%s link to %s, %d ms\n", (isInterval ? "interval" : "timer"), linkname, n); }
 void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"); }
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
 void underKill(Tag *t) { }
-void delTimers(Frame *f) { }
-void delTags(int startRange, int endRange){}
-bool htmlTest(void) {return true; }
-char *htmlParse(char *buf, int remote) {return 0;}
-void createJavaContext(void) {puts("old style create"); }
 void cssFree(Frame *f) { }
 void rebuildSelectors(void) { puts("rebuild selectors"); }
-void runScriptsPending(bool something) { puts("run scripts pending"); }
-void runOnload(void) { puts("run onload"); }
-void set_basehref(const char *b) { printf("base %s\n", b); }
 void decorate(int start) { puts("decorate"); }
 void freeTags(struct ebWindow *w) {}
 void prerender(int start) { puts("prerender"); }
 void htmlNodesIntoTree(int start, Tag *attach) { puts("tags into tree"); }
 void html2nodes(const char *htmltext, bool startpage) { puts("htnl 2 nodes"); }
 bool javaOK(const char *url) { return true; }
-void scriptSetsTimeout( Tag *t) { }
 bool mustVerifyHost(const char *url) { return false; }
 const char *findAgentForURL(const char *url) { return 0; }
 const char eol[] = "\r\n";
 const char *findProxyForURL(const char *url) { return 0; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
-void runningError(int msg, ...) { }
-bool timerWait(int *delay_sec, int *delay_ms) { return false; }
-void jSideEffects(void) { }
-void jClearSync(void) { }
-void rerender(bool notify) { }
-void runTimer(void) { }
-void jSyncup(bool fromtimer) { }
 void readConfigFile(void) { }
-void infShow(int tagno, const char *search) {}
-void itext(void){}
-bool infReplace(int tagno, const char *newtext, bool notify){return true;}
-bool infPush(int tagno, char **post_string){return true;}
-bool tagHandler(int seqno, const char *name) { return false; }
-bool js_redirects;
 void setTagAttr(Tag *t, const char *name, char *val) { nzFree(val); }
-void domSubmitsForm(Tag *t, bool reset){}
+const char *attribVal(const Tag *t, const char *name){ return 0;}
+void set_basehref(const char *b){}
+void traverseAll(int start){}
+nodeFunction traverse_callback;
+const char *fetchReplace(const char *u){return 0;}
+void initTagArray(void){}
+const struct tagInfo availableTags[1] = {
+	{"html", "html", TAGACT_HTML}};
+const char *const inp_types[1] = {"X"};
+const char *const inp_others[1] = {"x"};
+char *displayOptions(const Tag *sel) {return 0;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -946,6 +932,41 @@ return false;
 return true;
 }
 
+static JSObject *tagToObject(const Tag *t);
+static JSObject *frameToCompartment(const Frame *f);
+
+bool run_function_bool_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return false;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+	return run_function_bool_o(obj, name);
+}
+
+bool run_function_bool_win(const Frame *f, const char *name)
+{
+if(!f->jslink || !allowJS)
+return false;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+	return run_function_bool_o(g, name);
+}
+
+static bool run_event_o(JS::HandleObject obj, const char *pname, const char *evname);
+
+void run_ontimer(const Frame *f, const char *backlink)
+{
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+JS::RootedObject to(cxa, get_property_object_o(g, backlink));
+if(!to) {
+  debugPrint(3, "could not find timer backlink %s", backlink);
+		return;
+	}
+	run_event_o(to, "timer", "ontimer");
+}
+
 int run_function_onearg_o(JS::HandleObject parent, const char *name,
 JS::HandleObject a)
 {
@@ -968,6 +989,26 @@ return retval.toBoolean();
 if(retval.isInt32())
 return retval.toInt32();
 return -1;
+}
+
+int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2)
+{
+if(!t->jslink || !t2->jslink || !allowJS)
+return -1;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+JS::RootedObject obj2(cxa, tagToObject(t2));
+	return run_function_onearg_o(obj, name, obj2);
+}
+
+int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2)
+{
+if(!f->jslink || !t2->jslink || !allowJS)
+return -1;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+JS::RootedObject obj2(cxa, tagToObject(t2));
+	return run_function_onearg_o(g, name, obj2);
 }
 
 void run_function_onestring_o(JS::HandleObject parent, const char *name,
@@ -996,25 +1037,66 @@ Unlike the _o functions, the _t functions set the compartment
 according to t->f0.
 *********************************************************************/
 
-static JSObject *tagToObject(const Tag *t);
-static JSObject *frameToCompartment(const Frame *f);
-
 char *get_property_url_t(const Tag *t, bool action)
 {
 if(!t->jslink || !allowJS)
 return 0;
-JSAutoCompartment(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
 return get_property_url_o(obj, action);
 }
 
+char *get_property_string_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return 0;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return 0;
+return get_property_string_o(obj, name);
+}
+
+bool get_property_bool_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return false;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return false;
+return get_property_bool_o(obj, name);
+}
+
+int get_property_number_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return -1;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return -1;
+return get_property_number_o(obj, name);
+}
+
+enum ej_proptype typeof_property_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return EJ_PROP_NONE;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return EJ_PROP_NONE;
+return typeof_property_o(obj, name);
+}
+
 char *get_style_string_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return 0;
-JSAutoCompartment(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
@@ -1028,10 +1110,63 @@ void delete_property_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(obj)
 delete_property_o(obj, name);
+}
+
+void delete_property_win(const Frame *f, const char *name)
+{
+if(!f->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+delete_property_o(g, name);
+}
+
+void delete_property_doc(const Frame *f, const char *name)
+{
+if(!f->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+if(doc)
+delete_property_o(doc, name);
+}
+
+void set_property_string_t(const Tag *t, const char *name, const char *v)
+{
+if(!t->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return;
+set_property_string_o(obj, name, v);
+}
+
+void set_property_bool_t(const Tag *t, const char *name, bool v)
+{
+if(!t->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return;
+set_property_bool_o(obj, name, v);
+}
+
+void set_property_number_t(const Tag *t, const char *name, int v)
+{
+if(!t->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return;
+set_property_number_o(obj, name, v);
 }
 
 /*********************************************************************
@@ -1141,12 +1276,11 @@ JS_CallFunctionName(cxa, g, "eb$stopexec", JS::HandleValueArray::empty(), &v);
 // Returns the result of the script as a string, from stringize(), not allocated,
 // copy it if you want to keep it any longer then the next call to stringize.
 // This function nad it's duktape counterpart ignores obj
-static const char *run_script_o(const Frame *f, JS::HandleObject obj, const char *s, const char *filename, int lineno)
+// Assumes the appropriate commpartment has been set.
+static const char *run_script_o(JS::HandleObject obj, const char *s, const char *filename, int lineno)
 {
 	char *s2 = 0;
 
-if(!allowJS || !f->jslink)
-return 0;
 if(!s || !*s)
 return 0;
 
@@ -1179,7 +1313,6 @@ return 0;
 		stringAndString(&s2, &l, u);
 	}
 
-JSAutoCompartment(cxa, frameToCompartment(f));
         JS::CompileOptions opts(cxa);
         opts.setFileAndLine(filename, lineno);
 JS::RootedValue v(cxa);
@@ -1203,18 +1336,18 @@ void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
 {
 if(!cf->jslink || !allowJS)
 return;
-JSAutoCompartment(cxa, frameToCompartment(cf));
+JSAutoCompartment ac(cxa, frameToCompartment(cf));
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
-	run_script_o(cf, g, str, filename, lineno);
+	run_script_o(g, str, filename, lineno);
 }
 
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
 JS::RootedObject tojb(cxa, tagToObject(t));
-	run_script_o(t->f0, tojb, str, filename, lineno);
+	run_script_o(tojb, str, filename, lineno);
 }
 
 char *jsRunScriptWinResult(const char *str,
@@ -1222,9 +1355,9 @@ const char *filename, 			int lineno)
 {
 if(!cf->jslink || !allowJS)
 return 0;
-JSAutoCompartment(cxa, frameToCompartment(cf));
+JSAutoCompartment ac(cxa, frameToCompartment(cf));
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
-const char *s = run_script_o(cf, g, str, filename, lineno);
+const char *s = run_script_o(g, str, filename, lineno);
 // This is and has to be copied in the duktape world,
 // so we do the same here for consistency.
 return cloneString(s);
@@ -1281,6 +1414,38 @@ JS::RootedObject tagobj(cxa, tagToObject(t));
 	return run_event_o(tagobj, pname, evname);
 }
 
+// execute script.text code, wrapper around run_script_o
+void jsRunData(const Tag *t, const char *filename, int lineno)
+{
+	bool rc;
+	const char *s;
+	if (!allowJS || !t->jslink)
+		return;
+	debugPrint(5, "> script:");
+JS::RootedObject to(cxa, tagToObject(t));
+JS::RootedValue v(cxa);
+if(!JS_GetProperty(cxa, to, "text", &v) ||
+!v.isString()) // no data
+		return;
+const char *s1 = stringize(v);
+	if (!s1 || !*s1)
+return;
+// have to set currentScript
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+set_property_object_o(doc, "currentScript", to);
+// running the script will almost surely run stringize again
+char *s2 = cloneString(s1);
+run_script_o(g, s2, filename, lineno);
+delete_property_o(doc, "currentScript");
+// onload handler? Should this run even if the script fails?
+// Right now it does.
+	if (t->js_file && !isDataURI(t->href) &&
+	typeof_property_o(to, "onload") == EJ_PROP_FUNCTION)
+		run_event_o(to, "script", "onload");
+	debugPrint(5, "< ok");
+}
+
 bool run_event_win(const Frame *f, const char *pname, const char *evname)
 {
 	if (!allowJS || !f->jslink)
@@ -1319,13 +1484,20 @@ JS::RootedObject tagobj(cxa, tagToObject(t));
 
 void set_master_bool(const char *name, bool v)
 {
-JSAutoCompartment(cxa, *mw0);
+JSAutoCompartment ac(cxa, *mw0);
 	set_property_bool_o(*mw0, name, v);
 }
 
-void set_win_string(const char *name, const char *v)
+void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
-JSAutoCompartment(cxa, frameToCompartment(cf));
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	set_property_bool_o(g, name, v);
+}
+
+void set_property_string_win(const Frame *f, const char *name, const char *v)
+{
+JSAutoCompartment ac(cxa, frameToCompartment(f));
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	set_property_string_o(g, name, v);
 }
@@ -1345,7 +1517,7 @@ JS_DefineProperty(cxa, o, "eb$gsn", t->gsn,
 t->jslink = true;
 }
 
-void disconnectTagObject1(Tag *t)
+void disconnectTagObject(Tag *t)
 {
 char buf[16];
 sprintf(buf, "o%d", t->gsn);
@@ -1995,9 +2167,10 @@ to = instantiate_o(g, fpn, "Timer");
 set_property_number_o(to, "class", n);
 set_property_object_o(to, "ontimer", fo);
 set_property_string_o(to, "backlink", fpn);
+set_property_number_o(to, "tsn", ++timer_sn);
 args.rval().setObject(*to);
 	debugPrint(5, "timer 2");
-	domSetsTimeout(n, fpn, to, isInterval);
+	domSetsTimeout(n, "+", fpn, isInterval);
 }
 
 static bool nat_timer(JSContext *cx, unsigned argc, JS::Value *vp)
@@ -2018,8 +2191,11 @@ static bool nat_cleartimer(JSContext *cx, unsigned argc, JS::Value *vp)
 if(argc >= 1 && args[0].isObject()) {
 JS::RootedObject to(cx);
 JS_ValueToObject(cx, args[0], &to);
+int tsn = get_property_number_o(to, "tsn");
+char * fpn = get_property_string_o(to, "backlink");
 // this call will unlink from the global, so gc can get rid of the timer object
-	domSetsTimeout(0, "-", to, false);
+	domSetsTimeout(tsn, "-", fpn, false);
+nzFree(fpn);
 }
 args.rval().setUndefined();
   return true;
@@ -2403,8 +2579,8 @@ cdo = get_property_object_o(cwo, "document");
 		t->contracted = true;
 	if (new_cf->jslink) {
 // Be in the compartment of the higher frame.
-JSAutoCompartment(cxa, prev);
-		disconnectTagObject1(cdt);
+JSAutoCompartment ac(cxa, prev);
+		disconnectTagObject(cdt);
 		connectTagObject1(cdt, cdo);
 		cdt->style = 0;
 		cdt->ssn = 0;
@@ -2534,7 +2710,7 @@ doc = get_property_object_o(g, "document");
 // Remember, g is the new content window object,
 // and doc is the new content document object.
 		Frame *save_cf;
-		disconnectTagObject1(cdt);
+		disconnectTagObject(cdt);
 		connectTagObject1(cdt, doc);
 		cdt->style = 0;
 		cdt->ssn = 0;
@@ -2546,7 +2722,7 @@ JS::RootedObject cna(cxa);	// childNodes array
 		save_cf = cf;
 		cf = frametag->f0;
 {
-JSAutoCompartment(cxa, frameToCompartment(cf));
+JSAutoCompartment ac(cxa, frameToCompartment(cf));
 // save_fe is conveniently the object that goes with frametag
 		set_property_object_o(save_fe, "content$Window", g);
 		set_property_object_o(save_fe, "content$Document", doc);
@@ -2592,7 +2768,7 @@ JS_ValueToObject(cx, args[1], &newdoc);
 			goto done;
 		}
 		underKill(cdt);
-		disconnectTagObject1(cdt);
+		disconnectTagObject(cdt);
 		connectTagObject1(cdt, newdoc);
 		f1 = t->f1;
 		t->f1 = 0;
@@ -3474,6 +3650,7 @@ for(c=0; c<top; ++c) {
 sprintf(buf, "session %d", c+1);
 cf->fileName = buf;
 cf->gsn = c+1;
+cf->owner = cw;
 cf->jslink = false;
 createJSContext(cf);
 if(!cf->jslink) {
@@ -3494,13 +3671,12 @@ execScript("'hello world, it is '+new Date()");
 }
 
 if(iaflag) {
-char line[500];
 // end with control d, EOF
-while(fgets(line, sizeof(line), stdin)) {
-// should check for line too long here
-// chomp
-int l = strlen(line);
-if(l && line[l-1] == '\n') line[--l] = 0;
+char *line;
+while(line = (char*)inputLine()) {
+perl2c(line);
+if(stringEqual(line, "q") || stringEqual(line, "qt"))
+break;
 
 // show context
 if(stringEqual(line, "e")) {

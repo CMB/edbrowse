@@ -22,7 +22,7 @@ uchar browseLocal;
 bool showHover, doColors;
 
 static Tag *js_reset, *js_submit;
-static const int asyncTimer = 250;
+static const int asyncTimer = 700;
 
 bool tagHandler(int seqno, const char *name)
 {
@@ -41,7 +41,7 @@ bool tagHandler(int seqno, const char *name)
 		return false;
 	if (!isJSAlive)
 		return false;
-	if (!handlerPresent(cf, t->jv, name))
+	if (!handlerPresent(t, name))
 		return false;
 
 	if (stringEqual(name, "onclick"))
@@ -499,8 +499,7 @@ void prepareScript(Tag *t)
 // A side effect of tidy + edbrowse is that the text of the script is a
 // childNode of script, but I don't think it should be.
 		if (t->firstchild && t->firstchild->action == TAGACT_TEXT)
-			run_function_onearg(f, t->jv, "removeChild",
-					    t->firstchild->jv);
+			run_function_onearg_t(t, "removeChild", t->firstchild);
 	}
 
 	if (t->href) {		/* fetch the javascript page */
@@ -606,9 +605,9 @@ void prepareScript(Tag *t)
 
 // deminimize the code if we're debugging.
 	if (demin)
-		run_function_onearg(f, f->winobj, "eb$demin", t->jv);
+		run_function_onearg_win(f, "eb$demin", t);
 	if (uvw)
-		run_function_onearg(f, f->winobj, "eb$watch", t->jv);
+		run_function_onearg_win(f, "eb$watch", t);
 
 success:
 	t->step = 4;
@@ -788,7 +787,7 @@ We skip past it here, and it isn't prepared, so it won't execute later.
 passes:
 
 	for (t = cw->scriptlist; t; t = t->same) {
-		if (t->dead || !t->jv || t->step >= 5 || t->step <= 2 || t->async != async)
+		if (t->dead || !t->jslink || t->step >= 5 || t->step <= 2 || t->async != async)
 			continue;
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))
@@ -828,8 +827,7 @@ passes:
 		if (t->inxhr) {
 // xhr looks like an asynchronous script before browse
 			char *gc_name;
-			jsobjtype xo = t->jv;	// xhr object
-			run_function_bool(cf, xo, "parseResponse");
+			run_function_bool_t(t, "parseResponse");
 /*********************************************************************
 Ok this is subtle. I put it on a script tag, and t.jv.onload exists!
 That is the function that is run by xhr.
@@ -838,10 +836,10 @@ I will disconnect here, and also check for inxhr in runOnload().
 *********************************************************************/
 			disconnectTagObject(t);
 			t->dead = true;
-// allow garbage collection to recapture xo if it wants to
-			gc_name = get_property_string(cf, xo, "backlink");
+// allow garbage collection to recapture the object if it wants to
+			gc_name = get_property_string_t(t, "backlink");
 			if (gc_name)
-				delete_property(cf, cf->winobj, gc_name);
+				delete_property_win(cf, gc_name);
 			goto afterscript;
 		}
 
@@ -878,16 +876,7 @@ I will disconnect here, and also check for inxhr in runOnload().
  * and hope the error messages line up. */
 		if (ln > 1)
 			++ln;
-		set_property_object(cf, cf->docobj, "currentScript", t->jv);
-		jsRunData(cf, t->jv, js_file, ln);
-
-// I don't know when to run the onload function, before or after the script.
-// And should we run it for a json script or other non js script?
-// If so that's a problem, cause we already jumped ahead to afterscript:
-
-		if (t->js_file && !isDataURI(t->href) && handlerPresent(cf, t->jv, "onload"))
-			run_event_t(t, "script", "onload");
-		delete_property(cf, cf->docobj, "currentScript");
+		jsRunData(t, js_file, ln);
 		debugPrint(3, "exec complete");
 
 afterscript:
@@ -903,7 +892,7 @@ afterscript:
 			nzFree(cf->dw);
 			cf->dw = 0;
 			cf->dw_l = 0;
-			run_function_onearg(cf, cf->winobj, "eb$uplift", t->jv);
+			run_function_onearg_win(cf, "eb$uplift", t);
 		}
 
 		change = true;
@@ -912,7 +901,7 @@ afterscript:
 // after each pass, see if there is a link onload to run.
 	for (t = cw->linklist; t; t = t->same) {
 		if(t->lic == 1 && t->jv && !t->dead) {
-			if(handlerPresent(t->f0, t->jv, "onload")) {
+			if(handlerPresent(t, "onload")) {
 				run_event_t(t, "link", "onload");
 				change = true;
 			}
@@ -1010,7 +999,7 @@ char *htmlParse(char *buf, int remote)
 		if (debugEvent && debugLevel >= 3)
 			set_master_bool("eventDebug", true);
 		set_basehref(cf->hbase);
-		run_function_bool(cf, cf->winobj, "eb$qs$start");
+		run_function_bool_win(cf, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
@@ -2671,11 +2660,11 @@ void runOnload(void)
 			++fn;
 		if (!t->jv)
 			continue;
-		if (action == TAGACT_BODY && handlerPresent(cf, t->jv, "onload"))
+		if (action == TAGACT_BODY && handlerPresent(t, "onload"))
 			run_event_t(t, "body", "onload");
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
-		if (action == TAGACT_FORM && handlerPresent(cf, t->jv, "onload"))
+		if (action == TAGACT_FORM && handlerPresent(t, "onload"))
 			run_event_t(t, "form", "onload");
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
@@ -2684,7 +2673,7 @@ void runOnload(void)
 				fn);
 			unloadHyperlink(formfunction, "Form");
 		}
-		if (action == TAGACT_H && handlerPresent(cf, t->jv, "onload"))
+		if (action == TAGACT_H && handlerPresent(t, "onload"))
 			run_event_t(t, "h1", "onload");
 	}
 }				/* runOnload */
@@ -2693,12 +2682,34 @@ void runOnload(void)
 Manage js timers here.
 It's a simple list of timers, assuming there aren't too many.
 Store the seconds and milliseconds when the timer should fire,
-the code to execute, and the timer object, which becomes "this".
+and an interval flag to repeat.
+The usual pathway is setTimeout(), whence backlink is the name
+of the timer object under window.
+Timer object.backlink also holds the name, so we don't forget it.
+jt->t will be 0. There is no tag with this timer.
+jt->tsn is a timer sequence number, globally, to help us keep track.
+Another path is an asynchronous script.
+If we have browsed the page, and down_jsbg is true,
+downloading js in background,
+then runScriptsPending doesn't run the script, it callse scriptSetsTimeout(),
+and thereby puts the script on a timer.
+The timer runs as an interval, according to asyncTimer ms.
+The script is out of the hands of runScriptsPending,
+and eventually executed by runTimer.
+The object on the tag is the script object.
+There is yet another path, asynchronous xhr.
+Like the above, the page must be browsed, and down_jsbg true.
+A tag is created, of type Object, not Script.
+The tag is connected to the XHR object, not a Script object.
+This is given a backlink name from window, with o.backlink having the same name.
+This is the same procedure as the timer objects.
+The links protect these objects from garbage collection,
+but we have to remember to unlink them.
 *********************************************************************/
 
 struct jsTimer {
 	struct jsTimer *next, *prev;
-	Frame *frame;	/* edbrowse frame holding this timer */
+	Frame *f;	/* edbrowse frame holding this timer */
 	Tag *t;	// for an asynchronous script
 	time_t sec;
 	int ms;
@@ -2707,7 +2718,8 @@ struct jsTimer {
 	bool deleted;
 	int jump_sec;		/* for interval */
 	int jump_ms;
-	jsobjtype timerObject;
+	int tsn;
+	char *backlink;
 };
 
 /* list of pending timers */
@@ -2726,9 +2738,9 @@ So ... the first few timers can run as fast  as they like,and we're ok
 with that, then timers slow down as we proceed.
 *********************************************************************/
 int timerResolution = 900;
-static int tsn;			// timer sequence number
+int timer_sn;			// timer sequence number
 
-void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
+void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterval)
 {
 	struct jsTimer *jt;
 	int seqno;
@@ -2737,31 +2749,29 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 		return;		/* nothing to run */
 
 	if (stringEqual(jsrc, "-")) {
-		seqno = get_property_number(cf, to, "tsn");
-// delete a timer
+// Delete a timer. Comes from clearTimeout(obj).
+		seqno = n;
 		foreach(jt, timerList) {
-			if (jt->timerObject == to) {
-				debugPrint(4, "timer %d delete", seqno);
+			if (jt->tsn != seqno)
+				continue;
+			debugPrint(4, "timer %d delete", seqno);
 // a running timer will often delete itself.
-				if (jt->running) {
-					jt->deleted = true;
-				} else {
-					char *gc_name =
-					    get_property_string(cf, jt->timerObject,
-								"backlink");
-					if (gc_name)
-						delete_property(cf, cf->winobj,
-								gc_name);
-					delFromList(jt);
-					nzFree(jt);
-				}
-				return;
+			if (jt->running) {
+				jt->deleted = true;
+			} else {
+				if (backlink)
+					delete_property_win(jt->f, backlink);
+				delFromList(jt);
+				nzFree(jt->backlink);
+				nzFree(jt);
 			}
+			return;
 		}
 // not found, just return.
 		return;
 	}
 
+// now adding a timer
 	jt = allocZeroMem(sizeof(struct jsTimer));
 	if (n < timerResolution) {
 		n = cf->jtmin;
@@ -2780,13 +2790,13 @@ void javaSetsTimeout(int n, const char *jsrc, jsobjtype to, bool isInterval)
 	jt->ms += now_ms;
 	if (jt->ms >= 1000)
 		jt->ms -= 1000, ++jt->sec;
-	jt->timerObject = to;
-	jt->frame = cf;
+	jt->backlink = cloneString(backlink);
+	jt->f = cf;
 	addToListBack(&timerList, jt);
-	seqno = ++tsn;
-	set_property_number(cf, to, "tsn", seqno);
+	seqno = timer_sn;
 	debugPrint(4, "timer %d %s", seqno, jsrc);
-}				/* javaSetsTimeout */
+	jt->tsn = seqno;
+}
 
 void scriptSetsTimeout(Tag *t)
 {
@@ -2801,13 +2811,13 @@ void scriptSetsTimeout(Tag *t)
 	if (jt->ms >= 1000)
 		jt->ms -= 1000, ++jt->sec;
 	jt->t = t;
-	jt->frame = cf;
+	jt->f = cf;
 	addToListBack(&timerList, jt);
 	debugPrint(3, "timer %s%d=%s",
 		   (t->action == TAGACT_SCRIPT ? "script" : "xhr"),
-		   ++tsn, t->href);
-	t->lic = tsn;
-}				/* scriptSetsTimeout */
+		   ++timer_sn, t->href);
+	jt->tsn = timer_sn;
+}
 
 static struct jsTimer *soonest(void)
 {
@@ -2820,7 +2830,7 @@ static struct jsTimer *soonest(void)
 			best_t = t;
 	}
 	return best_t;
-}				/* soonest */
+}
 
 bool timerWait(int *delay_sec, int *delay_ms)
 {
@@ -2859,7 +2869,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	}
 
 	return true;
-}				/* timerWait */
+}
 
 void delTimers(Frame *f)
 {
@@ -2867,14 +2877,15 @@ void delTimers(Frame *f)
 	struct jsTimer *jt, *jnext;
 	for (jt = timerList.next; jt != (void *)&timerList; jt = jnext) {
 		jnext = jt->next;
-		if (jt->frame == f) {
+		if (jt->f == f) {
 			++delcount;
 			delFromList(jt);
+			nzFree(jt->backlink);
 			nzFree(jt);
 		}
 	}
-	debugPrint(4, "%d timers deleted", delcount);
-}				/* delTimers */
+	debugPrint(3, "%d timers deleted", delcount);
+}
 
 void runTimer(void)
 {
@@ -2885,14 +2896,15 @@ void runTimer(void)
 
 	currentTime();
 
-	if ((jt = soonest())
-	    && !(jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms))) {
+	if (!(jt = soonest()) ||
+	    (jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms)))
+		goto done;
 
-		if (!gotimers)
-			goto skip_execution;
+	if (!gotimers)
+		goto skip_execution;
 
-		cf = jt->frame;
-		cw = cf->owner;
+	cf = jt->f;
+	cw = cf->owner;
 
 /*********************************************************************
 Only syncing the foreground window is right almost all the time,
@@ -2902,107 +2914,96 @@ You should sync that other window before running javascript, so it has
 the latest text, the text you are editing right now.
 I can't do that because jSyncup calls fetchLine() to pull text lines
 out of the buffer, which has to be the foreground window.
-We need to fix this someday, though it is a very rare low runner case.
+We need to fix this someday, though it is a very rare corner case.
 *********************************************************************/
-		if (foregroundWindow)
-			jSyncup(true);
-		jt->running = true;
-		if ((t = jt->t)) {
-// asynchronous script
-			if (t->step == 3) {	// background load
-				int rc =
-				    pthread_tryjoin_np(t->loadthread, NULL);
-				if (rc != 0 && rc != EBUSY) {
+	if (foregroundWindow)
+		jSyncup(true);
+	jt->running = true;
+	if ((t = jt->t)) {
+// asynchronous script or xhr
+		if (t->step == 3) {	// background load
+			int rc =
+			    pthread_tryjoin_np(t->loadthread, NULL);
+			if (rc != 0 && rc != EBUSY) {
 // should never happen
-					debugPrint(3,
-						   "script background thread test returns %d",
-						   rc);
-					pthread_join(t->loadthread, NULL);
-					rc = 0;
-				}
-				if (!rc) {	// it's done
-					if (!t->loadsuccess) {
-						if (debugLevel >= 3)
-							i_printf(MSG_GetJS,
-								 t->href,
-								 t->hcode);
-						t->step = 6;
-					} else {
-						if (t->action == TAGACT_SCRIPT) {
-							set_property_string_t(t->jv, "text", t->value);
-							nzFree(t->value);
-							t->value = 0;
-						}
-						t->step = 4;	// loaded
+				debugPrint(3,
+					   "script background thread test returns %d",
+					   rc);
+				pthread_join(t->loadthread, NULL);
+				rc = 0;
+			}
+			if (!rc) {	// it's done
+				if (!t->loadsuccess) {
+					if (debugLevel >= 3)
+						i_printf(MSG_GetJS,
+							 t->href,
+							 t->hcode);
+					t->step = 6;
+				} else {
+					if (t->action == TAGACT_SCRIPT) {
+						set_property_string_t(t->jv, "text", t->value);
+						nzFree(t->value);
+						t->value = 0;
 					}
+					t->step = 4;	// loaded
 				}
 			}
-			if (t->step == 4 && t->action == TAGACT_SCRIPT) {
-				char *js_file = t->js_file;
-				int ln = t->js_ln;
-				t->step = 5;	// running
-				if (!js_file)
-					js_file = "generated";
-				if (!ln)
-					ln = 1;
-				if (ln > 1)
-					++ln;
-				if (cf != save_cf)
-					debugPrint(4,
-						   "running script at a lower frame %s",
-						   js_file);
-				debugPrint(3, "async exec timer %d %s at %d",
-					   t->lic, js_file, ln);
-				set_property_object(cf, cf->docobj, "currentScript",
-						    t->jv);
-				jsRunData(cf, t->jv, js_file, ln);
-				if (t->js_file && !isDataURI(t->href) && handlerPresent(cf, t->jv, "onload"))
-					run_event_t(t, "script", "onload");
-				delete_property(cf, cf->docobj, "currentScript");
-				debugPrint(3, "async exec complete");
-			}
-			if (t->step == 4 && t->action != TAGACT_SCRIPT) {
-				t->step = 5;
-				set_property_string_t(t, "$entire", t->value);
-// could be large; it's worth freeing
-				nzFree(t->value);
-				t->value = 0;
-				debugPrint(3, "run xhr %d", t->lic);
-				run_function_bool(cf, t->jv, "parseResponse");
-				jt->timerObject = t->jv;
-			}
-			if (t->step >= 5)
-				jt->deleted = true;
-		} else {
-			run_function_bool(cf, jt->timerObject, "ontimer");
 		}
-		jt->running = false;
+		if (t->step == 4 && t->action == TAGACT_SCRIPT) {
+			char *js_file = t->js_file;
+			int ln = t->js_ln;
+			t->step = 5;	// running
+			if (!js_file)
+				js_file = "generated";
+			if (!ln)
+				ln = 1;
+			if (ln > 1)
+				++ln;
+			if (cf != save_cf)
+				debugPrint(4,
+					   "running script at a lower frame %s",
+					   js_file);
+			debugPrint(3, "async exec timer %d %s at %d",
+				   jt->tsn, js_file, ln);
+			jsRunData(t, js_file, ln);
+			debugPrint(3, "async exec complete");
+		}
+		if (t->step == 4 && t->action != TAGACT_SCRIPT) {
+			t->step = 5;
+			set_property_string_t(t, "$entire", t->value);
+			nzFree(t->value);
+			t->value = 0;
+			debugPrint(3, "run xhr %d", jt->tsn);
+			run_function_bool_t(t, "parseResponse");
+		}
+		if (t->step >= 5)
+			jt->deleted = true;
+	} else {
+// regular timer
+		run_ontimer(jt->f, jt->backlink);
+	}
+	jt->running = false;
 skip_execution:
 
-		if (!jt->isInterval || jt->deleted) {
-			if (jt->timerObject) {
-				char *gc_name =
-				    get_property_string(cf, jt->timerObject,
-							"backlink");
-				if (gc_name)
-					delete_property(cf, cf->winobj, gc_name);
-			}
-			delFromList(jt);
-			nzFree(jt);
-		} else {
-			jt->sec = now_sec + jt->jump_sec;
-			jt->ms = now_ms + jt->jump_ms;
-			if (jt->ms >= 1000)
-				jt->ms -= 1000, ++jt->sec;
-		}
-
-		if (gotimers)
-			jSideEffects();
+	if (!jt->isInterval || jt->deleted) {
+		if(jt->backlink)
+			delete_property_win(jt->f, jt->backlink);
+		delFromList(jt);
+		nzFree(jt->backlink);
+		nzFree(jt);
+	} else {
+		jt->sec = now_sec + jt->jump_sec;
+		jt->ms = now_ms + jt->jump_ms;
+		if (jt->ms >= 1000)
+			jt->ms -= 1000, ++jt->sec;
 	}
 
-	cw = save_cw;
-	cf = save_cf;
-}				/* runTimer */
+	if (gotimers)
+		jSideEffects();
+
+done:
+	cw = save_cw, cf = save_cf;
+}
 
 void javaOpensWindow(const char *href, const char *name)
 {
@@ -3207,7 +3208,7 @@ nocolorend:
 // what is the visibility now?
 		uchar v_now = 2;
 		t->disval =
-		    run_function_onearg(f, f->winobj, "eb$visible", t->jv);
+		    run_function_onearg_win(f, "eb$visible", t);
 		if (t->disval == 1)
 			v_now = 1;
 		if (t->disval == 2)
@@ -3412,7 +3413,7 @@ nocolor:
 // But only at the start, so maybe we only need to check on the first render.
 // But maybe some other site adds onclick later. Do we have to check every time?
 // This rerender function is getting more and more js intensive!
-		if (!t->onclick && t->jv && handlerPresent(f, t->jv, "onclick"))
+		if (!t->onclick && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
 		if (!t->onclick) {
 // regular span
@@ -3804,7 +3805,7 @@ char *render(int start)
 	Frame *f;
 	for (f = &cw->f0; f; f = f->next)
 		if (f->cx)
-			set_property_bool(f, f->winobj, "rr$start", true);
+			set_property_bool_win(f, "rr$start", true);
 	ns = initString(&ns_l);
 	invisible = false;
 	inv2 = inv3 = NULL;

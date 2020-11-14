@@ -316,6 +316,7 @@ extern bool curlAuthNegotiate;  /* try curl negotiate (SPNEGO) auth */
 extern bool listNA;		/* list nonascii chars */
 extern bool inInput;		/* reading line from standard in */
 extern int fileSize;		/* when reading/writing files */
+extern int timer_sn; // timer sequence numbers
 extern char errorMsg[];		/* generated error message */
 extern int localAccount;	/* this is the smtp server for outgoing mail */
 extern char *mailDir;		/* move to this directory when fetching mail */

@@ -70,33 +70,6 @@ static const char *debugString(const char *v)
 	return v;
 }				/* debugString */
 
-/*********************************************************************
-This is unique among all the wrappered calls in that it can be made for
-a window that is not the current window.
-You can free another window, or a whole stack of windows, by typeing
-q2 while in session 1.
-*********************************************************************/
-
-void jsRunData(const Frame *f, jsobjtype obj,
-const char *filename, int lineno)
-{
-// this never runs from the j process.
-	if (whichproc != 'e') {
-		debugPrint(1, "jsRunData run from the js process");
-		return;
-	}
-	if (!allowJS || !f->winobj || !obj)
-		return;
-	debugPrint(5, "> script:");
-	jsSourceFile = filename;
-	jsLineno = lineno;
-	whichproc = 'j';
-	run_data_0(f->cx, obj);
-	whichproc = 'e';
-	jsSourceFile = NULL;
-	debugPrint(5, "< ok");
-}
-
 /* does the member exist in the object or its prototype? */
 bool has_property(const Frame *f, jsobjtype obj, const char *name)
 {

@@ -6333,7 +6333,7 @@ replaceframe:
 // edbrowse is more like a touchscreen, and there are such devices, so just go.
 // No mouseEnter, mouseOver, mouseExit, etc.
 			if (!jsdead)
-				set_win_string("status", h);
+				set_property_string_win(cf, "status", h);
 			if (jsgo) {
 				jSyncup(false);
 				rc = bubble_event_t(tag, "onclick");
