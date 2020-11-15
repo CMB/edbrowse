@@ -2960,11 +2960,11 @@ Tag **querySelectorAll(const char *selstring, jsobjtype topobj)
 	return a;
 }
 
-// this one just returns the node
-jsobjtype querySelector(const char *selstring, jsobjtype topobj)
+// this one just returns the first node.
+// This is only called from the native method.
+Tag *querySelector(const char *selstring, jsobjtype topobj)
 {
-	Tag *top = 0, **a;
-	jsobjtype node = 0;
+	Tag *top = 0, **a, *t;
 	rootobj = topobj;
 	if (topobj)
 		top = tagFromJavaVar(topobj);
@@ -2973,10 +2973,9 @@ jsobjtype querySelector(const char *selstring, jsobjtype topobj)
 	onematch = false;
 	if (!a)
 		return 0;
-	if (a[0])
-		node = a[0]->jv;
+	t = a[0];
 	nzFree(a);
-	return node;
+	return t;
 }
 
 bool querySelector0(const char *selstring, jsobjtype topobj)

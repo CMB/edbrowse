@@ -91,6 +91,7 @@ const char *mailRedirect(const char *to, const char *from, 			 const char *reply
 void readConfigFile(void) { }
 const char *fetchReplace(const char *u){return 0;}
 Tag **querySelectorAll(const char *selstring, jsobjtype topobj){return 0;}
+Tag *querySelector(const char *selstring, jsobjtype topobj){return 0;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -2251,7 +2252,8 @@ JS::RootedObject tobj(cx);
 	for (i = j = 0; (t = tlist[i]); ++i) {
 		if (!t->jslink)	// should never happen
 			continue;
-tobj = tagToObject(t);
+if(!(tobj = tagToObject(t)))
+continue;
 v.setObject(*tobj);
 JS_DefineElement(cx, ao, j, v, JSPROP_STD);
 		++j;
@@ -2303,6 +2305,7 @@ static bool nat_qs(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 char *selstring = NULL;
+	Tag *t;
 JS::RootedObject start(cx);
 if(argc >= 1 && args[0].isString()) {
 JSString *s = args[0].toString();
@@ -2313,11 +2316,14 @@ JS_ValueToObject(cx, args[1], &start);
 if(!start)
 start = JS_THIS_OBJECT(cx, vp);
 jsInterruptCheck();
-//` call querySelector in css.c
+	t = querySelector(selstring, start);
 free(selstring);
-// return undefined for now
-args.rval().setUndefined();
-return true;
+	if(t && t->jslink) {
+JS::RootedObject tobj(cx, tagToObject(t));
+args.rval().setObject(*tobj);
+	} else
+		args.rval().setUndefined();
+	return true;
 }
 
 static bool nat_qs0(JSContext *cx, unsigned argc, JS::Value *vp)

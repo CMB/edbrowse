@@ -2070,7 +2070,8 @@ static duk_ret_t native_qsa(duk_context * cx)
 // querySelector
 static duk_ret_t native_qs(duk_context * cx)
 {
-	jsobjtype root = 0, ao;
+	jsobjtype start = 0;
+	Tag *t;
 	const char *selstring = duk_get_string(cx, 0);
 	int top = duk_get_top(cx);
 	if (top > 2) {
@@ -2079,18 +2080,18 @@ static duk_ret_t native_qs(duk_context * cx)
 	}
 	if (top == 2) {
 		if (duk_is_object(cx, 1))
-			root = duk_get_heapptr(cx, 1);
+			start = duk_get_heapptr(cx, 1);
 	}
-	if (!root) {
+	if (!start) {
 		duk_push_this(cx);
-		root = duk_get_heapptr(cx, -1);
+		start = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
 	jsInterruptCheck(cx);
-	ao = querySelector(selstring, root);
+	t = querySelector(selstring, start);
 	duk_pop_n(cx, top);
-	if (ao)
-		duk_push_heapptr(cx, ao);
+	if(t && t->jslink)
+		duk_push_heapptr(cx, t->jv);
 	else
 		duk_push_undefined(cx);
 	return 1;
