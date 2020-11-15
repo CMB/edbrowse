@@ -55,36 +55,7 @@ int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=ebjs.c */
 void javaSetsTagVar(jsobjtype v, const char *newtext);
-void dwStart(void);
-void createJSContext(Frame *f) ;
-void freeJSContext(Frame *f) ;
-enum ej_proptype typeof_property(const Frame *f, jsobjtype obj, const char *name) ;
-#define handlerPresent(t, name) (typeof_property_t(t, name) == EJ_PROP_FUNCTION)
-bool has_property(const Frame *f, jsobjtype obj, const char *name) ;
-void delete_property(const Frame *f, jsobjtype obj, const char *name) ;
-char *get_property_string(const Frame *f, jsobjtype obj, const char *name) ;
-int get_property_number(const Frame *f, jsobjtype obj, const char *name) ;
-double get_property_float(const Frame *f, jsobjtype obj, const char *name) ;
-bool get_property_bool(const Frame *f, jsobjtype obj, const char *name) ;
-jsobjtype get_property_object(const Frame *f, jsobjtype parent, const char *name) ;
-jsobjtype get_property_function(const Frame *f, jsobjtype parent, const char *name);
-jsobjtype get_array_element_object(const Frame *f, jsobjtype obj, int idx) ;
-int set_property_string(const Frame *f, jsobjtype obj, const char *name, const char *value) ;
-int set_property_number(const Frame *f, jsobjtype obj, const char *name, int n) ;
-int set_property_float(const Frame *f, jsobjtype obj, const char *name, double n) ;
-int set_property_bool(const Frame *f, jsobjtype obj, const char *name, bool n) ;
-int set_property_object(const Frame *f, jsobjtype parent, const char *name, jsobjtype child) ;
-jsobjtype instantiate_array(const Frame *f, jsobjtype parent, const char *name) ;
-int set_array_element_object(const Frame *f, jsobjtype array, int idx, jsobjtype child) ;
-jsobjtype instantiate_array_element(const Frame *f, jsobjtype array, int idx, const char *classname) ;
-jsobjtype instantiate(const Frame *f, jsobjtype parent, const char *name, const char *classname) ;
-int set_property_function(const Frame *f, jsobjtype parent, const char *name, const char *body) ;
-int get_arraylength(const Frame *f, jsobjtype a);
 void rebuildSelectors(void);
-bool run_function_bool(const Frame *f, jsobjtype obj, const char *name);
-int run_function_onearg(const Frame *f, jsobjtype obj, const char *name, jsobjtype o);
-void run_function_onestring(const Frame *f, jsobjtype parent, const char *name, const char *s);
-void set_basehref(const char *b);
 
 /* sourcefile=fetchmail.c */
 int fetchMail(int account);
@@ -122,6 +93,8 @@ uchar fromHex(char d, char e) ;
 char *closeColor(const char *s);
 
 /* sourcefile=html.c */
+void dwStart(void);
+void set_basehref(const char *b);
 bool tagHandler(int seqno, const char *name);
 void jSideEffects(void);
 void jSyncup(bool fromtimer);
@@ -402,7 +375,6 @@ void cssText(jsobjtype node, const char *rulestring);
 void disconnectTagObject(Tag *t);
 bool frameExpand(bool expand, int ln1, int ln2);
 bool reexpandFrame(void);
-// the native versions of the api functions in ebjs.c
 enum ej_proptype typeof_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 bool has_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 bool has_property_t(const Tag *t, const char *name) ;
@@ -429,6 +401,8 @@ int get_arraylength_0(jsobjtype cx, jsobjtype a);
 bool run_function_bool_0(jsobjtype cx, jsobjtype obj, const char *name);
 bool run_function_bool_t(const Tag *t, const char *name);
 bool run_function_bool_win(const Frame *f, const char *name);
+void createJSContext(Frame *f) ;
+void freeJSContext(Frame *f) ;
 void run_ontimer(const Frame *f, const char *backlink);
 int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, jsobjtype o);
 int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2);
@@ -450,6 +424,7 @@ void delete_property_win(const Frame *f, const char *name);
 void delete_property_doc(const Frame *f, const char *name);
 bool get_property_bool_t(const Tag *t, const char *name);
 enum ej_proptype typeof_property_t(const Tag *t, const char *name);
+#define handlerPresent(t, name) (typeof_property_t(t, name) == EJ_PROP_FUNCTION)
 int get_property_number_t(const Tag *t, const char *name);
 char * get_property_string_t(const Tag *t, const char *name);
 void set_property_bool_t(const Tag *t, const char *name, bool v);

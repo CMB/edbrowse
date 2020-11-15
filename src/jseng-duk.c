@@ -34,6 +34,7 @@ Exit codes are as follows:
 
 static void processError(duk_context * cx);
 static void jsInterruptCheck(duk_context * cx);
+static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
 
 static duk_ret_t native_error_stub_0(duk_context * cx)
 {
@@ -772,21 +773,21 @@ we did that before and now it's being expanded. So bump step up to 2.
 		decorate(0);
 		set_basehref(cf->hbase);
 // parent points to the containing frame.
-		set_property_object(cf, cf->winobj, "parent", save_cf->winobj);
+		set_property_object_0(cf->cx, cf->winobj, "parent", save_cf->winobj);
 // And top points to the top.
 		cf = save_cf;
-		topobj = get_property_object(cf, cf->winobj, "top");
+		topobj = get_property_object_0(cf->cx, cf->winobj, "top");
 		cf = new_cf;
-		set_property_object(cf, cf->winobj, "top", topobj);
-		set_property_object(cf, cf->winobj, "frameElement", t->jv);
-		run_function_bool(cf, cf->winobj, "eb$qs$start");
+		set_property_object_0(cf->cx, cf->winobj, "top", topobj);
+		set_property_object_0(cf->cx, cf->winobj, "frameElement", t->jv);
+		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
 		if (jssrc) {
 			jsRunScriptWin(jssrc, "frame.src", 1);
 		}
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
-		set_property_string(cf, cf->docobj, "readyState", "complete");
+		set_property_string_0(cf->cx, cf->docobj, "readyState", "complete");
 		run_event_doc(cf, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
@@ -814,13 +815,12 @@ we did that before and now it's being expanded. So bump step up to 2.
 		cdt->style = 0;
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = new_cf;
-		set_property_object(new_cf, t->jv, "content$Document", cdo);
-		cna = get_property_object(t->f0, t->jv, "childNodes");
-		set_array_element_object(t->f0, cna, 0, cdo);
-// Should we do this? For consistency I guess yes.
-		set_property_object(t->f0, cdo, "parentNode", t->jv);
+		set_property_object_0(new_cf->cx, t->jv, "content$Document", cdo);
+		cna = get_property_object_0(t->f0->cx, t->jv, "childNodes");
+		set_array_element_object_0(t->f0->cx, cna, 0, cdo);
+		set_property_object_0(t->f0->cx, cdo, "parentNode", t->jv);
 		cwo = new_cf->winobj;
-		set_property_object(new_cf, t->jv, "content$Window", cwo);
+		set_property_object_0(new_cf->cx, t->jv, "content$Window", cwo);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
 		run_event_t(t, t->info->name, "onload");
@@ -850,9 +850,9 @@ bool reexpandFrame(void)
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-	save_top = get_property_object(cf, cf->winobj, "top");
-	save_parent = get_property_object(cf, cf->winobj, "parent");
-	save_fe = get_property_object(cf, cf->winobj, "frameElement");
+	save_top = get_property_object_0(cf->cx, cf->winobj, "top");
+	save_parent = get_property_object_0(cf->cx, cf->winobj, "parent");
+	save_fe = get_property_object_0(cf->cx, cf->winobj, "frameElement");
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
@@ -915,14 +915,14 @@ bool reexpandFrame(void)
 	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object(cf, cf->winobj, "top", save_top);
-		set_property_object(cf, cf->winobj, "parent", save_parent);
-		set_property_object(cf, cf->winobj, "frameElement", save_fe);
-		run_function_bool(cf, cf->winobj, "eb$qs$start");
+		set_property_object_0(cf->cx, cf->winobj, "top", save_top);
+		set_property_object_0(cf->cx, cf->winobj, "parent", save_parent);
+		set_property_object_0(cf->cx, cf->winobj, "frameElement", save_fe);
+		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
-		set_property_string(cf, cf->docobj, "readyState", "complete");
+		set_property_string_0(cf->cx, cf->docobj, "readyState", "complete");
 		run_event_doc(cf, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
@@ -949,12 +949,11 @@ bool reexpandFrame(void)
 // but that requires a change of context.
 		save_cf = cf;
 		cf = frametag->f0;
-		set_property_object(cf, frametag->jv, "content$Document", cdo);
-		cna = get_property_object(cf, frametag->jv, "childNodes");
-		set_array_element_object(cf, cna, 0, cdo);
-// Should we do this? For consistency I guess yes.
-		set_property_object(cf, cdo, "parentNode", frametag->jv);
-		set_property_object(cf, frametag->jv, "content$Window", cwo);
+		set_property_object_0(cf->cx, frametag->jv, "content$Document", cdo);
+		cna = get_property_object_0(cf->cx, frametag->jv, "childNodes");
+		set_array_element_object_0(cf->cx, cna, 0, cdo);
+		set_property_object_0(cf->cx, cdo, "parentNode", frametag->jv);
+		set_property_object_0(cf->cx, frametag->jv, "content$Window", cwo);
 		cf = save_cf;
 	}
 
@@ -3011,8 +3010,6 @@ bool run_function_bool_win(const Frame *f, const char *name)
 		return false;
 	return run_function_bool_0(f->cx, f->winobj, name);
 }
-
-static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
 
 void run_ontimer(const Frame *f, const char *backlink)
 {

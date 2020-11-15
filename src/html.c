@@ -24,6 +24,33 @@ bool showHover, doColors;
 static Tag *js_reset, *js_submit;
 static const int asyncTimer = 700;
 
+// start a document.write on current frame, i.e. cf
+void dwStart(void)
+{
+	if (cf->dw)
+		return;
+	cf->dw = initString(&cf->dw_l);
+	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
+}
+
+/* pass, to js, the filename,
+ * or the <base href=url>, for relative url resolution on innerHTML.
+ * This has to be retained per edbrowse buffer. */
+void set_basehref(const char *h)
+{
+	if (!h)
+		h = emptyString;
+	set_property_string_win(cf, "eb$base", h);
+// This is special code for snapshot simulations.
+// If the file jslocal is present, push base over to window.location etc,
+// as though you were running that page.
+	if (!access("jslocal", 4) && h[0]) {
+		run_function_bool_win(cf, "eb$base$snapshot");
+		nzFree(cf->fileName);
+		cf->fileName = cloneString(h);
+	}
+}
+
 bool tagHandler(int seqno, const char *name)
 {
 	Tag *t = tagList[seqno];
