@@ -2005,10 +2005,45 @@ static duk_ret_t native_css_start(duk_context * cx)
 	return 0;
 }
 
+// turn an array of html tags into an array of objects.
+// Leave the array on the duktape stack.
+static void objectize(duk_context *cx, Tag **tlist)
+{
+	int i, j;
+	const Tag *t;
+	        duk_get_global_string(cx, "Array");
+	duk_new(cx, 0);
+	if(!tlist)
+		return;
+	for (i = j = 0; (t = tlist[i]); ++i) {
+		if (!t->jslink)	// should never happen
+			continue;
+		duk_push_heapptr(cx, t->jv);
+		duk_put_prop_index(cx, -2, j);
+		++j;
+	}
+}
+
+// Turn start into a tag, or 0 if start is doc or win for the current frame.
+// Return false if we can't turn it into a tag within the current window.
+static bool rootTag(jsobjtype start, Tag **tp)
+{
+	Tag *t;
+	*tp = 0;
+	if(start == cf->winobj || start == cf->docobj)
+		return true;
+	t = tagFromJavaVar(start);
+	if(!t)
+		return false;
+	*tp = t;
+	return true;
+}
+
 // querySelectorAll
 static duk_ret_t native_qsa(duk_context * cx)
 {
-	jsobjtype root = 0, ao;
+	jsobjtype start = 0;
+	Tag **tlist;
 	const char *selstring = duk_get_string(cx, 0);
 	int top = duk_get_top(cx);
 	if (top > 2) {
@@ -2017,17 +2052,18 @@ static duk_ret_t native_qsa(duk_context * cx)
 	}
 	if (top == 2) {
 		if (duk_is_object(cx, 1))
-			root = duk_get_heapptr(cx, 1);
+			start = duk_get_heapptr(cx, 1);
 	}
-	if (!root) {
+	if (!start) {
 		duk_push_this(cx);
-		root = duk_get_heapptr(cx, -1);
+		start = duk_get_heapptr(cx, -1);
 		duk_pop(cx);
 	}
 	jsInterruptCheck(cx);
-	ao = querySelectorAll(selstring, root);
+	tlist = querySelectorAll(selstring, start);
 	duk_pop_n(cx, top);
-	duk_push_heapptr(cx, ao);
+	objectize(cx, tlist);
+	nzFree(tlist);
 	return 1;
 }
 

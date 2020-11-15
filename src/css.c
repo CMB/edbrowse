@@ -2948,36 +2948,16 @@ static Tag **qsaInternal(const char *selstring, Tag *top)
 	return a;
 }
 
-// turn an array of html tags into an array of objects
-static jsobjtype objectize(Tag **list)
-{
-	jsobjtype cx = cf->cx;
-	int i, j;
-	const Tag *t;
-	jsobjtype ao;
-	delete_property_0(cx, cf->winobj, "qsagc");
-	ao = instantiate_array_0(cx, cf->winobj, "qsagc");
-	if (!ao || !list)
-		return ao;
-	for (i = j = 0; (t = list[i]); ++i) {
-		if (!t->jv)	// should never happen
-			continue;
-		set_array_element_object_0(cx, ao, j++, t->jv);
-	}
-	return ao;
-}
-
-jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj)
+// This is only called from the native method, and the native method
+// will free the list of tags.
+Tag **querySelectorAll(const char *selstring, jsobjtype topobj)
 {
 	Tag *top = 0, **a;
-	jsobjtype ao;
 	rootobj = topobj;
 	if (topobj)
 		top = tagFromJavaVar(topobj);
 	a = qsaInternal(selstring, top);
-	ao = objectize(a);
-	nzFree(a);
-	return ao;
+	return a;
 }
 
 // this one just returns the node

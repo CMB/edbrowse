@@ -362,7 +362,7 @@ void writeShortCache(void);
 bool matchMedia(char *t);
 void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
 void cssFree(Frame *f);
-jsobjtype querySelectorAll(const char *selstring, jsobjtype topobj);
+Tag **querySelectorAll(const char *selstring, jsobjtype topobj);
 jsobjtype querySelector(const char *selstring, jsobjtype topobj);
 bool querySelector0(const char *selstring, jsobjtype topobj);
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);

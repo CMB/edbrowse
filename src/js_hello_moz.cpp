@@ -90,6 +90,7 @@ const char *findProxyForURL(const char *url) { return 0; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
 void readConfigFile(void) { }
 const char *fetchReplace(const char *u){return 0;}
+Tag **querySelectorAll(const char *selstring, jsobjtype topobj){return 0;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -2236,6 +2237,46 @@ cssText(thisobj, rules);
 return true;
 }
 
+// turn an array of html tags into an array of objects.
+// You need to dump the returned pointer into a rooted object.
+static JSObject * objectize(JSContext *cx, Tag **tlist)
+{
+	int i, j;
+	const Tag *t;
+JS::RootedObject ao(cx, JS_NewArrayObject(cx, 0));
+	if(!tlist)
+return ao;
+JS::RootedValue v(cx);
+JS::RootedObject tobj(cx);
+	for (i = j = 0; (t = tlist[i]); ++i) {
+		if (!t->jslink)	// should never happen
+			continue;
+tobj = tagToObject(t);
+v.setObject(*tobj);
+JS_DefineElement(cx, ao, j, v, JSPROP_STD);
+		++j;
+	}
+return ao;
+}
+
+// Turn start into a tag, or 0 if start is doc or win for the current frame.
+// Return false if we can't turn this into a tag within the current window.
+static bool rootTag(JS::HandleObject start, Tag **tp)
+{
+	Tag *t;
+	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+	*tp = 0;
+	if(start == g || start == doc)
+		return true;
+	t = tagFromObject(start);
+	if(!t)
+		return false;
+	*tp = t;
+	return true;
+}
+
+// querySelectorAll
 static bool nat_qsa(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -2250,11 +2291,12 @@ JS_ValueToObject(cx, args[1], &start);
 if(!start)
 start = JS_THIS_OBJECT(cx, vp);
 jsInterruptCheck();
-//` call querySelectorAll in css.c
+	Tag **tlist = querySelectorAll(selstring, start);
 free(selstring);
-// return empty array for now
-args.rval().setObject(*JS_NewArrayObject(cx, 0));
-  return true;
+JS::RootedObject ao(cx, objectize(cx, tlist));
+args.rval().setObject(*ao);
+	nzFree(tlist);
+	  return true;
 }
 
 static bool nat_qs(JSContext *cx, unsigned argc, JS::Value *vp)
