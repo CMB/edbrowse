@@ -76,26 +76,14 @@ int verifyCertificates = 1;
 char *userAgents[MAXAGENT + 1];
 char *currentAgent;
 void ebClose(int n) { exit(n); }
-Tag *newTag(const Frame *f, const char *tagname) { puts("new tag abort"); exit(4); }
 void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
-void htmlInputHelper(Tag *t) { }
-void formControl(Tag *t, bool namecheck) { }
-Tag *findOpenTag(Tag *t, int action) { return NULL; }
-Tag *findOpenList(Tag *t){return 0;}
 void writeShortCache(void) { }
-void html_from_setter( jsobjtype innerParent, const char *h) { printf("expand %s\n", h); }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
 void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"); }
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
-void underKill(Tag *t) { }
 void cssFree(Frame *f) { }
 void rebuildSelectors(void) { puts("rebuild selectors"); }
-void decorate(int start) { puts("decorate"); }
-void freeTags(struct ebWindow *w) {}
-void prerender(int start) { puts("prerender"); }
-void htmlNodesIntoTree(int start, Tag *attach) { puts("tags into tree"); }
-void html2nodes(const char *htmltext, bool startpage) { puts("htnl 2 nodes"); }
 bool javaOK(const char *url) { return true; }
 bool mustVerifyHost(const char *url) { return false; }
 const char *findAgentForURL(const char *url) { return 0; }
@@ -103,18 +91,8 @@ const char eol[] = "\r\n";
 const char *findProxyForURL(const char *url) { return 0; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
 void readConfigFile(void) { }
-void setTagAttr(Tag *t, const char *name, char *val) { nzFree(val); }
-const char *attribVal(const Tag *t, const char *name){ return 0;}
 void set_basehref(const char *b){}
-void traverseAll(int start){}
-nodeFunction traverse_callback;
 const char *fetchReplace(const char *u){return 0;}
-void initTagArray(void){}
-const struct tagInfo availableTags[1] = {
-	{"html", "html", TAGACT_HTML}};
-const char *const inp_types[1] = {"X"};
-const char *const inp_others[1] = {"x"};
-char *displayOptions(const Tag *sel) {return 0;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -188,12 +166,26 @@ return top_proptype(v);
 static void uptrace(JS::HandleObject start);
 static void processError(void);
 static void jsInterruptCheck(void);
+static Tag *tagFromObject(JS::HandleObject o);
+static JSObject *tagToObject(const Tag *t);
+static JSObject *frameToCompartment(const Frame *f);
 
 bool has_property_o(JS::HandleObject parent, const char *name)
 {
 bool found;
 JS_HasProperty(cxa, parent, name, &found);
 return found;
+}
+
+bool has_property_t(const Tag *t, const char *name)
+{
+if(!t->jslink || !allowJS)
+return false;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return false;
+return has_property_o(obj, name);
 }
 
 void delete_property_o(JS::HandleObject parent, const char *name)
@@ -427,8 +419,6 @@ JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
 // Example: the value property, when set, uses a setter to push that value
 // through to edbrowse, where you can see it.
 
-static Tag *tagFromObject(JS::HandleObject o);
-
 static void domSetsInner(JS::HandleObject ival, const char *newtext)
 {
 	int side;
@@ -599,6 +589,7 @@ static bool setter_innerHTML(JSContext *cx, unsigned argc, JS::Value *vp)
 if(argc != 1)
 return true; // should never happen
   JS::CallArgs args = CallArgsFromVp(argc, vp);
+	Tag *t;
 const char *h = stringize(args[0]);
 if(!h)
 h = emptyString;
@@ -636,7 +627,12 @@ JS_SetProperty(cx, thisobj, "inner$HTML", args[0]);
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
-	html_from_setter(thisobj, run);
+	t = tagFromObject(thisobj);
+	if(t) {
+		html_from_setter(t, run);
+	} else {
+		                debugPrint(1, "innerHTML finds no tag, cannot parse");
+	}
 	nzFree(run);
 	debugPrint(5, "setter h 2");
 
@@ -750,6 +746,16 @@ v = JS::ObjectValue(*child);
 JS_SetProperty(cxa, parent, name, v);
 else
 JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
+}
+
+void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
+{
+if(!t->jslink || !t2->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+JS::RootedObject obj2(cxa, tagToObject(t2));
+	set_property_object_o(obj, name, obj2);
 }
 
 void set_array_element_object_o(JS::HandleObject parent, int idx, JS::HandleObject child)
@@ -932,9 +938,6 @@ return false;
 return true;
 }
 
-static JSObject *tagToObject(const Tag *t);
-static JSObject *frameToCompartment(const Frame *f);
-
 bool run_function_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
@@ -1011,6 +1014,17 @@ JS::RootedObject obj2(cxa, tagToObject(t2));
 	return run_function_onearg_o(g, name, obj2);
 }
 
+int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2)
+{
+if(!f->jslink || !t2->jslink || !allowJS)
+return -1;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+JS::RootedObject obj2(cxa, tagToObject(t2));
+	return run_function_onearg_o(doc, name, obj2);
+}
+
 void run_function_onestring_o(JS::HandleObject parent, const char *name,
 const char *a)
 {
@@ -1027,6 +1041,15 @@ if(!ok) {
 	debugPrint(3, "failure on %s(%s)", name, a);
 	uptrace(parent);
 } // error
+}
+
+void run_function_onestring_t(const Tag *t, const char *name, const char *s)
+{
+if(!t->jslink || !allowJS)
+return;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+	run_function_onestring_o(obj, name, s);
 }
 
 /*********************************************************************
@@ -1145,6 +1168,19 @@ JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return;
 set_property_string_o(obj, name, v);
+}
+
+void set_dataset_string_t(const Tag *t, const char *name, const char *v)
+{
+	if(!t->jslink || !allowJS)
+		return;
+	JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+	JS::RootedObject obj(cxa, tagToObject(t));
+	if(!obj)
+		return;
+	JS::RootedObject dso(cxa, get_property_object_o(obj, "dataset"));
+	if(dso)
+		set_property_string_o(dso, name, v);
 }
 
 void set_property_bool_t(const Tag *t, const char *name, bool v)
@@ -1488,6 +1524,12 @@ JSAutoCompartment ac(cxa, *mw0);
 	set_property_bool_o(*mw0, name, v);
 }
 
+void delete_master(const char *name)
+{
+JSAutoCompartment ac(cxa, *mw0);
+	delete_property_o(*mw0, name);
+}
+
 void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
 JSAutoCompartment ac(cxa, frameToCompartment(f));
@@ -1502,7 +1544,15 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	set_property_string_o(g, name, v);
 }
 
-void connectTagObject1(Tag *t, JS::HandleObject o)
+void set_property_string_doc(const Frame *f, const char *name, const char *v)
+{
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+	set_property_string_o(doc, name, v);
+}
+
+static void connectTagObject(Tag *t, JS::HandleObject o)
 {
 char buf[16];
 sprintf(buf, "o%d", t->gsn);
@@ -1608,7 +1658,7 @@ static Tag *tagFromObject2(JS::HandleObject o, const char *tagname)
 		debugPrint(3, "cannot create tag node %s", tagname);
 		return 0;
 	}
-	connectTagObject1(t, o);
+	connectTagObject(t, o);
 // this node now has a js object, don't decorate it again.
 	t->step = 2;
 // and don't render it unless it is linked into the active tree.
@@ -2117,15 +2167,6 @@ args.rval().setBoolean(rc);
 return true;
 }
 
-const char *fakePropName(void)
-{
-	static char fakebuf[24];
-	static int idx = 0;
-	++idx;
-	sprintf(fakebuf, "gc$$%d", idx);
-	return fakebuf;
-}
-
 static void set_timer(JSContext *cx, unsigned argc, JS::Value *vp, bool isInterval)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -2581,7 +2622,7 @@ cdo = get_property_object_o(cwo, "document");
 // Be in the compartment of the higher frame.
 JSAutoCompartment ac(cxa, prev);
 		disconnectTagObject(cdt);
-		connectTagObject1(cdt, cdo);
+		connectTagObject(cdt, cdo);
 		cdt->style = 0;
 		cdt->ssn = 0;
 // Should I switch this tag into the new frame? I don't really know.
@@ -2711,7 +2752,7 @@ doc = get_property_object_o(g, "document");
 // and doc is the new content document object.
 		Frame *save_cf;
 		disconnectTagObject(cdt);
-		connectTagObject1(cdt, doc);
+		connectTagObject(cdt, doc);
 		cdt->style = 0;
 		cdt->ssn = 0;
 // it should already be set to cf, since this is a replacement
@@ -2769,7 +2810,7 @@ JS_ValueToObject(cx, args[1], &newdoc);
 		}
 		underKill(cdt);
 		disconnectTagObject(cdt);
-		connectTagObject1(cdt, newdoc);
+		connectTagObject(cdt, newdoc);
 		f1 = t->f1;
 		t->f1 = 0;
 		remember_contracted = t->contracted;
@@ -3208,7 +3249,7 @@ nzFree(incoming_url);
 		t->async = true;
 		t->inxhr = true;
 		t->f0 = cf;
-		connectTagObject1(t, thisobj);
+		connectTagObject(t, thisobj);
 // This routine will return, and javascript might stop altogether; do we need
 // to protect this object from garbage collection?
 set_property_object_o(global, fpn, thisobj);
@@ -3404,7 +3445,7 @@ JS_DefineProperty(cxa, global, "window", objval,
 JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
 objval = JS::ObjectValue(*docroot);
 JS_DefineProperty(cxa, global, "document", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT));
+(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 
 set_property_number_o(docroot, "eb$seqno", 0);
@@ -3546,6 +3587,269 @@ void freeJSContext(Frame *f)
 	cssFree(f);
 }				/* freeJSContext */
 
+void establish_js_option(Tag *t, Tag *sel)
+{
+	int idx = t->lic;
+	JS::RootedObject oa(cxa);		// option array
+	JS::RootedObject oo(cxa);		// option object
+	JS::RootedObject so(cxa);		// style object
+	JS::RootedObject ato(cxa);		// attributes object
+	JS::RootedObject fo(cxa);		// form object
+	JS::RootedObject selobj(cxa); // select object
+
+	if(!sel->jslink)
+		return;
+
+        JSAutoCompartment ac(cxa, frameToCompartment(sel->f0));
+	selobj = tagToObject(sel);
+	if (!(oa = get_property_object_o(selobj, "options")))
+		return;
+	if (!(oo = instantiate_array_element_o(oa, idx, "Option")))
+		return;
+	set_property_object_o(oo, "parentNode", oa);
+/* option.form = select.form */
+	fo = get_property_object_o(selobj, "form");
+	if (fo)
+		set_property_object_o(oo, "form", fo);
+	instantiate_array_o(oo, "childNodes");
+	ato = instantiate_o(oo, "attributes", "NamedNodeMap");
+	set_property_object_o(ato, "owner", oo);
+	so = instantiate_o(oo, "style", "CSSStyleDeclaration");
+	set_property_object_o(so, "element", oo);
+
+connectTagObject(t, oo);
+}
+
+void establish_js_textnode(Tag *t, const char *fpn)
+{
+	JS::RootedObject mw(cxa, *mw0);
+JS::RootedObject tagobj(cxa,  instantiate_o(mw, fpn, "TextNode"));
+	connectTagObject(t, tagobj);
+}
+
+static void processStyles(JS::HandleObject so, const char *stylestring)
+{
+	char *workstring = cloneString(stylestring);
+	char *s;		// gets truncated to the style name
+	char *sv;
+	char *next;
+	for (s = workstring; *s; s = next) {
+		next = strchr(s, ';');
+		if (!next) {
+			next = s + strlen(s);
+		} else {
+			*next++ = 0;
+			skipWhite2(&next);
+		}
+		sv = strchr(s, ':');
+		// if there was something there, but it didn't
+		// adhere to the expected syntax, skip this pair
+		if (sv) {
+			*sv++ = '\0';
+			skipWhite2(&sv);
+			trimWhite(s);
+			trimWhite(sv);
+// the property name has to be nonempty
+			if (*s) {
+				camelCase(s);
+				set_property_string_o(so, s, sv);
+// Should we set a specification level here, perhaps high,
+// so the css sheets don't overwrite it?
+// sv + "$$scy" = 99999;
+			}
+		}
+	}
+	nzFree(workstring);
+}
+
+void domLink(Tag *t, const char *classname,	/* instantiate this class */
+		    const char *href, const char *list,	/* next member of this array */
+		    const Tag * owntag, int extra)
+{
+	JS::RootedObject owner(cxa);
+	JS::RootedObject alist(cxa);
+	JS::RootedObject io(cxa); // the input object
+	int length;
+	bool dupname = false, fakeName = false;
+	uchar isradio = (extra&1);
+// some strings from the html tag
+	const char *symname = t->name;
+	const char *idname = t->id;
+	const char *membername = 0;	/* usually symname */
+	const char *href_url = t->href;
+	const char *tcn = t->jclass;
+	const char *stylestring = attribVal(t, "style");
+	JS::RootedObject so(cxa);	/* obj.style */
+	JS::RootedObject ato(cxa);	/* obj.attributes */
+	char upname[MAXTAGNAME];
+
+	debugPrint(5, "domLink %s.%d name %s",
+		   classname, extra, (symname ? symname : emptyString));
+	extra &= 6;
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
+	if(owntag)
+		owner = tagToObject(owntag);
+if(extra == 2)
+		owner = g;
+if(extra == 4)
+		owner = doc;
+
+	if (symname && typeof_property_o(owner, symname)) {
+/*********************************************************************
+This could be a duplicate name.
+Yes, that really happens.
+Link to the first tag having this name,
+and link the second tag under a fake name so gc won't throw it away.
+Or - it could be a duplicate name because multiple radio buttons
+all share the same name.
+The first time we create the array,
+and thereafter we just link under that array.
+Or - and this really does happen -
+an input tag could have the name action, colliding with form.action.
+don't overwrite form.action, or anything else that pre-exists.
+*********************************************************************/
+
+		if (isradio) {
+/* name present and radio buttons, name should be the array of buttons */
+			if(!(io = get_property_object_o(owner, symname)))
+				return;
+		} else {
+/* don't know why the duplicate name */
+			dupname = true;
+		}
+	}
+
+/* The input object is nonzero if&only if the input is a radio button,
+ * and not the first button in the set, thus it isce the array containing
+ * these buttons. */
+	if (!io) {
+/*********************************************************************
+Ok, the above condition does not hold.
+We'll be creating a new object under owner, but through what name?
+The name= tag, unless it's a duplicate,
+or id= if there is no name=, or a fake name just to protect it from gc.
+That's how it was for a long time, but I think we only do this on form.
+*********************************************************************/
+		if (t->action == TAGACT_INPUT && list) {
+			if (!symname && idname)
+				membername = idname;
+			else if (symname && !dupname)
+				membername = symname;
+/* id= or name= must not displace submit, reset, or action in form.
+ * Example www.startpage.com, where id=submit.
+ * nor should it collide with another attribute, such as document.cookie and
+ * <div ID=cookie> in www.orange.com.
+ * This call checks for the name in the object and its prototype. */
+			if (membername && has_property_o(owner, membername)) {
+				debugPrint(3, "membername overload %s.%s",
+					   classname, membername);
+				membername = 0;
+			}
+		}
+		if (!membername)
+			membername = fakePropName(), fakeName = true;
+
+		if (isradio) {	// the first radio button
+			if(!(io = instantiate_array_o(
+			(fakeName ? *mw0 : owner), membername)))
+				return;
+			set_property_string_o(io, "type", "radio");
+		} else {
+/* A standard input element, just create it. */
+			JS::RootedObject ca(cxa);  // childNodes array
+			if(!(io = instantiate_o(
+(fakeName ? *mw0 : owner), membername, classname)))
+				return;
+/* not an array; needs the childNodes array beneath it for the children */
+			ca = instantiate_array_o(io, "childNodes");
+// childNodes and options are the same for Select
+			if (stringEqual(classname, "Select"))
+				set_property_object_o(io, "options", ca);
+		}
+
+/* deal with the 'styles' here.
+object will get 'style' regardless of whether there is
+anything to put under it, just like it gets childNodes whether
+or not there are any.  After that, there is a conditional step.
+If this node contains style='' of one or more name-value pairs,
+call out to process those and add them to the object.
+Don't do any of this if the tag is itself <style>. */
+		if (t->action != TAGACT_STYLE) {
+			so = instantiate_o(io, "style", "CSSStyleDeclaration");
+			set_property_object_o(so, "element", io);
+/* now if there are any style pairs to unpack,
+ processStyles can rely on obj.style existing */
+			if (stylestring)
+				processStyles(so, stylestring);
+		}
+
+/* Other attributes that are expected by pages, even if they
+ * aren't populated at domLink-time */
+		if (!tcn)
+			tcn = emptyString;
+		set_property_string_o(io, "class", tcn);
+		set_property_string_o(io, "last$class", tcn);
+		ato = instantiate_o(io, "attributes", "NamedNodeMap");
+		set_property_object_o(ato, "owner", io);
+		set_property_object_o(io, "ownerDocument", doc);
+		instantiate_o(io, "dataset", 0);
+
+// only anchors with href go into links[]
+		if (list && stringEqual(list, "links") &&
+		    !attribPresent(t, "href"))
+			list = 0;
+		if (list)
+			alist = get_property_object_o(owner, list);
+		if (alist) {
+			if((length = get_arraylength_o(alist)) < 0)
+				return;
+			set_array_element_object_o(alist, length, io);
+			if (symname && !dupname
+			    && !has_property_o(alist, symname))
+				set_property_object_o(alist, symname, io);
+#if 0
+			if (idname && symname != idname
+			    && !has_property_o(alist, idname))
+				set_property_object_o(alist, idname, io);
+#endif
+		}		/* list indicated */
+	}
+
+	if (isradio) {
+// drop down to the element within the radio array, and return that element.
+// io becomes the object associated with this radio button.
+// At present, io is an array.
+		if((length = get_arraylength_o(io)) < 0)
+			return;
+		if(!(io = instantiate_array_element_o(io, length, "Element")))
+			return;
+	}
+
+	set_property_string_o(io, "name", (symname ? symname : emptyString));
+	set_property_string_o(io, "id", (idname ? idname : emptyString));
+	set_property_string_o(io, "last$id", (idname ? idname : emptyString));
+
+	if (href && href_url)
+// This use to be instantiate_url, but with the new side effects
+// on Anchor, Image, etc, we can just set the string.
+		set_property_string_o(io, href, href_url);
+
+	if (t->action == TAGACT_INPUT) {
+/* link back to the form that owns the element */
+		set_property_object_o(io, "form", owner);
+	}
+
+	connectTagObject(t, io);
+
+	strcpy(upname, t->info->name);
+	caseShift(upname, 'u');
+	set_property_string_o(io, "nodeName", upname);
+	set_property_string_o(io, "tagName", upname);
+	set_property_number_o(io, "nodeType", 1);
+}
+
 // Now we go back to the stand alone hello program.
 
 // I don't understand any of this. Code from:
@@ -3639,11 +3943,12 @@ JS_DefineProperty(cxa, *mw0, "mw$", objval,
 // need document, just for its native methods
 JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
 objval = JS::ObjectValue(*docroot);
-JS_DefineProperty(cxa, *mw0, "document", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT));
-JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
+		JS_DefineProperty(cxa, *mw0, "document", objval,
+		(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
+		JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 // Do we need anything in the master window, besides our third party debugging tools?
-jsRunScriptWin(thirdJS, "third.js", 1);
+		JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+		run_script_o(g, thirdJS, "third.js", 1);
 	}
 
 for(c=0; c<top; ++c) {

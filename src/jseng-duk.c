@@ -394,6 +394,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	jsobjtype thisobj, c1, c2;
 	char *run;
 	int run_l;
+	Tag *t;
 	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
@@ -434,7 +435,12 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
-	html_from_setter(thisobj, run);
+		t = tagFromJavaVar(thisobj);
+	if(t) {
+		html_from_setter(t, run);
+	} else {
+		debugPrint(1, "innerHTML finds no tag, cannot parse");
+	}
 	nzFree(run);
 	debugPrint(5, "setter h 2");
 
@@ -1284,16 +1290,6 @@ static duk_ret_t native_log_element(duk_context * cx)
 	duk_pop(cx);
 	debugPrint(5, "log el 2");
 	return 0;
-}
-
-/* like the function in ebjs.c, but a different name */
-static const char *fakePropName(void)
-{
-	static char fakebuf[24];
-	static int idx = 0;
-	++idx;
-	sprintf(fakebuf, "gc$$%d", idx);
-	return fakebuf;
 }
 
 static void set_timeout(duk_context * cx, bool isInterval)
@@ -2467,6 +2463,13 @@ bool has_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	return l;
 }
 
+bool has_property_t(const Tag *t, const char *name)
+{
+	if(!t->jslink || !allowJS)
+		return false;
+	return has_property_0(t->f0->cx, t->jv, name);
+}
+
 void delete_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
@@ -2747,7 +2750,14 @@ int set_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name, jso
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
 	return 0;
-}				/* set_property_object_0 */
+}
+
+void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
+{
+	if (!allowJS || !t->jslink || !t2->jslink)
+		return;
+	set_property_object_0(t->f0->cx, t->jv, name, t2->jv);
+}
 
 // handler.toString = function() { return this.body; }
 static duk_ret_t native_fntos(duk_context * cx)
@@ -3068,6 +3078,13 @@ int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2)
 	return run_function_onearg_0(f->cx, f->winobj, name, t2->jv);
 }
 
+int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2)
+{
+	if (!allowJS || !f->jslink || !t2->jslink)
+		return -1;
+	return run_function_onearg_0(f->cx, f->docobj, name, t2->jv);
+}
+
 // The single argument to the function has to be a string.
 void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char *name,
 				const char *s)
@@ -3094,7 +3111,14 @@ void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char *name,
 	processError(cx);
 	debugPrint(3, "failure on %p.%s[]", parent, name);
 	uptrace(cx, parent);
-}				/* run_function_onestring_0 */
+}
+
+void run_function_onestring_t(const Tag *t, const char *name, const char *s)
+{
+	if (!allowJS || !t->jslink)
+		return;
+	run_function_onestring_0(t->f0->cx, t->jv, name, s);
+}
 
 jsobjtype instantiate_array_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
@@ -3393,6 +3417,11 @@ void set_master_bool(const char *name, bool v)
 	set_property_bool_0(cf->cx, context0_obj, name, v);
 }
 
+void delete_master(const char *name)
+{
+	delete_property_0(cf->cx, context0_obj, name);
+}
+
 bool get_property_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
@@ -3479,6 +3508,16 @@ void set_property_string_t(const Tag *t, const char *name, const char * v)
 	set_property_string_0(t->f0->cx, t->jv, name, v);
 }
 
+void set_dataset_string_t(const Tag *t, const char *name, const char *v)
+{
+	jsobjtype dso; // dataset object
+	if(!t->jslink || !allowJS)
+		return;
+	dso = get_property_object_0(t->f0->cx, t->jv, "dataset");
+	if(dso)
+		set_property_string_0(t->f0->cx, dso, name, v);
+}
+
 void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
 	set_property_bool_0(f->cx, f->winobj, name, v);
@@ -3487,6 +3526,11 @@ void set_property_bool_win(const Frame *f, const char *name, bool v)
 void set_property_string_win(const Frame *f, const char *name, const char *v)
 {
 	set_property_string_0(f->cx, f->winobj, name, v);
+}
+
+void set_property_string_doc(const Frame *f, const char *name, const char *v)
+{
+	set_property_string_0(f->cx, f->docobj, name, v);
 }
 
 // Run some javascript code under the named object, usually window.
@@ -3528,3 +3572,265 @@ const char *filename, 			int lineno)
 {
 return jsRunScriptResult(cf, cf->winobj, str, filename, lineno);
 }
+
+// Functions that help decorate the DOM tree, called from decorate.c.
+
+void establish_js_option(Tag *t, Tag *sel)
+{
+	jsobjtype cx = cf->cx; // context
+	int idx = t->lic;
+	jsobjtype oa;		// option array
+	jsobjtype oo;		// option object
+	jsobjtype so;		// style object
+	jsobjtype ato;		// attributes object
+	jsobjtype fo;		// form object
+	jsobjtype selobj = sel->jv; // select object
+
+	if(!sel->jslink)
+		return;
+
+	if ((oa = get_property_object_0(cx, selobj, "options")) == NULL)
+		return;
+	if ((oo = instantiate_array_element_0(cx, oa, idx, "Option")) == NULL)
+		return;
+	set_property_object_0(cx, oo, "parentNode", oa);
+/* option.form = select.form */
+	fo = get_property_object_0(cx, selobj, "form");
+	if (fo)
+		set_property_object_0(cx, oo, "form", fo);
+	instantiate_array_0(cx, oo, "childNodes");
+	ato = instantiate_0(cx, oo, "attributes", "NamedNodeMap");
+	set_property_object_0(cx, ato, "owner", oo);
+	so = instantiate_0(cx, oo, "style", "CSSStyleDeclaration");
+	set_property_object_0(cx, so, "element", oo);
+
+connectTagObject(t, oo);
+}
+
+void establish_js_textnode(Tag *t, const char *fpn)
+{
+	connectTagObject(t,
+	 instantiate_0(cf->cx, context0_obj, fpn, "TextNode"));
+}
+
+static void processStyles(jsobjtype so, const char *stylestring)
+{
+	char *workstring = cloneString(stylestring);
+	char *s;		// gets truncated to the style name
+	char *sv;
+	char *next;
+	for (s = workstring; *s; s = next) {
+		next = strchr(s, ';');
+		if (!next) {
+			next = s + strlen(s);
+		} else {
+			*next++ = 0;
+			skipWhite2(&next);
+		}
+		sv = strchr(s, ':');
+		// if there was something there, but it didn't
+		// adhere to the expected syntax, skip this pair
+		if (sv) {
+			*sv++ = '\0';
+			skipWhite2(&sv);
+			trimWhite(s);
+			trimWhite(sv);
+// the property name has to be nonempty
+			if (*s) {
+				camelCase(s);
+				set_property_string_0(cf->cx, so, s, sv);
+// Should we set a specification level here, perhaps high,
+// so the css sheets don't overwrite it?
+// sv + "$$scy" = 99999;
+			}
+		}
+	}
+	nzFree(workstring);
+}
+
+void domLink(Tag *t, const char *classname,	/* instantiate this class */
+		    const char *href, const char *list,	/* next member of this array */
+		    const Tag * owntag, int extra)
+{
+	jsobjtype cx = cf->cx;
+	jsobjtype owner;
+	jsobjtype alist = 0;
+	jsobjtype io = 0;	/* input object */
+	int length;
+	bool dupname = false, fakeName = false;
+	uchar isradio = (extra&1);
+// some strings from the html tag
+	const char *symname = t->name;
+	const char *idname = t->id;
+	const char *membername = 0;	/* usually symname */
+	const char *href_url = t->href;
+	const char *tcn = t->jclass;
+	const char *stylestring = attribVal(t, "style");
+	jsobjtype so = 0;	/* obj.style */
+	jsobjtype ato = 0;	/* obj.attributes */
+	char upname[MAXTAGNAME];
+
+	debugPrint(5, "domLink %s.%d name %s",
+		   classname, extra, (symname ? symname : emptyString));
+	extra &= 6;
+	if(owntag)
+		owner = owntag->jv;
+if(extra == 2)
+		owner = cf->winobj;
+if(extra == 4)
+		owner = cf->docobj;
+
+	if (symname && typeof_property_0(cx, owner, symname)) {
+/*********************************************************************
+This could be a duplicate name.
+Yes, that really happens.
+Link to the first tag having this name,
+and link the second tag under a fake name so gc won't throw it away.
+Or - it could be a duplicate name because multiple radio buttons
+all share the same name.
+The first time we create the array,
+and thereafter we just link under that array.
+Or - and this really does happen -
+an input tag could have the name action, colliding with form.action.
+don't overwrite form.action, or anything else that pre-exists.
+*********************************************************************/
+
+		if (isradio) {
+/* name present and radio buttons, name should be the array of buttons */
+			if(!(io = get_property_object_0(cx, owner, symname)))
+				return;
+		} else {
+/* don't know why the duplicate name */
+			dupname = true;
+		}
+	}
+
+/* The input object is nonzero if&only if the input is a radio button,
+ * and not the first button in the set, thus it isce the array containing
+ * these buttons. */
+	if (io == NULL) {
+/*********************************************************************
+Ok, the above condition does not hold.
+We'll be creating a new object under owner, but through what name?
+The name= tag, unless it's a duplicate,
+or id= if there is no name=, or a fake name just to protect it from gc.
+That's how it was for a long time, but I think we only do this on form.
+*********************************************************************/
+		if (t->action == TAGACT_INPUT && list) {
+			if (!symname && idname)
+				membername = idname;
+			else if (symname && !dupname)
+				membername = symname;
+/* id= or name= must not displace submit, reset, or action in form.
+ * Example www.startpage.com, where id=submit.
+ * nor should it collide with another attribute, such as document.cookie and
+ * <div ID=cookie> in www.orange.com.
+ * This call checks for the name in the object and its prototype. */
+			if (membername && has_property_0(cx, owner, membername)) {
+				debugPrint(3, "membername overload %s.%s",
+					   classname, membername);
+				membername = 0;
+			}
+		}
+		if (!membername)
+			membername = fakePropName(), fakeName = true;
+
+		if (isradio) {	// the first radio button
+			if(!(io = instantiate_array_0(cx,
+			(fakeName ? context0_obj : owner), membername)))
+				return;
+			set_property_string_0(cx, io, "type", "radio");
+		} else {
+/* A standard input element, just create it. */
+			jsobjtype ca;	// child array
+			if(!(io = instantiate_0(cx,
+(fakeName ? context0_obj : owner), membername, classname)))
+				return;
+/* not an array; needs the childNodes array beneath it for the children */
+			ca = instantiate_array_0(cx, io, "childNodes");
+// childNodes and options are the same for Select
+			if (stringEqual(classname, "Select"))
+				set_property_object_0(cx, io, "options", ca);
+		}
+
+/* deal with the 'styles' here.
+object will get 'style' regardless of whether there is
+anything to put under it, just like it gets childNodes whether
+or not there are any.  After that, there is a conditional step.
+If this node contains style='' of one or more name-value pairs,
+call out to process those and add them to the object.
+Don't do any of this if the tag is itself <style>. */
+		if (t->action != TAGACT_STYLE) {
+			so = instantiate_0(cx, io, "style", "CSSStyleDeclaration");
+			set_property_object_0(cx, so, "element", io);
+/* now if there are any style pairs to unpack,
+ processStyles can rely on obj.style existing */
+			if (stylestring)
+				processStyles(so, stylestring);
+		}
+
+/* Other attributes that are expected by pages, even if they
+ * aren't populated at domLink-time */
+		if (!tcn)
+			tcn = emptyString;
+		set_property_string_0(cx, io, "class", tcn);
+		set_property_string_0(cx, io, "last$class", tcn);
+		ato = instantiate_0(cx, io, "attributes", "NamedNodeMap");
+		set_property_object_0(cx, ato, "owner", io);
+		set_property_object_0(cx, io, "ownerDocument", cf->docobj);
+		instantiate_0(cx, io, "dataset", 0);
+
+// only anchors with href go into links[]
+		if (list && stringEqual(list, "links") &&
+		    !attribPresent(t, "href"))
+			list = 0;
+		if (list)
+			alist = get_property_object_0(cx, owner, list);
+		if (alist) {
+			if((length = get_arraylength_0(cx, alist)) < 0)
+				return;
+			set_array_element_object_0(cx, alist, length, io);
+			if (symname && !dupname
+			    && !has_property_0(cx, alist, symname))
+				set_property_object_0(cx, alist, symname, io);
+#if 0
+			if (idname && symname != idname
+			    && !has_property_0(cx, alist, idname))
+				set_property_object_0(cx, alist, idname, io);
+#endif
+		}		/* list indicated */
+	}
+
+	if (isradio) {
+// drop down to the element within the radio array, and return that element.
+// io becomes the object associated with this radio button.
+// At present, io is an array.
+		if((length = get_arraylength_0(cx, io)) < 0)
+			return;
+		if(!(io = instantiate_array_element_0(cx, io, length, "Element")))
+			return;
+	}
+
+	set_property_string_0(cx, io, "name", (symname ? symname : emptyString));
+	set_property_string_0(cx, io, "id", (idname ? idname : emptyString));
+	set_property_string_0(cx, io, "last$id", (idname ? idname : emptyString));
+
+	if (href && href_url)
+// This use to be instantiate_url, but with the new side effects
+// on Anchor, Image, etc, we can just set the string.
+		set_property_string_0(cx, io, href, href_url);
+
+	if (t->action == TAGACT_INPUT) {
+/* link back to the form that owns the element */
+		set_property_object_0(cx, io, "form", owner);
+	}
+
+	connectTagObject(t, io);
+
+	strcpy(upname, t->info->name);
+	caseShift(upname, 'u');
+	set_property_string_0(cx, io, "nodeName", upname);
+	set_property_string_0(cx, io, "tagName", upname);
+	set_property_number_0(cx, io, "nodeType", 1);
+}
+

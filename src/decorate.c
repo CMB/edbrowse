@@ -24,8 +24,6 @@ static void prerenderNode(Tag *node, bool opentag);
 static void jsNode(Tag *node, bool opentag);
 static void pushAttributes(const Tag *t);
 
-static void processStyles(jsobjtype so, const char *stylestring);
-
 static bool treeOverflow;
 
 static void traverseNode(Tag *node)
@@ -44,7 +42,7 @@ static void traverseNode(Tag *node)
 	for (child = node->firstchild; child; child = child->sibling)
 		traverseNode(child);
 	(*traverse_callback) (node, false);
-}				/* traverseNode */
+}
 
 void traverseAll(int start)
 {
@@ -65,7 +63,7 @@ void traverseAll(int start)
 
 	if (treeOverflow)
 		debugPrint(3, "malformed tree!");
-}				/* traverseAll */
+}
 
 static int nopt;		/* number of options */
 /* None of these tags nest, so it is reasonable to talk about
@@ -89,7 +87,7 @@ const char *attribVal(const Tag *t, const char *name)
 	return v;
 }
 
-static bool attribPresent(const Tag *t, const char *name)
+bool attribPresent(const Tag *t, const char *name)
 {
 	int j = stringInListCI(t->attributes, name);
 	return (j >= 0);
@@ -144,7 +142,7 @@ static void linkinTree(Tag *parent, Tag *child)
 		d = c;
 	}
 	d->sibling = child;
-}				/* linkinTree */
+}
 
 static void makeButton(void)
 {
@@ -154,7 +152,7 @@ static void makeButton(void)
 	t->value = emptyString;
 	t->step = 1;
 	linkinTree(currentForm, t);
-}				/* makeButton */
+}
 
 Tag *findOpenTag(Tag *t, int action)
 {
@@ -168,7 +166,7 @@ Tag *findOpenTag(Tag *t, int action)
 		}
 	}
 	return 0;
-}				/* findOpenTag */
+}
 
 static Tag *findOpenSection(Tag *t)
 {
@@ -183,7 +181,7 @@ static Tag *findOpenSection(Tag *t)
 		}
 	}
 	return 0;
-}				/* findOpenSection */
+}
 
 Tag *findOpenList(Tag *t)
 {
@@ -191,7 +189,7 @@ Tag *findOpenList(Tag *t)
 		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
 			return t;
 	return 0;
-}				/* findOpenList */
+}
 
 /*********************************************************************
 tidy workaround functions.
@@ -246,7 +244,7 @@ static void nestedAnchors(int start)
 		a2->sibling = a1->sibling;
 		a1->sibling = a2;
 	}
-}				/* nestedAnchors */
+}
 
 /*********************************************************************
 Tables are suppose to have bodies, I guess.
@@ -369,7 +367,7 @@ static bool tagBelow(Tag *t, int action)
 		if (tagBelow(c, action))
 			return true;
 	return false;
-}				/* tagBelow */
+}
 
 static void emptyAnchors(int start)
 {
@@ -400,7 +398,7 @@ static void emptyAnchors(int start)
 		div->parent = a0;
 		div->sibling = 0;
 	}
-}				/* emptyAnchors */
+}
 
 /*********************************************************************
 If a form is in a table, but not in tr or td, it closes immediately,
@@ -433,7 +431,7 @@ static void tableForm(int start)
 			t = table;
 		}
 	}
-}				/* tableForm */
+}
 
 void formControl(Tag *t, bool namecheck)
 {
@@ -451,7 +449,7 @@ void formControl(Tag *t, bool namecheck)
 			   t->info->desc);
 	if (namecheck && !myname && !htmlGenerated)
 		debugPrint(3, "%s does not have a name", t->info->desc);
-}				/* formControl */
+}
 
 const char *const inp_types[] = {
 	"reset", "button", "image", "submit",
@@ -540,7 +538,7 @@ void htmlInputHelper(Tag *t)
 
 	/* Even the submit fields can have a name, but they don't have to */
 	formControl(t, (n > INP_SUBMIT));
-}				/* htmlInputHelper */
+}
 
 /* return an allocated string containing the text entries for the checked options */
 char *displayOptions(const Tag *sel)
@@ -561,7 +559,7 @@ char *displayOptions(const Tag *sel)
 	}
 
 	return opt;
-}				/* displayOptions */
+}
 
 static void prerenderNode(Tag *t, bool opentag)
 {
@@ -874,7 +872,7 @@ static void prerenderNode(Tag *t, bool opentag)
 		break;
 
 	}			/* switch */
-}				/* prerenderNode */
+}
 
 void prerender(int start)
 {
@@ -894,57 +892,17 @@ void prerender(int start)
 	currentForm = NULL;
 	nzFree(radioCheck);
 	radioCheck = 0;
-}				/* prerender */
-
-/* create a new url with constructor */
-jsobjtype instantiate_url(const Frame *f, jsobjtype parent, const char *name, const char *url)
-{
-	jsobjtype uo;		/* url object */
-	uo = instantiate(f, parent, name, "URL");
-	if (uo)
-		set_property_string(f, uo, "href", url);
-	return uo;
-}				/* instantiate_url */
+}
 
 static char fakePropLast[24];
-static jsobjtype fakePropParent;
-static const char *fakePropName(void)
+const char *fakePropName(void)
 {
 	static int idx = 0;
-	++idx;
-	sprintf(fakePropLast, "gd$$%d", idx);
+	sprintf(fakePropLast, "gc$%d", ++idx);
 	return fakePropLast;
-}				/*fakePropName */
+}
 
-static jsobjtype establish_js_option(jsobjtype obj, int idx)
-{
-	jsobjtype oa;		/* option array */
-	jsobjtype oo;		/* option object */
-	jsobjtype so;		// style object
-	jsobjtype ato;		// attributes object
-	jsobjtype fo;		/* form object */
-
-	if ((oa = get_property_object(cf, obj, "options")) == NULL)
-		return NULL;
-	if ((oo = instantiate_array_element(cf, oa, idx, "Option")) == NULL)
-		return NULL;
-
-	set_property_object(cf, oo, "parentNode", oa);
-
-/* option.form = select.form */
-	fo = get_property_object(cf, obj, "form");
-	if (fo)
-		set_property_object(cf, oo, "form", fo);
-	instantiate_array(cf, oo, "childNodes");
-	ato = instantiate(cf, oo, "attributes", "NamedNodeMap");
-	set_property_object(cf, ato, "owner", oo);
-	so = instantiate(cf, oo, "style", "CSSStyleDeclaration");
-	set_property_object(cf, so, "element", oo);
-
-	return oo;
-}				/* establish_js_option */
-
-static void establish_inner(jsobjtype obj, const char *start, const char *end,
+static void establish_inner(Tag *t, const char *start, const char *end,
 			    bool isText)
 {
 	const char *s = emptyString;
@@ -954,199 +912,14 @@ static void establish_inner(jsobjtype obj, const char *start, const char *end,
 		if (end)
 			s = pullString(start, end - start);
 	}
-	set_property_string(cf, obj, name, s);
+	set_property_string_t(t, name, s);
 	if (start && end)
 		nzFree((char *)s);
 // If this is a textarea, we haven't yet set up the innerHTML
 // getter and seter
 	if (isText)
-		set_property_string(cf, obj, "innerHTML", emptyString);
-}				/* establish_inner */
-
-static void domLink(Tag *t, const char *classname,	/* instantiate this class */
-		    const char *href, const char *list,	/* next member of this array */
-		    jsobjtype owner, bool isradio)
-{
-	jsobjtype alist = 0;
-	jsobjtype io = 0;	/* input object */
-	int length;
-	bool dupname = false;
-/* some strings from the html tag */
-	const char *symname = t->name;
-	const char *idname = t->id;
-	const char *membername = 0;	/* usually symname */
-	const char *href_url = t->href;
-	const char *tcn = t->jclass;
-	const char *stylestring = attribVal(t, "style");
-	jsobjtype so = 0;	/* obj.style */
-	jsobjtype ato = 0;	/* obj.attributes */
-	char upname[MAXTAGNAME];
-
-	debugPrint(5, "domLink %s.%d name %s",
-		   classname, isradio, (symname ? symname : emptyString));
-
-	if (symname && typeof_property(cf, owner, symname)) {
-/*********************************************************************
-This could be a duplicate name.
-Yes, that really happens.
-Link to the first tag having this name,
-and link the second tag under a fake name so gc won't throw it away.
-Or - it could be a duplicate name because multiple radio buttons
-all share the same name.
-The first time we create the array,
-and thereafter we just link under that array.
-Or - and this really does happen -
-an input tag could have the name action, colliding with form.action.
-don't overwrite form.action, or anything else that pre-exists.
-*********************************************************************/
-
-		if (isradio) {
-/* name present and radio buttons, name should be the array of buttons */
-			io = get_property_object(cf, owner, symname);
-			if (io == NULL)
-				return;
-		} else {
-/* don't know why the duplicate name */
-			dupname = true;
-		}
-	}
-
-/* The input object is nonzero if&only if the input is a radio button,
- * and not the first button in the set, thus it isce the array containing
- * these buttons. */
-	if (io == NULL) {
-/*********************************************************************
-Ok, the above condition does not hold.
-We'll be creating a new object under owner, but through what name?
-The name= tag, unless it's a duplicate,
-or id= if there is no name=, or a fake name just to protect it from gc.
-That's how it was for a long time, but I think we only do this on form.
-*********************************************************************/
-		if (t->action == TAGACT_INPUT && list) {
-			if (!symname && idname)
-				membername = idname;
-			else if (symname && !dupname)
-				membername = symname;
-/* id= or name= must not displace submit, reset, or action in form.
- * Example www.startpage.com, where id=submit.
- * nor should it collide with another attribute, such as document.cookie and
- * <div ID=cookie> in www.orange.com.
- * This call checks for the name in the object and its prototype. */
-			if (membername && has_property(cf, owner, membername)) {
-				debugPrint(3, "membername overload %s.%s",
-					   classname, membername);
-				membername = NULL;
-			}
-		}
-		if (!membername) {
-			membername = fakePropName();
-			fakePropParent = owner;
-		}
-
-		if (isradio) {	// the first radio button
-			io = instantiate_array(cf, owner, membername);
-			if (io == NULL)
-				return;
-			set_property_string(cf, io, "type", "radio");
-		} else {
-/* A standard input element, just create it. */
-			jsobjtype ca;	// child array
-			io = instantiate(cf, owner, membername, classname);
-			if (io == NULL)
-				return;
-/* not an array; needs the childNodes array beneath it for the children */
-			ca = instantiate_array(cf, io, "childNodes");
-// childNodes and options are the same for Select
-			if (stringEqual(classname, "Select"))
-				set_property_object(cf, io, "options", ca);
-		}
-
-/* deal with the 'styles' here.
-object will get 'style' regardless of whether there is
-anything to put under it, just like it gets childNodes whether
-or not there are any.  After that, there is a conditional step.
-If this node contains style='' of one or more name-value pairs,
-call out to process those and add them to the object.
-Don't do any of this if the tag is itself <style>. */
-		if (t->action != TAGACT_STYLE) {
-			so = instantiate(cf, io, "style", "CSSStyleDeclaration");
-			set_property_object(cf, so, "element", io);
-/* now if there are any style pairs to unpack,
- processStyles can rely on obj.style existing */
-			if (stylestring)
-				processStyles(so, stylestring);
-		}
-
-/* Other attributes that are expected by pages, even if they
- * aren't populated at domLink-time */
-		if (!tcn)
-			tcn = emptyString;
-		set_property_string(cf, io, "class", tcn);
-		set_property_string(cf, io, "last$class", tcn);
-		ato = instantiate(cf, io, "attributes", "NamedNodeMap");
-		set_property_object(cf, ato, "owner", io);
-		set_property_object(cf, io, "ownerDocument", cf->docobj);
-		instantiate(cf, io, "dataset", "Object");
-
-// only anchors with href go into links[]
-		if (list && stringEqual(list, "links") &&
-		    !attribPresent(t, "href"))
-			list = 0;
-
-		if (list)
-			alist = get_property_object(cf, owner, list);
-		if (alist) {
-			length = get_arraylength(cf, alist);
-			if (length < 0)
-				return;
-			set_array_element_object(cf, alist, length, io);
-			if (symname && !dupname
-			    && !has_property(cf, alist, symname))
-				set_property_object(cf, alist, symname, io);
-#if 0
-			if (idname && symname != idname
-			    && !has_property(cf, alist, idname))
-				set_property_object(cf, alist, idname, io);
-#endif
-		}		/* list indicated */
-	}
-
-	if (isradio) {
-/* drop down to the element within the radio array, and return that element */
-/* w becomes the object associated with this radio button */
-/* io is, by assumption, an array */
-		jsobjtype w;
-		length = get_arraylength(cf, io);
-		if (length < 0)
-			return;
-		w = instantiate_array_element(cf, io, length, "Element");
-		if (w == NULL)
-			return;
-		io = w;
-	}
-
-	set_property_string(cf, io, "name", (symname ? symname : emptyString));
-	set_property_string(cf, io, "id", (idname ? idname : emptyString));
-	set_property_string(cf, io, "last$id", (idname ? idname : emptyString));
-
-	if (href && href_url)
-// This use to be instantiate_url, but with the new side effects
-// on Anchor, Image, etc, we can just set the string.
-		set_property_string(cf, io, href, href_url);
-
-	if (t->action == TAGACT_INPUT) {
-/* link back to the form that owns the element */
-		set_property_object(cf, io, "form", owner);
-	}
-
-	connectTagObject(t, io);
-
-	strcpy(upname, t->info->name);
-	caseShift(upname, 'u');
-	set_property_string(cf, io, "nodeName", upname);
-	set_property_string(cf, io, "tagName", upname);
-	set_property_number(cf, io, "nodeType", 1);
-}				/* domLink */
+		set_property_string_t(t, "innerHTML", emptyString);
+}
 
 static const char defvl[] = "defaultValue";
 static const char defck[] = "defaultChecked";
@@ -1156,23 +929,23 @@ static void formControlJS(Tag *t)
 {
 	const char *typedesc;
 	int itype = t->itype;
-	bool isradio = (itype == INP_RADIO);
+	int isradio = (itype == INP_RADIO);
 	bool isselect = (itype == INP_SELECT);
 	const char *whichclass = (isselect ? "Select" : "Element");
 	const Tag *form = t->controller;
 
-	if (form && form->jv)
-		domLink(t, whichclass, 0, "elements", form->jv, isradio);
+	if (form && form->jslink)
+		domLink(t, whichclass, 0, "elements", form, isradio);
 	else
-		domLink(t, whichclass, 0, 0, cf->docobj, isradio);
-	if (!t->jv)
+		domLink(t, whichclass, 0, 0, 0, (4|isradio));
+	if (!t->jslink)
 		return;
 
 	if (itype <= INP_RADIO && !isselect) {
-		set_property_string(cf, t->jv, "value", t->value);
+		set_property_string_t(t, "value", t->value);
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
-			set_property_string(cf, t->jv, defvl, t->value);
+			set_property_string_t(t, defvl, t->value);
 		}		/* not file */
 	}
 
@@ -1180,13 +953,13 @@ static void formControlJS(Tag *t)
 		typedesc = t->multiple ? "select-multiple" : "select-one";
 	else
 		typedesc = inp_types[itype];
-	set_property_string(cf, t->jv, "type", typedesc);
+	set_property_string_t(t, "type", typedesc);
 
 	if (itype >= INP_RADIO) {
-		set_property_bool(cf, t->jv, "checked", t->checked);
-		set_property_bool(cf, t->jv, defck, t->checked);
+		set_property_bool_t(t, "checked", t->checked);
+		set_property_bool_t(t, defck, t->checked);
 	}
-}				/* formControlJS */
+}
 
 static void optionJS(Tag *t)
 {
@@ -1203,26 +976,24 @@ static void optionJS(Tag *t)
 		if (!t->value)
 			t->value = cloneString(tx);
 	}
-
 /* no point if the controlling select doesn't have a js object */
 	if (!sel->jv)
 		return;
-
-	connectTagObject(t, establish_js_option(sel->jv, t->lic));
-	set_property_string(cf, t->jv, "text", t->textval);
-	set_property_string(cf, t->jv, "value", t->value);
-	set_property_string(cf, t->jv, "nodeName", "OPTION");
-	set_property_number(cf, t->jv, "nodeType", 1);
-	set_property_bool(cf, t->jv, "selected", t->checked);
-	set_property_bool(cf, t->jv, defsel, t->checked);
+establish_js_option(t, sel);
+	set_property_string_t(t, "text", t->textval);
+	set_property_string_t(t, "value", t->value);
+	set_property_string_t(t, "nodeName", "OPTION");
+	set_property_number_t(t, "nodeType", 1);
+	set_property_bool_t(t, "selected", t->checked);
+	set_property_bool_t(t, defsel, t->checked);
 	if (!cl)
 		cl = emptyString;
-	set_property_string(cf, t->jv, "class", cl);
-	set_property_string(cf, t->jv, "last$class", cl);
+	set_property_string_t(t, "class", cl);
+	set_property_string_t(t, "last$class", cl);
 
 	if (t->checked && !sel->multiple)
-		set_property_number(cf, sel->jv, "selectedIndex", t->lic);
-}				/* optionJS */
+		set_property_number_t(sel, "selectedIndex", t->lic);
+}
 
 static void link_css(Tag *t)
 {
@@ -1235,9 +1006,9 @@ static void link_css(Tag *t)
 	const char *altsource;
 
 	if (a1)
-		set_property_string(cf, t->jv, "type", a1);
+		set_property_string_t(t, "type", a1);
 	if (a2)
-		set_property_string(cf, t->jv, "rel", a2);
+		set_property_string_t(t, "rel", a2);
 	if (!t->href)
 		return;
 	if ((!a1 || !stringEqualCI(a1, "text/css")) &&
@@ -1298,14 +1069,14 @@ static void link_css(Tag *t)
 		}
 	}
 	if (a) {
-		set_property_string(cf, t->jv, "css$data", a);
+		set_property_string_t(t, "css$data", a);
 // indicate we can run the onload function, if there is one
 		t->lic = 1;
 	}
 	cnzFree(a);
 }				/* link_css */
 
-static jsobjtype innerParent;
+static Tag *innerParent;
 
 static void jsNode(Tag *t, bool opentag)
 {
@@ -1317,7 +1088,7 @@ static void jsNode(Tag *t, bool opentag)
 
 // run reindex at table close
 	if (action == TAGACT_TABLE && !opentag && t->jv)
-		run_function_onearg(cf, cf->winobj, "rowReindex", t->jv);
+		run_function_onearg_win(cf, "rowReindex", t);
 
 /* all the js variables are on the open tag */
 	if (!opentag)
@@ -1341,66 +1112,65 @@ Needless to say that's not good!
 	switch (action) {
 
 	case TAGACT_TEXT:
-		connectTagObject(t,
-				 instantiate(cf, cf->docobj, fakePropName(),      "TextNode"));
+		establish_js_textnode(t, fakePropName());
 // nodeName and nodeType set in constructor
-		if (t->jv) {
+		if (t->jslink) {
 			const char *w = t->textval;
 			if (!w)
 				w = emptyString;
-			set_property_string(cf, t->jv, "data", w);
+			set_property_string_t(t, "data", w);
 			w = (t->jclass ? t->jclass : emptyString);
-			set_property_string(cf, t->jv, "class", w);
-			set_property_string(cf, t->jv, "last$class", w);
+			set_property_string_t(t, "class", w);
+			set_property_string_t(t, "last$class", w);
 		}
 		break;
 
 	case TAGACT_HTML:
-		domLink(t, "HTML", 0, 0, cf->docobj, 0);
+		domLink(t, "HTML", 0, 0, 0, 4);
 		cf->htmltag = t;
 		break;
 
 	case TAGACT_META:
-		domLink(t, "Meta", 0, "metas", cf->docobj, 0);
+		domLink(t, "Meta", 0, "metas", 0, 4);
 		break;
 
 	case TAGACT_STYLE:
-		domLink(t, "CSSStyleDeclaration", 0, "styles", cf->docobj, 0);
+		domLink(t, "CSSStyleDeclaration", 0, "styles", 0, 4);
 		a = attribVal(t, "type");
 		if (!a)
 			a = emptyString;
-		set_property_string(cf, t->jv, "type", a);
+		set_property_string_t(t, "type", a);
 		break;
 
 	case TAGACT_SCRIPT:
-		domLink(t, "Script", "src", "scripts", cf->docobj, 0);
+		domLink(t, "Script", "src", "scripts", 0, 4);
 		a = attribVal(t, "type");
 		if (a)
-			set_property_string(cf, t->jv, "type", a);
+			set_property_string_t(t, "type", a);
 		a = attribVal(t, "text");
 		if (a) {
-			set_property_string(cf, t->jv, "text", a);
+			set_property_string_t(t, "text", a);
 		} else {
-			set_property_string(cf, t->jv, "text", "");
+			set_property_string_t(t, "text", "");
 		}
 		a = attribVal(t, "src");
 		if (a) {
-			set_property_string(cf, t->jv, "src", a);
+			set_property_string_t(t, "src", a);
 			if (down_jsbg && a[0])	// from another source, let's get it started
 				prepareScript(t);
 		} else {
-			set_property_string(cf, t->jv, "src", "");
+			set_property_string_t(t, "src", "");
 		}
 		break;
 
 	case TAGACT_FORM:
-		domLink(t, "Form", "action", "forms", cf->docobj, 0);
+		domLink(t, "Form", "action", "forms", 0, 4);
 		break;
 
 	case TAGACT_INPUT:
 		formControlJS(t);
 		if (t->itype == INP_TA)
-			establish_inner(t->jv, t->value, 0, true);
+			establish_inner(t, t->value, 0, true);
 		break;
 
 	case TAGACT_OPTION:
@@ -1410,87 +1180,87 @@ Needless to say that's not good!
 		return;
 
 	case TAGACT_A:
-		domLink(t, "Anchor", "href", "links", cf->docobj, 0);
+		domLink(t, "Anchor", "href", "links", 0, 4);
 		break;
 
 	case TAGACT_HEAD:
-		domLink(t, "Head", 0, "heads", cf->docobj, 0);
+		domLink(t, "Head", 0, "heads", 0, 4);
 		cf->headtag = t;
 		break;
 
 	case TAGACT_BODY:
-		domLink(t, "Body", 0, "bodies", cf->docobj, 0);
+		domLink(t, "Body", 0, "bodies", 0, 4);
 		cf->bodytag = t;
 		break;
 
 	case TAGACT_OL:
 	case TAGACT_UL:
 	case TAGACT_DL:
-		domLink(t, "Lister", 0, 0, cf->docobj, 0);
+		domLink(t, "Lister", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_LI:
-		domLink(t, "Listitem", 0, 0, cf->docobj, 0);
+		domLink(t, "Listitem", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_TABLE:
-		domLink(t, "Table", 0, "tables", cf->docobj, 0);
+		domLink(t, "Table", 0, "tables", 0, 4);
 		break;
 
 	case TAGACT_TBODY:
 		if ((above = t->controller) && above->jv)
-			domLink(t, "tBody", 0, "tBodies", above->jv, 0);
+			domLink(t, "tBody", 0, "tBodies", above, 0);
 		break;
 
 	case TAGACT_THEAD:
 		if ((above = t->controller) && above->jv) {
-			domLink(t, "tHead", 0, 0, above->jv, 0);
-			set_property_object(cf, above->jv, "tHead", t->jv);
+			domLink(t, "tHead", 0, 0, above, 0);
+			set_property_object_t(above, "tHead", t);
 		}
 		break;
 
 	case TAGACT_TFOOT:
 		if ((above = t->controller) && above->jv) {
-			domLink(t, "tFoot", 0, 0, above->jv, 0);
-			set_property_object(cf, above->jv, "tFoot", t->jv);
+			domLink(t, "tFoot", 0, 0, above, 0);
+			set_property_object_t(above, "tFoot", t);
 		}
 		break;
 
 	case TAGACT_TR:
 		if ((above = t->controller) && above->jv)
-			domLink(t, "tRow", 0, "rows", above->jv, 0);
+			domLink(t, "tRow", 0, "rows", above, 0);
 		break;
 
 	case TAGACT_TD:
 		if ((above = t->controller) && above->jv)
-			domLink(t, "Cell", 0, "cells", above->jv, 0);
+			domLink(t, "Cell", 0, "cells", above, 0);
 		break;
 
 	case TAGACT_DIV:
-		domLink(t, "Div", 0, "divs", cf->docobj, 0);
+		domLink(t, "Div", 0, "divs", 0, 4);
 		break;
 
 	case TAGACT_LABEL:
-		domLink(t, "Label", 0, "labels", cf->docobj, 0);
+		domLink(t, "Label", 0, "labels", 0, 4);
 		break;
 
 	case TAGACT_OBJECT:
-		domLink(t, "HtmlObj", 0, "htmlobjs", cf->docobj, 0);
+		domLink(t, "HtmlObj", 0, "htmlobjs", 0, 4);
 		break;
 
 	case TAGACT_UNKNOWN:
-		domLink(t, "HTMLElement", 0, 0, cf->docobj, 0);
+		domLink(t, "HTMLElement", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_SPAN:
 	case TAGACT_SUB:
 	case TAGACT_SUP:
 	case TAGACT_OVB:
-		domLink(t, "Span", 0, "spans", cf->docobj, 0);
+		domLink(t, "Span", 0, "spans", 0, 4);
 		break;
 
 	case TAGACT_AREA:
-		domLink(t, "Area", "href", "links", cf->docobj, 0);
+		domLink(t, "Area", "href", "links", 0, 4);
 		break;
 
 	case TAGACT_FRAME:
@@ -1499,46 +1269,48 @@ Needless to say that's not good!
 			nzFree(t->href);
 			t->href = 0;
 		}
-		domLink(t, "Frame", "src", "frames", cf->winobj, 0);
+		domLink(t, "Frame", "src", "frames", 0, 2);
 		break;
 
 	case TAGACT_IMAGE:
-		domLink(t, "Image", "src", "images", cf->docobj, 0);
+		domLink(t, "Image", "src", "images", 0, 4);
 		break;
 
 	case TAGACT_P:
-		domLink(t, "P", 0, "paragraphs", cf->docobj, 0);
+		domLink(t, "P", 0, "paragraphs", 0, 4);
 		break;
 
 	case TAGACT_HEADER:
-		domLink(t, "Header", 0, "headers", cf->docobj, 0);
+		domLink(t, "Header", 0, "headers", 0, 4);
 		break;
 
 	case TAGACT_FOOTER:
-		domLink(t, "Footer", 0, "footers", cf->docobj, 0);
+		domLink(t, "Footer", 0, "footers", 0, 4);
 		break;
 
 	case TAGACT_TITLE:
 		if (cw->htmltitle)
-			set_property_string(cf, cf->docobj, "title", cw->htmltitle);
-		domLink(t, "Title", 0, 0, cf->docobj, 0);
+			set_property_string_doc(cf, "title", cw->htmltitle);
+		domLink(t, "Title", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_LINK:
-		domLink(t, "Link", "href", 0, cf->docobj, 0);
+		domLink(t, "Link", "href", 0, 0, 4);
 		link_css(t);
 		break;
 
 	case TAGACT_MUSIC:
-		domLink(t, "Audio", "src", 0, cf->docobj, 0);
+		domLink(t, "Audio", "src", 0, 0, 4);
+		break;
+
+	case TAGACT_BASE:
+		domLink(t, "Base", "href", 0, 0, 4);
 		break;
 
 	default:
 // Don't know what this tag is, or it's not semantically important,
 // so just call it an html element.
-		domLink(t, "Element", 0, 0, cf->docobj, 0);
-		if (t->action == TAGACT_BASE && t->href)
-			instantiate_url(cf, t->jv, "href", t->href);
+		domLink(t, "Element", 0, 0, 0, 4);
 		break;
 	}			/* switch */
 
@@ -1549,33 +1321,33 @@ Needless to say that's not good!
 	linked_in = false;
 
 	if (t->parent && t->parent->jv) {
-		run_function_onearg(cf, t->parent->jv, "eb$apch1", t->jv);
+		run_function_onearg_t(t->parent, "eb$apch1", t);
 		linked_in = true;
 // special code for frame.contentDocument.
 		if (t->parent->action == TAGACT_FRAME) {
-			set_property_object(cf, t->parent->jv,
-					    "contentDocument", t->jv);
-			set_property_object(cf, t->parent->jv,
-					    "contentWindow", t->jv);
+			set_property_object_t(t->parent,
+					    "contentDocument", t);
+			set_property_object_t(t->parent,
+					    "contentWindow", t);
 		}
 	}
 
 	if (action == TAGACT_HTML) {
-		run_function_onearg(cf, cf->docobj, "eb$apch1", t->jv);
+		run_function_onearg_doc(cf, "eb$apch1", t);
 		linked_in = true;
 	}
 
 	if (!t->parent && innerParent) {
 // this is the top of innerHTML or some such.
 // It is never html head or body, as those are skipped.
-		run_function_onearg(cf, innerParent, "eb$apch1", t->jv);
+		run_function_onearg_t(innerParent, "eb$apch1", t);
 		linked_in = true;
 	}
 
 	if (linked_in && fakePropLast[0]) {
 // Node linked to document/gc to protect if from garbage collection,
 // but now it is linked to its parent.
-		delete_property(cf, fakePropParent, fakePropLast);
+		delete_master(fakePropLast);
 	}
 
 	if (!linked_in) {
@@ -1586,7 +1358,7 @@ Needless to say that's not good!
 
 /* set innerHTML from the source html, if this tag supports it */
 	if (ti->bits & TAG_INNERHTML)
-		establish_inner(t->jv, t->innerHTML, 0, false);
+		establish_inner(t, t->innerHTML, 0, false);
 
 // If the tag has foo=bar as an attribute, pass this forward to javascript.
 	pushAttributes(t);
@@ -1626,15 +1398,12 @@ static void pushAttributes(const Tag *t)
 // attributes on HTML tags that begin with "data-" should be available under a
 // "dataset" object in JS
 		if (strncmp(a[i], "data-", 5) == 0) {
-			jsobjtype dso = get_property_object(cf, t->jv, "dataset");
-			if (dso) {
 // must convert to camelCase
-				char *a2 = cloneString(a[i] + 5);
-				camelCase(a2);
-				set_property_string(cf, dso, a2, u);
-				nzFree(a2);
-				run_function_onestring(cf, t->jv, "markAttribute",        a[i]);
-			}
+			char *a2 = cloneString(a[i] + 5);
+			camelCase(a2);
+			set_dataset_string_t(t, a2, u);
+			nzFree(a2);
+			run_function_onestring_t(t, "markAttribute",        a[i]);
 			continue;
 		}
 
@@ -1644,7 +1413,7 @@ static void pushAttributes(const Tag *t)
 // Maybe they wrote <a firstChild=foo>
 // See if the name is in the prototype, and not a handler,
 // as handlers have setters.
-		if (has_property(cf, t->jv, a[i]) && !typeof_property(cf, t->jv, a[i])
+		if (has_property_t(t, a[i]) && !typeof_property_t(t, a[i])
 		    && stringInList(handlers, a[i]) < 0) {
 			debugPrint(3, "html attribute overload %s.%s",
 				   t->info->name, a[i]);
@@ -1653,13 +1422,13 @@ static void pushAttributes(const Tag *t)
 // There are some, like multiple or readonly, that should be set to true,
 // not the empty string.
 		if (!*u && stringInList(dotrue, a[i]) >= 0) {
-			set_property_bool(cf, t->jv, a[i], true);
+			set_property_bool_t(t, a[i], true);
 		} else {
 // standard attribute here
 			if (stringInListCI(exclist, a[i]) < 0)
-				set_property_string(cf, t->jv, a[i], u);
+				set_property_string_t(t, a[i], u);
 		}
-		run_function_onestring(cf, t->jv, "markAttribute", a[i]);
+		run_function_onestring_t(t, "markAttribute", a[i]);
 	}
 }				/* pushAttributes */
 
@@ -2225,7 +1994,7 @@ void underKill(Tag *t)
 		v = u->sibling;
 		u->sibling = u->parent = 0;
 		u->deleted = true;
-		if (!u->jv)
+		if (!u->jslink)
 			killTag(u);
 	}
 	t->firstchild = NULL;
@@ -2267,19 +2036,11 @@ void killTag(Tag *t)
 }
 
 /* Parse some html, as generated by innerHTML or document.write. */
-void html_from_setter(jsobjtype inner, const char *h)
+void html_from_setter(Tag *t, const char *h)
 {
-	Tag *t = NULL;
 	int l = 0;
 	debugPrint(4, "Generated {%s}", h);
-	t = tagFromJavaVar(inner);
-	if (!t) {
-		debugPrint(1,
-			   "innerHTML finds no tag for %p, cannot parse",
-			   inner);
-		return;
-	}
-	debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
+	debugPrint(4, "parse under tag %s %d", t->info->name, t->seqno);
 	l = cw->numTags;
 
 /* Cut all the children away from t */
@@ -2289,42 +2050,7 @@ void html_from_setter(jsobjtype inner, const char *h)
 	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
 	prerender(0);
-	innerParent = inner;
+	innerParent = t;
 	decorate(0);
 	innerParent = 0;
 }				/* html_from_setter */
-
-static void processStyles(jsobjtype so, const char *stylestring)
-{
-	char *workstring = cloneString(stylestring);
-	char *s;		// gets truncated to the style name
-	char *sv;
-	char *next;
-	for (s = workstring; *s; s = next) {
-		next = strchr(s, ';');
-		if (!next) {
-			next = s + strlen(s);
-		} else {
-			*next++ = 0;
-			skipWhite2(&next);
-		}
-		sv = strchr(s, ':');
-		// if there was something there, but it didn't
-		// adhere to the expected syntax, skip this pair
-		if (sv) {
-			*sv++ = '\0';
-			skipWhite2(&sv);
-			trimWhite(s);
-			trimWhite(sv);
-// the property name has to be nonempty
-			if (*s) {
-				camelCase(s);
-				set_property_string(cf, so, s, sv);
-// Should we set a specification level here, perhaps high,
-// so the css sheets don't overwrite it?
-// sv + "$$scy" = 99999;
-			}
-		}
-	}
-	nzFree(workstring);
-}				/* processStyles */

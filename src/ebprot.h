@@ -156,6 +156,7 @@ void html2nodes(const char *htmltext, bool startpage);
 /* sourcefile=decorate.c */
 void traverseAll(int start);
 const char *attribVal(const Tag *t, const char *name);
+bool attribPresent(const Tag *t, const char *name);
 void setTagAttr(Tag *t, const char *name, char *val);
 Tag *findOpenTag(Tag *t, int action);
 Tag *findOpenList(Tag *t);
@@ -163,8 +164,8 @@ void formControl(Tag *t, bool namecheck);
 void htmlInputHelper(Tag *t);
 char *displayOptions(const Tag *sel) ;
 void prerender(int start);
-jsobjtype instantiate_url(const Frame *f, jsobjtype parent, const char *name, const char *url) ;
 char *render(int start);
+const char *fakePropName(void);
 void decorate(int start);
 void freeTags(struct ebWindow *w) ;
 Tag *newTag(const Frame *f, const char *tagname) ;
@@ -174,7 +175,7 @@ void tag_gc(void);
 void htmlNodesIntoTree(int start, Tag *attach);
 void underKill(Tag *t);
 void killTag(Tag *t);
-void html_from_setter( jsobjtype innerParent, const char *h);
+void html_from_setter( Tag *innerParent, const char *h);
 
 /* sourcefile=http.c */
 void eb_curl_global_init(void);
@@ -398,13 +399,13 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
 
 /* sourcefile=jseng-duk.c */
-void connectTagObject(Tag *t, jsobjtype p);
 void disconnectTagObject(Tag *t);
 bool frameExpand(bool expand, int ln1, int ln2);
 bool reexpandFrame(void);
 // the native versions of the api functions in ebjs.c
 enum ej_proptype typeof_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 bool has_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
+bool has_property_t(const Tag *t, const char *name) ;
 void delete_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 char *get_property_string_0(jsobjtype cx, jsobjtype obj, const char *name) ;
 int get_property_number_0(jsobjtype cx, jsobjtype parent, const char *name) ;
@@ -418,6 +419,7 @@ int set_property_number_0(jsobjtype cx, jsobjtype obj, const char *name, int n) 
 int set_property_float_0(jsobjtype cx, jsobjtype obj, const char *name, double n) ;
 int set_property_bool_0(jsobjtype cx, jsobjtype obj, const char *name, bool n) ;
 int set_property_object_0(jsobjtype cx, jsobjtype parent, const char *name, jsobjtype child) ;
+void set_property_object_t(const Tag *t, const char *name, const Tag *t2);
 jsobjtype instantiate_array_0(jsobjtype cx, jsobjtype parent, const char *name) ;
 int set_array_element_object_0(jsobjtype cx, jsobjtype array, int idx, jsobjtype child) ;
 jsobjtype instantiate_array_element_0(jsobjtype cx, jsobjtype array, int idx, const char *classname) ;
@@ -431,13 +433,16 @@ void run_ontimer(const Frame *f, const char *backlink);
 int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, jsobjtype o);
 int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2);
 int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2);
+int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2);
 void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
+void run_function_onestring_t(const Tag *t, const char *name, const char *s);
 void jsRunData(const Tag *t, const char *filename, int lineno);
 bool run_event_t(const Tag *t, const char *pname, const char *evname);
 bool run_event_win(const Frame *f, const char *pname, const char *evname);
 bool run_event_doc(const Frame *f, const char *pname, const char *evname);
 bool bubble_event_t(const Tag *t, const char *name);
 void set_master_bool(const char *name, bool v);
+void delete_master(const char *name);
 char *get_property_url_t(const Tag *t, bool action);
 char *get_style_string_t(const Tag *t, const char *name);
 void delete_property_t(const Tag *t, const char *name);
@@ -450,11 +455,16 @@ char * get_property_string_t(const Tag *t, const char *name);
 void set_property_bool_t(const Tag *t, const char *name, bool v);
 void set_property_number_t(const Tag *t, const char *name, int v);
 void set_property_string_t(const Tag *t, const char *name, const char * v);
+void set_dataset_string_t(const Tag *t, const char *name, const char * v);
 void set_property_bool_win(const Frame *f, const char *name, bool v);
 void set_property_string_win(const Frame *f, const char *name, const char *v);
+void set_property_string_doc(const Frame *f, const char *name, const char *v);
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno);
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno);
 char *jsRunScriptWinResult(const char *str, const char *filename, int lineno) ;
+void establish_js_option(Tag *t, Tag *sel);
+void establish_js_textnode(Tag *t, const char *fpn);
+void domLink(Tag *t, const char *classname, const char *href, const char *list, const Tag *owntag, int extra);
 
 #ifdef __cplusplus
 }

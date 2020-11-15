@@ -1042,8 +1042,8 @@ don't take it out!
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["Anchor", "HTMLAnchorElement", "Image", "Script", "Link", "Area", "Form", "Frame", "Audio"];
-var ulist = ["href", "href", "src", "src", "href", "href", "action", "src", "src"];
+var cnlist = ["Anchor", "HTMLAnchorElement", "Image", "Script", "Link", "Area", "Form", "Frame", "Audio", "Base"];
+var ulist = ["href", "href", "src", "src", "href", "href", "action", "src", "src", "href"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
