@@ -91,7 +91,6 @@ const char eol[] = "\r\n";
 const char *findProxyForURL(const char *url) { return 0; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
 void readConfigFile(void) { }
-void set_basehref(const char *b){}
 const char *fetchReplace(const char *u){return 0;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
@@ -3307,15 +3306,6 @@ if(f->gsn == my_sn)
 break;
 	return f;
 }
-
-/* start a document.write */
-void dwStart(void)
-{
-	if (cf->dw)
-		return;
-	cf->dw = initString(&cf->dw_l);
-	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
-}				/* dwStart */
 
 static void dwrite(JSContext *cx, unsigned argc, JS::Value *vp, bool newline)
 {
