@@ -1527,28 +1527,29 @@ JS_DeleteProperty(cxa, *rw0, buf);
 t->jslink = false;
 }
 
-// I don't have any reverse pointers, so I'm just going to scan the list.
-// This doesn't come up all that often.
 // I assume we are in a compartment.
 static Tag *tagFromObject(JS::HandleObject o)
 {
 	Tag *t;
-	int i, gsn;
+	int gsn, seqno;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-JS::RootedValue v(cxa);
-if(!JS_GetProperty(cxa, o, "eb$gsn", &v) ||
-!v.isInt32())
-return NULL;
-gsn = v.toInt32();
-	for (i = 0; i < cw->numTags; ++i) {
-		t = tagList[i];
-if(t->dead) // not sure how this would happen
-continue;
-if(t->gsn == gsn)
-			return t;
-	}
-	return 0;
+	JS::RootedValue v(cxa);
+	if(!JS_GetProperty(cxa, o, "eb$gsn", &v) ||
+	!v.isInt32())
+		return 0;
+	gsn = v.toInt32();
+	if(!JS_GetProperty(cxa, o, "eb$seqno", &v) ||
+	!v.isInt32())
+		return 0;
+	seqno = v.toInt32();
+	if(seqno <= 0 || seqno >= cw->numTags)
+		return 0;
+	t = tagList[seqno];
+	if(t->gsn != gsn ||
+	 t->dead) // not sure how this would happen
+		return 0;
+	return t;
 }
 
 // inverse of the above

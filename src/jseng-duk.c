@@ -1036,23 +1036,21 @@ static duk_ret_t native_unframe2(duk_context * cx)
 	return 0;
 }
 
-/* I don't have any reverse pointers, so I'm just going to scan the list */
-/* This doesn't come up all that often. */
+// If we stay with duktape, optimize this routine with seqno and gsn,
+// the way I did in the mozilla version.
 Tag *tagFromJavaVar(jsobjtype v)
 {
 	Tag *t = 0;
 	int i;
-
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->jv == v && !t->dead)
 			return t;
 	}
 	return 0;
-}				/* tagFromJavaVar */
+}
 
 // Create a new tag for this pointer, only from document.createElement().
 static Tag *tagFromJavaVar2(jsobjtype v, const char *tagname)
