@@ -788,11 +788,6 @@ static void prerenderNode(Tag *t, bool opentag)
 /* like the other value fields, it can't be null */
 				t->rvalue = t->value = emptyString;
 			}
-#if 0
-// When textarea buffers were allocated at browse time, before the ib command
-			if (whichproc == 'e')
-				t->lic = sideBuffer(0, t->value, -1, 0);
-#endif
 			currentTA = 0;
 		}
 		break;

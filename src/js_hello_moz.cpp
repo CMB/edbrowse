@@ -29,7 +29,6 @@ static struct ebWindow win0;
 struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
 int context = 0;
-char whichproc = 'e';
 bool allowJS = true;
 bool showHover, doColors;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
@@ -510,9 +509,7 @@ static void forceFrameExpand(JS::HandleObject thisobj)
 	bool save_plug = pluginsOn;
 set_property_bool_o(thisobj, "eb$auto", true);
 	pluginsOn = false;
-	whichproc = 'e';
 	frameExpandLine(0, thisobj);
-	whichproc = 'j';
 	cf = save_cf;
 	jsSourceFile = save_src;
 	jsLineno = save_lineno;

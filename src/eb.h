@@ -296,7 +296,6 @@ extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
 extern bool down_bg;		// download in background
 extern bool down_jsbg;		// download javascript in background
-extern char whichproc; // which edbrowse-xx process
 extern char showProgress; // feedback as a file is downloaded
 extern char eb_language[];		/* edbrowse language, determined by $LANG */
 extern  const char *const supported_languages[];

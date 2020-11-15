@@ -40,7 +40,6 @@ static int numTables;
 volatile bool intFlag;
 time_t intStart;
 bool ismc, isimap, passMail;
-char whichproc = 'e';		// edbrowse
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
@@ -74,7 +73,6 @@ static void finishBrowse(void)
 	int j;
 	char *a, *newbuf;
 	Frame *f;
-	whichproc = 'e';
 // tags should certainly be set
 	if (!tagList)
 		return;
@@ -142,8 +140,7 @@ static void catchSig(int n)
 		return;
 // Let's do something drastic here; start a new thread and exit the current one.
 	i_puts(MSG_IntForce);
-	if (whichproc == 'j')
-		finishBrowse();
+	finishBrowse();
 	if (pthread_equal(t1, pthread_self())) {
 		if (pthread_create(&t2, NULL, inputForever, NULL))
 			return;	// didn't work

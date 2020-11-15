@@ -508,9 +508,7 @@ static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
 	duk_push_true(cx);
 	duk_put_prop_string(cx, -2, "eb$auto");
 	pluginsOn = false;
-	whichproc = 'e';
 	frameExpandLine(0, thisobj);
-	whichproc = 'j';
 	cf = save_cf;
 	jsSourceFile = save_src;
 	jsLineno = save_lineno;
@@ -3543,9 +3541,7 @@ const char *filename, 			int lineno)
 	debugPrint(5, "> script:");
 	jsSourceFile = filename;
 	jsLineno = lineno;
-	whichproc = 'j';
 	result = run_script_0(f->cx, str);
-	whichproc = 'e';
 	jsSourceFile = NULL;
 	debugPrint(5, "< ok");
 	return result;

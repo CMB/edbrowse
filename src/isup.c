@@ -1639,7 +1639,7 @@ void cookiesFromJar(void)
 #if 0
 // We use to write the file out again with the old cookies deleted,
 // I don't think we need to do this.
-	if (expired && whichproc == 'e') {
+	if (expired) {
 /* Pour the cookies back into the jar */
 		f = fopen(cookieFile, "w");
 		if (!f)
@@ -1825,8 +1825,6 @@ void mergeCookies(void)
 	int i;
 
 	if (!cookieFile)
-		return;
-	if (whichproc != 'e')
 		return;
 	if (ismc)
 		return;

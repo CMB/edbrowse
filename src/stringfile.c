@@ -642,16 +642,16 @@ void setDebugFile(const char *name)
 	if (!name || !*name)
 		return;
 	debugFileName = cloneString(name);
-	debugFile = fopen(name, (whichproc == 'e' ? "w" : "a"));
+	debugFile = fopen(name, "w");
 	if (debugFile) {
 #ifndef _MSC_VER		// port setlinebuf(debugFile);, if required...
 		setlinebuf(debugFile);
 #else
 		;
 #endif // !_MSC_VER
-	} else if (whichproc == 'e')
+	} else
 		printf("cannot create %s\n", name);
-}				/* setDebugFile */
+}
 
 void nl(void)
 {
