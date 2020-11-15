@@ -105,7 +105,7 @@ void jSideEffects(void)
 	cw->mustrender = true;
 	rebuildSelectors();
 	debugPrint(4, "jSideEffects ends");
-}				/* jSideEffects */
+}
 
 static Tag *locateOptionByName(const Tag *sel,
 					  const char *name, int *pmc,
@@ -2079,6 +2079,26 @@ void domSubmitsForm(Tag *t, bool reset)
 		js_reset = t;
 	else
 		js_submit = t;
+}
+
+void domSetsTagValue(Tag *t, const char *newtext)
+{
+	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO
+	    || t->itype == INP_FILE)
+		return;
+	if (t->itype == INP_TA) {
+		int side = t->lic;
+		if (side <= 0 || side >= MAXSESSION || side == context)
+			return;
+		if (sessionList[side].lw == NULL)
+			return;
+		if (cw->browseMode)
+			i_printf(MSG_BufferUpdated, side);
+		sideBuffer(side, newtext, -1, 0);
+		return;
+	}
+	nzFree(t->value);
+	t->value = cloneString(newtext);
 }
 
 /* Javascript errors, we need to see these no matter what. */

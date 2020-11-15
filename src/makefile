@@ -23,7 +23,7 @@ all: edbrowse
 
 #  edbrowse objects
 EBOBJS =	main.o buffers.o sendmail.o fetchmail.o \
-		html.o format.o ebjs.o plugin.o ebrc.o \
+		html.o format.o plugin.o ebrc.o \
 		messages.o stringfile.o html-tidy.o decorate.o \
 		msg-strings.o http.o isup.o css.o jseng-duk.o startwindow.o
 

@@ -477,21 +477,25 @@ static duk_ret_t getter_value(duk_context * cx)
 static duk_ret_t setter_value(duk_context * cx)
 {
 	jsobjtype thisobj;
-	char *t;
+	char *k;
+	Tag *t;
 	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
 	debugPrint(5, "setter v 1");
-	t = cloneString(h);
+	k = cloneString(h);
 	duk_push_this(cx);
 	duk_insert(cx, -2);
 	duk_put_prop_string(cx, -2, "val$ue");
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
-	prepareForField(t);
-	debugPrint(4, "value %p=%s", thisobj, t);
-	javaSetsTagVar(thisobj, t);
-	nzFree(t);
+	prepareForField(k);
+	t = tagFromJavaVar(thisobj);
+	if(t) {
+		debugPrint(4, "value tag %d=%s", t->seqno, k);
+		domSetsTagValue(t, k);
+	}
+	nzFree(k);
 	debugPrint(5, "setter v 2");
 	return 0;
 }
@@ -3827,3 +3831,170 @@ Don't do any of this if the tag is itself <style>. */
 	set_property_number_0(cx, io, "nodeType", 1);
 }
 
+/*********************************************************************
+Javascript sometimes builds or rebuilds a submenu, based upon your selection
+in a primary menu. These new options must map back to html tags,
+and then to the dropdown list as you interact with the form.
+This is tested in jsrt - select a state,
+whereupon the colors below, that you have to choose from, can change.
+This does not easily fold into rerender(),
+it must be rerun after javascript activity, e.g. in jSideEffects().
+*********************************************************************/
+
+static void rebuildSelector(Tag *sel, jsobjtype oa, int len2)
+{
+	int i2 = 0;
+	bool check2;
+	char *s;
+	const char *selname;
+	bool changed = false;
+	Tag *t, *t0 = 0;
+	jsobjtype oo;		/* option object */
+	jsobjtype cx = sel->f0->cx;
+
+	selname = sel->name;
+	if (!selname)
+		selname = "?";
+	debugPrint(4, "testing selector %s %d", selname, len2);
+	sel->lic = (sel->multiple ? 0 : -1);
+	t = cw->optlist;
+
+	while (t && i2 < len2) {
+		t0 = t;
+/* there is more to both lists */
+		if (t->controller != sel) {
+			t = t->same;
+			continue;
+		}
+
+/* find the corresponding option object */
+		if ((oo = get_array_element_object_0(cx, oa, i2)) == NULL) {
+/* Wow this shouldn't happen. */
+/* Guess I'll just pretend the array stops here. */
+			len2 = i2;
+			break;
+		}
+
+		if (t->jv != oo) {
+			debugPrint(5, "oo switch");
+/*********************************************************************
+Ok, we freed up the old options, and garbage collection
+could well kill the tags that went with these options,
+i.e. the tags we're looking at now.
+I'm bringing the tags back to life.
+*********************************************************************/
+			t->dead = false;
+			disconnectTagObject(t);
+			connectTagObject(t, oo);
+		}
+
+		t->rchecked = get_property_bool_0(cx, oo, "defaultSelected");
+		check2 = get_property_bool_0(cx, oo, "selected");
+		if (check2) {
+			if (sel->multiple)
+				++sel->lic;
+			else
+				sel->lic = i2;
+		}
+		++i2;
+		if (t->checked != check2)
+			changed = true;
+		t->checked = check2;
+		s = get_property_string_0(cx, oo, "text");
+		if ((s && !t->textval) || !stringEqual(t->textval, s)) {
+			nzFree(t->textval);
+			t->textval = s;
+			changed = true;
+		} else
+			nzFree(s);
+		s = get_property_string_0(cx, oo, "value");
+		if ((s && !t->value) || !stringEqual(t->value, s)) {
+			nzFree(t->value);
+			t->value = s;
+		} else
+			nzFree(s);
+		t = t->same;
+	}
+
+/* one list or the other or both has run to the end */
+	if (i2 == len2) {
+		for (; t; t = t->same) {
+			if (t->controller != sel) {
+				t0 = t;
+				continue;
+			}
+/* option is gone in js, disconnect this option tag from its select */
+			disconnectTagObject(t);
+			t->controller = 0;
+			t->action = TAGACT_NOP;
+			if (t0)
+				t0->same = t->same;
+			else
+				cw->optlist = t->same;
+			changed = true;
+		}
+	} else if (!t) {
+		for (; i2 < len2; ++i2) {
+			if ((oo = get_array_element_object_0(cx, oa, i2)) == NULL)
+				break;
+			t = newTag(sel->f0, "option");
+			t->lic = i2;
+			t->controller = sel;
+			connectTagObject(t, oo);
+			t->step = 2;	// already decorated
+			t->textval = get_property_string_0(cx, oo, "text");
+			t->value = get_property_string_0(cx, oo, "value");
+			t->checked = get_property_bool_0(cx, oo, "selected");
+			if (t->checked) {
+				if (sel->multiple)
+					++sel->lic;
+				else
+					sel->lic = i2;
+			}
+			t->rchecked = get_property_bool_0(cx, oo, "defaultSelected");
+			changed = true;
+		}
+	}
+
+	if (!changed)
+		return;
+	debugPrint(4, "selector %s has changed", selname);
+
+	s = displayOptions(sel);
+	if (!s)
+		s = emptyString;
+	domSetsTagValue(sel, s);
+	nzFree(s);
+
+	if (!sel->multiple)
+		set_property_number_0(cx, sel->jv, "selectedIndex", sel->lic);
+}				/* rebuildSelector */
+
+void rebuildSelectors(void)
+{
+	int i1;
+	Tag *t;
+	jsobjtype oa;		/* option array */
+	int len;		/* length of option array */
+
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
+		t = tagList[i1];
+		if (!t->jslink)
+			continue;
+		if (t->action != TAGACT_INPUT)
+			continue;
+		if (t->itype != INP_SELECT)
+			continue;
+#if 0
+		if(!tagIsRooted(t))
+			continue;
+#endif
+
+/* there should always be an options array, if not then move on */
+		if (!(oa = get_property_object_0(t->f0->cx, t->jv, "options")))
+			continue;
+		if ((len = get_arraylength_0(t->f0->cx, oa)) < 0)
+			continue;
+		rebuildSelector(t, oa, len);
+	}
+}

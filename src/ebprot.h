@@ -53,10 +53,6 @@ bool sqlAddRows(int ln) ;
 bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
-/* sourcefile=ebjs.c */
-void javaSetsTagVar(jsobjtype v, const char *newtext);
-void rebuildSelectors(void);
-
 /* sourcefile=fetchmail.c */
 int fetchMail(int account);
 int fetchAllMail(void);
@@ -111,6 +107,7 @@ bool infReplace(int tagno, const char *newtext, bool notify);
 bool infPush(int tagno, char **post_string);
 Tag *tagFromJavaVar(jsobjtype v);
 void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest);
+void domSetsTagValue(Tag *t, const char *newtext);
 void domSubmitsForm(Tag *t, bool reset);
 void runningError(int msg, ...);
 void rerender(bool notify);
@@ -440,6 +437,7 @@ char *jsRunScriptWinResult(const char *str, const char *filename, int lineno) ;
 void establish_js_option(Tag *t, Tag *sel);
 void establish_js_textnode(Tag *t, const char *fpn);
 void domLink(Tag *t, const char *classname, const char *href, const char *list, const Tag *owntag, int extra);
+void rebuildSelectors(void);
 
 #ifdef __cplusplus
 }

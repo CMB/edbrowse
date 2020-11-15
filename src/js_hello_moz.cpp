@@ -82,7 +82,6 @@ void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"
 void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
 void cssFree(Frame *f) { }
-void rebuildSelectors(void) { puts("rebuild selectors"); }
 bool javaOK(const char *url) { return true; }
 bool mustVerifyHost(const char *url) { return false; }
 const char *findAgentForURL(const char *url) { return 0; }
@@ -417,49 +416,6 @@ JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
 // Example: the value property, when set, uses a setter to push that value
 // through to edbrowse, where you can see it.
 
-static void domSetsInner(JS::HandleObject ival, const char *newtext)
-{
-	int side;
-	Tag *t = tagFromObject(ival);
-	if (!t)
-		return;
-// the tag should always be a textarea
-	if (t->action != TAGACT_INPUT || t->itype != INP_TA) {
-		debugPrint(3,
-			   "innerText is applied to tag %d that is not a textarea.",
-			   t->seqno);
-		return;
-	}
-	side = t->lic;
-	if (side <= 0 || side >= MAXSESSION || side == context)
-		return;
-	if (sessionList[side].lw == NULL)
-		return;
-// Not sure how we could not be browsing
-	if (cw->browseMode)
-		i_printf(MSG_BufferUpdated, side);
-	sideBuffer(side, newtext, -1, 0);
-}
-
-static void domSetsTagValue(JS::HandleObject ival, const char *newtext)
-{
-	Tag *t = tagFromObject(ival);
-	if (!t)
-		return;
-// dom often changes the value of hidden fiels;
-// it should not change values of radio through this mechanism,
-// and should never change a file field for security reasons.
-	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO
-	    || t->itype == INP_FILE)
-		return;
-	if (t->itype == INP_TA) {
-		domSetsInner(ival, newtext);
-		return;
-	}
-	nzFree(t->value);
-	t->value = cloneString(newtext);
-}
-
 static bool getter_value(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -488,11 +444,11 @@ h = emptyString;
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 JS_SetProperty(cx, thisobj, "val$ue", args[0]);
 	prepareForField(k);
-if(debugLevel >= 4) {
-int esn = get_property_number_o(thisobj, "eb$seqno");
-	debugPrint(4, "value tag %d=%s", esn, k);
-}
-	domSetsTagValue(thisobj, k);
+	Tag *t = tagFromObject(thisobj);
+	if(t) {
+		debugPrint(4, "value tag %d=%s", t->seqno, k);
+		domSetsTagValue(t, k);
+	}
 	nzFree(k);
 	debugPrint(5, "setter v 2");
 	return true;
@@ -3837,6 +3793,183 @@ Don't do any of this if the tag is itself <style>. */
 	set_property_number_o(io, "nodeType", 1);
 }
 
+/*********************************************************************
+Javascript sometimes builds or rebuilds a submenu, based upon your selection
+in a primary menu. These new options must map back to html tags,
+and then to the dropdown list as you interact with the form.
+This is tested in jsrt - select a state,
+whereupon the colors below, that you have to choose from, can change.
+This does not easily fold into rerender(),
+it must be rerun after javascript activity, e.g. in jSideEffects().
+*********************************************************************/
+
+static void rebuildSelector(Tag *sel, JS::HandleObject oa, int len2)
+{
+	int i2 = 0;
+	bool check2;
+	char *s;
+	const char *selname;
+	bool changed = false;
+	Tag *t, *t0 = 0;
+	JS::RootedObject oo(cxa);		/* option object */
+	JS::RootedObject selobj(cxa);		/* select object */
+	JS::RootedObject tobj(cxa);
+
+	selname = sel->name;
+	if (!selname)
+		selname = "?";
+	debugPrint(4, "testing selector %s %d", selname, len2);
+	sel->lic = (sel->multiple ? 0 : -1);
+	t = cw->optlist;
+
+	        JSAutoCompartment ac(cxa, frameToCompartment(sel->f0));
+	selobj = tagToObject(sel);
+
+	while (t && i2 < len2) {
+		t0 = t;
+/* there is more to both lists */
+		if (t->controller != sel) {
+			t = t->same;
+			continue;
+		}
+
+/* find the corresponding option object */
+		if (!(oo = get_array_element_object_o(oa, i2))) {
+/* Wow this shouldn't happen. */
+/* Guess I'll just pretend the array stops here. */
+			len2 = i2;
+			break;
+		}
+
+		tobj = tagToObject(t);
+		if (tobj != oo) {
+			debugPrint(5, "oo switch");
+/*********************************************************************
+Ok, we freed up the old options, and garbage collection
+could well kill the tags that went with these options,
+i.e. the tags we're looking at now.
+I'm bringing the tags back to life.
+*********************************************************************/
+			t->dead = false;
+			disconnectTagObject(t);
+			connectTagObject(t, oo);
+		}
+
+		t->rchecked = get_property_bool_o(oo, "defaultSelected");
+		check2 = get_property_bool_o(oo, "selected");
+		if (check2) {
+			if (sel->multiple)
+				++sel->lic;
+			else
+				sel->lic = i2;
+		}
+		++i2;
+		if (t->checked != check2)
+			changed = true;
+		t->checked = check2;
+		s = get_property_string_o(oo, "text");
+		if ((s && !t->textval) || !stringEqual(t->textval, s)) {
+			nzFree(t->textval);
+			t->textval = s;
+			changed = true;
+		} else
+			nzFree(s);
+		s = get_property_string_o(oo, "value");
+		if ((s && !t->value) || !stringEqual(t->value, s)) {
+			nzFree(t->value);
+			t->value = s;
+		} else
+			nzFree(s);
+		t = t->same;
+	}
+
+/* one list or the other or both has run to the end */
+	if (i2 == len2) {
+		for (; t; t = t->same) {
+			if (t->controller != sel) {
+				t0 = t;
+				continue;
+			}
+/* option is gone in js, disconnect this option tag from its select */
+			disconnectTagObject(t);
+			t->controller = 0;
+			t->action = TAGACT_NOP;
+			if (t0)
+				t0->same = t->same;
+			else
+				cw->optlist = t->same;
+			changed = true;
+		}
+	} else if (!t) {
+		for (; i2 < len2; ++i2) {
+			if (!(oo = get_array_element_object_o(oa, i2)))
+				break;
+			t = newTag(sel->f0, "option");
+			t->lic = i2;
+			t->controller = sel;
+			connectTagObject(t, oo);
+			t->step = 2;	// already decorated
+			t->textval = get_property_string_o(oo, "text");
+			t->value = get_property_string_o(oo, "value");
+			t->checked = get_property_bool_o(oo, "selected");
+			if (t->checked) {
+				if (sel->multiple)
+					++sel->lic;
+				else
+					sel->lic = i2;
+			}
+			t->rchecked = get_property_bool_o(oo, "defaultSelected");
+			changed = true;
+		}
+	}
+
+	if (!changed)
+		return;
+	debugPrint(4, "selector %s has changed", selname);
+
+	s = displayOptions(sel);
+	if (!s)
+		s = emptyString;
+	domSetsTagValue(sel, s);
+	nzFree(s);
+
+	if (!sel->multiple)
+		set_property_number_o(selobj, "selectedIndex", sel->lic);
+}				/* rebuildSelector */
+
+void rebuildSelectors(void)
+{
+	int i1;
+	Tag *t;
+	JS::RootedObject oa(cxa);		/* option array */
+	JS::RootedObject tobj(cxa);		/* option array */
+	int len;		/* length of option array */
+
+	        JSAutoCompartment ac(cxa, *rw0);
+
+	for (i1 = 0; i1 < cw->numTags; ++i1) {
+		t = tagList[i1];
+		if (!t->jslink)
+			continue;
+		if (t->action != TAGACT_INPUT)
+			continue;
+		if (t->itype != INP_SELECT)
+			continue;
+#if 0
+		if(!tagIsRooted(t))
+			continue;
+#endif
+
+/* there should always be an options array, if not then move on */
+		tobj = tagToObject(t);
+		if (!(oa = get_property_object_o(tobj, "options")))
+			continue;
+		if ((len = get_arraylength_o(oa)) < 0)
+			continue;
+		rebuildSelector(t, oa, len);
+	}
+}
+
 // Now we go back to the stand alone hello program.
 
 // I don't understand any of this. Code from:
@@ -3963,7 +4096,7 @@ execScript("'hello world, it is '+new Date()");
 }
 
 if(iaflag) {
-// end with control d, EOF
+// end with q to quit
 char *line;
 while(line = (char*)inputLine()) {
 perl2c(line);
