@@ -1571,6 +1571,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	}			// switch
 }
 
+// Warning: this function changes the current frame!
 static void frameFromWindow(int gsn)
 {
 	Frame *f;
@@ -3020,6 +3021,7 @@ do_rules is called from 3 different places, under 3 very different contexts.
 1. getComputedStyle(node), creates a new style object s,
 loops through all the extant css descriptors, matches them against node,
 and then applies the rules to s.
+s is accessible through window.soj$, the style object.
 The obj argument is the newly created style object s.
 Because matchtype is 0, the before and after selectors don't match,
 and they shouldn't, because before after attributes
@@ -3028,9 +3030,11 @@ matchhover is false so hover selectors won't match either, nor should they.
 2. The cssText setter on a style object.
 There are no selectors here, just rules, as supplied by the calling function.
 This is the easy case.
-obj is the style object, also supplied by the calling function.
+window.soj$ is the style object for internal use.
+obj is the style object, supplied by the calling function.
 3. Apply all css descriptors to all nodes at javascript startup.
-This is indicated by bulkmatch = true.
+This is done by cssEverybody().
+It is indicated by bulkmatch = true.
 3a. matchtype is 0 for the plain selectors. obj = node.style.
 3b. matchtype is 1 for the before selectors. obj = node.
 3c. matchtype is 2 for the after selectors. obj = node.
@@ -3038,6 +3042,10 @@ Then repeat 3a 3b 3c with matchhover = true.
 This is done only to see if the node becomes visible on hover.
 Only looking for display=something or visibility=visible.
 Set a flag if that is found.
+To reiterate, the rather confusing first argument obj is the style object
+if matchtype is 0, but is a node object if matchtype is nonzero,
+so we can manage before and after,
+and then we'll glom onto node.(before or after text).style to apply the rules.
 *********************************************************************/
 
 static void do_rules(jsobjtype obj, struct rule *r0, int highspec)
@@ -3122,7 +3130,8 @@ in fact it's easier to list the tags that allow it.
 
 	if (matchtype)
 		obj = get_property_object_0(cx, textobj, "style");
-// obj is now the style object, ready for attributes
+// obj is now the style object on the before or after text,
+// ready for attributes
 
 	s = initString(&sl);
 	for (r = r0; r; r = r->next) {
@@ -3573,7 +3582,7 @@ static void cssEverybody(void)
 	struct cssmaster *cm = cf->cssmaster;
 	struct desc *d0 = cm->descriptors, *d;
 	Tag **a, **u;
-	jsobjtype style;
+	jsobjtype z;
 	jsobjtype cx;
 	Tag *t;
 	int l;
@@ -3596,16 +3605,18 @@ static void cssEverybody(void)
 				if (!t->jv)
 					continue;
 		cx = t->f0->cx;
+// matchtype nonzero means we pass the node to do_rules
 				if (matchtype)
-					style = t->jv;
+					z = t->jv;
 				else {
-					style =
+// pass the style object for this node
+					z =
 					    get_property_object_0(cx, t->jv,
 								    "style");
-					if (!style)
+					if (!z)
 						continue;
 				}
-				do_rules(style, d->rules, t->highspec);
+				do_rules(z, d->rules, t->highspec);
 			}
 			nzFree(a);
 		}

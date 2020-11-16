@@ -1321,7 +1321,9 @@ for speed and optimization, is lost if the version changes.
 // remember that this is the window object
 dom$.cssGather(false, this);
 
+this.soj$ = s;
 eb$cssApply(this.document.eb$ctx, e, s);
+delete this.soj$;
 
 /*********************************************************************
 Now for the confusion.
@@ -1377,6 +1379,7 @@ return s;
 // It writes the changes back to the style node, does not create a new one.
 dom$.computeStyleInline = function(e) {
 var s;
+var w = my$win();
 
 e.last$class = e.class, e.last$id = e.id;
 
@@ -1410,7 +1413,9 @@ delete s[k.replace(/\$(\$scy|pri)$/, "")];
 }
 
 // apply all the css rules
-eb$cssApply(my$win().document.eb$ctx, e, s);
+w.soj$ = s;
+eb$cssApply(w.document.eb$ctx, e, s);
+delete w.soj$;
 // style has been recomputed
 // descend into the children
 if(e.childNodes)
