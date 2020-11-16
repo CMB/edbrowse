@@ -78,8 +78,8 @@ void ebClose(int n) { exit(n); }
 void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
 void writeShortCache(void) { }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
-void cssDocLoad(jsobjtype thisobj, char *s, bool pageload) { puts("css doc load"); }
-void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination) { puts("css apply"); }
+void cssDocLoad(int n, char *s, bool pageload) { puts("css doc load"); }
+void cssApply(int n, jsobjtype node, jsobjtype destination) { puts("css apply"); }
 void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
 void cssFree(Frame *f) { }
 bool javaOK(const char *url) { return true; }
@@ -2202,31 +2202,29 @@ args.rval().setUndefined();
 
 static bool nat_cssStart(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-args.rval().setUndefined();
-JS::RootedObject start(cx);
-JS_ValueToObject(cx, args[0], &start);
+	  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	int n = args[0].toInt32();
 // cssDocLoad is a lot of code, and it may well call get_property_string,
 // which calls stringize, so just to be safe, I'll copy it.
-char *s = cloneString(stringize(args[1]));
-bool r = args[2].toBoolean();
-cssDocLoad(start, s, r);
-nzFree(s);
-return true;
+	char *s = cloneString(stringize(args[1]));
+	bool r = args[2].toBoolean();
+	cssDocLoad(n, s, r);
+	nzFree(s);
+	args.rval().setUndefined();
+	return true;
 }
 
 static bool nat_cssApply(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-args.rval().setUndefined();
-JS::RootedObject top(cx);
-JS_ValueToObject(cx, args[0], &top);
-JS::RootedObject node(cx);
-JS_ValueToObject(cx, args[1], &node);
-JS::RootedObject dest(cx);
-JS_ValueToObject(cx, args[2], &dest);
-cssApply(top, node, dest);
-return true;
+	  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	int n = args[0].toInt32();
+	JS::RootedObject node(cx);
+	JS_ValueToObject(cx, args[1], &node);
+	JS::RootedObject dest(cx);
+	JS_ValueToObject(cx, args[2], &dest);
+	cssApply(n, node, dest);
+	args.rval().setUndefined();
+	return true;
 }
 
 static bool nat_cssText(JSContext *cx, unsigned argc, JS::Value *vp)

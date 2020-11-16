@@ -1321,7 +1321,7 @@ for speed and optimization, is lost if the version changes.
 // remember that this is the window object
 dom$.cssGather(false, this);
 
-eb$cssApply(this, e, s);
+eb$cssApply(this.document.eb$ctx, e, s);
 
 /*********************************************************************
 Now for the confusion.
@@ -1410,7 +1410,7 @@ delete s[k.replace(/\$(\$scy|pri)$/, "")];
 }
 
 // apply all the css rules
-eb$cssApply(my$win(), e, s);
+eb$cssApply(my$win().document.eb$ctx, e, s);
 // style has been recomputed
 // descend into the children
 if(e.childNodes)
@@ -3848,7 +3848,7 @@ return;
 
 w.last$css_all = css_all;
 w.css$ver++;
-eb$cssDocLoad(w, css_all, pageload);
+eb$cssDocLoad(w.document.eb$ctx, css_all, pageload);
 }
 
 // Apply rules to a given style object, which is this.

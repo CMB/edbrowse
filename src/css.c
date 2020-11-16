@@ -1571,26 +1571,25 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	}			// switch
 }
 
-static void frameFromWindow(jsobjtype thisobj)
+static void frameFromWindow(int gsn)
 {
 	Frame *f;
 	for (f = &(cw->f0); f; f = f->next)
-		if (f->winobj == thisobj)
+		if (f->gsn == gsn)
 			break;
 	if (f) {
 		cf = f;
 	} else {
-		debugPrint(3, " can't find frame for window object %p",
-			   thisobj);
+		debugPrint(3, " can't find frame for window %d", gsn);
 	}
 }
 
-void cssDocLoad(jsobjtype thisobj, char *start, bool pageload)
+void cssDocLoad(int frameNumber, char *start, bool pageload)
 {
 	Frame *save_cf = cf;
 	struct cssmaster *cm;
 	bool recompile = false;
-	frameFromWindow(thisobj);
+	frameFromWindow(frameNumber);
 	cm = cf->cssmaster;
 	if (!cm) {
 		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
@@ -3214,7 +3213,7 @@ the css rules. If there's ever a document.head.getComputedStyle or some such,
 where "this" is not the window object, then we have to make some changes.
 *********************************************************************/
 
-void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
+void cssApply(int frameNumber, jsobjtype node, jsobjtype destination)
 {
 	Frame *save_cf = cf;
 	jsobjtype cx;
@@ -3225,7 +3224,7 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 	if (!t)			// should never happen
 		return;
 
-	frameFromWindow(thisobj);
+	frameFromWindow(frameNumber);
 	cx = cf->cx;
 
 // I think the root is document, not the current node, but that is not clear.

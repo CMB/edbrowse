@@ -360,12 +360,12 @@ bool addWebAuthorization(const char *url, const char *credentials, bool proxy, c
 /* sourcefile=css.c */
 void writeShortCache(void);
 bool matchMedia(char *t);
-void cssDocLoad(jsobjtype thisobj, char *s, bool pageload);
+void cssDocLoad(int frameNumber, char *s, bool pageload);
 void cssFree(Frame *f);
 Tag **querySelectorAll(const char *selstring, Tag *top);
 Tag *querySelector(const char *selstring, Tag *top);
 bool querySelector0(const char *selstring, Tag *top);
-void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination);
+void cssApply(int frameNumber, jsobjtype node, jsobjtype destination);
 void cssText(jsobjtype node, const char *rulestring);
 
 /* sourcefile=jseng-duk.c */

@@ -2002,7 +2002,7 @@ static duk_ret_t native_setcook(duk_context * cx)
 
 static duk_ret_t native_css_start(duk_context * cx)
 {
-	cssDocLoad(duk_get_heapptr(cx, 0), cloneString(duk_get_string(cx, 1)),
+	cssDocLoad(duk_get_number(cx, 0), cloneString(duk_get_string(cx, 1)),
 		   duk_get_boolean(cx, 2));
 	return 0;
 }
@@ -2135,7 +2135,7 @@ static duk_ret_t native_cssApply(duk_context * cx)
 {
 	jsInterruptCheck(cx);
 	if (duk_is_object(cx, 1) && duk_is_object(cx, 2))
-		cssApply(duk_get_heapptr(cx, 0), duk_get_heapptr(cx, 1),
+		cssApply(duk_get_number(cx, 0), duk_get_heapptr(cx, 1),
 			 duk_get_heapptr(cx, 2));
 	duk_pop_n(cx, 3);
 	return 0;
@@ -2265,6 +2265,9 @@ static void createJSContext_0(Frame *f)
 // document.eb$seqno = 0
 	duk_push_number(cx, 0);
 	duk_put_prop_string(cx, -2, "eb$seqno");
+// and the frame context
+	duk_push_number(cx, f->gsn);
+	duk_put_prop_string(cx, -2, "eb$ctx");
 
 	duk_pop(cx); // document
 
