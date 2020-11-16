@@ -1777,9 +1777,11 @@ return r;
 }
 
 document.prependChild = function(c) {
+var v;
 dom$.isabove(c, this);
-if(this.childNodes.length) this.insertBefore(c, this.childNodes[0]);
-else this.appendChild(c);
+if(this.childNodes.length) v = this.insertBefore(c, this.childNodes[0]);
+else v = this.appendChild(c);
+return v;
 }
 
 document.insertBefore = function(c, t) {
@@ -2678,6 +2680,27 @@ top.removeChild(top.childNodes[i]);
 top.appendChild(document.createTextNode(s));
 }
 
+dom$.injectSetup = function(which) {
+var z = this, w = my$win();
+switch(which) {
+case 'a':
+if(!this.inj$after) {
+z = this.appendChild(document.createTextNode());
+z.inj$css = true;
+this.inj$after = true;
+} else z = this.lastChild;
+break;
+case 'b':
+if(!this.inj$before) {
+z = this.prependChild(document.createTextNode());
+z.inj$css = true;
+this.inj$before = true;
+} else z = this.firstChild;
+break;
+}
+w.soj$ = z.style;
+}
+
 /*********************************************************************
 Add prototype methods to the standard nodes, nodes that have children,
 and the normal set of methods to go with those children.
@@ -2779,6 +2802,7 @@ c.prototype.insertAdjacentHTML = document.insertAdjacentHTML;
 // outerHTML is dynamic; should innerHTML be?
 Object.defineProperty(c.prototype, "outerHTML", { get: function() { return dom$.htmlString(this);},
 set: function(h) { dom$.outer$1(this,h); }});
+c.prototype.injectSetup = dom$.injectSetup;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return dom$.classList(this);}});
@@ -3857,7 +3881,8 @@ eb$cssDocLoad(w.document.eb$ctx, css_all, pageload);
 }
 
 // Apply rules to a given style object, which is this.
-Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssTextGet, set: eb$cssText });
+Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssTextGet,
+set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
 eb$qs$start = function() {
 // This is a stub for now.

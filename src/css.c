@@ -3019,48 +3019,47 @@ static char *attrify(jsobjtype obj, char *line)
 /*********************************************************************
 do_rules is called from 3 different places, under 3 very different contexts.
 1. getComputedStyle(node), creates a new style object s,
-loops through all the extant css descriptors, matches them against node,
+loops through all the css descriptors, matches them against node,
 and then applies the rules to s.
-s is accessible through window.soj$, the style object.
-The obj argument is the newly created style object s.
+s is accessed internally through window.soj$,
+and also passed in as the style parameter.
 Because matchtype is 0, the before and after selectors don't match,
 and they shouldn't, because before after attributes
 wouldn't apply to node.style but rather node.textnode.style.
 matchhover is false so hover selectors won't match either, nor should they.
 2. The cssText setter on a style object.
 There are no selectors here, just rules, as supplied by the calling function.
-This is the easy case.
 window.soj$ is the style object for internal use.
-obj is the style object, supplied by the calling function.
+style parameter is the style object, supplied by the calling function.
 3. Apply all css descriptors to all nodes at javascript startup.
 This is done by cssEverybody().
 It is indicated by bulkmatch = true.
-3a. matchtype is 0 for the plain selectors. obj = node.style.
-3b. matchtype is 1 for the before selectors. obj = node.
-3c. matchtype is 2 for the after selectors. obj = node.
+t indicates the node being examined.
+3a. matchtype is 0 for the plain selectors.
+style will be set to node.style.
+3b. matchtype is 1 for the before selectors.
+3c. matchtype is 2 for the after selectors.
 Then repeat 3a 3b 3c with matchhover = true.
 This is done only to see if the node becomes visible on hover.
 Only looking for display=something or visibility=visible.
 Set a flag if that is found.
-To reiterate, the rather confusing first argument obj is the style object
-if matchtype is 0, but is a node object if matchtype is nonzero,
-so we can manage before and after,
-and then we'll glom onto node.(before or after text).style to apply the rules.
+To reiterate, t is not null, indicating the node,
+from cssEverybody.
+We get the style object from the node.
+If matchtype is nonzero then we are looking at t.TextNode.style,
+for the before or after text.
+For matchtype == 0 we access t.style.
 *********************************************************************/
 
-static void do_rules(jsobjtype obj, struct rule *r0, int highspec)
+static void do_rules(const Tag *t, jsobjtype style, struct rule *r0, int highspec)
 {
 	jsobjtype cx = cf->cx;
 	struct rule *r, *r1;
 	char *s, *s_attr;
 	int sl;
-	jsobjtype textobj, original = obj;
-	static const char jl[] = "text 0x0, 0x0";
+	jsobjtype textobj;
 	char *a;
 	int spec;
-
-	if (!obj)
-		return;
 
 /*********************************************************************
 before and after can't act on a select node,as that is an array,
@@ -3086,7 +3085,7 @@ in fact it's easier to list the tags that allow it.
 			"LISTING", "STRONG", "EM", "S", "STRIKE", "I", "U", "B",
 			0
 		};
-		s = get_property_string_0(cx, obj, "nodeName");
+		s = get_property_string_t(t, "nodeName");
 		if (s && stringInList(ok2inject, s) >= 0)
 			forbidden = false;
 		nzFree(s);
@@ -3094,44 +3093,36 @@ in fact it's easier to list the tags that allow it.
 			return;
 	}
 
-	if (matchtype == 1) {	// before
-		if (get_property_bool_0(cx, obj, "inj$before")) {
-			textobj = get_property_object_0(cx, obj, "firstChild");
-		} else {
-			textobj =
-			    instantiate_0(cx, cf->winobj, "eb$inject",
-					    "TextNode");
-			if (!textobj)	// should never happen
-				return;
-			domSetsLinkage(false, 'c', textobj, jl);
-			run_function_onearg_0(cx, obj, "prependChild", textobj);
-// It is now linked in and safe from gc
-			delete_property_0(cx, cf->winobj, "eb$inject");
-			set_property_bool_0(cx, obj, "inj$before", true);
+	if(t) {
+		static const char commands[] = "-\0b\0a";
+		run_function_onestring_t(t, "injectSetup", commands + 2*matchtype);
+		if(matchtype && !t->firstchild)
+			return; // should never happen
+// this is temporary
+		if(matchtype == 1)
+			textobj = t->firstchild->jv;
+		if(matchtype == 2) {
+			const Tag *u = t->firstchild;
+			while(u->sibling) u = u->sibling;
+			textobj = u->jv;
 		}
-	}
-
-	if (matchtype == 2) {	// after
-		if (get_property_bool_0(cx, obj, "inj$after")) {
-			textobj = get_property_object_0(cx, obj, "lastChild");
-		} else {
-			textobj =
-			    instantiate_0(cx, cf->winobj, "eb$inject",
-					    "TextNode");
-			if (!textobj)	// should never happen
-				return;
-			domSetsLinkage(false, 'c', textobj, jl);
-			run_function_onearg_0(cx, obj, "appendChild", textobj);
-// It is now linked in and safe from gc
-			delete_property_0(cx, cf->winobj, "eb$inject");
-			set_property_bool_0(cx, obj, "inj$after", true);
-		}
-	}
-
-	if (matchtype)
-		obj = get_property_object_0(cx, textobj, "style");
-// obj is now the style object on the before or after text,
+		if (matchtype) {
+			if(textobj)
+				style = get_property_object_0(cx, textobj, "style");
+// style is now the style object on the before or after text,
 // ready for attributes
+		} else {
+			style = get_property_object_0(cx, t->jv, "style");
+		}
+	}
+
+	if(!style) {
+		debugPrint(3, "no style object in do_rules()");
+		if(t)
+			debugPrint(3, "t %d %s", t->seqno, t->info->name);
+		else
+			debugPrint(3, "t is nil");
+		}
 
 	s = initString(&sl);
 	for (r = r0; r; r = r->next) {
@@ -3146,12 +3137,12 @@ in fact it's easier to list the tags that allow it.
 			    (stringEqual(r->atname, "visibility") &&
 			     strlen(r->atval)
 			     && !stringEqual(r->atval, "hidden")))
-				set_property_bool_0(cx, obj, "hov$vis", true);
+				set_property_bool_0(cx, style, "hov$vis", true);
 // what about color anything other than transparent?
 // If invisible because color = transparent, then color = red unhides it.
 			if (stringEqual(r->atname, "color") && strlen(r->atval)
 			    && !stringEqual(r->atval, "transparent"))
-				set_property_bool_0(cx, obj, "hov$col", true);
+				set_property_bool_0(cx, style, "hov$col", true);
 			continue;
 		}
 // special code for before after content
@@ -3165,8 +3156,8 @@ in fact it's easier to list the tags that allow it.
 		}
 // if it appears to be part of the prototype, and not the object,
 // I won't write it.
-		has = has_property_0(cx, obj, r->atname);
-		what = typeof_property_0(cx, obj, r->atname);
+		has = has_property_0(cx, style, r->atname);
+		what = typeof_property_0(cx, style, r->atname);
 		if (has && !what)
 			continue;
 
@@ -3180,7 +3171,7 @@ in fact it's easier to list the tags that allow it.
 // Don't write if the specificity is less
 		a = allocMem(strlen(r->atname) + 6);
 		sprintf(a, "%s$$scy", r->atname);
-		spec = get_property_number_0(cx, obj, a);
+		spec = get_property_number_0(cx, style, a);
 		if (spec > highspec) {
 			free(a);
 			continue;
@@ -3188,14 +3179,17 @@ in fact it's easier to list the tags that allow it.
 
 		if (bulkmatch)
 			++bulktotal;
-		set_property_string_0(cx, obj, r->atname, r->atval);
-		set_property_number_0(cx, obj, a, highspec);
+		set_property_string_0(cx, style, r->atname, r->atval);
+		set_property_number_0(cx, style, a, highspec);
 		free(a);
 	}
 
+	if(t)
+		delete_property_win(cf, "soj$");
 	if (!sl)
 		return;
 
+// At this point matchtype is nonzero.
 // put a space between the injected text and the original text
 	stringAndChar(&s, &sl, ' ');
 	if (matchtype == 2) {
@@ -3203,8 +3197,8 @@ in fact it's easier to list the tags that allow it.
 		memmove(s + 1, s, sl - 1);
 		s[0] = ' ';
 	}
-// turn attr(foo) into obj[foo]
-	s_attr = attrify(original, s);
+// turn attr(foo) into node[foo]
+	s_attr = attrify(t->jv, s);
 	nzFree(s);
 	s = s_attr;
 	set_property_string_0(cx, textobj, "data", s);
@@ -3251,7 +3245,7 @@ void cssApply(int frameNumber, jsobjtype node, jsobjtype destination)
 
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
-			do_rules(destination, d->rules, d->highspec);
+			do_rules(0, destination, d->rules, d->highspec);
 	}
 
 done:
@@ -3291,7 +3285,7 @@ void cssText(jsobjtype node, const char *rulestring)
 		cssPiecesFree(d0);
 		return;
 	}
-	do_rules(node, d0->rules, 100000);
+	do_rules(0, node, d0->rules, 100000);
 	cssPiecesFree(d0);
 }
 
@@ -3582,8 +3576,6 @@ static void cssEverybody(void)
 	struct cssmaster *cm = cf->cssmaster;
 	struct desc *d0 = cm->descriptors, *d;
 	Tag **a, **u;
-	jsobjtype z;
-	jsobjtype cx;
 	Tag *t;
 	int l;
 
@@ -3604,19 +3596,7 @@ static void cssEverybody(void)
 			for (u = a; (t = *u); ++u) {
 				if (!t->jv)
 					continue;
-		cx = t->f0->cx;
-// matchtype nonzero means we pass the node to do_rules
-				if (matchtype)
-					z = t->jv;
-				else {
-// pass the style object for this node
-					z =
-					    get_property_object_0(cx, t->jv,
-								    "style");
-					if (!z)
-						continue;
-				}
-				do_rules(z, d->rules, t->highspec);
+				do_rules(t, 0, d->rules, t->highspec);
 			}
 			nzFree(a);
 		}
