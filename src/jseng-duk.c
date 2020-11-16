@@ -1044,6 +1044,8 @@ Tag *tagFromJavaVar(jsobjtype v)
 	int i;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
+	if(!v)
+		return 0;
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->jv == v && !t->dead)
@@ -2030,7 +2032,7 @@ static bool rootTag(jsobjtype start, Tag **tp)
 {
 	Tag *t;
 	*tp = 0;
-	if(start == cf->winobj || start == cf->docobj)
+	if(!start || start == cf->winobj || start == cf->docobj)
 		return true;
 	t = tagFromJavaVar(start);
 	if(!t)
@@ -2043,7 +2045,7 @@ static bool rootTag(jsobjtype start, Tag **tp)
 static duk_ret_t native_qsa(duk_context * cx)
 {
 	jsobjtype start = 0;
-	Tag **tlist;
+	Tag **tlist, *t;
 	const char *selstring = duk_get_string(cx, 0);
 	int top = duk_get_top(cx);
 	if (top > 2) {
@@ -2060,7 +2062,12 @@ static duk_ret_t native_qsa(duk_context * cx)
 		duk_pop(cx);
 	}
 	jsInterruptCheck(cx);
-	tlist = querySelectorAll(selstring, start);
+	if(!rootTag(start, &t)) {
+		duk_pop_n(cx, top);
+		objectize(cx, 0);
+		return 1;
+	}
+	tlist = querySelectorAll(selstring, t);
 	duk_pop_n(cx, top);
 	objectize(cx, tlist);
 	nzFree(tlist);
@@ -2088,7 +2095,12 @@ static duk_ret_t native_qs(duk_context * cx)
 		duk_pop(cx);
 	}
 	jsInterruptCheck(cx);
-	t = querySelector(selstring, start);
+	if(!rootTag(start, &t)) {
+		duk_pop_n(cx, top);
+		duk_push_undefined(cx);
+		return 1;
+	}
+	t = querySelector(selstring, t);
 	duk_pop_n(cx, top);
 	if(t && t->jslink)
 		duk_push_heapptr(cx, t->jv);
@@ -2100,14 +2112,20 @@ static duk_ret_t native_qs(duk_context * cx)
 // querySelector0
 static duk_ret_t native_qs0(duk_context * cx)
 {
-	jsobjtype root;
+	jsobjtype start;
+	Tag *t;
 	bool rc;
 	const char *selstring = duk_get_string(cx, 0);
 	duk_push_this(cx);
-	root = duk_get_heapptr(cx, -1);
+	start = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	jsInterruptCheck(cx);
-	rc = querySelector0(selstring, root);
+	if(!rootTag(start, &t)) {
+		duk_pop(cx);
+		duk_push_false(cx);
+		return 1;
+	}
+	rc = querySelector0(selstring, t);
 	duk_pop(cx);
 	duk_push_boolean(cx, rc);
 	return 1;

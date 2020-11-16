@@ -321,7 +321,7 @@ static void chainFree(struct asel *asel);
 static bool onematch, topmatch, skiproot, gcsmatch, bulkmatch, bulktotal;
 static char matchtype;		// 0 plain 1 before 2 after
 static bool matchhover;		// match on :hover selectors.
-static jsobjtype rootobj;
+static Tag *rootnode;
 static Tag **doclist;
 static int doclist_a, doclist_n;
 static void build_doclist(Tag *top);
@@ -2439,16 +2439,16 @@ Meantime, this code manages :root up the chain, as in :root>div,
 all the div sections just below the current node.
 *********************************************************************/
 			if (t) {
-				if (!rootobj) {
+				if (!rootnode) {
 					if ((t->action == TAGACT_HTML))
 						goto next_mod;
 					return false;
 				}
-				if ((t->jv == rootobj))
+				if (t == rootnode)
 					goto next_mod;
 				return false;
 			}
-			if (!rootobj) {
+			if (!rootnode) {
 				const char *a =
 				    get_property_string_0(cx, obj, "nodeName");
 				rc = (a && stringEqualCI(a, "document"));
@@ -2457,7 +2457,7 @@ all the div sections just below the current node.
 					goto next_mod;
 				return false;
 			}
-			if ((obj == rootobj))
+			if (obj == rootnode->jv)
 				goto next_mod;
 			return false;
 		}
@@ -2950,24 +2950,20 @@ static Tag **qsaInternal(const char *selstring, Tag *top)
 
 // This is only called from the native method, and the native method
 // will free the list of tags.
-Tag **querySelectorAll(const char *selstring, jsobjtype topobj)
+Tag **querySelectorAll(const char *selstring, Tag *top)
 {
-	Tag *top = 0, **a;
-	rootobj = topobj;
-	if (topobj)
-		top = tagFromJavaVar(topobj);
+	Tag **a;
+	rootnode = top;
 	a = qsaInternal(selstring, top);
 	return a;
 }
 
 // this one just returns the first node.
 // This is only called from the native method.
-Tag *querySelector(const char *selstring, jsobjtype topobj)
+Tag *querySelector(const char *selstring, Tag *top)
 {
-	Tag *top = 0, **a, *t;
-	rootobj = topobj;
-	if (topobj)
-		top = tagFromJavaVar(topobj);
+	Tag **a, *t;
+	rootnode = top;
 	onematch = true;
 	a = qsaInternal(selstring, top);
 	onematch = false;
@@ -2978,22 +2974,18 @@ Tag *querySelector(const char *selstring, jsobjtype topobj)
 	return t;
 }
 
-bool querySelector0(const char *selstring, jsobjtype topobj)
+bool querySelector0(const char *selstring, Tag *top)
 {
-	Tag *top = 0, **a;
-	jsobjtype node = 0;
-	rootobj = topobj;
-	if (topobj)
-		top = tagFromJavaVar(topobj);
+	Tag **a, *t;
+	rootnode = top;
 	onematch = topmatch = true;
 	a = qsaInternal(selstring, top);
 	onematch = topmatch = false;
 	if (!a)
 		return false;
-	if (a[0])
-		node = a[0]->jv;
+	t = a[0];
 	nzFree(a);
-	return (node ? true : false);
+	return (t && t->jslink);
 }
 
 // replace each attr(foo) with the value of attribute foo
@@ -3237,7 +3229,7 @@ void cssApply(jsobjtype thisobj, jsobjtype node, jsobjtype destination)
 	cx = cf->cx;
 
 // I think the root is document, not the current node, but that is not clear.
-	rootobj = 0;
+	rootnode = 0;
 	cm = cf->cssmaster;
 	if (!cm)
 		goto done;
@@ -3590,7 +3582,7 @@ static void cssEverybody(void)
 	bulkmatch = true;
 	bulktotal = 0;
 	skiproot = false;
-	rootobj = NULL;
+	rootnode = 0;
 
 	for (l = 0; l < 6; ++l) {
 		matchhover = (l >= 3);

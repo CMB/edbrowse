@@ -90,8 +90,9 @@ const char *findProxyForURL(const char *url) { return 0; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
 void readConfigFile(void) { }
 const char *fetchReplace(const char *u){return 0;}
-Tag **querySelectorAll(const char *selstring, jsobjtype topobj){return 0;}
-Tag *querySelector(const char *selstring, jsobjtype topobj){return 0;}
+Tag **querySelectorAll(const char *selstring, Tag *top){return 0;}
+Tag *querySelector(const char *selstring, Tag *top){return 0;}
+bool querySelector0(const char *selstring, Tag *top){return false;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
@@ -1536,6 +1537,8 @@ static Tag *tagFromObject(JS::HandleObject o)
 	int gsn, seqno;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
+if(!o)
+return 0;
 	JS::RootedValue v(cxa);
 	if(!JS_GetProperty(cxa, o, "eb$gsn", &v) ||
 	!v.isInt32())
@@ -2269,7 +2272,8 @@ static bool rootTag(JS::HandleObject start, Tag **tp)
 	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	JS::RootedObject doc(cxa, get_property_object_o(g, "document"));
 	*tp = 0;
-	if(start == g || start == doc)
+// assume this is 0 when querySelectorAll is called from the window
+	if(!start || start == g || start == doc)
 		return true;
 	t = tagFromObject(start);
 	if(!t)
@@ -2283,6 +2287,7 @@ static bool nat_qsa(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 char *selstring = NULL;
+	Tag *t;
 JS::RootedObject start(cx);
 if(argc >= 1 && args[0].isString()) {
 JSString *s = args[0].toString();
@@ -2293,9 +2298,16 @@ JS_ValueToObject(cx, args[1], &start);
 if(!start)
 start = JS_THIS_OBJECT(cx, vp);
 jsInterruptCheck();
-	Tag **tlist = querySelectorAll(selstring, start);
-free(selstring);
-JS::RootedObject ao(cx, objectize(cx, tlist));
+JS::RootedObject ao(cx);
+	if(!rootTag(start, &t)) {
+nzFree(selstring);
+ao = objectize(cx, 0);
+args.rval().setObject(*ao);
+return true;
+}
+	Tag **tlist = querySelectorAll(selstring, t);
+nzFree(selstring);
+ao = objectize(cx, tlist);
 args.rval().setObject(*ao);
 	nzFree(tlist);
 	  return true;
@@ -2316,8 +2328,13 @@ JS_ValueToObject(cx, args[1], &start);
 if(!start)
 start = JS_THIS_OBJECT(cx, vp);
 jsInterruptCheck();
-	t = querySelector(selstring, start);
-free(selstring);
+	if(!rootTag(start, &t)) {
+nzFree(selstring);
+		args.rval().setUndefined();
+return true;
+}
+t = querySelector(selstring, t);
+nzFree(selstring);
 	if(t && t->jslink) {
 JS::RootedObject tobj(cx, tagToObject(t));
 args.rval().setObject(*tobj);
@@ -2331,17 +2348,20 @@ static bool nat_qs0(JSContext *cx, unsigned argc, JS::Value *vp)
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 char *selstring = NULL;
 bool rc = false;
+	Tag *t;
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 if(argc >= 1 && args[0].isString()) {
 JSString *s = args[0].toString();
 selstring = JS_EncodeString(cx, s);
 }
 jsInterruptCheck();
-/*
-if(selstring && *selstring)
-	rc = querySelector0(selstring, root);
-*/
-free(selstring);
+	if(!rootTag(thisobj, &t)) {
+nzFree(selstring);
+args.rval().setBoolean(rc);
+return true;
+}
+	rc = querySelector0(selstring, t);
+nzFree(selstring);
 args.rval().setBoolean(rc);
 return true;
 }
