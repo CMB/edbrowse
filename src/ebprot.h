@@ -425,6 +425,7 @@ enum ej_proptype typeof_property_t(const Tag *t, const char *name);
 #define handlerPresent(t, name) (typeof_property_t(t, name) == EJ_PROP_FUNCTION)
 int get_property_number_t(const Tag *t, const char *name);
 char * get_property_string_t(const Tag *t, const char *name);
+char *get_dataset_string_t(const Tag *t, const char *name);
 void set_property_bool_t(const Tag *t, const char *name, bool v);
 void set_property_number_t(const Tag *t, const char *name, int v);
 void set_property_string_t(const Tag *t, const char *name, const char * v);

@@ -1037,6 +1037,28 @@ return 0;
 return get_property_string_o(obj, name);
 }
 
+char *get_dataset_string_t(const Tag *t, const char *p)
+{
+	char *r;
+if(!t->jslink || !allowJS)
+return 0;
+JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JS::RootedObject obj(cxa, tagToObject(t));
+if(!obj)
+return 0;
+	if (!strncmp(p, "data-", 5)) {
+		char *k = cloneString(p + 5);
+JS::RootedObject ds(cxa, get_property_object_o(obj, "dataset"));
+		if(!ds)
+			return 0;
+		camelCase(k);
+		r = get_property_string_o(ds, k);
+		nzFree(k);
+	} else
+		r = get_property_string_o(obj, p);
+	return r;
+}
+
 bool get_property_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)

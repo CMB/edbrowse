@@ -1794,22 +1794,19 @@ You could almost replace it with :[lang=|foo], except, that same selector
 is compared against all the ancestors. Ugh.
 *********************************************************************/
 
-static bool languageSpecial(Tag *t, jsobjtype obj, const char *lang)
+static bool languageSpecial(Tag *t, const char *lang)
 {
 	char *v;
 	bool valloc;
 	int rc, l = strlen(lang);
-	jsobjtype cx = cf->cx;
 
 top:
 	v = 0;
 	valloc = false;
-	if (t)
-		obj = t->jv, cx = t->f0->cx;
-	if (bulkmatch && t)
+	if (bulkmatch)
 		v = (char *)attribVal(t, "lang");
-	else if (obj) {
-		v = get_property_string_0(cx, obj, "lang");
+	else {
+		v = get_property_string_t(t, "lang");
 		valloc = true;
 	}
 	if (!v)
@@ -1821,13 +1818,7 @@ top:
 	return !rc;
 
 up:
-	if (t) {
-		if ((t = t->parent) && t->action != TAGACT_DOC)
-			goto top;
-		return false;
-	}
-	if ((obj = get_property_object_0(cx, obj, "parentNode")) &&
-	    get_property_number_0(cx, obj, "nodeType") != 9)
+	if ((t = t->parent) && t->action != TAGACT_DOC)
 		goto top;
 	return false;
 }
@@ -1836,7 +1827,7 @@ up:
 A helpful spread routine to find the siblings of where you are.
 Returns 0 if you are at the top and siblings are not meaningful.
 Otherwise allocate an array, which you must free.
-Return is the length of the aray.
+Return is the length of the array.
 *********************************************************************/
 
 struct sibnode {
@@ -1850,81 +1841,37 @@ struct sibnode {
 };
 static struct sibnode *sibs;
 
-static int spread(Tag *t, jsobjtype obj)
+static int spread(Tag *t)
 {
 	int ns = 0;		// number of siblings
 	int i, ntype, me_index = -1;
-	jsobjtype pobj, children, w;
-	jsobjtype cx;
+			Tag *tp, *u;
 
 	sibs = NULL;
 
-	if (t) {
-		Tag *tp, *u;
-		if (!(tp = t->parent) || tp->action == TAGACT_DOC)
-			return 0;
-		for ((u = tp->firstchild); u; u = u->sibling) {
-			if (u == t)
-				me_index = ns;
-			++ns;
-		}
-		if (me_index < 0)	// should never happen
-			return 0;
-		sibs = allocMem(sizeof(struct sibnode) * ns);
-		for (i = 0, (u = tp->firstchild); i < ns; ++i, u = u->sibling) {
-			strcpy(sibs[i].tag, u->info->name);
-			ntype = 1;
-			if (u->action == TAGACT_TEXT)
-				ntype = 3;
-			if (u->action == TAGACT_DOC)
-				ntype = 9;
-			if (u->action == TAGACT_COMMENT)
-				ntype = 8;
-			sibs[i].nodeType = ntype;
-			sibs[i].myself = (i == me_index);
-		}
-		return ns;
-	}
-// bummer, have to go by objects
-	cx = cf->cx;
-	pobj = get_property_object_0(cx, obj, "parentNode");
-	if (!pobj || get_property_number_0(cx, pobj, "nodeType") == 9)
-		return 0;
-	children = get_property_object_0(cx, pobj, "childNodes");
-	if (!children)
-		return 0;
-	ns = get_arraylength_0(cx, children);
-	if (!ns)
-		return 0;
-	sibs = allocMem(sizeof(struct sibnode) * ns);
-	for (i = 0; i < ns; ++i) {
-		char *v;
-		int l;
-		w = get_array_element_object_0(cx, children, i);
-		if (!w) {	// should never happen
-			free(sibs);
-			return 0;
-		}
-		sibs[i].nodeType = get_property_number_0(cx, w, "nodeType");
-		v = get_property_string_0(cx, w, "nodeName");
-		if (!v) {
-			strcpy(sibs[i].tag, "@x");
-		} else {
-			l = strlen(v);
-			if (l >= MAXTAGNAME)
-				l = MAXTAGNAME - 1;
-			strncpy(sibs[i].tag, v, l);
-			sibs[i].tag[l] = 0;
-			nzFree(v);
-		}
-		sibs[i].myself = 0;
-		if (w == obj)
-			sibs[i].myself = 1, me_index = i;
-	}
-	if (me_index >= 0)
-		return ns;
-	free(sibs);
-	return 0;
+			if (!(tp = t->parent) || tp->action == TAGACT_DOC)
+				return 0;
+			for ((u = tp->firstchild); u; u = u->sibling) {
+				if (u == t)
+					me_index = ns;
+				++ns;
+			}
+			if (me_index < 0)	// should never happen
+				return 0;
+			sibs = allocMem(sizeof(struct sibnode) * ns);
+			for (i = 0, (u = tp->firstchild); i < ns; ++i, u = u->sibling) {
+				strcpy(sibs[i].tag, u->info->name);
+				ntype = 1;
+				if (u->action == TAGACT_TEXT)
+					ntype = 3;
+				if (u->action == TAGACT_DOC)
+					ntype = 9;
+				if (u->action == TAGACT_COMMENT)
+					ntype = 8;
+				sibs[i].nodeType = ntype;
+				sibs[i].myself = (i == me_index);
+			}
+			return ns;
 }
 
 // when we only need elements, do nothing if ns == 0
@@ -1974,122 +1921,64 @@ static int spreadType(int ns)
 }
 
 // Like spread but for children, not siblings. Still I use the sibs array.
-static int spreadKids(Tag *t, jsobjtype obj)
+static int spreadKids(Tag *t)
 {
 	int ns = 0;		// number of children
+	Tag *u;
 	int i, ntype;
-	jsobjtype children, w;
-	jsobjtype cx = cf->cx;
 
 	sibs = NULL;
 
-	if (t) {
-		Tag *u;
-		for ((u = t->firstchild); u; u = u->sibling)
-			++ns;
-		if (!ns)
-			return 0;
-		sibs = allocMem(sizeof(struct sibnode) * ns);
-		for (i = 0, (u = t->firstchild); i < ns; ++i, u = u->sibling) {
-			strcpy(sibs[i].tag, u->info->name);
-			ntype = 1;
-			if (u->action == TAGACT_TEXT)
-				ntype = 3;
-			if (u->action == TAGACT_DOC)
-				ntype = 9;
-			if (u->action == TAGACT_COMMENT)
-				ntype = 8;
-			sibs[i].nodeType = ntype;
-			sibs[i].myself = 0;
-			sibs[i].u.t = u;
-		}
-		return ns;
-	}
-
-	children = get_property_object_0(cx, obj, "childNodes");
-	if (!children)
-		return 0;
-	ns = get_arraylength_0(cx, children);
+	for ((u = t->firstchild); u; u = u->sibling)
+		++ns;
 	if (!ns)
 		return 0;
 	sibs = allocMem(sizeof(struct sibnode) * ns);
-	for (i = 0; i < ns; ++i) {
-		char *v;
-		int l;
-		w = get_array_element_object_0(cx, children, i);
-		if (!w) {	// should never happen
-			free(sibs);
-			return 0;
-		}
-		sibs[i].nodeType = get_property_number_0(cx, w, "nodeType");
-		v = get_property_string_0(cx, w, "nodeName");
-		if (!v) {
-			strcpy(sibs[i].tag, "@x");
-		} else {
-			l = strlen(v);
-			if (l >= MAXTAGNAME)
-				l = MAXTAGNAME - 1;
-			strncpy(sibs[i].tag, v, l);
-			sibs[i].tag[l] = 0;
-			nzFree(v);
-		}
+	for (i = 0, (u = t->firstchild); i < ns; ++i, u = u->sibling) {
+		strcpy(sibs[i].tag, u->info->name);
+		ntype = 1;
+		if (u->action == TAGACT_TEXT)
+			ntype = 3;
+		if (u->action == TAGACT_DOC)
+			ntype = 9;
+		if (u->action == TAGACT_COMMENT)
+			ntype = 8;
+		sibs[i].nodeType = ntype;
 		sibs[i].myself = 0;
-		sibs[i].u.j = w;
+		sibs[i].u.t = u;
 	}
 	return ns;
 }
 
 // Things like enabled, clik, read-only, only make sense for input fields;
 // they are false for other tags.
-static bool inputLike(Tag *t, jsobjtype obj, int flavor)
+static bool inputLike(Tag *t, int flavor)
 {
-	jsobjtype cx = cf->cx;
 	char *v;
 	bool rc;
-	int j, action;
-	static const char *const inputtags[] = {
-		"INPUT", "SELECT", "BUTTON", 0
-	};
+	int action;
 	static const char *const clicktypes[] = {
 		"button", "submit", "reset", "checkbox", "radio", 0
 	};
 	static const char *const nwtypes[] = {
 		"button", "submit", "reset", "hidden", 0
 	};
-	if (t) {
-		action = t->action;
-		rc = (action == TAGACT_INPUT || action == TAGACT_BUTTON ||
-		      action == TAGACT_SELECT);
-		if (!rc)
-			return false;
-	} else {
-		v = get_property_string_0(cx, obj, "nodeName");
-		if (!v || !*v)
-			return false;
-		j = stringInList(inputtags, v);
-		nzFree(v);
-		if (j < 0)
-			return false;
-		if (j == 0)
-			action = TAGACT_INPUT;
-		if (j == 1)
-			action = TAGACT_SELECT;
-		if (j == 2)
-			action = TAGACT_BUTTON;
-	}
+	action = t->action;
+	rc = (action == TAGACT_INPUT || action == TAGACT_BUTTON ||
+	      action == TAGACT_SELECT);
+	if (!rc)
+		return false;
 	if (flavor == 1) {	// clickable
-		v = get_property_string_0(cx, obj, "type");
-		rc = (action == TAGACT_BUTTON || (action == TAGACT_INPUT &&
-						  v
+		v = get_property_string_t(t, "type");
+		rc = (action == TAGACT_BUTTON || (action == TAGACT_INPUT && v
 						  && stringInList(clicktypes,
 								  v) >= 0));
 		nzFree(v);
 		return rc;
 	}
 	if (flavor == 2) {	// writable
-		v = get_property_string_0(cx, obj, "type");
-		rc = (action == TAGACT_SELECT || (action == TAGACT_INPUT &&
-						  v
+		v = get_property_string_t(t, "type");
+		rc = (action == TAGACT_SELECT || (action == TAGACT_INPUT && v
 						  && stringInList(nwtypes,
 								  v) < 0));
 		nzFree(v);
@@ -2109,29 +1998,27 @@ That chain is considered, or not considered, based on before after hover
 criteria in qsa2() and qsaMatchGroup(), so we need not test for those here.
 *********************************************************************/
 
-static bool qsaMatchChain(Tag *t, jsobjtype obj,
-			  const struct asel *a);
+static bool qsaMatchChain(Tag *t, const struct asel *a);
 
-static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
+static bool qsaMatch(Tag *t, const struct asel *a)
 {
 	bool rc;
 	struct mod *mod;
-	jsobjtype cx = cf->cx;
+
+if(!t) {
+		debugPrint(3, "t is null in qsaMatch()");
+		return false;
+	}
 
 	if (a->tag) {
-		const char *nn;
-		if (t)
-			nn = t->nodeName;
-		else
-			nn = get_property_string_0(cx, obj, "nodeName");
+		const char *nn = t->nodeName;
 		if (!nn)	// should never happen
 			return false;
 		rc = stringEqualCI(nn, a->tag);
-		if (!t)
-			cnzFree(nn);
 		if (!rc)
 			return false;
 	}
+
 // now step through the modifyers
 	for (mod = a->modifiers; mod; mod = mod->next) {
 		char *p = mod->part;
@@ -2144,7 +2031,7 @@ static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 
 		if (negate) {
 			if (mod->notchain) {
-				if (qsaMatchChain(t, obj, mod->notchain))
+				if (qsaMatchChain(t, mod->notchain))
 					return false;
 // the notchain fails, which is what we want, so on we go.
 				continue;
@@ -2153,7 +2040,7 @@ static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 			continue;
 		}
 
-		if (mod->isclass && t
+		if (mod->isclass
 		    && (bulkmatch || (gcsmatch && a->combin == ','))) {
 			char *v = t->jclass;
 			char *u = p + 8;
@@ -2172,7 +2059,7 @@ static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 			return false;
 		}
 
-		if (mod->isid && t
+		if (mod->isid
 		    && (bulkmatch || (gcsmatch && a->combin == ','))) {
 			char *v = t->id;
 			if (!v)
@@ -2181,9 +2068,6 @@ static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 				goto next_mod;
 			return false;
 		}
-
-		if (t)
-			obj = t->jv, cx = t->f0->cx;
 
 // for bulkmatch we use the attributes on t,
 // not js, t is faster.
@@ -2204,22 +2088,10 @@ static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 				*cut = 0;	// I'll put it back
 			}
 			v = 0;
-			if (bulkmatch && t)
+			if (bulkmatch)
 				v = (char *)attribVal(t, p + 1);
-			else if (obj) {
-				if (!strncmp(p + 1, "data-", 5)) {
-					jsobjtype ds =
-					    get_property_object_0(cx, obj,
-								    "dataset");
-					if (ds) {
-						char *k = cloneString(p + 6);
-						camelCase(k);
-						v = get_property_string_0(cx, ds,
-									    k);
-						nzFree(k);
-					}
-				} else
-					v = get_property_string_0(cx, obj, p + 1);
+			else {
+					v = get_dataset_string_t(t, p + 1);
 				valloc = true;
 			}
 			if (cut)
@@ -2301,7 +2173,7 @@ static bool qsaMatch(Tag *t, jsobjtype obj, const struct asel *a)
 			continue;
 
 		if (!strncmp(p, ":lang(", 6)) {
-			if (languageSpecial(t, obj, p + 6))
+			if (languageSpecial(t, p + 6))
 				goto next_mod;
 			return false;
 		}
@@ -2367,7 +2239,7 @@ nth_good:
 			if (n_present && coef == 0)
 				n_present = false;
 
-			ns = spread(t, obj);
+			ns = spread(t);
 			ns = spreadElem(ns);
 			if (oftype)
 				ns = spreadType(ns);
@@ -2408,7 +2280,7 @@ nth_bad:
 		    stringEqual(p, ":first-of-type") ||
 		    stringEqual(p, ":last-of-type") ||
 		    stringEqual(p, ":only-of-type")) {
-			ns = spread(t, obj);
+			ns = spread(t);
 			ns = spreadElem(ns);
 			if (strstr(p, "of-type"))
 				ns = spreadType(ns);
@@ -2438,32 +2310,18 @@ Should I make an exception for :root? If so, how best to implement it?
 Meantime, this code manages :root up the chain, as in :root>div,
 all the div sections just below the current node.
 *********************************************************************/
-			if (t) {
-				if (!rootnode) {
-					if ((t->action == TAGACT_HTML))
-						goto next_mod;
-					return false;
-				}
-				if (t == rootnode)
-					goto next_mod;
-				return false;
-			}
 			if (!rootnode) {
-				const char *a =
-				    get_property_string_0(cx, obj, "nodeName");
-				rc = (a && stringEqualCI(a, "document"));
-				cnzFree(a);
-				if (rc)
+				if ((t->action == TAGACT_HTML))
 					goto next_mod;
 				return false;
 			}
-			if (obj == rootnode->jv)
+			if (t == rootnode)
 				goto next_mod;
 			return false;
 		}
 
 		if (stringEqual(p, ":empty")) {
-			ns = spreadKids(t, obj);
+			ns = spreadKids(t);
 			rc = true;	// empty
 			for (i = 0; i < ns; ++i) {
 				jsobjtype w;
@@ -2493,6 +2351,7 @@ all the div sections just below the current node.
 					rc = false;
 					break;
 				}
+jsobjtype cx = t->f0->cx;
 				v = get_property_string_0(cx, w, "data");
 				rc = (!v || !*v);
 				nzFree(v);
@@ -2507,12 +2366,11 @@ all the div sections just below the current node.
 
 		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
 			rc = false;
-			if (inputLike(t, obj, 0)) {
-				if (t && bulkmatch)
+			if (inputLike(t, 0)) {
+				if (bulkmatch)
 					rc = t->disabled;
 				else
-					rc = get_property_bool_0(cx, obj,
-								   "disabled");
+					rc = get_property_bool_t(t, "disabled");
 				if (p[1] == 'e')
 					rc ^= 1;
 			}
@@ -2524,12 +2382,11 @@ all the div sections just below the current node.
 		if (stringEqual(p, ":read-only")
 		    || stringEqual(p, ":read-write")) {
 			rc = false;
-			if (inputLike(t, obj, 2)) {
-				if (t && bulkmatch)
+			if (inputLike(t, 2)) {
+				if (bulkmatch)
 					rc = t->rdonly;
 				else
-					rc = get_property_bool_0(cx, obj,
-								   "readonly");
+					rc = get_property_bool_t(t, "readonly");
 				if (p[6] == 'w')
 					rc ^= 1;
 			}
@@ -2540,12 +2397,11 @@ all the div sections just below the current node.
 
 		if (stringEqual(p, ":checked")) {
 			rc = false;
-			if (inputLike(t, obj, 1)) {
-				if (t && bulkmatch)
+			if (inputLike(t, 1)) {
+				if (bulkmatch)
 					rc = t->checked;
 				else
-					rc = get_property_bool_0(cx, obj,
-								   "checked");
+					rc = get_property_bool_t(t, "checked");
 			}
 			if (rc)
 				goto next_mod;
@@ -2578,118 +2434,71 @@ Called from qsaMatchGroup and from qsa1.
 This is recursive, since we must explore every path.
 *********************************************************************/
 
-static bool qsaMatchChain(Tag *t, jsobjtype obj,
-			  const struct asel *a)
+static bool qsaMatchChain(Tag *t, const struct asel *a)
 {
 	Tag *u;
-	jsobjtype cx = cf->cx;
 
 	if (!a)			// should never happen
 		return false;
 
-	if(t)
-		cx = t->f0->cx;
-
 	switch (a->combin) {
 	case ',':
 // this is the base node; it has to match.
-		if (!qsaMatch(t, obj, a))
+		if (!qsaMatch(t, a))
 			break;
 // now look down the rest of the chain
 onetime:
 		if (!a->next)
 			return true;
-		return qsaMatchChain(t, obj, a->next);
+		return qsaMatchChain(t, a->next);
 
 	case '+':
-		if (t) {
-			if (!t->parent)
-				break;
-			u = t->parent->firstchild;
-			if (!u || u == t)
-				break;
-			for (; u; u = u->sibling)
-				if (u->sibling == t)
-					break;
-			if (!u)
-				break;
-			if (!qsaMatch(u, obj, a))
-				break;
-			t = u;
-			goto onetime;
-		}
-// now by objects
-		obj = get_property_object_0(cx, obj, "previousSibling");
-		if (!obj)
+		if (!t->parent)
 			break;
-		if (!qsaMatch(t, obj, a))
+		u = t->parent->firstchild;
+		if (!u || u == t)
 			break;
+		for (; u; u = u->sibling)
+			if (u->sibling == t)
+				break;
+		if (!u)
+			break;
+		if (!qsaMatch(u, a))
+			break;
+		t = u;
 		goto onetime;
 
 	case '~':
-		if (t) {
-			if (!t->parent)
-				break;
-			u = t->parent->firstchild;
-			for (; u; u = u->sibling) {
-				if (u == t)
-					return false;
-				if (!qsaMatch(u, obj, a))
-					continue;
-				if (!a->next)
-					return true;
-				if (qsaMatchChain(u, obj, a->next))
-					return true;
-			}
+		if (!t->parent)
 			break;
-		}
-		while ((obj = get_property_object_0(cx, obj, "previousSibling"))) {
-			if (!qsaMatch(t, obj, a))
+		u = t->parent->firstchild;
+		for (; u; u = u->sibling) {
+			if (u == t)
+				return false;
+			if (!qsaMatch(u, a))
 				continue;
 			if (!a->next)
 				return true;
-			if (qsaMatchChain(t, obj, a->next))
+			if (qsaMatchChain(u, a->next))
 				return true;
 		}
 		break;
 
 	case '>':
-		if (t) {
-			t = t->parent;
-			if (!t || t->action == TAGACT_DOC)
-				break;
-			if (!qsaMatch(t, obj, a))
-				break;
-			goto onetime;
-		}
-		obj = get_property_object_0(cx, obj, "parentNode");
-		if (!obj)
+		t = t->parent;
+		if (!t || t->action == TAGACT_DOC)
 			break;
-		if (get_property_number_0(cx, obj, "numType") == 9)
-			break;
-		if (!qsaMatch(t, obj, a))
+		if (!qsaMatch(t, a))
 			break;
 		goto onetime;
 
 	case ' ':
-		if (t) {
-			while ((t = t->parent) && t->action != TAGACT_DOC) {
-				if (!qsaMatch(t, obj, a))
-					continue;
-				if (!a->next)
-					return true;
-				if (qsaMatchChain(t, obj, a->next))
-					return true;
-			}
-			break;
-		}
-		while ((obj = get_property_object_0(cx, obj, "parentNode")) &&
-		       get_property_number_0(cx, obj, "nodeType") != 9) {
-			if (!qsaMatch(t, obj, a))
+		while ((t = t->parent) && t->action != TAGACT_DOC) {
+			if (!qsaMatch(t, a))
 				continue;
 			if (!a->next)
 				return true;
-			if (qsaMatchChain(t, obj, a->next))
+			if (qsaMatchChain(t, a->next))
 				return true;
 		}
 		break;
@@ -2700,7 +2509,7 @@ onetime:
 }
 
 // Only called from cssApply, as part of getComputedStyle.
-static bool qsaMatchGroup(Tag *t, jsobjtype obj, struct desc *d)
+static bool qsaMatchGroup(Tag *t, struct desc *d)
 {
 	struct sel *sel;
 	FILE *f = 0;
@@ -2715,7 +2524,7 @@ static bool qsaMatchGroup(Tag *t, jsobjtype obj, struct desc *d)
 // Only the plain descriptors for getComputedStyle().
 		if (sel->before | sel->after | sel->hover)
 			continue;
-		if (qsaMatchChain(t, obj, sel->chain)) {
+		if (qsaMatchChain(t, sel->chain)) {
 // debug getComputedStyle, which can also be a directed debug
 // of the whole css system, focusing on a particular node.
 			if (f)
@@ -2759,7 +2568,7 @@ static Tag **qsa1(const struct sel *sel)
 	if (skiproot && list[i])
 		++i;
 	for (; (t = list[i]); ++i) {
-		if (qsaMatchChain(t, 0, sel->chain)) {
+		if (qsaMatchChain(t, sel->chain)) {
 			a[n++] = t;
 			if (sel->spec > t->highspec)
 				t->highspec = sel->spec;
@@ -3227,7 +3036,7 @@ void cssApply(int frameNumber, Tag *t)
 	t->id = get_property_string_t(t, "id");
 
 	for (d = cm->descriptors; d; d = d->next) {
-		if (qsaMatchGroup(t, 0, d))
+		if (qsaMatchGroup(t, d))
 			do_rules(0, d->rules, d->highspec);
 	}
 

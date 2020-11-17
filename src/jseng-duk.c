@@ -3512,6 +3512,25 @@ return 0;
 return get_property_string_0(t->f0->cx, t->jv, name);
 }
 
+char *get_dataset_string_t(const Tag *t, const char *p)
+{
+	jsobjtype cx = t->f0->cx;
+	char *v;
+	if(!t->jslink)
+		return 0;
+	if (!strncmp(p, "data-", 5)) {
+		char *k = cloneString(p + 5);
+		jsobjtype ds = get_property_object_0(cx, t->jv, "dataset");
+		if(!ds)
+			return 0;
+		camelCase(k);
+		v = get_property_string_0(cx, ds, k);
+		nzFree(k);
+	} else
+		v = get_property_string_0(cx, t->jv, p);
+	return v;
+}
+
 char *get_property_url_t(const Tag *t, bool action)
 {
 if(!t->jslink || !allowJS)
