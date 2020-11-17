@@ -3651,6 +3651,7 @@ connectTagObject(t, oo);
 
 void establish_js_textnode(Tag *t, const char *fpn)
 {
+	        JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
 	JS::RootedObject mw(cxa, *mw0);
 JS::RootedObject tagobj(cxa,  instantiate_0(mw, fpn, "TextNode"));
 	connectTagObject(t, tagobj);
