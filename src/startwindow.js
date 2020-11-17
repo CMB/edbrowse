@@ -2719,7 +2719,8 @@ var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration",
 // The following nodes shouldn't have any children, but the various
 // children methods could be called on them anyways.
 // And getAttribute applies to just about everything.
-"Comment", "Node", "Area", "TextNode", "Image", "Option", "Link", "Meta", "Audio", "Canvas"];
+"Comment", "Node", "Area", "TextNode", "Image", "Option", "Link",
+"Base", "Meta", "Audio", "Canvas"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 var c = window[cn];

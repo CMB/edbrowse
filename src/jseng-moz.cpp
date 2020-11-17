@@ -217,7 +217,7 @@ case JSTYPE_SYMBOL: return "symbol";
 
 case JSTYPE_LIMIT: return "limit";
 
-default: return "undefined";
+default: return 0;
 }
 }
 
