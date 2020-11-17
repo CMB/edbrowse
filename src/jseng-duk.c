@@ -1,27 +1,11 @@
 /*********************************************************************
 This is the back-end process for javascript.
-This is the server, and edbrowse is the client.
-We receive commands from edbrowse,
+We receive calls from edbrowse,
 getting and setting properties for various DOM objects.
-
 This is the duktape version.
 If you package this with the duktape js libraries,
 you will need to include the MIT open source license,
 along with the GPL, general public license.
-
-Exit codes are as follows:
-0 terminate normally, as directed by edbrowse
-1. bad arguments
-2 cannot read or write to edbrowse
-3 messages are out of sync
-4 cannot create javascript runtime environmet
-5 cannot read from stdin or write to stdout
-6 unexpected message command from edbrowse
-7 unexpected property type from edbrowse
-8 unexpected class name from edbrowse
-9 only arrays of objects are supported at this time
-90 this program was never executed
-99 memory allocation error or heap corruption
 *********************************************************************/
 
 #include "eb.h"
@@ -216,7 +200,7 @@ static duk_ret_t native_new_location(duk_context * cx)
 		char *u = strchr(t, '\n');
 		*u++ = 0;
 		debugPrint(4, "window %s|%s", t, u);
-		javaOpensWindow(t, u);
+		domOpensWindow(t, u);
 		nzFree(t);
 	}
 	return 0;

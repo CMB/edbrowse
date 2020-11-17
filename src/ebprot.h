@@ -118,7 +118,7 @@ void scriptSetsTimeout( Tag *t);
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(Frame *f);
 void runTimer(void);
-void javaOpensWindow(const char *href, const char *name) ;
+void domOpensWindow(const char *href, const char *name) ;
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);

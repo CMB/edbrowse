@@ -487,7 +487,7 @@ extern struct ebWindow *cw;	/* current window */
 #define tagList (cw->tags)
 
 /* js is running in the current session */
-#define isJSAlive (cf->cx && allowJS)
+#define isJSAlive (cf->jslink && allowJS)
 
 /*********************************************************************
 Temporary cap on the number of lines, so the integer index into cw->map

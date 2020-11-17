@@ -3052,7 +3052,7 @@ done:
 	cw = save_cw, cf = save_cf;
 }
 
-void javaOpensWindow(const char *href, const char *name)
+void domOpensWindow(const char *href, const char *name)
 {
 	char *copy, *r;
 	const char *a;

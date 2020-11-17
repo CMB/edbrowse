@@ -1,5 +1,6 @@
 *.[oa]
 edbrowse
+edbrowsesm
 startwindow.c
 ebrc.c
 msg-strings.c

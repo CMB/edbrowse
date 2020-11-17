@@ -34,7 +34,7 @@ LDFLAGS += $(STRIP)
 ESQLDFLAGS = $(STRIP)
 
 #  Libraries for edbrowse.
-LDLIBS = -lpcre -lcurl -lreadline -ltidy -lduktape -lpthread -lm
+LDLIBS = -lpcre -lcurl -lreadline -ltidy -lpthread -lm
 
 #  Make the dynamically linked executable program by default.
 all: edbrowse
@@ -43,7 +43,7 @@ all: edbrowse
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 	html.o format.o plugin.o ebrc.o \
 	messages.o stringfile.o html-tidy.o decorate.o \
-	msg-strings.o http.o isup.o css.o jseng-duk.o
+	msg-strings.o http.o isup.o css.o
 ifeq ($(BUILD_EDBR_ODBC),on)
 EBOBJS += dbodbc.o dbops.o
 LDLIBS += -lodbc
@@ -53,6 +53,7 @@ endif
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h
+jseng-duk.o jseng-moz.o : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
@@ -72,8 +73,8 @@ msg-strings.c: ../lang/msg-*
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) startwindow.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -o $@
+edbrowse: $(EBOBJS) startwindow.o jseng-duk.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lduktape -o $@
 
 #  You probably need to be root to do this.
 install:
@@ -85,12 +86,25 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
-edbrowse-infx: $(EBOBJS) startwindow.o dbops.o dbinfx.o
-	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS)
+edbrowse-infx: $(EBOBJS) startwindow.o dbops.o dbinfx.o jseng-duk.o
+	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS) -lduktape
 
 clean:
 	rm -f *.o edbrowse \
 	startwindow.c ebrc.c msg-strings.c
+
+#  The mozilla version, highly experimental
+#  need packages libmozjs-52-0 and libmozjs-52-dev, or higher.
+#  Set SMV to your spider monkey version.
+ifeq ($(SMV),)
+SMV=52
+endif
+#  I added -Wno-psabi to supress warning   changed in GCC 7.1
+#  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
+CXXFLAGS += -Wno-psabi -I/usr/include/mozjs-$(SMV)
+#  For now a separate target, not built by all.
+edbrowsesm: $(EBOBJS) startwindow.o jseng-moz.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lmozjs-$(SMV) -lstdc++ -o $@
 
 #  some hello world targets, for testing and debugging
 
@@ -101,16 +115,9 @@ js_hello_duk: js_hello_duk.c
 js_hello_v8 : js_hello_v8.cpp
 	g++ -I/usr/include/v8 js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
-#  need packages libmozjs-52-0 and libmozjs-52-dev
-#  Or whatever spider monkey version you are using, as determined by environment variable SMV
-ifeq ($(SMV),)
-SMV=52
-endif
-#  I added -Wno-psabi to supress warning   changed in GCC 7.1
-#  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
 HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o isup.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o html.o decorate.o html-tidy.o css.o
-js_hello_moz : js_hello_moz.cpp
-	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) $(CXXFLAGS) js_hello_moz.cpp -lmozjs-$(SMV) $(HELLOEXTRA) -lstdc++ -lpthread -lreadline -lpcre -lcurl -ltidy -o js_hello_moz
+js_hello_moz : js_hello_moz.o $(HELLOEXTRA) jseng-moz.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lmozjs-$(SMV) -lstdc++ -o $@
 
 hello: js_hello_duk js_hello_v8 js_hello_moz
 
