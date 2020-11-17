@@ -34,16 +34,32 @@ Exit codes are as follows:
 
 static void processError(duk_context * cx);
 static void jsInterruptCheck(duk_context * cx);
+// The level 0 functions live right next to the engine, and in the interest
+// of encapsulation, they should not be called outside of this file.
+static enum ej_proptype typeof_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
+static bool has_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
+static void delete_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
+static char *get_property_string_0(jsobjtype cx, jsobjtype obj, const char *name) ;
+static int get_property_number_0(jsobjtype cx, jsobjtype parent, const char *name) ;
+static bool get_property_bool_0(jsobjtype cx, jsobjtype parent, const char *name) ;
+static jsobjtype get_property_object_0(jsobjtype cx, jsobjtype parent, const char *name) ;
+static jsobjtype get_array_element_object_0(jsobjtype cx, jsobjtype obj, int idx) ;
+static int set_property_string_0(jsobjtype cx, jsobjtype obj, const char *name, const char *value) ;
+static int set_property_number_0(jsobjtype cx, jsobjtype obj, const char *name, int n) ;
+static int set_property_bool_0(jsobjtype cx, jsobjtype obj, const char *name, bool n) ;
+static int set_property_object_0(jsobjtype cx, jsobjtype parent, const char *name, jsobjtype child) ;
+static jsobjtype instantiate_array_0(jsobjtype cx, jsobjtype parent, const char *name) ;
+static int set_array_element_object_0(jsobjtype cx, jsobjtype array, int idx, jsobjtype child) ;
+static jsobjtype instantiate_array_element_0(jsobjtype cx, jsobjtype array, int idx, const char *classname) ;
+static jsobjtype instantiate_0(jsobjtype cx, jsobjtype parent, const char *name, const char *classname) ;
+static int get_arraylength_0(jsobjtype cx, jsobjtype a);
+static bool run_function_bool_0(jsobjtype cx, jsobjtype obj, const char *name);
+static int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, jsobjtype o);
+static void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
 static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
 
 static duk_ret_t native_error_stub_0(duk_context * cx)
 {
-	return 0;
-}
-
-static duk_ret_t native_error_stub_1(duk_context * cx)
-{
-	i_puts(MSG_CompileError);
 	return 0;
 }
 
@@ -2500,7 +2516,7 @@ static duk_ret_t protected_get(duk_context * cx, void *udata)
 	return 1;
 }
 
-enum ej_proptype typeof_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static enum ej_proptype typeof_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	enum ej_proptype l;
@@ -2512,7 +2528,7 @@ enum ej_proptype typeof_property_0(jsobjtype cx0, jsobjtype parent, const char *
 	return l;
 }
 
-bool has_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static bool has_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	bool l;
@@ -2529,15 +2545,15 @@ bool has_property_t(const Tag *t, const char *name)
 	return has_property_0(t->f0->cx, t->jv, name);
 }
 
-void delete_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static void delete_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
 	duk_del_prop_string(cx, -1, name);
 	duk_pop(cx);
-}				/* delete_property_0 */
+}
 
-int get_arraylength_0(jsobjtype cx0, jsobjtype a)
+static int get_arraylength_0(jsobjtype cx0, jsobjtype a)
 {
 	duk_context * cx = cx0;
 	int l;
@@ -2548,11 +2564,11 @@ int get_arraylength_0(jsobjtype cx0, jsobjtype a)
 		l = -1;
 	duk_pop(cx);
 	return l;
-}				/* get_arraylength_0 */
+}
 
 /* Return a property as a string, if it is
  * string compatible. The string is allocated, free it when done. */
-char *get_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static char *get_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	const char *s;
@@ -2577,13 +2593,13 @@ char *get_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	s0 = cloneString(s);
 	duk_pop_2(cx);
 	return s0;
-}				/* get_property_string_0 */
+}
 
 /* Get the url from a url object, special wrapper.
  * Owner object is passed, look for obj.href, obj.src, or obj.action.
  * Return that if it's a string, or its member href if it is a url.
  * The result, coming from get_property_string, is allocated. */
-char *get_property_url_0(jsobjtype cx, jsobjtype owner, bool action)
+static char *get_property_url_0(jsobjtype cx, jsobjtype owner, bool action)
 {
 	enum ej_proptype mtype;	/* member type */
 	jsobjtype uo = 0;	/* url object */
@@ -2616,7 +2632,7 @@ char *get_property_url_0(jsobjtype cx, jsobjtype owner, bool action)
 	return get_property_string_0(cx, uo, "href");
 }
 
-jsobjtype get_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static jsobjtype get_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	jsobjtype o = NULL;
@@ -2626,9 +2642,10 @@ jsobjtype get_property_object_0(jsobjtype cx0, jsobjtype parent, const char *nam
 		o = duk_get_heapptr(cx, -1);
 	duk_pop_2(cx);
 	return o;
-}				/* get_property_object_0 */
+}
 
-jsobjtype get_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name)
+#if 0
+static jsobjtype get_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	jsobjtype o = NULL;
@@ -2638,9 +2655,10 @@ jsobjtype get_property_function_0(jsobjtype cx0, jsobjtype parent, const char *n
 		o = duk_get_heapptr(cx, -1);
 	duk_pop_2(cx);
 	return o;
-}				/* get_property_function_0 */
+}
+#endif
 
-int get_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static int get_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	int n = -1;
@@ -2652,9 +2670,10 @@ int get_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	}
 	duk_pop_2(cx);
 	return n;
-}				/* get_property_number_0 */
+}
 
-double get_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name)
+#if 0
+static double get_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	double d = -1;
@@ -2664,9 +2683,10 @@ double get_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name)
 		d = duk_get_number(cx, -1);
 	duk_pop_2(cx);
 	return d;
-}				/* get_property_float_0 */
+}
+#endif
 
-bool get_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static bool get_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	bool b = false;
@@ -2682,9 +2702,9 @@ bool get_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	}
 	duk_pop_2(cx);
 	return b;
-}				/* get_property_bool_0 */
+}
 
-int set_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name,
+static int set_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name,
 			    const char *value)
 {
 	duk_context * cx = cx0;
@@ -2733,9 +2753,9 @@ int set_property_string_0(jsobjtype cx0, jsobjtype parent, const char *name,
 	duk_put_prop_string(cx, -2, (setter ? altname : name));
 	duk_pop(cx);
 	return 0;
-}				/* set_property_string_0 */
+}
 
-int set_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name, bool n)
+static int set_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name, bool n)
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
@@ -2743,9 +2763,9 @@ int set_property_bool_0(jsobjtype cx0, jsobjtype parent, const char *name, bool 
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
 	return 0;
-}				/* set_property_bool_0 */
+}
 
-int set_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name, int n)
+static int set_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name, int n)
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
@@ -2753,9 +2773,10 @@ int set_property_number_0(jsobjtype cx0, jsobjtype parent, const char *name, int
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
 	return 0;
-}				/* set_property_number_0 */
+}
 
-int set_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name, double n)
+#if 0
+static int set_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name, double n)
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
@@ -2763,9 +2784,10 @@ int set_property_float_0(jsobjtype cx0, jsobjtype parent, const char *name, doub
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
 	return 0;
-}				/* set_property_float_0 */
+}
+#endif
 
-int set_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name, jsobjtype child)
+static int set_property_object_0(jsobjtype cx0, jsobjtype parent, const char *name, jsobjtype child)
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
@@ -2818,6 +2840,13 @@ void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
 	set_property_object_0(t->f0->cx, t->jv, name, t2->jv);
 }
 
+#if 0
+static duk_ret_t native_error_stub_1(duk_context * cx)
+{
+	i_puts(MSG_CompileError);
+	return 0;
+}
+
 // handler.toString = function() { return this.body; }
 static duk_ret_t native_fntos(duk_context * cx)
 {
@@ -2827,7 +2856,7 @@ static duk_ret_t native_fntos(duk_context * cx)
 	return 1;
 }
 
-int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name,
+static int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name,
 			      const char *body)
 {
 	duk_context * cx = cx0;
@@ -2863,6 +2892,7 @@ int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *name,
 	duk_pop(cx);
 	return 0;
 }
+#endif
 
 /*********************************************************************
 Error object is at the top of the duktape stack.
@@ -3007,7 +3037,7 @@ static void uptrace(duk_context * cx, jsobjtype node)
 	infunction = false;
 }
 
-bool run_function_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static bool run_function_bool_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	int dbl = 3;		// debug level
@@ -3087,7 +3117,7 @@ void run_ontimer(const Frame *f, const char *backlink)
 
 // The single argument to the function has to be an object.
 // Returns -1 if the return is not int or bool
-int run_function_onearg_0(jsobjtype cx0, jsobjtype parent, const char *name, jsobjtype child)
+static int run_function_onearg_0(jsobjtype cx0, jsobjtype parent, const char *name, jsobjtype child)
 {
 	duk_context * cx = cx0;
 	int rc = -1;
@@ -3143,7 +3173,7 @@ int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2)
 }
 
 // The single argument to the function has to be a string.
-void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char *name,
+static void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char *name,
 				const char *s)
 {
 	duk_context * cx = cx0;
@@ -3177,7 +3207,7 @@ void run_function_onestring_t(const Tag *t, const char *name, const char *s)
 	run_function_onestring_0(t->f0->cx, t->jv, name, s);
 }
 
-jsobjtype instantiate_array_0(jsobjtype cx0, jsobjtype parent, const char *name)
+static jsobjtype instantiate_array_0(jsobjtype cx0, jsobjtype parent, const char *name)
 {
 	duk_context * cx = cx0;
 	jsobjtype a;
@@ -3200,9 +3230,9 @@ jsobjtype instantiate_array_0(jsobjtype cx0, jsobjtype parent, const char *name)
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
 	return a;
-}				/* instantiate_array_0 */
+}
 
-jsobjtype instantiate_0(jsobjtype cx0, jsobjtype parent, const char *name,
+static jsobjtype instantiate_0(jsobjtype cx0, jsobjtype parent, const char *name,
 			  const char *classname)
 {
 	duk_context * cx = cx0;
@@ -3234,9 +3264,9 @@ jsobjtype instantiate_0(jsobjtype cx0, jsobjtype parent, const char *name,
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
 	return a;
-}				/* instantiate_0 */
+}
 
-jsobjtype instantiate_array_element_0(jsobjtype cx0, jsobjtype parent, int idx,
+static jsobjtype instantiate_array_element_0(jsobjtype cx0, jsobjtype parent, int idx,
 					const char *classname)
 {
 	duk_context * cx = cx0;
@@ -3259,7 +3289,7 @@ jsobjtype instantiate_array_element_0(jsobjtype cx0, jsobjtype parent, int idx,
 	return a;
 }
 
-int set_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx, jsobjtype child)
+static int set_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx, jsobjtype child)
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
@@ -3269,7 +3299,7 @@ int set_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx, jsobjty
 	return 0;
 }
 
-jsobjtype get_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx)
+static jsobjtype get_array_element_object_0(jsobjtype cx0, jsobjtype parent, int idx)
 {
 	duk_context * cx = cx0;
 	jsobjtype a = 0;
