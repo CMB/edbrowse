@@ -972,7 +972,7 @@ static void optionJS(Tag *t)
 			t->value = cloneString(tx);
 	}
 /* no point if the controlling select doesn't have a js object */
-	if (!sel->jv)
+	if (!sel->jslink)
 		return;
 establish_js_option(t, sel);
 	set_property_string_t(t, "text", t->textval);
@@ -1082,7 +1082,7 @@ static void jsNode(Tag *t, bool opentag)
 	bool linked_in;
 
 // run reindex at table close
-	if (action == TAGACT_TABLE && !opentag && t->jv)
+	if (action == TAGACT_TABLE && !opentag && t->jslink)
 		run_function_onearg_win(cf, "rowReindex", t);
 
 /* all the js variables are on the open tag */
@@ -1203,31 +1203,31 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_TBODY:
-		if ((above = t->controller) && above->jv)
+		if ((above = t->controller) && above->jslink)
 			domLink(t, "tBody", 0, "tBodies", above, 0);
 		break;
 
 	case TAGACT_THEAD:
-		if ((above = t->controller) && above->jv) {
+		if ((above = t->controller) && above->jslink) {
 			domLink(t, "tHead", 0, 0, above, 0);
 			set_property_object_t(above, "tHead", t);
 		}
 		break;
 
 	case TAGACT_TFOOT:
-		if ((above = t->controller) && above->jv) {
+		if ((above = t->controller) && above->jslink) {
 			domLink(t, "tFoot", 0, 0, above, 0);
 			set_property_object_t(above, "tFoot", t);
 		}
 		break;
 
 	case TAGACT_TR:
-		if ((above = t->controller) && above->jv)
+		if ((above = t->controller) && above->jslink)
 			domLink(t, "tRow", 0, "rows", above, 0);
 		break;
 
 	case TAGACT_TD:
-		if ((above = t->controller) && above->jv)
+		if ((above = t->controller) && above->jslink)
 			domLink(t, "Cell", 0, "cells", above, 0);
 		break;
 
@@ -1309,13 +1309,13 @@ Needless to say that's not good!
 		break;
 	}			/* switch */
 
-	if (!t->jv)
+	if (!t->jslink)
 		return;		/* nothing else to do */
 
 /* js tree mirrors the dom tree. */
 	linked_in = false;
 
-	if (t->parent && t->parent->jv) {
+	if (t->parent && t->parent->jslink) {
 		run_function_onearg_t(t->parent, "eb$apch1", t);
 		linked_in = true;
 // special code for frame.contentDocument.

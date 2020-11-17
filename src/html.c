@@ -64,7 +64,7 @@ bool tagHandler(int seqno, const char *name)
 	if (t->onchange && stringEqual(name, "onchange"))
 		return true;
 
-	if (!t->jv)
+	if (!t->jslink)
 		return false;
 	if (!isJSAlive)
 		return false;
@@ -174,12 +174,12 @@ locateOptions(const Tag *sel, const char *input,
 
 	if (setcheck) {
 /* Uncheck all existing options, then check the ones selected. */
-		if (sel->jv && allowJS)
+		if (sel->jslink && allowJS)
 			set_property_number_t(sel, "selectedIndex", -1);
 		for (t = cw->optlist; t; t = t->same) {
 			if (t->controller == sel && t->textval) {
 				t->checked = false;
-				if (t->jv && allowJS)
+				if (t->jslink && allowJS)
 					set_property_bool_t(t, "selected",   false);
 			}
 		}
@@ -234,9 +234,9 @@ locateOptions(const Tag *sel, const char *input,
 
 		if (setcheck) {
 			t->checked = true;
-			if (t->jv && allowJS) {
+			if (t->jslink && allowJS) {
 				set_property_bool_t(t, "selected", true);
-				if (sel->jv && allowJS)
+				if (sel->jslink && allowJS)
 					set_property_number_t(sel, "selectedIndex", t->lic);
 			}
 		}
@@ -512,7 +512,7 @@ void prepareScript(Tag *t)
 	if (f->fileName && !t->scriptgen)
 		js_file = f->fileName;
 
-	if (t->jv) {
+	if (t->jslink) {
 // js might have set, or changed, the source url.
 		char *new_url = get_property_url_t(t, false);
 		if (new_url && *new_url) {
@@ -778,7 +778,7 @@ top:
 	change = false;
 
 	for (t = cw->scriptlist; t; t = t->same) {
-		if (t->dead || !t->jv || t->step >= 3)
+		if (t->dead || !t->jslink || t->step >= 3)
 			continue;
 
 /*********************************************************************
@@ -927,7 +927,7 @@ afterscript:
 
 // after each pass, see if there is a link onload to run.
 	for (t = cw->linklist; t; t = t->same) {
-		if(t->lic == 1 && t->jv && !t->dead) {
+		if(t->lic == 1 && t->jslink && !t->dead) {
 			if(handlerPresent(t, "onload")) {
 				run_event_t(t, "link", "onload");
 				change = true;
@@ -1206,7 +1206,7 @@ void infShow(int tagno, const char *search)
 
 static bool inputDisabled(const Tag *t)
 {
-	if (allowJS && t->jv)
+	if (allowJS && t->jslink)
 		return get_property_bool_t(t, "disabled");
 	return t->disabled;
 }
@@ -1427,7 +1427,7 @@ static void resetVar(Tag *t)
 		t->value = cloneString(t->rvalue);
 	}
 
-	if (!t->jv || !allowJS)
+	if (!t->jslink || !allowJS)
 		return;
 
 	if (itype >= INP_RADIO) {
@@ -1435,7 +1435,7 @@ static void resetVar(Tag *t)
 	} else if (itype == INP_SELECT) {
 /* remember this means option */
 		set_property_bool_t(t, "selected", bval);
-		if (bval && !t->controller->multiple && t->controller->jv)
+		if (bval && !t->controller->multiple && t->controller->jslink)
 			set_property_number_t(t->controller,
 					    "selectedIndex", t->lic);
 	} else
@@ -1466,7 +1466,7 @@ static void formReset(const Tag *form)
 			resetVar(t);
 			continue;
 		}
-		if (t->jv && allowJS)
+		if (t->jslink && allowJS)
 			set_property_number_t(t, "selectedIndex", -1);
 	}			/* loop over tags */
 
@@ -1496,7 +1496,7 @@ static char *fetchTextVar(const Tag *t)
 
 // js must not muck with the value of a file field
 	if (t->itype != INP_FILE) {
-		if (t->jv && allowJS)
+		if (t->jslink && allowJS)
 			return get_property_string_t(t, "value");
 	}
 
@@ -1514,7 +1514,7 @@ static bool fetchBoolVar(const Tag *t)
 {
 	int checked;
 
-	if (t->jv && isJSAlive)
+	if (t->jslink && allowJS)
 		return get_property_bool_t(t,
 					 (t->action == TAGACT_OPTION ? "selected" : "checked"));
 
@@ -1890,7 +1890,7 @@ bool infPush(int tagno, char **post_string)
 	if (itype == INP_BUTTON) {
 /* I use to error here, but click could be captured by a node higher up in the tree
    and do what it is suppose to do, so we might not want an error here.
-		if (allowJS && t->jv && !t->onclick) {
+		if (allowJS && t->jslink && !t->onclick) {
 			setError(MSG_ButtonNoJS);
 			return false;
 		}
@@ -1912,7 +1912,7 @@ bool infPush(int tagno, char **post_string)
 				runningError(MSG_NJNoReset);
 			else {
 				rc = true;
-				if (form->jv)
+				if (form->jslink)
 					rc = run_event_t(form, "form", "onreset");
 				if (!rc)
 					return true;
@@ -1937,7 +1937,7 @@ bool infPush(int tagno, char **post_string)
 			runningError(MSG_NJNoSubmit);
 		else {
 			rc = true;
-			if (form->jv)
+			if (form->jslink)
 				rc = bubble_event_t(form, "onsubmit");
 			if (!rc)
 				return true;
@@ -1948,7 +1948,7 @@ bool infPush(int tagno, char **post_string)
 
 	action = form->href;
 /* But we defer to the js variable */
-	if (form->jv && allowJS) {
+	if (form->jslink && allowJS) {
 		char *jh = get_property_url_t(form, true);
 		if (jh && (!action || !stringEqual(jh, action))) {
 			nzFree(form->href);
@@ -2705,7 +2705,7 @@ void runOnload(void)
 		action = t->action;
 		if (action == TAGACT_FORM)
 			++fn;
-		if (!t->jv)
+		if (!t->jslink)
 			continue;
 		if (action == TAGACT_BODY && handlerPresent(t, "onload"))
 			run_event_t(t, "body", "onload");
@@ -2988,7 +2988,7 @@ We need to fix this someday, though it is a very rare corner case.
 					t->step = 6;
 				} else {
 					if (t->action == TAGACT_SCRIPT) {
-						set_property_string_t(t->jv, "text", t->value);
+						set_property_string_t(t, "text", t->value);
 						nzFree(t->value);
 						t->value = 0;
 					}
@@ -3251,7 +3251,7 @@ nocolorend:
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
 
-	if (opentag && t->jv) {
+	if (opentag && t->jslink) {
 // what is the visibility now?
 		uchar v_now = 2;
 		t->disval =
@@ -3297,7 +3297,7 @@ nocolorend:
 			inv2 = t;
 			return;
 		}
-		if (action == TAGACT_TEXT && t->jv &&
+		if (action == TAGACT_TEXT && t->jslink &&
 		    get_property_bool_t(t, "inj$css")) {
 			++injcount;
 			if (!showHover) {
@@ -3382,7 +3382,7 @@ nocolor:
 
 	switch (action) {
 	case TAGACT_TEXT:
-		if (t->jv) {
+		if (t->jslink) {
 // defer to the javascript text.
 // either we query js every time, on every piece of text, as we do now,
 // or we include a setter so that TextNode.data assignment has a side effect.
@@ -3407,7 +3407,7 @@ nocolor:
 		if (!retainTag)
 			break;
 // Javascript might have set or changed this url.
-		if (opentag && t->jv) {
+		if (opentag && t->jslink) {
 			char *new_url = get_property_url_t(t, false);
 			if (new_url && *new_url) {
 				nzFree(t->href);
@@ -3422,7 +3422,7 @@ nocolor:
 		if (t->href) {
 			if (opentag) {
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
-				if (t->jv
+				if (t->jslink
 				    && (a =
 					get_property_string_t(t, "title"))) {
 					++hovcount;
@@ -3452,7 +3452,7 @@ nocolor:
 		a = 0, u = 0;
 		if (!t->firstchild && opentag) {
 			a = attribVal(t, "title");
-			if (allowJS && t->jv)
+			if (allowJS && t->jslink)
 				u = get_property_string_t(t, "title");
 		}
 // If an onclick function, then turn this into a hyperlink, thus clickable.
@@ -3625,7 +3625,7 @@ nop:
 						i_getString(MSG_Push));
 		} else {
 // in case js checked or unchecked
-			if (allowJS && t->jv)
+			if (allowJS && t->jslink)
 				t->checked =
 				    get_property_bool_t(t, "checked");
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
@@ -3810,7 +3810,7 @@ unparen:
 				u = altText(a);
 				a = NULL;
 /* see if js has changed the alt tag */
-				if (allowJS && t->jv) {
+				if (allowJS && t->jslink) {
 					char *aa =
 					    get_property_string_t(t, "alt");
 					if (aa)

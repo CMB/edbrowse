@@ -1290,11 +1290,13 @@ return 0;
 /* like the above but throw away the result */
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
 {
-if(!cf->jslink || !allowJS)
-return;
-JSAutoCompartment ac(cxa, frameToCompartment(cf));
-JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+	if(!cf->jslink || !allowJS)
+		return;
+	debugPrint(5, "> script win:");
+	JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
 	run_script_0(g, str, filename, lineno);
+	debugPrint(5, "< ok");
 }
 
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
@@ -1377,7 +1379,8 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 	const char *s;
 	if (!allowJS || !t->jslink)
 		return;
-	debugPrint(5, "> script:");
+	debugPrint(5, "> script tag %d:", t->seqno);
+        JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
 JS::RootedObject to(cxa, tagToObject(t));
 JS::RootedValue v(cxa);
 if(!JS_GetProperty(cxa, to, "text", &v) ||
