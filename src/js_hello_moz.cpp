@@ -79,8 +79,8 @@ void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n"
 void writeShortCache(void) { }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
 void cssDocLoad(int n, char *s, bool pageload) { puts("css doc load"); }
-void cssApply(int n, jsobjtype node, jsobjtype destination) { puts("css apply"); }
-void cssText(jsobjtype node, const char *rulestring) { puts("css text"); }
+void cssApply(int n, jsobjtype node) { puts("css apply"); }
+void cssText(const char *rulestring) { puts("css text"); }
 void cssFree(Frame *f) { }
 bool javaOK(const char *url) { return true; }
 bool mustVerifyHost(const char *url) { return false; }
@@ -1485,6 +1485,12 @@ JSAutoCompartment ac(cxa, *mw0);
 	delete_property_o(*mw0, name);
 }
 
+bool has_master(const char *name)
+{
+JSAutoCompartment ac(cxa, *mw0);
+	return has_property_o(*mw0, name);
+}
+
 void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
 JSAutoCompartment ac(cxa, frameToCompartment(f));
@@ -2220,23 +2226,20 @@ static bool nat_cssApply(JSContext *cx, unsigned argc, JS::Value *vp)
 	int n = args[0].toInt32();
 	JS::RootedObject node(cx);
 	JS_ValueToObject(cx, args[1], &node);
-	JS::RootedObject dest(cx);
-	JS_ValueToObject(cx, args[2], &dest);
-	cssApply(n, node, dest);
+	cssApply(n, node);
 	args.rval().setUndefined();
 	return true;
 }
 
 static bool nat_cssText(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-args.rval().setUndefined();
-        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-const char *rules = emptyString;
-if(argc >= 1)
-rules = stringize(args[0]);
-cssText(thisobj, rules);
-return true;
+	  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	const char *rules = emptyString;
+	if(argc >= 1)
+		rules = stringize(args[0]);
+	cssText(rules);
+	args.rval().setUndefined();
+	return true;
 }
 
 // turn an array of html tags into an array of objects.
@@ -4037,6 +4040,116 @@ void rebuildSelectors(void)
 	}
 }
 
+// Some primitives needed by css.c. These bounce through window.soj$
+static const char soj[] = "soj$";
+static void sofail() { debugPrint(5, "no style object"); }
+
+bool has_gcs(const char *name)
+{
+	bool found;
+	JS::RootedValue v(cxa);
+	JS::RootedObject j(cxa);
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+		sofail();
+		return false;
+	}
+	JS_ValueToObject(cxa, v, &j);
+	JS_HasProperty(cxa, j, name, &found);
+	return found;
+}
+
+enum ej_proptype typeof_gcs(const char *name)
+{
+	enum ej_proptype l;
+	JS::RootedValue v(cxa);
+	JS::RootedObject j(cxa);
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+		sofail();
+		return EJ_PROP_NONE;
+	}
+	JS_ValueToObject(cxa, v, &j);
+	if(!JS_GetProperty(cxa, j, name, &v))
+		return EJ_PROP_NONE;
+	return top_proptype(v);
+}
+
+int get_gcs_number(const char *name)
+{
+	JS::RootedValue v(cxa);
+	JS::RootedObject j(cxa);
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+		sofail();
+		return -1;
+	}
+	JS_ValueToObject(cxa, v, &j);
+	if(JS_GetProperty(cxa, j, name, &v) &&
+	v.isInt32())
+		return v.toInt32();
+	return -1;
+}
+
+void set_gcs_number(const char *name, int n)
+{
+	bool found;
+	JS::RootedValue v(cxa);
+	JS::RootedObject j(cxa);
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+		sofail();
+		return;
+	}
+	JS_ValueToObject(cxa, v, &j);
+	v.setInt32(n);
+	JS_HasProperty(cxa, j, name, &found);
+	if (found)
+		JS_SetProperty(cxa, j, name, v);
+	else
+		JS_DefineProperty(cxa, j, name, v, JSPROP_STD);
+}
+
+void set_gcs_bool(const char *name, bool b)
+{
+	bool found;
+	JS::RootedValue v(cxa);
+	JS::RootedObject j(cxa);
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+		sofail();
+		return;
+	}
+	JS_ValueToObject(cxa, v, &j);
+	v.setBoolean(b);
+	JS_HasProperty(cxa, j, name, &found);
+	if (found)
+		JS_SetProperty(cxa, j, name, v);
+	else
+		JS_DefineProperty(cxa, j, name, v, JSPROP_STD);
+}
+
+void set_gcs_string(const char *name, const char *s)
+{
+	bool found;
+	JS::RootedValue v(cxa);
+	JS::RootedObject j(cxa);
+	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+		sofail();
+		return;
+	}
+	JS_ValueToObject(cxa, v, &j);
+	if(!s) s = emptyString;
+	JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, s));
+	v.setString(m);
+	JS_HasProperty(cxa, j, name, &found);
+	if (found)
+		JS_SetProperty(cxa, j, name, v);
+	else
+		JS_DefineProperty(cxa, j, name, v, JSPROP_STD);
+}
+
 // Now we go back to the stand alone hello program.
 
 // I don't understand any of this. Code from:
@@ -4134,7 +4247,7 @@ objval = JS::ObjectValue(*docroot);
 		(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 		JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 // Do we need anything in the master window, besides our third party debugging tools?
-		JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
+		                JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
 		run_script_o(g, thirdJS, "third.js", 1);
 	}
 

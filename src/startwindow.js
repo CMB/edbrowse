@@ -1321,9 +1321,9 @@ for speed and optimization, is lost if the version changes.
 // remember that this is the window object
 dom$.cssGather(false, this);
 
-this.soj$ = s;
-eb$cssApply(this.document.eb$ctx, e, s);
-delete this.soj$;
+mw$.soj$ = s;
+eb$cssApply(this.document.eb$ctx, e);
+delete mw$.soj$;
 
 /*********************************************************************
 Now for the confusion.
@@ -1413,9 +1413,9 @@ delete s[k.replace(/\$(\$scy|pri)$/, "")];
 }
 
 // apply all the css rules
-w.soj$ = s;
-eb$cssApply(w.document.eb$ctx, e, s);
-delete w.soj$;
+mw$.soj$ = s;
+eb$cssApply(w.document.eb$ctx, e);
+delete mw$.soj$;
 // style has been recomputed
 // descend into the children
 if(e.childNodes)
@@ -2681,7 +2681,7 @@ top.appendChild(document.createTextNode(s));
 }
 
 dom$.injectSetup = function(which) {
-var z = this, w = my$win();
+var z = this;
 switch(which) {
 case 'a':
 if(!this.inj$after) {
@@ -2698,7 +2698,7 @@ this.inj$before = true;
 } else z = this.firstChild;
 break;
 }
-w.soj$ = z.style;
+mw$.soj$ = z.style;
 }
 
 /*********************************************************************
@@ -3882,7 +3882,7 @@ eb$cssDocLoad(w.document.eb$ctx, css_all, pageload);
 
 // Apply rules to a given style object, which is this.
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssTextGet,
-set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
+set: function(h) { mw$.soj$ = this; eb$cssText.call(this,h); delete mw$.soj$; } });
 
 eb$qs$start = function() {
 // This is a stub for now.

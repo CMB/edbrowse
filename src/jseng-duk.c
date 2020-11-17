@@ -2134,21 +2134,17 @@ static duk_ret_t native_qs0(duk_context * cx)
 static duk_ret_t native_cssApply(duk_context * cx)
 {
 	jsInterruptCheck(cx);
-	if (duk_is_object(cx, 1) && duk_is_object(cx, 2))
-		cssApply(duk_get_number(cx, 0), duk_get_heapptr(cx, 1),
-			 duk_get_heapptr(cx, 2));
-	duk_pop_n(cx, 3);
+	if (duk_is_object(cx, 1))
+		cssApply(duk_get_number(cx, 0), duk_get_heapptr(cx, 1));
+	duk_pop_2(cx);
 	return 0;
 }
 
 static duk_ret_t native_cssText(duk_context * cx)
 {
-	jsobjtype thisobj;
 	const char *rulestring = duk_get_string(cx, 0);
-	duk_push_this(cx);
-	thisobj = duk_get_heapptr(cx, -1);
-	cssText(thisobj, rulestring);
-	duk_pop_2(cx);
+	cssText(rulestring);
+	duk_pop(cx);
 	return 0;
 }
 
@@ -2237,7 +2233,7 @@ static void createJSContext_0(Frame *f)
 	duk_put_global_string(cx, "querySelector");
 	duk_push_c_function(cx, native_qs0, 1);
 	duk_put_global_string(cx, "querySelector0");
-	duk_push_c_function(cx, native_cssApply, 3);
+	duk_push_c_function(cx, native_cssApply, 2);
 	duk_put_global_string(cx, "eb$cssApply");
 	duk_push_c_function(cx, native_cssText, 1);
 	duk_put_global_string(cx, "eb$cssText");
@@ -2476,7 +2472,7 @@ static enum ej_proptype top_proptype(duk_context * cx)
 		return EJ_PROP_NULL;
 	}
 	return EJ_PROP_NONE;	/* don't know */
-}				/* top_proptype */
+}
 
 /*********************************************************************
 http://theconversation.com/how-to-build-a-moon-base-120259
@@ -3477,6 +3473,11 @@ void delete_master(const char *name)
 	delete_property_0(cf->cx, context0_obj, name);
 }
 
+bool has_master(const char *name)
+{
+	return has_property_0(cf->cx, context0_obj, name);
+}
+
 bool get_property_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
@@ -4054,3 +4055,100 @@ void rebuildSelectors(void)
 		rebuildSelector(t, oa, len);
 	}
 }
+
+// Some primitives needed by css.c. These bounce through window.soj$
+static const char soj[] = "soj$";
+static void sofail() { debugPrint(5, "no style object"); }
+
+bool has_gcs(const char *name)
+{
+	bool l;
+	duk_context * cx = cf->cx;
+	duk_push_heapptr(cx, context0_obj);
+	if(!duk_get_prop_string(cx, -1, soj)) {
+		sofail();
+		duk_pop_2(cx);
+		return false;
+	}
+	l = duk_has_prop_string(cx, -1, name);
+	duk_pop_2(cx);
+	return l;
+}
+
+enum ej_proptype typeof_gcs(const char *name)
+{
+	duk_context * cx = cf->cx;
+	enum ej_proptype l;
+	bool rc;
+	duk_push_heapptr(cx, context0_obj);
+	if(!duk_get_prop_string(cx, -1, soj)) {
+		sofail();
+		duk_pop_2(cx);
+		return 0;
+	}
+	rc = duk_get_prop_string(cx, -1, name);
+	l = rc ? top_proptype(cx) : 0;
+	duk_pop_n(cx, 3);
+	return l;
+}
+
+int get_gcs_number(const char *name)
+{
+	duk_context * cx = cf->cx;
+	int l = -1;
+	bool rc;
+	duk_push_heapptr(cx, context0_obj);
+	if(!duk_get_prop_string(cx, -1, soj)) {
+		sofail();
+		duk_pop_2(cx);
+		return -1;
+	}
+	rc = duk_get_prop_string(cx, -1, name);
+	if(rc && duk_is_number(cx, -1))
+		l = duk_get_number(cx, -1);
+	duk_pop_n(cx, 3);
+	return l;
+}
+
+void set_gcs_number(const char *name, int n)
+{
+	duk_context * cx = cf->cx;
+	duk_push_heapptr(cx, context0_obj);
+	if(!duk_get_prop_string(cx, -1, soj)) {
+		sofail();
+		duk_pop_2(cx);
+		return;
+	}
+	duk_push_int(cx, n);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop_2(cx);
+}
+
+void set_gcs_bool(const char *name, bool v)
+{
+	duk_context * cx = cf->cx;
+	duk_push_heapptr(cx, context0_obj);
+	if(!duk_get_prop_string(cx, -1, soj)) {
+		sofail();
+		duk_pop_2(cx);
+		return;
+	}
+	duk_push_boolean(cx, v);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop_2(cx);
+}
+
+void set_gcs_string(const char *name, const char *s)
+{
+	duk_context * cx = cf->cx;
+	duk_push_heapptr(cx, context0_obj);
+	if(!duk_get_prop_string(cx, -1, soj)) {
+		sofail();
+		duk_pop_2(cx);
+		return;
+	}
+	duk_push_string(cx, s);
+	duk_put_prop_string(cx, -2, name);
+	duk_pop_2(cx);
+}
+

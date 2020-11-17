@@ -3020,9 +3020,9 @@ static char *attrify(jsobjtype obj, char *line)
 do_rules is called from 3 different places, under 3 very different contexts.
 1. getComputedStyle(node), creates a new style object s,
 loops through all the css descriptors, matches them against node,
-and then applies the rules to s.
-s is accessed internally through window.soj$,
-and also passed in as the style parameter.
+and then applies the rules to s. s is accessed internally through window.soj$,
+via the gcs (get computed style) primitives, so that css.c can remain
+engine portable.
 Because matchtype is 0, the before and after selectors don't match,
 and they shouldn't, because before after attributes
 wouldn't apply to node.style but rather node.textnode.style.
@@ -3030,28 +3030,25 @@ matchhover is false so hover selectors won't match either, nor should they.
 2. The cssText setter on a style object.
 There are no selectors here, just rules, as supplied by the calling function.
 window.soj$ is the style object for internal use.
-style parameter is the style object, supplied by the calling function.
 3. Apply all css descriptors to all nodes at javascript startup.
 This is done by cssEverybody().
 It is indicated by bulkmatch = true.
 t indicates the node being examined.
 3a. matchtype is 0 for the plain selectors.
-style will be set to node.style.
+style will be set to node.style by the injectSetup function.
 3b. matchtype is 1 for the before selectors.
 3c. matchtype is 2 for the after selectors.
 Then repeat 3a 3b 3c with matchhover = true.
 This is done only to see if the node becomes visible on hover.
 Only looking for display=something or visibility=visible.
 Set a flag if that is found.
-To reiterate, t is not null, indicating the node,
-from cssEverybody.
-We get the style object from the node.
+To reiterate, t is not null, indicating the node, from cssEverybody.
+We derive the style object from the node.
 If matchtype is nonzero then we are looking at t.TextNode.style,
-for the before or after text.
-For matchtype == 0 we access t.style.
+for the before or after text. For matchtype == 0 we access t.style.
 *********************************************************************/
 
-static void do_rules(const Tag *t, jsobjtype style, struct rule *r0, int highspec)
+static void do_rules(const Tag *t, struct rule *r0, int highspec)
 {
 	jsobjtype cx = cf->cx;
 	struct rule *r, *r1;
@@ -3106,23 +3103,15 @@ in fact it's easier to list the tags that allow it.
 			while(u->sibling) u = u->sibling;
 			textobj = u->jv;
 		}
-		if (matchtype) {
-			if(textobj)
-				style = get_property_object_0(cx, textobj, "style");
-// style is now the style object on the before or after text,
-// ready for attributes
-		} else {
-			style = get_property_object_0(cx, t->jv, "style");
-		}
 	}
 
-	if(!style) {
-		debugPrint(3, "no style object in do_rules()");
+	if(!has_master("soj$")) {
 		if(t)
-			debugPrint(3, "t %d %s", t->seqno, t->info->name);
+			debugPrint(3, "no master style object for tag %d %s", t->seqno, t->info->name);
 		else
-			debugPrint(3, "t is nil");
-		}
+			debugPrint(3, "no master style object for tag nil");
+		return;
+	}
 
 	s = initString(&sl);
 	for (r = r0; r; r = r->next) {
@@ -3137,12 +3126,12 @@ in fact it's easier to list the tags that allow it.
 			    (stringEqual(r->atname, "visibility") &&
 			     strlen(r->atval)
 			     && !stringEqual(r->atval, "hidden")))
-				set_property_bool_0(cx, style, "hov$vis", true);
+				set_gcs_bool("hov$vis", true);
 // what about color anything other than transparent?
 // If invisible because color = transparent, then color = red unhides it.
 			if (stringEqual(r->atname, "color") && strlen(r->atval)
 			    && !stringEqual(r->atval, "transparent"))
-				set_property_bool_0(cx, style, "hov$col", true);
+				set_gcs_bool("hov$col", true);
 			continue;
 		}
 // special code for before after content
@@ -3156,8 +3145,8 @@ in fact it's easier to list the tags that allow it.
 		}
 // if it appears to be part of the prototype, and not the object,
 // I won't write it.
-		has = has_property_0(cx, style, r->atname);
-		what = typeof_property_0(cx, style, r->atname);
+		has = has_gcs(r->atname);
+		what = typeof_gcs(r->atname);
 		if (has && !what)
 			continue;
 
@@ -3171,7 +3160,7 @@ in fact it's easier to list the tags that allow it.
 // Don't write if the specificity is less
 		a = allocMem(strlen(r->atname) + 6);
 		sprintf(a, "%s$$scy", r->atname);
-		spec = get_property_number_0(cx, style, a);
+		spec = get_gcs_number(a);
 		if (spec > highspec) {
 			free(a);
 			continue;
@@ -3179,13 +3168,13 @@ in fact it's easier to list the tags that allow it.
 
 		if (bulkmatch)
 			++bulktotal;
-		set_property_string_0(cx, style, r->atname, r->atval);
-		set_property_number_0(cx, style, a, highspec);
+		set_gcs_string(r->atname, r->atval);
+		set_gcs_number(a, highspec);
 		free(a);
 	}
 
 	if(t)
-		delete_property_win(cf, "soj$");
+		delete_master("soj$");
 	if (!sl)
 		return;
 
@@ -3216,7 +3205,7 @@ the css rules. If there's ever a document.head.getComputedStyle or some such,
 where "this" is not the window object, then we have to make some changes.
 *********************************************************************/
 
-void cssApply(int frameNumber, jsobjtype node, jsobjtype destination)
+void cssApply(int frameNumber, jsobjtype node)
 {
 	Frame *save_cf = cf;
 	jsobjtype cx;
@@ -3245,7 +3234,7 @@ void cssApply(int frameNumber, jsobjtype node, jsobjtype destination)
 
 	for (d = cm->descriptors; d; d = d->next) {
 		if (qsaMatchGroup(t, node, d))
-			do_rules(0, destination, d->rules, d->highspec);
+			do_rules(0, d->rules, d->highspec);
 	}
 
 done:
@@ -3253,12 +3242,12 @@ done:
 	gcsmatch = false;
 }
 
-void cssText(jsobjtype node, const char *rulestring)
+void cssText(const char *rulestring)
 {
 	struct desc *d0;
 	char *s;
 // check arguments.
-	if (!node || !rulestring)
+	if (!rulestring)
 		return;
 // Is this suppose to replace the existing properties, or add to them?
 // I have no idea; for now it just adds to them.
@@ -3285,7 +3274,7 @@ void cssText(jsobjtype node, const char *rulestring)
 		cssPiecesFree(d0);
 		return;
 	}
-	do_rules(0, node, d0->rules, 100000);
+	do_rules(0, d0->rules, 100000);
 	cssPiecesFree(d0);
 }
 
@@ -3596,7 +3585,7 @@ static void cssEverybody(void)
 			for (u = a; (t = *u); ++u) {
 				if (!t->jv)
 					continue;
-				do_rules(t, 0, d->rules, t->highspec);
+				do_rules(t, d->rules, t->highspec);
 			}
 			nzFree(a);
 		}

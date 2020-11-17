@@ -365,8 +365,8 @@ void cssFree(Frame *f);
 Tag **querySelectorAll(const char *selstring, Tag *top);
 Tag *querySelector(const char *selstring, Tag *top);
 bool querySelector0(const char *selstring, Tag *top);
-void cssApply(int frameNumber, jsobjtype node, jsobjtype destination);
-void cssText(jsobjtype node, const char *rulestring);
+void cssApply(int frameNumber, jsobjtype node);
+void cssText(const char *rulestring);
 
 /* sourcefile=jseng-duk.c */
 void disconnectTagObject(Tag *t);
@@ -414,6 +414,7 @@ bool run_event_doc(const Frame *f, const char *pname, const char *evname);
 bool bubble_event_t(const Tag *t, const char *name);
 void set_master_bool(const char *name, bool v);
 void delete_master(const char *name);
+bool has_master(const char *name);
 char *get_property_url_t(const Tag *t, bool action);
 char *get_style_string_t(const Tag *t, const char *name);
 void delete_property_t(const Tag *t, const char *name);
@@ -438,6 +439,12 @@ void establish_js_option(Tag *t, Tag *sel);
 void establish_js_textnode(Tag *t, const char *fpn);
 void domLink(Tag *t, const char *classname, const char *href, const char *list, const Tag *owntag, int extra);
 void rebuildSelectors(void);
+bool has_gcs(const char *name);
+enum ej_proptype typeof_gcs(const char *name);
+int get_gcs_number(const char *name);
+void set_gcs_number(const char *name, int n);
+void set_gcs_bool(const char *name, bool v);
+void set_gcs_string(const char *name, const char *s);
 
 #ifdef __cplusplus
 }
