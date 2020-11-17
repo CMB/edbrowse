@@ -79,7 +79,7 @@ void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n"
 void writeShortCache(void) { }
 bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
 void cssDocLoad(int n, char *s, bool pageload) { puts("css doc load"); }
-void cssApply(int n, jsobjtype node) { puts("css apply"); }
+void cssApply(int n, Tag *t) { puts("css apply"); }
 void cssText(const char *rulestring) { puts("css text"); }
 void cssFree(Frame *f) { }
 bool javaOK(const char *url) { return true; }
@@ -2226,7 +2226,11 @@ static bool nat_cssApply(JSContext *cx, unsigned argc, JS::Value *vp)
 	int n = args[0].toInt32();
 	JS::RootedObject node(cx);
 	JS_ValueToObject(cx, args[1], &node);
-	cssApply(n, node);
+	Tag *t = tagFromObject(node);
+	if(t)
+		cssApply(n, t);
+	else
+		debugPrint(3, "eb$cssApply is passed an object that does not correspond to an html tag");
 	args.rval().setUndefined();
 	return true;
 }

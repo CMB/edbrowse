@@ -3205,19 +3205,13 @@ the css rules. If there's ever a document.head.getComputedStyle or some such,
 where "this" is not the window object, then we have to make some changes.
 *********************************************************************/
 
-void cssApply(int frameNumber, jsobjtype node)
+void cssApply(int frameNumber, Tag *t)
 {
 	Frame *save_cf = cf;
-	jsobjtype cx;
-	Tag *t = tagFromJavaVar(node);
 	struct cssmaster *cm;
 	struct desc *d;
 
-	if (!t)			// should never happen
-		return;
-
 	frameFromWindow(frameNumber);
-	cx = cf->cx;
 
 // I think the root is document, not the current node, but that is not clear.
 	rootnode = 0;
@@ -3228,12 +3222,12 @@ void cssApply(int frameNumber, jsobjtype node)
 // it's a getComputedStyle match
 	gcsmatch = true;
 	nzFree(t->jclass);
-	t->jclass = get_property_string_0(cx, node, "class");
+	t->jclass = get_property_string_t(t, "class");
 	nzFree(t->id);
-	t->id = get_property_string_0(cx, node, "id");
+	t->id = get_property_string_t(t, "id");
 
 	for (d = cm->descriptors; d; d = d->next) {
-		if (qsaMatchGroup(t, node, d))
+		if (qsaMatchGroup(t, 0, d))
 			do_rules(0, d->rules, d->highspec);
 	}
 

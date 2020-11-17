@@ -2133,9 +2133,15 @@ static duk_ret_t native_qs0(duk_context * cx)
 
 static duk_ret_t native_cssApply(duk_context * cx)
 {
+	jsobjtype node;
+	Tag *t;
 	jsInterruptCheck(cx);
-	if (duk_is_object(cx, 1))
-		cssApply(duk_get_number(cx, 0), duk_get_heapptr(cx, 1));
+	node = duk_get_heapptr(cx, 1);
+	t = tagFromJavaVar(node);
+	if(t)
+		cssApply(duk_get_number(cx, 0), t);
+	else
+		debugPrint(3, "eb$cssApply is passed an object that does not correspond to an html tag");
 	duk_pop_2(cx);
 	return 0;
 }
