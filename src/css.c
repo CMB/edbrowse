@@ -1834,10 +1834,7 @@ struct sibnode {
 	char tag[MAXTAGNAME];
 	int nodeType;
 	int myself;
-	union {
-		Tag *t;
-		jsobjtype j;
-	} u;
+	Tag *t;
 };
 static struct sibnode *sibs;
 
@@ -1945,7 +1942,7 @@ static int spreadKids(Tag *t)
 			ntype = 8;
 		sibs[i].nodeType = ntype;
 		sibs[i].myself = 0;
-		sibs[i].u.t = u;
+		sibs[i].t = u;
 	}
 	return ns;
 }
@@ -2324,8 +2321,8 @@ all the div sections just below the current node.
 			ns = spreadKids(t);
 			rc = true;	// empty
 			for (i = 0; i < ns; ++i) {
-				jsobjtype w;
 				char *v;
+				Tag *u;
 				ntype = sibs[i].nodeType;
 				if (ntype == 8)	// comment
 					continue;
@@ -2334,8 +2331,7 @@ all the div sections just below the current node.
 					break;
 				}
 // text node has to be empty.
-				if (t) {
-					Tag *u = sibs[i].u.t;
+				u = sibs[i].t;
 					if (bulkmatch) {
 						if (u->textval && *u->textval) {
 							rc = false;
@@ -2343,16 +2339,7 @@ all the div sections just below the current node.
 						}
 						continue;
 					}
-					w = u->jv;
-				} else {
-					w = sibs[i].u.j;
-				}
-				if (!w) {	// should not happen
-					rc = false;
-					break;
-				}
-jsobjtype cx = t->f0->cx;
-				v = get_property_string_0(cx, w, "data");
+				v = get_property_string_t(u, "data");
 				rc = (!v || !*v);
 				nzFree(v);
 				if (!rc)
@@ -2798,9 +2785,8 @@ bool querySelector0(const char *selstring, Tag *top)
 }
 
 // replace each attr(foo) with the value of attribute foo
-static char *attrify(jsobjtype obj, char *line)
+static char *attrify(const Tag *r, char *line)
 {
-	jsobjtype cx = cf->cx;
 	char *s;
 	int sl;
 	char *t, *t1, *t2, *v;
@@ -2815,7 +2801,7 @@ static char *attrify(jsobjtype obj, char *line)
 		*t2++ = 0;
 		stringAndBytes(&s, &sl, t, t1 - t);
 		t1 += 5;
-		v = get_property_string_0(cx, obj, t1);
+		v = get_property_string_t(r, t1);
 		if (v) {
 			stringAndString(&s, &sl, v);
 			nzFree(v);
@@ -2859,11 +2845,10 @@ for the before or after text. For matchtype == 0 we access t.style.
 
 static void do_rules(const Tag *t, struct rule *r0, int highspec)
 {
-	jsobjtype cx = cf->cx;
 	struct rule *r, *r1;
 	char *s, *s_attr;
 	int sl;
-	jsobjtype textobj;
+	const Tag *tn; // the text node that holds before or after text
 	char *a;
 	int spec;
 
@@ -2906,11 +2891,11 @@ in fact it's easier to list the tags that allow it.
 			return; // should never happen
 // this is temporary
 		if(matchtype == 1)
-			textobj = t->firstchild->jv;
+			tn = t->firstchild;
 		if(matchtype == 2) {
 			const Tag *u = t->firstchild;
 			while(u->sibling) u = u->sibling;
-			textobj = u->jv;
+			tn = u;
 		}
 	}
 
@@ -2996,12 +2981,12 @@ in fact it's easier to list the tags that allow it.
 		s[0] = ' ';
 	}
 // turn attr(foo) into node[foo]
-	s_attr = attrify(t->jv, s);
+	s_attr = attrify(t, s);
 	nzFree(s);
 	s = s_attr;
-	set_property_string_0(cx, textobj, "data", s);
+	set_property_string_t(tn, "data", s);
 	nzFree(s);
-	set_property_bool_0(cx, textobj, "inj$css", true);
+	set_property_bool_t(tn, "inj$css", true);
 }
 
 /*********************************************************************
@@ -3386,7 +3371,7 @@ static void cssEverybody(void)
 			if (!a)
 				continue;
 			for (u = a; (t = *u); ++u) {
-				if (!t->jv)
+				if (!t->jslink)
 					continue;
 				do_rules(t, d->rules, t->highspec);
 			}

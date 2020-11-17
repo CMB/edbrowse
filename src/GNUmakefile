@@ -108,7 +108,7 @@ SMV=52
 endif
 #  I added -Wno-psabi to supress warning   changed in GCC 7.1
 #  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
-HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o isup.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o html.o decorate.o html-tidy.o
+HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o isup.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o html.o decorate.o html-tidy.o css.o
 js_hello_moz : js_hello_moz.cpp
 	g++ -Wno-psabi -I/usr/include/mozjs-$(SMV) $(CXXFLAGS) js_hello_moz.cpp -lmozjs-$(SMV) $(HELLOEXTRA) -lstdc++ -lpthread -lreadline -lpcre -lcurl -ltidy -o js_hello_moz
 

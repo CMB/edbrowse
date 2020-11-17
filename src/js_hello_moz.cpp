@@ -76,12 +76,6 @@ char *userAgents[MAXAGENT + 1];
 char *currentAgent;
 void ebClose(int n) { exit(n); }
 void domOpensWindow(const char *href, const char *u) { printf("set to open %s\n", href); }
-void writeShortCache(void) { }
-bool matchMedia(char *t) { printf("match media %s\n", t); return false; }
-void cssDocLoad(int n, char *s, bool pageload) { puts("css doc load"); }
-void cssApply(int n, Tag *t) { puts("css apply"); }
-void cssText(const char *rulestring) { puts("css text"); }
-void cssFree(Frame *f) { }
 bool javaOK(const char *url) { return true; }
 bool mustVerifyHost(const char *url) { return false; }
 const char *findAgentForURL(const char *url) { return 0; }
@@ -90,9 +84,6 @@ const char *findProxyForURL(const char *url) { return 0; }
 const char *mailRedirect(const char *to, const char *from, 			 const char *reply, const char *subj) { return 0; }
 void readConfigFile(void) { }
 const char *fetchReplace(const char *u){return 0;}
-Tag **querySelectorAll(const char *selstring, Tag *top){return 0;}
-Tag *querySelector(const char *selstring, Tag *top){return 0;}
-bool querySelector0(const char *selstring, Tag *top){return false;}
 
 // Here begins code that can eventually move to jseng-moz.cpp,
 // or maybe html.cpp or somewhere.
