@@ -107,6 +107,7 @@ static void watch_free(void *udata, void *p)
 	if (t) {
 		debugPrint(4, "gc %p", p);
 		t->jslink = false;
+		t->jv = 0;
 		killTag(t);
 	}
 }

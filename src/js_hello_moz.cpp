@@ -84,8 +84,6 @@ void readConfigFile(void) { }
 const char *fetchReplace(const char *u){return 0;}
 
 extern JSContext *cxa; // the context for all
-extern JS::RootedObject *rw0;
-extern JS::RootedObject *mw0;
 
 static void ReportJSException(void)
 {
@@ -113,16 +111,6 @@ JS_ClearPendingException(cxa);
 extern const char *stringize(JS::HandleValue v);
 extern JSObject *frameToCompartment(const Frame *f);
 
-static void unlinkJSContext(int sn)
-{
-char buf[16];
-sprintf(buf, "g%d", sn);
-debugPrint(3, "remove js context %d", sn);
-// I think we're already in a compartment, but just to be safe...
-        JSAutoCompartment ac(cxa, *rw0);
-JS_DeleteProperty(cxa, *rw0, buf);
-}
-
 // This assumes you are in the compartment where you want to exec the file
 static void execScript(const char *script)
 {
@@ -136,6 +124,7 @@ else
 puts(stringize(v));
 }
 
+static void *wins[3];
 int main(int argc, const char *argv[])
 {
 bool iaflag = false; // interactive
@@ -143,8 +132,8 @@ int c; // compartment
 int top; // number of windows
 char buf[16];
 
-// It's a test program, let's see the stuff.
-debugLevel = 5;
+// It's a test program, let's see some basic errors
+debugLevel = 3;
 selectLanguage();
 
 static char myhome[] = "/snork";
@@ -164,9 +153,11 @@ if(!cf->jslink) {
 printf("create failed on %d\n", c+1); 
 return 3;
 }
+wins[c] = cf->winobj;
 }
 
 c = 0; // back to the first window
+cf->winobj = wins[c];
 //  puts("after loop");
 
 {
@@ -201,6 +192,7 @@ puts(tempname);
 cf->fileName = tempname;
 c = line[1] - '1';
 cf->gsn = c+1;
+cf->winobj = wins[c];
 continue;
 }
 
@@ -227,15 +219,14 @@ nzFree(res);
 }
 
 // I should be able to remove globals in any order, need not be a stack
-for(c=0; c<top; ++c)
-unlinkJSContext(c+1);
-
-// rooted objects have to free in the reverse (stack) order.
-delete mw0;
-delete rw0;
+for(c=0; c<top; ++c) {
+cf->jslink = true;
+cf->gsn = c+1;
+cf->winobj = wins[c];
+freeJSContext(cf);
+}
 
 puts("destroy");
-JS_DestroyContext(cxa);
-    JS_ShutDown();
+jsClose();
     return 0;
 }

@@ -30,13 +30,21 @@ JSContext *cxa; // the context for all
 // I'll still use cx when it is passed in, as it must be for native methods.
 // But it will be equal to cxa.
 
+struct cro { // chain of rooted objects
+	struct cro *prev;
+	JS::RootedObject *m;
+	bool inuse;
+};
+typedef struct cro Cro;
+static Cro *g_tail, *o_tail; // chain of globals and tags
+
 // Rooting window, to hold on to any objects that edbrowse might access.
-JS::RootedObject *rw0;
+static JS::RootedObject *rw0;
 
 // Master window, with large and complex functions that we want to
 // compile and store only once. Unfortunately, we can't put much here,
 // because of security reasons.
-JS::RootedObject *mw0;
+static JS::RootedObject *mw0;
 
 /*********************************************************************
 The _0 methods are the lowest level, calling upon the engine.
@@ -1562,24 +1570,10 @@ is better than none.
 
 JSObject *frameToCompartment(const Frame *f)
 {
-if(!f->jslink)
-goto fail;
-{
-char buf[16];
-sprintf(buf, "g%d", f->gsn);
-JS::RootedValue v(cxa);
-JS::RootedObject o(cxa);
-	        JSAutoCompartment ac(cxa, *rw0);
-if(JS_GetProperty(cxa, *rw0, buf, &v) &&
-v.isObject()) {
-JS_ValueToObject(cxa, v, &o);
-// cast from rooted object to JSObject *
-return o;
-}
-}
-fail:
-debugPrint(1, "Warning: no compartment for frame %d", f->gsn);
-return *rw0;
+	if(f->jslink && f->winobj)
+		return *(((Cro*)f->winobj)->m);
+	debugPrint(1, "Warning: no compartment for frame %d", f->gsn);
+	return *rw0;
 }
 
 // Create a new tag for this pointer, only called from document.createElement().
@@ -3409,7 +3403,6 @@ rw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nul
 	}
 
 	{
-	extern const char thirdJS[];
       JS::CompartmentOptions options;
 mw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
         JSAutoCompartment ac(cxa, *mw0);
@@ -3426,76 +3419,72 @@ objval = JS::ObjectValue(*docroot);
 		JS_DefineProperty(cxa, *mw0, "document", objval,
 		(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 		JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
-// Do we need anything in the master window, besides our third party debugging tools?
-		                JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa)); // global
-		run_script_0(g, thirdJS, "third.js", 1);
 	}
 }
 
-static void setup_window_2(void);
+static void setup_window_2(int sn);
 
 // This is an edbrowse context, in a frame,
 // unrelated to the mozilla js context.
 void createJSContext(Frame *f)
 {
+	if(!allowJS)
+		return;
 	if(!cxa)
 		js_start();
 
-int sn = f->gsn;
-char buf[16];
-sprintf(buf, "g%d", sn);
-debugPrint(3, "create js context %d", sn);
+debugPrint(3, "create js context %d", f->gsn);
       JS::CompartmentOptions options;
 JSObject *g = JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options);
-if(!g)
-return;
+	if(!g) {
+		debugPrint(1, "Failure to create javascript compartment; javascript is disabled.");
+		allowJS = false;
+		return;
+	}
+	f->jslink = true;
+
+	Cro *u = (Cro *)allocMem(sizeof(Cro));
+	u->m = new JS::RootedObject(cxa, g);
+	u->prev = g_tail;
+	f->winobj = g_tail = u;
+	u->inuse = true;
+
 JS::RootedObject global(cxa, g);
         JSAutoCompartment ac(cxa, g);
         JS_InitStandardClasses(cxa, global);
 JS_DefineFunctions(cxa, global, nativeMethodsWindow);
 
-JS::RootedValue objval(cxa); // object as value
-objval = JS::ObjectValue(*global);
-if(!JS_DefineProperty(cxa, *rw0, buf, objval, JSPROP_STD))
-return;
-f->jslink = true;
-
-// Link back to the master window.
-objval = JS::ObjectValue(**mw0);
-JS_DefineProperty(cxa, global, "mw$", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT));
-
-// Link to root window, debugging only.
-// Don't do this in production; it's a huge security risk!
-objval = JS::ObjectValue(**rw0);
-JS_DefineProperty(cxa, global, "rw0", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT));
-
 // window
-objval = JS::ObjectValue(*global);
-JS_DefineProperty(cxa, global, "window", objval,
+JS::RootedValue v(cxa);
+v = JS::ObjectValue(*global);
+JS_DefineProperty(cxa, global, "window", v,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
 // time for document under window
 JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
-objval = JS::ObjectValue(*docroot);
-JS_DefineProperty(cxa, global, "document", objval,
+v = JS::ObjectValue(*docroot);
+JS_DefineProperty(cxa, global, "document", v,
 (JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 
 set_property_number_0(docroot, "eb$seqno", 0);
-set_property_number_0(docroot, "eb$ctx", sn);
+set_property_number_0(docroot, "eb$ctx", f->gsn);
 // Sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
-JS::RootedValue v(cxa);
 JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, f->fileName));
 v.setString(m);
 JS_DefineProperty(cxa, global, "eb$url", v,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
-setup_window_2();
+// what use to be the master window
+JS::RootedObject mw(cxa, JS_NewObject(cxa, nullptr));
+v = JS::ObjectValue(*mw);
+JS_DefineProperty(cxa, global, "mw$", v,
+(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
+
+setup_window_2(f->gsn);
 }
 
 #ifdef DOSLIKE			// port of uname(p), and struct utsname
@@ -3513,7 +3502,7 @@ int uname(struct utsname *pun)
 #include <sys/utsname.h>
 #endif // DOSLIKE y/n // port of uname(p), and struct utsname
 
-static void setup_window_2(void)
+static void setup_window_2(int sn)
 {
 JS::RootedObject nav(cxa); // navigator object
 JS::RootedObject navpi(cxa); // navigator plugins
@@ -3525,9 +3514,14 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	int i;
 	char save_c;
 	extern const char startWindowJS[];
+	extern const char thirdJS[];
 
 // startwindow.js stored as an internal string
-jsRunScriptWin(startWindowJS, "startwindow.js", 1);
+	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
+
+// third party debugging stuff
+	if(sn == 1)
+		jsRunScriptWin(thirdJS, "third.js", 1);
 
 	nav = get_property_object_0(g, "navigator");
 	if (!nav)
@@ -3599,22 +3593,19 @@ jsRunScriptWin(
 		set_master_bool("throwDebug", true);
 }
 
-// the garbage collector can eat this window
-static void unlinkJSContext(int sn)
-{
-char buf[16];
-sprintf(buf, "g%d", sn);
-debugPrint(3, "remove js context %d", sn);
-// I think we're already in a compartment, but just to be safe...
-        JSAutoCompartment ac(cxa, *rw0);
-JS_DeleteProperty(cxa, *rw0, buf);
-}
-
 void freeJSContext(Frame *f)
 {
 	debugPrint(5, "> free frame %d", f->gsn);
 	if(f->jslink) {
-		unlinkJSContext(f->gsn);
+		debugPrint(3, "remove js context %d", f->gsn);
+		Cro *u = (Cro *)f->winobj;
+		u->inuse = false;
+		while(u && !u->inuse && u == g_tail) {
+			Cro *v = u->prev;
+			delete u->m;
+			free(u);
+			g_tail = u = v;
+		}
 		 f->jslink = false;
 	}
 	f->cx = f->winobj = f->docobj = 0;
@@ -4181,6 +4172,16 @@ void jsClose(void)
 // see if javascript is running.
 	if(!cxa)
 		return;
+	if(g_tail) {
+		debugPrint(1, "global javascript compartments remain");
+// can't really trust the shutdown process at this point
+		return;
+	}
+	if(o_tail) {
+		debugPrint(1, "javascript tag objects remain");
+// can't really trust the shutdown process at this point
+		return;
+	}
 // rooted objects have to free in the reverse (stack) order.
 	delete mw0;
 	delete rw0;

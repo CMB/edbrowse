@@ -2004,7 +2004,6 @@ void killTag(Tag *t)
 		++cw->deadTags;
 	}
 	t->deleted = true;
-	t->jv = NULL;
 
 // unlink it from the tree above.
 	parent = t->parent;
