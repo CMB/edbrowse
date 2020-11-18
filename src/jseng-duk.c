@@ -4191,3 +4191,8 @@ void set_gcs_string(const char *name, const char *s)
 	duk_pop_2(cx);
 }
 
+void jsClose(void)
+{
+	if(js_running)
+		duk_destroy_heap(context0);
+}

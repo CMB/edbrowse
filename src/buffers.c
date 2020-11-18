@@ -5982,8 +5982,11 @@ replaceframe:
 		while (true) {
 			if (++cx > maxSession)
 				cx = 1;
-			if (cx == context)
+			if (cx == context) {
+// A controled shutdown; try to close down javascript; see if it blows up.
+				jsClose();
 				ebClose(0);
+			}
 			if (!sessionList[cx].lw)
 				continue;
 			cxSwitch(cx, true);

@@ -4173,3 +4173,14 @@ void set_gcs_string(const char *name, const char *s)
 		JS_DefineProperty(cxa, j, name, v, JSPROP_STD);
 }
 
+void jsClose(void)
+{
+	if(!cxa)
+		return;
+// javascript is running.
+// rooted objects have to free in the reverse (stack) order.
+	delete mw0;
+	delete rw0;
+	JS_DestroyContext(cxa);
+	    JS_ShutDown();
+}
