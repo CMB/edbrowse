@@ -2829,6 +2829,12 @@ c.prototype.offsetWidth = 120;
 }
 })();
 
+// This is needed by mozilla, not by duktape, not sure how duktape
+// skates past it. See the first call to apch1 in decorate.c.
+// If this is <html> from the expanded frame, linking into an object
+// of class Document, not the window document, it still has to work.
+Document.prototype.eb$apch1 = document.eb$apch1;
+
 /*********************************************************************
 As promised, Form is weird.
 If you add an input to a form, it adds under childNodes in the usual way,

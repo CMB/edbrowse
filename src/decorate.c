@@ -569,12 +569,11 @@ static void prerenderNode(Tag *t, bool opentag)
 	const char *a;		/* usually an attribute */
 	Tag *cdt;
 
-	debugPrint(6, "prend %c%s %d%s",
-		   (opentag ? ' ' : '/'), t->info->name,
-		   t->seqno, (t->step >= 1 ? "-" : ""));
-
 	if (t->step >= 1)
 		return;
+	debugPrint(6, "prend %c%s %d",
+		   (opentag ? ' ' : '/'), t->info->name,
+		   t->seqno);
 	if (!opentag)
 		t->step = 1;
 
