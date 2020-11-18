@@ -1498,10 +1498,13 @@ t->jslink = true;
 
 void disconnectTagObject(Tag *t)
 {
-char buf[16];
-sprintf(buf, "o%d", t->gsn);
-JS_DeleteProperty(cxa, *rw0, buf);
-t->jslink = false;
+	char buf[16];
+	if(!t->jslink)
+		return; // already disconnected
+	        JSAutoCompartment ac(cxa, *rw0);
+	sprintf(buf, "o%d", t->gsn);
+	JS_DeleteProperty(cxa, *rw0, buf);
+	t->jslink = false;
 }
 
 // I assume we are in a compartment.

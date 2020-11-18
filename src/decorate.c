@@ -1673,7 +1673,6 @@ void freeTags(struct ebWindow *w)
 
 	for (i = 0; i < w->numTags; ++i, ++e) {
 		t = *e;
-		disconnectTagObject(t);
 		freeTag(t);
 	}
 
