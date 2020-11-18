@@ -4064,6 +4064,8 @@ void rebuildSelectors(void)
 }
 
 // Some primitives needed by css.c. These bounce through window.soj$
+// These are called from do_rules(), which is called from a native method,
+// So a compartment is always set.
 static const char soj[] = "soj$";
 static void sofail() { debugPrint(5, "no style object"); }
 
@@ -4072,7 +4074,7 @@ bool has_gcs(const char *name)
 	bool found;
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+//	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
 		sofail();
 		return false;
@@ -4087,7 +4089,7 @@ enum ej_proptype typeof_gcs(const char *name)
 	enum ej_proptype l;
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+//	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
 		sofail();
 		return EJ_PROP_NONE;
@@ -4102,7 +4104,7 @@ int get_gcs_number(const char *name)
 {
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+//	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
 		sofail();
 		return -1;
@@ -4119,7 +4121,7 @@ void set_gcs_number(const char *name, int n)
 	bool found;
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+//	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
 		sofail();
 		return;
@@ -4138,7 +4140,7 @@ void set_gcs_bool(const char *name, bool b)
 	bool found;
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+//	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
 		sofail();
 		return;
@@ -4157,7 +4159,7 @@ void set_gcs_string(const char *name, const char *s)
 	bool found;
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+//	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
 		sofail();
 		return;
@@ -4173,11 +4175,12 @@ void set_gcs_string(const char *name, const char *s)
 		JS_DefineProperty(cxa, j, name, v, JSPROP_STD);
 }
 
+// edbrowse is about to exit; close down javascript.
 void jsClose(void)
 {
+// see if javascript is running.
 	if(!cxa)
 		return;
-// javascript is running.
 // rooted objects have to free in the reverse (stack) order.
 	delete mw0;
 	delete rw0;
