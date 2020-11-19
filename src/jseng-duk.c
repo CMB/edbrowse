@@ -2426,11 +2426,11 @@ static void setup_window_2(void)
 	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
 // These calls are redundent unless this is the first window
 	if (debugClone)
-		set_master_bool("cloneDebug", true);
+		set_property_bool_0(cx, w, "cloneDebug", true);
 	if (debugEvent)
-		set_master_bool("eventDebug", true);
+		set_property_bool_0(cx, w, "eventDebug", true);
 	if (debugThrow)
-		set_master_bool("throwDebug", true);
+		set_property_bool_0(cx, w, "throwDebug", true);
 }
 
 static void freeJSContext_0(jsobjtype cx)
@@ -2528,6 +2528,13 @@ bool has_property_t(const Tag *t, const char *name)
 	if(!t->jslink || !allowJS)
 		return false;
 	return has_property_0(t->f0->cx, t->jv, name);
+}
+
+bool has_property_win(const Frame *f, const char *name)
+{
+	if(!f->jslink || !allowJS)
+		return false;
+	return has_property_0(f->cx, f->winobj, name);
 }
 
 static void delete_property_0(jsobjtype cx0, jsobjtype parent, const char *name)
@@ -3484,19 +3491,9 @@ bool bubble_event_t(const Tag *t, const char *name)
 	return rc;
 }
 
-void set_master_bool(const char *name, bool v)
+void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
-	set_property_bool_0(cf->cx, context0_obj, name, v);
-}
-
-void delete_master(const char *name)
-{
-	delete_property_0(cf->cx, context0_obj, name);
-}
-
-bool has_master(const char *name)
-{
-	return has_property_0(cf->cx, context0_obj, name);
+	set_property_bool_0(f->cx, f->winobj, name, v);
 }
 
 bool get_property_bool_t(const Tag *t, const char *name)
@@ -3614,11 +3611,6 @@ void set_dataset_string_t(const Tag *t, const char *name, const char *v)
 		set_property_string_0(t->f0->cx, dso, name, v);
 }
 
-void set_property_bool_win(const Frame *f, const char *name, bool v)
-{
-	set_property_bool_0(f->cx, f->winobj, name, v);
-}
-
 void set_property_string_win(const Frame *f, const char *name, const char *v)
 {
 	set_property_string_0(f->cx, f->winobj, name, v);
@@ -3704,7 +3696,7 @@ connectTagObject(t, oo);
 void establish_js_textnode(Tag *t, const char *fpn)
 {
 	connectTagObject(t,
-	 instantiate_0(cf->cx, context0_obj, fpn, "TextNode"));
+	 instantiate_0(cf->cx, cf->winobj, fpn, "TextNode"));
 }
 
 static void processStyles(jsobjtype so, const char *stylestring)
@@ -3831,14 +3823,14 @@ That's how it was for a long time, but I think we only do this on form.
 
 		if (isradio) {	// the first radio button
 			if(!(io = instantiate_array_0(cx,
-			(fakeName ? context0_obj : owner), membername)))
+			(fakeName ? cf->winobj : owner), membername)))
 				return;
 			set_property_string_0(cx, io, "type", "radio");
 		} else {
 /* A standard input element, just create it. */
 			jsobjtype ca;	// child array
 			if(!(io = instantiate_0(cx,
-(fakeName ? context0_obj : owner), membername, classname)))
+(fakeName ? cf->winobj : owner), membername, classname)))
 				return;
 /* not an array; needs the childNodes array beneath it for the children */
 			ca = instantiate_array_0(cx, io, "childNodes");
@@ -4102,33 +4094,30 @@ static void sofail() { debugPrint(5, "no style object"); }
 
 bool has_gcs(const char *name)
 {
-	bool l;
 	duk_context * cx = cf->cx;
-	duk_push_heapptr(cx, context0_obj);
-	if(!duk_get_prop_string(cx, -1, soj)) {
+	if(!duk_get_global_string(cx, soj)) {
 		sofail();
-		duk_pop_2(cx);
+		duk_pop(cx);
 		return false;
 	}
-	l = duk_has_prop_string(cx, -1, name);
-	duk_pop_2(cx);
+	        bool l = duk_has_prop_string(cx, -1, name);
+	duk_pop(cx);
 	return l;
 }
 
 enum ej_proptype typeof_gcs(const char *name)
 {
-	duk_context * cx = cf->cx;
-	enum ej_proptype l;
 	bool rc;
-	duk_push_heapptr(cx, context0_obj);
-	if(!duk_get_prop_string(cx, -1, soj)) {
+	enum ej_proptype l;
+	duk_context * cx = cf->cx;
+	if(!duk_get_global_string(cx, soj)) {
 		sofail();
-		duk_pop_2(cx);
-		return 0;
+		duk_pop(cx);
+		return EJ_PROP_NONE;
 	}
-	rc = duk_get_prop_string(cx, -1, name);
-	l = rc ? top_proptype(cx) : 0;
-	duk_pop_n(cx, 3);
+	        rc = duk_get_prop_string(cx, -1, name);
+	        l = rc ? top_proptype(cx) : 0;
+	duk_pop_2(cx);
 	return l;
 }
 
@@ -4137,59 +4126,55 @@ int get_gcs_number(const char *name)
 	duk_context * cx = cf->cx;
 	int l = -1;
 	bool rc;
-	duk_push_heapptr(cx, context0_obj);
-	if(!duk_get_prop_string(cx, -1, soj)) {
+	if(!duk_get_global_string(cx, soj)) {
 		sofail();
-		duk_pop_2(cx);
+		duk_pop(cx);
 		return -1;
 	}
 	rc = duk_get_prop_string(cx, -1, name);
 	if(rc && duk_is_number(cx, -1))
 		l = duk_get_number(cx, -1);
-	duk_pop_n(cx, 3);
+	duk_pop_2(cx);
 	return l;
 }
 
 void set_gcs_number(const char *name, int n)
 {
 	duk_context * cx = cf->cx;
-	duk_push_heapptr(cx, context0_obj);
-	if(!duk_get_prop_string(cx, -1, soj)) {
+	if(!duk_get_global_string(cx, soj)) {
 		sofail();
-		duk_pop_2(cx);
+		duk_pop(cx);
 		return;
 	}
 	duk_push_int(cx, n);
 	duk_put_prop_string(cx, -2, name);
-	duk_pop_2(cx);
+	duk_pop(cx);
 }
 
 void set_gcs_bool(const char *name, bool v)
 {
 	duk_context * cx = cf->cx;
-	duk_push_heapptr(cx, context0_obj);
-	if(!duk_get_prop_string(cx, -1, soj)) {
+	if(!duk_get_global_string(cx, soj)) {
 		sofail();
-		duk_pop_2(cx);
+		duk_pop(cx);
 		return;
 	}
 	duk_push_boolean(cx, v);
 	duk_put_prop_string(cx, -2, name);
-	duk_pop_2(cx);
+	duk_pop(cx);
 }
 
 void set_gcs_string(const char *name, const char *s)
 {
 	duk_context * cx = cf->cx;
-	duk_push_heapptr(cx, context0_obj);
-	if(!duk_get_prop_string(cx, -1, soj)) {
+	if(!duk_get_global_string(cx, soj)) {
 		sofail();
-		duk_pop_2(cx);
+		duk_pop(cx);
 		return;
 	}
 	duk_push_string(cx, s);
 	duk_put_prop_string(cx, -2, name);
-	duk_pop_2(cx);
+	duk_pop(cx);
 }
 
 void jsClose(void)

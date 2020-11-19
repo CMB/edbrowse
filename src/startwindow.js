@@ -1321,9 +1321,9 @@ for speed and optimization, is lost if the version changes.
 // remember that this is the window object
 dom$.cssGather(false, this);
 
-mw$.soj$ = s;
+this.soj$ = s;
 eb$cssApply(this.document.eb$ctx, e);
-delete mw$.soj$;
+delete this.soj$;
 
 /*********************************************************************
 Now for the confusion.
@@ -1413,9 +1413,9 @@ delete s[k.replace(/\$(\$scy|pri)$/, "")];
 }
 
 // apply all the css rules
-mw$.soj$ = s;
+w.soj$ = s;
 eb$cssApply(w.document.eb$ctx, e);
-delete mw$.soj$;
+delete w.soj$;
 // style has been recomputed
 // descend into the children
 if(e.childNodes)
@@ -2027,7 +2027,7 @@ dom$.eb$clone = function(node1,deep) {
 var node2;
 var i, j;
 var kids = null;
-var debug = mw$.cloneDebug;
+var debug = my$win().cloneDebug;
 
 if(node1.dom$class == "CSSStyleDeclaration") {
 if(debug) alert3("copy style");
@@ -2424,7 +2424,7 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 document.createEvent = function(unused) { return new Event; }
 
 document.dispatchEvent = function (e) {
-if(mw$.eventDebug) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno:"?") + " " + e.type);
+if(my$win().eventDebug) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno:"?") + " " + e.type);
 e.target = this;
 var t = this;
 var pathway = [];
@@ -2439,11 +2439,11 @@ t = pathway[--l];
 e.eventPhase = (l?1:2); // capture or current target
 var fn = "on" + e.type;
 if(typeof t[fn] == "function") {
-if(mw$.eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
+if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
 e.currentTarget = t;
-if(!t[fn + "$$array"] && mw$.eventDebug) alert3("fire assigned");
+if(!t[fn + "$$array"] && my$win().eventDebug) alert3("fire assigned");
 var r = t[fn](e);
-if(!t[fn + "$$array"] && mw$.eventDebug) alert3("endfire assigned");
+if(!t[fn + "$$array"] && my$win().eventDebug) alert3("endfire assigned");
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.defaultPrevented;
 }
@@ -2458,7 +2458,7 @@ if(typeof t[fn] == "function") {
 // If function was just put here, not part of addEventListener,
 // don't run it on the second phase or you're running it twice.
 if(!t[fn + "$$array"]) continue;
-if(mw$.eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
+if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
@@ -2514,7 +2514,7 @@ if(once) handler.do$once = true;
 if(passive) handler.do$passive = true;
 // event handler serial number, for debugging
 if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
-if(mw$.eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 
@@ -2559,7 +2559,7 @@ this[evarray].push(handler);
 eb$unlisten = document.eb$unlisten = function(ev, handler, iscapture, addon) {
 var ehsn = (handler.ehsn ? handler.ehsn : 0);
 if(addon) ev = "on" + ev;
-if(mw$.eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
+if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
 
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -2698,7 +2698,7 @@ this.inj$before = true;
 } else z = this.firstChild;
 break;
 }
-mw$.soj$ = z.style;
+my$win().soj$ = z.style;
 }
 
 /*********************************************************************
@@ -3178,7 +3178,7 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(mw$.eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3197,7 +3197,7 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(mw$.eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3215,7 +3215,7 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(mw$.eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3232,7 +3232,7 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(mw$.eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3703,7 +3703,7 @@ var evname = evs[j];
 eval(cn + '["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(mw$.eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f; \
 /* I assume this clobbers the addEventListener system */ \
@@ -3889,7 +3889,7 @@ eb$cssDocLoad(w.document.eb$ctx, css_all, pageload);
 
 // Apply rules to a given style object, which is this.
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssTextGet,
-set: function(h) { mw$.soj$ = this; eb$cssText.call(this,h); delete mw$.soj$; } });
+set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
 eb$qs$start = function() {
 // This is a stub for now.
@@ -3982,7 +3982,7 @@ document.xmlVersion = 0;
 // This is only meaningful in duktape.
 if(window.Duktape) {
 Duktape.errCreate = function (e) {
-if(mw$.throwDebug) {
+if(my$win().throwDebug) {
 var n = e.lineNumber;
 var msg = "";
 if(typeof n === "number")

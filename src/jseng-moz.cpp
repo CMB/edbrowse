@@ -41,11 +41,6 @@ static Cro *g_tail, *o_tail; // chain of globals and tags
 // Rooting window, to hold on to any objects that edbrowse might access.
 static JS::RootedObject *rw0;
 
-// Master window, with large and complex functions that we want to
-// compile and store only once. Unfortunately, we can't put much here,
-// because of security reasons.
-static JS::RootedObject *mw0;
-
 /*********************************************************************
 The _0 methods are the lowest level, calling upon the engine.
 They take JSObjects as parameter,
@@ -132,6 +127,7 @@ static void jsInterruptCheck(void);
 static Tag *tagFromObject(JS::HandleObject o);
 static JSObject *tagToObject(const Tag *t);
 extern JSObject *frameToCompartment(const Frame *f);
+#define tagToCompartment(t) frameToCompartment((t)->f0)
 
 static bool has_property_0(JS::HandleObject parent, const char *name)
 {
@@ -829,7 +825,7 @@ bool run_function_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return false;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 	return run_function_bool_0(obj, name);
 }
@@ -883,7 +879,7 @@ int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2)
 {
 if(!t->jslink || !t2->jslink || !allowJS)
 return -1;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 JS::RootedObject obj2(cxa, tagToObject(t2));
 	return run_function_onearg_0(obj, name, obj2);
@@ -932,7 +928,7 @@ void run_function_onestring_t(const Tag *t, const char *name, const char *s)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 	run_function_onestring_0(obj, name, s);
 }
@@ -949,18 +945,27 @@ bool has_property_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return false;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return false;
 return has_property_0(obj, name);
 }
 
+bool has_property_win(const Frame *f, const char *name)
+{
+if(!f->jslink || !allowJS)
+return false;
+JSAutoCompartment ac(cxa, frameToCompartment(f));
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+return has_property_0(g, name);
+}
+
 void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
 {
 if(!t->jslink || !t2->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 JS::RootedObject obj2(cxa, tagToObject(t2));
 	set_property_object_0(obj, name, obj2);
@@ -970,7 +975,7 @@ char *get_property_url_t(const Tag *t, bool action)
 {
 if(!t->jslink || !allowJS)
 return 0;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
@@ -981,7 +986,7 @@ char *get_property_string_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return 0;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
@@ -993,7 +998,7 @@ char *get_dataset_string_t(const Tag *t, const char *p)
 	char *r;
 if(!t->jslink || !allowJS)
 return 0;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
@@ -1014,7 +1019,7 @@ bool get_property_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return false;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return false;
@@ -1025,7 +1030,7 @@ int get_property_number_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return -1;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return -1;
@@ -1036,7 +1041,7 @@ enum ej_proptype typeof_property_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return EJ_PROP_NONE;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return EJ_PROP_NONE;
@@ -1047,7 +1052,7 @@ char *get_style_string_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return 0;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
@@ -1061,7 +1066,7 @@ void delete_property_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(obj)
 delete_property_0(obj, name);
@@ -1091,7 +1096,7 @@ void set_property_string_t(const Tag *t, const char *name, const char *v)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return;
@@ -1102,7 +1107,7 @@ void set_dataset_string_t(const Tag *t, const char *name, const char *v)
 {
 	if(!t->jslink || !allowJS)
 		return;
-	JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+	JSAutoCompartment ac(cxa, tagToCompartment(t));
 	JS::RootedObject obj(cxa, tagToObject(t));
 	if(!obj)
 		return;
@@ -1115,7 +1120,7 @@ void set_property_bool_t(const Tag *t, const char *name, bool v)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return;
@@ -1126,7 +1131,7 @@ void set_property_number_t(const Tag *t, const char *name, int v)
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return;
@@ -1311,7 +1316,7 @@ void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int l
 {
 if(!t->jslink || !allowJS)
 return;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject tojb(cxa, tagToObject(t));
 	run_script_0(tojb, str, filename, lineno);
 }
@@ -1375,7 +1380,7 @@ bool run_event_t(const Tag *t, const char *pname, const char *evname)
 {
 	if (!allowJS || !t->jslink)
 		return true;
-JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject tagobj(cxa, tagToObject(t));
 	return run_event_0(tagobj, pname, evname);
 }
@@ -1388,7 +1393,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 	if (!allowJS || !t->jslink)
 		return;
 	debugPrint(5, "> script tag %d:", t->seqno);
-        JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
+        JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject to(cxa, tagToObject(t));
 JS::RootedValue v(cxa);
 if(!JS_GetProperty(cxa, to, "text", &v) ||
@@ -1449,26 +1454,10 @@ JS::RootedObject tagobj(cxa, tagToObject(t));
 	return rc;
 }
 
-void set_master_bool(const char *name, bool v)
-{
-JSAutoCompartment ac(cxa, *mw0);
-	set_property_bool_0(*mw0, name, v);
-}
-
-void delete_master(const char *name)
-{
-JSAutoCompartment ac(cxa, *mw0);
-	delete_property_0(*mw0, name);
-}
-
-bool has_master(const char *name)
-{
-JSAutoCompartment ac(cxa, *mw0);
-	return has_property_0(*mw0, name);
-}
-
 void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
+if(!f->jslink || !allowJS)
+return;
 JSAutoCompartment ac(cxa, frameToCompartment(f));
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	set_property_bool_0(g, name, v);
@@ -1476,6 +1465,8 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 
 void set_property_string_win(const Frame *f, const char *name, const char *v)
 {
+if(!f->jslink || !allowJS)
+return;
 JSAutoCompartment ac(cxa, frameToCompartment(f));
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	set_property_string_0(g, name, v);
@@ -1491,12 +1482,12 @@ JS::RootedObject doc(cxa, get_property_object_0(g, "document"));
 
 static void connectTagObject(Tag *t, JS::HandleObject o)
 {
-char buf[16];
-sprintf(buf, "o%d", t->gsn);
-JS::RootedValue v(cxa);
-v = JS::ObjectValue(*o);
-JS_DefineProperty(cxa, *rw0, buf, v,
-JSPROP_STD);
+	Cro *u = (Cro *)allocMem(sizeof(Cro));
+	u->m = new JS::RootedObject(cxa, o);
+	u->prev = o_tail;
+	t->jv = o_tail = u;
+	u->inuse = true;
+        JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS_DefineProperty(cxa, o, "eb$seqno", t->seqno,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 JS_DefineProperty(cxa, o, "eb$gsn", t->gsn,
@@ -1506,58 +1497,45 @@ t->jslink = true;
 
 void disconnectTagObject(Tag *t)
 {
-	char buf[16];
 	if(!t->jslink)
 		return; // already disconnected
-	        JSAutoCompartment ac(cxa, *rw0);
-	sprintf(buf, "o%d", t->gsn);
-	JS_DeleteProperty(cxa, *rw0, buf);
+	Cro *u = (Cro *)t->jv;
+	u->inuse = false;
+	while(u && !u->inuse && u == o_tail) {
+		Cro *v = u->prev;
+		delete u->m;
+		free(u);
+		o_tail = u = v;
+	}
 	t->jslink = false;
+	t->jv = 0;
 }
 
-// I assume we are in a compartment.
+// This is ugly and inefficient
 static Tag *tagFromObject(JS::HandleObject o)
 {
-	Tag *t;
-	int gsn, seqno;
+	int i;
+	JSObject *j = o;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-if(!o)
-return 0;
-	JS::RootedValue v(cxa);
-	if(!JS_GetProperty(cxa, o, "eb$gsn", &v) ||
-	!v.isInt32())
+	if(!j)
 		return 0;
-	gsn = v.toInt32();
-	if(!JS_GetProperty(cxa, o, "eb$seqno", &v) ||
-	!v.isInt32())
-		return 0;
-	seqno = v.toInt32();
-	if(seqno <= 0 || seqno >= cw->numTags)
-		return 0;
-	t = tagList[seqno];
-	if(t->gsn != gsn ||
-	 t->dead) // not sure how this would happen
-		return 0;
-	return t;
+	for (i = 0; i < cw->numTags; ++i) {
+		Tag *t = tagList[i];
+		if(t->jslink &&
+		*(((Cro*)t->jv)->m) == j &&
+		!t->dead)
+			return t;
+	}
+	return 0;
 }
 
 // inverse of the above
 static JSObject *tagToObject(const Tag *t)
 {
-if(!t->jslink)
-return 0;
-char buf[16];
-sprintf(buf, "o%d", t->gsn);
-JS::RootedValue v(cxa);
-JS::RootedObject o(cxa);
-if(JS_GetProperty(cxa, *rw0, buf, &v) &&
-v.isObject()) {
-JS_ValueToObject(cxa, v, &o);
-// cast from rooted object to JSObject *
-return o;
-}
-return 0;
+	if(!t->jslink)
+		return 0;
+	return *(((Cro *)t->jv)->m);
 }
 
 /*********************************************************************
@@ -2369,9 +2347,6 @@ bool frameExpand(bool expand, int ln1, int ln2)
 	int problem = 0, p;
 	bool something_worked = false;
 
-// make sure we're in a compartment
-	        JSAutoCompartment ac(cxa, *rw0);
-
 	for (ln = ln1; ln <= ln2; ++ln) {
 		if (expand)
 			p = frameExpandLine(ln, NULL);
@@ -2390,14 +2365,13 @@ bool frameExpand(bool expand, int ln1, int ln2)
 	if (problem == 2)
 		setError(MSG_FrameNoURL);
 	return (problem == 0);
-}				/* frameExpand */
+}
 
 /* Problems: 0, frame expanded successfully.
  1 line is not a frame.
  2 frame doesn't have a valid url.
  3 Problem fetching the rul or rendering the page.  */
 
-// We're in some compartment, the root compartment if t is nonzero
 static int frameExpandLine(int ln, JS::HandleObject fo)
 {
 	bool fromget = !ln;
@@ -2442,6 +2416,8 @@ static int frameExpandLine(int ln, JS::HandleObject fo)
 			t->contracted = false;
 		return 0;
 	}
+
+	JSAutoCompartment bc(cxa, tagToCompartment(t));
 
 // Check with js first, in case it changed.
 	if ((a = get_property_url_t(t, false)) && *a) {
@@ -3394,32 +3370,11 @@ static void js_start(void)
 		return;
 	}
 
-// make rooting window and master window
-	{
-      JS::CompartmentOptions options;
-rw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
-        JSAutoCompartment ac(cxa, *rw0);
-        JS_InitStandardClasses(cxa, *rw0);
-	}
-
-	{
-      JS::CompartmentOptions options;
-mw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
-        JSAutoCompartment ac(cxa, *mw0);
-        JS_InitStandardClasses(cxa, *mw0);
-JS_DefineFunctions(cxa, *mw0, nativeMethodsWindow);
-// Link yourself to the master window.
-JS::RootedValue objval(cxa); // object as value
-objval = JS::ObjectValue(**mw0);
-JS_DefineProperty(cxa, *mw0, "mw$", objval,
-(JSPROP_READONLY|JSPROP_PERMANENT));
-// need document, just for its native methods
-JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
-objval = JS::ObjectValue(*docroot);
-		JS_DefineProperty(cxa, *mw0, "document", objval,
-		(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
-		JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
-	}
+// make rooting window
+	      JS::CompartmentOptions options;
+	rw0 = new       JS::RootedObject(cxa, JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGlobalHook, options));
+	        JSAutoCompartment ac(cxa, *rw0);
+	        JS_InitStandardClasses(cxa, *rw0);
 }
 
 static void setup_window_2(int sn);
@@ -3586,11 +3541,11 @@ jsRunScriptWin(
 		    "locreplace", 1);
 	set_property_string_0(doc, "domain", getHostURL(cf->fileName));
 	if (debugClone)
-		set_master_bool("cloneDebug", true);
+		set_property_bool_0(g, "cloneDebug", true);
 	if (debugEvent)
-		set_master_bool("eventDebug", true);
+		set_property_bool_0(g, "eventDebug", true);
 	if (debugThrow)
-		set_master_bool("throwDebug", true);
+		set_property_bool_0(g, "throwDebug", true);
 }
 
 void freeJSContext(Frame *f)
@@ -3626,7 +3581,7 @@ void establish_js_option(Tag *t, Tag *sel)
 	if(!sel->jslink)
 		return;
 
-        JSAutoCompartment ac(cxa, frameToCompartment(sel->f0));
+        JSAutoCompartment ac(cxa, tagToCompartment(sel));
 	selobj = tagToObject(sel);
 	if (!(oa = get_property_object_0(selobj, "options")))
 		return;
@@ -3648,9 +3603,9 @@ connectTagObject(t, oo);
 
 void establish_js_textnode(Tag *t, const char *fpn)
 {
-	        JSAutoCompartment ac(cxa, frameToCompartment(t->f0));
-	JS::RootedObject mw(cxa, *mw0);
-JS::RootedObject tagobj(cxa,  instantiate_0(mw, fpn, "TextNode"));
+	        JSAutoCompartment ac(cxa, tagToCompartment(t));
+	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+JS::RootedObject tagobj(cxa,  instantiate_0(g, fpn, "TextNode"));
 	connectTagObject(t, tagobj);
 }
 
@@ -3780,14 +3735,14 @@ That's how it was for a long time, but I think we only do this on form.
 
 		if (isradio) {	// the first radio button
 			if(!(io = instantiate_array_0(
-			(fakeName ? *mw0 : owner), membername)))
+			(fakeName ? g : owner), membername)))
 				return;
 			set_property_string_0(io, "type", "radio");
 		} else {
 /* A standard input element, just create it. */
 			JS::RootedObject ca(cxa);  // childNodes array
 			if(!(io = instantiate_0(
-(fakeName ? *mw0 : owner), membername, classname)))
+(fakeName ? g : owner), membername, classname)))
 				return;
 /* not an array; needs the childNodes array beneath it for the children */
 			ca = instantiate_array_0(io, "childNodes");
@@ -3906,7 +3861,7 @@ static void rebuildSelector(Tag *sel, JS::HandleObject oa, int len2)
 	sel->lic = (sel->multiple ? 0 : -1);
 	t = cw->optlist;
 
-	        JSAutoCompartment ac(cxa, frameToCompartment(sel->f0));
+	        JSAutoCompartment ac(cxa, tagToCompartment(sel));
 	selobj = tagToObject(sel);
 
 	while (t && i2 < len2) {
@@ -4029,8 +3984,6 @@ void rebuildSelectors(void)
 	JS::RootedObject tobj(cxa);		/* option array */
 	int len;		/* length of option array */
 
-	        JSAutoCompartment ac(cxa, *rw0);
-
 	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
 		if (!t->jslink)
@@ -4044,6 +3997,8 @@ void rebuildSelectors(void)
 			continue;
 #endif
 
+		JSAutoCompartment ac(cxa, tagToCompartment(t));
+
 /* there should always be an options array, if not then move on */
 		tobj = tagToObject(t);
 		if (!(oa = get_property_object_0(tobj, "options")))
@@ -4056,7 +4011,7 @@ void rebuildSelectors(void)
 
 // Some primitives needed by css.c. These bounce through window.soj$
 // These are called from do_rules(), which is called from a native method,
-// So a compartment is always set.
+// So a compartment is always set, I guess.
 static const char soj[] = "soj$";
 static void sofail() { debugPrint(5, "no style object"); }
 
@@ -4066,7 +4021,8 @@ bool has_gcs(const char *name)
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
 //	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
-	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
 		return false;
 	}
@@ -4081,7 +4037,8 @@ enum ej_proptype typeof_gcs(const char *name)
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
 //	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
-	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
 		return EJ_PROP_NONE;
 	}
@@ -4096,7 +4053,8 @@ int get_gcs_number(const char *name)
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
 //	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
-	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
 		return -1;
 	}
@@ -4113,7 +4071,8 @@ void set_gcs_number(const char *name, int n)
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
 //	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
-	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
 		return;
 	}
@@ -4132,7 +4091,8 @@ void set_gcs_bool(const char *name, bool b)
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
 //	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
-	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
 		return;
 	}
@@ -4151,7 +4111,8 @@ void set_gcs_string(const char *name, const char *s)
 	JS::RootedValue v(cxa);
 	JS::RootedObject j(cxa);
 //	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
-	if(!JS_GetProperty(cxa, *mw0, soj, &v)) {
+JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
+	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
 		return;
 	}
@@ -4183,7 +4144,6 @@ void jsClose(void)
 		return;
 	}
 // rooted objects have to free in the reverse (stack) order.
-	delete mw0;
 	delete rw0;
 	JS_DestroyContext(cxa);
 	    JS_ShutDown();

@@ -1341,7 +1341,7 @@ Needless to say that's not good!
 	if (linked_in && fakePropLast[0]) {
 // Node linked to document/gc to protect if from garbage collection,
 // but now it is linked to its parent.
-		delete_master(fakePropLast);
+		delete_property_win(cf, fakePropLast);
 	}
 
 	if (!linked_in) {

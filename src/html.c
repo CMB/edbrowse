@@ -1021,10 +1021,10 @@ char *htmlParse(char *buf, int remote)
 	if (isJSAlive) {
 // the "create handlers" messages aren't helpful here.
 		if (debugEvent && debugLevel >= 3)
-			set_master_bool("eventDebug", false);
+			set_property_bool_win(cf, "eventDebug", false);
 		decorate(0);
 		if (debugEvent && debugLevel >= 3)
-			set_master_bool("eventDebug", true);
+			set_property_bool_win(cf, "eventDebug", true);
 		set_basehref(cf->hbase);
 		run_function_bool_win(cf, "eb$qs$start");
 		runScriptsPending(true);

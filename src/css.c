@@ -2899,7 +2899,7 @@ in fact it's easier to list the tags that allow it.
 		}
 	}
 
-	if(!has_master("soj$")) {
+	if(!has_property_win(cf, "soj$")) {
 		if(t)
 			debugPrint(3, "no master style object for tag %d %s", t->seqno, t->info->name);
 		else
@@ -2968,7 +2968,7 @@ in fact it's easier to list the tags that allow it.
 	}
 
 	if(t)
-		delete_master("soj$");
+		delete_property_win(cf, "soj$");
 	if (!sl)
 		return;
 
