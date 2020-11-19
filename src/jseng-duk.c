@@ -2003,6 +2003,8 @@ static duk_ret_t native_setcook(duk_context * cx)
 
 static duk_ret_t native_css_start(duk_context * cx)
 {
+// The selection string has to be allocated - css will use it in place,
+// then free it later.
 	cssDocLoad(duk_get_number(cx, 0), cloneString(duk_get_string(cx, 1)),
 		   duk_get_boolean(cx, 2));
 	return 0;

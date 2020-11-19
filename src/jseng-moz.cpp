@@ -2153,12 +2153,11 @@ static bool nat_cssStart(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 	  JS::CallArgs args = CallArgsFromVp(argc, vp);
 	int n = args[0].toInt32();
-// cssDocLoad is a lot of code, and it may well call get_property_string,
-// which calls stringize, so just to be safe, I'll copy it.
+// The selection string has to be allocated - css will use it in place,
+// then free it later.
 	char *s = cloneString(stringize(args[1]));
 	bool r = args[2].toBoolean();
 	cssDocLoad(n, s, r);
-	nzFree(s);
 	args.rval().setUndefined();
 	return true;
 }

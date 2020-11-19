@@ -1585,6 +1585,9 @@ static void frameFromWindow(int gsn)
 	}
 }
 
+// The selection string (start) must be allocated - css will use it in place,
+// separating it into all its descriptors.
+// cssFree() will free it.
 void cssDocLoad(int frameNumber, char *start, bool pageload)
 {
 	Frame *save_cf = cf;
