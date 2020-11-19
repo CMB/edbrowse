@@ -34,9 +34,10 @@ struct cro { // chain of rooted objects
 	struct cro *prev;
 	JS::RootedObject *m;
 	bool inuse;
+	bool global;
 };
 typedef struct cro Cro;
-static Cro *g_tail, *o_tail; // chain of globals and tags
+static Cro *o_tail; // chain of globals and tags
 
 // Rooting window, to hold on to any objects that edbrowse might access.
 static JS::RootedObject *rw0;
@@ -1487,6 +1488,7 @@ static void connectTagObject(Tag *t, JS::HandleObject o)
 	u->prev = o_tail;
 	t->jv = o_tail = u;
 	u->inuse = true;
+	u->global = false;
         JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS_DefineProperty(cxa, o, "eb$seqno", t->seqno,
 (JSPROP_READONLY|JSPROP_PERMANENT));
@@ -3399,9 +3401,10 @@ JSObject *g = JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGloba
 
 	Cro *u = (Cro *)allocMem(sizeof(Cro));
 	u->m = new JS::RootedObject(cxa, g);
-	u->prev = g_tail;
-	f->winobj = g_tail = u;
+	u->prev = o_tail;
+	f->winobj = o_tail = u;
 	u->inuse = true;
+	u->global = true;
 
 JS::RootedObject global(cxa, g);
         JSAutoCompartment ac(cxa, g);
@@ -3554,11 +3557,11 @@ void freeJSContext(Frame *f)
 		debugPrint(3, "remove js context %d", f->gsn);
 		Cro *u = (Cro *)f->winobj;
 		u->inuse = false;
-		while(u && !u->inuse && u == g_tail) {
+		while(u && !u->inuse && u == o_tail) {
 			Cro *v = u->prev;
 			delete u->m;
 			free(u);
-			g_tail = u = v;
+			o_tail = u = v;
 		}
 		 f->jslink = false;
 	}
@@ -4132,11 +4135,6 @@ void jsClose(void)
 // see if javascript is running.
 	if(!cxa)
 		return;
-	if(g_tail) {
-		debugPrint(1, "global javascript compartments remain");
-// can't really trust the shutdown process at this point
-		return;
-	}
 	if(o_tail) {
 		debugPrint(1, "javascript tag objects remain");
 // can't really trust the shutdown process at this point
