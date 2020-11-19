@@ -1367,20 +1367,50 @@ static void pushAttributes(const Tag *t)
 		return;
 	for (i = 0; a[i]; ++i) {
 // There are some exceptions, some attributes that we handle individually.
-		static const char *const exclist[] = {
+// these are handled in domLink()
+		static const char *const excdom[] = {
 			"name", "id", "class",
 			"checked", "value", "type",
 			"href", "src", "action",
 			0
 		};
+// These are on node.prototype, and you don't want to displace them.
+// Sadly, you have to keep this list in sync with startwindow.js.
+// These must be lower case, something about the attribute processing.
+		static const char *const excprot[] = {
+			"getelementsbytagname", "getelementsbyname",
+			"getelementsbyclassname", "contains",
+			"queryselectorall", "queryselector", "matches",
+			"haschildnodes", "appendchild", "prependchild",
+			"insertbefore", "replacechild",
+			"eb$apch1", "eb$apch2", "eb$insbf", "removechild",
+			"firstchild", "firstelementchild",
+			"lastchild", "lastelementchild",
+			"nextsibling", "nextelementsibling",
+			"previoussibling", "previouselementsibling",
+			"children",
+			"hasattribute", "hasattributens", "markattribute",
+			"getattribute", "getattributens",
+			"setattribute", "setattributens",
+			"removeattribute", "removeattributens",
+			"classname", "parentelement",
+			"getattributenode", "getclientrects",
+			"clonenode", "importnode",
+			"comparedocumentposition", "getboundingclientrect",
+			"focus", "blur",
+			"eb$listen", "eb$unlisten",
+			"addeventlistener", "removeeventlistener",
+			"attachevent", "detachevent", "dispatchevent",
+			"insertadjacenthtml", "outerhtml",
+			"injectsetup", "document_fragment_node",
+			"classlist", "textcontent", "contenttext", "nodevalue",
+// handlers are reserved yes, but they have important setters,
+// so we do want to allow <A onclick=blah>
+			0
+		};
 		static const char *const dotrue[] = {
 			"required",
 			"multiple", "readonly", "disabled", "async", 0
-		};
-		static const char *const handlers[] = {
-			"onload", "onunload", "onclick", "onchange",
-			"onsubmit", "onreset",
-			0
 		};
 		const char *u;
 
@@ -1404,27 +1434,26 @@ static void pushAttributes(const Tag *t)
 		if (stringEqual(a[i], "style"))	// no clue
 			continue;
 
+// check for exceptions.
 // Maybe they wrote <a firstChild=foo>
-// See if the name is in the prototype, and not a handler,
-// as handlers have setters.
-		if (has_property_t(t, a[i]) && !typeof_property_t(t, a[i])
-		    && stringInList(handlers, a[i]) < 0) {
+		if( stringInList(excprot, a[i]) >= 0) {
 			debugPrint(3, "html attribute overload %s.%s",
 				   t->info->name, a[i]);
 			continue;
 		}
+
 // There are some, like multiple or readonly, that should be set to true,
 // not the empty string.
 		if (!*u && stringInList(dotrue, a[i]) >= 0) {
 			set_property_bool_t(t, a[i], true);
 		} else {
 // standard attribute here
-			if (stringInListCI(exclist, a[i]) < 0)
+			                        if (stringInListCI(excdom, a[i]) < 0)
 				set_property_string_t(t, a[i], u);
 		}
 		run_function_onestring_t(t, "markAttribute", a[i]);
 	}
-}				/* pushAttributes */
+}
 
 /* decorate the tree of nodes with js objects */
 void decorate(int start)
