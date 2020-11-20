@@ -321,7 +321,10 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	int len, inlen, outlen;
 	bool has_o = false;
 
-	*outdata = 0, *outlength = 0;
+	if(outdata)
+		*outdata = 0;
+	if(outlength)
+		*outlength = 0;
 
 	if (indata) {
 // calling function has gathered the data for us,
