@@ -39,6 +39,25 @@ struct cro { // chain of rooted objects
 typedef struct cro Cro;
 static Cro *o_tail; // chain of globals and tags
 
+// for debugging
+void rootchain(void)
+{
+	JS::RootedObject o(cxa);
+	long *l;
+	int n;
+	Cro *u;
+	n = 0, l = (long*)&o;
+	while(l) ++n, l = (long*)l[1];
+	printf("chain %d|", n);
+	n = 0, u = o_tail;
+	while(u) ++n, u = u->prev;
+	printf("%d", n);
+	l = (long*)&o;
+	if(l[1] == 0 && !o_tail || (void*)l[1] == (void*)(o_tail->m))
+	printf(" flat");
+	printf("\n");
+}
+
 // Rooting window, to hold on to any objects that edbrowse might access.
 static JS::RootedObject *rw0;
 
