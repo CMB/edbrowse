@@ -55,7 +55,10 @@ void rootchain(void)
 	l = (long*)&o;
 	if(l[1] == 0 && !o_tail || (void*)l[1] == (void*)(o_tail->m))
 	printf(" flat");
-	printf("\n");
+	JS::RootedValue v(cxa);
+	n = 0, l = (long*)&v;
+	while(l) ++n, l = (long*)l[1];
+	printf(" v %d\n", n);
 }
 
 // Rooting window, to hold on to any objects that edbrowse might access.
