@@ -39,6 +39,13 @@ struct cro { // chain of rooted objects
 typedef struct cro Cro;
 static Cro *o_tail; // chain of globals and tags
 
+static void last3(void *v)
+{
+	unsigned long l = (unsigned long)v;
+	l %= 1000;
+	printf("%03lu", l);
+}
+
 // for debugging
 void rootchain(void)
 {
@@ -47,7 +54,14 @@ void rootchain(void)
 	int n;
 	Cro *u;
 	n = 0, l = (void**)&o;
+#if 1
+	while(l) {
+last3(l[0]), printf(":"), last3(l[1]), puts("");
+++n, l = (void**)l[1];
+}
+#else
 	while(l) ++n, l = (void**)l[1];
+#endif
 	printf("chain %d|", n);
 	n = 0, u = o_tail;
 	while(u) ++n, u = u->prev;
@@ -108,8 +122,13 @@ static void jsRootAndMove(void ** dest, JSObject *j, bool isglobal)
 	void **l = (void**)&z;
 	void **find = (void**)(k[1]);
 	l[1] = (void*)find; // this cuts m out of the chain
-	while(find[1] != (void*)top)
+	while(find[1] != (void*)top) {
 		find = (void**)(find[1]);
+		if(find)
+			continue;
+		printf("root chain can't find the top, don't know what to do, have to abort\nRemember, this only works on moz60 or above\n");
+		exit(1);
+	}
 	find[1] = (void*)k;
 	k[1] = (void*)top;
 	}
