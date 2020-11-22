@@ -43,26 +43,82 @@ static Cro *o_tail; // chain of globals and tags
 void rootchain(void)
 {
 	JS::RootedObject o(cxa);
-	long *l;
+	void **l;
 	int n;
 	Cro *u;
-	n = 0, l = (long*)&o;
-	while(l) ++n, l = (long*)l[1];
+	n = 0, l = (void**)&o;
+	while(l) ++n, l = (void**)l[1];
 	printf("chain %d|", n);
 	n = 0, u = o_tail;
 	while(u) ++n, u = u->prev;
 	printf("%d", n);
-	l = (long*)&o;
-	if(l[1] == 0 && !o_tail || (void*)l[1] == (void*)(o_tail->m))
+	l = (void**)&o;
+	if(l[1] == 0 && !o_tail || l[1] == (void*)(o_tail->m))
 	printf(" flat");
 	JS::RootedValue v(cxa);
-	n = 0, l = (long*)&v;
-	while(l) ++n, l = (long*)l[1];
+	n = 0, l = (void**)&v;
+	while(l) ++n, l = (void**)l[1];
 	printf(" v %d\n", n);
+}
+
+// unravle the objects of our tags, our frames, if we can
+void jsUnroot(void)
+{
+	if(!o_tail)
+		return; // nothing to undo
+	{
+	JS::RootedObject z(cxa);
+	void **l = (void**)&z;
+	if(l[1] != (void*)o_tail->m) {
+		debugPrint(1, "extra rooted objects found by jsUnroot()");
+		return; // not flat
+	}
+	}
+// now o_tail is at the top of the rooting stack
+	Cro *u = o_tail;
+	while(u && !u->inuse) {
+		Cro *v = u->prev;
+		delete u->m;
+		free(u);
+		o_tail = u = v;
+	}
 }
 
 // Rooting window, to hold on to any objects that edbrowse might access.
 static JS::RootedObject *rw0;
+
+static void jsRootAndMove(void ** dest, JSObject *j, bool isglobal)
+{
+	Cro *u = (Cro *)allocMem(sizeof(Cro));
+	u->m = new JS::RootedObject(cxa, j);
+	u->prev = o_tail;
+	u->inuse = true;
+	u->global = isglobal;
+// ok that was the easy part; the next part is really cheeky!
+// Move this root down through the other rooted objects on the stack,
+// and down to o_tail.
+	void **top = (void**)rw0;
+	if(o_tail)
+		top = (void**)(o_tail->m);
+	void **k = (void**)u->m;
+	if(top == (void**)k[1]) // already in position
+		goto done;
+	{
+	JS::RootedObject z(cxa);
+	void **l = (void**)&z;
+	void **find = (void**)(k[1]);
+	l[1] = (void*)find; // this cuts m out of the chain
+	while(find[1] != (void*)top)
+		find = (void**)(find[1]);
+	find[1] = (void*)k;
+	k[1] = (void*)top;
+	}
+done:
+	*dest = o_tail = u;
+}
+
+// dereference this if you want to abort and gdb and trace
+static char *bad_ptr;
 
 /*********************************************************************
 The _0 methods are the lowest level, calling upon the engine.
@@ -1505,12 +1561,7 @@ JS::RootedObject doc(cxa, get_property_object_0(g, "document"));
 
 static void connectTagObject(Tag *t, JS::HandleObject o)
 {
-	Cro *u = (Cro *)allocMem(sizeof(Cro));
-	u->m = new JS::RootedObject(cxa, o);
-	u->prev = o_tail;
-	t->jv = o_tail = u;
-	u->inuse = true;
-	u->global = false;
+	jsRootAndMove(&(t->jv), o, false);
         JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS_DefineProperty(cxa, o, "eb$seqno", t->seqno,
 (JSPROP_READONLY|JSPROP_PERMANENT));
@@ -1525,12 +1576,6 @@ void disconnectTagObject(Tag *t)
 		return; // already disconnected
 	Cro *u = (Cro *)t->jv;
 	u->inuse = false;
-	while(u && !u->inuse && u == o_tail) {
-		Cro *v = u->prev;
-		delete u->m;
-		free(u);
-		o_tail = u = v;
-	}
 	t->jslink = false;
 	t->jv = 0;
 }
@@ -1542,8 +1587,10 @@ static Tag *tagFromObject(JS::HandleObject o)
 	JSObject *j = o;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-	if(!j)
+	if(!j) {
+		debugPrint(1, "tagFromObject(null)");
 		return 0;
+	}
 	for (i = 0; i < cw->numTags; ++i) {
 		Tag *t = tagList[i];
 		if(t->jslink &&
@@ -1551,6 +1598,7 @@ static Tag *tagFromObject(JS::HandleObject o)
 		!t->dead)
 			return t;
 	}
+	debugPrint(1, "tagFromObject() returns null");
 	return 0;
 }
 
@@ -3421,12 +3469,7 @@ JSObject *g = JS_NewGlobalObject(cxa, &global_class, nullptr, JS::FireOnNewGloba
 	}
 	f->jslink = true;
 
-	Cro *u = (Cro *)allocMem(sizeof(Cro));
-	u->m = new JS::RootedObject(cxa, g);
-	u->prev = o_tail;
-	f->winobj = o_tail = u;
-	u->inuse = true;
-	u->global = true;
+	jsRootAndMove(&(f->winobj), g, true);
 
 JS::RootedObject global(cxa, g);
         JSAutoCompartment ac(cxa, g);
@@ -3579,12 +3622,6 @@ void freeJSContext(Frame *f)
 		debugPrint(3, "remove js context %d", f->gsn);
 		Cro *u = (Cro *)f->winobj;
 		u->inuse = false;
-		while(u && !u->inuse && u == o_tail) {
-			Cro *v = u->prev;
-			delete u->m;
-			free(u);
-			o_tail = u = v;
-		}
 		 f->jslink = false;
 	}
 	f->cx = f->winobj = f->docobj = 0;
@@ -4157,6 +4194,7 @@ void jsClose(void)
 // see if javascript is running.
 	if(!cxa)
 		return;
+	jsUnroot();
 	if(o_tail) {
 		debugPrint(1, "javascript tag objects remain");
 // can't really trust the shutdown process at this point

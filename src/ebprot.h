@@ -369,6 +369,7 @@ void cssApply(int frameNumber, Tag *t);
 void cssText(const char *rulestring);
 
 /* sourcefile=jseng-* */
+void jsUnroot(void);
 void disconnectTagObject(Tag *t);
 bool frameExpand(bool expand, int ln1, int ln2);
 bool reexpandFrame(void);

@@ -4179,6 +4179,11 @@ void set_gcs_string(const char *name, const char *s)
 	duk_pop(cx);
 }
 
+void jsUnroot(void)
+{
+// this function isn't needed in the duktape world
+}
+
 void jsClose(void)
 {
 	if(js_running)
