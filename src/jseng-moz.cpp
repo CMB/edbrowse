@@ -489,7 +489,7 @@ const char *h = stringize(args[0]);
 if(!h)
 h = emptyString;
 	char *k = cloneString(h);
-	debugPrint(5, "setter v 1");
+	debugPrint(5, "setter v in");
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 JS_SetProperty(cx, thisobj, "val$ue", args[0]);
 	prepareForField(k);
@@ -499,7 +499,7 @@ JS_SetProperty(cx, thisobj, "val$ue", args[0]);
 		domSetsTagValue(t, k);
 	}
 	nzFree(k);
-	debugPrint(5, "setter v 2");
+	debugPrint(5, "setter v out");
 	return true;
 }
 
@@ -585,7 +585,7 @@ const char *h = stringize(args[0]);
 if(!h)
 h = emptyString;
 jsInterruptCheck();
-	debugPrint(5, "setter h 1");
+	debugPrint(5, "setter h in");
 
 	{ // scope
 bool isarray;
@@ -625,7 +625,7 @@ JS_SetProperty(cx, thisobj, "inner$HTML", args[0]);
 		                debugPrint(1, "innerHTML finds no tag, cannot parse");
 	}
 	nzFree(run);
-	debugPrint(5, "setter h 2");
+	debugPrint(5, "setter h out");
 
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 run_function_onearg_0(g, "textarea$html$crossover", thisobj);
@@ -644,7 +644,7 @@ return true;
 	}
 
 fail:
-	debugPrint(5, "setter h 3");
+	debugPrint(5, "setter h fail");
 args.rval().setUndefined();
 return true;
 }
@@ -1912,14 +1912,14 @@ args.rval().setUndefined();
 if(argc != 2 ||
 !args[0].isObject() || !args[1].isString())
 return true;
-	debugPrint(5, "log el 1");
+	debugPrint(5, "log in");
 JS::RootedObject obj(cxa);
 JS_ValueToObject(cxa, args[0], &obj);
 // this call creates the getter and setter for innerHTML
 set_property_string_0(obj, "innerHTML", emptyString);
 const char *tagname = stringize(args[1]);
 domSetsLinkage('c', obj, tagname);
-	debugPrint(5, "log el 2");
+	debugPrint(5, "log out");
 return true;
 }
 
@@ -2174,7 +2174,7 @@ JS::RootedObject fo(cx); // function object
 	int n = 1000;		/* default number of milliseconds */
 if(!argc)
 return;
-	debugPrint(5, "timer 1");
+	debugPrint(5, "timer in");
 // if second parameter is missing, leave milliseconds at 1000.
 if(argc >= 2 && args[1].isInt32())
 n = args[1].toInt32();
@@ -2191,7 +2191,7 @@ JS::RootedFunction f(cxa);
 if(!JS::CompileFunction(cx, envChain, opts, "timer", 0, nullptr, source, strlen(source), &f)) {
 		processError();
 		debugPrint(3, "compile error for timer(){%s}", source);
-	debugPrint(5, "timer 3");
+	debugPrint(5, "timer fail");
 return;
 }
 fo = JS_GetFunctionObject(f);
@@ -2208,7 +2208,7 @@ set_property_object_0(to, "ontimer", fo);
 set_property_string_0(to, "backlink", fpn);
 set_property_number_0(to, "tsn", ++timer_sn);
 args.rval().setObject(*to);
-	debugPrint(5, "timer 2");
+	debugPrint(5, "timer out");
 	domSetsTimeout(n, "+", fpn, isInterval);
 }
 
@@ -2974,7 +2974,7 @@ static void append0(JSContext *cx, unsigned argc, JS::Value *vp, bool side)
 	const char *thisname, *childname;
 bool isarray;
 
-	debugPrint(5, "append 1");
+	debugPrint(5, "append in");
 // we need one argument that is an object
 if(argc != 1 || !args[0].isObject())
 goto fail;
@@ -3025,13 +3025,13 @@ domSetsLinkage('a', thisobj, thisname, child, childname);
 	}
 
 done:
-	debugPrint(5, "append 2");
+	debugPrint(5, "append out");
 // return the child that was appended
 args.rval().set(args[0]);
 return;
 
 fail:
-	debugPrint(5, "append 3");
+	debugPrint(5, "append fail");
 args.rval().setNull();
 }
 
@@ -3055,7 +3055,7 @@ static bool nat_removeChild(JSContext *cx, unsigned argc, JS::Value *vp)
 int mark;
 bool isarray;
 
-	debugPrint(5, "remove 1");
+	debugPrint(5, "remove in");
 // we need one argument that is an object
 if(argc != 1 || !args[0].isObject())
 		goto fail;
@@ -3110,7 +3110,7 @@ domSetsLinkage('r', thisobj, thisname, child, childname);
 
 // return the child upon success
 args.rval().set(args[0]);
-	debugPrint(5, "remove 2");
+	debugPrint(5, "remove out");
 
 // mutFixup(this, false, mark, child);
 // This illustrates why most of our dom is writtten in javascript.
@@ -3127,7 +3127,7 @@ return true;
 	}
 
 fail:
-	debugPrint(5, "remove 3");
+	debugPrint(5, "remove fail");
 args.rval().setNull();
   return true;
 }
@@ -3141,7 +3141,7 @@ static bool nat_insbf(JSContext *cx, unsigned argc, JS::Value *vp)
 int mark;
 bool isarray;
 
-	debugPrint(5, "before 1");
+	debugPrint(5, "before in");
 // we need two objects
 if(argc != 2 || !args[0].isObject() || !args[1].isObject())
 		goto fail;
@@ -3205,11 +3205,11 @@ domSetsLinkage('b', thisobj, thisname, child, childname, item, itemname);
 done:
 // return the child upon success
 args.rval().set(args[0]);
-	debugPrint(5, "before 2");
+	debugPrint(5, "before out");
 return true;
 
 fail:
-	debugPrint(5, "remove 3");
+	debugPrint(5, "remove fail");
 args.rval().setNull();
   return true;
 }
@@ -3267,7 +3267,7 @@ static bool nat_fetch(JSContext *cx, unsigned argc, JS::Value *vp)
 	char *a = NULL, methchar = '?';
 	bool rc, async = false;
 
-	debugPrint(5, "xhr 1");
+	debugPrint(5, "xhr in");
 JS::RootedObject global(cx, JS::CurrentGlobalOrNull(cx));
         JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	if (down_jsbg)
@@ -3348,7 +3348,7 @@ nzFree(incoming_method);
 nzFree(incoming_headers);
 nzFree(incoming_payload);
 
-	debugPrint(5, "xhr 2");
+	debugPrint(5, "xhr out");
 JS::RootedString m(cx, JS_NewStringCopyZ(cx, a));
 args.rval().setString(m);
 nzFree(a);

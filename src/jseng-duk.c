@@ -400,7 +400,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
-	debugPrint(5, "setter h 1");
+	debugPrint(5, "setter h in");
 	jsInterruptCheck(cx);
 	duk_push_this(cx);
 // remove the preexisting children.
@@ -410,7 +410,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 // no child nodes array, don't do anything.
 // This should never happen.
 		duk_pop_n(cx, 3);
-		debugPrint(5, "setter h 3");
+		debugPrint(5, "setter h fail");
 		return 0;
 	}
 // hold this away from garbage collection
@@ -444,7 +444,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 		debugPrint(1, "innerHTML finds no tag, cannot parse");
 	}
 	nzFree(run);
-	debugPrint(5, "setter h 2");
+	debugPrint(5, "setter h out");
 
 	run_function_onearg_0(cx, cf->winobj, "textarea$html$crossover",
 				thisobj);
@@ -483,7 +483,7 @@ static duk_ret_t setter_value(duk_context * cx)
 	const char *h = duk_safe_to_string(cx, -1);
 	if (!h)			// should never happen
 		h = emptyString;
-	debugPrint(5, "setter v 1");
+	debugPrint(5, "setter v in");
 	k = cloneString(h);
 	duk_push_this(cx);
 	duk_insert(cx, -2);
@@ -497,7 +497,7 @@ static duk_ret_t setter_value(duk_context * cx)
 		domSetsTagValue(t, k);
 	}
 	nzFree(k);
-	debugPrint(5, "setter v 2");
+	debugPrint(5, "setter v out");
 	return 0;
 }
 
@@ -1276,7 +1276,7 @@ static duk_ret_t native_log_element(duk_context * cx)
 	char e[60];
 	if (!newobj || !tag)
 		return 0;
-	debugPrint(5, "log el 1");
+	debugPrint(5, "log in");
 	jsInterruptCheck(cx);
 // pass the newly created node over to edbrowse
 	sprintf(e, "l{c|%s,%s 0x0, 0x0, ", pointer2string(newobj), tag);
@@ -1293,7 +1293,7 @@ static duk_ret_t native_log_element(duk_context * cx)
 	duk_push_string(cx, emptyString);
 	duk_put_prop_string(cx, -2, "inner$HTML");
 	duk_pop(cx);
-	debugPrint(5, "log el 2");
+	debugPrint(5, "log out");
 	return 0;
 }
 
@@ -1310,7 +1310,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	if (top == 0)
 		return;		// no args
 
-	debugPrint(5, "timer 1");
+	debugPrint(5, "timer in");
 // if second parameter is missing, leave milliseconds at 1000.
 	if (top > 1) {
 		n = duk_get_int(cx, 1);
@@ -1405,7 +1405,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 	domSetsTimeout(n, fname, fpn, isInterval);
 
 done:
-	debugPrint(5, "timer 2");
+	debugPrint(5, "timer out");
 }
 
 static duk_ret_t native_setTimeout(duk_context * cx)
@@ -1550,7 +1550,7 @@ static void append0(duk_context * cx, bool side)
 	if (duk_get_top(cx) != 1 || !duk_is_object(cx, 0))
 		return;
 
-	debugPrint(5, "append 1");
+	debugPrint(5, "append in");
 	child = duk_get_heapptr(cx, 0);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
@@ -1596,7 +1596,7 @@ static void append0(duk_context * cx, bool side)
 	linkageNow(cx, 'a', thisobj);
 
 done:
-	debugPrint(5, "append 2");
+	debugPrint(5, "append out");
 }
 
 static duk_ret_t native_apch1(duk_context * cx)
@@ -1624,7 +1624,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	    !duk_is_object(cx, 0) || !duk_is_object(cx, 1))
 		return 0;
 
-	debugPrint(5, "before 1");
+	debugPrint(5, "before in");
 	child = duk_get_heapptr(cx, 0);
 	item = duk_get_heapptr(cx, 1);
 	duk_push_this(cx);
@@ -1687,7 +1687,7 @@ static duk_ret_t native_insbf(duk_context * cx)
 	linkageNow(cx, 'b', thisobj);
 
 done:
-	debugPrint(5, "before 2");
+	debugPrint(5, "before out");
 	return 1;
 }
 
@@ -1699,7 +1699,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	char *e;
 	const char *thisname, *childname;
 
-	debugPrint(5, "remove 1");
+	debugPrint(5, "remove in");
 // top of stack must be the object to remove.
 	if (!duk_is_object(cx, -1))
 		goto fail;
@@ -1751,7 +1751,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	effectString(" 0x0, ");
 	linkageNow(cx, 'r', thisobj);
 
-	debugPrint(5, "remove 2");
+	debugPrint(5, "remove out");
 // mutation fix up from native code
 	duk_push_heapptr(cx, cf->winobj);
 	duk_get_prop_string(cx, -1, "mutFixup");
@@ -1767,7 +1767,7 @@ static duk_ret_t native_removeChild(duk_context * cx)
 	return 1;
 
 fail:
-	debugPrint(5, "remove 2");
+	debugPrint(5, "remove fail");
 	duk_pop(cx);
 	duk_push_null(cx);
 	return 1;
@@ -1786,7 +1786,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	char *a = NULL, methchar = '?';
 	bool rc, async;
 
-	debugPrint(5, "xhr 1");
+	debugPrint(5, "xhr in");
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_get_prop_string(cx, -1, "async");
@@ -1889,7 +1889,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	nzFree(outgoing_xhrheaders);
 	nzFree(outgoing_xhrbody);
 
-	debugPrint(5, "xhr 2");
+	debugPrint(5, "xhr out");
 	return 1;
 }
 
@@ -1991,7 +1991,7 @@ static duk_ret_t native_getcook(duk_context * cx)
 static duk_ret_t native_setcook(duk_context * cx)
 {
 	const char *newcook = duk_get_string(cx, 0);
-	debugPrint(5, "cook 1");
+	debugPrint(5, "cook in");
 	if (newcook) {
 		const char *s = strchr(newcook, '=');
 		if(s && s > newcook) {
@@ -2000,7 +2000,7 @@ static duk_ret_t native_setcook(duk_context * cx)
 			duk_pop(cx);
 		}
 	}
-	debugPrint(5, "cook 2");
+	debugPrint(5, "cook out");
 	return 0;
 }
 

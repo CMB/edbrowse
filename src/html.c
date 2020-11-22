@@ -1015,7 +1015,7 @@ char *htmlParse(char *buf, int remote)
  * no point in generating it.
  * This is typical of generated html, from pdf for instance,
  * or the html that is in email. */
-	if (cf->cx && !jsDoorway())
+	if (cf->jslink && !jsDoorway())
 		freeJSContext(cf);
 
 	if (isJSAlive) {
@@ -2841,7 +2841,7 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 	jt->f = cf;
 	addToListBack(&timerList, jt);
 	seqno = timer_sn;
-	debugPrint(4, "timer %d %s", seqno, jsrc);
+	debugPrint(4, "timer %d add", seqno);
 	jt->tsn = seqno;
 }
 
@@ -3027,7 +3027,9 @@ We need to fix this someday, though it is a very rare corner case.
 			jt->deleted = true;
 	} else {
 // regular timer
+		debugPrint(4, "exec timer %d", jt->tsn);
 		run_ontimer(jt->f, jt->backlink);
+		debugPrint(4, "exec complete");
 	}
 	jt->running = false;
 skip_execution:
