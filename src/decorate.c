@@ -974,10 +974,9 @@ static void optionJS(Tag *t)
 	if (!sel->jslink)
 		return;
 establish_js_option(t, sel);
+// nodeName and nodeType set in constructor
 	set_property_string_t(t, "text", t->textval);
 	set_property_string_t(t, "value", t->value);
-	set_property_string_t(t, "nodeName", "OPTION");
-	set_property_number_t(t, "nodeType", 1);
 	set_property_bool_t(t, "selected", t->checked);
 	set_property_bool_t(t, defsel, t->checked);
 	if (!cl)
@@ -1117,6 +1116,11 @@ Needless to say that's not good!
 			set_property_string_t(t, "class", w);
 			set_property_string_t(t, "last$class", w);
 		}
+		break;
+
+	case TAGACT_DOCTYPE:
+		domLink(t, "DocType", 0, 0, 0, 4);
+		t->deleted = true;
 		break;
 
 	case TAGACT_HTML:
@@ -1326,7 +1330,7 @@ Needless to say that's not good!
 		}
 	}
 
-	if (action == TAGACT_HTML) {
+	if (action == TAGACT_HTML || action == TAGACT_DOCTYPE) {
 		run_function_onearg_doc(cf, "eb$apch1", t);
 		linked_in = true;
 	}
@@ -1538,11 +1542,12 @@ void tag_gc(void)
 	}
 }
 
-/* first three have to be in this order */
+// first one has to be the unknown
 const struct tagInfo availableTags[] = {
+	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
+	{"doctype", "doctype", TAGACT_DOCTYPE},
 	{"html", "html", TAGACT_HTML},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
-	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
 	{"object", "an html object", TAGACT_OBJECT, 5, 3},
 	{"a", "an anchor", TAGACT_A, 0, 1},
 	{"htmlanchorelement", "an anchor element", TAGACT_A, 0, 1},
@@ -1723,7 +1728,7 @@ Tag *newTag(const Frame *f, const char *name)
 	if (!ti->name[0]) {
 		debugPrint(4, "warning, created node %s reverts to generic",
 			   name);
-		ti = availableTags + 2;
+		ti = availableTags;
 	}
 
 	t = (Tag *)allocZeroMem(sizeof(Tag));
@@ -1853,7 +1858,7 @@ static void intoTree(Tag *parent)
 				treeDisable = false;
 				continue;
 			}
-			if (action == TAGACT_HTML || action == TAGACT_BODY) {
+			if (action == TAGACT_DOCTYPE || action == TAGACT_HTML || action == TAGACT_BODY) {
 				debugPrint(tdb, "node pass %s", t->info->name);
 				t->dead = true;
 				++cw->deadTags;

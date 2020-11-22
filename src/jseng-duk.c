@@ -1045,13 +1045,16 @@ Tag *tagFromJavaVar(jsobjtype v)
 	int i;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-	if(!v)
+	if(!v) {
+		debugPrint(1, "tagFromObject(null)");
 		return 0;
+	}
 	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (t->jv == v && !t->dead)
 			return t;
 	}
+	debugPrint(1, "tagFromObject() returns null");
 	return 0;
 }
 
@@ -3917,9 +3920,12 @@ Don't do any of this if the tag is itself <style>. */
 
 	strcpy(upname, t->info->name);
 	caseShift(upname, 'u');
-	set_property_string_0(cx, io, "nodeName", upname);
-	set_property_string_0(cx, io, "tagName", upname);
-	set_property_number_0(cx, io, "nodeType", 1);
+// DocType has nodeType = 10, see startwindow.js
+	if(t->action != TAGACT_DOCTYPE) {
+		set_property_string_0(cx, io, "nodeName", upname);
+		set_property_string_0(cx, io, "tagName", upname);
+		set_property_number_0(cx, io, "nodeType", 1);
+	}
 }
 
 /*********************************************************************

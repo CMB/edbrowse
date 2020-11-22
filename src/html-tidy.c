@@ -270,6 +270,9 @@ static void convertNode(TidyNode node, int level, bool opentag)
 	case TidyNode_Text:
 		name = "text";
 		break;
+	case TidyNode_DocType:
+		name = "doctype";
+		break;
 	case TidyNode_Start:
 	case TidyNode_End:
 	case TidyNode_StartEnd:

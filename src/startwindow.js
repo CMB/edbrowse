@@ -1603,7 +1603,8 @@ return c;
 
 // The Option class, these are choices in a dropdown list.
 Option = function() {
-this.nodeName = "OPTION";
+this.nodeName = this.tagName = "OPTION";
+this.nodeType = 1;
 this.text = this.value = "";
 if(arguments.length > 0)
 this.text = arguments[0];
@@ -3892,8 +3893,6 @@ Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssT
 set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
 eb$qs$start = function() {
-// This is a stub for now.
-my$doc().prependChild(new DocType);
 dom$.cssGather(true);
 }
 

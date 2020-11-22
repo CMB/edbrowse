@@ -3907,9 +3907,12 @@ Don't do any of this if the tag is itself <style>. */
 
 	strcpy(upname, t->info->name);
 	caseShift(upname, 'u');
-	set_property_string_0(io, "nodeName", upname);
-	set_property_string_0(io, "tagName", upname);
-	set_property_number_0(io, "nodeType", 1);
+// DocType has nodeType = 10, see startwindow.js
+	if(t->action != TAGACT_DOCTYPE) {
+		set_property_string_0(io, "nodeName", upname);
+		set_property_string_0(io, "tagName", upname);
+		set_property_number_0(io, "nodeType", 1);
+	}
 }
 
 /*********************************************************************
