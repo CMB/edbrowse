@@ -3647,13 +3647,13 @@ document.childNodes = [];
 // We'll make another childNodes array belowe every node in the tree.
 // document should always and only have two children: DOCTYPE and HTML
 Object.defineProperty(document, "firstChild", {
-get: function() { return document.childNodes[0]; }});
+get: function() { return this.childNodes[0]; }});
 Object.defineProperty(document, "firstElementChild", {
-get: function() { return document.childNodes[1]; }});
+get: function() { return this.childNodes[1]; }});
 Object.defineProperty(document, "lastChild", {
-get: function() { return document.childNodes[document.childNodes.length-1]; }});
+get: function() { return this.childNodes[document.childNodes.length-1]; }});
 Object.defineProperty(document, "lastElementChild", {
-get: function() { return document.childNodes[document.childNodes.length-1]; }});
+get: function() { return this.childNodes[document.childNodes.length-1]; }});
 Object.defineProperty(document, "nextSibling", {
 get: function() { return dom$.eb$getSibling(this,"next"); }});
 Object.defineProperty(document, "nextElementSibling", {
@@ -3814,12 +3814,12 @@ window.location$2.href = h;
 }
 }});
 Object.defineProperty(document, "location", {
-get: function() { return document.location$2; },
+get: function() { return this.location$2; },
 set: function(h) {
-if(!document.location$2) {
-document.location$2 = new URL(h);
+if(!this.location$2) {
+this.location$2 = new URL(h);
 } else {
-document.location$2.href = h;
+this.location$2.href = h;
 }
 }});
 
