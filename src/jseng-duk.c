@@ -3047,10 +3047,7 @@ static bool run_function_bool_0(jsobjtype cx0, jsobjtype parent, const char *nam
 		duk_pop(cx);
 	}
 	if (!duk_get_prop_string(cx, -1, name) || !duk_is_function(cx, -1)) {
-#if 0
-		if (!errorMessage)
-			asprintf(&errorMessage, "no such function %s", name);
-#endif
+		debugPrint(3, "no such function %s", name);
 		duk_pop_2(cx);
 		return false;
 	}
@@ -3120,10 +3117,7 @@ static int run_function_onearg_0(jsobjtype cx0, jsobjtype parent, const char *na
 	int rc = -1;
 	duk_push_heapptr(cx, parent);
 	if (!duk_get_prop_string(cx, -1, name) || !duk_is_function(cx, -1)) {
-#if 0
-		if (!errorMessage)
-			asprintf(&errorMessage, "no such function %s", name);
-#endif
+		debugPrint(3, "no such function %s", name);
 		duk_pop_2(cx);
 		return rc;
 	}
@@ -3176,10 +3170,7 @@ static void run_function_onestring_0(jsobjtype cx0, jsobjtype parent, const char
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
 	if (!duk_get_prop_string(cx, -1, name) || !duk_is_function(cx, -1)) {
-#if 0
-		if (!errorMessage)
-			asprintf(&errorMessage, "no such function %s", name);
-#endif
+		debugPrint(3, "no such function %s", name);
 		duk_pop_2(cx);
 		return;
 	}
@@ -3668,7 +3659,7 @@ return jsRunScriptResult(cf, cf->winobj, str, filename, lineno);
 
 void establish_js_option(Tag *t, Tag *sel)
 {
-	jsobjtype cx = cf->cx; // context
+	duk_context *cx = cf->cx; // context
 	int idx = t->lic;
 	jsobjtype oa;		// option array
 	jsobjtype oo;		// option object
@@ -3700,8 +3691,15 @@ connectTagObject(t, oo);
 
 void establish_js_textnode(Tag *t, const char *fpn)
 {
-	connectTagObject(t,
-	 instantiate_0(cf->cx, cf->winobj, fpn, "TextNode"));
+	duk_context *cx = cf->cx;
+	jsobjtype so, ato;
+	 jsobjtype tagobj = instantiate_0(cx, cf->winobj, fpn, "TextNode");
+	instantiate_array_0(cx, tagobj, "childNodes");
+	ato = instantiate_0(cx, tagobj, "attributes", "NamedNodeMap");
+	set_property_object_0(cx, ato, "owner", tagobj);
+	so = instantiate_0(cx, tagobj, "style", "CSSStyleDeclaration");
+	set_property_object_0(cx, so, "element", tagobj);
+	connectTagObject(t, tagobj);
 }
 
 static void processStyles(jsobjtype so, const char *stylestring)
@@ -4098,7 +4096,7 @@ void rebuildSelectors(void)
 
 // Some primitives needed by css.c. These bounce through window.soj$
 static const char soj[] = "soj$";
-static void sofail() { debugPrint(5, "no style object"); }
+static void sofail() { debugPrint(3, "no style object"); }
 
 bool has_gcs(const char *name)
 {

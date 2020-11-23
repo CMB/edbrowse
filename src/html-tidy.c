@@ -326,9 +326,8 @@ static void convertNode(TidyNode node, int level, bool opentag)
 	while (tattr != NULL) {
 		t->attributes[i] = cloneString(tidyAttrName(tattr));
 		t->atvals[i] = cloneString(tidyAttrValue(tattr));
-		if (t->atvals[i] == NULL) {
+		if (t->atvals[i] == NULL)
 			t->atvals[i] = emptyString;
-		}
 		++i;
 		tattr = tidyAttrNext(tattr);
 	}

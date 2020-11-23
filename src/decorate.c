@@ -1105,6 +1105,7 @@ Needless to say that's not good!
 	switch (action) {
 
 	case TAGACT_TEXT:
+		debugPrint(5, "domText");
 		establish_js_textnode(t, fakePropName());
 // nodeName and nodeType set in constructor
 		if (t->jslink) {
@@ -1367,8 +1368,11 @@ static void pushAttributes(const Tag *t)
 	int i;
 	const char **a = t->attributes;
 	const char **v = t->atvals;
+	const char *u;
+	char *x;
 	if (!a)
 		return;
+
 	for (i = 0; a[i]; ++i) {
 // There are some exceptions, some attributes that we handle individually.
 // these are handled in domLink()
@@ -1416,46 +1420,53 @@ static void pushAttributes(const Tag *t)
 			"required",
 			"multiple", "readonly", "disabled", "async", 0
 		};
-		const char *u;
 
-// Should we drop attribute name to lower case? I don't, for now.
+// html tags and attributes are case insensitive.
+// That's why the entire getAttribute system drops names to lower case.
 		u = v[i];
 		if (!u)
 			u = emptyString;
+		x = cloneString(a[i]);
+		caseShift(x, 'l');
 
 // attributes on HTML tags that begin with "data-" should be available under a
 // "dataset" object in JS
-		if (strncmp(a[i], "data-", 5) == 0) {
+		if (strncmp(x, "data-", 5) == 0) {
 // must convert to camelCase
-			char *a2 = cloneString(a[i] + 5);
+			char *a2 = cloneString(x + 5);
 			camelCase(a2);
 			set_dataset_string_t(t, a2, u);
 			nzFree(a2);
-			run_function_onestring_t(t, "markAttribute",        a[i]);
+			run_function_onestring_t(t, "markAttribute",        x);
+			nzFree(x);
 			continue;
 		}
 
-		if (stringEqual(a[i], "style"))	// no clue
+		if (stringEqual(x, "style")) {	// no clue
+			nzFree(x);
 			continue;
+		}
 
 // check for exceptions.
 // Maybe they wrote <a firstChild=foo>
 		if( stringInList(excprot, a[i]) >= 0) {
 			debugPrint(3, "html attribute overload %s.%s",
-				   t->info->name, a[i]);
+				   t->info->name, x);
+			nzFree(x);
 			continue;
 		}
 
 // There are some, like multiple or readonly, that should be set to true,
 // not the empty string.
 		if (!*u && stringInList(dotrue, a[i]) >= 0) {
-			set_property_bool_t(t, a[i], true);
+			set_property_bool_t(t, x, true);
 		} else {
 // standard attribute here
-			                        if (stringInListCI(excdom, a[i]) < 0)
-				set_property_string_t(t, a[i], u);
+			                        if (stringInListCI(excdom, x) < 0)
+				set_property_string_t(t, x, u);
 		}
-		run_function_onestring_t(t, "markAttribute", a[i]);
+		run_function_onestring_t(t, "markAttribute", x);
+		nzFree(x);
 	}
 }
 

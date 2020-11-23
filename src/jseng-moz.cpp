@@ -871,6 +871,7 @@ JS_ValueToObject(cxa, v, &a);
 		}
 		JS_DeleteProperty(cxa, parent, name);
 	}
+// I assume this instantiates in the current compartment
 a = JS_NewArrayObject(cxa, 0);
 v = JS::ObjectValue(*a);
 	JS_DefineProperty(cxa, parent, name, v, JSPROP_STD);
@@ -3683,9 +3684,16 @@ connectTagObject(t, oo);
 
 void establish_js_textnode(Tag *t, const char *fpn)
 {
+	JS::RootedObject so(cxa);		// style object
+	JS::RootedObject ato(cxa);		// attributes object
 	        JSAutoCompartment ac(cxa, tagToCompartment(t));
 	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 JS::RootedObject tagobj(cxa,  instantiate_0(g, fpn, "TextNode"));
+	instantiate_array_0(tagobj, "childNodes");
+	ato = instantiate_0(tagobj, "attributes", "NamedNodeMap");
+	set_property_object_0(ato, "owner", tagobj);
+	so = instantiate_0(tagobj, "style", "CSSStyleDeclaration");
+	set_property_object_0(so, "element", tagobj);
 	connectTagObject(t, tagobj);
 }
 
@@ -4096,7 +4104,7 @@ void rebuildSelectors(void)
 // These are called from do_rules(), which is called from a native method,
 // So a compartment is always set, I guess.
 static const char soj[] = "soj$";
-static void sofail() { debugPrint(5, "no style object"); }
+static void sofail() { debugPrint(3, "no style object"); }
 
 bool has_gcs(const char *name)
 {

@@ -1553,19 +1553,7 @@ this.data$2 += arguments[0];
 }
 this.nodeName = this.tagName = "#text";
 this.nodeType = 3;
-this.ownerDocument = my$doc();
-this.style = new CSSStyleDeclaration;
-this.style.element = this;
 this.class = "";
-/* A text node chould never have children, and does not need childNodes array,
- * but there is improper html out there <text> <stuff> </text>
- * which has to put stuff under the text node, so against this
- * unlikely occurence, I have to create the array.
- * I have to treat a text node like an html node. */
-this.childNodes = [];
-this.parentNode = null;
-this.attributes = new NamedNodeMap;
-this.attributes.owner = this;
 }
 TextNode.prototype.dom$class = "TextNode";
 
@@ -1578,7 +1566,20 @@ set: function(s) { this.data$2 = s + ""; }});
 
 document.createTextNode = function(t) {
 if(t == undefined) t = "";
-var c = new TextNode(t);
+var w = this.defaultView;
+var c = new w.TextNode(t);
+c.ownerDocument = this;
+c.style = new w.CSSStyleDeclaration;
+c.style.element = c;
+/* A text node chould never have children, and does not need childNodes array,
+ * but there is improper html out there <text> <stuff> </text>
+ * which has to put stuff under the text node, so against this
+ * unlikely occurence, I have to create the array.
+ * I have to treat a text node like an html node. */
+c.childNodes = new w.Array;
+c.parentNode = null;
+c.attributes = new w.NamedNodeMap;
+c.attributes.owner = c;
 eb$logElement(c, "text");
 return c;
 }
@@ -1587,16 +1588,17 @@ Comment = function(t) {
 this.data = t;
 this.nodeName = this.tagName = "#comment";
 this.nodeType = 8;
-this.ownerDocument = my$doc();
 this.class = "";
-this.childNodes = [];
-this.parentNode = null;
 }
 Comment.prototype.dom$class = "Comment";
 
 document.createComment = function(t) {
 if(t == undefined) t = "";
-var c = new Comment(t);
+var w = this.defaultView;
+var c = new w.Comment(t);
+c.ownerDocument = this;
+c.childNodes = new w.Array;
+c.parentNode = null;
 eb$logElement(c, "comment");
 return c;
 }
@@ -2712,7 +2714,7 @@ Again, leading ; to avert a parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
+var cnlist = ["DocType", "HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
 "Anchor", "Element","HTMLElement", "Select", "Lister", "Listitem", "tBody", "Table", "Div",
 "HTMLAnchorElement", "HTMLLinkElement", "HTMLAreaElement",
 "tHead", "tFoot", "tCap", "Label",
@@ -3242,10 +3244,10 @@ delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
 
 document.createElementNS = function(nsurl,s) {
 var mismatch = false;
-var u = document.createElement(s);
+var u = this.createElement(s);
 if(!u) return null;
 if(!nsurl) nsurl = "";
-u.namespaceURI = new URL(nsurl);
+u.namespaceURI = new this.defaultView.URL(nsurl);
 // prefix and url have to fit together, I guess.
 // I don't understand any of this.
 if(!s.match(/:/)) {
@@ -3289,50 +3291,61 @@ alert3("bad createElement(" + t + ')');
 // But we get these kinds of strings from www.oranges.com all the time.
 var e = new Error; e.code = 5; throw e;
 }
+
+/*********************************************************************
+The next line is not needed for duktape, but is vital in Mozilla.
+You have to instantiate a class in the same compartment where you use the resulting object.
+If you don't, a seg fault will come eventually.
+new foo() has to be new window.foo(), according to document.create.
+"this" is document, and "this".defaultView is the window
+from whence we want to instantiate our objects.
+Sadly, this still doesn't solve the seg fault problems I am having.
+*********************************************************************/
+var w = this.defaultView;
+
 switch(t) { 
-case "body": c = new Body; break;
-case "object": c = new HtmlObj; break;
-case "a": c = new Anchor; break;
-case "htmlanchorelement": c = new HTMLAnchorElement; break;
+case "body": c = new w.Body; break;
+case "object": c = new w.HtmlObj; break;
+case "a": c = new w.Anchor; break;
+case "htmlanchorelement": c = new w.HTMLAnchorElement; break;
 case "image": t = "img";
-case "img": c = new Image; break;
-case "link": c = new Link; break;
-case "meta": c = new Meta; break;
-case "cssstyledeclaration": case "style": c = new CSSStyleDeclaration; break;
-case "script": c = new Script; break;
-case "div": c = new Div; break;
-case "label": c = new Label; break;
-case "p": c = new P; break;
-case "header": c = new Header; break;
-case "footer": c = new Footer; break;
-case "table": c = new Table; break;
-case "tbody": c = new tBody; break;
-case "tr": c = new tRow; break;
-case "td": c = new Cell; break;
-case "caption": c = new tCap; break;
-case "thead": c = new tHead; break;
-case "tfoot": c = new tFoot; break;
-case "canvas": c = new Canvas; break;
-case "audio": case "video": c = new Audio; break;
-case "document": c = new Document; break;
-case "htmliframeelement": case "iframe": case "frame": c = new Frame; break;
-case "select": c = new Select; break;
+case "img": c = new w.Image; break;
+case "link": c = new w.Link; break;
+case "meta": c = new w.Meta; break;
+case "cssstyledeclaration": case "style": c = new w.CSSStyleDeclaration; break;
+case "script": c = new w.Script; break;
+case "div": c = new w.Div; break;
+case "label": c = new w.Label; break;
+case "p": c = new w.P; break;
+case "header": c = new w.Header; break;
+case "footer": c = new w.Footer; break;
+case "table": c = new w.Table; break;
+case "tbody": c = new w.tBody; break;
+case "tr": c = new w.tRow; break;
+case "td": c = new w.Cell; break;
+case "caption": c = new w.tCap; break;
+case "thead": c = new w.tHead; break;
+case "tfoot": c = new w.tFoot; break;
+case "canvas": c = new w.Canvas; break;
+case "audio": case "video": c = new w.Audio; break;
+case "document": c = new w.Document; break;
+case "htmliframeelement": case "iframe": case "frame": c = new w.Frame; break;
+case "select": c = new w.Select; break;
 case "option":
-c = new Option;
-c.nodeName = c.tagName = "OPTION";
-c.childNodes = [];
+c = new w.Option;
+c.childNodes = new w.Array;
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
-case "form": c = new Form; break;
+case "form": c = new w.Form; break;
 case "input": case "element": case "textarea":
-c = new Element;
+c = new w.Element;
 if(t == "textarea") c.type = t;
 break;
-case "button": c = new Element; c.type = "submit"; break;
+case "button": c = new w.Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
-c = new HTMLElement;
+c = new w.HTMLElement;
 }
 
 /* ok, for some element types this perhaps doesn't make sense,
@@ -3340,14 +3353,14 @@ c = new HTMLElement;
 if(c.dom$class == "CSSStyleDeclaration") {
 c.element = c;
 } else {
-c.style = new CSSStyleDeclaration;
+c.style = new w.CSSStyleDeclaration;
 c.style.element = c;
 }
-c.dataset = {};
-c.childNodes = [];
+c.dataset = new w.Object;
+c.childNodes = new w.Array;
 if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
-c.attributes = new NamedNodeMap;
+c.attributes = new w.NamedNodeMap;
 c.attributes.owner = c;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");
@@ -3365,12 +3378,12 @@ c.nodeType = 1;
 if(t == "document")
 c.nodeType = 9, c.tagName = "document";
 c.class = "";
-c.ownerDocument = my$doc();
+c.ownerDocument = this;
 eb$logElement(c, t);
 if(c.nodeType == 1) c.id = c.name = "";
 
 if(c.dom$class == "Frame") {
-var d = document.createElement("document");
+var d = this.createElement("document");
 c.content$Document = c.content$Window = d;
 Object.defineProperty(c, "contentDocument", { get: eb$getter_cd });
 Object.defineProperty(c, "contentWindow", { get: eb$getter_cw });
@@ -3381,7 +3394,7 @@ return c;
 } 
 
 document.createDocumentFragment = function() {
-var c = document.createElement("fragment");
+var c = this.createElement("fragment");
 c.nodeType = 11;
 c.nodeName = c.tagName = "#document-fragment";
 return c;
