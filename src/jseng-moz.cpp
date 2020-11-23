@@ -30,7 +30,80 @@ JSContext *cxa; // the context for all
 // I'll still use cx when it is passed in, as it must be for native methods.
 // But it will be equal to cxa.
 
-struct cro { // chain of rooted objects
+/*********************************************************************
+This is really cheeky, and if I don't document it, you'll never figure it out.
+In mozilla, the garbage collector rules the day;
+it can move objects around in memory, or even delete them out from under you.
+The defense against this is the rooted object, and perhaps other mechanisms
+that I don't know about.
+A rooted object is a structure with three pointers.
+l[0] points to the base of the root chain.
+l[1] points to the previous rooted object in the chain.
+The chain ends when l[1] = 0.
+l[2] points to the object.
+When gc wants to delete an object, as it is no longer used by javascript,
+it runs down the root chain, until l[1] = 0, and if l[2] ever points to
+that object,then it will not remove it, because C is still using it.
+The same is done in duktape if the object is on their context stack.
+But mozilla has a complexity that duktape doesn't; objects move in memory.
+If an object moves, gc runs down the root chain, and whenever l[2]
+points to the old location, it updates l[2] to the new location.
+Now consider a function like
+foo() { JS::RootedObject a(cx), b(cx); ... }
+The constructor of a pushes the root a onto the top of the chain.
+void **l = (void**)&a, and l[1] points to the next rooted object down.
+Then b roots, and the second pointer of b points to the base of a.
+When the function returns, the destructors run, b unroots, and a unroots.
+Rooted objects have to run this way, fifo, like a stack.
+If you unroot them in the wrong order you get a big seg fault.
+If you don't do a setjmp() or anything weird, the normal flow
+of scope and execution guarantees this.
+But I need to do something weird. In the middle of a function
+I want to associate a rooted object with an html tag.
+This association has to outlast the function.
+t->jv = new JS::RootedObject(cx, corespondingObject());
+If this is done in a function foo, and if there is a single rooted object before,
+I'm toast! a unroots when foo returns, while t->jv is still rooted,
+and it blows up.
+So, just guarantee nothing is rooted when you do this.
+foo() { { JS:RootedObject a(cx), b(cx); ... } ... assign t->jv; }
+There: a and b go out of scope, and unroot, and don't cause trouble.
+But a lot of my functions make these assignments from native methods.
+The act of running a native method puts a dozen rooted objects on the chain.
+Try it; call rootchain() from within a native method.
+It's not flat, i.e. just our rooted objects for our tags,
+it has its own rooted objects, and I can't do anything about that.
+So that is impossible.
+So here's the cheeky thing I do, and don't do this at home!
+Move t->jv down in the chain, all the way down to the top of our tags.
+Now the other rooted objects can unroot, and shockingly, it works.
+But it only works in moz 60, not moz 52. Here's why.
+In Moz 52, every time you AutoCompartment, it starts a new root chain.
+Somehow it connects all these root chains together when moving or deleting
+objects, but I don't know how it does it.
+In Moz 60 there is one overall root chain, no matter the compartments,
+and my strategy works.
+Are they likely to revert back to chains per compartment in a future version,
+and destroy my strategy? Probably not.
+The single root chain is simpler, less software, why would they go back to
+something more complex?
+So I'm gonna say we need Moz 60 or above, or, I figure out how to manage
+rooted objects on the heap, and then I don't have to do all this crazy hacking.
+So, rootchain() is for debugging, it steps down the chain
+and prints the first two pointers at each step, just the last 3 digites,
+then the length of the chain.
+Also the length of the rooted value chain, which is separate,
+rooted strings also a separate chain.
+jsUnroot unroots all our tag objects,
+which would otherwise never unroot and become a substantial memory leak.
+jsClose() prints an error message if we have not cleaned up all our rooted
+objects, the ones tied to html tags, the ones we are responsible for.
+jsRootAndMove is the complicated function; it creates the rooted object
+for the html tag, then moves it down the chain to join the rest of our
+tag objects, where it will be safe.
+*********************************************************************/
+
+struct cro { // chain of allocated rooted objects
 	struct cro *prev;
 	JS::RootedObject *m;
 	bool inuse;
