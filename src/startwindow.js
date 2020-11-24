@@ -1570,19 +1570,18 @@ set: function(s) { this.data$2 = s + ""; }});
 
 document.createTextNode = function(t) {
 if(t == undefined) t = "";
-var w = this.defaultView;
-var c = new w.TextNode(t);
+var c = new TextNode(t);
 c.ownerDocument = this;
-c.style = new w.CSSStyleDeclaration;
+c.style = new CSSStyleDeclaration;
 c.style.element = c;
 /* A text node chould never have children, and does not need childNodes array,
  * but there is improper html out there <text> <stuff> </text>
  * which has to put stuff under the text node, so against this
  * unlikely occurence, I have to create the array.
  * I have to treat a text node like an html node. */
-c.childNodes = new w.Array;
+c.childNodes = [];
 c.parentNode = null;
-c.attributes = new w.NamedNodeMap;
+c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
 eb$logElement(c, "text");
 return c;
@@ -1598,10 +1597,9 @@ Comment.prototype.dom$class = "Comment";
 
 document.createComment = function(t) {
 if(t == undefined) t = "";
-var w = this.defaultView;
-var c = new w.Comment(t);
+var c = new Comment(t);
 c.ownerDocument = this;
-c.childNodes = new w.Array;
+c.childNodes = [];
 c.parentNode = null;
 eb$logElement(c, "comment");
 return c;
@@ -3251,7 +3249,7 @@ var mismatch = false;
 var u = this.createElement(s);
 if(!u) return null;
 if(!nsurl) nsurl = "";
-u.namespaceURI = new this.defaultView.URL(nsurl);
+u.namespaceURI = new URL(nsurl);
 // prefix and url have to fit together, I guess.
 // I don't understand any of this.
 if(!s.match(/:/)) {
@@ -3296,60 +3294,49 @@ alert3("bad createElement(" + t + ')');
 var e = new Error; e.code = 5; throw e;
 }
 
-/*********************************************************************
-The next line is not needed for duktape, but is vital in Mozilla.
-You have to instantiate a class in the same compartment where you use the resulting object.
-If you don't, a seg fault will come eventually.
-new foo() has to be new window.foo(), according to document.create.
-"this" is document, and "this".defaultView is the window
-from whence we want to instantiate our objects.
-Sadly, this still doesn't solve the seg fault problems I am having.
-*********************************************************************/
-var w = this.defaultView;
-
 switch(t) { 
-case "body": c = new w.Body; break;
-case "object": c = new w.HtmlObj; break;
-case "a": c = new w.Anchor; break;
-case "htmlanchorelement": c = new w.HTMLAnchorElement; break;
+case "body": c = new Body; break;
+case "object": c = new HtmlObj; break;
+case "a": c = new Anchor; break;
+case "htmlanchorelement": c = new HTMLAnchorElement; break;
 case "image": t = "img";
-case "img": c = new w.Image; break;
-case "link": c = new w.Link; break;
-case "meta": c = new w.Meta; break;
-case "cssstyledeclaration": case "style": c = new w.CSSStyleDeclaration; break;
-case "script": c = new w.Script; break;
-case "div": c = new w.Div; break;
-case "label": c = new w.Label; break;
-case "p": c = new w.P; break;
-case "header": c = new w.Header; break;
-case "footer": c = new w.Footer; break;
-case "table": c = new w.Table; break;
-case "tbody": c = new w.tBody; break;
-case "tr": c = new w.tRow; break;
-case "td": c = new w.Cell; break;
-case "caption": c = new w.tCap; break;
-case "thead": c = new w.tHead; break;
-case "tfoot": c = new w.tFoot; break;
-case "canvas": c = new w.Canvas; break;
-case "audio": case "video": c = new w.Audio; break;
-case "document": c = new w.Document; break;
-case "htmliframeelement": case "iframe": case "frame": c = new w.Frame; break;
-case "select": c = new w.Select; break;
+case "img": c = new Image; break;
+case "link": c = new Link; break;
+case "meta": c = new Meta; break;
+case "cssstyledeclaration": case "style": c = new CSSStyleDeclaration; break;
+case "script": c = new Script; break;
+case "div": c = new Div; break;
+case "label": c = new Label; break;
+case "p": c = new P; break;
+case "header": c = new Header; break;
+case "footer": c = new Footer; break;
+case "table": c = new Table; break;
+case "tbody": c = new tBody; break;
+case "tr": c = new tRow; break;
+case "td": c = new Cell; break;
+case "caption": c = new tCap; break;
+case "thead": c = new tHead; break;
+case "tfoot": c = new tFoot; break;
+case "canvas": c = new Canvas; break;
+case "audio": case "video": c = new Audio; break;
+case "document": c = new Document; break;
+case "htmliframeelement": case "iframe": case "frame": c = new Frame; break;
+case "select": c = new Select; break;
 case "option":
-c = new w.Option;
-c.childNodes = new w.Array;
+c = new Option;
+c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
-case "form": c = new w.Form; break;
+case "form": c = new Form; break;
 case "input": case "element": case "textarea":
-c = new w.Element;
+c = new Element;
 if(t == "textarea") c.type = t;
 break;
-case "button": c = new w.Element; c.type = "submit"; break;
+case "button": c = new Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
-c = new w.HTMLElement;
+c = new HTMLElement;
 }
 
 /* ok, for some element types this perhaps doesn't make sense,
@@ -3357,14 +3344,14 @@ c = new w.HTMLElement;
 if(c.dom$class == "CSSStyleDeclaration") {
 c.element = c;
 } else {
-c.style = new w.CSSStyleDeclaration;
+c.style = new CSSStyleDeclaration;
 c.style.element = c;
 }
-c.dataset = new w.Object;
-c.childNodes = new w.Array;
+c.dataset = {};
+c.childNodes = [];
 if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
-c.attributes = new w.NamedNodeMap;
+c.attributes = new NamedNodeMap;
 c.attributes.owner = c;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");
