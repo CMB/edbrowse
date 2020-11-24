@@ -57,8 +57,10 @@ void traverseAll(int start)
 
 	for (i = start; i < cw->numTags; ++i) {
 		t = tagList[i];
-		if (!t->parent && !t->slash && !t->dead)
+		if (!t->parent && !t->slash && !t->dead) {
+			debugPrint(6, "traverse start at %s %d", t->info->name, t->seqno);
 			traverseNode(t);
+		}
 	}
 
 	if (treeOverflow)
@@ -567,7 +569,6 @@ static void prerenderNode(Tag *t, bool opentag)
 	int j;
 	int action = t->action;
 	const char *a;		/* usually an attribute */
-	Tag *cdt;
 
 	if (t->step >= 1)
 		return;
@@ -852,9 +853,6 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 // If somebody wrote <frame><p>foo</frame>, those tags should be excised.
 		underKill(t);
-		cdt = newTag(cf, "document");
-		t->firstchild = cdt;
-		cdt->parent = t;
 		break;
 
 	case TAGACT_MUSIC:
@@ -1322,13 +1320,6 @@ Needless to say that's not good!
 	if (t->parent && t->parent->jslink) {
 		run_function_onearg_t(t->parent, "eb$apch1", t);
 		linked_in = true;
-// special code for frame.contentDocument.
-		if (t->parent->action == TAGACT_FRAME) {
-			set_property_object_t(t->parent,
-					    "contentDocument", t);
-			set_property_object_t(t->parent,
-					    "contentWindow", t);
-		}
 	}
 
 	if (action == TAGACT_HTML || action == TAGACT_DOCTYPE) {

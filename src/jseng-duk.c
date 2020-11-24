@@ -502,18 +502,16 @@ static duk_ret_t setter_value(duk_context * cx)
 }
 
 static int frameContractLine(int lineNumber);
-static int frameExpandLine(int ln, jsobjtype fo);
+static int frameExpandLine(int ln, Tag *t);
 
-static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
+static void forceFrameExpand(Tag *t)
 {
 	Frame *save_cf = cf;
 	const char *save_src = jsSourceFile;
 	int save_lineno = jsLineno;
 	bool save_plug = pluginsOn;
-	duk_push_true(cx);
-	duk_put_prop_string(cx, -2, "eb$auto");
 	pluginsOn = false;
-	frameExpandLine(0, thisobj);
+	frameExpandLine(0, t);
 	cf = save_cf;
 	jsSourceFile = save_src;
 	jsLineno = save_lineno;
@@ -523,46 +521,46 @@ static void forceFrameExpand(duk_context * cx, jsobjtype thisobj)
 // contentDocument getter setter; this is a bit complicated.
 static duk_ret_t getter_cd(duk_context * cx)
 {
-	bool found;
 	jsobjtype thisobj;
+	Tag *t;
 	jsInterruptCheck(cx);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
-	found = duk_get_prop_string(cx, -1, "eb$auto");
 	duk_pop(cx);
-	if (!found)
-		forceFrameExpand(cx, thisobj);
-	duk_get_prop_string(cx, -1, "content$Document");
-	duk_remove(cx, -2);
+	t = tagFromJavaVar(thisobj);
+	if(!t)
+		goto fail;
+	if(!t->f1)
+		forceFrameExpand(t);
+	if(!t->f1 || !t->f1->docobj) // should not happen
+		goto fail;
+	duk_push_heapptr(cx, t->f1->docobj);
 	return 1;
-}
-
-// You can't really change contentDocument; this is a stub.
-static duk_ret_t setter_cd(duk_context * cx)
-{
-	return 0;
+fail:
+	duk_push_null(cx);
+	return 1;
 }
 
 static duk_ret_t getter_cw(duk_context * cx)
 {
-	bool found;
 	jsobjtype thisobj;
+	Tag *t;
 	jsInterruptCheck(cx);
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
-	found = duk_get_prop_string(cx, -1, "eb$auto");
 	duk_pop(cx);
-	if (!found)
-		forceFrameExpand(cx, thisobj);
-	duk_get_prop_string(cx, -1, "content$Window");
-	duk_remove(cx, -2);
+	t = tagFromJavaVar(thisobj);
+	if(!t)
+		goto fail;
+	if(!t->f1)
+		forceFrameExpand(t);
+	if(!t->f1 || !t->f1->winobj) // should not happen
+		goto fail;
+	duk_push_heapptr(cx, t->f1->winobj);
 	return 1;
-}
-
-// You can't really change contentWindow; this is a stub.
-static duk_ret_t setter_cw(duk_context * cx)
-{
-	return 0;
+fail:
+	duk_push_null(cx);
+	return 1;
 }
 
 /*********************************************************************
@@ -576,10 +574,10 @@ Return false if there is a problem fetching a web page,
 or if none of the lines are frames.
 If first argument expand is false then we are contracting.
 Call either frameExpandLine or frameContractLine on each line in the range.
-frameExpandLine takes a line number or an object, not both.
+frameExpandLine takes a line number or a tag, not both.
 One or the other will be 0.
 If a line number, it comes from a user command, you asked to expand the frame.
-If the object is not null, it is from a getter,
+If the tag is not null, it is from a getter,
 javascript is trying to access objects within that frame,
 and now we need to expand it.
 *********************************************************************/
@@ -614,22 +612,18 @@ bool frameExpand(bool expand, int ln1, int ln2)
  1 line is not a frame.
  2 frame doesn't have a valid url.
  3 Problem fetching the rul or rendering the page.  */
-static int frameExpandLine(int ln, jsobjtype fo)
+static int frameExpandLine(int ln, Tag *t)
 {
 	pst line;
 	int tagno, start;
 	const char *s, *jssrc = 0;
 	char *a;
-	Tag *t;
 	Frame *save_cf, *new_cf, *last_f;
 	uchar save_local;
+	bool fromget = !ln;
 	Tag *cdt;	// contentDocument tag
 
-	if (fo) {
-		t = tagFromJavaVar(fo);
-		if (!t)
-			return 1;
-	} else {
+	if(!t) {
 		line = fetchLine(ln, -1);
 		s = stringInBufLine((char *)line, "Frame ");
 		if (!s)
@@ -648,10 +642,16 @@ static int frameExpandLine(int ln, jsobjtype fo)
 /* the easy case is if it's already been expanded before, we just unhide it. */
 	if (t->f1) {
 // If js is accessing objects in this frame, that doesn't mean we unhide it.
-		if (!fo)
+		if (!fromget)
 			t->contracted = false;
 		return 0;
 	}
+
+// maybe we tried to expand it and it failed
+	if(t->expf)
+		return 0;
+	t->expf = true;
+
 // Check with js first, in case it changed.
 	if ((a = get_property_url_t(t, false)) && *a) {
 		nzFree(t->href);
@@ -669,7 +669,7 @@ static int frameExpandLine(int ln, jsobjtype fo)
 // No source. If this is your request then return an error.
 // But if we're dipping into the objects then it needs to expand
 // into a separate window, a separate js space, with an empty body.
-		if (!fo && !jssrc)
+		if (!fromget && !jssrc)
 			return 2;
 // After expansion we need to be able to expand it,
 // because there's something there, well maybe.
@@ -688,7 +688,7 @@ static int frameExpandLine(int ln, jsobjtype fo)
 		   (s ? s : (jssrc ? "javascript" : "empty")));
 
 	if (s) {
-		bool rc = readFileArgv(s, (fo ? 2 : 1));
+		bool rc = readFileArgv(s, (fromget ? 2 : 1));
 		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
@@ -749,25 +749,21 @@ So check for serverData null here. Once again we pop the frame.
 	newlocation = 0;
 
 	start = cw->numTags;
+	cdt = newTag(cf, "Document");
+	cdt->parent = t, t->firstchild = cdt;
+	cdt->attributes = allocZeroMem(sizeof(char*));
+	cdt->atvals = allocZeroMem(sizeof(char*));
 /* call the tidy parser to build the html nodes */
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
 	htmlGenerated = false;
-// in the edbrowse world, the only child of the frame tag
-// is the contentDocument tag.
-	cdt = t->firstchild;
-// the placeholder document node will soon be orphaned.
-	delete_property_t(t, "parentNode");
-	htmlNodesIntoTree(start, cdt);
-	cdt->step = 0;
+	htmlNodesIntoTree(start + 1, cdt);
 	prerender(0);
 
 /*********************************************************************
 At this point cdt->step is 1; the html tree is built, but not decorated.
-I already put the object on cdt manually. Besides, we don't want to set up
-the fake cdt object and the getter that auto-expands the frame,
-we did that before and now it's being expanded. So bump step up to 2.
+cdt doesn't have or need an object; it's a place holder.
 *********************************************************************/
 	cdt->step = 2;
 
@@ -806,24 +802,17 @@ we did that before and now it's being expanded. So bump step up to 2.
 	t->f1 = cf;
 	cf = save_cf;
 	browseLocal = save_local;
-	if (fo)
+	if (fromget)
 		t->contracted = true;
 	if (new_cf->docobj) {
 		jsobjtype cdo;	// contentDocument object
-		jsobjtype cwo;	// contentWindow object
-		jsobjtype cna;	// childNodes array
 		cdo = new_cf->docobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
 		cdt->style = 0;
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = new_cf;
-		set_property_object_0(new_cf->cx, t->jv, "content$Document", cdo);
-		cna = get_property_object_0(t->f0->cx, t->jv, "childNodes");
-		set_array_element_object_0(t->f0->cx, cna, 0, cdo);
-		set_property_object_0(t->f0->cx, cdo, "parentNode", t->jv);
-		cwo = new_cf->winobj;
-		set_property_object_0(new_cf->cx, t->jv, "content$Window", cwo);
+		set_property_bool_t(t, "eb$expf", true);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
 		run_event_t(t, t->info->name, "onload");
@@ -937,31 +926,17 @@ bool reexpandFrame(void)
 	browseLocal = save_local;
 
 	if (cf->docobj) {
-		Frame *save_cf;
 		jsobjtype cdo;	// contentDocument object
-		jsobjtype cwo;	// contentWindow object
-		jsobjtype cna;	// childNodes array
 		cdo = cf->docobj;
-		cwo = cf->winobj;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, cdo);
 		cdt->style = 0;
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = cf;
-// have to point contentDocument to the new document object,
-// but that requires a change of context.
-		save_cf = cf;
-		cf = frametag->f0;
-		set_property_object_0(cf->cx, frametag->jv, "content$Document", cdo);
-		cna = get_property_object_0(cf->cx, frametag->jv, "childNodes");
-		set_array_element_object_0(cf->cx, cna, 0, cdo);
-		set_property_object_0(cf->cx, cdo, "parentNode", frametag->jv);
-		set_property_object_0(cf->cx, frametag->jv, "content$Window", cwo);
-		cf = save_cf;
 	}
 
 	return true;
-}				/* reexpandFrame */
+}
 
 static bool remember_contracted;
 
@@ -969,7 +944,6 @@ static duk_ret_t native_unframe(duk_context * cx)
 {
 	if (duk_is_object(cx, 0)) {
 		jsobjtype fobj = duk_get_heapptr(cx, 0);
-		jsobjtype newdoc = duk_get_heapptr(cx, 1);
 		int i, n;
 		Tag *t, *cdt;
 		Frame *f, *f1;
@@ -978,14 +952,12 @@ static duk_ret_t native_unframe(duk_context * cx)
 			debugPrint(1, "unframe couldn't find tag");
 			goto done;
 		}
-		if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC ||
-		cdt->sibling || !(cdt->jv)) {
-			debugPrint(1, "unframe child tag isn't right");
+		                if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC) {
+			                        debugPrint(1, "unframe child tag isn't right");
 			goto done;
 		}
 		underKill(cdt);
 		disconnectTagObject(cdt);
-		connectTagObject(cdt, newdoc);
 		f1 = t->f1;
 		t->f1 = 0;
 		remember_contracted = t->contracted;
@@ -1021,7 +993,7 @@ static duk_ret_t native_unframe(duk_context * cx)
 			debugPrint(3, "%d nodes pushed up to the parent frame", n);
 	}
 done:
-	duk_pop_2(cx);
+	duk_pop(cx);
 	return 0;
 }
 
@@ -2199,7 +2171,7 @@ static void createJSContext_0(Frame *f)
 	duk_put_global_string(cx, "btoa");
 	duk_push_c_function(cx, native_atob, 1);
 	duk_put_global_string(cx, "atob");
-	duk_push_c_function(cx, native_unframe, 2);
+	duk_push_c_function(cx, native_unframe, 1);
 	duk_put_global_string(cx, "eb$unframe");
 	duk_push_c_function(cx, native_unframe2, 1);
 	duk_put_global_string(cx, "eb$unframe2");
@@ -2788,42 +2760,6 @@ static int set_property_object_0(jsobjtype cx0, jsobjtype parent, const char *na
 {
 	duk_context * cx = cx0;
 	duk_push_heapptr(cx, parent);
-
-// Special code for frame.contentDocument
-	if (stringEqual(name, "contentDocument")) {
-		bool rc;
-		duk_get_global_string(cx, "Frame");
-		rc = duk_instanceof(cx, -2, -1);
-		duk_pop(cx);
-		if (rc) {
-			duk_push_string(cx, name);
-			duk_push_c_function(cx, getter_cd, 0);
-			duk_push_c_function(cx, setter_cd, 1);
-			duk_def_prop(cx, -4,
-				     (DUK_DEFPROP_HAVE_SETTER |
-				      DUK_DEFPROP_HAVE_GETTER |
-				      DUK_DEFPROP_SET_ENUMERABLE));
-			name = "content$Document";
-		}
-	}
-
-	if (stringEqual(name, "contentWindow")) {
-		bool rc;
-		duk_get_global_string(cx, "Frame");
-		rc = duk_instanceof(cx, -2, -1);
-		duk_pop(cx);
-		if (rc) {
-			duk_push_string(cx, name);
-			duk_push_c_function(cx, getter_cw, 0);
-			duk_push_c_function(cx, setter_cw, 1);
-			duk_def_prop(cx, -4,
-				     (DUK_DEFPROP_HAVE_SETTER |
-				      DUK_DEFPROP_HAVE_GETTER |
-				      DUK_DEFPROP_SET_ENUMERABLE));
-			name = "content$Window";
-		}
-	}
-
 	duk_push_heapptr(cx, child);
 	duk_put_prop_string(cx, -2, name);
 	duk_pop(cx);
@@ -3830,12 +3766,12 @@ That's how it was for a long time, but I think we only do this on form.
 				return;
 			set_property_string_0(cx, io, "type", "radio");
 		} else {
+		jsobjtype ca;	// child array
 /* A standard input element, just create it. */
-			jsobjtype ca;	// child array
 			if(!(io = instantiate_0(cx,
 (fakeName ? cf->winobj : owner), membername, classname)))
 				return;
-/* not an array; needs the childNodes array beneath it for the children */
+// Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array_0(cx, io, "childNodes");
 // childNodes and options are the same for Select
 			if (stringEqual(classname, "Select"))

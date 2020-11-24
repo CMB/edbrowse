@@ -576,16 +576,15 @@ JS_SetProperty(cx, thisobj, "val$ue", args[0]);
 	return true;
 }
 
-static int frameExpandLine(int ln, JS::HandleObject fo);
+static int frameExpandLine(int ln, Tag *t);
 static int frameContractLine(int lineNumber);
 
-static void forceFrameExpand(JS::HandleObject thisobj)
+static void forceFrameExpand(Tag *t)
 {
 	Frame *save_cf = cf;
 	bool save_plug = pluginsOn;
-set_property_bool_0(thisobj, "eb$auto", true);
 	pluginsOn = false;
-	frameExpandLine(0, thisobj);
+	frameExpandLine(0, t);
 	cf = save_cf;
 	pluginsOn = save_plug;
 }
@@ -593,43 +592,43 @@ set_property_bool_0(thisobj, "eb$auto", true);
 // contentDocument getter setter; this is a bit complicated.
 static bool getter_cd(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-	bool found;
+	  JS::CallArgs args = CallArgsFromVp(argc, vp);
 	jsInterruptCheck();
-        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-JS_HasProperty(cx, thisobj, "eb$auto", &found);
-	if (!found)
-		forceFrameExpand(thisobj);
-JS::RootedValue v(cx);
-JS_GetProperty(cx, thisobj, "content$Document", &v);
-args.rval().set(v);
-return true;
+	args.rval().setNull();
+	Tag *t;
+	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	t = tagFromObject(thisobj);
+	if(!t)
+		return true;
+	if(!t->f1)
+		forceFrameExpand(t);
+	if(!t->f1 || !t->f1->jslink) // should not happen
+		return true;
+	JS::RootedObject fw(cx, frameToCompartment(t->f1));
+	JS::RootedValue v(cx);
+	JS_GetProperty(cx, fw, "document", &v);
+	args.rval().set(v);
+	return true;
 }
-
-// You can't really change contentDocument; we'll use
-// nat_stub for the setter instead.
-static bool nat_stub(JSContext *cx, unsigned argc, JS::Value *vp)
-{
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-args.rval().setUndefined();
-  return true;
-}
-
 
 // contentWindow getter setter; this is a bit complicated.
 static bool getter_cw(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-	bool found;
+	  JS::CallArgs args = CallArgsFromVp(argc, vp);
 	jsInterruptCheck();
-        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
-JS_HasProperty(cx, thisobj, "eb$auto", &found);
-	if (!found)
-		forceFrameExpand(thisobj);
-JS::RootedValue v(cx);
-JS_GetProperty(cx, thisobj, "content$Window", &v);
-args.rval().set(v);
-return true;
+	args.rval().setNull();
+	Tag *t;
+	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	t = tagFromObject(thisobj);
+	if(!t)
+		return true;
+	if(!t->f1)
+		forceFrameExpand(t);
+	if(!t->f1 || !t->f1->jslink) // should not happen
+		return true;
+	JS::RootedObject fw(cx, frameToCompartment(t->f1));
+	args.rval().setObject(*fw);
+	return true;
 }
 
 // You can't really change contentWindow; we'll use
@@ -774,38 +773,8 @@ static void set_property_object_0(JS::HandleObject parent, const char *name,  JS
 JS::RootedValue v(cxa);
 	bool found;
 
-	JS_HasProperty(cxa, parent, name, &found);
-
-// Special code for frame.contentDocument
-	if (stringEqual(name, "contentDocument")) {
-// Is it really a Frame object?
-JS_GetProperty(cxa, parent, "dom$class", &v);
-if(stringEqual(stringize(v), "Frame")) {
-#if MOZJS_MAJOR_VERSION >= 60
-JS_DefineProperty(cxa, parent, name, getter_cd, nat_stub, JSPROP_STD);
-#else
-JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD, getter_cd, nat_stub);
-#endif
-name = "content$Document";
-found = false;
-}
-}
-
-	if (stringEqual(name, "contentWindow")) {
-// Is it really a Frame object?
-JS_GetProperty(cxa, parent, "dom$class", &v);
-if(stringEqual(stringize(v), "Frame")) {
-#if MOZJS_MAJOR_VERSION >= 60
-JS_DefineProperty(cxa, parent, name, getter_cw, nat_stub, JSPROP_STD);
-#else
-JS_DefineProperty(cxa, parent, name, 0, JSPROP_STD, getter_cw, nat_stub);
-#endif
-name = "content$Window";
-found = false;
-}
-}
-
 v = JS::ObjectValue(*child);
+	JS_HasProperty(cxa, parent, name, &found);
 	if (found)
 JS_SetProperty(cxa, parent, name, v);
 else
@@ -2489,10 +2458,10 @@ Return false if there is a problem fetching a web page,
 or if none of the lines are frames.
 If first argument expand is false then we are contracting.
 Call either frameExpandLine or frameContractLine on each line in the range.
-frameExpandLine takes a line number or an object, not both.
+frameExpandLine takes a line number or a tag, not both.
 One or the other will be 0.
 If a line number, it comes from a user command, you asked to expand the frame.
-If the object is not null, it is from a getter,
+If the tag is not null, it is from a getter,
 javascript is trying to access objects within that frame,
 and now we need to expand it.
 We're in a compartment, but who knows which one.
@@ -2536,14 +2505,13 @@ bool frameExpand(bool expand, int ln1, int ln2)
  2 frame doesn't have a valid url.
  3 Problem fetching the rul or rendering the page.  */
 
-static int frameExpandLine(int ln, JS::HandleObject fo)
+static int frameExpandLine(int ln, Tag *t)
 {
 	bool fromget = !ln;
 	pst line;
 	int tagno, start;
 	const char *s, *jssrc = 0;
 	char *a;
-	Tag *t;
 	Frame *save_cf, *new_cf, *last_f;
 	uchar save_local;
 	Tag *cdt;	// contentDocument tag
@@ -2551,9 +2519,6 @@ static int frameExpandLine(int ln, JS::HandleObject fo)
 	JSObject *comp; // compartment
 
 	if (fromget) {
-		t = tagFromObject(fo);
-		if (!t)
-			return 1;
 		jslink = true;
 	} else {
 		line = fetchLine(ln, -1);
@@ -2580,6 +2545,11 @@ static int frameExpandLine(int ln, JS::HandleObject fo)
 			t->contracted = false;
 		return 0;
 	}
+
+// maybe we tried to expand it and it failed
+	if(t->expf)
+		return 0;
+	t->expf = true;
 
 	JSAutoCompartment bc(cxa, tagToCompartment(t));
 
@@ -2680,25 +2650,22 @@ So check for serverData null here. Once again we pop the frame.
 	newlocation = 0;
 
 	start = cw->numTags;
+	cdt = newTag(cf, "Document");
+	cdt->parent = t, t->firstchild = cdt;
+	cdt->attributes = (const char **)allocZeroMem(sizeof(char*));
+	cdt->atvals = (const char **)allocZeroMem(sizeof(char*));
 /* call the tidy parser to build the html nodes */
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
 	htmlGenerated = false;
-// in the edbrowse world, the only child of the frame tag
-// is the contentDocument tag.
-	cdt = t->firstchild;
-// the placeholder document node will soon be orphaned.
-	delete_property_t(cdt, "parentNode");
-	htmlNodesIntoTree(start, cdt);
+	htmlNodesIntoTree(start + 1, cdt);
 	cdt->step = 0;
 	prerender(0);
 
 /*********************************************************************
 At this point cdt->step is 1; the html tree is built, but not decorated.
-I already put the object on cdt manually. Besides, we don't want to set up
-the fake cdt object and the getter that auto-expands the frame,
-we did that before and now it's being expanded. So bump step up to 2.
+cdt doesn't have or need an object; it's a place holder.
 *********************************************************************/
 	cdt->step = 2;
 
@@ -2756,14 +2723,9 @@ JSAutoCompartment ac(cxa, prev);
 		connectTagObject(cdt, cdo);
 		cdt->style = 0;
 		cdt->ssn = 0;
+		set_property_bool_t(t, "eb$expf", true);
 // Should I switch this tag into the new frame? I don't really know.
 		cdt->f0 = new_cf;
-		set_property_object_0(fto, "content$Window", cwo);
-		set_property_object_0(fto, "content$Document", cdo);
-JS::RootedObject cna(cxa);	// childNodes array
-		cna = get_property_object_0(fto, "childNodes");
-		set_array_element_object_0(cna, 0, cdo);
-		set_property_object_0(cdo, "parentNode", fto);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
 // Hope so cause that is the current compartment.
@@ -2881,28 +2843,12 @@ doc = get_property_object_0(g, "document");
 	if (cf->jslink) {
 // Remember, g is the new content window object,
 // and doc is the new content document object.
-		Frame *save_cf;
 		disconnectTagObject(cdt);
 		connectTagObject(cdt, doc);
 		cdt->style = 0;
 		cdt->ssn = 0;
 // it should already be set to cf, since this is a replacement
 		cdt->f0 = cf;
-JS::RootedObject cna(cxa);	// childNodes array
-// have to point contentDocument to the new document object,
-// but that requires a change of context.
-		save_cf = cf;
-		cf = frametag->f0;
-{
-JSAutoCompartment ac(cxa, frameToCompartment(cf));
-// save_fe is conveniently the object that goes with frametag
-		set_property_object_0(save_fe, "content$Window", g);
-		set_property_object_0(save_fe, "content$Document", doc);
-		cna = get_property_object_0(save_fe, "childNodes");
-		set_array_element_object_0(cna, 0, doc);
-		set_property_object_0(doc, "parentNode", save_fe);
-}
-		cf = save_cf;
 	}
 
 	return true;
@@ -2922,10 +2868,9 @@ static bool remember_contracted;
 static bool nat_unframe(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
-	if(argc == 2 && args[0].isObject() && args[1].isObject()) {
-JS::RootedObject fobj(cx), newdoc(cx);
+	if(argc == 1 && args[0].isObject()) {
+JS::RootedObject fobj(cx);
 JS_ValueToObject(cx, args[0], &fobj);
-JS_ValueToObject(cx, args[1], &newdoc);
 		int i, n;
 		Tag *t, *cdt;
 		Frame *f, *f1;
@@ -2934,14 +2879,12 @@ JS_ValueToObject(cx, args[1], &newdoc);
 			debugPrint(1, "unframe couldn't find tag");
 			goto done;
 		}
-		if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC ||
-		cdt->sibling || !(tagToObject(cdt))) {
+		if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC) {
 			debugPrint(1, "unframe child tag isn't right");
 			goto done;
 		}
 		underKill(cdt);
 		disconnectTagObject(cdt);
-		connectTagObject(cdt, newdoc);
 		f1 = t->f1;
 		t->f1 = 0;
 		remember_contracted = t->contracted;
@@ -3489,7 +3432,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$formReset", nat_formReset, 1, 0),
   JS_FN("eb$wlf", nat_wlf, 2, 0),
   JS_FN("eb$media", nat_media, 1, 0),
-  JS_FN("eb$unframe", nat_unframe, 2, 0),
+  JS_FN("eb$unframe", nat_unframe, 1, 0),
   JS_FN("eb$unframe2", nat_unframe2, 1, 0),
   JS_FN("eb$resolveURL", nat_resolve, 2, 0),
   JS_FN("setTimeout", nat_timer, 2, 0),
@@ -3901,11 +3844,11 @@ That's how it was for a long time, but I think we only do this on form.
 			set_property_string_0(io, "type", "radio");
 		} else {
 /* A standard input element, just create it. */
-			JS::RootedObject ca(cxa);  // childNodes array
 			if(!(io = instantiate_0(
 (fakeName ? g : owner), membername, classname)))
 				return;
-/* not an array; needs the childNodes array beneath it for the children */
+// Not an array; needs the childNodes array beneath it for the children.
+			JS::RootedObject ca(cxa);  // childNodes array
 			ca = instantiate_array_0(io, "childNodes");
 // childNodes and options are the same for Select
 			if (stringEqual(classname, "Select"))

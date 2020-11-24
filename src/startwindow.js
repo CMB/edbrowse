@@ -30,8 +30,10 @@ eb$puts = print;
 eb$logputs = function(a,b) { print(b); }
 eb$newLocation = function (s) { print("new location " + s); }
 eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
-eb$getcook = function(member) { return "cookies"; }
-eb$setcook = function(value, member) { print(" new cookie " + value); }
+eb$getcook = function() { return "cookies"; }
+eb$setcook = function(value) { print(" new cookie " + value); }
+eb$getter_cd = function() { return null; }
+eb$getter_cw = function() { return null; }
 eb$formSubmit = function() { print("submit"); }
 eb$formReset = function() { print("reset"); }
 my$win = function() { return window; }
@@ -93,7 +95,9 @@ alert(nn + extra);
 return;
 }
 alert(nn + " {" + extra);
-if(top.childNodes) {
+if(top.dom$class == "Frame") {
+if(top.eb$expf) dumptree(top.contentDocument);
+} else if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 dumptree(c);
@@ -950,6 +954,9 @@ Image = function(){};
 Image.prototype.dom$class = "Image";
 Frame = function(){};
 Frame.prototype.dom$class = "Frame";
+Object.defineProperty(Frame.prototype, "contentDocument", { get: eb$getter_cd});
+Object.defineProperty(Frame.prototype, "contentWindow", { get: eb$getter_cw});
+
 // This is a placeholder for now. I don't know what HTMLIFrameElement is.
 HTMLIFrameElement = Frame;
 Anchor = function(){};
@@ -1061,14 +1068,11 @@ if(!this.href$2) { this.href$2 = new URL(h ? eb$resolveURL(w.eb$base,h) : h) } e
 this.href$2.href = h; }  \
 var next_href = this.href$2.href$val; \
 /* special code for setting frame.src, redirect to a new page. */ \
-if(this.dom$class == "Frame" && this.content$Document && this.content$Document.lastChild && last_href != next_href && next_href) { \
+if(this.dom$class == "Frame" && this.eb$expf && last_href != next_href && next_href) { \
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
-if(w == this.content$Window) { w.location = next_href; return; } \
-var d = new Document; d.childNodes = []; d.attributes = new NamedNodeMap; d.attributes.owner = d; \
-d.nodeName = "DOCUMENT"; d.tagName = "document"; d.nodeType = 9; d.ownerDocument = my$doc(); \
-delete this.eb$auto; this.content$Document = this.content$Window = d; \
-eb$unframe(this, d); /* fix links on the edbrowse side */ \
-this.childNodes[0] = d; d.parentNode = this; \
+if(w == this.contentWindow) { w.location = next_href; return; } \
+delete this.eb$expf; \
+eb$unframe(this); /* fix links on the edbrowse side */ \
 /* I can force the opening of this new frame, but should I? */ \
 this.contentDocument; eb$unframe2(this); \
 } }});');
@@ -1643,8 +1647,8 @@ if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
 // don't descend into another frame.
-// Look for iframe.document.html, meaning the frame is expanded.
-if(top.dom$class != "Frame" || !top.firstChild.firstChild)
+// The frame has no children through childNodes, so we don't really need this line.
+if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(dom$.eb$gebtn(c, s));
@@ -1667,7 +1671,7 @@ var a = [];
 if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
-if(top.dom$class != "Frame" || !top.firstChild.firstChild)
+if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(dom$.eb$gebn(c, s));
@@ -1692,7 +1696,7 @@ var a = [];
 if(s === '*' || (top.id && top.id.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
-if(top.dom$class != "Frame" || !top.firstChild.firstChild)
+if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(dom$.eb$gebi(c, s));
@@ -1711,7 +1715,7 @@ var a = [];
 if(s === '*' || (top.class && top.class.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
-if(top.dom$class != "Frame" || !top.firstChild.firstChild)
+if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(dom$.eb$gebcn(c, s));
@@ -1725,7 +1729,7 @@ document.nodeContains = function(n) {  return dom$.eb$cont(this, n); }
 dom$.eb$cont = function(top, n) { 
 if(top === n) return true;
 if(!top.childNodes) return false;
-if((top.dom$class == "Frame") &&top.firstChild.firstChild) return false;
+if(top.dom$class == "Frame") return false;
 for(var i=0; i<top.childNodes.length; ++i)
 if(dom$.eb$cont(top.childNodes[i], n)) return true;
 return false;
@@ -3381,14 +3385,6 @@ c.class = "";
 c.ownerDocument = this;
 eb$logElement(c, t);
 if(c.nodeType == 1) c.id = c.name = "";
-
-if(c.dom$class == "Frame") {
-var d = this.createElement("document");
-c.content$Document = c.content$Window = d;
-Object.defineProperty(c, "contentDocument", { get: eb$getter_cd });
-Object.defineProperty(c, "contentWindow", { get: eb$getter_cw });
-c.appendChild(d);
-}
 
 return c;
 } 

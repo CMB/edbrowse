@@ -576,6 +576,7 @@ struct htmlTag {
 	bool post:1;		/* post, rather than get */
 	bool javapost:1;	// post by calling javascript
 	bool jslink:1;	// linked to a js object
+	bool expf:1; // we tried to expand this frame
 	bool mime:1;		/* encode as mime, rather than url encode */
 	bool bymail:1;		/* send by mail, rather than http */
 	bool submitted:1;
