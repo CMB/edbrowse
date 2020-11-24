@@ -809,6 +809,7 @@ f = JS_NewFunction(cxa, nat_null, 0, 0, name);
 } else {
 JS::AutoObjectVector envChain(cxa);
 JS::CompileOptions opts(cxa);
+opts.utf8 = true;
 if(!JS::CompileFunction(cxa, envChain, opts, name, 0, nullptr, body, strlen(body), &f)) {
 		processError();
 		debugPrint(3, "compile error for %s(){%s}", name, body);
@@ -1424,6 +1425,7 @@ return 0;
 	}
 
         JS::CompileOptions opts(cxa);
+opts.utf8 = true;
         opts.setFileAndLine(filename, lineno);
 JS::RootedValue v(cxa);
 if(s2) s = s2;
@@ -2230,6 +2232,7 @@ return;
 const char *source = stringize(args[0]);
 JS::AutoObjectVector envChain(cx);
 JS::CompileOptions opts(cx);
+opts.utf8 = true;
 JS::RootedFunction f(cxa);
 if(!JS::CompileFunction(cx, envChain, opts, "timer", 0, nullptr, source, strlen(source), &f)) {
 		processError();

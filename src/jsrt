@@ -33,7 +33,8 @@ Warning: these tests are in no particular order, except if you rearrange
 them they will fail, because some depend on variables that were
 set by others.  Yeah, it's ugly. */
 
-var udef = "undefined";
+// breakspace is tolerated, and utf8 is understood
+ var udef = "undefined";
 function fail(n) { alert("failed "+n); }
 
 var popwin = new Window("http://www.moreAndMoreCrap.com/BuyNow.html", "obnoxious_ad", "width=72");
@@ -503,7 +504,7 @@ We'll get back to you if we like what you have to say.
 <input type=button name=rw value=rewrite onclick=newwords()>
 <input type='reset' value='Reset' name='b0'>
 <input type='submit' value='Send Message' name='b1'
-onclick="alert('rock and roll')">
+onclick="alert('rock and ½ roll')">
 </form>
 
 <DIV id=tag_with_data_attribute data-dog-food=abc></DIV>
