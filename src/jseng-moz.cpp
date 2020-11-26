@@ -793,10 +793,76 @@ else
 JS_DefineElement(cxa, parent, idx, v, JSPROP_STD);
 }
 
+// some do-nothing functions
+static bool nat_void(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+// can't really return void
+	args.rval().setUndefined();
+	return true;
+}
+
 static bool nat_null(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 	args.rval().setNull();
+	return true;
+}
+
+static bool nat_true(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().setBoolean(true);
+	return true;
+}
+
+static bool nat_false(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	args.rval().setBoolean(false);
+	return true;
+}
+
+// base64 encode
+static bool nat_btoa(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	char *t = 0;
+	if(argc >= 1 && args[0].isString()) {
+		const char *s = stringize(args[0]);
+		if (!s)
+			s = emptyString;
+		t = base64Encode(s, strlen(s), false);
+	}
+	if(!t)
+		t = emptyString;
+	JS::RootedString m(cx, JS_NewStringCopyZ(cx, t));
+	args.rval().setString(m);
+	nzFree(t);
+	return true;
+}
+
+// base64 decode
+static bool nat_atob(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
+	char *t1 = 0, *t2;
+	if(argc >= 1 && args[0].isString()) {
+		const char *s = stringize(args[0]);
+		t1 = cloneString(s);
+	}
+	if(!t1 || t1 == emptyString) {
+		args.rval().setString(JS_GetEmptyString(cx));
+		return true;
+	}
+// it's a real string
+	t2 = t1 + strlen(t1);
+	base64Decode(t1, &t2);
+// ignore errors for now.
+	*t2 = 0;
+	JS::RootedString m(cx, JS_NewStringCopyZ(cx, t1));
+	args.rval().setString(m);
+	nzFree(t1);
 	return true;
 }
 
@@ -3489,6 +3555,19 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$fetchHTTP", nat_fetch, 4, 0),
   JS_FN("eb$parent", nat_parent, 0, 0),
   JS_FN("eb$top", nat_top, 0, 0),
+  JS_FN("atob", nat_atob, 1, 0),
+  JS_FN("btoa", nat_btoa, 1, 0),
+  JS_FN("eb$voidfunction", nat_void, 0, 0),
+  JS_FN("eb$nullfunction", nat_null, 0, 0),
+  JS_FN("eb$truefunction", nat_true, 0, 0),
+  JS_FN("eb$falsefunction", nat_false, 0, 0),
+  JS_FN("scroll", nat_void, 0, 0),
+  JS_FN("scrollTo", nat_void, 0, 0),
+  JS_FN("scrollBy", nat_void, 0, 0),
+  JS_FN("scrollByLines", nat_void, 0, 0),
+  JS_FN("scrollByPages", nat_void, 0, 0),
+  JS_FN("focus", nat_void, 0, 0),
+  JS_FN("blur", nat_void, 0, 0),
   JS_FS_END
 };
 
@@ -3500,6 +3579,9 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FN("removeChild", nat_removeChild, 1, 0),
   JS_FN("write", nat_write, 0, 0),
   JS_FN("writeln", nat_writeln, 0, 0),
+  JS_FN("focus", nat_void, 0, 0),
+  JS_FN("blur", nat_void, 0, 0),
+  JS_FN("close", nat_void, 0, 0),
   JS_FS_END
 };
 

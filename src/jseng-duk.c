@@ -42,9 +42,28 @@ static int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, 
 static void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
 static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
 
-static duk_ret_t native_error_stub_0(duk_context * cx)
+// some do-nothing functions
+static duk_ret_t nat_void(duk_context * cx)
 {
 	return 0;
+}
+
+static duk_ret_t nat_null(duk_context * cx)
+{
+	duk_push_null(cx);
+	return 1;
+}
+
+static duk_ret_t nat_true(duk_context * cx)
+{
+	duk_push_true(cx);
+	return 1;
+}
+
+static duk_ret_t nat_false(duk_context * cx)
+{
+	duk_push_false(cx);
+	return 1;
 }
 
 const char *jsSourceFile;	// sourcefile providing the javascript
@@ -161,7 +180,7 @@ static int js_main(void)
 }
 
 // base64 encode
-static duk_ret_t native_btoa(duk_context * cx)
+static duk_ret_t nat_btoa(duk_context * cx)
 {
 	char *t;
 	const char *s = duk_get_string(cx, 0);
@@ -175,7 +194,7 @@ static duk_ret_t native_btoa(duk_context * cx)
 }
 
 // base64 decode
-static duk_ret_t native_atob(duk_context * cx)
+static duk_ret_t nat_atob(duk_context * cx)
 {
 	char *t1, *t2;
 	const char *s = duk_get_string(cx, 0);
@@ -192,7 +211,7 @@ static duk_ret_t native_atob(duk_context * cx)
 	return 1;
 }
 
-static duk_ret_t native_new_location(duk_context * cx)
+static duk_ret_t nat_new_location(duk_context * cx)
 {
 	const char *s = duk_safe_to_string(cx, -1);
 	if (s && *s) {
@@ -207,25 +226,25 @@ static duk_ret_t native_new_location(duk_context * cx)
 	return 0;
 }
 
-static duk_ret_t native_mywin(duk_context * cx)
+static duk_ret_t nat_mywin(duk_context * cx)
 {
 	duk_push_global_object(cx);
 	return 1;
 }
 
-static duk_ret_t native_mydoc(duk_context * cx)
+static duk_ret_t nat_mydoc(duk_context * cx)
 {
 	duk_get_global_string(cx, "document");
 	return 1;
 }
 
-static duk_ret_t native_hasfocus(duk_context * cx)
+static duk_ret_t nat_hasfocus(duk_context * cx)
 {
 	duk_push_boolean(cx, foregroundWindow);
 	return 1;
 }
 
-static duk_ret_t native_puts(duk_context * cx)
+static duk_ret_t nat_puts(duk_context * cx)
 {
 	const char *s = duk_safe_to_string(cx, -1);
 	if (!s)
@@ -235,7 +254,7 @@ static duk_ret_t native_puts(duk_context * cx)
 }
 
 // write local file
-static duk_ret_t native_wlf(duk_context * cx)
+static duk_ret_t nat_wlf(duk_context * cx)
 {
 	const char *s = duk_safe_to_string(cx, 0);
 	int len = strlen(s);
@@ -266,7 +285,7 @@ static duk_ret_t native_wlf(duk_context * cx)
 	return 0;
 }
 
-static duk_ret_t native_media(duk_context * cx)
+static duk_ret_t nat_media(duk_context * cx)
 {
 	const char *s = duk_safe_to_string(cx, 0);
 	bool rc = false;
@@ -280,7 +299,7 @@ static duk_ret_t native_media(duk_context * cx)
 	return 1;
 }
 
-static duk_ret_t native_logputs(duk_context * cx)
+static duk_ret_t nat_logputs(duk_context * cx)
 {
 	int minlev = duk_get_int(cx, 0);
 	const char *s = duk_safe_to_string(cx, 1);
@@ -291,7 +310,7 @@ static duk_ret_t native_logputs(duk_context * cx)
 	return 0;
 }
 
-static duk_ret_t native_prompt(duk_context * cx)
+static duk_ret_t nat_prompt(duk_context * cx)
 {
 	const char *msg = 0;
 	const char *answer = 0;
@@ -328,7 +347,7 @@ static duk_ret_t native_prompt(duk_context * cx)
 	return 1;
 }
 
-static duk_ret_t native_confirm(duk_context * cx)
+static duk_ret_t nat_confirm(duk_context * cx)
 {
 	const char *msg = duk_safe_to_string(cx, 0);
 	bool answer = false, first = true;
@@ -928,7 +947,7 @@ bool reexpandFrame(void)
 
 static bool remember_contracted;
 
-static duk_ret_t native_unframe(duk_context * cx)
+static duk_ret_t nat_unframe(duk_context * cx)
 {
 	if (duk_is_object(cx, 0)) {
 		jsobjtype fobj = duk_get_heapptr(cx, 0);
@@ -985,7 +1004,7 @@ done:
 	return 0;
 }
 
-static duk_ret_t native_unframe2(duk_context * cx)
+static duk_ret_t nat_unframe2(duk_context * cx)
 {
 	if (duk_is_object(cx, 0)) {
 		jsobjtype fobj = duk_get_heapptr(cx, 0);
@@ -1229,7 +1248,7 @@ static void linkageNow(duk_context * cx, char linkmode, jsobjtype o)
 	effects = initString(&eff_l);
 }
 
-static duk_ret_t native_log_element(duk_context * cx)
+static duk_ret_t nat_log_element(duk_context * cx)
 {
 	jsobjtype newobj = duk_get_heapptr(cx, -2);
 	const char *tag = duk_get_string(cx, -1);
@@ -1310,7 +1329,7 @@ static void set_timeout(duk_context * cx, bool isInterval)
 		if (duk_pcompile(cx, 0)) {
 			processError(cx);
 			cc_error = true;
-			duk_push_c_function(cx, native_error_stub_0, 0);
+			duk_push_c_function(cx, nat_void, 0);
 		}
 // Now looks like a function object, just like the previous case.
 		duk_push_string(cx, body);
@@ -1368,19 +1387,19 @@ done:
 	debugPrint(5, "timer out");
 }
 
-static duk_ret_t native_setTimeout(duk_context * cx)
+static duk_ret_t nat_setTimeout(duk_context * cx)
 {
 	set_timeout(cx, false);
 	return 1;
 }
 
-static duk_ret_t native_setInterval(duk_context * cx)
+static duk_ret_t nat_setInterval(duk_context * cx)
 {
 	set_timeout(cx, true);
 	return 1;
 }
 
-static duk_ret_t native_clearTimeout(duk_context * cx)
+static duk_ret_t nat_clearTimeout(duk_context * cx)
 {
 	int tsn;
 	char *fpn; // fake prop name
@@ -1394,7 +1413,7 @@ static duk_ret_t native_clearTimeout(duk_context * cx)
 	return 0;
 }
 
-static duk_ret_t native_win_close(duk_context * cx)
+static duk_ret_t nat_win_close(duk_context * cx)
 {
 	i_puts(MSG_PageDone);
 // I should probably freeJSContext and close down javascript,
@@ -1452,13 +1471,13 @@ static void dwrite(duk_context * cx, bool newline)
 	cf = save_cf;
 }
 
-static duk_ret_t native_doc_write(duk_context * cx)
+static duk_ret_t nat_doc_write(duk_context * cx)
 {
 	dwrite(cx, false);
 	return 0;
 }
 
-static duk_ret_t native_doc_writeln(duk_context * cx)
+static duk_ret_t nat_doc_writeln(duk_context * cx)
 {
 	dwrite(cx, true);
 	return 0;
@@ -1478,7 +1497,7 @@ static Frame *win2frame(duk_context * cx)
 	return f;
 }
 
-static duk_ret_t native_parent(duk_context * cx)
+static duk_ret_t nat_parent(duk_context * cx)
 {
 	Frame *current = win2frame(cx);
 	if(!current) {
@@ -1496,7 +1515,7 @@ if(current == &(cw->f0)) {
 	return 1;
 }
 
-static duk_ret_t native_top(duk_context * cx)
+static duk_ret_t nat_top(duk_context * cx)
 {
 	duk_push_heapptr(cx, cw->f0.winobj);
 	return 1;
@@ -1597,19 +1616,19 @@ done:
 	debugPrint(5, "append out");
 }
 
-static duk_ret_t native_apch1(duk_context * cx)
+static duk_ret_t nat_apch1(duk_context * cx)
 {
 	append0(cx, false);
 	return 1;
 }
 
-static duk_ret_t native_apch2(duk_context * cx)
+static duk_ret_t nat_apch2(duk_context * cx)
 {
 	append0(cx, true);
 	return 1;
 }
 
-static duk_ret_t native_insbf(duk_context * cx)
+static duk_ret_t nat_insbf(duk_context * cx)
 {
 	unsigned i, length;
 	int mark;
@@ -1689,7 +1708,7 @@ done:
 	return 1;
 }
 
-static duk_ret_t native_removeChild(duk_context * cx)
+static duk_ret_t nat_removeChild(duk_context * cx)
 {
 	unsigned i, length;
 	int mark;
@@ -1771,7 +1790,7 @@ fail:
 	return 1;
 }
 
-static duk_ret_t native_fetchHTTP(duk_context * cx)
+static duk_ret_t nat_fetchHTTP(duk_context * cx)
 {
 	jsobjtype thisobj;
 	struct i_get g;
@@ -1891,7 +1910,7 @@ static duk_ret_t native_fetchHTTP(duk_context * cx)
 	return 1;
 }
 
-static duk_ret_t native_resolveURL(duk_context * cx)
+static duk_ret_t nat_resolveURL(duk_context * cx)
 {
 	const char *base = duk_get_string(cx, -2);
 	const char *rel = duk_get_string(cx, -1);
@@ -1909,7 +1928,7 @@ static duk_ret_t native_resolveURL(duk_context * cx)
 	return 1;
 }
 
-static duk_ret_t native_formSubmit(duk_context * cx)
+static duk_ret_t nat_formSubmit(duk_context * cx)
 {
 Tag *t;
 	jsobjtype thisobj;
@@ -1926,7 +1945,7 @@ t = tagFromJavaVar(thisobj);
 	return 0;
 }
 
-static duk_ret_t native_formReset(duk_context * cx)
+static duk_ret_t nat_formReset(duk_context * cx)
 {
 	jsobjtype thisobj;
 	Tag *t;
@@ -1979,14 +1998,14 @@ static void startCookie(void)
 	}
 }
 
-static duk_ret_t native_getcook(duk_context * cx)
+static duk_ret_t nat_getcook(duk_context * cx)
 {
 	startCookie();
 	duk_push_string(cx, cookieCopy + 2);
 	return 1;
 }
 
-static duk_ret_t native_setcook(duk_context * cx)
+static duk_ret_t nat_setcook(duk_context * cx)
 {
 	const char *newcook = duk_get_string(cx, 0);
 	debugPrint(5, "cook in");
@@ -2002,7 +2021,7 @@ static duk_ret_t native_setcook(duk_context * cx)
 	return 0;
 }
 
-static duk_ret_t native_css_start(duk_context * cx)
+static duk_ret_t nat_css_start(duk_context * cx)
 {
 // The selection string has to be allocated - css will use it in place,
 // then free it later.
@@ -2046,7 +2065,7 @@ static bool rootTag(jsobjtype start, Tag **tp)
 }
 
 // querySelectorAll
-static duk_ret_t native_qsa(duk_context * cx)
+static duk_ret_t nat_qsa(duk_context * cx)
 {
 	jsobjtype start = 0;
 	Tag **tlist, *t;
@@ -2079,7 +2098,7 @@ static duk_ret_t native_qsa(duk_context * cx)
 }
 
 // querySelector
-static duk_ret_t native_qs(duk_context * cx)
+static duk_ret_t nat_qs(duk_context * cx)
 {
 	jsobjtype start = 0;
 	Tag *t;
@@ -2114,7 +2133,7 @@ static duk_ret_t native_qs(duk_context * cx)
 }
 
 // querySelector0
-static duk_ret_t native_qs0(duk_context * cx)
+static duk_ret_t nat_qs0(duk_context * cx)
 {
 	jsobjtype start;
 	Tag *t;
@@ -2135,7 +2154,7 @@ static duk_ret_t native_qs0(duk_context * cx)
 	return 1;
 }
 
-static duk_ret_t native_cssApply(duk_context * cx)
+static duk_ret_t nat_cssApply(duk_context * cx)
 {
 	jsobjtype node;
 	Tag *t;
@@ -2150,7 +2169,7 @@ static duk_ret_t native_cssApply(duk_context * cx)
 	return 0;
 }
 
-static duk_ret_t native_cssText(duk_context * cx)
+static duk_ret_t nat_cssText(duk_context * cx)
 {
 	const char *rulestring = duk_get_string(cx, 0);
 	cssText(rulestring);
@@ -2181,93 +2200,121 @@ static void createJSContext_0(Frame *f)
 	duk_pop(cx);
 
 // bind native functions here
-	duk_push_c_function(cx, native_new_location, 1);
+	duk_push_c_function(cx, nat_new_location, 1);
 	duk_put_global_string(cx, "eb$newLocation");
-	duk_push_c_function(cx, native_mywin, 0);
+	duk_push_c_function(cx, nat_mywin, 0);
 	duk_put_global_string(cx, "my$win");
-	duk_push_c_function(cx, native_mydoc, 0);
+	duk_push_c_function(cx, nat_mydoc, 0);
 	duk_put_global_string(cx, "my$doc");
-	duk_push_c_function(cx, native_puts, 1);
+	duk_push_c_function(cx, nat_puts, 1);
 	duk_put_global_string(cx, "eb$puts");
-	duk_push_c_function(cx, native_wlf, 2);
+	duk_push_c_function(cx, nat_wlf, 2);
 	duk_put_global_string(cx, "eb$wlf");
-	duk_push_c_function(cx, native_media, 1);
+	duk_push_c_function(cx, nat_media, 1);
 	duk_put_global_string(cx, "eb$media");
-	duk_push_c_function(cx, native_btoa, 1);
+	duk_push_c_function(cx, nat_btoa, 1);
 	duk_put_global_string(cx, "btoa");
-	duk_push_c_function(cx, native_atob, 1);
+	duk_push_c_function(cx, nat_atob, 1);
 	duk_put_global_string(cx, "atob");
-	duk_push_c_function(cx, native_unframe, 1);
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "eb$voidfunction");
+	duk_push_c_function(cx, nat_null, 0);
+	duk_put_global_string(cx, "eb$nullfunction");
+	duk_push_c_function(cx, nat_true, 0);
+	duk_put_global_string(cx, "eb$truefunction");
+	duk_push_c_function(cx, nat_false, 0);
+	duk_put_global_string(cx, "eb$falsefunction");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "scroll");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "scrollTo");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "scrollBy");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "scrollByLines");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "scrollByPages");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "focus");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_global_string(cx, "blur");
+	duk_push_c_function(cx, nat_unframe, 1);
 	duk_put_global_string(cx, "eb$unframe");
-	duk_push_c_function(cx, native_unframe2, 1);
+	duk_push_c_function(cx, nat_unframe2, 1);
 	duk_put_global_string(cx, "eb$unframe2");
-	duk_push_c_function(cx, native_logputs, 2);
+	duk_push_c_function(cx, nat_logputs, 2);
 	duk_put_global_string(cx, "eb$logputs");
-	duk_push_c_function(cx, native_prompt, DUK_VARARGS);
+	duk_push_c_function(cx, nat_prompt, DUK_VARARGS);
 	duk_put_global_string(cx, "prompt");
-	duk_push_c_function(cx, native_confirm, 1);
+	duk_push_c_function(cx, nat_confirm, 1);
 	duk_put_global_string(cx, "confirm");
-	duk_push_c_function(cx, native_log_element, 2);
+	duk_push_c_function(cx, nat_log_element, 2);
 	duk_put_global_string(cx, "eb$logElement");
-	duk_push_c_function(cx, native_setTimeout, DUK_VARARGS);
+	duk_push_c_function(cx, nat_setTimeout, DUK_VARARGS);
 	duk_put_global_string(cx, "setTimeout");
-	duk_push_c_function(cx, native_setInterval, DUK_VARARGS);
+	duk_push_c_function(cx, nat_setInterval, DUK_VARARGS);
 	duk_put_global_string(cx, "setInterval");
-	duk_push_c_function(cx, native_clearTimeout, 1);
+	duk_push_c_function(cx, nat_clearTimeout, 1);
 	duk_put_global_string(cx, "clearTimeout");
-	duk_push_c_function(cx, native_clearTimeout, 1);
+	duk_push_c_function(cx, nat_clearTimeout, 1);
 	duk_put_global_string(cx, "clearInterval");
-	duk_push_c_function(cx, native_win_close, 0);
+	duk_push_c_function(cx, nat_win_close, 0);
 	duk_put_global_string(cx, "close");
-	duk_push_c_function(cx, native_fetchHTTP, 4);
+	duk_push_c_function(cx, nat_fetchHTTP, 4);
 	duk_put_global_string(cx, "eb$fetchHTTP");
-	duk_push_c_function(cx, native_parent, 0);
+	duk_push_c_function(cx, nat_parent, 0);
 	duk_put_global_string(cx, "eb$parent");
-	duk_push_c_function(cx, native_top, 0);
+	duk_push_c_function(cx, nat_top, 0);
 	duk_put_global_string(cx, "eb$top");
-	duk_push_c_function(cx, native_resolveURL, 2);
+	duk_push_c_function(cx, nat_resolveURL, 2);
 	duk_put_global_string(cx, "eb$resolveURL");
-	duk_push_c_function(cx, native_formSubmit, 0);
+	duk_push_c_function(cx, nat_formSubmit, 0);
 	duk_put_global_string(cx, "eb$formSubmit");
-	duk_push_c_function(cx, native_formReset, 0);
+	duk_push_c_function(cx, nat_formReset, 0);
 	duk_put_global_string(cx, "eb$formReset");
-	duk_push_c_function(cx, native_getcook, 0);
+	duk_push_c_function(cx, nat_getcook, 0);
 	duk_put_global_string(cx, "eb$getcook");
-	duk_push_c_function(cx, native_setcook, 1);
+	duk_push_c_function(cx, nat_setcook, 1);
 	duk_put_global_string(cx, "eb$setcook");
 	duk_push_c_function(cx, getter_cd, 0);
 	duk_put_global_string(cx, "eb$getter_cd");
 	duk_push_c_function(cx, getter_cw, 0);
 	duk_put_global_string(cx, "eb$getter_cw");
-	duk_push_c_function(cx, native_css_start, 3);
+	duk_push_c_function(cx, nat_css_start, 3);
 	duk_put_global_string(cx, "eb$cssDocLoad");
-	duk_push_c_function(cx, native_qsa, DUK_VARARGS);
+	duk_push_c_function(cx, nat_qsa, DUK_VARARGS);
 	duk_put_global_string(cx, "querySelectorAll");
-	duk_push_c_function(cx, native_qs, DUK_VARARGS);
+	duk_push_c_function(cx, nat_qs, DUK_VARARGS);
 	duk_put_global_string(cx, "querySelector");
-	duk_push_c_function(cx, native_qs0, 1);
+	duk_push_c_function(cx, nat_qs0, 1);
 	duk_put_global_string(cx, "querySelector0");
-	duk_push_c_function(cx, native_cssApply, 2);
+	duk_push_c_function(cx, nat_cssApply, 2);
 	duk_put_global_string(cx, "eb$cssApply");
-	duk_push_c_function(cx, native_cssText, 1);
+	duk_push_c_function(cx, nat_cssText, 1);
 	duk_put_global_string(cx, "eb$cssText");
 
 	duk_push_heapptr(cx, f->docobj);	// native document methods
 
-	duk_push_c_function(cx, native_hasfocus, 0);
+	duk_push_c_function(cx, nat_hasfocus, 0);
 	duk_put_prop_string(cx, -2, "hasFocus");
-	duk_push_c_function(cx, native_doc_write, DUK_VARARGS);
+	duk_push_c_function(cx, nat_doc_write, DUK_VARARGS);
 	duk_put_prop_string(cx, -2, "write");
-	duk_push_c_function(cx, native_doc_writeln, DUK_VARARGS);
+	duk_push_c_function(cx, nat_doc_writeln, DUK_VARARGS);
 	duk_put_prop_string(cx, -2, "writeln");
-	duk_push_c_function(cx, native_apch1, 1);
+	duk_push_c_function(cx, nat_apch1, 1);
 	duk_put_prop_string(cx, -2, "eb$apch1");
-	duk_push_c_function(cx, native_apch2, 1);
+	duk_push_c_function(cx, nat_apch2, 1);
 	duk_put_prop_string(cx, -2, "eb$apch2");
-	duk_push_c_function(cx, native_insbf, 2);
+	duk_push_c_function(cx, nat_insbf, 2);
 	duk_put_prop_string(cx, -2, "eb$insbf");
-	duk_push_c_function(cx, native_removeChild, 1);
+	duk_push_c_function(cx, nat_removeChild, 1);
 	duk_put_prop_string(cx, -2, "removeChild");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_prop_string(cx, -2, "focus");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_prop_string(cx, -2, "blur");
+	duk_push_c_function(cx, nat_void, 0);
+	duk_put_prop_string(cx, -2, "close");
 
 // document.ctx$ is the context number
 	duk_push_number(cx, ++seqno);
@@ -2804,14 +2851,14 @@ void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
 }
 
 #if 0
-static duk_ret_t native_error_stub_1(duk_context * cx)
+static duk_ret_t nat_error_stub_1(duk_context * cx)
 {
 	i_puts(MSG_CompileError);
 	return 0;
 }
 
 // handler.toString = function() { return this.body; }
-static duk_ret_t native_fntos(duk_context * cx)
+static duk_ret_t nat_fntos(duk_context * cx)
 {
 	duk_push_this(cx);
 	duk_get_prop_string(cx, -1, "body");
@@ -2834,7 +2881,7 @@ static int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *
 	if (duk_pcompile(cx, 0)) {
 		processError(cx);
 		debugPrint(3, "compile error for %p.%s", parent, name);
-		duk_push_c_function(cx, native_error_stub_1, 0);
+		duk_push_c_function(cx, nat_error_stub_1, 0);
 	}
 // At this point I have to undo the mashinations performed by handlerSet().
 	s = body2 = cloneString(body);
@@ -2847,7 +2894,7 @@ static int set_property_function_0(jsobjtype cx0, jsobjtype parent, const char *
 	duk_push_string(cx, s);
 	nzFree(body2);
 	duk_put_prop_string(cx, -2, "body");
-	duk_push_c_function(cx, native_fntos, 0);
+	duk_push_c_function(cx, nat_fntos, 0);
 	duk_put_prop_string(cx, -2, "toString");
 	duk_push_heapptr(cx, parent);
 	duk_insert(cx, -2);	// switch places

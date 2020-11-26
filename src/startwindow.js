@@ -28,6 +28,10 @@ document = {};
 if(!window.print) print = console.log;
 eb$puts = print;
 eb$logputs = function(a,b) { print(b); }
+eb$nullfunction = function() { return null; }
+eb$voidfunction = function() { }
+eb$truefunction = function() { return true; }
+eb$falsefunction = function() { return false; }
 eb$newLocation = function (s) { print("new location " + s); }
 eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
 eb$getcook = function() { return "cookies"; }
@@ -226,14 +230,6 @@ step$go = "";
 // This is our bailout function, it references a variable that does not exist.
 function eb$stopexec() { return javascript$interrupt; }
 
-eb$nullfunction = function() { return null; }
-eb$voidfunction = function() { }
-eb$truefunction = function() { return true; }
-eb$falsefunction = function() { return false; }
-
-scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = eb$voidfunction;
-focus = blur = scroll = eb$voidfunction;
-document.focus = document.blur = document.close = eb$voidfunction;
 document.open = function() { return this }
 
 /* Some visual attributes of the window.
@@ -2792,8 +2788,8 @@ c.prototype.cloneNode = document.cloneNode;
 c.prototype.importNode = document.importNode;
 c.prototype.compareDocumentPosition = dom$.compareDocumentPosition;
 // visual
-c.prototype.focus = focus;
-c.prototype.blur = blur;
+c.prototype.focus = eb$voidfunction;
+c.prototype.blur = eb$voidfunction;
 c.prototype.getBoundingClientRect = document.getBoundingClientRect; 
 // events
 c.prototype.eb$listen = eb$listen;
