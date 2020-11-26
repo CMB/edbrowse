@@ -768,16 +768,8 @@ cdt doesn't have or need an object; it's a place holder.
 	cdt->step = 2;
 
 	if (cf->docobj) {
-		jsobjtype topobj;
 		decorate(0);
 		set_basehref(cf->hbase);
-// parent points to the containing frame.
-		set_property_object_0(cf->cx, cf->winobj, "parent", save_cf->winobj);
-// And top points to the top.
-		cf = save_cf;
-		topobj = get_property_object_0(cf->cx, cf->winobj, "top");
-		cf = new_cf;
-		set_property_object_0(cf->cx, cf->winobj, "top", topobj);
 		set_property_object_0(cf->cx, cf->winobj, "frameElement", t->jv);
 		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
 		if (jssrc) {
@@ -837,13 +829,11 @@ bool reexpandFrame(void)
 	Tag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
-	jsobjtype save_top, save_parent, save_fe;
+	jsobjtype save_fe;
 
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-	save_top = get_property_object_0(cf->cx, cf->winobj, "top");
-	save_parent = get_property_object_0(cf->cx, cf->winobj, "parent");
 	save_fe = get_property_object_0(cf->cx, cf->winobj, "frameElement");
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
@@ -907,8 +897,6 @@ bool reexpandFrame(void)
 	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object_0(cf->cx, cf->winobj, "top", save_top);
-		set_property_object_0(cf->cx, cf->winobj, "parent", save_parent);
 		set_property_object_0(cf->cx, cf->winobj, "frameElement", save_fe);
 		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
 		runScriptsPending(true);
@@ -1416,7 +1404,7 @@ static duk_ret_t native_win_close(duk_context * cx)
 
 // find the frame, in the current window, that goes with this.
 // Used by document.write to put the html in the right frame.
-static Frame *thisFrame(duk_context * cx)
+static Frame *doc2frame(duk_context * cx)
 {
 	jsobjtype thisobj;
 	Frame *f;
@@ -1446,7 +1434,7 @@ static void dwrite(duk_context * cx, bool newline)
 	if (!s || !*s)
 		return;
 	debugPrint(4, "dwrite:%s", s);
-	f = thisFrame(cx);
+	f = doc2frame(cx);
 	if (!f)
 		debugPrint(3,
 			   "no frame found for document.write, using the default");
@@ -1474,6 +1462,44 @@ static duk_ret_t native_doc_writeln(duk_context * cx)
 {
 	dwrite(cx, true);
 	return 0;
+}
+
+static Frame *win2frame(duk_context * cx)
+{
+	jsobjtype thisobj;
+	Frame *f;
+	duk_push_this(cx);
+	thisobj = duk_get_heapptr(cx, -1);
+	duk_pop(cx);
+	for (f = &(cw->f0); f; f = f->next) {
+		if (f->winobj == thisobj)
+			break;
+	}
+	return f;
+}
+
+static duk_ret_t native_parent(duk_context * cx)
+{
+	Frame *current = win2frame(cx);
+	if(!current) {
+		duk_push_undefined(cx);
+		return 1;
+	}
+if(current == &(cw->f0)) {
+		duk_push_heapptr(cx, current->winobj);
+		return 1;
+	}
+	if(!current->frametag) // should not happen
+		duk_push_undefined(cx);
+	else
+		duk_push_heapptr(cx, current->frametag->f0->winobj);
+	return 1;
+}
+
+static duk_ret_t native_top(duk_context * cx)
+{
+	duk_push_heapptr(cx, cw->f0.winobj);
+	return 1;
 }
 
 // We need to call and remember up to 3 node names, and then embed
@@ -2195,6 +2221,10 @@ static void createJSContext_0(Frame *f)
 	duk_put_global_string(cx, "close");
 	duk_push_c_function(cx, native_fetchHTTP, 4);
 	duk_put_global_string(cx, "eb$fetchHTTP");
+	duk_push_c_function(cx, native_parent, 0);
+	duk_put_global_string(cx, "eb$parent");
+	duk_push_c_function(cx, native_top, 0);
+	duk_put_global_string(cx, "eb$top");
 	duk_push_c_function(cx, native_resolveURL, 2);
 	duk_put_global_string(cx, "eb$resolveURL");
 	duk_push_c_function(cx, native_formSubmit, 0);

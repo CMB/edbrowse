@@ -32,6 +32,8 @@ eb$newLocation = function (s) { print("new location " + s); }
 eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
 eb$getcook = function() { return "cookies"; }
 eb$setcook = function(value) { print(" new cookie " + value); }
+eb$parent = function() { return this; }
+eb$top = function() { return this; }
 eb$getter_cd = function() { return null; }
 eb$getter_cw = function() { return null; }
 eb$formSubmit = function() { print("submit"); }
@@ -45,11 +47,10 @@ querySelector0 = function() { return false; }
 eb$cssText = function(){}
 }
 
-// other names for window
-self = top = parent = window;
+self = window;
+Object.defineProperty(window, "parent", {get: eb$parent});
+Object.defineProperty(window, "top", {get: eb$top});
 frameElement = null;
-// parent and top and frameElement could be changed
-// if this is a frame in a larger frameset.
 
 /* An ok (object keys) function for javascript/dom debugging.
  * This is in concert with the jdb command in edbrowse.

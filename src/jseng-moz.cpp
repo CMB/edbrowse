@@ -2685,11 +2685,6 @@ JSAutoCompartment ac(cxa, cwo);
 prev = frameToCompartment(save_cf);
 		decorate(0);
 		set_basehref(cf->hbase);
-// parent points to the containing frame.
-		set_property_object_0(cwo, "parent", prev);
-// And top points to the top.
-JS::RootedObject top(cxa, get_property_object_0(prev, "top"));
-set_property_object_0(cwo, "top", top);
 // frame tag object
 fto = tagToObject(t);
 		set_property_object_0(cwo, "frameElement", fto);
@@ -2748,7 +2743,7 @@ bool reexpandFrame(void)
 	Tag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
-	JS::RootedObject save_top(cxa), save_parent(cxa), save_fe(cxa);
+	JS::RootedObject save_fe(cxa);
 
 	cf = newloc_f;
 	frametag = cf->frametag;
@@ -2756,8 +2751,6 @@ bool reexpandFrame(void)
 // I think we can do this part in any compartment
 	JS::RootedObject g(cxa, frameToCompartment(cf));
 JS::RootedObject doc(cxa);
-	save_top = get_property_object_0(g, "top");
-	save_parent = get_property_object_0(g, "parent");
 	save_fe = get_property_object_0(g, "frameElement");
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
@@ -2824,8 +2817,6 @@ g = frameToCompartment(cf);
 JSAutoCompartment ac(cxa, g);
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object_0(g, "top", save_top);
-		set_property_object_0(g, "parent", save_parent);
 		set_property_object_0(g, "frameElement", save_fe);
 		run_function_bool_0(g, "eb$qs$start");
 		runScriptsPending(true);
@@ -3375,13 +3366,13 @@ nzFree(a);
 return true;
 }
 
-static Frame *thisFrame(JS::HandleObject thisobj)
+static Frame *doc2frame(JS::HandleObject thisobj)
 {
-int my_sn = get_property_number_0(thisobj, "eb$ctx");
+	int my_sn = get_property_number_0(thisobj, "eb$ctx");
 	Frame *f;
 	for (f = &(cw->f0); f; f = f->next)
-if(f->gsn == my_sn)
-break;
+		if(f->gsn == my_sn)
+			break;
 	return f;
 }
 
@@ -3395,7 +3386,7 @@ char *a = initString(&a_l);
 for(int i=0; i<argc; ++i)
 stringAndString(&a, &a_l, stringize(args[i]));
 	Frame *f, *save_cf = cf;
-	f = thisFrame(thisobj);
+	f = doc2frame(thisobj);
 	if (!f)
 		debugPrint(3,    "no frame found for document.write, using the default");
 	else {
@@ -3420,6 +3411,48 @@ static bool nat_writeln(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 dwrite(cx, argc, vp, true);
   return true;
+}
+
+static Frame *win2frame(JS::Value *vp)
+{
+	JSObject *win = JS_THIS_OBJECT(cxa, vp);
+	Frame *f;
+	for (f = &(cw->f0); f; f = f->next)
+		if(win == frameToCompartment(f))
+			break;
+	return f;
+}
+
+static bool nat_parent(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	JS::RootedObject r(cx);
+	Frame *current = win2frame(vp);
+	if(!current) {
+		args.rval().setUndefined();
+		return true;
+	}
+	if(current == &(cw->f0)) {
+		r = frameToCompartment(current);
+		args.rval().setObject(*r);
+		return true;
+	}
+	if(!current->frametag) // should not happen
+		args.rval().setUndefined();
+	else {
+		r = frameToCompartment(current->frametag->f0);
+		args.rval().setObject(*r);
+	}
+  return true;
+}
+
+static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	JS::RootedObject r(cx);
+	r = frameToCompartment(&(cw->f0));
+	args.rval().setObject(*r);
+	return true;
 }
 
 static JSFunctionSpec nativeMethodsWindow[] = {
@@ -3454,6 +3487,8 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$getter_cd", getter_cd, 0, 0),
   JS_FN("eb$getter_cw", getter_cw, 1, 0),
   JS_FN("eb$fetchHTTP", nat_fetch, 4, 0),
+  JS_FN("eb$parent", nat_parent, 0, 0),
+  JS_FN("eb$top", nat_top, 0, 0),
   JS_FS_END
 };
 
