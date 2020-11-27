@@ -902,6 +902,14 @@ if(document.body.style.fly) fail(176);
 
 var dataset_test = document.getElementById("tag_with_data_attribute");
 if(dataset_test.dataset.dogFood !== "abc") fail(177);
+
+/* Run this to produce the intercompartment seg fault in mozjs.
+Header() is a function that does nothing.
+Yet if you call a native method, like focus(), it's fine.
+for(var i=0; i<50; ++i) alert(i), frames[0].contentWindow.Header();
+seg fault after 9
+*/
+
 </script>
 
 </body>
