@@ -793,7 +793,6 @@ cdt doesn't have or need an object; it's a place holder.
 	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object_0(cf->cx, cf->winobj, "frameElement", t->jv);
 		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
 		if (jssrc) {
 			jsRunScriptWin(jssrc, "frame.src", 1);
@@ -852,12 +851,10 @@ bool reexpandFrame(void)
 	Tag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
-	jsobjtype save_fe;
 
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-	save_fe = get_property_object_0(cf->cx, cf->winobj, "frameElement");
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
@@ -920,7 +917,6 @@ bool reexpandFrame(void)
 	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object_0(cf->cx, cf->winobj, "frameElement", save_fe);
 		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
@@ -1516,6 +1512,17 @@ if(current == &(cw->f0)) {
 		duk_push_undefined(cx);
 	else
 		duk_push_heapptr(cx, current->frametag->f0->winobj);
+	return 1;
+}
+
+static duk_ret_t nat_fe(duk_context * cx)
+{
+	Frame *current = win2frame(cx);
+	if(!current || current == &(cw->f0) || !current->frametag) {
+		duk_push_undefined(cx);
+		return 1;
+	}
+	duk_push_heapptr(cx, current->frametag->jv);
 	return 1;
 }
 
@@ -2269,6 +2276,8 @@ static void createJSContext_0(Frame *f)
 	duk_put_global_string(cx, "eb$parent");
 	duk_push_c_function(cx, nat_top, 0);
 	duk_put_global_string(cx, "eb$top");
+	duk_push_c_function(cx, nat_fe, 0);
+	duk_put_global_string(cx, "eb$frameElement");
 	duk_push_c_function(cx, nat_resolveURL, 2);
 	duk_put_global_string(cx, "eb$resolveURL");
 	duk_push_c_function(cx, nat_formSubmit, 0);

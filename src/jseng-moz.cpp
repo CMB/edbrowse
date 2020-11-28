@@ -2757,7 +2757,6 @@ prev = frameToCompartment(save_cf);
 		set_basehref(cf->hbase);
 // frame tag object
 fto = tagToObject(t);
-		set_property_object_0(cwo, "frameElement", fto);
 		run_function_bool_0(cwo, "eb$qs$start");
 		if(jssrc)
 			jsRunScriptWin(jssrc, "frame.src", 1);
@@ -2813,7 +2812,6 @@ bool reexpandFrame(void)
 	Tag *cdt;	// contentDocument tag
 	uchar save_local;
 	bool rc;
-	JS::RootedObject save_fe(cxa);
 
 	cf = newloc_f;
 	frametag = cf->frametag;
@@ -2821,7 +2819,6 @@ bool reexpandFrame(void)
 // I think we can do this part in any compartment
 	JS::RootedObject g(cxa, frameToCompartment(cf));
 JS::RootedObject doc(cxa);
-	save_fe = get_property_object_0(g, "frameElement");
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
@@ -2887,7 +2884,6 @@ g = frameToCompartment(cf);
 JSAutoCompartment ac(cxa, g);
 		decorate(0);
 		set_basehref(cf->hbase);
-		set_property_object_0(g, "frameElement", save_fe);
 		run_function_bool_0(g, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
@@ -3516,6 +3512,20 @@ static bool nat_parent(JSContext *cx, unsigned argc, JS::Value *vp)
   return true;
 }
 
+static bool nat_fe(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	JS::RootedObject r(cx);
+	Frame *current = win2frame(vp);
+	if(!current || current == &(cw->f0) || !current->frametag) {
+		args.rval().setUndefined();
+		return true;
+	}
+	r = tagToObject(current->frametag);
+	args.rval().setObject(*r);
+	  return true;
+}
+
 static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
 {
   JS::CallArgs args = CallArgsFromVp(argc, vp);
@@ -3559,6 +3569,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$fetchHTTP", nat_fetch, 4, 0),
   JS_FN("eb$parent", nat_parent, 0, 0),
   JS_FN("eb$top", nat_top, 0, 0),
+  JS_FN("eb$frameElement", nat_fe, 0, 0),
   JS_FN("atob", nat_atob, 1, 0),
   JS_FN("btoa", nat_btoa, 1, 0),
   JS_FN("eb$voidfunction", nat_void, 0, 0),

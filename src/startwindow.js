@@ -54,7 +54,7 @@ eb$cssText = function(){}
 self = window;
 Object.defineProperty(window, "parent", {get: eb$parent});
 Object.defineProperty(window, "top", {get: eb$top});
-frameElement = null;
+Object.defineProperty(window, "frameElement", {get: eb$frameElement});
 
 /* An ok (object keys) function for javascript/dom debugging.
  * This is in concert with the jdb command in edbrowse.
