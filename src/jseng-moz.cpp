@@ -1692,12 +1692,16 @@ JS::RootedObject doc(cxa, get_property_object_0(g, "document"));
 static void connectTagObject(Tag *t, JS::HandleObject o)
 {
 	jsRootAndMove(&(t->jv), o, false);
-        JSAutoCompartment ac(cxa, tagToCompartment(t));
-JS_DefineProperty(cxa, o, "eb$seqno", t->seqno,
-(JSPROP_READONLY|JSPROP_PERMANENT));
-JS_DefineProperty(cxa, o, "eb$gsn", t->gsn,
-(JSPROP_READONLY|JSPROP_PERMANENT));
-t->jslink = true;
+	t->jslink = true;
+// Below a frame, t could be a manufactured document for the new window.
+// We don't want to set eb$seqno in this case.
+	if(t->action != TAGACT_DOC) {
+		        JSAutoCompartment ac(cxa, tagToCompartment(t));
+		JS_DefineProperty(cxa, o, "eb$seqno", t->seqno,
+		(JSPROP_READONLY|JSPROP_PERMANENT));
+		JS_DefineProperty(cxa, o, "eb$gsn", t->gsn,
+		(JSPROP_READONLY|JSPROP_PERMANENT));
+	}
 }
 
 void disconnectTagObject(Tag *t)
@@ -3633,33 +3637,33 @@ JS::RootedObject global(cxa, g);
 JS_DefineFunctions(cxa, global, nativeMethodsWindow);
 
 // window
-JS::RootedValue v(cxa);
-v = JS::ObjectValue(*global);
-JS_DefineProperty(cxa, global, "window", v,
+JS_DefineProperty(cxa, global, "window", global,
 (JSPROP_READONLY|JSPROP_PERMANENT));
 
 // time for document under window
 JS::RootedObject docroot(cxa, JS_NewObject(cxa, nullptr));
-v = JS::ObjectValue(*docroot);
-JS_DefineProperty(cxa, global, "document", v,
+JS_DefineProperty(cxa, global, "document", docroot,
 (JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 JS_DefineFunctions(cxa, docroot, nativeMethodsDocument);
 
-set_property_number_0(docroot, "eb$seqno", 0);
-set_property_number_0(docroot, "eb$ctx", f->gsn);
+	JS_DefineProperty(cxa, docroot, "eb$seqno", 0,
+	(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
+	JS_DefineProperty(cxa, docroot, "eb$ctx", f->gsn,
+	(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
+	JS_DefineProperty(cxa, global, "eb$ctx", f->gsn,
+	(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
+
 // Sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
 JS::RootedString m(cxa, JS_NewStringCopyZ(cxa, f->fileName));
-v.setString(m);
-JS_DefineProperty(cxa, global, "eb$url", v,
-(JSPROP_READONLY|JSPROP_PERMANENT));
+	JS_DefineProperty(cxa, global, "eb$url", m,
+	(JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 
 // what use to be the master window
 JS::RootedObject mw(cxa, JS_NewObject(cxa, nullptr));
-v = JS::ObjectValue(*mw);
-JS_DefineProperty(cxa, global, "mw$", v,
+JS_DefineProperty(cxa, global, "mw$", mw,
 (JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 
 setup_window_2(f->gsn);

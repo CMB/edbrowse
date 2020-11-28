@@ -139,8 +139,12 @@ void connectTagObject(Tag *t, jsobjtype p)
 	w->u.t = t;
 	t->jv = p;
 	t->jslink = true;
-	set_property_number_0(t->f0->cx, p, "eb$seqno", t->seqno);
-	set_property_number_0(t->f0->cx, p, "eb$gsn", t->gsn);
+// Below a frame, t could be a manufactured document for the new window.
+// We don't want to set eb$seqno in this case.
+	if(t->action != TAGACT_DOC) {
+		set_property_number_0(t->f0->cx, p, "eb$seqno", t->seqno);
+		set_property_number_0(t->f0->cx, p, "eb$gsn", t->gsn);
+	}
 }
 
 void disconnectTagObject(Tag *t)
@@ -2179,13 +2183,12 @@ static duk_ret_t nat_cssText(duk_context * cx)
 
 static void createJSContext_0(Frame *f)
 {
-	static int seqno;
 	duk_context * cx;
 	duk_push_thread_new_globalenv(context0);
 	cx = f->cx = duk_get_context(context0, -1);
 	if (!cx)
 		return;
-	debugPrint(3, "create js context %d", duk_get_top(context0) - 1);
+	debugPrint(3, "create js context %d", f->gsn);
 // the global object, which will become window,
 // and the document object.
 	duk_push_global_object(cx);
@@ -2316,15 +2319,20 @@ static void createJSContext_0(Frame *f)
 	duk_push_c_function(cx, nat_void, 0);
 	duk_put_prop_string(cx, -2, "close");
 
-// document.ctx$ is the context number
-	duk_push_number(cx, ++seqno);
-	duk_put_prop_string(cx, -2, "ctx$");
-// document.eb$seqno = 0
-	duk_push_number(cx, 0);
-	duk_put_prop_string(cx, -2, "eb$seqno");
-// and the frame context
+// document.eb$ctx is the context number
+	duk_push_string(cx, "eb$ctx");
 	duk_push_number(cx, f->gsn);
-	duk_put_prop_string(cx, -2, "eb$ctx");
+	duk_def_prop(cx, 0,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+// document.eb$seqno = 0
+	duk_push_string(cx, "eb$seqno");
+	duk_push_number(cx, 0);
+	duk_def_prop(cx, 0,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 
 	duk_pop(cx); // document
 
@@ -2341,19 +2349,24 @@ static void createJSContext_0(Frame *f)
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
-	duk_pop(cx);
 
 // Sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
-	duk_push_global_object(cx);
 	duk_push_string(cx, "eb$url");
 	duk_push_string(cx, f->fileName);
-	duk_def_prop(cx, -3,
+	duk_def_prop(cx, 0,
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+	duk_push_string(cx, "eb$ctx");
+	duk_push_number(cx, f->gsn);
+	duk_def_prop(cx, 0,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+
 	duk_pop(cx);
 }
 
@@ -2487,13 +2500,14 @@ static void setup_window_2(void)
 		set_property_bool_0(cx, w, "throwDebug", true);
 }
 
-static void freeJSContext_0(jsobjtype cx)
+static void freeJSContext_0(Frame *f)
 {
+	duk_context *cx = f->cx;
 	int i, top = duk_get_top(context0);
 	for (i = 0; i < top; ++i) {
 		if (cx == duk_get_context(context0, i)) {
 			duk_remove(context0, i);
-			debugPrint(3, "remove js context %d", i);
+			debugPrint(3, "remove js context %d", f->gsn);
 			break;
 		}
 	}
@@ -2503,7 +2517,7 @@ void freeJSContext(Frame *f)
 {
 	if (!f->jslink)
 		return;
-	freeJSContext_0(f->cx);
+	freeJSContext_0(f);
 	f->cx = f->winobj = f->docobj = 0;
 	f->jslink = false;
 	cssFree(f);
