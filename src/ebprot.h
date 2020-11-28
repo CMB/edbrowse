@@ -105,8 +105,6 @@ void infShow(int tagno, const char *search) ;
 void itext(void);
 bool infReplace(int tagno, const char *newtext, bool notify);
 bool infPush(int tagno, char **post_string);
-Tag *tagFromJavaVar(jsobjtype v);
-void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest);
 void domSetsTagValue(Tag *t, const char *newtext);
 void domSubmitsForm(Tag *t, bool reset);
 void runningError(int msg, ...);

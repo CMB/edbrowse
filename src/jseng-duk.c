@@ -41,6 +41,7 @@ static bool run_function_bool_0(jsobjtype cx, jsobjtype obj, const char *name);
 static int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, jsobjtype o);
 static void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
 static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
+static Tag *tagFromObject(jsobjtype v);
 
 // some do-nothing functions
 static duk_ret_t nat_void(duk_context * cx)
@@ -460,7 +461,7 @@ static duk_ret_t setter_innerHTML(duk_context * cx)
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
-		t = tagFromJavaVar(thisobj);
+		t = tagFromObject(thisobj);
 	if(t) {
 		html_from_setter(t, run);
 	} else {
@@ -514,7 +515,7 @@ static duk_ret_t setter_value(duk_context * cx)
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
 	prepareForField(k);
-	t = tagFromJavaVar(thisobj);
+	t = tagFromObject(thisobj);
 	if(t) {
 		debugPrint(4, "value tag %d=%s", t->seqno, k);
 		domSetsTagValue(t, k);
@@ -550,7 +551,7 @@ static duk_ret_t getter_cd(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
-	t = tagFromJavaVar(thisobj);
+	t = tagFromObject(thisobj);
 	if(!t)
 		goto fail;
 	if(!t->f1)
@@ -572,7 +573,7 @@ static duk_ret_t getter_cw(duk_context * cx)
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
-	t = tagFromJavaVar(thisobj);
+	t = tagFromObject(thisobj);
 	if(!t)
 		goto fail;
 	if(!t->f1)
@@ -954,7 +955,7 @@ static duk_ret_t nat_unframe(duk_context * cx)
 		int i, n;
 		Tag *t, *cdt;
 		Frame *f, *f1;
-		t = tagFromJavaVar(fobj);
+		t = tagFromObject(fobj);
 		if (!t) {
 			debugPrint(1, "unframe couldn't find tag");
 			goto done;
@@ -1008,7 +1009,7 @@ static duk_ret_t nat_unframe2(duk_context * cx)
 {
 	if (duk_is_object(cx, 0)) {
 		jsobjtype fobj = duk_get_heapptr(cx, 0);
-		Tag *t = tagFromJavaVar(fobj);
+		Tag *t = tagFromObject(fobj);
 		if(t)
 			t->contracted = remember_contracted;
 	}
@@ -1018,7 +1019,7 @@ static duk_ret_t nat_unframe2(duk_context * cx)
 
 // If we stay with duktape, optimize this routine with seqno and gsn,
 // the way I did in the mozilla version.
-Tag *tagFromJavaVar(jsobjtype v)
+static Tag *tagFromObject(jsobjtype v)
 {
 	Tag *t = 0;
 	int i;
@@ -1038,7 +1039,7 @@ Tag *tagFromJavaVar(jsobjtype v)
 }
 
 // Create a new tag for this pointer, only from document.createElement().
-static Tag *tagFromJavaVar2(jsobjtype v, const char *tagname)
+static Tag *tagFromObject2(jsobjtype v, const char *tagname)
 {
 	Tag *t;
 	if (!tagname)
@@ -1054,9 +1055,9 @@ static Tag *tagFromJavaVar2(jsobjtype v, const char *tagname)
 /* and don't render it unless it is linked into the active tree */
 	t->deleted = true;
 	return t;
-}				/* tagFromJavaVar2 */
+}				/* tagFromObject2 */
 
-void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
+static void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 {
 	Tag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
@@ -1072,7 +1073,7 @@ void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 
 	sscanf(rest, "%s %p,%s %p,%s ", p_name, &a_j, a_name, &b_j, b_name);
 	if (type == 'c') {	/* create */
-		parent = tagFromJavaVar2(p_j, p_name);
+		parent = tagFromObject2(p_j, p_name);
 		if (parent) {
 			debugPrint(4, "linkage, %s %d created",
 				   p_name, parent->seqno);
@@ -1085,7 +1086,7 @@ void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 		return;
 	}
 
-	parent = tagFromJavaVar(p_j);
+	parent = tagFromObject(p_j);
 /* options are relinked by rebuildSelectors, not here. */
 	if (stringEqual(p_name, "option"))
 		return;
@@ -1093,7 +1094,7 @@ void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	if (stringEqual(a_name, "option"))
 		return;
 
-	add = tagFromJavaVar(a_j);
+	add = tagFromObject(a_j);
 	if (!parent || !add)
 		return;
 
@@ -1132,7 +1133,7 @@ void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 				   "linkage cycle, cannot link %s %d into %s %d",
 				   a_name, add->seqno, p_name, parent->seqno);
 			if (type == 'b') {
-				before = tagFromJavaVar(b_j);
+				before = tagFromObject(b_j);
 				debugPrint(3, "before %s %d", b_name,
 					   (before ? before->seqno : -1));
 			}
@@ -1148,7 +1149,7 @@ void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
 	}
 
 	if (type == 'b') {	/* insertBefore */
-		before = tagFromJavaVar(b_j);
+		before = tagFromObject(b_j);
 		if (!before)
 			return;
 		debugPrint(4, "linkage, %s %d linked into %s %d before %s %d",
@@ -1945,7 +1946,7 @@ Tag *t;
 	jsobjtype thisobj;
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
-t = tagFromJavaVar(thisobj);
+t = tagFromObject(thisobj);
 	duk_pop(cx);
 	if(t && t->action == TAGACT_FORM) {
 		debugPrint(3, "submit form tag %d", t->seqno);
@@ -1962,7 +1963,7 @@ static duk_ret_t nat_formReset(duk_context * cx)
 	Tag *t;
 	duk_push_this(cx);
 	thisobj = duk_get_heapptr(cx, -1);
-t = tagFromJavaVar(thisobj);
+t = tagFromObject(thisobj);
 	duk_pop(cx);
 	if(t && t->action == TAGACT_FORM) {
 		debugPrint(3, "reset form tag %d", t->seqno);
@@ -2068,7 +2069,7 @@ static bool rootTag(jsobjtype start, Tag **tp)
 	*tp = 0;
 	if(!start || start == cf->winobj || start == cf->docobj)
 		return true;
-	t = tagFromJavaVar(start);
+	t = tagFromObject(start);
 	if(!t)
 		return false;
 	*tp = t;
@@ -2171,7 +2172,7 @@ static duk_ret_t nat_cssApply(duk_context * cx)
 	Tag *t;
 	jsInterruptCheck(cx);
 	node = duk_get_heapptr(cx, 1);
-	t = tagFromJavaVar(node);
+	t = tagFromObject(node);
 	if(t)
 		cssApply(duk_get_number(cx, 0), t);
 	else
@@ -2186,6 +2187,43 @@ static duk_ret_t nat_cssText(duk_context * cx)
 	cssText(rulestring);
 	duk_pop(cx);
 	return 0;
+}
+
+/*********************************************************************
+This is a wrapper around document.method, mostly, but also node.method
+and mabye even window.method. It is unnecessary in duktape.
+It is needed in mozilla, so I include it here for consistency.
+If you want to grok it's purpose, read the comments in jseng-moz.cpp.
+Although it's not needed here, it might not be a bad idea anyways.
+subframe.document.createElement creates a new tag, and t->f0 is set to the
+current frame, and shouldn't that current frame be the subframe?
+So shouldn't we use these wrappers to reset cf?
+*********************************************************************/
+
+static Frame *thisFrame(duk_context *cx)
+{
+	Frame *f;
+	Tag *t;
+	jsobjtype thisobj;
+	duk_push_this(cx);
+	if(duk_has_prop_string(cx, -1, "eb$ctx")) {
+		bool d = duk_has_prop_string(cx, -1, "eb$seqno");
+		f = d ? doc2frame(cx) : win2frame(cx);
+		duk_pop(cx);
+		if(!f) {
+			debugPrint(3, "cannot connect %s to its frame",
+			(d ? "document" : "window"));
+			f = cf;
+		}
+		return f;
+	}
+// better be associated with a tag
+	thisobj = duk_get_heapptr(cx, -1);
+	duk_pop(cx);
+	if((t = tagFromObject(thisobj)))
+		return t->f0;
+			debugPrint(3, "cannot connect node.method to its frame");
+	return cf;
 }
 
 static void createJSContext_0(Frame *f)

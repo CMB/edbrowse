@@ -3535,6 +3535,30 @@ static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
 	return true;
 }
 
+static Frame *thisFrame(JSContext *cx, JS::Value *vp)
+{
+	Frame *f;
+	Tag *t;
+        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	bool found;
+	JS_HasProperty(cx, thisobj, "eb$ctx", &found);
+	if(found) {
+		JS_HasProperty(cx, thisobj, "eb$seqno", &found);
+		f = found ? doc2frame(thisobj) : win2frame(vp);
+		if(!f) {
+			debugPrint(3, "cannot connect %s to its frame",
+			(found ? "document" : "window"));
+			f = cf;
+		}
+		return f;
+	}
+// better be associated with a tag
+	if((t = tagFromObject(thisobj)))
+		return t->f0;
+			debugPrint(3, "cannot connect node.method to its frame");
+	return cf;
+}
+
 static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$puts", nat_puts, 1, 0),
   JS_FN("eb$logputs", nat_logputs, 2, 0),
