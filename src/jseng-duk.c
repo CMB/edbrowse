@@ -817,6 +817,10 @@ cdt doesn't have or need an object; it's a place holder.
 	if (fromget)
 		t->contracted = true;
 	if (new_cf->docobj) {
+		jsobjtype cdo;	// contentDocument object
+		cdo = new_cf->docobj;
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, cdo);
 		set_property_bool_t(t, "eb$expf", true);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
@@ -926,6 +930,13 @@ bool reexpandFrame(void)
 	j = strlen(cf->fileName);
 	cf->fileName = reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
+
+	if (cf->docobj) {
+		jsobjtype cdo;	// contentDocument object
+		cdo = cf->docobj;
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, cdo);
+	}
 
 	cdt->style = 0;
 	browseLocal = save_local;

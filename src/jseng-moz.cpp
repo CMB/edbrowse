@@ -2791,6 +2791,8 @@ cdo = get_property_object_0(cwo, "document");
 		t->contracted = true;
 	if (t->jslink) {
 		set_property_bool_t(t, "eb$expf", true);
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, cdo);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
 // Hope so cause that is the compartment of t.
@@ -2903,6 +2905,11 @@ doc = get_property_object_0(g, "document");
 	j = strlen(cf->fileName);
 	cf->fileName = (char *)reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
+
+	if(cf->jslink) {
+		disconnectTagObject(cdt);
+		connectTagObject(cdt, doc);
+	}
 
 	cdt->style = 0;
 	cdt->ssn = 0;
