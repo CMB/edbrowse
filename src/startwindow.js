@@ -38,6 +38,7 @@ eb$getcook = function() { return "cookies"; }
 eb$setcook = function(value) { print(" new cookie " + value); }
 eb$parent = function() { return this; }
 eb$top = function() { return this; }
+eb$frameElement = function() { return this; }
 eb$getter_cd = function() { return null; }
 eb$getter_cw = function() { return null; }
 eb$formSubmit = function() { print("submit"); }

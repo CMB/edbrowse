@@ -2589,9 +2589,10 @@ static int frameExpandLine(int ln, Tag *t)
 	uchar save_local;
 	Tag *cdt;	// contentDocument tag
 	bool jslink; // frame tag is linked to objects
-	JSObject *comp; // compartment
 
 	if (fromget) {
+// We are in a compartment.
+// It is probably the compartment of the higher frame, the superframe.
 		jslink = true;
 	} else {
 		line = fetchLine(ln, -1);
@@ -2624,7 +2625,12 @@ static int frameExpandLine(int ln, Tag *t)
 		return 0;
 	t->expf = true;
 
-	JSAutoCompartment bc(cxa, tagToCompartment(t));
+// Let's make sure we're in the compartment of the superframe,
+// and if called from the command line, not from a getter,
+// then we're not in any compartment at all, so we need to do this.
+	JS::RootedObject super(cxa); // the previous (super) frame
+	super = tagToCompartment(t);
+	JSAutoCompartment bc(cxa, super);
 
 // Check with js first, in case it changed.
 	if ((a = get_property_url_t(t, false)) && *a) {
@@ -2717,12 +2723,16 @@ So check for serverData null here. Once again we pop the frame.
 	save_local = browseLocal;
 	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
+// create context creates the new global and does everything in that compartment
 	if (javaOK(cf->fileName))
 		createJSContext(cf);
 	nzFree(newlocation);	/* should already be 0 */
 	newlocation = 0;
 
 	start = cw->numTags;
+// A bit confusing, as cf is the new frame, the subframe,
+// but we're still in the superframe compartment.
+// The document tag belongs to the subframe, which I think is right.
 	cdt = newTag(cf, "Document");
 	cdt->parent = t, t->firstchild = cdt;
 	cdt->attributes = (const char **)allocZeroMem(sizeof(char*));
@@ -2744,19 +2754,17 @@ cdt doesn't have or need an object; it's a place holder.
 
 JS::RootedObject cwo(cxa); // the content window object
 JS::RootedObject cdo(cxa); // the content document object
-JS::RootedObject prev(cxa); // the previous frame
-JS::RootedObject fto(cxa); // the frame tag object
 
 	if (cf->jslink) {
 // global for the current frame becomes the content window object
 cwo = frameToCompartment(cf);
+// decorate runs from the browse command, where there is no compartment,
+// thus it sets compartment to cf all the way through.
+// Thus we don't need to set compartment here, but we will
+// later on, so let's just do it now.
 JSAutoCompartment ac(cxa, cwo);
-// and for the previous frame
-prev = frameToCompartment(save_cf);
 		decorate(0);
 		set_basehref(cf->hbase);
-// frame tag object
-fto = tagToObject(t);
 		run_function_bool_0(cwo, "eb$qs$start");
 		if(jssrc)
 			jsRunScriptWin(jssrc, "frame.src", 1);
@@ -2779,27 +2787,19 @@ cdo = get_property_object_0(cwo, "document");
 	}
 
 	t->f1 = cf;
-	cf = save_cf;
-	browseLocal = save_local;
 	if (fromget)
 		t->contracted = true;
-	if (new_cf->jslink) {
-// Be in the compartment of the higher frame.
-JSAutoCompartment ac(cxa, prev);
-		disconnectTagObject(cdt);
-		connectTagObject(cdt, cdo);
-		cdt->style = 0;
-		cdt->ssn = 0;
+	if (t->jslink) {
 		set_property_bool_t(t, "eb$expf", true);
-// Should I switch this tag into the new frame? I don't really know.
-		cdt->f0 = new_cf;
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
-// Hope so cause that is the current compartment.
-		run_event_0(fto, t->info->name, "onload");
+// Hope so cause that is the compartment of t.
+		run_event_t(t, t->info->name, "onload");
 	}
 
 // success, frame is expanded
+	cf = save_cf;
+	browseLocal = save_local;
 	return 0;
 }
 
@@ -2811,20 +2811,20 @@ bool reexpandFrame(void)
 	Tag *frametag;
 	Tag *cdt;	// contentDocument tag
 	uchar save_local;
+	Frame *save_cf = cf;
 	bool rc;
 
+// I don't know why cf would ever not be newloc_f.
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
-// I think we can do this part in any compartment
-	JS::RootedObject g(cxa, frameToCompartment(cf));
+// compartment of the subframe
+	JS::RootedObject g(cxa);
 JS::RootedObject doc(cxa);
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
 
-// the previous document node will soon be orphaned.
-	delete_property_t(cdt, "parentNode");
 	delTimers(cf);
 	freeJSContext(cf);
 	nzFree(cf->dw);
@@ -2841,12 +2841,14 @@ JS::RootedObject doc(cxa);
 	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 		fileSize = -1;	/* don't print 0 */
+		cf = save_cf;
 		return false;
 	}
 
 	if (serverData == NULL) {
 /* frame replaced itself with a playable stream, what to do? */
 		fileSize = -1;
+		cf = save_cf;
 		return true;
 	}
 
@@ -2879,8 +2881,11 @@ JS::RootedObject doc(cxa);
 	cdt->step = 2;
 
 	if (cf->jslink) {
-// we better be in the compartment of the new web page
-g = frameToCompartment(cf);
+// decorate runs from the browse command, where there is no compartment,
+// thus it sets compartment to cf all the way through.
+// Thus we don't need to set compartment here, but we will
+// later on, so let's just do it now.
+		g = frameToCompartment(cf);
 JSAutoCompartment ac(cxa, g);
 		decorate(0);
 		set_basehref(cf->hbase);
@@ -2898,19 +2903,11 @@ doc = get_property_object_0(g, "document");
 	j = strlen(cf->fileName);
 	cf->fileName = (char *)reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
+
+	cdt->style = 0;
+	cdt->ssn = 0;
 	browseLocal = save_local;
-
-	if (cf->jslink) {
-// Remember, g is the new content window object,
-// and doc is the new content document object.
-		disconnectTagObject(cdt);
-		connectTagObject(cdt, doc);
-		cdt->style = 0;
-		cdt->ssn = 0;
-// it should already be set to cf, since this is a replacement
-		cdt->f0 = cf;
-	}
-
+		cf = save_cf;
 	return true;
 }
 
@@ -3535,6 +3532,7 @@ static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
 	return true;
 }
 
+#if 0
 static Frame *thisFrame(JSContext *cx, JS::Value *vp)
 {
 	Frame *f;
@@ -3558,6 +3556,36 @@ static Frame *thisFrame(JSContext *cx, JS::Value *vp)
 			debugPrint(3, "cannot connect node.method to its frame");
 	return cf;
 }
+
+static void docWrap(JSContext *cx, int argc, JS::Value *vp, const char *fn)
+{
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	Frame *save_cf = cf;
+	bool ok;
+cf = thisFrame(cx, vp);
+  if(cf != save_cf) puts("cf switch");
+// 99.9% of the time, it's the same frame, and the same compartment;
+// but it's easier to jump into the correct compartment than to test for it,
+// even if it's the same one.
+	JSAutoCompartment(cx, frameToCompartment(cf));
+	JS::AutoValueVector p(cx);
+	for(int i=0; i<argc; ++i)
+		ok = p.append(args[i]);
+	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
+	JS::RootedValue v(cx);
+	ok = JS_CallFunctionName(cxa, thisobj, fn, p, &v);
+	if(ok) {
+		args.rval().set(v);
+		cf = save_cf;
+		return;
+	}
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError();
+	args.rval().setUndefined();
+		cf = save_cf;
+}
+#endif
 
 static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$puts", nat_puts, 1, 0),
@@ -4280,6 +4308,7 @@ void rebuildSelectors(void)
 // So a compartment is always set, I guess.
 static const char soj[] = "soj$";
 static void sofail() { debugPrint(3, "no style object"); }
+static const char sotype[] = "soj$ type %d";
 
 bool has_gcs(const char *name)
 {
@@ -4290,6 +4319,10 @@ bool has_gcs(const char *name)
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
+		return false;
+	}
+	if(!v.isObject()) {
+		debugPrint(3, sotype, top_proptype(v));
 		return false;
 	}
 	JS_ValueToObject(cxa, v, &j);
@@ -4308,6 +4341,10 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 		sofail();
 		return EJ_PROP_NONE;
 	}
+	if(!v.isObject()) {
+		debugPrint(3, sotype, top_proptype(v));
+		return EJ_PROP_NONE;
+	}
 	JS_ValueToObject(cxa, v, &j);
 	if(!JS_GetProperty(cxa, j, name, &v))
 		return EJ_PROP_NONE;
@@ -4322,6 +4359,10 @@ int get_gcs_number(const char *name)
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
+		return -1;
+	}
+	if(!v.isObject()) {
+		debugPrint(3, sotype, top_proptype(v));
 		return -1;
 	}
 	JS_ValueToObject(cxa, v, &j);
@@ -4340,6 +4381,10 @@ void set_gcs_number(const char *name, int n)
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
+		return;
+	}
+	if(!v.isObject()) {
+		debugPrint(3, sotype, top_proptype(v));
 		return;
 	}
 	JS_ValueToObject(cxa, v, &j);
@@ -4362,6 +4407,10 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 		sofail();
 		return;
 	}
+	if(!v.isObject()) {
+		debugPrint(3, sotype, top_proptype(v));
+		return;
+	}
 	JS_ValueToObject(cxa, v, &j);
 	v.setBoolean(b);
 	JS_HasProperty(cxa, j, name, &found);
@@ -4380,6 +4429,10 @@ void set_gcs_string(const char *name, const char *s)
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	if(!JS_GetProperty(cxa, g, soj, &v)) {
 		sofail();
+		return;
+	}
+	if(!v.isObject()) {
+		debugPrint(3, sotype, top_proptype(v));
 		return;
 	}
 	JS_ValueToObject(cxa, v, &j);

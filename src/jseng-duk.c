@@ -795,9 +795,8 @@ cdt doesn't have or need an object; it's a place holder.
 		decorate(0);
 		set_basehref(cf->hbase);
 		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
-		if (jssrc) {
+		if (jssrc)
 			jsRunScriptWin(jssrc, "frame.src", 1);
-		}
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
@@ -815,24 +814,18 @@ cdt doesn't have or need an object; it's a place holder.
 	}
 
 	t->f1 = cf;
-	cf = save_cf;
-	browseLocal = save_local;
 	if (fromget)
 		t->contracted = true;
 	if (new_cf->docobj) {
-		jsobjtype cdo;	// contentDocument object
-		cdo = new_cf->docobj;
-		disconnectTagObject(cdt);
-		connectTagObject(cdt, cdo);
-		cdt->style = 0;
-// Should I switch this tag into the new frame? I don't really know.
-		cdt->f0 = new_cf;
 		set_property_bool_t(t, "eb$expf", true);
 // run the frame onload function if it is there.
 // I assume it should run in the higher frame.
 		run_event_t(t, t->info->name, "onload");
 	}
 
+// success, frame is expanded
+	cf = save_cf;
+	browseLocal = save_local;
 	return 0;
 }
 
@@ -851,17 +844,16 @@ bool reexpandFrame(void)
 	Tag *frametag;
 	Tag *cdt;	// contentDocument tag
 	uchar save_local;
+	Frame *save_cf = cf;
 	bool rc;
 
+// I don't know why cf would ever not be newloc_f.
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
-
-// the previous document node will soon be orphaned.
-	delete_property_t(cdt, "parentNode");
 
 	delTimers(cf);
 	freeJSContext(cf);
@@ -879,12 +871,14 @@ bool reexpandFrame(void)
 	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 		fileSize = -1;	/* don't print 0 */
+		cf = save_cf;
 		return false;
 	}
 
 	if (serverData == NULL) {
 /* frame replaced itself with a playable stream, what to do? */
 		fileSize = -1;
+		cf = save_cf;
 		return true;
 	}
 
@@ -915,6 +909,7 @@ bool reexpandFrame(void)
 	cdt->step = 0;
 	prerender(0);
 	cdt->step = 2;
+
 	if (cf->docobj) {
 		decorate(0);
 		set_basehref(cf->hbase);
@@ -931,18 +926,10 @@ bool reexpandFrame(void)
 	j = strlen(cf->fileName);
 	cf->fileName = reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
+
+	cdt->style = 0;
 	browseLocal = save_local;
-
-	if (cf->docobj) {
-		jsobjtype cdo;	// contentDocument object
-		cdo = cf->docobj;
-		disconnectTagObject(cdt);
-		connectTagObject(cdt, cdo);
-		cdt->style = 0;
-// Should I switch this tag into the new frame? I don't really know.
-		cdt->f0 = cf;
-	}
-
+		cf = save_cf;
 	return true;
 }
 
@@ -2200,6 +2187,7 @@ current frame, and shouldn't that current frame be the subframe?
 So shouldn't we use these wrappers to reset cf?
 *********************************************************************/
 
+#if 0
 static Frame *thisFrame(duk_context *cx)
 {
 	Frame *f;
@@ -2225,6 +2213,28 @@ static Frame *thisFrame(duk_context *cx)
 			debugPrint(3, "cannot connect node.method to its frame");
 	return cf;
 }
+
+static void docWrap(duk_context *cx, const char *fn)
+{
+	int top = duk_get_top(cx);
+	Frame *save_cf = cf;
+cf = thisFrame(cx);
+	duk_push_this(cx);
+	duk_get_prop_string(cx, -1, fn);
+duk_insert(cx, 0);
+	duk_insert(cx, 1);
+	if (!duk_pcall_method(cx, top)) {
+// the return, if you care about it, is left on the stack
+		cf = save_cf;
+		return;
+	}
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError(cx);
+	duk_push_undefined(cx);
+	cf = save_cf;
+}
+#endif
 
 static void createJSContext_0(Frame *f)
 {
