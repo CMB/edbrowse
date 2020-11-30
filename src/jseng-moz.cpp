@@ -3539,7 +3539,7 @@ static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
 	return true;
 }
 
-#if 0
+#if 1
 static Frame *thisFrame(JSContext *cx, JS::Value *vp)
 {
 	Frame *f;
@@ -3575,12 +3575,9 @@ cf = thisFrame(cx, vp);
 // but it's easier to jump into the correct compartment than to test for it,
 // even if it's the same one.
 	JSAutoCompartment(cx, frameToCompartment(cf));
-	JS::AutoValueVector p(cx);
-	for(int i=0; i<argc; ++i)
-		ok = p.append(args[i]);
 	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::RootedValue v(cx);
-	ok = JS_CallFunctionName(cxa, thisobj, fn, p, &v);
+	ok = JS_CallFunctionName(cxa, thisobj, fn, args, &v);
 	if(ok) {
 		args.rval().set(v);
 		cf = save_cf;
@@ -3591,6 +3588,12 @@ cf = thisFrame(cx, vp);
 	processError();
 	args.rval().setUndefined();
 		cf = save_cf;
+}
+
+static bool nat_star(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "star1");
+	return true;
 }
 #endif
 
@@ -3656,6 +3659,7 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FN("focus", nat_void, 0, 0),
   JS_FN("blur", nat_void, 0, 0),
   JS_FN("close", nat_void, 0, 0),
+  JS_FN("star2", nat_star, 0, 0),
   JS_FS_END
 };
 
@@ -3771,8 +3775,9 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 // startwindow.js stored as an internal string
 	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
 
-// third party debugging stuff
-	if(sn == 1)
+// Third party debugging stuff. Just in window 1.
+// If it's short, it's my tests, and then I want it in every window.
+	if(sn == 1 || strlen(thirdJS) <= 4000)
 		jsRunScriptWin(thirdJS, "third.js", 1);
 
 	nav = get_property_object_0(g, "navigator");
