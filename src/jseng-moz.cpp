@@ -297,8 +297,10 @@ static void processError(void);
 static void jsInterruptCheck(void);
 static Tag *tagFromObject(JS::HandleObject o);
 static JSObject *tagToObject(const Tag *t);
+// should be static, but is used, temporarily, by js_hello_moz.cpp
 extern JSObject *frameToCompartment(const Frame *f);
 #define tagToCompartment(t) frameToCompartment((t)->f0)
+static Frame *thisFrame(JSContext *cx, JS::Value *vp, const char *whence);
 
 static bool has_property_0(JS::HandleObject parent, const char *name)
 {
@@ -3550,8 +3552,7 @@ static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
 	return true;
 }
 
-#if 1
-static Frame *thisFrame(JSContext *cx, JS::Value *vp)
+static Frame *thisFrame(JSContext *cx, JS::Value *vp, const char *whence)
 {
 	Frame *f;
 	Tag *t;
@@ -3566,12 +3567,17 @@ static Frame *thisFrame(JSContext *cx, JS::Value *vp)
 			(found ? "document" : "window"));
 			f = cf;
 		}
+		if(f != cf)
+			debugPrint(4, "%s frame %d>%d", whence, cf->gsn, f->gsn);
 		return f;
 	}
 // better be associated with a tag
-	if((t = tagFromObject(thisobj)))
+	if((t = tagFromObject(thisobj))) {
+		if(t->f0 != cf)
+			debugPrint(4, "%s frame %d>%d", whence, cf->gsn, t->f0->gsn);
 		return t->f0;
-			debugPrint(3, "cannot connect node.method to its frame");
+	}
+	debugPrint(3, "cannot connect node.method to its frame");
 	return cf;
 }
 
@@ -3580,8 +3586,7 @@ static void docWrap(JSContext *cx, int argc, JS::Value *vp, const char *fn)
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 	Frame *save_cf = cf;
 	bool ok;
-cf = thisFrame(cx, vp);
-  if(cf != save_cf) puts("cf switch");
+cf = thisFrame(cx, vp, fn);
 // 99.9% of the time, it's the same frame, and the same compartment;
 // but it's easier to jump into the correct compartment than to test for it,
 // even if it's the same one.
@@ -3606,7 +3611,6 @@ static bool nat_star(JSContext *cx, unsigned argc, JS::Value *vp)
 	docWrap(cx, argc, vp, "star1");
 	return true;
 }
-#endif
 
 static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$puts", nat_puts, 1, 0),

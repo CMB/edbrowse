@@ -42,6 +42,7 @@ static int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, 
 static void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
 static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
 static Tag *tagFromObject(jsobjtype v);
+static Frame *thisFrame(duk_context *cx, const char *whence);
 
 // some do-nothing functions
 static duk_ret_t nat_void(duk_context * cx)
@@ -2198,8 +2199,7 @@ current frame, and shouldn't that current frame be the subframe?
 So shouldn't we use these wrappers to reset cf?
 *********************************************************************/
 
-#if 0
-static Frame *thisFrame(duk_context *cx)
+static Frame *thisFrame(duk_context *cx, const char *whence)
 {
 	Frame *f;
 	Tag *t;
@@ -2214,22 +2214,28 @@ static Frame *thisFrame(duk_context *cx)
 			(d ? "document" : "window"));
 			f = cf;
 		}
+		if(f != cf)
+			debugPrint(4, "%s frame %d>%d", whence, cf->gsn, f->gsn);
 		return f;
 	}
 // better be associated with a tag
 	thisobj = duk_get_heapptr(cx, -1);
 	duk_pop(cx);
-	if((t = tagFromObject(thisobj)))
+	if((t = tagFromObject(thisobj))) {
+		if(t->f0 != cf)
+			debugPrint(4, "%s frame %d>%d", whence, cf->gsn, t->f0->gsn);
 		return t->f0;
-			debugPrint(3, "cannot connect node.method to its frame");
+	}
+	debugPrint(3, "cannot connect node.method to its frame");
 	return cf;
 }
 
+// not used by duktape, yet, so ignore the compiler warning.
 static void docWrap(duk_context *cx, const char *fn)
 {
 	int top = duk_get_top(cx);
 	Frame *save_cf = cf;
-cf = thisFrame(cx);
+cf = thisFrame(cx, fn);
 	duk_push_this(cx);
 	duk_get_prop_string(cx, -1, fn);
 duk_insert(cx, 0);
@@ -2245,7 +2251,6 @@ duk_insert(cx, 0);
 	duk_push_undefined(cx);
 	cf = save_cf;
 }
-#endif
 
 static void createJSContext_0(Frame *f)
 {
