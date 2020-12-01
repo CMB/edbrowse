@@ -3585,7 +3585,7 @@ cf = thisFrame(cx, vp);
 // 99.9% of the time, it's the same frame, and the same compartment;
 // but it's easier to jump into the correct compartment than to test for it,
 // even if it's the same one.
-	JSAutoCompartment(cx, frameToCompartment(cf));
+	JSAutoCompartment ac(cx, frameToCompartment(cf));
 	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::RootedValue v(cx);
 	ok = JS_CallFunctionName(cxa, thisobj, fn, args, &v);
