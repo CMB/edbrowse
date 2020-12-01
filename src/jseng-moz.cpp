@@ -1500,13 +1500,24 @@ if(s2) s = s2;
 	if (intFlag)
 		i_puts(MSG_Interrupted);
 	if (ok) {
-s = stringize(v);
+		s = stringize(v);
 		if (s && !*s)
 			s = 0;
-return s;
-}
+		return s;
+	}
+	processError();
+	return 0;
+	}
+
+static void run_script_file(const char *filename)
+{
+        JS::CompileOptions opts(cxa);
+opts.utf8 = true;
+        opts.setFileAndLine(filename, 1);
+JS::RootedValue v(cxa);
+        bool ok = JS::Evaluate(cxa, opts, filename, &v);
+	if(!ok)
 		processError();
-return 0;
 	}
 
 /* like the above but throw away the result */
@@ -3776,9 +3787,12 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
 
 // Third party debugging stuff. Just in window 1.
-// If it's short, it's my tests, and then I want it in every window.
-	if(sn == 1 || strlen(thirdJS) <= 4000)
+	if(sn == 1)
 		jsRunScriptWin(thirdJS, "third.js", 1);
+
+// For debugging, so I don't have to recompile every time.
+	if(!access("extra.js", 4))
+		run_script_file("extra.js");
 
 	nav = get_property_object_0(g, "navigator");
 	if (!nav)
