@@ -3187,7 +3187,17 @@ break;
 if(mark < 0)
 goto fail;
 
-// pull the other elements down
+// Pull the other elements down. At this point we need the proper compartment.
+// SetElement takes an object from this compartment and assigns it to a
+// preexisting array in this compartment, so what's the problem?
+// I believe the context must also be set to this compartment.
+// All 3 must agree.
+// Also, we're calling mutFixup, and that does a lot of stuff
+// relative to this copartment.
+	Frame *save_cf = cf;
+	cf = thisFrame(cx, vp, "-removeChild");
+	JSAutoCompartment ac(cx, frameToCompartment(cf));
+
 	for (i = mark + 1; i < length; ++i) {
 JS_GetElement(cx, cna, i, &v);
 JS_SetElement(cx, cna, i-1, v);
@@ -3208,15 +3218,16 @@ args.rval().set(args[0]);
 
 // mutFixup(this, false, mark, child);
 // This illustrates why most of our dom is writtten in javascript.
+// Look at what that one line of js turns into in C.
 JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 JS::AutoValueArray<4> ma(cxa); // mutfix arguments
-// what's wrong with assigning this directly to ma[0]?
 ma[0].setObject(*thisobj);
 ma[1].setBoolean(false);
 ma[2].setInt32(mark);
 ma[3].set(args[0]);
 JS_CallFunctionName(cxa, g, "mutFixup", ma, &v);
 
+	cf = save_cf;
 return true;
 	}
 
@@ -3564,9 +3575,11 @@ It calls doc.createElement, but doc is not your document,
 it's the document object in a lower frame.
 At the top level, we're calling a function in another compartment.
 Even if that function does nothing at all, (I've tested this),
-document.foo() { },
 you can call that from another compartment about 10 times, then it blows up.
-This does not happen with native methods. I've tested that too.
+Try this in any web page with a frame, like jsrt.
+	for(var i=0; i<50; ++i) alert(i), frames[0].contentWindow.Header();
+See - edbrowsesm blows up after 9.
+This does not happen with native methods. I've tested it.
 Firefox probably doesn't care about any of this because
 their entire dom is written in native C.
 It's all native and can be called from any compartment.
@@ -3581,7 +3594,7 @@ Multiply this by 12 and get 53 thousand lines of code.
 ../tools/lines
 edbrowse is currently 53 thousand lines of code.
 Everything we've managed to do for the past 20 years,
-a handful of volunteers working in their spare time -
+a handful of volunteers working in their spare time,
 we'd have to do that much over again to build a working dom in C.
 So let's say we're not gonna do that.   😏
 Let's say it has to stay in js for the foreseeable future.
@@ -3645,6 +3658,10 @@ cf = thisFrame(cx, vp, fn);
 	JSAutoCompartment ac(cx, frameToCompartment(cf));
 	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
 	JS::RootedValue v(cx);
+/* At first I didn't realize I could just pass args through.
+JS::AutoValueVector p(cx);
+for(int i=0; i<argc; ++i) ok = p.append(args[i]);
+then pass p, and that works, but gees I can just pass args directly. */
 	ok = JS_CallFunctionName(cxa, thisobj, fn, args, &v);
 	if(ok) {
 		args.rval().set(v);
