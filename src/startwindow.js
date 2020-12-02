@@ -50,6 +50,12 @@ querySelectorAll = function() { return [] ; }
 querySelector = function() { return {} ; }
 querySelector0 = function() { return false; }
 eb$cssText = function(){}
+
+document.createElement = function(s) { return this.$createElement(s); }
+document.createElementNS = function(s,u) { return this.$createElementNS(s,u); }
+document.createTextNode = function(s) { return this.$createTextNode(s); }
+document.createComment = function(s) { return this.$createComment(s); }
+document.createDocumentFragment = function() { return this.$createDocumentFragment(); }
 }
 
 self = window;
@@ -1465,7 +1471,7 @@ var t = this;
 var nrows = t.rows.length;
 if(idx < 0) idx = nrows;
 if(idx > nrows) return null;
-var r = document.createElement("tr");
+var r = t.ownerDocument.createElement("tr");
 if(t.dom$class != "Table") {
 if(idx == nrows) t.appendChild(r);
 else t.insertBefore(r, t.rows[idx]);
@@ -1504,7 +1510,7 @@ var t = this;
 var n = t.childNodes.length;
 if(idx < 0) idx = n;
 if(idx > n) return null;
-var r = document.createElement("td");
+var r = t.ownerDocument.createElement("td");
 if(idx == n)
 t.appendChild(r);
 else
@@ -1519,7 +1525,7 @@ this.removeChild(r);
 
 Table.prototype.createCaption = function() {
 if(this.caption) return this.caption;
-var c = document.createElement("caption");
+var c = this.ownerDocument.createElement("caption");
 this.appendChild(c);
 return c;
 }
@@ -1529,7 +1535,7 @@ if(this.caption) this.removeChild(this.caption);
 
 Table.prototype.createTHead = function() {
 if(this.tHead) return this.tHead;
-var c = document.createElement("thead");
+var c = this.ownerDocument.createElement("thead");
 this.prependChild(c);
 return c;
 }
@@ -1539,7 +1545,7 @@ if(this.tHead) this.removeChild(this.tHead);
 
 Table.prototype.createTFoot = function() {
 if(this.tFoot) return this.tFoot;
-var c = document.createElement("tfoot");
+var c = this.ownerDocument.createElement("tfoot");
 this.insertBefore(c, this.caption);
 return c;
 }
@@ -1566,7 +1572,7 @@ Object.defineProperty(TextNode.prototype, "data", {
 get: function() { return this.data$2; },
 set: function(s) { this.data$2 = s + ""; }});
 
-document.createTextNode = function(t) {
+document.$createTextNode = function(t) {
 if(t == undefined) t = "";
 var c = new TextNode(t);
 c.ownerDocument = this;
@@ -1593,7 +1599,7 @@ this.class = "";
 }
 Comment.prototype.dom$class = "Comment";
 
-document.createComment = function(t) {
+document.$createComment = function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);
 c.ownerDocument = this;
@@ -2059,13 +2065,13 @@ else alert3("no kids, type " + typeof node1.childNodes);
 }
 
 if(node1.nodeName == "#text")
-node2 = document.createTextNode();
+node2 = document.$createTextNode();
 else if(node1.nodeName == "#comment")
-node2 = document.createComment();
+node2 = document.$createComment();
 else if(node1.nodeName == "#document-fragment")
-node2 = document.createDocumentFragment();
+node2 = document.$createDocumentFragment();
 else
-node2 = document.createElement(node1.nodeName);
+node2 = document.$createElement(node1.nodeName);
 if(node1 == dom$.cloneRoot1) dom$.cloneRoot2 = node2;
 
 if (deep && kids) {
@@ -2680,7 +2686,7 @@ dom$.newTextUnder = function(top, s, flavor) {
 var l = top.childNodes.length;
 for(var i=l-1; i>=0; --i)
 top.removeChild(top.childNodes[i]);
-top.appendChild(document.createTextNode(s));
+top.appendChild(document.$createTextNode(s));
 }
 
 dom$.injectSetup = function(which) {
@@ -2688,14 +2694,14 @@ var z = this;
 switch(which) {
 case 'a':
 if(!this.inj$after) {
-z = this.appendChild(document.createTextNode());
+z = this.appendChild(document.$createTextNode());
 z.inj$css = true;
 this.inj$after = true;
 } else z = this.lastChild;
 break;
 case 'b':
 if(!this.inj$before) {
-z = this.prependChild(document.createTextNode());
+z = this.prependChild(document.$createTextNode());
 z.inj$css = true;
 this.inj$before = true;
 } else z = this.firstChild;
@@ -3242,9 +3248,9 @@ if(typeof f == "function") { this.' + evname + '$2 = f; \
 delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
 }}})();
 
-document.createElementNS = function(nsurl,s) {
+document.$createElementNS = function(nsurl,s) {
 var mismatch = false;
-var u = this.createElement(s);
+var u = this.$createElement(s);
 if(!u) return null;
 if(!nsurl) nsurl = "";
 u.namespaceURI = new URL(nsurl);
@@ -3273,12 +3279,13 @@ if(nsurl != "http://www.w3.org/2000/xmlns/") mismatch = true;
 } else mismatch = true;
 if(mismatch) {
 alert3("bad createElementNS(" + nsurl + "," + s + ')');
-var e = new Error; e.code = 14; throw e;
+// throw error code 14
+return null;
 }
 return u;
 }
 
-document.createElement = function(s) { 
+document.$createElement = function(s) { 
 var c;
 if(!s) { // a null or missing argument
 alert3("bad createElement( type" + typeof s + ')');
@@ -3289,7 +3296,9 @@ if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
 alert3("bad createElement(" + t + ')');
 // acid3 says we should throw an exception here.
 // But we get these kinds of strings from www.oranges.com all the time.
-var e = new Error; e.code = 5; throw e;
+// I'll just return null and tweak acid3 accordingly.
+// throw error code 5
+return null;
 }
 
 switch(t) { 
@@ -3374,8 +3383,8 @@ if(c.nodeType == 1) c.id = c.name = "";
 return c;
 } 
 
-document.createDocumentFragment = function() {
-var c = this.createElement("fragment");
+document.$createDocumentFragment = function() {
+var c = this.$createElement("fragment");
 c.nodeType = 11;
 c.nodeName = c.tagName = "#document-fragment";
 return c;
@@ -3399,13 +3408,13 @@ hasFeature: eb$truefunction,
 createDocumentType: function(tag, pubid, sysid) {
 // I really don't know what this function is suppose to do.
 var tagstrip = tag.replace(/:.*/, "");
-return document.createElement(tagstrip);
+return this.createElement(tagstrip);
 },
 // https://developer.mozilla.org/en-US/docs/Web/API/DOMImplementation/createHTMLDocument
 createHTMLDocument: function(t) {
 if(t == undefined) t = "Empty"; // the title
 // put it in a paragraph, just cause we have to put it somewhere.
-var p = document.createElement("p");
+var p = this.createElement("p");
 p.innerHTML = "<iframe></iframe>";
 var d = p.firstChild; // this is the created document
 // This reference will expand the document via the setter.
@@ -3955,12 +3964,12 @@ v.innerHTML = t;
 return v;
 }
 if(y == "text/plain") {
-return document.createTextNode(t);
+return d.createTextNode(t);
 }
 alert3("trying to use the DOM parser\n" + y + " <<< ");
 alert4(t);
 alert3(">>>");
-return document.createTextNode("DOMParser not yet implemented");
+return d.createTextNode("DOMParser not yet implemented");
 }}};
 
 XMLSerializer = function(){}

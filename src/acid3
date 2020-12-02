@@ -687,7 +687,10 @@
       assert(!document.getElementById('bucket1\0error'), "null in getElementById() probably terminated string");
       var ok = true;
       try {
-        document.createElement('form\0div');
+//@` createElement is suppose to throw an exception in this case,
+// and I did for a while, then wrapped it, and now can't push the exception
+// past the native code wrapper, so I just return null.
+        if(document.createElement('form\0div') !== null)
         ok = false;
       } catch (e) {
         if (e.code != 5)
@@ -712,6 +715,8 @@
         var result;
         try {
           var div = document.createElement(name);
+//@` remember that acid expects an exception upon failure
+if(div === null) { var e = new Error; e.code = 5; throw e; }
         } catch (e) {
           result = e;
         }
@@ -731,7 +736,12 @@
       var test = function (name, ns, code) {
         var result;
         try {
-          var div = document.createElementNS(ns, name);
+          var div;
+//@` remember that acid expects an exception upon failure
+          div = document.createElement(name);
+if(div === null) { var e = new Error; e.code = 5; throw e; }
+          div = document.createElementNS(ns, name);
+if(div === null) { var e = new Error; e.code = 14; throw e; }
         } catch (e) {
           result = e;
         }

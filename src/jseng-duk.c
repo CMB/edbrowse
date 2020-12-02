@@ -2230,12 +2230,11 @@ static Frame *thisFrame(duk_context *cx, const char *whence)
 	return cf;
 }
 
-// not used by duktape, yet, so ignore the compiler warning.
 static void docWrap(duk_context *cx, const char *fn)
 {
 	int top = duk_get_top(cx);
 	Frame *save_cf = cf;
-cf = thisFrame(cx, fn);
+cf = thisFrame(cx, fn + 1);
 	duk_push_this(cx);
 	duk_get_prop_string(cx, -1, fn);
 duk_insert(cx, 0);
@@ -2250,6 +2249,40 @@ duk_insert(cx, 0);
 	processError(cx);
 	duk_push_undefined(cx);
 	cf = save_cf;
+}
+
+// Almost nothing in duktape needs to be wrapped, but createElement is
+// probably worth it, since it creates an edbrowse tag,
+// that should probably be in the correct frame.
+// Similarly for createTextNode and createComment.
+static duk_ret_t nat_crelem(duk_context *cx)
+{
+	docWrap(cx, "$createElement");
+	return 1;
+}
+
+static duk_ret_t nat_crelns(duk_context *cx)
+{
+	docWrap(cx, "$createElementNS");
+	return 1;
+}
+
+static duk_ret_t nat_crtext(duk_context *cx)
+{
+	docWrap(cx, "$createTextNode");
+	return 1;
+}
+
+static duk_ret_t nat_crcom(duk_context *cx)
+{
+	docWrap(cx, "$createComment");
+	return 1;
+}
+
+static duk_ret_t nat_crfrag(duk_context *cx)
+{
+	docWrap(cx, "$createDocumentFragment");
+	return 1;
 }
 
 static void createJSContext_0(Frame *f)
@@ -2391,6 +2424,17 @@ static void createJSContext_0(Frame *f)
 	duk_put_prop_string(cx, -2, "blur");
 	duk_push_c_function(cx, nat_void, 0);
 	duk_put_prop_string(cx, -2, "close");
+// native wrappers around dom functions
+	duk_push_c_function(cx, nat_crelem, 1);
+	duk_put_prop_string(cx, -2, "createElement");
+	duk_push_c_function(cx, nat_crelns, 2);
+	duk_put_prop_string(cx, -2, "createElementNS");
+	duk_push_c_function(cx, nat_crtext, 1);
+	duk_put_prop_string(cx, -2, "createTextNode");
+	duk_push_c_function(cx, nat_crcom, 1);
+	duk_put_prop_string(cx, -2, "createComment");
+	duk_push_c_function(cx, nat_crfrag, 0);
+	duk_put_prop_string(cx, -2, "createDocumentFragment");
 
 // document.eb$ctx is the context number
 	duk_push_string(cx, "eb$ctx");

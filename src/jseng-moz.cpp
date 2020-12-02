@@ -3552,6 +3552,58 @@ static bool nat_top(JSContext *cx, unsigned argc, JS::Value *vp)
 	return true;
 }
 
+/*********************************************************************
+Mozilla is very particular about its compartments.
+Link an object in one compartment to an object in another, x.foo = y,
+x and y in different compartments, and it will seg fault, but not right away,
+much later, when you can't possibly track down the bug.
+But it's worse; invoke a function that was defined in a different compartment,
+and you'll seg fault, eventually, down the road.
+Look at getTestDocument() in acid3.
+It calls doc.createElement, but doc is not your document,
+it's the document object in a lower frame.
+At the top level, we're calling a function in another compartment.
+Even if that function does nothing at all, (I've tested this),
+document.foo() { },
+you can call that from another compartment about 10 times, then it blows up.
+This does not happen with native methods. I've tested that too.
+Firefox probably doesn't care about any of this because
+their entire dom is written in native C.
+It's all native and can be called from any compartment.
+so, why don't I do that?
+In my experience, C is about 6 times as much code as js, for the same functionality.
+Probably more if you're defining classes.
+And this has to be done separately for every engine we support.
+Two engines so far, so 12 times as much code.
+3 engines (v8 some day), 18 times as much code.
+startwindow.js is currently 4400 lines of code.
+Multiply this by 12 and get 53 thousand lines of code.
+../tools/lines
+edbrowse is currently 53 thousand lines of code.
+Everything we've managed to do for the past 20 years,
+a handful of volunteers working in their spare time -
+we'd have to do that much over again to build a working dom in C.
+So let's say we're not gonna do that.   😏
+Let's say it has to stay in js for the foreseeable future.
+But how can it, if js in a top frame might invoke functions
+in a lower frame. And it's not just quirky acid3.
+A lot of websites create an empty frame, then build the web page
+dynamically inside that frame using the various functions off of doc,
+rather like getTestDocument() in acid3.
+So we do have to address it.
+My answer is a native wrapper around each function that we care about.
+docWrap() handles a lot of this.
+So we write document.$createElement() in startwindow.js, which does all the
+object creation stuff, like it did before.
+Then the native method createElement finds and sets the proper compartment,
+then calls the js function $createElement(), and passes it the arguments.
+createElement is a native C wrapper around $createElement.
+And this has to be done many times over.
+thisFrame() finds the appropriate frame for where we are.
+docWrap() calls thisFrame(), sets the compartment, then calls the js function,
+passing the arguments through.
+*********************************************************************/
+
 static Frame *thisFrame(JSContext *cx, JS::Value *vp, const char *whence)
 {
 	Frame *f;
@@ -3608,7 +3660,37 @@ cf = thisFrame(cx, vp, fn);
 
 static bool nat_star(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-	docWrap(cx, argc, vp, "star1");
+	docWrap(cx, argc, vp, "$star1");
+	return true;
+}
+
+static bool nat_crelem(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "$createElement");
+	return true;
+}
+
+static bool nat_crelns(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "$createElementNS");
+	return true;
+}
+
+static bool nat_crtext(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "$createTextNode");
+	return true;
+}
+
+static bool nat_crcom(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "$createComment");
+	return true;
+}
+
+static bool nat_crfrag(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "$createDocumentFragment");
 	return true;
 }
 
@@ -3674,7 +3756,13 @@ static JSFunctionSpec nativeMethodsDocument[] = {
   JS_FN("focus", nat_void, 0, 0),
   JS_FN("blur", nat_void, 0, 0),
   JS_FN("close", nat_void, 0, 0),
-  JS_FN("star2", nat_star, 0, 0),
+// native wrappers around dom functions
+  JS_FN("star1", nat_star, 0, 0),
+  JS_FN("createElement", nat_crelem, 1, 0),
+  JS_FN("createElementNS", nat_crelns, 2, 0),
+  JS_FN("createTextNode", nat_crtext, 1, 0),
+  JS_FN("createComment", nat_crcom, 1, 0),
+  JS_FN("createDocumentFragment", nat_crfrag, 0, 0),
   JS_FS_END
 };
 
