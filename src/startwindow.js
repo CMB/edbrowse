@@ -83,7 +83,7 @@ window.nodeName = "WINDOW";
 // Print the first line of text for a text node, and no braces
 // because nothing should be below a text node.
 // You can make this more elaborate and informative if you wish.
-dumptree = function(top) {
+$dumptree = function(top) {
 var nn = top.nodeName.toLowerCase();
 var extra = "";
 if(nn === "#text" && top.data) {
@@ -108,11 +108,11 @@ return;
 }
 alert(nn + " {" + extra);
 if(top.dom$class == "Frame") {
-if(top.eb$expf) dumptree(top.contentDocument);
+if(top.eb$expf) top.contentWindow.dumptree(top.contentDocument);
 } else if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-dumptree(c);
+$dumptree(c);
 }
 }
 alert("}");
@@ -4371,3 +4371,7 @@ return s+v;
 
 cancelAnimationFrame = eb$voidfunction;
 
+// functions wrappered in mozilla but not in duktape
+if(!window.dumptree) {
+dumptree = $dumptree;
+}

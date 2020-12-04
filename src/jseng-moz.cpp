@@ -3711,6 +3711,12 @@ static bool nat_crfrag(JSContext *cx, unsigned argc, JS::Value *vp)
 	return true;
 }
 
+static bool nat_dump(JSContext *cx, unsigned argc, JS::Value *vp)
+{
+	docWrap(cx, argc, vp, "$dumptree");
+	return true;
+}
+
 static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("eb$puts", nat_puts, 1, 0),
   JS_FN("eb$logputs", nat_logputs, 2, 0),
@@ -3759,6 +3765,7 @@ static JSFunctionSpec nativeMethodsWindow[] = {
   JS_FN("scrollByPages", nat_void, 0, 0),
   JS_FN("focus", nat_void, 0, 0),
   JS_FN("blur", nat_void, 0, 0),
+  JS_FN("dumptree", nat_dump, 1, 0),
   JS_FS_END
 };
 
