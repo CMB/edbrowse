@@ -3195,7 +3195,7 @@ goto fail;
 // Also, we're calling mutFixup, and that does a lot of stuff
 // relative to this copartment.
 	Frame *save_cf = cf;
-	cf = thisFrame(cx, vp, "-removeChild");
+	cf = thisFrame(cx, vp, "removeChild");
 	JSAutoCompartment ac(cx, frameToCompartment(cf));
 
 	for (i = mark + 1; i < length; ++i) {
@@ -3651,7 +3651,7 @@ static void docWrap(JSContext *cx, int argc, JS::Value *vp, const char *fn)
   JS::CallArgs args = CallArgsFromVp(argc, vp);
 	Frame *save_cf = cf;
 	bool ok;
-cf = thisFrame(cx, vp, fn);
+cf = thisFrame(cx, vp, fn + 1);
 // 99.9% of the time, it's the same frame, and the same compartment;
 // but it's easier to jump into the correct compartment than to test for it,
 // even if it's the same one.
