@@ -2053,10 +2053,15 @@ return true;
 
 static bool nat_puts(JSContext *cx, unsigned argc, JS::Value *vp)
 {
-  JS::CallArgs args = CallArgsFromVp(argc, vp);
-if(argc >= 1) puts(stringize(args[0]));
-args.rval().setUndefined();
-  return true;
+	  JS::CallArgs args = CallArgsFromVp(argc, vp);
+	if(argc >= 1) {
+		const char *s = stringize(args[0]);
+		if(!s)
+			s = emptyString;
+		puts(s);
+	}
+	args.rval().setUndefined();
+	  return true;
 }
 
 static bool nat_logputs(JSContext *cx, unsigned argc, JS::Value *vp)
