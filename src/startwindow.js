@@ -3391,6 +3391,7 @@ return c;
 }
 
 document.implementation = {
+owner: document,
 /*********************************************************************
 This is my tentative implementation of hasFeature:
 hasFeature: function(mod, v) {
@@ -3408,18 +3409,15 @@ hasFeature: eb$truefunction,
 createDocumentType: function(tag, pubid, sysid) {
 // I really don't know what this function is suppose to do.
 var tagstrip = tag.replace(/:.*/, "");
-return this.createElement(tagstrip);
+return owner.createElement(tagstrip);
 },
 // https://developer.mozilla.org/en-US/docs/Web/API/DOMImplementation/createHTMLDocument
 createHTMLDocument: function(t) {
 if(t == undefined) t = "Empty"; // the title
-// put it in a paragraph, just cause we have to put it somewhere.
-var p = this.createElement("p");
-p.innerHTML = "<iframe></iframe>";
-var d = p.firstChild; // this is the created document
-// This reference will expand the document via the setter.
-d.contentDocument.title = t;
-return d.contentDocument;
+var f = this.owner.createElement("iframe");
+var d = f.contentDocument; // this is the created document
+d.title = t;
+return d;
 }
 };
 

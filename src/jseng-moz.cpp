@@ -698,6 +698,9 @@ if(!isarray)
 goto fail;
 JS::RootedObject cna(cx); // child nodes array
 JS_ValueToObject(cx, v, &cna);
+Frame *save_cf = cf;
+cf = thisFrame(cx, vp, "innerHTML");
+JSAutoCompartment ac(cx, frameToCompartment(cf));
 // hold this away from garbage collection
 JS_SetProperty(cxa, thisobj, "old$cn", v);
 JS_DeleteProperty(cxa, thisobj, "childNodes");
@@ -738,6 +741,7 @@ JS_CallFunctionName(cxa, g, "mutFixup", ma, &v);
 
 JS_DeleteProperty(cxa, thisobj, "old$cn");
 args.rval().setUndefined();
+cf = save_cf;
 return true;
 	}
 
