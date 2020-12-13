@@ -29,6 +29,7 @@ struct ebWindow *cw = &win0;
 Frame *cf = &win0.f0;
 int context = 0;
 bool allowJS = true;
+const char *progname = "...hello...";
 bool showHover, doColors;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
@@ -127,20 +128,17 @@ puts(stringize(v));
 static void *wins[3];
 int main(int argc, const char *argv[])
 {
-bool iaflag = false; // interactive
 int c; // compartment
-int top; // number of windows
+int top = 3; // number of windows
 char buf[16];
+bool iaflag = true;
 
 // It's a test program, let's see some basic errors
-debugLevel = 3;
+debugLevel = 4;
 selectLanguage();
 
 static char myhome[] = "/snork";
 home = myhome;
-
-if(argc > 1 && !strcmp(argv[1], "-i")) iaflag = true;
-top = iaflag ? 3 : 1;
 
 for(c=0; c<top; ++c) {
 sprintf(buf, "session %d", c+1);

@@ -137,7 +137,9 @@ void rootchain(void)
 	Cro *u = 0;
 	n = 0, l = (void**)&o;
 	while(l) {
+#if 0
 last3(l[0]), printf(":"), last3(l[1]), puts("");
+#endif
 if(l == (void**)rw0) puts("root");
 ++n, l = (void**)l[1];
 if(!l) break;
@@ -642,6 +644,14 @@ static bool getter_cw(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 	  JS::CallArgs args = CallArgsFromVp(argc, vp);
 	jsInterruptCheck();
+if(strstr(progname, "hello")) {
+// this is just for debugging in the hello program
+// returns window 1, so is best called from window 2 or 3.
+Cro *u = o_tail;
+while(u->prev) u = u->prev;
+args.rval().setObject(**(u->m));
+return true;
+}
 	args.rval().setNull();
 	Tag *t;
 	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
@@ -3900,6 +3910,7 @@ JS::RootedObject mw(cxa, JS_NewObject(cxa, nullptr));
 JS_DefineProperty(cxa, global, "mw$", mw,
 (JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 
+if(!strstr(progname, "hello"))
 setup_window_2(f->gsn);
 }
 
