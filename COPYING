@@ -1,4 +1,4 @@
-This program is copyright (C) Karl Dahlke, 2000-2014.
+This program is copyright (C) Karl Dahlke, 2000-2021.
 It is made available by the author under the terms of the GNU General Public
 License (GPL), as articulated by the Free Software Foundation.
 http://www.fsf.org/licensing/licenses/gpl.html
@@ -12,3 +12,5 @@ However, if you wish to release a version of edbrowse with these shared
 libraries included,
 or a statically linked executable, you will need to specify both gpl and mpl.
 
+Some aspects of the DOM are third party software, released under the MIT public license.
+See startwindow.js for this code.
