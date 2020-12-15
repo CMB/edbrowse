@@ -92,8 +92,7 @@ rooted objects on the heap, and then I don't have to do all this crazy hacking.
 So, rootchain() is for debugging, it steps down the chain
 and prints the first two pointers at each step, just the last 3 digites,
 then the length of the chain.
-Also the length of the rooted value chain, which is separate,
-rooted strings also a separate chain.
+The rooted value chain and rooted string chain are separate.
 jsUnroot unroots all our tag objects,
 which would otherwise never unroot and become a substantial memory leak.
 jsClose() prints an error message if we have not cleaned up all our rooted
@@ -112,40 +111,70 @@ struct cro { // chain of allocated rooted objects
 typedef struct cro Cro;
 static Cro *o_tail; // chain of globals and tags
 
+// Rooting window, to hold on to any objects that edbrowse might access.
+static JS::RootedObject *rw0;
+
 static void last3(void *v)
 {
-	unsigned long l = (unsigned long)v;
-	l %= 1000;
-	printf("%03lu", l);
+	if(!v) {
+		printf("nil");
+	} else {
+		unsigned long l = (unsigned long)v;
+		l %= 1000;
+		printf("%03lu", l);
+	}
 }
 
 // for debugging
 void rootchain(void)
 {
 	JS::RootedObject o(cxa);
+	void **top = (void**)rw0;
+	if(o_tail)
+		top = (void**)(o_tail->m);
 	void **l;
 	int n;
-	Cro *u;
+	Cro *u = 0;
 	n = 0, l = (void**)&o;
-#if 1
 	while(l) {
+#if 0
 last3(l[0]), printf(":"), last3(l[1]), puts("");
-++n, l = (void**)l[1];
-}
-#else
-	while(l) ++n, l = (void**)l[1];
 #endif
+if(l == (void**)rw0) puts("root");
+++n, l = (void**)l[1];
+if(!l) break;
+if(!u) {
+if(l != top) continue;
+puts("top");
+u = o_tail;
+if(!u) { // none of our objects are present
+if(l[1]) puts("error: objects below rw0");
+}
+continue;
+}
+if(!u) continue;
+// make sure we all step down together
+if(!u->prev) {
+if(l != (void**)rw0)
+puts("error: objects between rw0 and our first object");
+u = 0;
+continue;
+}
+if(l == (void**)u->prev->m) {
+u = u->prev;
+continue;
+}
+puts("error: object mismatch root chain and Cro chain");
+u = 0;
+}
 	printf("chain %d|", n);
 	n = 0, u = o_tail;
 	while(u) ++n, u = u->prev;
 	printf("%d", n);
 	l = (void**)&o;
-	if(l[1] == 0 && !o_tail || l[1] == (void*)(o_tail->m))
+	if(l[1] == (void*)rw0 && !o_tail || l[1] == (void*)(o_tail->m))
 	printf(" flat");
-	JS::RootedValue v(cxa);
-	n = 0, l = (void**)&v;
-	while(l) ++n, l = (void**)l[1];
-	printf(" v %d\n", n);
+puts("");
 }
 
 // unravle the objects of our tags, our frames, if we can
@@ -170,9 +199,6 @@ void jsUnroot(void)
 		o_tail = u = v;
 	}
 }
-
-// Rooting window, to hold on to any objects that edbrowse might access.
-static JS::RootedObject *rw0;
 
 static void jsRootAndMove(void ** dest, JSObject *j, bool isglobal)
 {
@@ -618,6 +644,14 @@ static bool getter_cw(JSContext *cx, unsigned argc, JS::Value *vp)
 {
 	  JS::CallArgs args = CallArgsFromVp(argc, vp);
 	jsInterruptCheck();
+if(strstr(progname, "hello")) {
+// this is just for debugging in the hello program
+// returns window 1, so is best called from window 2 or 3.
+Cro *u = o_tail;
+while(u->prev) u = u->prev;
+args.rval().setObject(**(u->m));
+return true;
+}
 	args.rval().setNull();
 	Tag *t;
 	        JS::RootedObject thisobj(cx, JS_THIS_OBJECT(cx, vp));
@@ -674,6 +708,9 @@ if(!isarray)
 goto fail;
 JS::RootedObject cna(cx); // child nodes array
 JS_ValueToObject(cx, v, &cna);
+Frame *save_cf = cf;
+cf = thisFrame(cx, vp, "innerHTML");
+JSAutoCompartment ac(cx, frameToCompartment(cf));
 // hold this away from garbage collection
 JS_SetProperty(cxa, thisobj, "old$cn", v);
 JS_DeleteProperty(cxa, thisobj, "childNodes");
@@ -714,6 +751,7 @@ JS_CallFunctionName(cxa, g, "mutFixup", ma, &v);
 
 JS_DeleteProperty(cxa, thisobj, "old$cn");
 args.rval().setUndefined();
+cf = save_cf;
 return true;
 	}
 
@@ -3872,6 +3910,7 @@ JS::RootedObject mw(cxa, JS_NewObject(cxa, nullptr));
 JS_DefineProperty(cxa, global, "mw$", mw,
 (JSPROP_READONLY|JSPROP_PERMANENT|JSPROP_ENUMERATE));
 
+if(!strstr(progname, "hello"))
 setup_window_2(f->gsn);
 }
 

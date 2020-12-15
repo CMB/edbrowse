@@ -880,10 +880,15 @@ char *resolveURL(const char *base, const char *rel)
 	n = allocString(strlen(base) + strlen(rel) + 12);
 
 	if (rel[0] == '#') {
-/* This is an anchor for the current document, don't resolve. */
-/* I assume the base does not have a #fragment on the end; that is not part of the base. */
-/* Thus I won't get url#foo#bar */
-		strcpy(n, rel);
+// This is an anchor for the current document
+		if(isURL(base))
+			strcpy(n, base);
+// We don't want url#foo#bar
+		q = strchr(n, '#');
+		if(q)
+			*q = 0;
+		if(rel[1])
+			strcat(n, rel);
 out_n:
 		debugPrint(5, "= %s", n);
 		hrefContext = false;
