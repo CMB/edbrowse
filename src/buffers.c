@@ -1741,7 +1741,11 @@ static bool joinText(void)
 struct DSR {
 	int idx;
 	union {
+#ifdef linux
+		struct timespec spec;
+#else
 		time_t t;
+#endif
 		off_t z;
 	} u;
 };
@@ -1766,10 +1770,24 @@ static int dircmp(const void *s, const void *t)
 	}
 	if (ls_sort == 2) {
 		rc = 0;
+#ifdef linux
+		if (q->u.spec.tv_sec < r->u.spec.tv_sec)
+			rc = -1;
+		if (q->u.spec.tv_sec > r->u.spec.tv_sec)
+			rc = 1;
+		if(!rc) {
+// Honor sub-second timestamp precision if the operating system supports it.
+		if (q->u.spec.tv_nsec < r->u.spec.tv_nsec)
+			rc = -1;
+		if (q->u.spec.tv_nsec > r->u.spec.tv_nsec)
+			rc = 1;
+		}
+#else
 		if (q->u.t < r->u.t)
 			rc = -1;
 		if (q->u.t > r->u.t)
 			rc = 1;
+#endif
 	}
 	if (ls_reverse)
 		rc = -rc;
@@ -1874,8 +1892,15 @@ static bool readDirectory(const char *filename)
 		if (ls_sort) {
 			if (ls_sort == 1)
 				dsr_list[j].u.z = this_stat.st_size;
-			if (ls_sort == 2)
+			if (ls_sort == 2) {
+// Honor sub-second timestamp precision if the operating system supports it.
+// Currently only linux - other systems?
+#ifdef linux
+				dsr_list[j].u.spec = this_stat.st_mtim;
+#else
 				dsr_list[j].u.t = this_stat.st_mtime;
+#endif
+			}
 		}
 
 /* extra stat entries on the line */
