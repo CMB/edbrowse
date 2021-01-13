@@ -477,7 +477,7 @@ none:
 	f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
 	mif = f->mlist;
 	u = t;
-	while (*u) {
+	while (*u && cnt) {
 		int seqno = strtol(u, &u, 10);
 		if (cnt <= f->nfetch) {
 			mif->seqno = seqno;
@@ -1289,7 +1289,8 @@ refresh:
 			goto input;
 		}
 
-		if (stringEqual(inputline, "q")) {
+		if (stringEqual(inputline, "q")
+		|| stringEqual(inputline, "qt")) {
 			i_puts(MSG_Quit);
 			goto imap_done;
 		}
