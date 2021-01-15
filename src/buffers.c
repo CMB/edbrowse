@@ -5978,7 +5978,8 @@ replaceframe:
 	/* Find suffix, as in 27,59w2 */
 	if (!postSpace) {
 		cx = stringIsNum(line);
-		if (!cx) {
+		if (!cx &&
+		strchr("qwer^&", cmd)) {
 			setError((cmd == '^'
 				  || cmd == '&') ? MSG_Backup0 : MSG_Session0);
 			return false;
