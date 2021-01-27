@@ -809,7 +809,6 @@ bool httpConnect(struct i_get *g)
 	char *referrer = NULL;
 	CURLcode curlret = CURLE_OK;
 	struct curl_slist *custom_headers = NULL;
-	struct curl_slist *tmp_headers = NULL;
 	const struct MIMETYPE *mt;
 	char creds_buf[MAXUSERPASS * 2 + 2];	/* creds abr. for credentials */
 	bool still_fetching = true;
@@ -904,11 +903,14 @@ mimestream:
 		return false;
 	}
 
-/* "Expect:" header causes some servers to lose.  Disable it. */
-	tmp_headers = curl_slist_append(custom_headers, "Expect:");
-	if (tmp_headers == NULL)
+// If we just accept */*, some sites don't work:   https://crates.io
+	custom_headers = curl_slist_append(custom_headers, "Accept: text/html,application/xhtml+xml,*/*;q=0.8");
+	if (custom_headers == NULL)
 		i_printfExit(MSG_NoMem);
-	custom_headers = tmp_headers;
+/* "Expect:" header causes some servers to lose.  Disable it. */
+	custom_headers = curl_slist_append(custom_headers, "Expect:");
+	if (custom_headers == NULL)
+		i_printfExit(MSG_NoMem);
 	if (httpLanguage) {
 		custom_headers =
 		    curl_slist_append(custom_headers, httpLanguage);
@@ -936,11 +938,10 @@ mimestream:
 			s = strchr(post, '\r');
 			stringAndBytes(&multipart_header, &multipart_header_len,
 				       post, s - post);
-			tmp_headers =
+			custom_headers =
 			    curl_slist_append(custom_headers, multipart_header);
-			if (tmp_headers == NULL)
+			if (custom_headers == NULL)
 				i_printfExit(MSG_NoMem);
-			custom_headers = tmp_headers;
 			/* curl_slist_append made a copy of multipart_header. */
 			nzFree(multipart_header);
 			memcpy(thisbound, post, s - post);
@@ -1015,10 +1016,9 @@ mimestream:
 			w = allocMem(d + 1);
 			memcpy(w, u, d);
 			w[d] = 0;
-			tmp_headers = curl_slist_append(custom_headers, w);
-			if (tmp_headers == NULL)
+			custom_headers = curl_slist_append(custom_headers, w);
+			if (custom_headers == NULL)
 				i_printfExit(MSG_NoMem);
-			custom_headers = tmp_headers;
 			debugPrint(4, "custom %s", w);
 			nzFree(w);
 			u = v + 1;
