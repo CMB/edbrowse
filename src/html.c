@@ -3909,3 +3909,99 @@ void itext(void)
 	else
 		i_puts(MSG_NoInputFields);
 }
+
+static struct htmlTag *line2tr(int ln)
+{
+	char *p;
+struct htmlTag *t;
+	int tagno;
+
+	if(!ln) {
+		setError(MSG_EmptyBuffer);
+		return 0;
+	}
+	p = (char *)fetchLine(ln, -1);
+	while(*p != '\n') {
+		if (*p != InternalCodeChar) {
+			++p;
+			continue;
+		}
+		tagno = strtol((char *)p + 1, (char **)&p, 10);
+/* could be 0, but should never be negative */
+		if (tagno <= 0)
+			continue;
+		t = tagList[tagno];
+		if(t->action != TAGACT_TD)
+			continue;
+		t = t->parent;
+		if(t && t->action == TAGACT_TR)
+			return t;
+	}
+	setError(MSG_NoTable);
+	return 0;
+}
+
+static struct htmlTag *line2table(int ln)
+{
+	struct htmlTag *t;
+	if(!ln) {
+		setError(MSG_EmptyBuffer);
+		return 0;
+	}
+	t = line2tr(ln);
+	if(!t || !t->parent ||
+	((t = t->parent)->action != TAGACT_TABLE &&
+	t->action != TAGACT_THEAD &&
+	t->action != TAGACT_TBODY)) {
+		setError(MSG_NoTable);
+		return 0;
+	}
+	if(t->action != TAGACT_TABLE) {
+// it is tbody or thead
+		t = t->parent;
+		if(!t || t->action != TAGACT_TABLE) {
+			setError(MSG_NoTable);
+			return 0;
+		}
+	}
+	return t;
+}
+
+// This routine is rather unforgiving.
+// Has to look like <table><thead><tr><th>text</th>...
+// Any intervening tags will throw it off.
+// Clearly this routine has to be expanded to cover more html layouts.
+bool showHeaders(int ln)
+{
+	struct htmlTag *t = line2table(ln), *u;
+	int colno;
+	if(!t)
+		return false;
+	t = t->firstchild;
+// skip past <thead> and down to <tr>
+	if(t && t->action == TAGACT_THEAD)
+		t = t->firstchild;
+	if(!t || t->action != TAGACT_TR || !t->firstchild)
+		goto fail;
+	t = t->firstchild;
+	if(t->action != TAGACT_TD ||
+	!stringEqual(t->info->name, "th"))
+		goto fail;
+	colno = 1;
+	while(t) {
+		if(t->action == TAGACT_TD) {
+			printf("%d ", colno++);
+			u = t->firstchild;
+			if(u && u->action == TAGACT_TEXT)
+				printf("%s\n", (u->textval ? u->textval : "?"));
+			else
+				printf("?\n");
+			}
+		t = t->sibling;
+	}
+	return true;
+
+fail:
+	setError(MSG_NoColumnHeaders);
+	return false;
+}

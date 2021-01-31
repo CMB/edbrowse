@@ -311,7 +311,7 @@ stop
 preleva %d alla volta\n
 non ci sono allegati
 .ebrc: keyword = valore in una funzione edbrowse alla riga %d
-0
+nessuna tavola chiamata
 l'inizializzazione della sessione ftp è fallita
 Push
 edbrowse non è stato compilato con il supporto per l'accesso ai database

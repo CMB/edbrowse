@@ -117,6 +117,7 @@ bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(Frame *f);
 void runTimer(void);
 void domOpensWindow(const char *href, const char *name) ;
+bool showHeaders(int ln);
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);

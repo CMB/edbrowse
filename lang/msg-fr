@@ -311,7 +311,7 @@ stop
 récupérer %d à la fois\n
 pas de pièces attachées
 .ebrc: mot-clé = valeur dans une fonction edbrowse à la ligne %d
-0
+la table n'existe pas
 ftp : échec de la session d'initialisation
 0
 edbrowse n'a pas été compilé avec l'accès aux bases de données

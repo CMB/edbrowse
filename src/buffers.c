@@ -4465,9 +4465,17 @@ pwd:
 	}
 
 	if (stringEqual(line, "shc")) {
+		cmd = 'e'; // trick to always show the errors
+		if(!cw->dot) {
+			setError(MSG_EmptyBuffer);
+			return 0;
+		}
 		if (!cw->sqlMode) {
-			setError(MSG_NoDB);
-			return false;
+			if (!cw->browseMode) {
+				setError(MSG_NoBrowse);
+				return false;
+			}
+		return showHeaders(cw->dot);
 		}
 		showColumns();
 		return true;

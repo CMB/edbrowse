@@ -311,7 +311,7 @@ stop
 hole %d auf einmal\n
 keine Anhänge
 .ebrc: Schlüsselwort = Wert innerhalb einer Edbrowse-Funktion in Zeile %d
-0
+keine Spalte
 ftp-Sitzung konnte nicht initialisiert werden
 Versenden
 Edbrowse wurde ohne Datenbankzugriff kompiliert

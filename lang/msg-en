@@ -311,7 +311,7 @@ stop
 fetch %d at a time\n
 no attachments
 .ebrc: keyword = value inside an edbrowse function at line %d
-0
+no table
 ftp session initialization failed
 Push
 edbrowse was not compiled with database access
@@ -603,7 +603,7 @@ misplaced / in %s
 decodePostData(0,0)
 search without wrap
 search with wrap
-0
+no column headings
 cannot reply in directory mode
 cannot reply in database mode
 cannot reply to an empty file

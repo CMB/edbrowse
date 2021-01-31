@@ -311,7 +311,7 @@ interromper
 pegar %d de uma vez\n
 sem anexos
 .ebrc: palavrachave = valor numa função do edbrowse na linha %d
-0
+tabela não existe
 falha a iniciar sessão de FTP
 botão de ação
 o edbrowse não foi compilado com acesso a bancos de dado

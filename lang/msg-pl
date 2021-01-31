@@ -311,7 +311,7 @@ stop
 pobierz %d na raz\n
 brak załączników
 .ebrc: klucz = wartość wewnątrz funkcji edbrowse w wierszu %d
-0
+brak tabeli
 ftp: inicjalizacja sesji zakończona niepowodzeniem
 Pchnij
 edbrowse nie został skompilowany z dostępem do bazy danych
