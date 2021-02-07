@@ -43,6 +43,7 @@
 #include <conio.h>  // for _kbhit, getch, getche
 #include <stdint.h> // for UINT32_MAX
 #include "vsprtf.h" // for WIN32 asprintf, vasprintf, ...
+#include "strcasestr.h" // for WIN32 stristr == unix strcasestr
 #else
 #include <unistd.h>
 #endif
@@ -665,6 +666,7 @@ extern nodeFunction traverse_callback;
 #define MODE_rw 0600
 #define MODE_rwx 0700
 #define MODE_private 0600
+#define strcasestr stristr
 #else
 #define MODE_rw 0666
 #define MODE_rwx 0777

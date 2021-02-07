@@ -29,14 +29,16 @@ endif()
 
 if(WIN32)
     if(MSVC)
-        # turn off various warnings - reviewed 20170727
+        # turn off various warnings - reviewed 20210207, 20170727
         set(WARNING_FLAGS "${WARNING_FLAGS} /wd4996")
         # foreach(warning 4244 4251 4267 4275 4290 4786 4305)
         # C4244: '=' : conversion from 'long' to 'unsigned char', possible loss of data
         # C4090: 'function' : different 'const' qualifiers
         # C4101: 'idx' : unreferenced local variable
         # C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-        foreach(warning 4090 4101 4244 4267)
+        # C4133: 'function': incompatible types - from 'long *' to 'SQLLEN *'
+        # C4018: '<': signed/unsigned mismatch
+        foreach(warning 4244 4090 4101 4267 4133 4018)
             set(WARNING_FLAGS "${WARNING_FLAGS} /wd${warning}")
         endforeach()
         set( MSVC_FLAGS "${MSVC_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
@@ -312,20 +314,16 @@ set(${name}_SRCS
     ${dir}/sendmail.c
     ${dir}/fetchmail.c
     ${dir}/messages.c
-    ${dir}/url.c
     ${dir}/stringfile.c
     ${dir}/html-tidy.c
     ${dir}/decorate.c
     ${dir}/http.c
-    ${dir}/auth.c
     ${dir}/css.c
 	${dir}/html.c
     ${dir}/format.c
-    ${dir}/cookies.c
-    ${dir}/cache.c
-    ${dir}/ebjs.c
     ${dir}/plugin.c
     ${dir}/jseng-duk.c
+    ${dir}/isup.c
     ${ODBC_SRCS}
     ${GEN_SOURCES}
     )
@@ -335,8 +333,8 @@ set(${name}_HDRS
     ${dir}/messages.h
     )
 if (MSVC)
-    list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c)
-    list(APPEND ${name}_HDRS win32/vsprtf.h win32/dirent.h)
+    list(APPEND ${name}_SRCS win32/vsprtf.c win32/dirent.c win32/strcasestr.c)
+    list(APPEND ${name}_HDRS win32/vsprtf.h win32/dirent.h win32/strcasestr.h)
     include_directories( win32 )
 endif ()
 add_executable( ${name} ${${name}_SRCS} ${${name}_HDRS} )
