@@ -475,7 +475,7 @@ struct ebWindow {
 	bool quitMode:1;	/* you can quit this buffer any time */
 	bool dirMode:1;		/* directory mode */
 	bool undoable:1;	/* undo is possible */
-	bool sqlMode:1;		/* accessing a table */
+	bool sqlMode:1;		// accessing a table
 	struct DBTABLE *table;	/* if in sqlMode */
 	time_t nextrender;
 };
@@ -590,6 +590,8 @@ struct htmlTag {
 	bool visited:1;
 	bool masked:1;
 	bool iscolor:1;
+	bool ur:1;		// row unfolded, only for trf
+	bool inur:1;		// in ur command
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		// input type =
 	uchar itype_minor;

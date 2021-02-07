@@ -5693,6 +5693,31 @@ bool runCommand(const char *line)
 		line = newline;
 	}
 
+	if (stringEqual(line, "ur")) {
+		Tag *w;
+		cmd = 'e'; // trick to always show the errors
+		if(!cw->dot) {
+			setError(MSG_EmptyBuffer);
+			return 0;
+		}
+		if (cw->sqlMode) {
+			puts("ur not implemented in database mode, but it should be!");
+			return true;
+		}
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		for(i = startRange; i <= endRange; ++i)
+			if((w = line2tr(i)))
+				w->inur = false;
+		for(i = startRange; i <= endRange; ++i)
+			if((w = line2tr(i)) && !w->inur)
+				w->inur = true, w->ur ^= 1;
+		rerender(true);
+		return true;
+	}
+
 /* Breakline is actually a substitution of lines. */
 	if (stringEqual(line, "bl")) {
 		if (cw->dirMode) {

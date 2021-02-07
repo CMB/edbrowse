@@ -2646,16 +2646,6 @@ void delTags(int startRange, int endRange)
 			    action == TAGACT_HR ||
 			    action == TAGACT_LI || action == TAGACT_IMAGE)
 				t->deleted = true;
-#if 0
-/* this seems to cause more trouble than it's worth */
-			Tag *last_td = 0;
-			if (action == TAGACT_TD) {
-				printf("td%d\n", tagno);
-				if (last_td)
-					last_td->deleted = true;
-				last_td = t;
-			}
-#endif
 		}
 	}
 }				/* delTags */
@@ -3663,22 +3653,63 @@ nop:
 	case TAGACT_TR:
 		if (opentag)
 			tdfirst = true;
+		if(t->ur && opentag && (ltag = t->parent)
+		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY)) {
+// print the row number
+			Tag *v = ltag->firstchild;
+			j = 1;
+			while(v && v != t) {
+				if(v->action == TAGACT_TR)
+					++j;
+				v = v->sibling;
+			}
+			if(v) { // should always happen
+				char rowbuf[20];
+				sprintf(rowbuf, "row %d\n", j);
+				stringAndString(&ns, &ns_l, rowbuf);
+			}
+		}
 	case TAGACT_TABLE:
 		goto nop;
 
 	case TAGACT_TD:
 		if (!retainTag)
 			break;
-		if (tdfirst)
-			tdfirst = false;
-		else {
-			liCheck(t);
-			j = ns_l;
-			while (j && ns[j - 1] == ' ')
-				--j;
-			ns[j] = 0;
-			ns_l = j;
-			stringAndChar(&ns, &ns_l, TableCellChar);
+		if(stringEqual(t->info->name, "th") || !(ltag = t->parent)
+		|| ltag->action != TAGACT_TR || !ltag->ur) {
+// Traditional table format, pipe separated,
+// on one line if it fits, or wraps in unpredictable ways if it doesn't.
+			if (tdfirst)
+				tdfirst = false;
+			else {
+				liCheck(t);
+				j = ns_l;
+				while (j && ns[j - 1] == ' ')
+					--j;
+				ns[j] = 0;
+				ns_l = j;
+				stringAndChar(&ns, &ns_l, TableCellChar);
+			}
+		} else {
+// unfolded row, find the column number.
+			Tag *v = ltag->firstchild;
+			if (tdfirst)
+				tdfirst = false;
+			else
+				stringAndChar(&ns, &ns_l, '\n');
+			j = 1;
+			while(v && v != t) {
+				if(v->action == TAGACT_TD)
+					++j;
+				v = v->sibling;
+			}
+			if(v) { // should always happen
+				if((a = findHeading(ltag, j)))
+					stringAndString(&ns, &ns_l, a);
+				else
+					stringAndNum(&ns, &ns_l, j);
+				stringAndString(&ns, &ns_l, ": ");
+			}
 		}
 		tagInStream(tagno);
 		break;
@@ -3910,7 +3941,7 @@ void itext(void)
 		i_puts(MSG_NoInputFields);
 }
 
-static struct htmlTag *line2tr(int ln)
+struct htmlTag *line2tr(int ln)
 {
 	char *p;
 struct htmlTag *t;
@@ -4004,4 +4035,44 @@ bool showHeaders(int ln)
 fail:
 	setError(MSG_NoColumnHeaders);
 	return false;
+}
+
+// return a column heading by number, the same logic as above.
+const char *findHeading(Tag *t, int colno)
+{
+	int j = 0;
+	if(!t->parent ||
+	((t = t->parent)->action != TAGACT_TABLE &&
+	t->action != TAGACT_THEAD &&
+	t->action != TAGACT_TBODY))
+		return 0;
+	if(t->action != TAGACT_TABLE) {
+// it is tbody or thead
+		t = t->parent;
+		if(!t || t->action != TAGACT_TABLE)
+			return 0;
+	}
+	t = t->firstchild;
+// skip past <thead> and down to <tr>
+	if(t && t->action == TAGACT_THEAD)
+		t = t->firstchild;
+	if(!t || t->action != TAGACT_TR || !t->firstchild)
+		return 0;
+	t = t->firstchild;
+	if(t->action != TAGACT_TD ||
+	!stringEqual(t->info->name, "th"))
+		return 0;
+	while(t) {
+		if(t->action == TAGACT_TD) {
+			if(++j == colno) {
+// this is the header we want, descend to the text field
+				Tag *u = t->firstchild;
+				if(u && u->action == TAGACT_TEXT)
+					return u->textval ? u->textval : "?";
+				return 0;
+			}
+		}
+		t = t->sibling;
+	}
+	return 0;
 }

@@ -1,5 +1,17 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.7.x
+Experiment with Spider Monkey js, make edbrowsesm
+I have no idea how to do cross copartment access, as in frames,
+so this is entirely in stall mode.
+
+Extend show columns (shc) command to html tables in browse mode.
+This was originally a database command.
+
+unfold row (ur) command for a row in a table in html.
+This should be extended to database mode, it's actually more valuable there,
+since tables can be arbitrarily wide and do not wrap.
+
 3.7.7
 Fix a potential security hole, where one website can bleed into another. Worth making a release just for this.
 
