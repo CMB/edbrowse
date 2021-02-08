@@ -5701,6 +5701,44 @@ bool runCommand(const char *line)
 			return 0;
 		}
 		if (cw->sqlMode) {
+
+/*********************************************************************
+While dabbling in another database, that I hadn't seen before,
+and needed to learn quickly, I found some tables with over 100 columns.
+These are flat file, pipe separated, with no wrap.
+This is where the ur command could really help!
+Yes the shc command gives you the 100 column headings,
+but still, counting over to column 76 is screaming frustrating.
+Yes, we could have commands to ask for column 76,
+if you know it's 76, or find 76 from column headings,
+but what if you want to change column 76 in the database?
+Another suite of commands? Ugh!
+You can take your chances with a substitute command, which does the sql update,
+but it's a long row, what if you accidentally update column 54 instead.  Oops.
+And sql has side effects, so there is no undo command.
+You have to fix what you screwed up, if you can, then try again.
+Think how much easier if you can unfold the row you are working on.
+Now you see each column on one line.
+Find the field you want, issue the substitute command on that line,
+it will do the right thing, you won't accidentally screw up a different column,
+and edbrowse does the corresponding sql update.
+This is like a sighted person moving his cursor over to the correct column
+and making the change. This is the kind of power edbrowse is famous for;
+but it's only possible via the ur command.
+In html, an unfolded row is indicated by Tag->ur = true.
+Then it is rendered accordingly.
+But database is all text, no embedded tags.
+How do we even know the row we are on, how do we find the primary key?
+Back up to the line that is row number, with no  colons.
+That is the start of the row and from there you can find the primary key.
+Put that in the where clause and update only the field that is changed.
+Similarly for delete; of course you need to remove
+the entire unfolded row.
+Finally insert, with the a command, you should advance down to the end
+of the unfolded row and put the new row there.
+Should the newly entered row be unfolded? idk
+*********************************************************************/
+
 			puts("ur not implemented in database mode, but it should be!");
 			return true;
 		}

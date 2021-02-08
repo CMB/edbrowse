@@ -624,6 +624,7 @@ g : suit le lien sur la ligne courante
 <br>ipass2 : prompt pour saisie du second formulaire, sans echo
 <br>ib : alloue un tampon d'entrée pour cette zone de texte
 <br>shc : affiche les en-têtes des colonnes d'une table html
+<br>ur : déploie une ligne d'une table html
 <br>M4 : déplace cette page web en session 4 et revient à la page précédente
 <br>M : déplace cette page web dans une session vide et sauvegarde
 <br>js : activation javascript (bascule)
@@ -1914,6 +1915,26 @@ Dans cet exemple, vous aurez :
 2 quantité
 <p>
 3 prix
+
+<p>
+La commande ur déploie une ligne, en affichant une ligne par colonne.
+Ceci est utile lorsqu'une ligne est longue, créant une très longue ligne, ou se découpe de manière imprévisible.
+Appliquez cette commande à la deuxième ligne du tableau précédent et vous obtiendrez ceci :
+<p>
+ligne 2
+<br>
+numéro de pièce : 1398
+<br>
+quantité : 1
+<br>
+prix : 67,50
+
+<p>
+Il s'agit d'une commande à bascule, c'est-à-dire que ur sur une ligne dépliée la remet sur une ligne,  avec le caractère de séparation "pipe" "|".
+Vous pouvez appliquer cette commande à une plage, 17,29ur, mais ne l'appliquez pas à une page web entière, car les tableaux html sont souvent utilisés pour la mise en page de l'écran, plutôt qu'un tableau réel.
+Le résultat pourrait être très laid.
+Assurez-vous que ur n'est appliqué qu'aux lignes d'un tableau réel,
+avec des lignes et des colonnes traditionnelles.
 
 <p>
 Notez que le fichier navigable est en lecture seule. 
