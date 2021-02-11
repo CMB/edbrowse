@@ -2525,6 +2525,7 @@ if(passive) handler.do$passive = true;
 if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
 if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
 var evarray = ev + "$$array"; // array of handlers
+var evnest = ev + "$$nest"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
 
 if(!this[evarray]) {
@@ -2540,11 +2541,13 @@ if(this[ev+"$$watch"]) extension = "$2";
 
 eval(
 'this["' + ev + extension + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
+if(++this["'+evnest+'"]>1&&my$win().eventDebug) alert3(this.nodeName+".'+ev+' recursion "+this["'+evnest+'"]); \
+if(this["'+evnest+'"]>=10) { alert(this.nodeName+".'+ev+' too much recursion!"); window.eventRecursion(); } \
 if(this["' + evorig + '"] && e.eventPhase < 3) { \
 var ehsn = this["' + evorig + '"].ehsn; \
 if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
 alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = this["' + evorig + '"](e); alert3("endfire orig" + (ehsn.length ? " handler " + ehsn : "")); \
-if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; } \
+if((typeof rc == "boolean" || typeof rc == "number") && !rc) { --this["'+evnest+'"]; return false; } } \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) { var h = a[i];if(h.did$run) continue; \
 if(e.eventPhase== 1 && !h.do$capture || e.eventPhase == 3 && !h.do$bubble) continue; \
@@ -2552,11 +2555,12 @@ var ehsn = h.ehsn; \
 if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
 h.did$run = true; alert3("fire tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = h.call(this,e); alert3("endfire handler " + ehsn); \
 if(h.do$once) { alert3("once"); this.removeEventListener(e.type, h, h.do$capture); } \
-if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
+if((typeof rc == "boolean" || typeof rc == "number") && !rc) { --this["'+evnest+'"]; return false; } \
 i = -1; \
-} return true; };');
+} --this["'+evnest+'"]; return true; };');
 
 this[evarray] = a;
+this[evnest] = 0;
 }
 
 this[evarray].push(handler);
