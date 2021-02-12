@@ -162,17 +162,19 @@ $ss = slist;
 }
 
 searchscripts = function(t) {
-if(!$ss) showscripts();
-for(var i=0; i<$ss.length; ++i)
+var w = my$win();
+if(!w.$ss) showscripts();
+for(var i=0; i<w.$ss.length; ++i)
 if(w.$ss[i].text && w.$ss[i].text.indexOf(t) >= 0) alert(i);
 }
 
 snapshot = function() {
+var w = my$win();
 // eb$wlf is native to support the snapshot functionality
 eb$wlf('<base href="' + w.eb$base + '">\n', "from");
 var jslocal = "";
 var idx = 0;
-if(!$ss) showscripts();
+if(!w.$ss) showscripts();
 for(var i=0; i<$ss.length; ++i) {
 var s = $ss[i];
 if(typeof s.text === "string" &&
