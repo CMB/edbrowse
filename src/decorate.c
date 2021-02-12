@@ -97,7 +97,7 @@ bool attribPresent(const Tag *t, const char *name)
 
 // Push an attribute onto an html tag.
 // Value is already allocated, name is not.
-// So far only used by domSetsLinkage.
+// So far used by domSetsLinkage and linkPipe.
 void setTagAttr(Tag *t, const char *name, char *val)
 {
 	int nattr = 0;		/* number of attributes */
@@ -432,6 +432,70 @@ static void tableForm(int start)
 			}
 			t = table;
 		}
+	}
+}
+
+/*********************************************************************
+<link rel=stylesheet href=http://example.com/|this.css,that.css,foo.css>
+This is shortcut for three css files.
+It is rarely used, but a long example can be found in https://www.amazon.com/
+It may not be the right approach, but the easiest is to spin it off into
+three separate link tags with the appropriate urls.
+*********************************************************************/
+
+static void linkPipe(int start)
+{
+	int j, n, last = cw->numTags;
+	char *mark, *url, *follow, *a, *b;
+	const char *rel, *type;
+	Tag *l, *e;
+
+	for (j = start; j < last; ++j) {
+		l = tagList[j];
+		if (l->action != TAGACT_LINK)
+			continue;
+		if(!l->href || !isURL(l->href) ||
+		!(mark = strchr(l->href, '|')))
+			continue;
+		rel = attribVal(l, "rel");
+		type = attribVal(l, "type");
+		if (!stringEqualCI(type, "text/css") &&
+		    !stringEqualCI(rel, "stylesheet"))
+// not a stylesheet, it doesn't matter
+			continue;
+		e = l->sibling;
+		n = mark - l->href;
+		url = allocMem(n + 1);
+		strncpy(url, l->href, n);
+		url[n] = 0;
+		a = follow = cloneString(mark+1);
+		while(*a) {
+			char *resolve;
+			if((b = strchr(a, ',')))
+				*b = 0;
+			resolve = resolveURL(url, a);
+			if(a == follow) {
+// first one, just displace the href url
+				nzFree(l->href);
+				l->href = resolve;
+			} else {
+				Tag *t = newTag(cf, "link");
+				t->href = resolve;
+				if(rel)
+					setTagAttr(t, "rel", cloneString(rel));
+				if(type)
+					setTagAttr(t, "type", cloneString(type));
+				t->parent = l->parent;
+				t->sibling = e;
+				l->sibling = t;
+				l = t;
+			}
+			if(!b)
+				break;
+			a = b + 1;
+		}
+		free(url);
+		free(follow);
 	}
 }
 
@@ -873,6 +937,7 @@ void prerender(int start)
 	emptyAnchors(start);
 	insert_tbody(start);
 	tableForm(start);
+linkPipe(start);
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
@@ -1002,8 +1067,8 @@ static void link_css(Tag *t)
 		set_property_string_t(t, "rel", a2);
 	if (!t->href)
 		return;
-	if ((!a1 || !stringEqualCI(a1, "text/css")) &&
-	    (!a2 || !stringEqualCI(a2, "stylesheet")))
+	if (!stringEqualCI(a1, "text/css") &&
+	    !stringEqualCI(a2, "stylesheet"))
 		return;
 
 // Fetch the css file so we can apply its attributes.
