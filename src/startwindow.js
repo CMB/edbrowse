@@ -2515,7 +2515,7 @@ if(iscapture.once) once = true;
 if(iscapture.passive) passive = true; // don't know how to implement this yet
 }
 if(!handler) {
-alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " for " + (iscap?"capture":"bubble") + " with null handler");
+alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " for " + (iscap?"capture":"bubble") + " with null handler");
 return;
 }
 if(iscap) handler.do$capture = true; else handler.do$bubble = true;
@@ -2523,7 +2523,7 @@ if(once) handler.do$once = true;
 if(passive) handler.do$passive = true;
 // event handler serial number, for debugging
 if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
-if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
+if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
 var evarray = ev + "$$array"; // array of handlers
 var evnest = ev + "$$nest"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -2535,12 +2535,8 @@ var a = [];
 var prev_fn = this[ev];
 if(prev_fn) this[evorig] = prev_fn;
 
-// Is thiis tag this event being watched?
-var extension = "";
-if(this[ev+"$$watch"]) extension = "$2";
-
 eval(
-'this["' + ev + extension + '"] = function(e){ var rc, a = this["' + evarray + '"]; \
+'this["'+ev+'"] = function(e){ var rc, a = this["' + evarray + '"]; \
 if(++this["'+evnest+'"]>1&&my$win().eventDebug) alert3(this.nodeName+".'+ev+' recursion "+this["'+evnest+'"]); \
 if(this["'+evnest+'"]>=10) { alert(this.nodeName+".'+ev+' too much recursion!"); window.eventRecursion(); } \
 if(this["' + evorig + '"] && e.eventPhase < 3) { \
@@ -2563,6 +2559,18 @@ this[evarray] = a;
 this[evnest] = 0;
 }
 
+if(prev_fn && handler == prev_fn) {
+if(my$win().eventDebug) alert3("handler duplicates orig");
+delete this[evorig];
+}
+
+for(var j=0; j<this[evarray].length; ++j)
+if(this[evarray][j] == handler) {
+if(my$win().eventDebug) alert3("handler is duplicate, move to the end");
+this[evarray].splice(j, 1);
+break;
+}
+
 this[evarray].push(handler);
 }
 
@@ -2572,7 +2580,7 @@ this[evarray].push(handler);
 eb$unlisten = document.eb$unlisten = function(ev, handler, iscapture, addon) {
 var ehsn = (handler.ehsn ? handler.ehsn : 0);
 if(addon) ev = "on" + ev;
-if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev.replace(/^on/,'') + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
+if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
 
 var evarray = ev + "$$array"; // array of handlers
 var evorig = ev + "$$orig"; // original handler from html
@@ -3191,11 +3199,9 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f; \
-/* I assume this clobbers the addEventListener system */ \
-delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 
 ; (function() {
@@ -3210,11 +3216,9 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f; \
-/* I assume this clobbers the addEventListener system */ \
-delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 // separate setters below for window and document
 
@@ -3228,11 +3232,9 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f; \
-/* I assume this clobbers the addEventListener system */ \
-delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 
 ; (function() {
@@ -3245,11 +3247,9 @@ var evname = evs[j];
 eval(cn + '.prototype["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f; \
-/* I assume this clobbers the addEventListener system */ \
-delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 
 document.$createElementNS = function(nsurl,s) {
@@ -3709,11 +3709,9 @@ var evname = evs[j];
 eval(cn + '["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$orig?"clobber ":"overwrite "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f; \
-/* I assume this clobbers the addEventListener system */ \
-delete this.' + evname + '$$array; delete this.' + evname + '$$orig; }}});');
+if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 
 // Local storage, this is per window.
