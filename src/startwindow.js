@@ -2767,6 +2767,7 @@ c.prototype.eb$apch1 = document.eb$apch1;
 c.prototype.eb$apch2 = document.eb$apch2;
 c.prototype.eb$insbf = document.eb$insbf;
 c.prototype.removeChild = document.removeChild;
+c.prototype.remove = function() { if(this.parentNode) this.parentNode.removeChild(this);}
 Object.defineProperty(c.prototype, "firstChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[0] : null; } });
 Object.defineProperty(c.prototype, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
 Object.defineProperty(c.prototype, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
