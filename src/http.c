@@ -2342,7 +2342,7 @@ static const char *response_codes_1xx[] = {
 
 static const char *response_codes_2xx[] = {
 	"OK",
-	"Created" "Accepted",
+	"Created", "Accepted",
 	"Non-Authoritative Information",
 	"No Content",
 	"Reset Content",
