@@ -74,7 +74,7 @@ msg-strings.c: ../lang/msg-*
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
 edbrowse: $(EBOBJS) startwindow.o jseng-duk.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lduktape -o $@
+	$(LINK.o) $^ $(LOADLIBES) -lduktape $(LDLIBS) -o $@
 
 #  You probably need to be root to do this.
 install:
