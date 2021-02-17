@@ -3871,6 +3871,12 @@ unparen:
 		stringAndString(&ns, &ns_l, u);
 		break;
 
+// This is for <unrecognized id=foo> and somewhere else <a href=#foo>
+// We have to have this unknown tag in the stream or we can't jump to it.
+	default:
+		if(opentag && t->id)
+			tagInStream(tagno);
+		break;
 	}			/* switch */
 }				/* renderNode */
 
