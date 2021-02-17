@@ -3223,64 +3223,16 @@ Again, look at handle$cc().
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["Body", "Anchor", "HTMLAnchorElement", "Div", "P", "Area", "Image",
-"Element","HTMLElement", "Lister", "Listitem", "tBody", "Table", "tRow", "Cell",
-"Form", "Span", "Header", "Footer"];
+var cnlist = ["HTMLElement.prototype", "document", "window"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
-var evs = ["onclick"];
+// there are lots more events, onmouseout etc, that we don't responnd to,
+// should we watch for them anyways?
+var evs = ["onload", "onunload", "onclick", "onchange", "oninput", "onsubmit", "onreset"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
-eval(cn + '.prototype["' + evname + '$$watch"] = true');
-eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
-get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
-if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f}}})')
-}}})();
-
-; (function() {
-var cnlist = ["Body", "Script", "Link", "Form", "Image", "Frame",
-"Element"]; // only for <input type=image>
-// documentation also says <style> but I don't understand when that is loaded
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var evs = ["onload", "onunload"];
-for(var j=0; j<evs.length; ++j) {
-var evname = evs[j];
-eval(cn + '.prototype["' + evname + '$$watch"] = true');
-eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
-get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
-if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f}}})')
-}}})();
-// separate setters below for window and document
-
-; (function() {
-var cnlist = ["Form"];
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var evs = ["onsubmit", "onreset"];
-for(var j=0; j<evs.length; ++j) {
-var evname = evs[j];
-eval(cn + '.prototype["' + evname + '$$watch"] = true');
-eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
-get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
-if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f}}})')
-}}})();
-
-; (function() {
-var cnlist = ["Element", "Select", "Body", "Div"];
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var evs = ["onchange", "oninput"];
-for(var j=0; j<evs.length; ++j) {
-var evname = evs[j];
-eval(cn + '.prototype["' + evname + '$$watch"] = true');
-eval('Object.defineProperty(' + cn + '.prototype, "' + evname + '", { \
+eval(cn + '["' + evname + '$$watch"] = true');
+eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
@@ -3733,21 +3685,6 @@ cf.body = f;
 cf.toString = function() { return this.body; }
 return cf;
 }
-
-; (function() {
-var cnlist = ["document", "window"];
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var evs = ["onload", "onunload", "onclick", "onchange", "oninput"];
-for(var j=0; j<evs.length; ++j) {
-var evname = evs[j];
-eval(cn + '["' + evname + '$$watch"] = true');
-eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
-get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
-if(typeof f == "string") f = my$win().handle$cc(f, this); \
-if(typeof f == "function") { this.' + evname + '$2 = f}}})')
-}}})();
 
 // Local storage, this is per window.
 // Then there's sessionStorage, and honestly I don't understand the difference.
