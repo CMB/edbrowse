@@ -878,6 +878,7 @@ char *resolveURL(const char *base, const char *rel)
 	if (!rel)
 		rel = emptyString;
 	n = allocString(strlen(base) + strlen(rel) + 12);
+	*n = 0;
 
 	if (rel[0] == '#') {
 // This is an anchor for the current document
