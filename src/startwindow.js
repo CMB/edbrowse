@@ -733,8 +733,8 @@ Object.defineProperty(URL.prototype, "trim", {enumerable:false});
 /*********************************************************************
 Here are the DOM classes with generic constructors.
 But first, the Node class, which is suppose to be the parent class
-of all the others. Javascript can't inherit like that, which is a bummer.
-Still, I include Node because some javascript will interrogate Node to see
+of all the others.
+I include Node because some javascript will interrogate Node to see
 which methods all the nodes possess?
 Do we support appendchild?   etc.
 *********************************************************************/
@@ -742,35 +742,48 @@ Do we support appendchild?   etc.
 Node = function(){};
 Node.prototype.dom$class = "Node";
 
+HTMLElement = function(){};
+HTMLElement.prototype = new Node;
+HTMLElement.prototype.dom$class = "HTMLElement";
+
 HTML = function(){};
+HTML.prototype = new HTMLElement;
 // Some screen attributes that are suppose to be there.
-HTML.prototype = {
-dom$class: "HTML",
-doScroll: eb$voidfunction,
-clientHeight: 768, clientWidth: 1024,
-offsetHeight: 768, offsetWidth: 1024,
- scrollHeight: 768, scrollWidth: 1024,
-scrollTop: 0, scrollLeft: 0
-};
+HTML.prototype.dom$class = "HTML";
+HTML.prototype.doScroll = eb$voidfunction;
+HTML.prototype.clientHeight = 768;
+HTML.prototype.clientWidth = 1024;
+HTML.prototype.offsetHeight = 768;
+HTML.prototype.offsetWidth = 1024;
+HTML.prototype. scrollHeight = 768;
+HTML.prototype.scrollWidth = 1024;
+HTML.prototype.scrollTop = 0;
+HTML.prototype.scrollLeft = 0;
 
 // is there a difference between DocType ad DocumentType?
 DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";};
+DocType.prototype = new HTMLElement;
 DocType.prototype.dom$class = "DocType";
 DocumentType = function(){};
+DocumentType.prototype = new HTMLElement;
 DocumentType.prototype.dom$class = "DocumentType";
 CharacterData = function(){};
 CharacterData.prototype.dom$class = "CharacterData";
 Head = function(){};
+Head.prototype = new HTMLElement;
 Head.prototype.dom$class = "Head";
 Meta = function(){};
+Meta.prototype = new HTMLElement;
 Meta.prototype.dom$class = "Meta";
 Title = function(){};
+Title.prototype = new HTMLElement;
 Title.prototype.dom$class = "Title";
 Object.defineProperty(Title.prototype, "text", {
 get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
 // setter should change the title of the document, not yet implemented
 });
 Link = function(){};
+Link.prototype = new HTMLElement;
 Link.prototype.dom$class = "Link";
 // It's a list but why would it ever be more than one?
 Object.defineProperty(Link.prototype, "relList", {
@@ -781,18 +794,23 @@ return a;
 }});
 
 Body = function(){};
-Body.prototype = {
-dom$class: "Body",
-doScroll: eb$voidfunction,
-clientHeight: 768, clientWidth: 1024,
-offsetHeight: 768, offsetWidth: 1024,
- scrollHeight: 768, scrollWidth: 1024,
-scrollTop: 0, scrollLeft: 0
-}
+Body.prototype = new HTMLElement;
+Body.prototype.dom$class = "Body";
+Body.prototype.doScroll = eb$voidfunction;
+Body.prototype.clientHeight = 768;
+Body.prototype.clientWidth = 1024;
+Body.prototype.offsetHeight = 768;
+Body.prototype.offsetWidth = 1024;
+Body.prototype. scrollHeight = 768;
+Body.prototype.scrollWidth = 1024;
+Body.prototype.scrollTop = 0;
+Body.prototype.scrollLeft = 0;
 
 Base = function(){};
+Base.prototype = new HTMLElement;
 Base.prototype.dom$class = "Base";
 Form = function(){ this.elements = [];};
+Form.prototype = new HTMLElement;
 Form.prototype.dom$class = "Form";
 Form.prototype.submit = eb$formSubmit;
 Form.prototype.reset = eb$formReset;
@@ -828,6 +846,7 @@ get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
 Element = function() { this.validity = new Validity, this.validity.owner = this};
+Element.prototype = new HTMLElement;
 Element.prototype.dom$class = "Element";
 Element.prototype.selectionStart = 0;
 Element.prototype.selectionEnd = -1;
@@ -946,9 +965,8 @@ return;
 alert3("textarea.innerHTML is too complicated for me to render");
 }
 
-HTMLElement = function(){};
-HTMLElement.prototype.dom$class = "HTMLElement";
 Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
+Select.prototype = new HTMLElement;
 Select.prototype.dom$class = "Select";
 Object.defineProperty(Select.prototype, "value", {
 get: function() {
@@ -957,8 +975,10 @@ var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
 Image = function(){};
+Image.prototype = new HTMLElement;
 Image.prototype.dom$class = "Image";
 Frame = function(){};
+Frame.prototype = new HTMLElement;
 Frame.prototype.dom$class = "Frame";
 Object.defineProperty(Frame.prototype, "contentDocument", { get: eb$getter_cd});
 Object.defineProperty(Frame.prototype, "contentWindow", { get: eb$getter_cw});
@@ -966,32 +986,46 @@ Object.defineProperty(Frame.prototype, "contentWindow", { get: eb$getter_cw});
 // This is a placeholder for now. I don't know what HTMLIFrameElement is.
 HTMLIFrameElement = Frame;
 Anchor = function(){};
+Anchor.prototype = new HTMLElement;
 Anchor.prototype.dom$class = "Anchor";
 HTMLAnchorElement = function(){};
+HTMLAnchorElement.prototype = new HTMLElement;
 HTMLAnchorElement.prototype.dom$class = "HTMLAnchorElement";
 HTMLLinkElement = function(){};
+HTMLLinkElement.prototype = new HTMLElement;
 HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
 HTMLAreaElement = function(){};
+HTMLAreaElement.prototype = new HTMLElement;
 HTMLAreaElement.prototype.dom$class = "HTMLAreaElement";
 Lister = function(){};
+Lister.prototype = new HTMLElement;
 Lister.prototype.dom$class = "Lister";
 Listitem = function(){};
+Listitem.prototype = new HTMLElement;
 Listitem.prototype.dom$class = "Listitem";
 tBody = function(){ this.rows = []};
+tBody.prototype = new HTMLElement;
 tBody.prototype.dom$class = "tBody";
 tHead = function(){ this.rows = []};
+tHead.prototype = new HTMLElement;
 tHead.prototype.dom$class = "tHead";
 tFoot = function(){ this.rows = []};
+tFoot.prototype = new HTMLElement;
 tFoot.prototype.dom$class = "tFoot";
 tCap = function(){};
+tCap.prototype = new HTMLElement;
 tCap.prototype.dom$class = "tCap";
 Table = function(){ this.rows = []; this.tBodies = []};
+Table.prototype = new HTMLElement;
 Table.prototype.dom$class = "Table";
 tRow = function(){ this.cells = []};
+tRow.prototype = new HTMLElement;
 tRow.prototype.dom$class = "tRow";
 Cell = function(){};
+Cell.prototype = new HTMLElement;
 Cell.prototype.dom$class = "Cell";
 Div = function(){};
+Div.prototype = new HTMLElement;
 Div.prototype.dom$class = "Div";
 Div.prototype.doScroll = eb$voidfunction;
 Div.prototype.click = function() {
@@ -1001,22 +1035,30 @@ e.initEvent("click", true, true);
 this.dispatchEvent(e);
 }
 Label = function(){};
+Label.prototype = new HTMLElement;
 Label.prototype.dom$class = "Label";
 Object.defineProperty(Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
 HtmlObj = function(){};
+HtmlObj.prototype = new HTMLElement;
 HtmlObj.prototype.dom$class = "HtmlObj";
 Area = function(){};
+Area.prototype = new HTMLElement;
 Area.prototype.dom$class = "Area";
 Span = function(){};
+Span.prototype = new HTMLElement;
 Span.prototype.dom$class = "Span";
 Span.prototype.doScroll = eb$voidfunction;
 P = function(){};
+P.prototype = new HTMLElement;
 P.prototype.dom$class = "P";
 Header = function(){};
+Header.prototype = new HTMLElement;
 Header.prototype.dom$class = "Header";
 Footer = function(){};
+Footer.prototype = new HTMLElement;
 Footer.prototype.dom$class = "Footer";
 Script = function(){};
+Script.prototype = new HTMLElement;
 Script.prototype.dom$class = "Script";
 Script.prototype.type = "";
 Script.prototype.text = "";
@@ -1024,6 +1066,7 @@ HTMLScriptElement = Script; // alias for Script, I guess
 Timer = function(){this.nodeName = "TIMER"};
 Timer.prototype.dom$class = "Timer";
 Audio = function(){};
+Audio.prototype = new HTMLElement;
 Audio.prototype.dom$class = "Audio";
 Audio.prototype.play = eb$voidfunction;
 
@@ -1112,6 +1155,7 @@ else p.appendChild(s.firstChild);
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
 Canvas = function() {};
+Canvas.prototype = new HTMLElement;
 Canvas.prototype.dom$class = "Canvas";
 Canvas.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
 arc: eb$nullfunction,
@@ -1242,6 +1286,7 @@ this.ownerDocument = my$doc();
 this.attributes.owner = this;
 this.sheet = new CSSStyleSheet;
 };
+CSSStyleDeclaration.prototype = new HTMLElement;
 CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
 // these are default properties of a style object
 CSSStyleDeclaration.prototype.animationDelay =
@@ -1565,6 +1610,7 @@ this.nodeName = this.tagName = "#text";
 this.nodeType = 3;
 this.class = "";
 }
+TextNode.prototype = new HTMLElement;
 TextNode.prototype.dom$class = "TextNode";
 
 // setter insures data is always a string, because roving javascript might
@@ -1599,6 +1645,7 @@ this.nodeName = this.tagName = "#comment";
 this.nodeType = 8;
 this.class = "";
 }
+Comment.prototype = new HTMLElement;
 Comment.prototype.dom$class = "Comment";
 
 document.$createComment = function(t) {
@@ -1623,6 +1670,7 @@ this.value = arguments[1];
 this.selected = false;
 this.defaultSelected = false;
 }
+Option.prototype = new HTMLElement;
 Option.prototype.dom$class = "Option";
 
 document.getBoundingClientRect = function(){
@@ -2734,20 +2782,7 @@ Again, leading ; to avert a parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["DocType", "HTML", "HtmlObj", "Head", "Title", "Body", "CSSStyleDeclaration", "Frame",
-"Anchor", "Element","HTMLElement", "Select", "Lister", "Listitem", "tBody", "Table", "Div",
-"HTMLAnchorElement", "HTMLLinkElement", "HTMLAreaElement",
-"tHead", "tFoot", "tCap", "Label",
-"Form", "Span", "tRow", "Cell", "P", "Script", "Header", "Footer",
-// The following nodes shouldn't have any children, but the various
-// children methods could be called on them anyways.
-// And getAttribute applies to just about everything.
-"Comment", "Node", "Area", "TextNode", "Image", "Option", "Link",
-"Base", "Meta", "Audio", "Canvas"];
-for(var i=0; i<cnlist.length; ++i) {
-var cn = cnlist[i];
-var c = window[cn];
-// c is class and cn is classname.
+var c = window.HTMLElement;
 // get elements below
 c.prototype.getElementsByTagName = document.getElementsByTagName;
 c.prototype.getElementsByName = document.getElementsByName;
@@ -2840,17 +2875,14 @@ set: function(s) { return dom$.newTextUnder(this, s, 1); }});
 Object.defineProperty(c.prototype, "nodeValue", {
 get: function() { return this.nodeType == 3 ? this.data : null;},
 set: function(h) { if(this.nodeType == 3) this.data = h; }});
-if(c !== Body) {
 c.prototype.clientHeight = 16;
 c.prototype.clientWidth = 120;
 c.prototype.scrollHeight = 16;
 c.prototype.scrollWidth = 120;
 c.prototype.scrollTop = 0;
 c.prototype.scrollLeft = 0;
-}
 c.prototype.offsetHeight = 16;
 c.prototype.offsetWidth = 120;
-}
 })();
 
 // This is needed by mozilla, not by duktape, not sure how duktape
