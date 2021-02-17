@@ -119,6 +119,7 @@ static void finishBrowse(void)
 static void catchSig(int n)
 {
 	time_t now;
+	int d;
 	pthread_t t1 = foreground_thread, t2;
 	intFlag = true;
 /* If we were reading from a file, or socket, this signal should
@@ -132,12 +133,16 @@ static void catchSig(int n)
 	}
 	if (!intStart) {	// first time hitting ^C
 		time(&intStart);
+		puts("0");
 		return;
 	}
 	time(&now);
+	d = now - intStart;
 // should 45 seconds be configurable?
-	if (now < intStart + 45)
+	if(d < 45) {
+		printf("%d\n", d);
 		return;
+	}
 // Let's do something drastic here; start a new thread and exit the current one.
 	i_puts(MSG_IntForce);
 	finishBrowse();
