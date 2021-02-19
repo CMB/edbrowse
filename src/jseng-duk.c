@@ -2901,7 +2901,7 @@ static int set_property_string_0(jsobjtype cx0, jsobjtype parent, const char *na
 		if (duk_instanceof(cx, -2, -1))
 			valsetter = false;
 		duk_pop(cx);
-		duk_get_global_string(cx, "Select");
+		duk_get_global_string(cx, "z$Select");
 		if (duk_instanceof(cx, -2, -1)) {
 			valsetter = false;
 			puts("select.value set! This shouldn't happen.");
@@ -3902,10 +3902,18 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	jsobjtype so = 0;	/* obj.style */
 	jsobjtype ato = 0;	/* obj.attributes */
 	char upname[MAXTAGNAME];
+	char classtweak[MAXTAGNAME + 4];
 
 	debugPrint(5, "domLink %s.%d name %s",
 		   classname, extra, (symname ? symname : emptyString));
 	extra &= 6;
+
+	if(stringEqual(classname, "HTMLElement") ||
+	stringEqual(classname, "CSSStyleDeclaration"))
+		strcpy(classtweak, classname);
+	else
+		sprintf(classtweak, "z$%s", classname);
+
 	if(owntag)
 		owner = owntag->jv;
 if(extra == 2)
@@ -3977,7 +3985,7 @@ That's how it was for a long time, but I think we only do this on form.
 		jsobjtype ca;	// child array
 /* A standard input element, just create it. */
 			if(!(io = instantiate_0(cx,
-(fakeName ? cf->winobj : owner), membername, classname)))
+(fakeName ? cf->winobj : owner), membername, classtweak)))
 				return;
 // Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array_0(cx, io, "childNodes");
@@ -4040,7 +4048,7 @@ Don't do any of this if the tag is itself <style>. */
 // At present, io is an array.
 		if((length = get_arraylength_0(cx, io)) < 0)
 			return;
-		if(!(io = instantiate_array_element_0(cx, io, length, "Element")))
+		if(!(io = instantiate_array_element_0(cx, io, length, "z$Element")))
 			return;
 	}
 

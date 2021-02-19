@@ -4141,10 +4141,18 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	JS::RootedObject so(cxa);	/* obj.style */
 	JS::RootedObject ato(cxa);	/* obj.attributes */
 	char upname[MAXTAGNAME];
+	char classtweak[MAXTAGNAME + 4];
 
 	debugPrint(5, "domLink %s.%d name %s",
 		   classname, extra, (symname ? symname : emptyString));
 	extra &= 6;
+
+	if(stringEqual(classname, "HTMLElement") ||
+	stringEqual(classname, "CSSStyleDeclaration"))
+		strcpy(classtweak, classname);
+	else
+		sprintf(classtweak, "z$%s", classname);
+
 	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	JS::RootedObject doc(cxa, get_property_object_0(g, "document"));
@@ -4218,7 +4226,7 @@ That's how it was for a long time, but I think we only do this on form.
 		} else {
 /* A standard input element, just create it. */
 			if(!(io = instantiate_0(
-(fakeName ? g : owner), membername, classname)))
+(fakeName ? g : owner), membername, classtweak)))
 				return;
 // Not an array; needs the childNodes array beneath it for the children.
 			JS::RootedObject ca(cxa);  // childNodes array
@@ -4282,7 +4290,7 @@ Don't do any of this if the tag is itself <style>. */
 // At present, io is an array.
 		if((length = get_arraylength_0(io)) < 0)
 			return;
-		if(!(io = instantiate_array_element_0(io, length, "Element")))
+		if(!(io = instantiate_array_element_0(io, length, "z$Element")))
 			return;
 	}
 

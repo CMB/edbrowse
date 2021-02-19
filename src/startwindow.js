@@ -400,7 +400,7 @@ forward: eb$voidfunction,
 go: eb$voidfunction,
 pushState: eb$voidfunction,
 replaceState: eb$voidfunction,
-toString: function() {  return "Sorry, edbrowse does not maintain a browsing history."; } 
+toString: function() {  return "Sorry, edbrowse does not maintain a browsing history."; }
 }
 
 /* some base arrays - lists of things we'll probably need */
@@ -686,7 +686,7 @@ Object.defineProperty(URL.prototype, "includes", {enumerable:false});
 /*
 Can't turn URL.search into String.search, because search is already a property
 of URL, that is, the search portion of the URL.
-URL.prototype.search = function(s) { 
+URL.prototype.search = function(s) {
 return this.toString().search(s);
 }
 */
@@ -746,75 +746,75 @@ HTMLElement = function(){};
 HTMLElement.prototype = new Node;
 HTMLElement.prototype.dom$class = "HTMLElement";
 
-HTML = function(){};
-HTML.prototype = new HTMLElement;
+z$HTML = function(){};
+z$HTML.prototype = new HTMLElement;
+z$HTML.prototype.dom$class = "HTML";
 // Some screen attributes that are suppose to be there.
-HTML.prototype.dom$class = "HTML";
-HTML.prototype.doScroll = eb$voidfunction;
-HTML.prototype.clientHeight = 768;
-HTML.prototype.clientWidth = 1024;
-HTML.prototype.offsetHeight = 768;
-HTML.prototype.offsetWidth = 1024;
-HTML.prototype. scrollHeight = 768;
-HTML.prototype.scrollWidth = 1024;
-HTML.prototype.scrollTop = 0;
-HTML.prototype.scrollLeft = 0;
+z$HTML.prototype.doScroll = eb$voidfunction;
+z$HTML.prototype.clientHeight = 768;
+z$HTML.prototype.clientWidth = 1024;
+z$HTML.prototype.offsetHeight = 768;
+z$HTML.prototype.offsetWidth = 1024;
+z$HTML.prototype.scrollHeight = 768;
+z$HTML.prototype.scrollWidth = 1024;
+z$HTML.prototype.scrollTop = 0;
+z$HTML.prototype.scrollLeft = 0;
 
 // is there a difference between DocType ad DocumentType?
-DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";};
-DocType.prototype = new HTMLElement;
-DocType.prototype.dom$class = "DocType";
+z$DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";};
+z$DocType.prototype = new HTMLElement;
+z$DocType.prototype.dom$class = "DocType";
 DocumentType = function(){};
 DocumentType.prototype = new HTMLElement;
 DocumentType.prototype.dom$class = "DocumentType";
 CharacterData = function(){};
 CharacterData.prototype.dom$class = "CharacterData";
-Head = function(){};
-Head.prototype = new HTMLElement;
-Head.prototype.dom$class = "Head";
-Meta = function(){};
-Meta.prototype = new HTMLElement;
-Meta.prototype.dom$class = "Meta";
-Title = function(){};
-Title.prototype = new HTMLElement;
-Title.prototype.dom$class = "Title";
-Object.defineProperty(Title.prototype, "text", {
+z$Head = function(){};
+z$Head.prototype = new HTMLElement;
+z$Head.prototype.dom$class = "Head";
+z$Meta = function(){};
+z$Meta.prototype = new HTMLElement;
+z$Meta.prototype.dom$class = "Meta";
+z$Title = function(){};
+z$Title.prototype = new HTMLElement;
+z$Title.prototype.dom$class = "Title";
+Object.defineProperty(z$Title.prototype, "text", {
 get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
 // setter should change the title of the document, not yet implemented
 });
-Link = function(){};
-Link.prototype = new HTMLElement;
-Link.prototype.dom$class = "Link";
+z$Link = function(){};
+z$Link.prototype = new HTMLElement;
+z$Link.prototype.dom$class = "Link";
 // It's a list but why would it ever be more than one?
-Object.defineProperty(Link.prototype, "relList", {
+Object.defineProperty(z$Link.prototype, "relList", {
 get: function() { var a = this.rel ? [this.rel] : [];
 // edbrowse only supports stylesheet
 a.supports = function(s) { return s === "stylesheet"; }
 return a;
 }});
 
-Body = function(){};
-Body.prototype = new HTMLElement;
-Body.prototype.dom$class = "Body";
-Body.prototype.doScroll = eb$voidfunction;
-Body.prototype.clientHeight = 768;
-Body.prototype.clientWidth = 1024;
-Body.prototype.offsetHeight = 768;
-Body.prototype.offsetWidth = 1024;
-Body.prototype. scrollHeight = 768;
-Body.prototype.scrollWidth = 1024;
-Body.prototype.scrollTop = 0;
-Body.prototype.scrollLeft = 0;
+z$Body = function(){};
+z$Body.prototype = new HTMLElement;
+z$Body.prototype.dom$class = "Body";
+z$Body.prototype.doScroll = eb$voidfunction;
+z$Body.prototype.clientHeight = 768;
+z$Body.prototype.clientWidth = 1024;
+z$Body.prototype.offsetHeight = 768;
+z$Body.prototype.offsetWidth = 1024;
+z$Body.prototype. scrollHeight = 768;
+z$Body.prototype.scrollWidth = 1024;
+z$Body.prototype.scrollTop = 0;
+z$Body.prototype.scrollLeft = 0;
 
-Base = function(){};
-Base.prototype = new HTMLElement;
-Base.prototype.dom$class = "Base";
-Form = function(){ this.elements = [];};
-Form.prototype = new HTMLElement;
-Form.prototype.dom$class = "Form";
-Form.prototype.submit = eb$formSubmit;
-Form.prototype.reset = eb$formReset;
-Object.defineProperty(Form.prototype, "length", { get: function() { return this.elements.length;}});
+z$Base = function(){};
+z$Base.prototype = new HTMLElement;
+z$Base.prototype.dom$class = "Base";
+z$Form = function(){ this.elements = [];};
+z$Form.prototype = new HTMLElement;
+z$Form.prototype.dom$class = "Form";
+z$Form.prototype.submit = eb$formSubmit;
+z$Form.prototype.reset = eb$formReset;
+Object.defineProperty(z$Form.prototype, "length", { get: function() { return this.elements.length;}});
 
 Validity = function(){};
 Validity.prototype.dom$class = "Validity";
@@ -845,20 +845,20 @@ Object.defineProperty(Validity.prototype, "valid", {
 get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
-Element = function() { this.validity = new Validity, this.validity.owner = this};
-Element.prototype = new HTMLElement;
-Element.prototype.dom$class = "Element";
-Element.prototype.selectionStart = 0;
-Element.prototype.selectionEnd = -1;
-Element.prototype.selectionDirection = "none";
+z$Element = function() { this.validity = new Validity, this.validity.owner = this};
+z$Element.prototype = new HTMLElement;
+z$Element.prototype.dom$class = "Element";
+z$Element.prototype.selectionStart = 0;
+z$Element.prototype.selectionEnd = -1;
+z$Element.prototype.selectionDirection = "none";
 // I really don't know what this function does, something visual I think.
-Element.prototype.setSelectionRange = function(s, e, dir) {
+z$Element.prototype.setSelectionRange = function(s, e, dir) {
 if(typeof s == "number") this.selectionStart = s;
 if(typeof e == "number") this.selectionEnd = e;
 if(typeof dir == "string") this.selectionDirection = dir;
 }
 
-Element.prototype.click = function() {
+z$Element.prototype.click = function() {
 var nn = this.nodeName, t = this.type;
 // as though the user had clicked on this
 if(nn == "button" || (nn == "INPUT" &&
@@ -896,7 +896,7 @@ if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this)
 
 // We only need this in the rare case of setting click and clearing
 // the other radio buttons. acid test 43
-Object.defineProperty(Element.prototype, "checked", {
+Object.defineProperty(z$Element.prototype, "checked", {
 get: function() { return this.checked$2 ? true : false; },
 set: function(n) {
 if(typeof n !== "boolean") n = false;
@@ -914,7 +914,7 @@ if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this)
 }
 }});
 
-Object.defineProperty(Element.prototype, "name", {
+Object.defineProperty(z$Element.prototype, "name", {
 get: function() { return this.name$2; },
 set: function(n) { var f; if(f = this.form) {
 if(this.name$2 && f[this.name$2] == this) delete f[this.name$2];
@@ -926,7 +926,7 @@ this.name$2 = n;
 }});
 
 // only meaningful for textarea
-Object.defineProperty(Element.prototype, "innerText", {
+Object.defineProperty(z$Element.prototype, "innerText", {
 get: function() { return this.type == "textarea" ? this.value : null },
 set: function(t) { if(this.type == "textarea") this.value = t; }});
 
@@ -965,29 +965,29 @@ return;
 alert3("textarea.innerHTML is too complicated for me to render");
 }
 
-Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
-Select.prototype = new HTMLElement;
-Select.prototype.dom$class = "Select";
-Object.defineProperty(Select.prototype, "value", {
+z$Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
+z$Select.prototype = new HTMLElement;
+z$Select.prototype.dom$class = "Select";
+Object.defineProperty(z$Select.prototype, "value", {
 get: function() {
 var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
-Image = function(){};
-Image.prototype = new HTMLElement;
-Image.prototype.dom$class = "Image";
-Frame = function(){};
-Frame.prototype = new HTMLElement;
-Frame.prototype.dom$class = "Frame";
-Object.defineProperty(Frame.prototype, "contentDocument", { get: eb$getter_cd});
-Object.defineProperty(Frame.prototype, "contentWindow", { get: eb$getter_cw});
+z$Image = function(){};
+z$Image.prototype = new HTMLElement;
+z$Image.prototype.dom$class = "Image";
+z$Frame = function(){};
+z$Frame.prototype = new HTMLElement;
+z$Frame.prototype.dom$class = "Frame";
+Object.defineProperty(z$Frame.prototype, "contentDocument", { get: eb$getter_cd});
+Object.defineProperty(z$Frame.prototype, "contentWindow", { get: eb$getter_cw});
 
 // This is a placeholder for now. I don't know what HTMLIFrameElement is.
-HTMLIFrameElement = Frame;
-Anchor = function(){};
-Anchor.prototype = new HTMLElement;
-Anchor.prototype.dom$class = "Anchor";
+HTMLIFrameElement = z$Frame;
+z$Anchor = function(){};
+z$Anchor.prototype = new HTMLElement;
+z$Anchor.prototype.dom$class = "Anchor";
 HTMLAnchorElement = function(){};
 HTMLAnchorElement.prototype = new HTMLElement;
 HTMLAnchorElement.prototype.dom$class = "HTMLAnchorElement";
@@ -997,78 +997,78 @@ HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
 HTMLAreaElement = function(){};
 HTMLAreaElement.prototype = new HTMLElement;
 HTMLAreaElement.prototype.dom$class = "HTMLAreaElement";
-Lister = function(){};
-Lister.prototype = new HTMLElement;
-Lister.prototype.dom$class = "Lister";
-Listitem = function(){};
-Listitem.prototype = new HTMLElement;
-Listitem.prototype.dom$class = "Listitem";
-tBody = function(){ this.rows = []};
-tBody.prototype = new HTMLElement;
-tBody.prototype.dom$class = "tBody";
-tHead = function(){ this.rows = []};
-tHead.prototype = new HTMLElement;
-tHead.prototype.dom$class = "tHead";
-tFoot = function(){ this.rows = []};
-tFoot.prototype = new HTMLElement;
-tFoot.prototype.dom$class = "tFoot";
-tCap = function(){};
-tCap.prototype = new HTMLElement;
-tCap.prototype.dom$class = "tCap";
-Table = function(){ this.rows = []; this.tBodies = []};
-Table.prototype = new HTMLElement;
-Table.prototype.dom$class = "Table";
-tRow = function(){ this.cells = []};
-tRow.prototype = new HTMLElement;
-tRow.prototype.dom$class = "tRow";
-Cell = function(){};
-Cell.prototype = new HTMLElement;
-Cell.prototype.dom$class = "Cell";
-Div = function(){};
-Div.prototype = new HTMLElement;
-Div.prototype.dom$class = "Div";
-Div.prototype.doScroll = eb$voidfunction;
-Div.prototype.click = function() {
+z$Lister = function(){};
+z$Lister.prototype = new HTMLElement;
+z$Lister.prototype.dom$class = "Lister";
+z$Listitem = function(){};
+z$Listitem.prototype = new HTMLElement;
+z$Listitem.prototype.dom$class = "Listitem";
+z$tBody = function(){ this.rows = []};
+z$tBody.prototype = new HTMLElement;
+z$tBody.prototype.dom$class = "tBody";
+z$tHead = function(){ this.rows = []};
+z$tHead.prototype = new HTMLElement;
+z$tHead.prototype.dom$class = "tHead";
+z$tFoot = function(){ this.rows = []};
+z$tFoot.prototype = new HTMLElement;
+z$tFoot.prototype.dom$class = "tFoot";
+z$tCap = function(){};
+z$tCap.prototype = new HTMLElement;
+z$tCap.prototype.dom$class = "tCap";
+z$Table = function(){ this.rows = []; this.tBodies = []};
+z$Table.prototype = new HTMLElement;
+z$Table.prototype.dom$class = "Table";
+z$tRow = function(){ this.cells = []};
+z$tRow.prototype = new HTMLElement;
+z$tRow.prototype.dom$class = "tRow";
+z$Cell = function(){};
+z$Cell.prototype = new HTMLElement;
+z$Cell.prototype.dom$class = "Cell";
+z$Div = function(){};
+z$Div.prototype = new HTMLElement;
+z$Div.prototype.dom$class = "Div";
+z$Div.prototype.doScroll = eb$voidfunction;
+z$Div.prototype.click = function() {
 // as though the user had clicked on this
 var e = new Event;
 e.initEvent("click", true, true);
 this.dispatchEvent(e);
 }
-Label = function(){};
-Label.prototype = new HTMLElement;
-Label.prototype.dom$class = "Label";
-Object.defineProperty(Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
+z$Label = function(){};
+z$Label.prototype = new HTMLElement;
+z$Label.prototype.dom$class = "Label";
+Object.defineProperty(z$Label.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
 HtmlObj = function(){};
 HtmlObj.prototype = new HTMLElement;
 HtmlObj.prototype.dom$class = "HtmlObj";
-Area = function(){};
-Area.prototype = new HTMLElement;
-Area.prototype.dom$class = "Area";
-Span = function(){};
-Span.prototype = new HTMLElement;
-Span.prototype.dom$class = "Span";
-Span.prototype.doScroll = eb$voidfunction;
-P = function(){};
-P.prototype = new HTMLElement;
-P.prototype.dom$class = "P";
-Header = function(){};
-Header.prototype = new HTMLElement;
-Header.prototype.dom$class = "Header";
-Footer = function(){};
-Footer.prototype = new HTMLElement;
-Footer.prototype.dom$class = "Footer";
-Script = function(){};
-Script.prototype = new HTMLElement;
-Script.prototype.dom$class = "Script";
-Script.prototype.type = "";
-Script.prototype.text = "";
-HTMLScriptElement = Script; // alias for Script, I guess
+z$Area = function(){};
+z$Area.prototype = new HTMLElement;
+z$Area.prototype.dom$class = "Area";
+z$Span = function(){};
+z$Span.prototype = new HTMLElement;
+z$Span.prototype.dom$class = "Span";
+z$Span.prototype.doScroll = eb$voidfunction;
+z$P = function(){};
+z$P.prototype = new HTMLElement;
+z$P.prototype.dom$class = "P";
+z$Header = function(){};
+z$Header.prototype = new HTMLElement;
+z$Header.prototype.dom$class = "Header";
+z$Footer = function(){};
+z$Footer.prototype = new HTMLElement;
+z$Footer.prototype.dom$class = "Footer";
+z$Script = function(){};
+z$Script.prototype = new HTMLElement;
+z$Script.prototype.dom$class = "Script";
+z$Script.prototype.type = "";
+z$Script.prototype.text = "";
+HTMLScriptElement = z$Script; // alias for Script, I guess
 Timer = function(){this.nodeName = "TIMER"};
 Timer.prototype.dom$class = "Timer";
-Audio = function(){};
-Audio.prototype = new HTMLElement;
-Audio.prototype.dom$class = "Audio";
-Audio.prototype.play = eb$voidfunction;
+z$Audio = function(){};
+z$Audio.prototype = new HTMLElement;
+z$Audio.prototype.dom$class = "Audio";
+z$Audio.prototype.play = eb$voidfunction;
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
@@ -1098,7 +1098,7 @@ don't take it out!
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["Anchor", "HTMLAnchorElement", "Image", "Script", "Link", "Area", "Form", "Frame", "Audio", "Base"];
+var cnlist = ["z$Anchor", "HTMLAnchorElement", "z$Image", "z$Script", "z$Link", "z$Area", "z$Form", "z$Frame", "z$Audio", "z$Base"];
 var ulist = ["href", "href", "src", "src", "href", "href", "action", "src", "src", "href"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
@@ -1154,10 +1154,10 @@ else p.appendChild(s.firstChild);
 
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
-Canvas = function() {};
-Canvas.prototype = new HTMLElement;
-Canvas.prototype.dom$class = "Canvas";
-Canvas.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
+z$Canvas = function() {};
+z$Canvas.prototype = new HTMLElement;
+z$Canvas.prototype.dom$class = "Canvas";
+z$Canvas.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
 arc: eb$nullfunction,
 arcTo: eb$nullfunction,
 beginPath: eb$nullfunction,
@@ -1206,7 +1206,7 @@ strokeRect: eb$nullfunction,
 strokeText: eb$nullfunction,
 transform: eb$nullfunction,
 translate: eb$nullfunction }};
-Canvas.prototype.toDataURL = function() {
+z$Canvas.prototype.toDataURL = function() {
 if(this.height === 0 || this.width === 0) return "data:,";
 // this is just a stub
 return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
@@ -1536,21 +1536,21 @@ t.rows[idx].parentNode.insertBefore(r, t.rows[idx]);
 }
 return r;
 }
-Table.prototype.insertRow = dom$.insertRow;
-tBody.prototype.insertRow = dom$.insertRow;
-tHead.prototype.insertRow = dom$.insertRow;
-tFoot.prototype.insertRow = dom$.insertRow;
+z$Table.prototype.insertRow = dom$.insertRow;
+z$tBody.prototype.insertRow = dom$.insertRow;
+z$tHead.prototype.insertRow = dom$.insertRow;
+z$tFoot.prototype.insertRow = dom$.insertRow;
 
 dom$.deleteRow = function(r) {
 if(r.dom$class != "tRow") return;
 this.removeChild(r);
 }
-Table.prototype.deleteRow = dom$.deleteRow;
-tBody.prototype.deleteRow = dom$.deleteRow;
-tHead.prototype.deleteRow = dom$.deleteRow;
-tFoot.prototype.deleteRow = dom$.deleteRow;
+z$Table.prototype.deleteRow = dom$.deleteRow;
+z$tBody.prototype.deleteRow = dom$.deleteRow;
+z$tHead.prototype.deleteRow = dom$.deleteRow;
+z$tFoot.prototype.deleteRow = dom$.deleteRow;
 
-tRow.prototype.insertCell = function(idx) {
+z$tRow.prototype.insertCell = function(idx) {
 if(idx === undefined) idx = -1;
 if(typeof idx !== "number") return null;
 var t = this;
@@ -1565,38 +1565,38 @@ t.insertBefore(r, t.childNodes[idx]);
 return r;
 }
 
-tRow.prototype.deleteCell = function(r) {
+z$tRow.prototype.deleteCell = function(r) {
 if(r.dom$class != "Cell") return;
 this.removeChild(r);
 }
 
-Table.prototype.createCaption = function() {
+z$Table.prototype.createCaption = function() {
 if(this.caption) return this.caption;
 var c = this.ownerDocument.createElement("caption");
 this.appendChild(c);
 return c;
 }
-Table.prototype.deleteCaption = function() {
+z$Table.prototype.deleteCaption = function() {
 if(this.caption) this.removeChild(this.caption);
 }
 
-Table.prototype.createTHead = function() {
+z$Table.prototype.createTHead = function() {
 if(this.tHead) return this.tHead;
 var c = this.ownerDocument.createElement("thead");
 this.prependChild(c);
 return c;
 }
-Table.prototype.deleteTHead = function() {
+z$Table.prototype.deleteTHead = function() {
 if(this.tHead) this.removeChild(this.tHead);
 }
 
-Table.prototype.createTFoot = function() {
+z$Table.prototype.createTFoot = function() {
 if(this.tFoot) return this.tFoot;
 var c = this.ownerDocument.createElement("tfoot");
 this.insertBefore(c, this.caption);
 return c;
 }
-Table.prototype.deleteTFoot = function() {
+z$Table.prototype.deleteTFoot = function() {
 if(this.tFoot) this.removeChild(this.tFoot);
 }
 
@@ -1684,7 +1684,7 @@ width: 0, height: 0
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
 // These are recursive as they descend through the tree of nodes.
 
-document.getElementsByTagName = function(s) { 
+document.getElementsByTagName = function(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByTagName(type " + typeof s + ")");
 return [];
@@ -1693,7 +1693,7 @@ s = s.toLowerCase();
 return dom$.eb$gebtn(this, s);
 }
 
-dom$.eb$gebtn = function(top, s) { 
+dom$.eb$gebtn = function(top, s) {
 var a = [];
 if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
@@ -1709,7 +1709,7 @@ a = a.concat(dom$.eb$gebtn(c, s));
 return a;
 }
 
-document.getElementsByName = function(s) { 
+document.getElementsByName = function(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByName(type " + typeof s + ")");
 return [];
@@ -1718,7 +1718,7 @@ s = s.toLowerCase();
 return dom$.eb$gebn(this, s);
 }
 
-dom$.eb$gebn = function(top, s) { 
+dom$.eb$gebn = function(top, s) {
 var a = [];
 if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
@@ -1732,7 +1732,7 @@ a = a.concat(dom$.eb$gebn(c, s));
 return a;
 }
 
-document.getElementById = function(s) { 
+document.getElementById = function(s) {
 if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
@@ -1743,7 +1743,7 @@ return a.length ? a[0] : null;
 }
 
 // this could stop when it finds the first match, it just doesn't
-dom$.eb$gebi = function(top, s) { 
+dom$.eb$gebi = function(top, s) {
 var a = [];
 if(s === '*' || (top.id && top.id.toLowerCase() === s))
 a.push(top);
@@ -1757,12 +1757,12 @@ a = a.concat(dom$.eb$gebi(c, s));
 return a;
 }
 
-document.getElementsByClassName = function(s) { 
+document.getElementsByClassName = function(s) {
 s = s.toLowerCase();
 return dom$.eb$gebcn(this, s);
 }
 
-dom$.eb$gebcn = function(top, s) { 
+dom$.eb$gebcn = function(top, s) {
 var a = [];
 if(s === '*' || (top.class && top.class.toLowerCase() === s))
 a.push(top);
@@ -1778,7 +1778,7 @@ return a;
 
 document.nodeContains = function(n) {  return dom$.eb$cont(this, n); }
 
-dom$.eb$cont = function(top, n) { 
+dom$.eb$cont = function(top, n) {
 if(top === n) return true;
 if(!top.childNodes) return false;
 if(top.dom$class == "Frame") return false;
@@ -1986,7 +1986,7 @@ return this.getAttribute(name);
 }
 document.hasAttributeNS = function(space, name) { return this.getAttributeNS(space, name) !== null;}
 
-document.setAttribute = function(name, v) { 
+document.setAttribute = function(name, v) {
 name = name.toLowerCase();
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
@@ -2013,7 +2013,7 @@ if(v !== "from@@html") {
 if(name.substr(0,5) == "data-") {
 if(!this.dataset) this.dataset = {};
 this.dataset[dom$.dataCamel(name)] = v;
-} else this[name] = v; 
+} else this[name] = v;
 }
 mutFixup(this, true, name, oldv);
 }
@@ -2847,7 +2847,7 @@ c.prototype.compareDocumentPosition = dom$.compareDocumentPosition;
 // visual
 c.prototype.focus = eb$voidfunction;
 c.prototype.blur = eb$voidfunction;
-c.prototype.getBoundingClientRect = document.getBoundingClientRect; 
+c.prototype.getBoundingClientRect = document.getBoundingClientRect;
 // events
 c.prototype.eb$listen = eb$listen;
 c.prototype.eb$unlisten = eb$unlisten;
@@ -2911,8 +2911,8 @@ if(!parent[s]) parent[s] = child;
 if(!parent.elements[s]) parent.elements[s] = child;
 }
 
-Form.prototype.appendChildNative = document.appendChild;
-Form.prototype.appendChild = function(newobj) {
+z$Form.prototype.appendChildNative = document.appendChild;
+z$Form.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
@@ -2923,8 +2923,8 @@ dom$.eb$formname(this, newobj);
 }
 return newobj;
 }
-Form.prototype.insertBeforeNative = document.insertBefore;
-Form.prototype.insertBefore = function(newobj, item) {
+z$Form.prototype.insertBeforeNative = document.insertBefore;
+z$Form.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
@@ -2941,8 +2941,8 @@ dom$.eb$formname(this, newobj);
 }
 return newobj;
 }
-Form.prototype.removeChildNative = document.removeChild;
-Form.prototype.removeChild = function(item) {
+z$Form.prototype.removeChildNative = document.removeChild;
+z$Form.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
@@ -2971,7 +2971,7 @@ as appendChild does. So I kinda have to reproduce what they do
 here, with just js, and no action in C.
 *********************************************************************/
 
-Select.prototype.appendChild = function(newobj) {
+z$Select.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 // should only be options!
 if(!(newobj.dom$class == "Option")) return newobj;
@@ -2983,7 +2983,7 @@ this.childNodes.push(newobj); newobj.parentNode = this;
 mutFixup(this, false, newobj, null);
 return newobj;
 }
-Select.prototype.insertBefore = function(newobj, item) {
+z$Select.prototype.insertBefore = function(newobj, item) {
 var i;
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
@@ -3003,7 +3003,7 @@ return null;
 mutFixup(this, false, newobj, null);
 return newobj;
 }
-Select.prototype.removeChild = function(item) {
+z$Select.prototype.removeChild = function(item) {
 var i;
 if(!item) return null;
 for(i=0; i<this.childNodes.length; ++i)
@@ -3017,21 +3017,21 @@ mutFixup(this, false, i, item);
 return item;
 }
 
-Select.prototype.add = function(o, idx) {
+z$Select.prototype.add = function(o, idx) {
 var n = this.options.length;
 if(typeof idx != "number" || idx < 0 || idx > n) idx = n;
 if(idx == n) this.appendChild(o);
 else this.insertBefore(o, this.options[idx]);
 }
-Select.prototype.remove = function(idx) {
+z$Select.prototype.remove = function(idx) {
 var n = this.options.length;
 if(typeof idx == "number" && idx >= 0 && idx < n)
 this.removeChild(this.options[idx]);
 }
 
 // rows under a table body
-tBody.prototype.appendChildNative = document.appendChild;
-tBody.prototype.appendChild = function(newobj) {
+z$tBody.prototype.appendChildNative = document.appendChild;
+z$tBody.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
@@ -3039,8 +3039,8 @@ if(newobj.dom$class == "tRow") // shouldn't be anything other than TR
 this.rows.push(newobj), rowReindex(this);
 return newobj;
 }
-tBody.prototype.insertBeforeNative = document.insertBefore;
-tBody.prototype.insertBefore = function(newobj, item) {
+z$tBody.prototype.insertBeforeNative = document.insertBefore;
+z$tBody.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
@@ -3055,8 +3055,8 @@ break;
 }
 return newobj;
 }
-tBody.prototype.removeChildNative = document.removeChild;
-tBody.prototype.removeChild = function(item) {
+z$tBody.prototype.removeChildNative = document.removeChild;
+z$tBody.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
@@ -3071,22 +3071,22 @@ return item;
 }
 
 // head and foot are just like body
-tHead.prototype.appendChildNative = document.appendChild;
-tHead.prototype.appendChild = tBody.prototype.appendChild;
-tHead.prototype.insertBeforeNative = document.insertBefore;
-tHead.prototype.insertBefore = tBody.prototype.insertBefore;
-tHead.prototype.removeChildNative = document.removeChild;
-tHead.prototype.removeChild = tBody.prototype.removeChild;
-tFoot.prototype.appendChildNative = document.appendChild;
-tFoot.prototype.appendChild = tBody.prototype.appendChild;
-tFoot.prototype.insertBeforeNative = document.insertBefore;
-tFoot.prototype.insertBefore = tBody.prototype.insertBefore;
-tFoot.prototype.removeChildNative = document.removeChild;
-tFoot.prototype.removeChild = tBody.prototype.removeChild;
+z$tHead.prototype.appendChildNative = document.appendChild;
+z$tHead.prototype.appendChild = z$tBody.prototype.appendChild;
+z$tHead.prototype.insertBeforeNative = document.insertBefore;
+z$tHead.prototype.insertBefore = z$tBody.prototype.insertBefore;
+z$tHead.prototype.removeChildNative = document.removeChild;
+z$tHead.prototype.removeChild = z$tBody.prototype.removeChild;
+z$tFoot.prototype.appendChildNative = document.appendChild;
+z$tFoot.prototype.appendChild = z$tBody.prototype.appendChild;
+z$tFoot.prototype.insertBeforeNative = document.insertBefore;
+z$tFoot.prototype.insertBefore = z$tBody.prototype.insertBefore;
+z$tFoot.prototype.removeChildNative = document.removeChild;
+z$tFoot.prototype.removeChild = z$tBody.prototype.removeChild;
 
 // rows or bodies under a table
-Table.prototype.appendChildNative = document.appendChild;
-Table.prototype.appendChild = function(newobj) {
+z$Table.prototype.appendChildNative = document.appendChild;
+z$Table.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
@@ -3106,8 +3106,8 @@ if(newobj.rows.length) rowReindex(this);
 }
 return newobj;
 }
-Table.prototype.insertBeforeNative = document.insertBefore;
-Table.prototype.insertBefore = function(newobj, item) {
+z$Table.prototype.insertBeforeNative = document.insertBefore;
+z$Table.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
@@ -3132,8 +3132,8 @@ if(newobj.rows.length) rowReindex(this);
 }
 return newobj;
 }
-Table.prototype.removeChildNative = document.removeChild;
-Table.prototype.removeChild = function(item) {
+z$Table.prototype.removeChildNative = document.removeChild;
+z$Table.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
@@ -3157,8 +3157,8 @@ if(item.rows.length) rowReindex(this);
 return item;
 }
 
-tRow.prototype.appendChildNative = document.appendChild;
-tRow.prototype.appendChild = function(newobj) {
+z$tRow.prototype.appendChildNative = document.appendChild;
+z$tRow.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
@@ -3166,8 +3166,8 @@ if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
 return newobj;
 }
-tRow.prototype.insertBeforeNative = document.insertBefore;
-tRow.prototype.insertBefore = function(newobj, item) {
+z$tRow.prototype.insertBeforeNative = document.insertBefore;
+z$tRow.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
@@ -3181,8 +3181,8 @@ break;
 }
 return newobj;
 }
-tRow.prototype.removeChildNative = document.removeChild;
-tRow.prototype.removeChild = function(item) {
+z$tRow.prototype.removeChildNative = document.removeChild;
+z$tRow.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
@@ -3276,7 +3276,7 @@ return null;
 return u;
 }
 
-document.$createElement = function(s) { 
+document.$createElement = function(s) {
 var c;
 if(!s) { // a null or missing argument
 alert3("bad createElement( type" + typeof s + ')');
@@ -3292,46 +3292,46 @@ alert3("bad createElement(" + t + ')');
 return null;
 }
 
-switch(t) { 
-case "body": c = new Body; break;
+switch(t) {
+case "body": c = new z$Body; break;
 case "object": c = new HtmlObj; break;
-case "a": c = new Anchor; break;
+case "a": c = new z$Anchor; break;
 case "htmlanchorelement": c = new HTMLAnchorElement; break;
 case "image": t = "img";
-case "img": c = new Image; break;
-case "link": c = new Link; break;
-case "meta": c = new Meta; break;
+case "img": c = new z$Image; break;
+case "link": c = new z$Link; break;
+case "meta": c = new z$Meta; break;
 case "cssstyledeclaration": case "style": c = new CSSStyleDeclaration; break;
-case "script": c = new Script; break;
-case "div": c = new Div; break;
-case "label": c = new Label; break;
-case "p": c = new P; break;
-case "header": c = new Header; break;
-case "footer": c = new Footer; break;
-case "table": c = new Table; break;
-case "tbody": c = new tBody; break;
-case "tr": c = new tRow; break;
-case "td": c = new Cell; break;
-case "caption": c = new tCap; break;
-case "thead": c = new tHead; break;
-case "tfoot": c = new tFoot; break;
-case "canvas": c = new Canvas; break;
-case "audio": case "video": c = new Audio; break;
+case "script": c = new z$Script; break;
+case "div": c = new z$Div; break;
+case "label": c = new z$Label; break;
+case "p": c = new z$P; break;
+case "header": c = new z$Header; break;
+case "footer": c = new z$Footer; break;
+case "table": c = new z$Table; break;
+case "tbody": c = new z$tBody; break;
+case "tr": c = new z$tRow; break;
+case "td": c = new z$Cell; break;
+case "caption": c = new z$tCap; break;
+case "thead": c = new z$tHead; break;
+case "tfoot": c = new z$tFoot; break;
+case "canvas": c = new z$Canvas; break;
+case "audio": case "video": c = new z$Audio; break;
 case "document": c = new Document; break;
-case "htmliframeelement": case "iframe": case "frame": c = new Frame; break;
-case "select": c = new Select; break;
+case "htmliframeelement": case "iframe": case "frame": c = new z$Frame; break;
+case "select": c = new z$Select; break;
 case "option":
 c = new Option;
 c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
-case "form": c = new Form; break;
+case "form": c = new z$Form; break;
 case "input": case "element": case "textarea":
-c = new Element;
+c = new z$Element;
 if(t == "textarea") c.type = t;
 break;
-case "button": c = new Element; c.type = "submit"; break;
+case "button": c = new z$Element; c.type = "submit"; break;
 default:
 /* eb$puts("createElement default " + s); */
 c = new HTMLElement;
@@ -3622,7 +3622,7 @@ document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, do
 // originally ms extension pre-DOM, we don't fully support it
 //but offer the legacy document.all.tags method.
 document.all = {};
-document.all.tags = function(s) { 
+document.all.tags = function(s) {
 return dom$.eb$gebtn(document.body, s.toLowerCase());
 }
 
