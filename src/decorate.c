@@ -1645,6 +1645,7 @@ const struct tagInfo availableTags[] = {
 	{"image", "an image", TAGACT_IMAGE, 0, 4},
 	{"br", "a line break", TAGACT_BR, 1, 4},
 	{"p", "a paragraph", TAGACT_P, 2, 5},
+	{"blockquote", "a quoted section", TAGACT_BQ, 2, 1},
 	{"header", "a header", TAGACT_HEADER, 2, 5},
 	{"footer", "a footer", TAGACT_FOOTER, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},

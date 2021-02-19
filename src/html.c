@@ -3473,6 +3473,13 @@ nocolor:
 		}
 		break;
 
+	case TAGACT_BQ:
+		if (invisible)
+			break;
+		stringAndString(&ns, &ns_l,
+		(opentag ? "\f``" : "''\f"));
+		break;
+
 	case TAGACT_OL:
 	case TAGACT_UL:
 		t->lic = t->slic;
@@ -3498,6 +3505,9 @@ nop:
 			j &= 3;
 		else
 			j >>= 2;
+// <blockquote><p> don't put in the extra whitespace after ``
+		if(ns_l >= 3 && stringEqual(ns + ns_l - 3, "\f``"))
+			j = 0;
 		if (j) {
 			c = '\f';
 			if (j == 1) {
