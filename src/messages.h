@@ -14,7 +14,7 @@ blank spaces for messages no longer used.
 Each file lang/msg-* must have exactly this many lines.
 *********************************************************************/
 
-#define EdbrowseMessageCount 662
+#define EdbrowseMessageCount 670
 
 // English
 extern const char *msg_en[], ebrc_en[], qrg_en[];
@@ -760,4 +760,12 @@ enum {
 	MSG_ColorOn,
 	MSG_ShowLast,
 	MSG_ShowFirst,
+	MSG_Previous,
+	MSG_NoPrevMail,
+	MSG_notused665,
+	MSG_notused666,
+	MSG_notused667,
+	MSG_notused668,
+	MSG_notused669,
+	MSG_notused670,
 };
