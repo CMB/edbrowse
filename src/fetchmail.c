@@ -639,7 +639,7 @@ action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbfdslmn /");
+		key = getLetter("h?qvbfdslmnp /");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -717,6 +717,20 @@ imap_done:
 			}
 			key = presentMail();
 /* presentMail has already freed mailstring */
+		}
+
+		if (key == 'p') {
+			int j2 = j;
+			while(--j >= 0) {
+				--mif;
+				if(!mif->gone)
+					break;
+			}
+			if(j >= 0)
+				goto reaction;
+			i_puts(MSG_NoPrevMail);
+			mif = f->mlist + (j = j2);
+			goto reaction;
 		}
 
 		if (key == 'v') {
@@ -1629,7 +1643,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 	printf("%c ", displine > cw->dol ? '?' : '*');
 	fflush(stdout);
-	key = getLetter((isimap ? "qvbfh? nwWuUasdm" : "qh? nwud"));
+	key = getLetter((isimap ? "qvbfh? npwWuUasdm" : "qh? nwud"));
 	printf("\b\b\b");
 	fflush(stdout);
 
@@ -1640,6 +1654,10 @@ key_command:
 
 	case 'n':
 		i_puts(MSG_Next);
+		goto afterinput;
+
+	case 'p':
+		i_puts(MSG_Previous);
 		goto afterinput;
 
 	case 's':
@@ -1811,7 +1829,7 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	return strchr("smvbf", key) ? key : 'n';
+	return strchr("smvbfp", key) ? key : 'n';
 }				/* presentMail */
 
 /* Here are the common keywords for mail header lines.
