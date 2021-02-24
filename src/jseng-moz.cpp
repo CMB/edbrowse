@@ -4292,6 +4292,8 @@ Don't do any of this if the tag is itself <style>. */
 			return;
 		if(!(io = instantiate_array_element_0(io, length, "z$Element")))
 			return;
+		so = instantiate_0(io, "style", "CSSStyleDeclaration");
+		set_property_object_0(so, "element", io);
 	}
 
 	set_property_string_0(io, "name", (symname ? symname : emptyString));

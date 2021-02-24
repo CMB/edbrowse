@@ -4050,6 +4050,8 @@ Don't do any of this if the tag is itself <style>. */
 			return;
 		if(!(io = instantiate_array_element_0(cx, io, length, "z$Element")))
 			return;
+		so = instantiate_0(cx, io, "style", "CSSStyleDeclaration");
+		set_property_object_0(cx, so, "element", io);
 	}
 
 	set_property_string_0(cx, io, "name", (symname ? symname : emptyString));

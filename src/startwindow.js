@@ -2263,7 +2263,7 @@ continue;
 }
 
 // copy style object if present and its subordinate strings.
-if (node1.style.dom$class == "CSSStyleDeclaration") {
+if (node1.style && node1.style.dom$class == "CSSStyleDeclaration") {
 node2.style = dom$.eb$clone(node1.style, false);
 node2.style.element = node2;
 }
