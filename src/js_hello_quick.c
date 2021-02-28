@@ -26,6 +26,7 @@ int main(int argc, char **argv)
 int c;
 JSRuntime *rt;
 JSContext *cx[3];
+JSValue wo[TOP]; // window objects
 const char *filename = "interactive";
 JSValue val;
 JSAtom a;
@@ -39,8 +40,22 @@ selectLanguage();
 debugLevel = 4;
 
 rt = JS_NewRuntime();
-for(c=0; c<TOP; ++c)
+for(c=0; c<TOP; ++c) {
 cx[c] = JS_NewContext(rt);
+wo[c] = JS_GetGlobalObject(cx[c]);
+}
+
+// as though windows 2 and 3 are frames in window 1
+JS_DefinePropertyValueStr(cx[0], wo[0], "f2", wo[1], JS_PROP_ENUMERABLE);
+JS_DefinePropertyValueStr(cx[0], wo[0], "f3", wo[2], JS_PROP_ENUMERABLE);
+/*********************************************************************
+I believe that JS_DefinePropertyValue takes over responsibility for the value,
+that is, it is now managed in the javascript world.
+We should not free it and when I try, FreeRuntime blows up.
+However, the first window object is never passed by value
+to js, so that one should be freed.
+*********************************************************************/
+JS_FreeValue(cx[0], wo[0]);
 
 // sample execution in the first window
 c = 0;
