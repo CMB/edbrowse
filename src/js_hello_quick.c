@@ -21,6 +21,21 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash) {}
 bool isDataURI(const char *u){ return false; }
 void unpercentString(char *s) {}
 
+// sample native function
+static JSValue nat_puts(JSContext *cx, JSValueConst this_val,
+                        int argc, JSValueConst *argv)
+{
+if(argc >= 1) {
+    const char *str = JS_ToCString(cx, argv[0]);
+            if (str) {
+printf("%s", str);
+JS_FreeCString(cx, str);
+            }
+        }
+printf("\n");
+    return JS_UNDEFINED;
+}
+
 int main(int argc, char **argv)
 {
 int c;
@@ -29,7 +44,6 @@ JSContext *cx[3];
 JSValue wo[TOP]; // window objects
 const char *filename = "interactive";
 JSValue val;
-JSAtom a;
 const char *result;
 const char *first = "'hello world, the answer is ' + 6*7;";
 char line[80];
@@ -54,18 +68,19 @@ that is, it is now managed in the javascript world.
 We should not free it and when I try, FreeRuntime blows up.
 However, the first window object is never passed by value
 to js, so that one should be freed.
+But first, some sample native methods for window 1.
 *********************************************************************/
+    JS_SetPropertyStr(cx[0], wo[0], "eb$puts",
+JS_NewCFunction(cx[0], nat_puts, "eb$puts", 1));
 JS_FreeValue(cx[0], wo[0]);
 
 // sample execution in the first window
 c = 0;
 val = JS_Eval(cx[c], first, strlen(first), filename, JS_EVAL_TYPE_GLOBAL);
-a = JS_ValueToAtom(cx[c],val);
-result = JS_AtomToCString(cx[c], a);
+result = JS_ToCString(cx[c], val);
 puts(result);
 // do we have to free these in reverse order?
 JS_FreeCString(cx[c], result);
-JS_FreeAtom(cx[c], a);
 JS_FreeValue(cx[c], val);
 
 while(fgets(line, sizeof(line), stdin)) {
@@ -98,7 +113,7 @@ if(line[0] == '<') { // from a file
 char *data;
 int datalen;
 if(!fileIntoMemory(line+1, &data, &datalen)) {
-printf("cannot open %s\n", line+1);
+showError();
 continue;
 }
 val = JS_Eval(cx[c], data, datalen, line + 1, JS_EVAL_TYPE_GLOBAL);
@@ -116,11 +131,9 @@ val = JS_Eval(cx[c], line, strlen(line), filename, JS_EVAL_TYPE_GLOBAL);
 if(JS_IsException(val)) {
 js_std_dump_error(cx[c]);
 } else {
-a = JS_ValueToAtom(cx[c],val);
-result = JS_AtomToCString(cx[c], a);
+result = JS_ToCString(cx[c], val);
 puts(result);
 JS_FreeCString(cx[c], result);
-JS_FreeAtom(cx[c], a);
 }
 JS_FreeValue(cx[c], val);
 }
