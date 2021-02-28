@@ -61,15 +61,20 @@ continue;
 
 if(line[0] == '<') {
   puts("execute file not yet implemented");
-} else {
+continue;
+}
+
 val = JS_Eval(cx[c], line, strlen(line), filename, JS_EVAL_TYPE_GLOBAL);
+if(JS_IsException(val)) {
+js_std_dump_error(cx[c]);
+} else {
 a = JS_ValueToAtom(cx[c],val);
 result = JS_AtomToCString(cx[c], a);
 puts(result);
 JS_FreeCString(cx[c], result);
 JS_FreeAtom(cx[c], a);
-JS_FreeValue(cx[c], val);
 }
+JS_FreeValue(cx[c], val);
 }
 
 // clean up
