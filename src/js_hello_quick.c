@@ -23,6 +23,7 @@ cx[c] = JS_NewContext(rt);
 c = 0;
 val = JS_Eval(cx[c], first, strlen(first), filename, JS_EVAL_TYPE_GLOBAL);
 printf("%s\n",JS_AtomToCString(cx[c],JS_ValueToAtom(cx[c],val)));
+JS_FreeValue(cx[c], val);
 
 while(fgets(line, sizeof(line), stdin)) {
 int l = strlen(line);
@@ -55,6 +56,7 @@ if(line[0] == '<') {
 } else {
 val = JS_Eval(cx[c], line, strlen(line), filename, JS_EVAL_TYPE_GLOBAL);
 printf("%s\n",JS_AtomToCString(cx[c],JS_ValueToAtom(cx[c],val)));
+JS_FreeValue(cx[c], val);
 }
 }
 
