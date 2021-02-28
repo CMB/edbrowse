@@ -1,9 +1,6 @@
-#include <stdio.h>
 #include <string.h>
-#include "quickjs-libc.h"
-#include "quickjs.h"
 
-// gcc js_hello_quick.c -o js_hello_quick quickjs.c libregexp.c libunicode.c cutils.c -lm -ldl -lpthread
+#include <quickjs/quickjs-libc.h>
 
 int main(int argc, char **argv)
 {

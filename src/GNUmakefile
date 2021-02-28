@@ -119,5 +119,8 @@ HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o
 js_hello_moz : js_hello_moz.o $(HELLOEXTRA) jseng-moz.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lmozjs-$(SMV) -lstdc++ -o $@
 
-hello: js_hello_duk js_hello_v8 js_hello_moz
+js_hello_quick : js_hello_quick.c
+	gcc js_hello_quick.c -o js_hello_quick -L/usr/local/lib/quickjs -lquickjs -lm -ldl -lpthread -latomic
+
+hello: js_hello_duk js_hello_v8 js_hello_moz js_hello_quick
 
