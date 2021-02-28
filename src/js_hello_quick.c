@@ -11,8 +11,10 @@ int main(int argc, char **argv)
 int c;
 JSRuntime *rt;
 JSContext *cx[3];
-JSValue val;
 const char *filename = "interactive";
+JSValue val;
+JSAtom a;
+const char *result;
 const char *first = "'hello world, the answer is ' + 6*7;";
 char line[80];
 
@@ -20,9 +22,15 @@ rt = JS_NewRuntime();
 for(c=0; c<TOP; ++c)
 cx[c] = JS_NewContext(rt);
 
+// sample execution in the first window
 c = 0;
 val = JS_Eval(cx[c], first, strlen(first), filename, JS_EVAL_TYPE_GLOBAL);
-printf("%s\n",JS_AtomToCString(cx[c],JS_ValueToAtom(cx[c],val)));
+a = JS_ValueToAtom(cx[c],val);
+result = JS_AtomToCString(cx[c], a);
+puts(result);
+// do we have to free these in reverse order?
+JS_FreeCString(cx[c], result);
+JS_FreeAtom(cx[c], a);
 JS_FreeValue(cx[c], val);
 
 while(fgets(line, sizeof(line), stdin)) {
@@ -55,7 +63,11 @@ if(line[0] == '<') {
   puts("execute file not yet implemented");
 } else {
 val = JS_Eval(cx[c], line, strlen(line), filename, JS_EVAL_TYPE_GLOBAL);
-printf("%s\n",JS_AtomToCString(cx[c],JS_ValueToAtom(cx[c],val)));
+a = JS_ValueToAtom(cx[c],val);
+result = JS_AtomToCString(cx[c], a);
+puts(result);
+JS_FreeCString(cx[c], result);
+JS_FreeAtom(cx[c], a);
 JS_FreeValue(cx[c], val);
 }
 }
