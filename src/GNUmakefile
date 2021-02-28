@@ -120,7 +120,7 @@ js_hello_moz : js_hello_moz.o $(HELLOEXTRA) jseng-moz.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lmozjs-$(SMV) -lstdc++ -o $@
 
 js_hello_quick : js_hello_quick.c
-	gcc $(CFLAGS) js_hello_quick.c -o js_hello_quick -L/usr/local/lib/quickjs -lquickjs -lm -ldl -lpthread -latomic
+	gcc $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o -o js_hello_quick -L/usr/local/lib/quickjs -lquickjs -lm -ldl -lpthread -latomic
 
 hello: js_hello_duk js_hello_v8 js_hello_moz js_hello_quick
 

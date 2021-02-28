@@ -1,10 +1,25 @@
-#include <string.h>
-
 #include <quickjs/quickjs-libc.h>
+
+#include "eb.h"
+
 
 #define TOP 3
 
-#define stringEqual !strcmp
+// stubs needed by other edbrowse functions that we are pulling in.
+int context; // edbrowse context, not js
+struct ebWindow *cw;
+struct ebSession sessionList[TOP];
+bool cxCompare(int cx) { return false; }
+bool cxActive(int cx) { return false; }
+bool cxQuit(int cx, int action) { return true; }
+void cxSwitch(int cx, bool interactive) {}
+bool browseCurrentBuffer(void) { return false; }
+int sideBuffer(int cx, const char *text, int textlen, const char *bufname){ return 0; }
+struct MACCOUNT accounts[MAXACCOUNT];
+int maxAccount;		/* how many email accounts specified */
+void preFormatCheck(int tagno, bool * pretag, bool * slash) {}
+bool isDataURI(const char *u){ return false; }
+void unpercentString(char *s) {}
 
 int main(int argc, char **argv)
 {
@@ -17,6 +32,11 @@ JSAtom a;
 const char *result;
 const char *first = "'hello world, the answer is ' + 6*7;";
 char line[80];
+
+selectLanguage();
+
+// test run; let's see the errors
+debugLevel = 4;
 
 rt = JS_NewRuntime();
 for(c=0; c<TOP; ++c)
@@ -59,8 +79,21 @@ c = line[1] - '1';
 continue;
 }
 
-if(line[0] == '<') {
-  puts("execute file not yet implemented");
+if(line[0] == '<') { // from a file
+char *data;
+int datalen;
+if(!fileIntoMemory(line+1, &data, &datalen)) {
+printf("cannot open %s\n", line+1);
+continue;
+}
+val = JS_Eval(cx[c], data, datalen, line + 1, JS_EVAL_TYPE_GLOBAL);
+nzFree(data);
+if(JS_IsException(val)) {
+js_std_dump_error(cx[c]);
+} else {
+puts("ok");
+}
+JS_FreeValue(cx[c], val);
 continue;
 }
 
@@ -82,4 +115,9 @@ for(c=0; c<TOP; ++c)
 JS_FreeContext(cx[c]);
 
 JS_FreeRuntime(rt);
+}
+
+void ebClose(int n)
+{
+	exit(n);
 }
