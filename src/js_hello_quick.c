@@ -36,6 +36,27 @@ printf("\n");
     return JS_UNDEFINED;
 }
 
+static JSValue test_getter(JSContext *cx, JSValueConst this_val,
+                        int argc, JSValueConst *argv)
+{
+return JS_NewAtomString(cx, "come on baby light my fire");
+}
+
+static JSValue test_setter(JSContext *cx, JSValueConst this_val,
+                        int argc, JSValueConst *argv)
+{
+int32_t z = 0, y;
+if(argc >= 1) {
+// I just assume the arg is an int.
+if(JS_ToInt32(cx, &y, argv[0])) // failure to convert
+z = 666;
+else
+z = y;
+}
+printf("setter %d\n", z);
+return JS_UNDEFINED;
+}
+
 int main(int argc, char **argv)
 {
 int c;
@@ -46,6 +67,7 @@ const char *filename = "interactive";
 JSValue val;
 const char *result;
 const char *first = "'hello world, the answer is ' + 6*7;";
+JSAtom a;
 char line[80];
 
 selectLanguage();
@@ -62,16 +84,38 @@ wo[c] = JS_GetGlobalObject(cx[c]);
 // as though windows 2 and 3 are frames in window 1
 JS_DefinePropertyValueStr(cx[0], wo[0], "f2", wo[1], JS_PROP_ENUMERABLE);
 JS_DefinePropertyValueStr(cx[0], wo[0], "f3", wo[2], JS_PROP_ENUMERABLE);
+
+/*********************************************************************
+Sample native method, eb$puts, just like edbrowse.
+You can use setPropertyStr and that works, but if you want
+nonstandard attributes, like not writable, then you have to do this.
+*********************************************************************/
+    JS_DefinePropertyValueStr(cx[0], wo[0], "eb$puts",
+JS_NewCFunction(cx[0], nat_puts, "eb$puts", 1), 0);
+
+/*********************************************************************
+sample getter setter, just in window 1.
+Unfortunately there is no GetSetStr, so I can name the property as a string.
+I have to create an atom for the property name, ugh, but then,
+am I suppose to free it or does DefineProperty take responsibility for it?
+The program runs properly whether I free it or not, so idk.
+*********************************************************************/
+a = JS_NewAtom(cx[0], "gs");
+JS_DefinePropertyGetSet(cx[0], wo[0], a,
+JS_NewCFunction(cx[0], test_getter, "testget", 0),
+JS_NewCFunction(cx[0], test_setter, "testset", 0),
+JS_PROP_ENUMERABLE);
+JS_FreeAtom(cx[0], a);
+
 /*********************************************************************
 I believe that JS_DefinePropertyValue takes over responsibility for the value,
 that is, it is now managed in the javascript world.
 We should not free it and when I try, FreeRuntime blows up.
-However, the first window object is never passed by value
-to js, so that one should be freed.
-But first, some sample native methods for window 1.
+wo[1] and wo[2] are owned by f2 and f3 respectively.
+However, the first window object wo[0] is never passed by value
+to js, so that should be freed.
+If I don't, FreeRuntime blows up.
 *********************************************************************/
-    JS_SetPropertyStr(cx[0], wo[0], "eb$puts",
-JS_NewCFunction(cx[0], nat_puts, "eb$puts", 1));
 JS_FreeValue(cx[0], wo[0]);
 
 // sample execution in the first window
