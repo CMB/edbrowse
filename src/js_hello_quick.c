@@ -21,6 +21,9 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash) {}
 bool isDataURI(const char *u){ return false; }
 void unpercentString(char *s) {}
 
+static JSValue g0; // first global object
+static JSValue save_o;
+
 // sample native function
 static JSValue nat_puts(JSContext *cx, JSValueConst this_val,
                         int argc, JSValueConst *argv)
@@ -87,10 +90,11 @@ JS_DefinePropertyValueStr(cx[0], wo[0], "f3", wo[2], JS_PROP_ENUMERABLE);
 
 /*********************************************************************
 Sample native method, eb$puts, just like edbrowse.
+But I'm gonna call it print, so we can load startwindow.js.
 You can use setPropertyStr and that works, but if you want
 nonstandard attributes, like not writable, then you have to do this.
 *********************************************************************/
-    JS_DefinePropertyValueStr(cx[0], wo[0], "eb$puts",
+    JS_DefinePropertyValueStr(cx[0], wo[0], "print",
 JS_NewCFunction(cx[0], nat_puts, "eb$puts", 1), 0);
 
 /*********************************************************************
@@ -115,8 +119,10 @@ wo[1] and wo[2] are owned by f2 and f3 respectively.
 However, the first window object wo[0] is never passed by value
 to js, so that should be freed.
 If I don't, FreeRuntime blows up.
+I'll free it at the end.
 *********************************************************************/
-JS_FreeValue(cx[0], wo[0]);
+
+g0 = wo[0];
 
 // sample execution in the first window
 c = 0;
@@ -183,6 +189,7 @@ JS_FreeValue(cx[c], val);
 }
 
 // clean up
+JS_FreeValue(cx[0], g0);
 for(c=0; c<TOP; ++c)
 JS_FreeContext(cx[c]);
 
