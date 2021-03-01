@@ -22,6 +22,8 @@ bool isDataURI(const char *u){ return false; }
 void unpercentString(char *s) {}
 
 static JSValue g0; // first global object
+static JSContext *cx0;
+
 static JSValue save_o;
 
 // sample native function
@@ -57,6 +59,16 @@ else
 z = y;
 }
 printf("setter %d\n", z);
+if(z == 21) {
+// this makes a copy of val, in the C world, pointing to the object oo
+save_o = JS_GetPropertyStr(cx0, g0, "oo");
+puts("capture");
+}
+if(z == 22) {
+// this passes val back to the js world
+JS_SetPropertyStr(cx0, g0, "oo", save_o);
+puts("restore");
+}
 return JS_UNDEFINED;
 }
 
@@ -123,6 +135,7 @@ I'll free it at the end.
 *********************************************************************/
 
 g0 = wo[0];
+cx0 = cx[0];
 
 // sample execution in the first window
 c = 0;
