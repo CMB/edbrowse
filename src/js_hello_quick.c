@@ -69,6 +69,24 @@ if(z == 22) {
 JS_SetPropertyStr(cx0, g0, "oo", save_o);
 puts("restore");
 }
+if(z == 23) { // test function call
+// pp = function(a,b){ return a+b;}
+JSValue g = JS_GetGlobalObject(cx), r;
+int32_t y;
+JSAtom a = JS_NewAtom(cx, "pp");
+JSValue l[2];
+l[0] = JS_NewInt32(cx, 17);
+l[1] = JS_NewInt32(cx, 15);
+r = JS_Invoke(cx, g, a, 2, l);
+JS_ToInt32(cx, &y, r);
+printf("sum is %d\n", y);
+// unravel everything, function calls aren't easy here.
+JS_FreeValue(cx, r);
+JS_FreeValue(cx, l[0]);
+JS_FreeValue(cx, l[1]);
+JS_FreeValue(cx, g);
+JS_FreeAtom(cx, a);
+}
 return JS_UNDEFINED;
 }
 
