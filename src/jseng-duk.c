@@ -133,7 +133,7 @@ static void watch_free(void *udata, void *p)
 	}
 }
 
-void connectTagObject(Tag *t, jsobjtype p)
+static void connectTagObject(Tag *t, jsobjtype p)
 {
 	struct jsdata_wrap *w = jsdata_of(p);
 	if (w->u.t)
@@ -165,6 +165,15 @@ void disconnectTagObject(Tag *t)
 	w->u.t = NULL;
 	t->jv = NULL;
 	t->jslink = false;
+}
+
+// this is for frame expansion
+void reconnectTagObject(Tag *t)
+{
+		jsobjtype cdo;	// contentDocument object
+		cdo = cf->docobj;
+		disconnectTagObject(t);
+		connectTagObject(t, cdo);
 }
 
 static int js_main(void)
@@ -526,9 +535,6 @@ static duk_ret_t setter_value(duk_context * cx)
 	return 0;
 }
 
-static int frameContractLine(int lineNumber);
-static int frameExpandLine(int ln, Tag *t);
-
 static void forceFrameExpand(Tag *t)
 {
 	Frame *save_cf = cf;
@@ -586,363 +592,6 @@ static duk_ret_t getter_cw(duk_context * cx)
 fail:
 	duk_push_null(cx);
 	return 1;
-}
-
-/*********************************************************************
-I'm putting the frame expand stuff here cause there really isn't a good place
-to put it, and it sort of goes with the unframe native methods below.
-Plus forceFrameExpand() when you access contentDocument or contentWindow
-through the getters above. So I think it belongs here.
-frameExpand(expand, start, end)
-Pass a range of lines; you can expand all the frames in one go.
-Return false if there is a problem fetching a web page,
-or if none of the lines are frames.
-If first argument expand is false then we are contracting.
-Call either frameExpandLine or frameContractLine on each line in the range.
-frameExpandLine takes a line number or a tag, not both.
-One or the other will be 0.
-If a line number, it comes from a user command, you asked to expand the frame.
-If the tag is not null, it is from a getter,
-javascript is trying to access objects within that frame,
-and now we need to expand it.
-*********************************************************************/
-
-bool frameExpand(bool expand, int ln1, int ln2)
-{
-	int ln;			/* line number */
-	int problem = 0, p;
-	bool something_worked = false;
-
-	for (ln = ln1; ln <= ln2; ++ln) {
-		if (expand)
-			p = frameExpandLine(ln, NULL);
-		else
-			p = frameContractLine(ln);
-		if (p > problem)
-			problem = p;
-		if (p == 0)
-			something_worked = true;
-	}
-
-	if (something_worked && problem < 3)
-		problem = 0;
-	if (problem == 1)
-		setError(expand ? MSG_NoFrame1 : MSG_NoFrame2);
-	if (problem == 2)
-		setError(MSG_FrameNoURL);
-	return (problem == 0);
-}				/* frameExpand */
-
-/* Problems: 0, frame expanded successfully.
- 1 line is not a frame.
- 2 frame doesn't have a valid url.
- 3 Problem fetching the rul or rendering the page.  */
-static int frameExpandLine(int ln, Tag *t)
-{
-	pst line;
-	int tagno, start;
-	const char *s, *jssrc = 0;
-	char *a;
-	Frame *save_cf, *new_cf, *last_f;
-	uchar save_local;
-	bool fromget = !ln;
-	Tag *cdt;	// contentDocument tag
-
-	if(!t) {
-		line = fetchLine(ln, -1);
-		s = stringInBufLine((char *)line, "Frame ");
-		if (!s)
-			return 1;
-		if ((s = strchr(s, InternalCodeChar)) == NULL)
-			return 2;
-		tagno = strtol(s + 1, (char **)&s, 10);
-		if (tagno < 0 || tagno >= cw->numTags || *s != '{')
-			return 2;
-		t = tagList[tagno];
-	}
-
-	if (t->action != TAGACT_FRAME)
-		return 1;
-
-/* the easy case is if it's already been expanded before, we just unhide it. */
-	if (t->f1) {
-// If js is accessing objects in this frame, that doesn't mean we unhide it.
-		if (!fromget)
-			t->contracted = false;
-		return 0;
-	}
-
-// maybe we tried to expand it and it failed
-	if(t->expf)
-		return 0;
-	t->expf = true;
-
-// Check with js first, in case it changed.
-	if ((a = get_property_url_t(t, false)) && *a) {
-		nzFree(t->href);
-		t->href = a;
-	}
-	s = t->href;
-
-// javascript in the src, what is this for?
-	if (s && !strncmp(s, "javascript:", 11)) {
-		jssrc = s;
-		s = 0;
-	}
-
-	if (!s) {
-// No source. If this is your request then return an error.
-// But if we're dipping into the objects then it needs to expand
-// into a separate window, a separate js space, with an empty body.
-		if (!fromget && !jssrc)
-			return 2;
-// After expansion we need to be able to expand it,
-// because there's something there, well maybe.
-		t->href = cloneString("#");
-// jssrc is the old href and now we are responsible for it
-	}
-
-	save_cf = cf = t->f0;
-/* have to push a new frame before we read the web page */
-	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
-	last_f->next = cf = allocZeroMem(sizeof(Frame));
-	cf->owner = cw;
-	cf->frametag = t;
-	cf->gsn = ++gfsn;
-	debugPrint(2, "fetch frame %s",
-		   (s ? s : (jssrc ? "javascript" : "empty")));
-
-	if (s) {
-		bool rc = readFileArgv(s, (fromget ? 2 : 1));
-		if (!rc) {
-/* serverData was never set, or was freed do to some other error. */
-/* We just need to pop the frame and return. */
-			fileSize = -1;	/* don't print 0 */
-			nzFree(cf->fileName);
-			free(cf);
-			last_f->next = 0;
-			cf = save_cf;
-			return 3;
-		}
-
-       /*********************************************************************
-readFile could return success and yet serverData is null.
-This happens if httpConnect did something other than fetching data,
-like playing a stream. Does that happen, even in a frame?
-It can, if the frame is a youtube video, which is not unusual at all.
-So check for serverData null here. Once again we pop the frame.
-*********************************************************************/
-
-		if (serverData == NULL) {
-			nzFree(cf->fileName);
-			free(cf);
-			last_f->next = 0;
-			cf = save_cf;
-			fileSize = -1;
-			return 0;
-		}
-	} else {
-		serverData = cloneString("<body></body>");
-		serverDataLen = strlen(serverData);
-	}
-
-	new_cf = cf;
-	if (changeFileName) {
-		nzFree(cf->fileName);
-		cf->fileName = changeFileName;
-		cf->uriEncoded = true;
-		changeFileName = 0;
-	} else {
-		cf->fileName = cloneString(s);
-	}
-
-/* don't print the size of what we just fetched */
-	fileSize = -1;
-
-/* If we got some data it has to be html.
- * I should check for that, something like htmlTest(),
- * but I'm too lazy to do that right now, so I'll just assume it's good.
- * Also, we have verified content-type = text/html, so that's pretty good. */
-
-	cf->hbase = cloneString(cf->fileName);
-	save_local = browseLocal;
-	browseLocal = !isURL(cf->fileName);
-	prepareForBrowse(serverData, serverDataLen);
-	if (javaOK(cf->fileName))
-		createJSContext(cf);
-	nzFree(newlocation);	/* should already be 0 */
-	newlocation = 0;
-
-	start = cw->numTags;
-	cdt = newTag(cf, "Document");
-	cdt->parent = t, t->firstchild = cdt;
-	cdt->attributes = allocZeroMem(sizeof(char*));
-	cdt->atvals = allocZeroMem(sizeof(char*));
-/* call the tidy parser to build the html nodes */
-	html2nodes(serverData, true);
-	nzFree(serverData);	/* don't need it any more */
-	serverData = 0;
-	htmlGenerated = false;
-	htmlNodesIntoTree(start + 1, cdt);
-	prerender(0);
-
-/*********************************************************************
-At this point cdt->step is 1; the html tree is built, but not decorated.
-cdt doesn't have or need an object; it's a place holder.
-*********************************************************************/
-	cdt->step = 2;
-
-	if (cf->docobj) {
-		decorate(0);
-		set_basehref(cf->hbase);
-		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
-		if (jssrc)
-			jsRunScriptWin(jssrc, "frame.src", 1);
-		runScriptsPending(true);
-		runOnload();
-		runScriptsPending(false);
-		set_property_string_0(cf->cx, cf->docobj, "readyState", "complete");
-		run_event_doc(cf, "document", "onreadystatechange");
-		runScriptsPending(false);
-		rebuildSelectors();
-	}
-	cnzFree(jssrc);
-
-	if (cf->fileName) {
-		int j = strlen(cf->fileName);
-		cf->fileName = reallocMem(cf->fileName, j + 8);
-		strcat(cf->fileName, ".browse");
-	}
-
-	t->f1 = cf;
-	if (fromget)
-		t->contracted = true;
-	if (new_cf->docobj) {
-		jsobjtype cdo;	// contentDocument object
-		cdo = new_cf->docobj;
-		disconnectTagObject(cdt);
-		connectTagObject(cdt, cdo);
-		set_property_bool_t(t, "eb$expf", true);
-// run the frame onload function if it is there.
-// I assume it should run in the higher frame.
-		run_event_t(t, t->info->name, "onload");
-	}
-
-// success, frame is expanded
-	cf = save_cf;
-	browseLocal = save_local;
-	return 0;
-}
-
-static int frameContractLine(int ln)
-{
-	Tag *t = line2frame(ln);
-	if (!t)
-		return 1;
-	t->contracted = true;
-	return 0;
-}				/* frameContractLine */
-
-bool reexpandFrame(void)
-{
-	int j, start;
-	Tag *frametag;
-	Tag *cdt;	// contentDocument tag
-	uchar save_local;
-	Frame *save_cf = cf;
-	bool rc;
-
-// I don't know why cf would ever not be newloc_f.
-	cf = newloc_f;
-	frametag = cf->frametag;
-	cdt = frametag->firstchild;
-
-// Cut away our tree nodes from the previous document, which are now inaccessible.
-	underKill(cdt);
-
-	delTimers(cf);
-	freeJSContext(cf);
-	nzFree(cf->dw);
-	cf->dw = 0;
-	nzFree(cf->hbase);
-	cf->hbase = 0;
-	nzFree(cf->fileName);
-	cf->fileName = newlocation;
-	newlocation = 0;
-	cf->uriEncoded = false;
-	nzFree(cf->firstURL);
-	cf->firstURL = 0;
-	rc = readFileArgv(cf->fileName, 2);
-	if (!rc) {
-/* serverData was never set, or was freed do to some other error. */
-		fileSize = -1;	/* don't print 0 */
-		cf = save_cf;
-		return false;
-	}
-
-	if (serverData == NULL) {
-/* frame replaced itself with a playable stream, what to do? */
-		fileSize = -1;
-		cf = save_cf;
-		return true;
-	}
-
-	if (changeFileName) {
-		nzFree(cf->fileName);
-		cf->fileName = changeFileName;
-		cf->uriEncoded = true;
-		changeFileName = 0;
-	}
-
-	/* don't print the size of what we just fetched */
-	fileSize = -1;
-
-	cf->hbase = cloneString(cf->fileName);
-	save_local = browseLocal;
-	browseLocal = !isURL(cf->fileName);
-	prepareForBrowse(serverData, serverDataLen);
-	if (javaOK(cf->fileName))
-		createJSContext(cf);
-
-	start = cw->numTags;
-/* call the tidy parser to build the html nodes */
-	html2nodes(serverData, true);
-	nzFree(serverData);	/* don't need it any more */
-	serverData = 0;
-	htmlGenerated = false;
-	htmlNodesIntoTree(start, cdt);
-	cdt->step = 0;
-	prerender(0);
-	cdt->step = 2;
-
-	if (cf->docobj) {
-		decorate(0);
-		set_basehref(cf->hbase);
-		run_function_bool_0(cf->cx, cf->winobj, "eb$qs$start");
-		runScriptsPending(true);
-		runOnload();
-		runScriptsPending(false);
-		set_property_string_0(cf->cx, cf->docobj, "readyState", "complete");
-		run_event_doc(cf, "document", "onreadystatechange");
-		runScriptsPending(false);
-		rebuildSelectors();
-	}
-
-	j = strlen(cf->fileName);
-	cf->fileName = reallocMem(cf->fileName, j + 8);
-	strcat(cf->fileName, ".browse");
-
-	if (cf->docobj) {
-		jsobjtype cdo;	// contentDocument object
-		cdo = cf->docobj;
-		disconnectTagObject(cdt);
-		connectTagObject(cdt, cdo);
-	}
-
-	cdt->style = 0;
-	browseLocal = save_local;
-		cf = save_cf;
-	return true;
 }
 
 static bool remember_contracted;
@@ -2608,7 +2257,6 @@ static void setup_window_2(void)
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
-// These calls are redundent unless this is the first window
 	if (debugClone)
 		set_property_bool_0(cx, w, "cloneDebug", true);
 	if (debugEvent)

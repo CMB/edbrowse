@@ -2641,7 +2641,7 @@ static int frameExpandLine(int ln, Tag *t)
 	int tagno, start;
 	const char *s, *jssrc = 0;
 	char *a;
-	Frame *save_cf, *new_cf, *last_f;
+	Frame *save_cf, *last_f;
 	uchar save_local;
 	Tag *cdt;	// contentDocument tag
 	bool jslink; // frame tag is linked to objects
@@ -2757,7 +2757,6 @@ So check for serverData null here. Once again we pop the frame.
 		serverDataLen = strlen(serverData);
 	}
 
-	new_cf = cf;
 	if (changeFileName) {
 		nzFree(cf->fileName);
 		cf->fileName = changeFileName;

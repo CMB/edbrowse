@@ -165,6 +165,9 @@ int prompt_and_read(int prompt, char *buffer, int buffer_length, int error_messa
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, struct i_get *g);
 int bg_jobs(bool iponly);
 CURLcode setCurlURL(CURL * h, const char *url);
+bool frameExpand(bool expand, int ln1, int ln2);
+int frameExpandLine(int ln, Tag *t);
+bool reexpandFrame(void);
 
 /* sourcefile=main.c */
 void ebClose(int n);
@@ -372,8 +375,7 @@ void cssText(const char *rulestring);
 /* sourcefile=jseng-* */
 void jsUnroot(void);
 void disconnectTagObject(Tag *t);
-bool frameExpand(bool expand, int ln1, int ln2);
-bool reexpandFrame(void);
+void reconnectTagObject(Tag *t);
 bool has_property_t(const Tag *t, const char *name) ;
 bool has_property_win(const Frame *f, const char *name) ;
 void set_property_object_t(const Tag *t, const char *name, const Tag *t2);
