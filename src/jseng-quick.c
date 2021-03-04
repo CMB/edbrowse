@@ -2443,8 +2443,9 @@ static bool rootTag(JSValue start, Tag **tp)
 	Tag *t;
 	*tp = 0;
 	if(!start ||
-JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(cf->winq) ||
-JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(cf->docq))
+	JS_IsUndefined(start) ||
+	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(cf->winq) ||
+	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(cf->docq))
 		return true;
 	t = tagFromObject(start);
 	if(!t)
@@ -2466,6 +2467,10 @@ static JSValue nat_qsa(JSContext * cx, JSValueConst this, int argc, JSValueConst
 	if (!start)
 		start = this;
 	jsInterruptCheck(cx);
+// node.querySelectorAll makes this equal to node.
+// If you just call querySelectorAll, this is undefined.
+// Then there's window.querySelectorAll and document.querySelectorAll
+// rootTag() checks for all these cases.
 	if(!rootTag(start, &t)) {
 		a = objectize(cx, 0);
 	} else {
