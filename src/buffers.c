@@ -4562,7 +4562,6 @@ et_go:
 				nzFree(f->fileName);
 				free(f);
 			} else {
-				f->cx = f->winobj = f->docobj = 0;
 				f->dw = 0;
 				f->dw_l = 0;
 				f->hbase = 0;

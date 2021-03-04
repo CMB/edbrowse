@@ -2964,7 +2964,7 @@ cdt doesn't have or need an object; it's a place holder.
 *********************************************************************/
 	cdt->step = 2;
 
-	if (cf->docobj) {
+	if (cf->jslink) {
 		decorate(0);
 		set_basehref(cf->hbase);
 		run_function_bool_win(cf, "eb$qs$start");
@@ -2989,7 +2989,7 @@ cdt doesn't have or need an object; it's a place holder.
 	t->f1 = cf;
 	if (fromget)
 		t->contracted = true;
-	if (cf->docobj) {
+	if (cf->jslink) {
 		reconnectTagObject(cdt);
 		set_property_bool_t(t, "eb$expf", true);
 // run the frame onload function if it is there.
@@ -3084,7 +3084,7 @@ bool reexpandFrame(void)
 	prerender(0);
 	cdt->step = 2;
 
-	if (cf->docobj) {
+	if (cf->jslink) {
 		decorate(0);
 		set_basehref(cf->hbase);
 		run_function_bool_win(cf, "eb$qs$start");
@@ -3101,7 +3101,7 @@ bool reexpandFrame(void)
 	cf->fileName = reallocMem(cf->fileName, j + 8);
 	strcat(cf->fileName, ".browse");
 
-	if (cf->docobj)
+	if (cf->jslink)
 		reconnectTagObject(cdt);
 
 	browseLocal = save_local;
