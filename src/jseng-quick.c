@@ -356,20 +356,20 @@ static void set_property_string(JSContext *cx, JSValueConst parent, const char *
 			    const char *value)
 {
 	bool defset = false;
-	JSValue setter = 0;
-	JSValue getter = 0;
+	JSCFunction *getter = 0;
+	JSCFunction *setter = 0;
 	const char *altname;
 	if (stringEqual(name, "innerHTML"))
-		getter = JS_NewCFunction(cx, getter_innerHTML, "getHTML", 0),
-		setter = JS_NewCFunction(cx, setter_innerHTML, "setHTML", 1),
+		getter = getter_innerHTML,
+		setter = setter_innerHTML,
 		    altname = "inner$HTML";
 	if (stringEqual(name, "value")) {
 // Only meaningful in the Element class
 		JSValue dc = JS_GetPropertyStr(cx, parent, "dom$class");
 		const char *dcs = JS_ToCString(cx, dc);
 		if(stringEqual(dcs, "Element"))
-			getter = JS_NewCFunction(cx, getter_value, "getvalue", 0),
-			setter = JS_NewCFunction(cx, setter_value, "setvalue", 1),
+			getter = getter_value,
+			setter = setter_value,
 			    altname = "val$ue";
 		JS_FreeCString(cx, dcs);
 		JS_FreeValue(cx, dc);
@@ -381,7 +381,10 @@ static void set_property_string(JSContext *cx, JSValueConst parent, const char *
 	}
 	if (defset) {
 		JSAtom a = JS_NewAtom(cx, name);
-		JS_DefinePropertyGetSet(cx, parent, a, getter, setter, JS_PROP_ENUMERABLE);
+		JS_DefinePropertyGetSet(cx, parent, a,
+		JS_NewCFunction(cx, getter, "get", 0),
+		JS_NewCFunction(cx, setter, "set", 0),
+		JS_PROP_ENUMERABLE);
 		JS_FreeAtom(cx, a);
 	}
 	if (!value)
@@ -2138,6 +2141,7 @@ static JSValue nat_removeChild(JSContext * cx, JSValueConst this, int argc, JSVa
 	for (i = 0; i < length; ++i) {
 		JSValue v = get_array_element_object(cx, cn, i);
 		bool same = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(child));
+		JS_FreeValue(cx, v);
 		if(same) {
 			mark = i;
 			break;
@@ -2572,13 +2576,13 @@ JS_NewCFunction(cx, nat_media, "media", 1), 0);
 JS_NewCFunction(cx, nat_btoa, "btoa", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "atob",
 JS_NewCFunction(cx, nat_atob, "atob", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$void",
+    JS_DefinePropertyValueStr(cx, g, "eb$voidfunction",
 JS_NewCFunction(cx, nat_void, "void", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$null",
+    JS_DefinePropertyValueStr(cx, g, "eb$nullfunction",
 JS_NewCFunction(cx, nat_null, "null", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$true",
+    JS_DefinePropertyValueStr(cx, g, "eb$truefunction",
 JS_NewCFunction(cx, nat_true, "true", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$false",
+    JS_DefinePropertyValueStr(cx, g, "eb$falsefunction",
 JS_NewCFunction(cx, nat_false, "false", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "scroll",
 JS_NewCFunction(cx, nat_void, "scroll", 0), 0);

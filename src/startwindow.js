@@ -20,7 +20,6 @@ using the obvious window = this.
 
 if(typeof window === "undefined") {
 window = this;
-mw$ = {compiled: false};
 document = {};
 // Stubs for native methods that are normally provided by edbrowse.
 // Example: eb$puts, which we can replace with print,
@@ -283,6 +282,10 @@ alert = eb$puts;
 // so all those support functions aren't cluttering up window.
 
 dom$ = {}
+
+// legacy, the third party deminimization stuff is in mw$
+// this is not folded in for the distributed version
+mw$ = {compiled: false};
 
 // The web console, one argument, print based on debugLevel.
 // First a helper function, then the console object.
