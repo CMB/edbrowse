@@ -50,12 +50,6 @@ querySelectorAll = function() { return [] ; }
 querySelector = function() { return {} ; }
 querySelector0 = function() { return false; }
 eb$cssText = function(){}
-
-document.createElement = function(s) { return this.$createElement(s); }
-document.createElementNS = function(s,u) { return this.$createElementNS(s,u); }
-document.createTextNode = function(s) { return this.$createTextNode(s); }
-document.createComment = function(s) { return this.$createComment(s); }
-document.createDocumentFragment = function() { return this.$createDocumentFragment(); }
 }
 
 self = window;
@@ -1620,7 +1614,7 @@ Object.defineProperty(TextNode.prototype, "data", {
 get: function() { return this.data$2; },
 set: function(s) { this.data$2 = s + ""; }});
 
-document.$createTextNode = function(t) {
+document.createTextNode = function(t) {
 if(t == undefined) t = "";
 var c = new TextNode(t);
 c.ownerDocument = this;
@@ -1648,7 +1642,7 @@ this.class = "";
 Comment.prototype = new HTMLElement;
 Comment.prototype.dom$class = "Comment";
 
-document.$createComment = function(t) {
+document.createComment = function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);
 c.ownerDocument = this;
@@ -2115,13 +2109,13 @@ else alert3("no kids, type " + typeof node1.childNodes);
 }
 
 if(node1.nodeName == "#text")
-node2 = document.$createTextNode();
+node2 = document.createTextNode();
 else if(node1.nodeName == "#comment")
-node2 = document.$createComment();
+node2 = document.createComment();
 else if(node1.nodeName == "#document-fragment")
-node2 = document.$createDocumentFragment();
+node2 = document.createDocumentFragment();
 else
-node2 = document.$createElement(node1.nodeName);
+node2 = document.createElement(node1.nodeName);
 if(node1 == dom$.cloneRoot1) dom$.cloneRoot2 = node2;
 
 if (deep && kids) {
@@ -2748,7 +2742,7 @@ dom$.newTextUnder = function(top, s, flavor) {
 var l = top.childNodes.length;
 for(var i=l-1; i>=0; --i)
 top.removeChild(top.childNodes[i]);
-top.appendChild(document.$createTextNode(s));
+top.appendChild(document.createTextNode(s));
 }
 
 dom$.injectSetup = function(which) {
@@ -2756,14 +2750,14 @@ var z = this;
 switch(which) {
 case 'a':
 if(!this.inj$after) {
-z = this.appendChild(document.$createTextNode());
+z = this.appendChild(document.createTextNode());
 z.inj$css = true;
 this.inj$after = true;
 } else z = this.lastChild;
 break;
 case 'b':
 if(!this.inj$before) {
-z = this.prependChild(document.$createTextNode());
+z = this.prependChild(document.createTextNode());
 z.inj$css = true;
 this.inj$before = true;
 } else z = this.firstChild;
@@ -3239,9 +3233,9 @@ if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 
-document.$createElementNS = function(nsurl,s) {
+document.createElementNS = function(nsurl,s) {
 var mismatch = false;
-var u = this.$createElement(s);
+var u = this.createElement(s);
 if(!u) return null;
 if(!nsurl) nsurl = "";
 u.namespaceURI = new URL(nsurl);
@@ -3276,7 +3270,7 @@ return null;
 return u;
 }
 
-document.$createElement = function(s) {
+document.createElement = function(s) {
 var c;
 if(!s) { // a null or missing argument
 alert3("bad createElement( type" + typeof s + ')');
@@ -3374,8 +3368,8 @@ if(c.nodeType == 1) c.id = c.name = "";
 return c;
 } 
 
-document.$createDocumentFragment = function() {
-var c = this.$createElement("fragment");
+document.createDocumentFragment = function() {
+var c = this.createElement("fragment");
 c.nodeType = 11;
 c.nodeName = c.tagName = "#document-fragment";
 return c;

@@ -42,7 +42,6 @@ static int run_function_onearg_0(jsobjtype cx, jsobjtype obj, const char *name, 
 static void run_function_onestring_0(jsobjtype cx, jsobjtype parent, const char *name, const char *s);
 static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const char *evname);
 static Tag *tagFromObject(jsobjtype v);
-static Frame *thisFrame(duk_context *cx, const char *whence);
 
 // some do-nothing functions
 static duk_ret_t nat_void(duk_context * cx)
@@ -1837,6 +1836,8 @@ static duk_ret_t nat_cssText(duk_context * cx)
 	return 0;
 }
 
+#ifdef DOCWRAP
+
 /*********************************************************************
 This is a wrapper around document.method, mostly, but also node.method
 and mabye even window.method. It is unnecessary in duktape.
@@ -1933,6 +1934,9 @@ static duk_ret_t nat_crfrag(duk_context *cx)
 	docWrap(cx, "$createDocumentFragment");
 	return 1;
 }
+
+#endif
+
 
 static void createJSContext_0(Frame *f)
 {
@@ -2073,6 +2077,8 @@ static void createJSContext_0(Frame *f)
 	duk_put_prop_string(cx, -2, "blur");
 	duk_push_c_function(cx, nat_void, 0);
 	duk_put_prop_string(cx, -2, "close");
+
+#ifdef DOCWRAP
 // native wrappers around dom functions
 	duk_push_c_function(cx, nat_crelem, 1);
 	duk_put_prop_string(cx, -2, "createElement");
@@ -2084,6 +2090,7 @@ static void createJSContext_0(Frame *f)
 	duk_put_prop_string(cx, -2, "createComment");
 	duk_push_c_function(cx, nat_crfrag, 0);
 	duk_put_prop_string(cx, -2, "createDocumentFragment");
+#endif
 
 // document.eb$ctx is the context number
 	duk_push_string(cx, "eb$ctx");
