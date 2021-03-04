@@ -2691,7 +2691,9 @@ JS_NewCFunction(cx, nat_void, "docclose", 0), 0);
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
-	JS_DefinePropertyValueStr(cx, g, "eb$url", JS_NewAtomString(cx, f->fileName), 0);
+// Could be null, e.g. an empty frame, but we can't pass null to quick.
+	JS_DefinePropertyValueStr(cx, g, "eb$url",
+	JS_NewAtomString(cx, (f->fileName ? f->fileName : emptyString)), 0);
 	JS_DefinePropertyValueStr(cx, g, "eb$ctx", JS_NewInt32(cx, f->gsn), 0);
 }
 
