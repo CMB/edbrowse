@@ -1115,7 +1115,7 @@ static Tag *tagFromObject(JSValueConst v)
 	}
 	for (i = 0; i < cw->numTags; ++i) {
 		Tag *t = tagList[i];
-		if (t->qv == v && !t->dead)
+		if (t->qv && JS_VALUE_GET_OBJ(t->qv) == JS_VALUE_GET_OBJ(v) && !t->dead)
 			return t;
 	}
 	debugPrint(1, "tagFromObject() returns null");
