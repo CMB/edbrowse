@@ -408,6 +408,7 @@ struct ebFrame {
 	jsobjtype cx;
 	jsobjtype winobj;
 	jsobjtype docobj;	/* window.document */
+	long long winq, docq; // quick versions
 	const struct MIMETYPE *mt;
 	void *cssmaster;
 };
@@ -537,9 +538,10 @@ struct htmlTag {
 	struct htmlTag *same; // same action
 	struct ebFrame *f0; /* frame that owns this tag */
 	struct ebFrame *f1; /* subordinate frame if this is a <frame> tag */
-	jsobjtype jv;		/* corresponding javascript variable */
-	jsobjtype style; // style object
-	int ssn; // style sequence number for the object
+	jsobjtype jv;		// duktape or mozilla javascript value
+	long long qv; // quick javascript variable
+// Yeah, these could union together and save 4 bytes per tag,
+// but I don't feel like doing all that typing.
 	int seqno; // tag sequence number in this window
 	int gsn; // global sequence number, for rooting
 	char *js_file;

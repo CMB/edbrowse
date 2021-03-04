@@ -2966,8 +2966,6 @@ doc = get_property_object_0(g, "document");
 		connectTagObject(cdt, doc);
 	}
 
-	cdt->style = 0;
-	cdt->ssn = 0;
 	browseLocal = save_local;
 		cf = save_cf;
 	return true;

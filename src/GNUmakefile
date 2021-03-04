@@ -106,6 +106,9 @@ CXXFLAGS += -Wno-psabi -I/usr/include/mozjs-$(SMV)
 edbrowsesm: $(EBOBJS) startwindow.o jseng-moz.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lmozjs-$(SMV) -lstdc++ -o $@
 
+edbrowseqk: $(EBOBJS) startwindow.o jseng-quick.o
+	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -L/usr/local/lib/quickjs -lquickjs -ldl -latomic -o $@
+
 #  some hello world targets, for testing and debugging
 
 js_hello_duk: js_hello_duk.c

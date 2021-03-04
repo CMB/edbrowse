@@ -3104,7 +3104,6 @@ bool reexpandFrame(void)
 	if (cf->docobj)
 		reconnectTagObject(cdt);
 
-	cdt->style = 0;
 	browseLocal = save_local;
 		cf = save_cf;
 	return true;
