@@ -1772,8 +1772,8 @@ static JSValue nat_log_element(JSContext * cx, JSValueConst this, int argc, JSVa
 {
 	JSValue newobj = argv[0];
 	const char *tagname = JS_ToCString(cx, argv[1]);
-	if (!newobj || !tagname)
-		return 0;
+	if (JS_IsUndefined(newobj) || !tagname)
+		return JS_UNDEFINED;
 	debugPrint(5, "log in");
 	jsInterruptCheck(cx);
 // create the innerHTML member with its setter, this has to be done in C.
@@ -2445,8 +2445,7 @@ static bool rootTag(JSValue start, Tag **tp)
 {
 	Tag *t;
 	*tp = 0;
-	if(!start ||
-	JS_IsUndefined(start) ||
+	if(JS_IsUndefined(start) ||
 	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(*((JSValue*)cf->winobj)) ||
 	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(*((JSValue*)cf->docobj)))
 		return true;
