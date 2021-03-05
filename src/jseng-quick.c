@@ -16,6 +16,16 @@ along with the GPL, general public license, for edbrowse.
 
 #include <quickjs/quickjs-libc.h>
 
+// to track down memory leaks
+#ifdef LEAK
+#define grab(p) if(JS_IsObject(p) || JS_IsString(p)) printf("%p<%d\n", JS_VALUE_GET_OBJ(p), __LINE__)
+#define release(p) if(JS_IsObject(p) || JS_IsString(p)) printf("%p>%d\n", JS_VALUE_GET_OBJ(p), __LINE__)
+#else
+#define grab(p)
+#define release(p)
+#endif
+#define JS_Release(c, v) release(v); JS_FreeValue(c, v)
+
 static void processError(JSContext * cx);
 static void uptrace(JSContext * cx, JSValueConst node);
 static void jsInterruptCheck(JSContext * cx);
@@ -59,7 +69,8 @@ static enum ej_proptype typeof_property(JSContext *cx, JSValueConst parent, cons
 {
 	JSValue v = JS_GetPropertyStr(cx, parent, name);
 	enum ej_proptype l = top_proptype(cx, v);
-	JS_FreeValue(cx, v);
+	grab(v);
+	JS_Release(cx, v);
 	return l;
 }
 
@@ -78,6 +89,7 @@ static char *get_property_string(JSContext *cx, JSValueConst parent, const char 
 	const char *s;
 	char *s0 = NULL;
 	enum ej_proptype proptype = top_proptype(cx, v);
+	grab(v);
 	if (proptype != EJ_PROP_NONE) {
 		s = JS_ToCString(cx, v);
 		if (!s)
@@ -85,7 +97,7 @@ static char *get_property_string(JSContext *cx, JSValueConst parent, const char 
 		s0 = cloneString(s);
 		JS_FreeCString(cx, s);
 	}
-	JS_FreeValue(cx, v);
+	JS_Release(cx, v);
 	return s0;
 }
 
@@ -100,6 +112,7 @@ static bool get_property_bool(JSContext *cx, JSValue parent, const char *name)
 {
 	JSValue v = JS_GetPropertyStr(cx, parent, name);
 	bool b = false;
+	grab(v);
 	if(JS_IsBool(v))
 		b = JS_ToBool(cx, v);
 	if(JS_IsNumber(v)) {
@@ -108,7 +121,7 @@ static bool get_property_bool(JSContext *cx, JSValue parent, const char *name)
 		JS_ToInt32(cx, &n, v);
 		b = !!n;
 	}
-	JS_FreeValue(cx, v);
+	JS_Release(cx, v);
 	return b;
 }
 
@@ -123,10 +136,11 @@ static int get_property_number(JSContext *cx, JSValueConst parent, const char *n
 {
 	JSValue v = JS_GetPropertyStr(cx, parent, name);
 	int32_t n = -1;
+	grab(v);
 	if(JS_IsNumber(v))
 // This will truncate if the number is floating point, I think
 		JS_ToInt32(cx, &n, v);
-	JS_FreeValue(cx, v);
+	JS_Release(cx, v);
 	return n;
 }
 
@@ -144,9 +158,10 @@ return get_property_number(t->f0->cx, *((JSValue*)t->jv), name);
 static JSValue get_property_object(JSContext *cx, JSValueConst parent, const char *name)
 {
 	JSValue v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
 	if(JS_IsObject(v))
 		return v;
-	JS_FreeValue(cx, v);
+	JS_Release(cx, v);
 	return JS_UNDEFINED;
 }
 
@@ -164,6 +179,7 @@ static JSValue get_array_element_object(JSContext *cx, JSValue parent, int idx)
 {
 	JSAtom a = JS_NewAtomUInt32(cx, idx);
 	JSValue v = JS_GetProperty(cx, parent, a);
+	grab(v);
 	JS_FreeAtom(cx, a);
 	return v;
 }
@@ -203,7 +219,7 @@ static char *get_property_url(JSContext *cx, JSValueConst owner, bool action)
 	if (JS_IsUndefined(uo))
 		return 0;
 	s = get_property_string(cx, uo, "href$val");
-	JS_FreeValue(cx, uo);
+	JS_Release(cx, uo);
 	return s;
 }
 
@@ -229,7 +245,7 @@ char *get_dataset_string_t(const Tag *t, const char *p)
 		camelCase(k);
 		v = get_property_string(cx, ds, k);
 		nzFree(k);
-		JS_FreeValue(cx, ds);
+		JS_Release(cx, ds);
 	} else
 		v = get_property_string(cx, *((JSValue*)t->jv), p);
 	return v;
@@ -246,7 +262,7 @@ char *get_style_string_t(const Tag *t, const char *name)
 	if(JS_IsUndefined(so))
 		return 0;
 	result = get_property_string(cx, so, name);
-	JS_FreeValue(cx, so);
+	JS_Release(cx, so);
 	return result;
 }
 
@@ -270,16 +286,18 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 	jsInterruptCheck(cx);
 // remove the preexisting children.
 	c1 = JS_GetPropertyStr(cx, this, "childNodes");
+	grab(c1);
 	if(!JS_IsArray(cx, c1)) {
 // no child nodes array, don't do anything.
 // This should never happen.
 		debugPrint(5, "setter h fail");
-		JS_FreeValue(cx, c1);
+		JS_Release(cx, c1);
 		JS_FreeCString(cx, h);
 		return JS_UNDEFINED;
 	}
 // make new childNodes array
 	c2 = JS_NewArray(cx);
+	grab(c2);
 	JS_SetPropertyStr(cx, this, "childNodes", JS_DupValue(cx, c2));
 	JS_SetPropertyStr(cx, this, "inner$HTML", JS_NewAtomString(cx, h));
 
@@ -308,20 +326,22 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 		JSValue g = JS_GetGlobalObject(cx), r;
 		JSAtom a = JS_NewAtom(cx, "mutFixup");
 		JSValue l[4];
+		grab(g);
 		l[0] = this;
 		l[1] = JS_FALSE;
 		l[2] = c2;
 		l[3] = c1;
 		r = JS_Invoke(cx, g, a, 4, l);
+		grab(r);
 // worked, didn't work, I don't care.
-		JS_FreeValue(cx, r);
-		JS_FreeValue(cx, l[1]);
-		JS_FreeValue(cx, g);
+		JS_Release(cx, r);
+		JS_Release(cx, l[1]);
+		JS_Release(cx, g);
 		JS_FreeAtom(cx, a);
 	}
 
-		JS_FreeValue(cx, c2);
-		JS_FreeValue(cx, c1);
+		JS_Release(cx, c2);
+		JS_Release(cx, c1);
 		JS_FreeCString(cx, h);
 	return JS_UNDEFINED;
 }
@@ -368,12 +388,13 @@ static void set_property_string(JSContext *cx, JSValueConst parent, const char *
 // Only meaningful in the Element class
 		JSValue dc = JS_GetPropertyStr(cx, parent, "dom$class");
 		const char *dcs = JS_ToCString(cx, dc);
+		grab(dc);
 		if(stringEqual(dcs, "Element"))
 			getter = getter_value,
 			setter = setter_value,
 			    altname = "val$ue";
 		JS_FreeCString(cx, dcs);
-		JS_FreeValue(cx, dc);
+		JS_Release(cx, dc);
 	}
 	if (setter) {
 // see if we already did this - does the property show up as a string?
@@ -470,7 +491,7 @@ void set_dataset_string_t(const Tag *t, const char *name, const char *v)
 	dso = get_property_object(cx, *((JSValue*)t->jv), "dataset");
 	if(!JS_IsUndefined(dso)) {
 		set_property_string(cx, dso, name, v);
-		JS_FreeValue(cx, dso);
+		JS_Release(cx, dso);
 	}
 }
 
@@ -505,6 +526,7 @@ void delete_property_doc(const Frame *f, const char *name)
 static JSValue instantiate_array(JSContext *cx, JSValueConst parent, const char *name)
 {
 	JSValue a = JS_NewArray(cx);
+	grab(a);
 	set_property_object(cx, parent, name, a);
 	return a;
 }
@@ -513,28 +535,32 @@ static JSValue instantiate(JSContext *cx, JSValueConst parent, const char *name,
 			  const char *classname)
 {
 	JSValue o; // the new object
-	if (!classname)
+	if (!classname) {
 		o = JS_NewObject(cx);
-	else {
+		grab(o);
+	} else {
 		JSValue g= JS_GetGlobalObject(cx);
 		JSValue v, l[1];
+		grab(g);
 		v = JS_GetPropertyStr(cx, g, classname);
+		grab(v);
 		if(!JS_IsFunction(cx, v)) {
 			debugPrint(3, "no such class %s", classname);
-			JS_FreeValue(cx, v);
-			JS_FreeValue(cx, g);
+			JS_Release(cx, v);
+			JS_Release(cx, g);
 			return JS_UNDEFINED;
 		}
 		o = JS_CallConstructor(cx, v, 0, l);
-		JS_FreeValue(cx, v);
-		JS_FreeValue(cx, g);
+		grab(o);
+		JS_Release(cx, v);
+		JS_Release(cx, g);
 		if(JS_IsException(o)) {
 			if (intFlag)
 				i_puts(MSG_Interrupted);
 			processError(cx);
 			debugPrint(3, "failure on new %s()", classname);
 			uptrace(cx, parent);
-			JS_FreeValue(cx, o);
+			JS_Release(cx, o);
 			return JS_UNDEFINED;
 		}
 	}
@@ -546,28 +572,32 @@ static JSValue instantiate_array_element(JSContext *cx, JSValueConst parent, int
 					const char *classname)
 {
 	JSValue o; // the new object
-	if (!classname)
+	if (!classname) {
 		o = JS_NewObject(cx);
-	else {
+		grab(o);
+	} else {
 		JSValue g = JS_GetGlobalObject(cx);
 		JSValue v, l[1];
+		grab(g);
 		v = JS_GetPropertyStr(cx, g, classname);
+		grab(v);
 		if(!JS_IsFunction(cx, v)) {
 			debugPrint(3, "no such class %s", classname);
-			JS_FreeValue(cx, v);
-			JS_FreeValue(cx, g);
+			JS_Release(cx, v);
+			JS_Release(cx, g);
 			return JS_UNDEFINED;
 		}
 		o = JS_CallConstructor(cx, v, 0, l);
-		JS_FreeValue(cx, v);
-		JS_FreeValue(cx, g);
+		grab(o);
+		JS_Release(cx, v);
+		JS_Release(cx, g);
 		if(JS_IsException(o)) {
 			if (intFlag)
 				i_puts(MSG_Interrupted);
 			processError(cx);
 			debugPrint(3, "failure on new %s()", classname);
 			uptrace(cx, parent);
-			JS_FreeValue(cx, o);
+			JS_Release(cx, o);
 			return JS_UNDEFINED;
 		}
 	}
@@ -602,14 +632,16 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 	if (stringEqual(name, "ontimer")) {
 		dbl = 4;
 		v = JS_GetPropertyStr(cx, parent, "tsn");
+		grab(v);
 		if(JS_IsNumber(v))
 			JS_ToInt32(cx, &seqno, v);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 	}
 	v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
 	if(!JS_IsFunction(cx, v)) {
 		debugPrint(3, "no such function %s", name);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		return false;
 	}
 	if (seqno > 0)
@@ -617,7 +649,8 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 	else
 		debugPrint(dbl, "exec %s", name);
 	r = JS_Call(cx, v, parent, 0, l);
-	JS_FreeValue(cx, v);
+	grab(r);
+	JS_Release(cx, v);
 	if(!JS_IsException(r)) {
 		bool rc = false;
 		debugPrint(dbl, "exec complete");
@@ -628,7 +661,7 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 			JS_ToInt32(cx, &n, r);
 			rc = !!n;
 		}
-		JS_FreeValue(cx, r);
+		JS_Release(cx, r);
 		return rc;
 	}
 // error in execution
@@ -665,7 +698,7 @@ void run_ontimer(const Frame *f, const char *backlink)
 		return;
 	}
 	run_event(cx, to, "timer", "ontimer");
-	JS_FreeValue(cx, to);
+	JS_Release(cx, to);
 }
 
 // The single argument to the function has to be an object.
@@ -674,14 +707,16 @@ static int run_function_onearg(JSContext *cx, JSValueConst parent, const char *n
 {
 		JSValue v, r, l[1];
 	v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
 	if(!JS_IsFunction(cx, v)) {
 		debugPrint(3, "no such function %s", name);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		return -1;
 	}
 	l[0] = child;
 	r = JS_Call(cx, v, parent, 1, l);
-	JS_FreeValue(cx, v);
+	grab(r);
+	JS_Release(cx, v);
 	if(!JS_IsException(r)) {
 		int rc = -1;
 		int32_t n = -1;
@@ -691,7 +726,7 @@ static int run_function_onearg(JSContext *cx, JSValueConst parent, const char *n
 			JS_ToInt32(cx, &n, r);
 			rc = n;
 		}
-		JS_FreeValue(cx, r);
+		JS_Release(cx, r);
 		return rc;
 	}
 // error in execution
@@ -700,7 +735,7 @@ static int run_function_onearg(JSContext *cx, JSValueConst parent, const char *n
 	processError(cx);
 	debugPrint(3, "failure on %s(obj)", name);
 	uptrace(cx, parent);
-	JS_FreeValue(cx, r);
+	JS_Release(cx, r);
 	return -1;
 }
 
@@ -731,17 +766,20 @@ static void run_function_onestring(JSContext *cx, JSValueConst parent, const cha
 {
 	JSValue v, r, l[1];
 	v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
 	if(!JS_IsFunction(cx, v)) {
 		debugPrint(3, "no such function %s", name);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		return;
 	}
 	l[0] = JS_NewAtomString(cx, s);
+	grab(l[0]);
 	r = JS_Call(cx, v, parent, 1, l);
-	JS_FreeValue(cx, v);
-	JS_FreeValue(cx, l[0]);
+	grab(r);
+	JS_Release(cx, v);
+	JS_Release(cx, l[0]);
 	if(!JS_IsException(r)) {
-		JS_FreeValue(cx, r);
+		JS_Release(cx, r);
 		return;
 	}
 // error in execution
@@ -750,7 +788,7 @@ static void run_function_onestring(JSContext *cx, JSValueConst parent, const cha
 	processError(cx);
 	debugPrint(3, "failure on %s(%s)", name, s);
 	uptrace(cx, parent);
-	JS_FreeValue(cx, r);
+	JS_Release(cx, r);
 }
 
 void run_function_onestring_t(const Tag *t, const char *name, const char *s)
@@ -802,6 +840,7 @@ static char *run_script(JSContext *cx, const char *s)
 	s3 = (s2 ? s2 : s);
 	r = JS_Eval(cx, s3, strlen(s3),
 	(jsSourceFile ? jsSourceFile : "internal"), JS_EVAL_TYPE_GLOBAL);
+	grab(r);
 	nzFree(s2);
 	if (intFlag)
 		i_puts(MSG_Interrupted);
@@ -813,7 +852,7 @@ static char *run_script(JSContext *cx, const char *s)
 	} else {
 		processError(cx);
 	}
-	JS_FreeValue(cx, r);
+	JS_Release(cx, r);
 	return result;
 }
 
@@ -830,17 +869,18 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 	jsSourceFile = filename;
 	jsLineno = lineno;
 	v = JS_GetPropertyStr(cx, *((JSValue*)t->jv), "text");
+	grab(v);
 	if(!JS_IsString(v)) {
 // no data
 		jsSourceFile = 0;
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		return;
 	}
 	s = JS_ToCString(cx, v);
 	if (!s || !*s) {
 		jsSourceFile = 0;
 		JS_FreeCString(cx, s);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		return;
 	}
 // have to set currentScript
@@ -852,11 +892,12 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 	} else {
 		JSValue r = JS_Eval(cx, s, strlen(s),
 		(jsSourceFile ? jsSourceFile : "internal"), JS_EVAL_TYPE_GLOBAL);
+		grab(r);
 		if (intFlag)
 			i_puts(MSG_Interrupted);
 		if(JS_IsException(r))
 			processError(cx);
-		JS_FreeValue(cx, r);
+		JS_Release(cx, r);
 	}
 	jsSourceFile = NULL;
 	delete_property(cx, *((JSValue*)t->f0->docobj), "currentScript");
@@ -941,7 +982,7 @@ static bool run_event(JSContext *cx, JSValueConst obj, const char *pname, const 
 	set_property_number(cx, eo, "eventPhase", 2);
 	rc = run_function_onearg(cx, obj, evname, eo);
 	unlink_event(cx, obj);
-	JS_FreeValue(cx, eo);
+	JS_Release(cx, eo);
 // no return or some other return is treated as true in this case
 	if (rc < 0)
 		rc = true;
@@ -982,7 +1023,7 @@ bool bubble_event_t(const Tag *t, const char *name)
 	if (rc && get_property_bool(cx, e, "prev$default"))
 		rc = false;
 	unlink_event(cx, *((JSValue*)t->jv));
-	JS_FreeValue(cx, e);
+	JS_Release(cx, e);
 	return rc;
 }
 
@@ -1019,6 +1060,7 @@ static void uptrace(JSContext * cx, JSValueConst node)
 		JSValue nnv, cnv;
 		char nnbuf[20];
 		nnv = JS_GetPropertyStr(cx, node, "nodeName");
+		grab(nnv);
 		if(JS_IsString(nnv))
 			nn = JS_ToCString(cx, nnv);
 		nnbuf[0] = 0;
@@ -1029,28 +1071,30 @@ static void uptrace(JSContext * cx, JSValueConst node)
 		}
 		if (!nnbuf[0])
 			strcpy(nnbuf, "?");
-		JS_FreeValue(cx, nnv);
+		JS_Release(cx, nnv);
 		cnv = JS_GetPropertyStr(cx, node, "class");
+		grab(cnv);
 		if(JS_IsString(cnv))
 			cn = JS_ToCString(cx, cnv);
 		debugPrint(3, "%s.%s", nnbuf,
 		((cn && cn[0]) ? cn : "?"));
 		if(cn)
 			JS_FreeCString(cx, cn);
-		JS_FreeValue(cx, cnv);
+		JS_Release(cx, cnv);
 		pn = JS_GetPropertyStr(cx, node, "parentNode");
+		grab(pn);
 		if(!first)
-			JS_FreeValue(cx, node);
+			JS_Release(cx, node);
 		first = false;
 		pntype = top_proptype(cx, pn);
 		if(pntype == EJ_PROP_NULL) {
 			debugPrint(3, "null");
-			JS_FreeValue(cx, pn);
+			JS_Release(cx, pn);
 			break;
 		}
 		if(pntype != EJ_PROP_OBJECT) {
 			debugPrint(3, "parentNode not object, type %d", pntype);
-			JS_FreeValue(cx, pn);
+			JS_Release(cx, pn);
 			break;
 		}
 // it's an object and we're ok to climb
@@ -1094,7 +1138,7 @@ void disconnectTagObject(Tag *t)
 {
 	if (!t->jslink)
 		return;
-	JS_FreeValue(t->f0->cx, *((JSValue*)t->jv));
+	JS_Release(t->f0->cx, *((JSValue*)t->jv));
 	free(t->jv);
 	t->jv = 0;
 	t->jslink = false;
@@ -1248,7 +1292,8 @@ static JSValue nat_mydoc(JSContext * cx, JSValueConst this, int argc, JSValueCon
 // I wish there was a JS_GetPropertyGlobalStr.
 	JSValue g = JS_GetGlobalObject(cx);
 	JSValue doc = JS_GetPropertyStr(cx, g, "document");
-	JS_FreeValue(cx, g);
+	grab(g);
+	JS_Release(cx, g);
 	return doc;
 }
 
@@ -1557,6 +1602,7 @@ static const char *embedNodeName(JSContext * cx, JSValueConst obj)
 	*b = 0;
 
 	v = 	JS_GetPropertyStr(cx, obj, "nodeName");
+	grab(v);
 	nodeName = JS_ToCString(cx, v);
 	if(nodeName) {
 		length = strlen(nodeName);
@@ -1566,7 +1612,7 @@ static const char *embedNodeName(JSContext * cx, JSValueConst obj)
 		b[length] = 0;
 		JS_FreeCString(cx, nodeName);
 	}
-	JS_FreeValue(cx, v);
+	JS_Release(cx, v);
 	caseShift(b, 'l');
 	return b;
 }
@@ -1812,6 +1858,7 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 		JSAtom a = JS_NewAtom(cx, "toString");
 		JSValue list[1];
 		r = JS_Invoke(cx, argv[0], a, 0, list);
+		grab(r);
 		JS_FreeAtom(cx, a);
 		body = 0;
 		if(JS_IsString(r))
@@ -1824,21 +1871,23 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 		JSAtom a = JS_NewAtom(cx, "handle$cc");
 		body = JS_ToCString(cx, argv[0]);
 		g = JS_GetGlobalObject(cx);
+		grab(g);
 		l[0] = argv[0];
 		l[1] = g;
 		fo = JS_Invoke(cx, g, a, 2, l);
+		grab(fo);
 		JS_FreeAtom(cx, a);
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		if (JS_IsException(fo)) {
 			processError(cx);
 			cc_error = true;
-			JS_FreeValue(cx, fo);
+			JS_Release(cx, fo);
 			fo = JS_NewCFunction(cx, nat_void, "void", 0);
 		}
 		if (!JS_IsFunction(cx, fo)) {
 			debugPrint(3, "compiled string '%s' does not produce a function", body);
 			cc_error = true;
-			JS_FreeValue(cx, fo);
+			JS_Release(cx, fo);
 			fo = JS_NewCFunction(cx, nat_void, "void", 0);
 		}
 // Now looks like a function object, just like the previous case.
@@ -1869,9 +1918,10 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	}
 	if(body)
 		JS_FreeCString(cx, body);
-	JS_FreeValue(cx, r);
+	JS_Release(cx, r);
 
 	g = JS_GetGlobalObject(cx);
+	grab(g);
 	fpn = fakePropName();
 	if (cc_error)
 		debugPrint(3, "compile error on timer %s", fpn);
@@ -1879,13 +1929,14 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	to = instantiate(cx, g, fpn, "Timer");
 	if (JS_IsException(to)) {
 		processError(cx);
-		JS_FreeValue(cx, fo);
+		JS_Release(cx, fo);
 		goto done;
 	}
 // classs is overloaded with milliseconds, for debugging
 	JS_SetPropertyStr(cx, to, "class", JS_NewInt32(cx, n));
 // function is contained in an ontimer handler
 // don't free fo after this line
+	release(fo);
 	JS_SetPropertyStr(cx, to, "ontimer", fo);
 	JS_SetPropertyStr(cx, to, "backlink", JS_NewAtomString(cx, fpn));
 	JS_SetPropertyStr(cx, to, "tsn", JS_NewInt32(cx, ++timer_sn));
@@ -1893,8 +1944,8 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	domSetsTimeout(n, fname, fpn, isInterval);
 
 done:
-	JS_FreeValue(cx, to);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, to);
+	JS_Release(cx, g);
 	debugPrint(5, "timer out");
 }
 
@@ -2034,6 +2085,7 @@ static bool append0(JSContext * cx, JSValueConst this, int argc, JSValueConst *a
 	debugPrint(5, "append in");
 	child = argv[0];
 	cn = JS_GetPropertyStr(cx, this, "childNodes");
+	grab(cn);
 	if(!JS_IsArray(cx, cn))
 		goto done;
 
@@ -2043,7 +2095,7 @@ static bool append0(JSContext * cx, JSValueConst this, int argc, JSValueConst *a
 	for (i = 0; i < length; ++i) {
 		JSValue v = get_array_element_object(cx, cn, i);
 		bool same = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(child));
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		if(same)
 // child was already there, just return.
 // Were we suppose to move it to the end? idk
@@ -2064,7 +2116,7 @@ set_property_object(cx, child, "parentNode", this);
 	domSetsLinkage1('a', this, thisname, child, childname);
 
 done:
-	JS_FreeValue(cx, cn);
+	JS_Release(cx, cn);
 	debugPrint(5, "append out");
 	return rc;
 }
@@ -2099,19 +2151,22 @@ static JSValue nat_insbf(JSContext * cx, JSValueConst this, int argc, JSValueCon
 	child = argv[0];
 	item = argv[1];
 	cn = JS_GetPropertyStr(cx, this, "childNodes");
+	grab(cn);
 	if(!JS_IsArray(cx, cn))
 		goto done;
 	rc = true;
 	length = get_arraylength(cx, cn);
 	mark = -1;
 	for (i = 0; i < length; ++i) {
+		bool same1, same2;
 		JSValue v = get_array_element_object(cx, cn, i);
-		bool same = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(child));
-		if (same)
+		same1 = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(child));
+		same2 = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(item));
+		JS_Release(cx, v);
+		if (same1)
 // should we move it to before item?
 			goto done;
-		same = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(item));
-		if (same)
+		if (same2)
 			mark = i;
 	}
 
@@ -2124,7 +2179,7 @@ static JSValue nat_insbf(JSContext * cx, JSValueConst this, int argc, JSValueCon
 	for (i = length; i > mark; --i) {
 		JSValue v = get_array_element_object(cx, cn, i - 1);
 		set_array_element_object(cx, cn, i, v);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 	}
 /* and place the child */
 	set_array_element_object(cx, cn, mark, child);
@@ -2137,7 +2192,7 @@ set_property_object(cx, child, "parentNode", this);
 	domSetsLinkage('b', this, thisname, child, childname, item, itemname);
 
 done:
-	JS_FreeValue(cx, cn);
+	JS_Release(cx, cn);
 	debugPrint(5, "before out");
 	return (rc ? JS_DupValue(cx, argv[0]) : JS_NULL);
 }
@@ -2153,6 +2208,7 @@ static JSValue nat_removeChild(JSContext * cx, JSValueConst this, int argc, JSVa
 		return JS_NULL;
 	child = argv[0];
 	cn = JS_GetPropertyStr(cx, this, "childNodes");
+	grab(cn);
 	if(!JS_IsArray(cx, cn))
 		goto fail;
 	length = get_arraylength(cx, cn);
@@ -2160,7 +2216,7 @@ static JSValue nat_removeChild(JSContext * cx, JSValueConst this, int argc, JSVa
 	for (i = 0; i < length; ++i) {
 		JSValue v = get_array_element_object(cx, cn, i);
 		bool same = (JS_VALUE_GET_OBJ(v) == JS_VALUE_GET_OBJ(child));
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 		if(same) {
 			mark = i;
 			break;
@@ -2174,7 +2230,7 @@ static JSValue nat_removeChild(JSContext * cx, JSValueConst this, int argc, JSVa
 	for (i = mark + 1; i < length; ++i) {
 		JSValue v = get_array_element_object(cx, cn, i);
 		set_array_element_object(cx, cn, i - 1, v);
-		JS_FreeValue(cx, v);
+		JS_Release(cx, v);
 	}
 	set_property_number(cx, cn, "length", length - 1);
 // missing parentnode must always be null
@@ -2191,26 +2247,28 @@ JS_SetPropertyStr(cx, child, "parentNode", JS_NULL);
 		JSValue g = JS_GetGlobalObject(cx), r;
 		JSAtom a = JS_NewAtom(cx, "mutFixup");
 		JSValue l[4];
+		grab(g);
 		l[0] = this;
 		l[1] = JS_FALSE;
 // exception here, push an integer where the node was.
 		l[2] = JS_NewInt32(cx, mark);
 		l[3] = child;
 		r = JS_Invoke(cx, g, a, 4, l);
+		grab(r);
 // worked, didn't work, I don't care.
-		JS_FreeValue(cx, r);
-		JS_FreeValue(cx, l[1]);
-		JS_FreeValue(cx, l[2]);
-		JS_FreeValue(cx, g);
+		JS_Release(cx, r);
+		JS_Release(cx, l[1]);
+		JS_Release(cx, l[2]);
+		JS_Release(cx, g);
 		JS_FreeAtom(cx, a);
 	}
 
-	JS_FreeValue(cx, cn);
+	JS_Release(cx, cn);
 	return JS_DupValue(cx, argv[0]);
 
 fail:
 	debugPrint(5, "remove fail");
-	JS_FreeValue(cx, cn);
+	JS_Release(cx, cn);
 	return JS_NULL;
 }
 
@@ -2274,9 +2332,10 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 // This routine will return, and javascript might stop altogether; do we need
 // to protect this object from garbage collection?
 		JSValue g = JS_GetGlobalObject(cx);
+		grab(g);
 		set_property_object(cx, g, fpn, this);
 		set_property_string(cx, this, "backlink", fpn);
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		t->href = (char*)incoming_url;
 // t now has responsibility for incoming_url
 // overloading the innerHTML field
@@ -2412,10 +2471,11 @@ static JSValue nat_setcook(JSContext * cx, JSValueConst this, int argc, JSValueC
 		const char *s = strchr(newcook, '=');
 		if(s && s > newcook) {
 			JSValue v = JS_GetPropertyStr(cx, *((JSValue*)cf->winobj), "eb$url");
+			grab(v);
 			const char *u = JS_ToCString(cx, v);
 			receiveCookie(u, newcook);
 			JS_FreeCString(cx, u);
-			JS_FreeValue(cx, v);
+			JS_Release(cx, v);
 		}
 	}
 	JS_FreeCString(cx, newcook);
@@ -2579,8 +2639,10 @@ static void createJSContext_0(Frame *f)
 // and the document object.
 	f->winobj = allocMem(sizeof(JSValue));
 	*((JSValue*)f->winobj) = g = JS_GetGlobalObject(cx);
+	grab(g);
 	f->docobj = allocMem(sizeof(JSValue));
 	*((JSValue*)f->docobj) = d = JS_NewObject(cx);
+	grab(d);
 	JS_DefinePropertyValueStr(cx, g, "document", JS_DupValue(cx, d),
 	JS_PROP_ENUMERABLE);
 
@@ -2825,18 +2887,18 @@ static void setup_window_2(void)
 		mt->program[len] = 0;
 		set_property_string(cx, po, "name", mt->program);
 		mt->program[len] = save_c;
-		JS_FreeValue(cx, mo);
-		JS_FreeValue(cx, po);
+		JS_Release(cx, mo);
+		JS_Release(cx, po);
 	}
-	JS_FreeValue(cx, navpi);
-	JS_FreeValue(cx, navmt);
-	JS_FreeValue(cx, nav);
+	JS_Release(cx, navpi);
+	JS_Release(cx, navmt);
+	JS_Release(cx, nav);
 
 	hist = get_property_object(cx, w, "history");
 	if (JS_IsUndefined(hist))
 		return;
 	set_property_string(cx, hist, "current", cf->fileName);
-	JS_FreeValue(cx, hist);
+	JS_Release(cx, hist);
 
 	set_property_string(cx, d, "referrer", cw->referrer);
 	set_property_string(cx, d, "URL", cf->fileName);
@@ -2861,9 +2923,9 @@ void freeJSContext(Frame *f)
 		return;
 	cssFree(f);
 	cx = f->cx;
-	JS_FreeValue(cx, *((JSValue*)f->winobj));
+	JS_Release(cx, *((JSValue*)f->winobj));
 	free(f->winobj);
-	JS_FreeValue(cx, *((JSValue*)f->docobj));
+	JS_Release(cx, *((JSValue*)f->docobj));
 	free(f->docobj);
 	f->winobj = f->docobj = 0;
 	f->cx = 0;
@@ -2915,7 +2977,7 @@ void establish_js_option(Tag *t, Tag *sel)
 	if(JS_IsUndefined(oa))
 		return;
 	if(!JS_IsArray(cx, oa)) {
-		JS_FreeValue(cx, oa);
+		JS_Release(cx, oa);
 		return;
 	}
 	oo = instantiate_array_element(cx, oa, idx, "Option");
@@ -2924,7 +2986,7 @@ void establish_js_option(Tag *t, Tag *sel)
 	fo = get_property_object(cx, selobj, "form");
 	if(!JS_IsUndefined(fo)) {
 		set_property_object(cx, oo, "form", fo);
-		JS_FreeValue(cx, fo);
+		JS_Release(cx, fo);
 	}
 	cn = instantiate_array(cx, oo, "childNodes");
 	ato = instantiate(cx, oo, "attributes", "NamedNodeMap");
@@ -2934,10 +2996,10 @@ void establish_js_option(Tag *t, Tag *sel)
 
 connectTagObject(t, oo);
 
-	JS_FreeValue(cx, so);
-	JS_FreeValue(cx, ato);
-	JS_FreeValue(cx, cn);
-	JS_FreeValue(cx, oa);
+	JS_Release(cx, so);
+	JS_Release(cx, ato);
+	JS_Release(cx, cn);
+	JS_Release(cx, oa);
 }
 
 void establish_js_textnode(Tag *t, const char *fpn)
@@ -2951,9 +3013,9 @@ void establish_js_textnode(Tag *t, const char *fpn)
 	so = instantiate(cx, tagobj, "style", "CSSStyleDeclaration");
 	set_property_object(cx, so, "element", tagobj);
 	connectTagObject(t, tagobj);
-	JS_FreeValue(cx, so);
-	JS_FreeValue(cx, ato);
-	JS_FreeValue(cx, cn);
+	JS_Release(cx, so);
+	JS_Release(cx, ato);
+	JS_Release(cx, cn);
 }
 
 static void processStyles(JSValueConst so, const char *stylestring)
@@ -3107,7 +3169,7 @@ That's how it was for a long time, but I think we only do this on form.
 // childNodes and options are the same for Select
 			if (stringEqual(classname, "Select"))
 				set_property_object(cx, io, "options", ca);
-			JS_FreeValue(cx, ca);
+			JS_Release(cx, ca);
 		}
 
 /* deal with the 'styles' here.
@@ -3124,7 +3186,7 @@ Don't do any of this if the tag is itself <style>. */
  processStyles can rely on obj.style existing */
 			if (stylestring)
 				processStyles(so, stylestring);
-			JS_FreeValue(cx, so);
+			JS_Release(cx, so);
 		}
 
 /* Other attributes that are expected by pages, even if they
@@ -3135,10 +3197,10 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_string(cx, io, "last$class", tcn);
 		ato = instantiate(cx, io, "attributes", "NamedNodeMap");
 		set_property_object(cx, ato, "owner", io);
-		JS_FreeValue(cx, ato);
+		JS_Release(cx, ato);
 		set_property_object(cx, io, "ownerDocument", *((JSValue*)cf->docobj));
 		ds = instantiate(cx, io, "dataset", 0);
-		JS_FreeValue(cx, ds);
+		JS_Release(cx, ds);
 
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&
@@ -3157,7 +3219,7 @@ Don't do any of this if the tag is itself <style>. */
 			    && !has_property(cx, alist, idname))
 				set_property_object(cx, alist, idname, io);
 #endif
-			JS_FreeValue(cx, alist);
+			JS_Release(cx, alist);
 		}		/* list indicated */
 	}
 
@@ -3168,13 +3230,13 @@ Don't do any of this if the tag is itself <style>. */
 // Borrow ca, so we can free things.
 		length = get_arraylength(cx, io);
 		ca = instantiate_array_element(cx, io, length, "z$Element");
-		JS_FreeValue(cx, io);
+		JS_Release(cx, io);
 		if(JS_IsUndefined(ca))
 			return;
 		io = ca;
 		so = instantiate(cx, io, "style", "CSSStyleDeclaration");
 		set_property_object(cx, so, "element", io);
-		JS_FreeValue(cx, so);
+		JS_Release(cx, so);
 	}
 
 	set_property_string(cx, io, "name", (symname ? symname : emptyString));
@@ -3289,7 +3351,7 @@ I'm bringing the tags back to life.
 			nzFree(s);
 		t = t->same;
 		if(!connect_o)
-			JS_FreeValue(cx, oo);
+			JS_Release(cx, oo);
 	}
 
 /* one list or the other or both has run to the end */
@@ -3372,7 +3434,7 @@ void rebuildSelectors(void)
 		if ((len = get_arraylength(cx, oa)) < 0)
 			continue;
 		rebuildSelector(t, oa, len);
-		JS_FreeValue(cx, oa);
+		JS_Release(cx, oa);
 	}
 }
 
@@ -3385,15 +3447,16 @@ bool has_gcs(const char *name)
 	JSContext * cx = cf->cx;
 	bool l;
 	JSValue g = JS_GetGlobalObject(cx), j;
+	grab(g);
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		return false;
 	}
 	        l = has_property(cx, j, name);
-	JS_FreeValue(cx, j);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, j);
+	JS_Release(cx, g);
 	return l;
 }
 
@@ -3402,15 +3465,16 @@ enum ej_proptype typeof_gcs(const char *name)
 	enum ej_proptype l;
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
+	grab(g);
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		return EJ_PROP_NONE;
 	}
 	        l = typeof_property(cx, j, name);
-	JS_FreeValue(cx, j);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, j);
+	JS_Release(cx, g);
 	return l;
 }
 
@@ -3419,15 +3483,16 @@ int get_gcs_number(const char *name)
 	JSContext * cx = cf->cx;
 	int l = -1;
 	JSValue g = JS_GetGlobalObject(cx), j;
+	grab(g);
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		return -1;
 	}
 		l = get_property_number(cx, j, name);
-	JS_FreeValue(cx, j);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, j);
+	JS_Release(cx, g);
 	return l;
 }
 
@@ -3435,45 +3500,48 @@ void set_gcs_number(const char *name, int n)
 {
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
+	grab(g);
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		return;
 	}
 	set_property_number(cx, j, name, n);
-	JS_FreeValue(cx, j);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, j);
+	JS_Release(cx, g);
 }
 
 void set_gcs_bool(const char *name, bool v)
 {
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
+	grab(g);
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		return;
 	}
 	set_property_bool(cx, j, name, v);
-	JS_FreeValue(cx, j);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, j);
+	JS_Release(cx, g);
 }
 
 void set_gcs_string(const char *name, const char *s)
 {
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
+	grab(g);
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
+		JS_Release(cx, g);
 		return;
 	}
 	set_property_string(cx, j, name, s);
-	JS_FreeValue(cx, j);
-	JS_FreeValue(cx, g);
+	JS_Release(cx, j);
+	JS_Release(cx, g);
 }
 
 void jsUnroot(void)
