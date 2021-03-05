@@ -1815,12 +1815,26 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 		if(JS_IsString(r))
 			body = JS_ToCString(cx, r);
 	} else if (JS_IsString(argv[0])) {
+// compile the string to get a funct.
+// I do this in C in the other engines, but can't figure it out in quick, so,
+// instead I use the js function that I already wrote.
+		JSValue l[2];
+		JSAtom a = JS_NewAtom(cx, "handle$cc");
 		body = JS_ToCString(cx, argv[0]);
-// compile the string under the filename timer
-		fo = JS_Eval(cx, body, strlen(body), "timer",
-		(JS_EVAL_TYPE_GLOBAL | JS_EVAL_FLAG_COMPILE_ONLY));
+		g = JS_GetGlobalObject(cx);
+		l[0] = argv[0];
+		l[1] = g;
+		fo = JS_Invoke(cx, g, a, 2, l);
+		JS_FreeAtom(cx, a);
+		JS_FreeValue(cx, g);
 		if (JS_IsException(fo)) {
 			processError(cx);
+			cc_error = true;
+			JS_FreeValue(cx, fo);
+			fo = JS_NewCFunction(cx, nat_void, "void", 0);
+		}
+		if (!JS_IsFunction(cx, fo)) {
+			debugPrint(3, "compiled string '%s' does not produce a function", body);
 			cc_error = true;
 			JS_FreeValue(cx, fo);
 			fo = JS_NewCFunction(cx, nat_void, "void", 0);
