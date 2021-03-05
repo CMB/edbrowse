@@ -67,7 +67,7 @@ enum ej_proptype typeof_property_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return EJ_PROP_NONE;
-return typeof_property(t->f0->cx, t->qv, name);
+return typeof_property(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 /* Return a property as a string, if it is
@@ -93,7 +93,7 @@ char *get_property_string_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return 0;
-return get_property_string(t->f0->cx, t->qv, name);
+return get_property_string(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 static bool get_property_bool(JSContext *cx, JSValue parent, const char *name)
@@ -116,7 +116,7 @@ bool get_property_bool_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return false;
-return get_property_bool(t->f0->cx, t->qv, name);
+return get_property_bool(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 static int get_property_number(JSContext *cx, JSValueConst parent, const char *name)
@@ -134,7 +134,7 @@ int get_property_number_t(const Tag *t, const char *name)
 {
 if(!t->jslink || !allowJS)
 return -1;
-return get_property_number(t->f0->cx, t->qv, name);
+return get_property_number(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 // This returns 0 if there is no such property, or it isn't an object.
@@ -147,7 +147,7 @@ static JSValue get_property_object(JSContext *cx, JSValueConst parent, const cha
 	if(JS_IsObject(v))
 		return v;
 	JS_FreeValue(cx, v);
-	return 0;
+	return JS_UNDEFINED;
 }
 
 // return -1 for error
@@ -175,7 +175,7 @@ static JSValue get_array_element_object(JSContext *cx, JSValue parent, int idx)
 static char *get_property_url(JSContext *cx, JSValueConst owner, bool action)
 {
 	enum ej_proptype mtype;	/* member type */
-	JSValue uo = 0;	/* url object */
+	JSValue uo = JS_UNDEFINED;	/* url object */
 	char *s;
 	if (action) {
 		mtype = typeof_property(cx, owner, "action");
@@ -192,7 +192,7 @@ static char *get_property_url(JSContext *cx, JSValueConst owner, bool action)
 			uo = get_property_object(cx, owner, "href");
 		else if (mtype)
 			return 0;
-		if (!uo) {
+		if (JS_IsUndefined(uo)) {
 			mtype = typeof_property(cx, owner, "src");
 			if (mtype == EJ_PROP_STRING)
 				return get_property_string(cx, owner, "src");
@@ -200,7 +200,7 @@ static char *get_property_url(JSContext *cx, JSValueConst owner, bool action)
 				uo = get_property_object(cx, owner, "src");
 		}
 	}
-	if (!uo)
+	if (JS_IsUndefined(uo))
 		return 0;
 	s = get_property_string(cx, uo, "href$val");
 	JS_FreeValue(cx, uo);
@@ -211,7 +211,7 @@ char *get_property_url_t(const Tag *t, bool action)
 {
 if(!t->jslink || !allowJS)
 return 0;
-return get_property_url(t->f0->cx, t->qv, action);
+return get_property_url(t->f0->cx, *((JSValue*)t->jv), action);
 }
 
 char *get_dataset_string_t(const Tag *t, const char *p)
@@ -222,8 +222,8 @@ char *get_dataset_string_t(const Tag *t, const char *p)
 		return 0;
 	if (!strncmp(p, "data-", 5)) {
 		char *k;
-		JSValue ds = get_property_object(cx, t->qv, "dataset");
-		if(!ds)
+		JSValue ds = get_property_object(cx, *((JSValue*)t->jv), "dataset");
+		if(JS_IsUndefined(ds))
 			return 0;
 		k = cloneString(p + 5);
 		camelCase(k);
@@ -231,7 +231,7 @@ char *get_dataset_string_t(const Tag *t, const char *p)
 		nzFree(k);
 		JS_FreeValue(cx, ds);
 	} else
-		v = get_property_string(cx, t->qv, p);
+		v = get_property_string(cx, *((JSValue*)t->jv), p);
 	return v;
 }
 
@@ -242,7 +242,8 @@ char *get_style_string_t(const Tag *t, const char *name)
 	char *result;
 	if(!t->jslink || !allowJS)
 		return 0;
-	if(!(so = get_property_object(cx, t->qv, "style")))
+	so = get_property_object(cx, *((JSValue*)t->jv), "style");
+	if(JS_IsUndefined(so))
 		return 0;
 	result = get_property_string(cx, so, name);
 	JS_FreeValue(cx, so);
@@ -396,7 +397,7 @@ void set_property_string_t(const Tag *t, const char *name, const char * v)
 {
 	if(!t->jslink || !allowJS)
 		return;
-	set_property_string(t->f0->cx, t->qv, name, v);
+	set_property_string(t->f0->cx, *((JSValue*)t->jv), name, v);
 }
 
 void set_property_string_win(const Frame *f, const char *name, const char *v)
@@ -418,7 +419,7 @@ void set_property_bool_t(const Tag *t, const char *name, bool v)
 {
 	if(!t->jslink || !allowJS)
 		return;
-	set_property_bool(t->f0->cx, t->qv, name, v);
+	set_property_bool(t->f0->cx, *((JSValue*)t->jv), name, v);
 }
 
 void set_property_bool_win(const Frame *f, const char *name, bool v)
@@ -435,7 +436,7 @@ void set_property_number_t(const Tag *t, const char *name, int v)
 {
 	if(!t->jslink || !allowJS)
 		return;
-	set_property_number(t->f0->cx, t->qv, name, v);
+	set_property_number(t->f0->cx, *((JSValue*)t->jv), name, v);
 }
 
 // the next two functions duplicate the object value;
@@ -449,7 +450,7 @@ void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
 {
 	if (!allowJS || !t->jslink || !t2->jslink)
 		return;
-	set_property_object(t->f0->cx, t->qv, name, t2->qv);
+	set_property_object(t->f0->cx, *((JSValue*)t->jv), name, *((JSValue*)t2->jv));
 }
 
 static void set_array_element_object(JSContext *cx, JSValueConst parent, int idx, JSValueConst child)
@@ -466,7 +467,8 @@ void set_dataset_string_t(const Tag *t, const char *name, const char *v)
 	if(!t->jslink || !allowJS)
 		return;
 	cx = t->f0->cx;
-	if((dso = get_property_object(cx, t->qv, "dataset"))) {
+	dso = get_property_object(cx, *((JSValue*)t->jv), "dataset");
+	if(!JS_IsUndefined(dso)) {
 		set_property_string(cx, dso, name, v);
 		JS_FreeValue(cx, dso);
 	}
@@ -483,7 +485,7 @@ void delete_property_t(const Tag *t, const char *name)
 {
 	if(!t->jslink || !allowJS)
 		return;
-	delete_property(t->f0->cx, t->qv, name);
+	delete_property(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 void delete_property_win(const Frame *f, const char *name)
@@ -521,7 +523,7 @@ static JSValue instantiate(JSContext *cx, JSValueConst parent, const char *name,
 			debugPrint(3, "no such class %s", classname);
 			JS_FreeValue(cx, v);
 			JS_FreeValue(cx, g);
-			return 0;
+			return JS_UNDEFINED;
 		}
 		o = JS_CallConstructor(cx, v, 0, l);
 		JS_FreeValue(cx, v);
@@ -533,7 +535,7 @@ static JSValue instantiate(JSContext *cx, JSValueConst parent, const char *name,
 			debugPrint(3, "failure on new %s()", classname);
 			uptrace(cx, parent);
 			JS_FreeValue(cx, o);
-			return 0;
+			return JS_UNDEFINED;
 		}
 	}
 	set_property_object(cx, parent, name, o);
@@ -554,7 +556,7 @@ static JSValue instantiate_array_element(JSContext *cx, JSValueConst parent, int
 			debugPrint(3, "no such class %s", classname);
 			JS_FreeValue(cx, v);
 			JS_FreeValue(cx, g);
-			return 0;
+			return JS_UNDEFINED;
 		}
 		o = JS_CallConstructor(cx, v, 0, l);
 		JS_FreeValue(cx, v);
@@ -566,7 +568,7 @@ static JSValue instantiate_array_element(JSContext *cx, JSValueConst parent, int
 			debugPrint(3, "failure on new %s()", classname);
 			uptrace(cx, parent);
 			JS_FreeValue(cx, o);
-			return 0;
+			return JS_UNDEFINED;
 		}
 	}
 	set_array_element_object(cx, parent, idx, o);
@@ -643,7 +645,7 @@ bool run_function_bool_t(const Tag *t, const char *name)
 {
 	if (!allowJS || !t->jslink)
 		return false;
-	return run_function_bool(t->f0->cx, t->qv, name);
+	return run_function_bool(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 bool run_function_bool_win(const Frame *f, const char *name)
@@ -658,7 +660,7 @@ void run_ontimer(const Frame *f, const char *backlink)
 	JSContext *cx = f->cx;
 // timer object from its backlink
 	JSValue to = get_property_object(cx, f->winq, backlink);
-	if(!to) {
+	if(JS_IsUndefined(to)) {
 		debugPrint(3, "could not find timer backlink %s", backlink);
 		return;
 	}
@@ -706,21 +708,21 @@ int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2)
 {
 	if (!allowJS || !t->jslink || !t2->jslink)
 		return -1;
-	return run_function_onearg(t->f0->cx, t->qv, name, t2->qv);
+	return run_function_onearg(t->f0->cx, *((JSValue*)t->jv), name, *((JSValue*)t2->jv));
 }
 
 int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2)
 {
 	if (!allowJS || !f->jslink || !t2->jslink)
 		return -1;
-	return run_function_onearg(f->cx, f->winq, name, t2->qv);
+	return run_function_onearg(f->cx, f->winq, name, *((JSValue*)t2->jv));
 }
 
 int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2)
 {
 	if (!allowJS || !f->jslink || !t2->jslink)
 		return -1;
-	return run_function_onearg(f->cx, f->docq, name, t2->qv);
+	return run_function_onearg(f->cx, f->docq, name, *((JSValue*)t2->jv));
 }
 
 // The single argument to the function has to be a string.
@@ -755,7 +757,7 @@ void run_function_onestring_t(const Tag *t, const char *name, const char *s)
 {
 	if (!allowJS || !t->jslink)
 		return;
-	run_function_onestring(t->f0->cx, t->qv, name, s);
+	run_function_onestring(t->f0->cx, *((JSValue*)t->jv), name, s);
 }
 
 static char *run_script(JSContext *cx, const char *s)
@@ -827,7 +829,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 	cx = t->f0->cx;
 	jsSourceFile = filename;
 	jsLineno = lineno;
-	v = JS_GetPropertyStr(cx, t->qv, "text");
+	v = JS_GetPropertyStr(cx, *((JSValue*)t->jv), "text");
 	if(!JS_IsString(v)) {
 // no data
 		jsSourceFile = 0;
@@ -842,7 +844,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 		return;
 	}
 // have to set currentScript
-	JS_SetPropertyStr(cx, t->f0->docq, "currentScript", JS_DupValue(cx, t->qv));
+	JS_SetPropertyStr(cx, t->f0->docq, "currentScript", JS_DupValue(cx, *((JSValue*)t->jv)));
 // defer to the earlier routine if there are breakpoints
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
 		char *result = run_script(cx, s);
@@ -861,8 +863,8 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 // onload handler? Should this run even if the script fails?
 // Right now it does.
 	if (t->js_file && !isDataURI(t->href) &&
-	typeof_property(cx, t->qv, "onload") == EJ_PROP_FUNCTION)
-		run_event(cx, t->qv, "script", "onload");
+	typeof_property(cx, *((JSValue*)t->jv), "onload") == EJ_PROP_FUNCTION)
+		run_event(cx, *((JSValue*)t->jv), "script", "onload");
 	debugPrint(5, "< ok");
 }
 
@@ -950,7 +952,7 @@ bool run_event_t(const Tag *t, const char *pname, const char *evname)
 {
 	if (!allowJS || !t->jslink)
 		return true;
-	return run_event(t->f0->cx, t->qv, pname, evname);
+	return run_event(t->f0->cx, *((JSValue*)t->jv), pname, evname);
 }
 
 bool run_event_win(const Frame *f, const char *pname, const char *evname)
@@ -975,11 +977,11 @@ bool bubble_event_t(const Tag *t, const char *name)
 	if (!allowJS || !t->jslink)
 		return true;
 	cx = t->f0->cx;
-	e = create_event(cx, t->qv, name);
-	rc = run_function_onearg(cx, t->qv, "dispatchEvent", e);
+	e = create_event(cx, *((JSValue*)t->jv), name);
+	rc = run_function_onearg(cx, *((JSValue*)t->jv), "dispatchEvent", e);
 	if (rc && get_property_bool(cx, e, "prev$default"))
 		rc = false;
-	unlink_event(cx, t->qv);
+	unlink_event(cx, *((JSValue*)t->jv));
 	JS_FreeValue(cx, e);
 	return rc;
 }
@@ -1002,7 +1004,7 @@ The resulting core dump has the stack so corrupted, that gdb is hopelessly confu
 static void uptrace(JSContext * cx, JSValueConst node)
 {
 	static bool infunction = false;
-	JSValue pn = 0; // parent node
+	JSValue pn; // parent node
 	enum ej_proptype pntype; // parent node type
 	bool first = true;
 	if (debugLevel < 3)
@@ -1076,7 +1078,8 @@ static void processError(JSContext * cx)
 static void connectTagObject(Tag *t, JSValue p)
 {
 	JSContext *cx = t->f0->cx;
-	t->qv = p;
+	t->jv = allocMem(sizeof(p));
+	*((JSValue*)t->jv) = p;
 	t->jslink = true;
 // Below a frame, t could be a manufactured document for the new window.
 // We don't want to set eb$seqno in this case.
@@ -1088,10 +1091,11 @@ static void connectTagObject(Tag *t, JSValue p)
 
 void disconnectTagObject(Tag *t)
 {
-	if (!t->qv)
+	if (!t->jslink)
 		return;
-	JS_FreeValue(t->f0->cx, t->qv);
-	t->qv = 0;
+	JS_FreeValue(t->f0->cx, *((JSValue*)t->jv));
+	free(t->jv);
+	t->jv = 0;
 	t->jslink = false;
 }
 
@@ -1115,7 +1119,7 @@ static Tag *tagFromObject(JSValueConst v)
 	}
 	for (i = 0; i < cw->numTags; ++i) {
 		Tag *t = tagList[i];
-		if (t->qv && JS_VALUE_GET_OBJ(t->qv) == JS_VALUE_GET_OBJ(v) && !t->dead)
+		if (t->jslink && JS_VALUE_GET_OBJ(*((JSValue*)t->jv)) == JS_VALUE_GET_OBJ(v) && !t->dead)
 			return t;
 	}
 	debugPrint(1, "tagFromObject() returns null");
@@ -1590,7 +1594,7 @@ jsInterruptCheck(cx);
 			if (parent->action == TAGACT_INPUT) {
 // we need to establish the getter and setter for value
 				set_property_string(parent->f0->cx,
-				parent->qv, "value", emptyString);
+				*((JSValue*)parent->jv), "value", emptyString);
 			}
 		}
 		return;
@@ -1702,8 +1706,8 @@ ab:
 	debugPrint(4, "fixup %s %d", a_name, t->seqno);
 	action = t->action;
 	cx = t->f0->cx;
-	t->name = get_property_string(cx, t->qv, "name");
-	t->id = get_property_string(cx, t->qv, "id");
+	t->name = get_property_string(cx, *((JSValue*)t->jv), "name");
+	t->id = get_property_string(cx, *((JSValue*)t->jv), "id");
 	t->jclass = get_property_string_t(t, "class");
 
 	switch (action) {
@@ -1734,7 +1738,7 @@ ab:
 	case TAGACT_SELECT:
 		t->action = TAGACT_INPUT;
 		t->itype = INP_SELECT;
-		if (typeof_property(cx, t->qv, "multiple"))
+		if (typeof_property(cx, *((JSValue*)t->jv), "multiple"))
 			t->multiple = true;
 		formControl(t, true);
 		break;
@@ -1787,7 +1791,7 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	JSValue g;		// global object
 	bool cc_error = false;
 	int32_t n = 1000;		// default number of milliseconds
-	JSValue r = 0;
+	JSValue r = JS_UNDEFINED;
 	const char *body; // function body
 	char fname[48];		/* function name */
 	const char *fstr;	/* function string */
@@ -1808,7 +1812,7 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 		r = JS_Invoke(cx, argv[0], a, 0, list);
 		JS_FreeAtom(cx, a);
 		body = 0;
-		if(r && JS_IsString(r))
+		if(JS_IsString(r))
 			body = JS_ToCString(cx, r);
 	} else if (JS_IsString(argv[0])) {
 		body = JS_ToCString(cx, argv[0]);
@@ -1849,8 +1853,7 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	}
 	if(body)
 		JS_FreeCString(cx, body);
-	if(r)
-		JS_FreeValue(cx, r);
+	JS_FreeValue(cx, r);
 
 	g = JS_GetGlobalObject(cx);
 	fpn = fakePropName();
@@ -1993,7 +1996,7 @@ static JSValue nat_fe(JSContext * cx, JSValueConst this, int argc, JSValueConst 
 	Frame *current = win2frame(this);
 	if(!current || current == &(cw->f0) || !current->frametag)
 		return JS_UNDEFINED;
-	return JS_DupValue(cx, current->frametag->qv);
+	return JS_DupValue(cx, *((JSValue*)current->frametag->jv));
 }
 
 static JSValue nat_top(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
@@ -2430,7 +2433,7 @@ static JSValue objectize(JSContext *cx, Tag **tlist)
 	for (i = j = 0; (t = tlist[i]); ++i) {
 		if (!t->jslink)	// should never happen
 			continue;
-		set_array_element_object(cx, a, j, t->qv);
+		set_array_element_object(cx, a, j, *((JSValue*)t->jv));
 		++j;
 	}
 	return a;
@@ -2457,14 +2460,14 @@ static bool rootTag(JSValue start, Tag **tp)
 // querySelectorAll
 static JSValue nat_qsa(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	JSValue start = 0, a;
+	JSValue start = JS_UNDEFINED, a;
 	Tag **tlist, *t;
 	const char *selstring = JS_ToCString(cx, argv[0]);
 	if (argc >= 2) {
 		if (JS_IsObject(argv[1]))
 			start = argv[1];
 	}
-	if (!start)
+	if (JS_IsUndefined(start))
 		start = this;
 	jsInterruptCheck(cx);
 // node.querySelectorAll makes this equal to node.
@@ -2485,14 +2488,14 @@ static JSValue nat_qsa(JSContext * cx, JSValueConst this, int argc, JSValueConst
 // querySelector
 static JSValue nat_qs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	JSValue start = 0;
+	JSValue start = JS_UNDEFINED;
 	Tag *t;
 	const char *selstring = JS_ToCString(cx, argv[0]);
 	if (argc >= 2) {
 		if (JS_IsObject(argv[1]))
 			start = argv[1];
 	}
-	if (!start)
+	if (JS_IsUndefined(start))
 		start = this;
 	jsInterruptCheck(cx);
 	if(!rootTag(start, &t)) {
@@ -2502,7 +2505,7 @@ static JSValue nat_qs(JSContext * cx, JSValueConst this, int argc, JSValueConst 
 	t = querySelector(selstring, t);
 	JS_FreeCString(cx, selstring);
 	if(t && t->jslink)
-		return JS_DupValue(cx, t->qv);
+		return JS_DupValue(cx, *((JSValue*)t->jv));
 	return JS_UNDEFINED;
 }
 
@@ -2760,7 +2763,7 @@ static void setup_window_2(void)
 		jsRunScriptWin(thirdJS, "Third", 1);
 
 	nav = get_property_object(cx, w, "navigator");
-	if (!nav)
+	if (JS_IsUndefined(nav))
 		return;
 /* some of the navigator is in startwindow.js; the runtime properties are here. */
 	set_property_string(cx, nav, "userLanguage", supported_languages[eb_lang]);
@@ -2776,7 +2779,7 @@ static void setup_window_2(void)
  * according to the entries in the config file. */
 	navpi = get_property_object(cx, nav, "plugins");
 	navmt = get_property_object(cx, nav, "mimeTypes");
-	if (!navpi || !navmt)
+	if (JS_IsUndefined(navpi) || JS_IsUndefined(navmt))
 		return;
 	mt = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++mt) {
@@ -2784,7 +2787,7 @@ static void setup_window_2(void)
 /* po is the plugin object and mo is the mime object */
 		JSValue po = instantiate_array_element(cx, navpi, i, 0);
 		JSValue mo = instantiate_array_element(cx, navmt, i, 0);
-		if (!po || !mo)
+		if (JS_IsUndefined(po) || JS_IsUndefined(mo))
 			return;
 		set_property_object(cx, mo, "enabledPlugin", po);
 		set_property_string(cx, mo, "type", mt->type);
@@ -2813,7 +2816,7 @@ static void setup_window_2(void)
 	JS_FreeValue(cx, nav);
 
 	hist = get_property_object(cx, w, "history");
-	if (!hist)
+	if (JS_IsUndefined(hist))
 		return;
 	set_property_string(cx, hist, "current", cf->fileName);
 	JS_FreeValue(cx, hist);
@@ -2862,7 +2865,7 @@ bool has_property_t(const Tag *t, const char *name)
 {
 	if(!t->jslink || !allowJS)
 		return false;
-	return has_property(t->f0->cx, t->qv, name);
+	return has_property(t->f0->cx, *((JSValue*)t->jv), name);
 }
 
 bool has_property_win(const Frame *f, const char *name)
@@ -2884,12 +2887,13 @@ void establish_js_option(Tag *t, Tag *sel)
 	JSValue ato;		// attributes object
 	JSValue fo;		// form object
 	JSValue cn; // childNodes
-	JSValue selobj = sel->qv; // select object
+	JSValue selobj = *((JSValue*)sel->jv); // select object
 
 	if(!sel->jslink)
 		return;
 
-	if(!(oa = get_property_object(cx, selobj, "options")))
+	oa = get_property_object(cx, selobj, "options");
+	if(JS_IsUndefined(oa))
 		return;
 	if(!JS_IsArray(cx, oa)) {
 		JS_FreeValue(cx, oa);
@@ -2898,7 +2902,8 @@ void establish_js_option(Tag *t, Tag *sel)
 	oo = instantiate_array_element(cx, oa, idx, "Option");
 	set_property_object(cx, oo, "parentNode", oa);
 /* option.form = select.form */
-	if((fo = get_property_object(cx, selobj, "form"))) {
+	fo = get_property_object(cx, selobj, "form");
+	if(!JS_IsUndefined(fo)) {
 		set_property_object(cx, oo, "form", fo);
 		JS_FreeValue(cx, fo);
 	}
@@ -2973,8 +2978,8 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 {
 	JSContext *cx = cf->cx;
 	JSValue owner;
-	JSValue alist = 0;
-	JSValue io = 0;	// input object
+	JSValue alist = JS_UNDEFINED;
+	JSValue io = JS_UNDEFINED;	// input object
 	int length;
 	bool dupname = false, fakeName = false;
 	uchar isradio = (extra&1);
@@ -2985,8 +2990,8 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *href_url = t->href;
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
-	JSValue so = 0;	/* obj.style */
-	JSValue ato = 0;	/* obj.attributes */
+	JSValue so;	/* obj.style */
+	JSValue ato;	/* obj.attributes */
 	JSValue ds; // dataset
 	JSValue ca; // child array
 	char upname[MAXTAGNAME];
@@ -3003,7 +3008,7 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 		sprintf(classtweak, "z$%s", classname);
 
 	if(owntag)
-		owner = owntag->qv;
+		owner = *((JSValue*)owntag->jv);
 if(extra == 2)
 		owner = cf->winq;
 if(extra == 4)
@@ -3026,7 +3031,8 @@ don't overwrite form.action, or anything else that pre-exists.
 
 		if (isradio) {
 /* name present and radio buttons, name should be the array of buttons */
-			if(!(io = get_property_object(cx, owner, symname)))
+			io = get_property_object(cx, owner, symname);
+			if(JS_IsUndefined(io))
 				return;
 		} else {
 // don't know why the duplicate name
@@ -3037,7 +3043,7 @@ don't overwrite form.action, or anything else that pre-exists.
 /* The input object is nonzero if&only if the input is a radio button,
  * and not the first button in the set, thus it isce the array containing
  * these buttons. */
-	if (!io) {
+	if (JS_IsUndefined(io)) {
 /*********************************************************************
 Ok, the above condition does not hold.
 We'll be creating a new object under owner, but through what name?
@@ -3065,15 +3071,17 @@ That's how it was for a long time, but I think we only do this on form.
 			membername = fakePropName(), fakeName = true;
 
 		if (isradio) {	// the first radio button
-			if(!(io = instantiate_array(cx,
-			(fakeName ? cf->winq : owner), membername)))
+			io = instantiate_array(cx,
+			(fakeName ? cf->winq : owner), membername);
+			if(JS_IsUndefined(io))
 				return;
 			set_property_string(cx, io, "type", "radio");
 		} else {
 		JSValue ca;	// child array
 /* A standard input element, just create it. */
-			if(!(io = instantiate(cx,
-(fakeName ? cf->winq : owner), membername, classtweak)))
+			io = instantiate(cx,
+(fakeName ? cf->winq : owner), membername, classtweak);
+			if(JS_IsUndefined(io))
 				return;
 // Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array(cx, io, "childNodes");
@@ -3119,7 +3127,7 @@ Don't do any of this if the tag is itself <style>. */
 			list = 0;
 		if (list)
 			alist = get_property_object(cx, owner, list);
-		if (alist) {
+		if (!JS_IsUndefined(alist)) {
 			length = get_arraylength(cx, alist);
 			set_array_element_object(cx, alist, length, io);
 			if (symname && !dupname
@@ -3142,7 +3150,7 @@ Don't do any of this if the tag is itself <style>. */
 		length = get_arraylength(cx, io);
 		ca = instantiate_array_element(cx, io, length, "z$Element");
 		JS_FreeValue(cx, io);
-		if(!ca)
+		if(JS_IsUndefined(ca))
 			return;
 		io = ca;
 		so = instantiate(cx, io, "style", "CSSStyleDeclaration");
@@ -3213,14 +3221,15 @@ static void rebuildSelector(Tag *sel, JSValue oa, int len2)
 		}
 
 /* find the corresponding option object */
-		if (!(oo = get_array_element_object(cx, oa, i2))) {
+		oo = get_array_element_object(cx, oa, i2);
+		if(JS_IsUndefined(oo)) {
 // Wow this shouldn't happen.
 // Guess I'll just pretend the array stops here.
 			len2 = i2;
 			break;
 		}
 
-		if (JS_VALUE_GET_OBJ(t->qv) != JS_VALUE_GET_OBJ(oo)) {
+		if (JS_VALUE_GET_OBJ(*((JSValue*)t->jv)) != JS_VALUE_GET_OBJ(oo)) {
 			debugPrint(5, "oo switch");
 /*********************************************************************
 Ok, we freed up the old options, and garbage collection
@@ -3283,7 +3292,8 @@ I'm bringing the tags back to life.
 		}
 	} else if (!t) {
 		for (; i2 < len2; ++i2) {
-			if (!(oo = get_array_element_object(cx, oa, i2)))
+			oo = get_array_element_object(cx, oa, i2);
+			if(JS_IsUndefined(oo))
 				break;
 			t = newTag(sel->f0, "option");
 			t->lic = i2;
@@ -3315,7 +3325,7 @@ I'm bringing the tags back to life.
 	nzFree(s);
 
 	if (!sel->multiple)
-		set_property_number(cx, sel->qv, "selectedIndex", sel->lic);
+		set_property_number(cx, *((JSValue*)sel->jv), "selectedIndex", sel->lic);
 }				/* rebuildSelector */
 
 void rebuildSelectors(void)
@@ -3337,7 +3347,8 @@ void rebuildSelectors(void)
 
 // there should always be an options array, if not then move on
 	cx = t->f0->cx;
-		if (!(oa = get_property_object(cx, t->qv, "options")))
+		oa = get_property_object(cx, *((JSValue*)t->jv), "options");
+		if(JS_IsUndefined(oa))
 			continue;
 		if ((len = get_arraylength(cx, oa)) < 0)
 			continue;
@@ -3355,7 +3366,8 @@ bool has_gcs(const char *name)
 	JSContext * cx = cf->cx;
 	bool l;
 	JSValue g = JS_GetGlobalObject(cx), j;
-	if(!(j = get_property_object(cx,  g, soj))) {
+	j = get_property_object(cx,  g, soj);
+	if(JS_IsUndefined(j)) {
 		sofail();
 		JS_FreeValue(cx, g);
 		return false;
@@ -3371,7 +3383,8 @@ enum ej_proptype typeof_gcs(const char *name)
 	enum ej_proptype l;
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
-	if(!(j = get_property_object(cx,  g, soj))) {
+	j = get_property_object(cx,  g, soj);
+	if(JS_IsUndefined(j)) {
 		sofail();
 		JS_FreeValue(cx, g);
 		return EJ_PROP_NONE;
@@ -3387,7 +3400,8 @@ int get_gcs_number(const char *name)
 	JSContext * cx = cf->cx;
 	int l = -1;
 	JSValue g = JS_GetGlobalObject(cx), j;
-	if(!(j = get_property_object(cx,  g, soj))) {
+	j = get_property_object(cx,  g, soj);
+	if(JS_IsUndefined(j)) {
 		sofail();
 		JS_FreeValue(cx, g);
 		return -1;
@@ -3402,7 +3416,8 @@ void set_gcs_number(const char *name, int n)
 {
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
-	if(!(j = get_property_object(cx,  g, soj))) {
+	j = get_property_object(cx,  g, soj);
+	if(JS_IsUndefined(j)) {
 		sofail();
 		JS_FreeValue(cx, g);
 		return;
@@ -3416,7 +3431,8 @@ void set_gcs_bool(const char *name, bool v)
 {
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
-	if(!(j = get_property_object(cx,  g, soj))) {
+	j = get_property_object(cx,  g, soj);
+	if(JS_IsUndefined(j)) {
 		sofail();
 		JS_FreeValue(cx, g);
 		return;
@@ -3430,7 +3446,8 @@ void set_gcs_string(const char *name, const char *s)
 {
 	JSContext * cx = cf->cx;
 	JSValue g = JS_GetGlobalObject(cx), j;
-	if(!(j = get_property_object(cx,  g, soj))) {
+	j = get_property_object(cx,  g, soj);
+	if(JS_IsUndefined(j)) {
 		sofail();
 		JS_FreeValue(cx, g);
 		return;
