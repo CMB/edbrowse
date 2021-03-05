@@ -408,7 +408,6 @@ struct ebFrame {
 	jsobjtype cx;
 	jsobjtype winobj;
 	jsobjtype docobj;	/* window.document */
-	long long winq, docq; // quick versions
 	const struct MIMETYPE *mt;
 	void *cssmaster;
 };

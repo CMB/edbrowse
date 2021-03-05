@@ -301,7 +301,7 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 	nzFree(run);
 	debugPrint(5, "setter h out");
 
-	run_function_onearg(cx, cf->winq, "textarea$html$crossover", this);
+	run_function_onearg(cx, *((JSValue*)cf->winobj), "textarea$html$crossover", this);
 
 // mutation fix up from native code
 	{
@@ -402,12 +402,12 @@ void set_property_string_t(const Tag *t, const char *name, const char * v)
 
 void set_property_string_win(const Frame *f, const char *name, const char *v)
 {
-	set_property_string(f->cx, f->winq, name, v);
+	set_property_string(f->cx, *((JSValue*)f->winobj), name, v);
 }
 
 void set_property_string_doc(const Frame *f, const char *name, const char *v)
 {
-	set_property_string(f->cx, f->docq, name, v);
+	set_property_string(f->cx, *((JSValue*)f->docobj), name, v);
 }
 
 static void set_property_bool(JSContext *cx, JSValueConst parent, const char *name, bool n)
@@ -424,7 +424,7 @@ void set_property_bool_t(const Tag *t, const char *name, bool v)
 
 void set_property_bool_win(const Frame *f, const char *name, bool v)
 {
-	set_property_bool(f->cx, f->winq, name, v);
+	set_property_bool(f->cx, *((JSValue*)f->winobj), name, v);
 }
 
 static void set_property_number(JSContext *cx, JSValueConst parent, const char *name, int n)
@@ -492,14 +492,14 @@ void delete_property_win(const Frame *f, const char *name)
 {
 	if(!f->jslink || !allowJS)
 		return;
-	delete_property(f->cx, f->winq, name);
+	delete_property(f->cx, *((JSValue*)f->winobj), name);
 }
 
 void delete_property_doc(const Frame *f, const char *name)
 {
 	if(!f->jslink || !allowJS)
 		return;
-	delete_property(f->cx, f->docq, name);
+	delete_property(f->cx, *((JSValue*)f->docobj), name);
 }
 
 static JSValue instantiate_array(JSContext *cx, JSValueConst parent, const char *name)
@@ -652,14 +652,14 @@ bool run_function_bool_win(const Frame *f, const char *name)
 {
 	if (!allowJS || !f->jslink)
 		return false;
-	return run_function_bool(f->cx, f->winq, name);
+	return run_function_bool(f->cx, *((JSValue*)f->winobj), name);
 }
 
 void run_ontimer(const Frame *f, const char *backlink)
 {
 	JSContext *cx = f->cx;
 // timer object from its backlink
-	JSValue to = get_property_object(cx, f->winq, backlink);
+	JSValue to = get_property_object(cx, *((JSValue*)f->winobj), backlink);
 	if(JS_IsUndefined(to)) {
 		debugPrint(3, "could not find timer backlink %s", backlink);
 		return;
@@ -715,14 +715,14 @@ int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2)
 {
 	if (!allowJS || !f->jslink || !t2->jslink)
 		return -1;
-	return run_function_onearg(f->cx, f->winq, name, *((JSValue*)t2->jv));
+	return run_function_onearg(f->cx, *((JSValue*)f->winobj), name, *((JSValue*)t2->jv));
 }
 
 int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2)
 {
 	if (!allowJS || !f->jslink || !t2->jslink)
 		return -1;
-	return run_function_onearg(f->cx, f->docq, name, *((JSValue*)t2->jv));
+	return run_function_onearg(f->cx, *((JSValue*)f->docobj), name, *((JSValue*)t2->jv));
 }
 
 // The single argument to the function has to be a string.
@@ -844,7 +844,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 		return;
 	}
 // have to set currentScript
-	JS_SetPropertyStr(cx, t->f0->docq, "currentScript", JS_DupValue(cx, *((JSValue*)t->jv)));
+	JS_SetPropertyStr(cx, *((JSValue*)t->f0->docobj), "currentScript", JS_DupValue(cx, *((JSValue*)t->jv)));
 // defer to the earlier routine if there are breakpoints
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
 		char *result = run_script(cx, s);
@@ -859,7 +859,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 		JS_FreeValue(cx, r);
 	}
 	jsSourceFile = NULL;
-	delete_property(cx, t->f0->docq, "currentScript");
+	delete_property(cx, *((JSValue*)t->f0->docobj), "currentScript");
 // onload handler? Should this run even if the script fails?
 // Right now it does.
 	if (t->js_file && !isDataURI(t->href) &&
@@ -874,7 +874,7 @@ static char *jsRunScriptResult(const Frame *f, JSValue obj, const char *str,
 const char *filename, 			int lineno)
 {
 	char *result;
-	if (!allowJS || !f->winq)
+	if (!allowJS || !f->jslink)
 		return NULL;
 	if (!str || !str[0])
 		return NULL;
@@ -890,20 +890,20 @@ const char *filename, 			int lineno)
 /* like the above but throw away the result */
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(cf, cf->winq, str, filename, lineno);
+	char *s = jsRunScriptResult(cf, *((JSValue*)cf->winobj), str, filename, lineno);
 	nzFree(s);
 }
 
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(t->f0, t->f0->winq, str, filename, lineno);
+	char *s = jsRunScriptResult(t->f0, *((JSValue*)t->f0->winobj), str, filename, lineno);
 	nzFree(s);
 }
 
 char *jsRunScriptWinResult(const char *str,
 const char *filename, 			int lineno)
 {
-return jsRunScriptResult(cf, cf->winq, str, filename, lineno);
+return jsRunScriptResult(cf, *((JSValue*)cf->winobj), str, filename, lineno);
 }
 
 static JSValue create_event(JSContext *cx, JSValueConst parent, const char *evname)
@@ -959,14 +959,14 @@ bool run_event_win(const Frame *f, const char *pname, const char *evname)
 {
 	if (!allowJS || !f->jslink)
 		return true;
-	return run_event(f->cx, f->winq, pname, evname);
+	return run_event(f->cx, *((JSValue*)f->winobj), pname, evname);
 }
 
 bool run_event_doc(const Frame *f, const char *pname, const char *evname)
 {
 	if (!allowJS || !f->jslink)
 		return true;
-	return run_event(f->cx, f->docq, pname, evname);
+	return run_event(f->cx, *((JSValue*)f->docobj), pname, evname);
 }
 
 bool bubble_event_t(const Tag *t, const char *name)
@@ -1103,7 +1103,7 @@ void disconnectTagObject(Tag *t)
 void reconnectTagObject(Tag *t)
 {
 	JSValue cdo;	// contentDocument object
-	cdo = JS_DupValue(cf->cx, cf->docq);
+	cdo = JS_DupValue(cf->cx, *((JSValue*)cf->docobj));
 	disconnectTagObject(t);
 	connectTagObject(t, cdo);
 }
@@ -1440,10 +1440,10 @@ static JSValue getter_cd(JSContext * cx, JSValueConst this, int argc, JSValueCon
 		goto fail;
 	if(!t->f1)
 		forceFrameExpand(t);
-	if(!t->f1 || !t->f1->docq) // should not happen
+	if(!t->f1 || !t->f1->jslink) // should not happen
 		goto fail;
 // we have to pass a copy of the document object, so we can retain the original
-	return JS_DupValue(cx, t->f1->docq);
+	return JS_DupValue(cx, *((JSValue*)t->f1->docobj));
 fail:
 	return JS_NULL;
 }
@@ -1457,10 +1457,10 @@ static JSValue getter_cw(JSContext * cx, JSValueConst this, int argc, JSValueCon
 		goto fail;
 	if(!t->f1)
 		forceFrameExpand(t);
-	if(!t->f1 || !t->f1->winq) // should not happen
+	if(!t->f1 || !t->f1->jslink) // should not happen
 		goto fail;
 // we have to pass a copy of the window object, so we can retain the original
-	return JS_DupValue(cx, t->f1->winq);
+	return JS_DupValue(cx, *((JSValue*)t->f1->winobj));
 fail:
 	return JS_NULL;
 }
@@ -1921,7 +1921,7 @@ static Frame *doc2frame(JSValueConst this)
 {
 	Frame *f;
 	for (f = &(cw->f0); f; f = f->next) {
-		if (f->docq == this)
+		if (JS_VALUE_GET_OBJ(*((JSValue*)f->docobj)) == JS_VALUE_GET_OBJ(this))
 			break;
 	}
 	return f;
@@ -1973,7 +1973,7 @@ static Frame *win2frame(JSValueConst this)
 {
 	Frame *f;
 	for (f = &(cw->f0); f; f = f->next) {
-		if (f->winq == this)
+		if (JS_VALUE_GET_OBJ(*((JSValue*)f->winobj)) == JS_VALUE_GET_OBJ(this))
 			break;
 	}
 	return f;
@@ -1985,10 +1985,10 @@ static JSValue nat_parent(JSContext * cx, JSValueConst this, int argc, JSValueCo
 	if(!current)
 		return JS_UNDEFINED;
 if(current == &(cw->f0))
-		return JS_DupValue(cx, current->winq);
+		return JS_DupValue(cx, *((JSValue*)current->winobj));
 	if(!current->frametag) // should not happen
 		return JS_UNDEFINED;
-	return JS_DupValue(cx, current->frametag->f0->winq);
+	return JS_DupValue(cx, *((JSValue*)current->frametag->f0->winobj));
 }
 
 static JSValue nat_fe(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
@@ -2001,7 +2001,7 @@ static JSValue nat_fe(JSContext * cx, JSValueConst this, int argc, JSValueConst 
 
 static JSValue nat_top(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	return JS_DupValue(cx, cw->f0.winq);
+	return JS_DupValue(cx, *((JSValue*)cw->f0.winobj));
 }
 
 static bool append0(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv, bool side)
@@ -2395,7 +2395,7 @@ static JSValue nat_setcook(JSContext * cx, JSValueConst this, int argc, JSValueC
 	if (newcook) {
 		const char *s = strchr(newcook, '=');
 		if(s && s > newcook) {
-			JSValue v = JS_GetPropertyStr(cx, cf->winq, "eb$url");
+			JSValue v = JS_GetPropertyStr(cx, *((JSValue*)cf->winobj), "eb$url");
 			const char *u = JS_ToCString(cx, v);
 			receiveCookie(u, newcook);
 			JS_FreeCString(cx, u);
@@ -2447,8 +2447,8 @@ static bool rootTag(JSValue start, Tag **tp)
 	*tp = 0;
 	if(!start ||
 	JS_IsUndefined(start) ||
-	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(cf->winq) ||
-	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(cf->docq))
+	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(*((JSValue*)cf->winobj)) ||
+	JS_VALUE_GET_OBJ(start) == JS_VALUE_GET_OBJ(*((JSValue*)cf->docobj)))
 		return true;
 	t = tagFromObject(start);
 	if(!t)
@@ -2562,8 +2562,10 @@ static void createJSContext_0(Frame *f)
 	debugPrint(3, "create js context %d", f->gsn);
 // the global object, which will become window,
 // and the document object.
-	f->winq = g = JS_GetGlobalObject(cx);
-	f->docq = d = JS_NewObject(cx);
+	f->winobj = allocMem(sizeof(JSValue));
+	*((JSValue*)f->winobj) = g = JS_GetGlobalObject(cx);
+	f->docobj = allocMem(sizeof(JSValue));
+	*((JSValue*)f->docobj) = d = JS_NewObject(cx);
 	JS_DefinePropertyValueStr(cx, g, "document", JS_DupValue(cx, d),
 	JS_PROP_ENUMERABLE);
 
@@ -2737,8 +2739,8 @@ int uname(struct utsname *pun)
 
 static void setup_window_2(void)
 {
-	JSValue w = cf->winq;	// window object
-	JSValue d = cf->docq;	// document object
+	JSValue w = *((JSValue*)cf->winobj);	// window object
+	JSValue d = *((JSValue*)cf->docobj);	// document object
 	JSContext *cx = cf->cx;	// current context
 	JSValue nav;		// navigator object
 	JSValue navpi;	// navigator plugins
@@ -2844,10 +2846,12 @@ void freeJSContext(Frame *f)
 		return;
 	cssFree(f);
 	cx = f->cx;
-	JS_FreeValue(cx, f->winq);
-	JS_FreeValue(cx, f->docq);
+	JS_FreeValue(cx, *((JSValue*)f->winobj));
+	free(f->winobj);
+	JS_FreeValue(cx, *((JSValue*)f->docobj));
+	free(f->docobj);
+	f->winobj = f->docobj = 0;
 	f->cx = 0;
-	f->winq = f->docq = 0;
 	JS_FreeContext(cx);
 	debugPrint(3, "remove js context %d", f->gsn);
 	f->jslink = false;
@@ -2872,7 +2876,7 @@ bool has_property_win(const Frame *f, const char *name)
 {
 	if(!f->jslink || !allowJS)
 		return false;
-	return has_property(f->cx, f->winq, name);
+	return has_property(f->cx, *((JSValue*)f->winobj), name);
 }
 
 // Functions that help decorate the DOM tree, called from decorate.c.
@@ -2925,7 +2929,7 @@ void establish_js_textnode(Tag *t, const char *fpn)
 {
 	JSContext *cx = cf->cx;
 	JSValue so, ato, cn;
-	 JSValue tagobj = instantiate(cx, cf->winq, fpn, "TextNode");
+	 JSValue tagobj = instantiate(cx, *((JSValue*)cf->winobj), fpn, "TextNode");
 	cn = instantiate_array(cx, tagobj, "childNodes");
 	ato = instantiate(cx, tagobj, "attributes", "NamedNodeMap");
 	set_property_object(cx, ato, "owner", tagobj);
@@ -3010,9 +3014,9 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	if(owntag)
 		owner = *((JSValue*)owntag->jv);
 if(extra == 2)
-		owner = cf->winq;
+		owner = *((JSValue*)cf->winobj);
 if(extra == 4)
-		owner = cf->docq;
+		owner = *((JSValue*)cf->docobj);
 
 	if (symname && typeof_property(cx, owner, symname)) {
 /*********************************************************************
@@ -3072,7 +3076,7 @@ That's how it was for a long time, but I think we only do this on form.
 
 		if (isradio) {	// the first radio button
 			io = instantiate_array(cx,
-			(fakeName ? cf->winq : owner), membername);
+			(fakeName ? *((JSValue*)cf->winobj) : owner), membername);
 			if(JS_IsUndefined(io))
 				return;
 			set_property_string(cx, io, "type", "radio");
@@ -3080,7 +3084,7 @@ That's how it was for a long time, but I think we only do this on form.
 		JSValue ca;	// child array
 /* A standard input element, just create it. */
 			io = instantiate(cx,
-(fakeName ? cf->winq : owner), membername, classtweak);
+(fakeName ? *((JSValue*)cf->winobj) : owner), membername, classtweak);
 			if(JS_IsUndefined(io))
 				return;
 // Not an array; needs the childNodes array beneath it for the children.
@@ -3117,7 +3121,7 @@ Don't do any of this if the tag is itself <style>. */
 		ato = instantiate(cx, io, "attributes", "NamedNodeMap");
 		set_property_object(cx, ato, "owner", io);
 		JS_FreeValue(cx, ato);
-		set_property_object(cx, io, "ownerDocument", cf->docq);
+		set_property_object(cx, io, "ownerDocument", *((JSValue*)cf->docobj));
 		ds = instantiate(cx, io, "dataset", 0);
 		JS_FreeValue(cx, ds);
 
