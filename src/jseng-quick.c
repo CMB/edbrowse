@@ -1081,6 +1081,7 @@ static void connectTagObject(Tag *t, JSValue p)
 	t->jv = allocMem(sizeof(p));
 	*((JSValue*)t->jv) = p;
 	t->jslink = true;
+	debugPrint(6, "connect %d %s", t->seqno, t->info->name);
 // Below a frame, t could be a manufactured document for the new window.
 // We don't want to set eb$seqno in this case.
 	if(t->action != TAGACT_DOC) {
@@ -1097,6 +1098,7 @@ void disconnectTagObject(Tag *t)
 	free(t->jv);
 	t->jv = 0;
 	t->jslink = false;
+	debugPrint(6, "disconnect %d %s", t->seqno, t->info->name);
 }
 
 // this is for frame expansion
