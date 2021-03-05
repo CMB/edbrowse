@@ -1113,8 +1113,8 @@ static Tag *tagFromObject(JSValueConst v)
 	int i;
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
-	if(!v) {
-		debugPrint(1, "tagFromObject(null)");
+	if(!JS_IsObject(v)) {
+		debugPrint(1, "tagFromObject(nothing)");
 		return 0;
 	}
 	for (i = 0; i < cw->numTags; ++i) {
@@ -1759,13 +1759,13 @@ static void domSetsLinkage1(char type,
 JSValueConst p_j, const char *p_name,
 JSValueConst a_j, const char *a_name)
 {
-domSetsLinkage(type, p_j, p_name, a_j, a_name, 0, emptyString);
+domSetsLinkage(type, p_j, p_name, a_j, a_name, JS_UNDEFINED, emptyString);
 }
 
 static void domSetsLinkage2(char type,
 JSValueConst p_j, const char *p_name)
 {
-domSetsLinkage(type, p_j, p_name, 0, emptyString, 0, emptyString);
+domSetsLinkage(type, p_j, p_name, JS_UNDEFINED, emptyString, JS_UNDEFINED, emptyString);
 }
 
 static JSValue nat_log_element(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
