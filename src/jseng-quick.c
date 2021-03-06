@@ -1325,6 +1325,7 @@ const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 static JSRuntime *jsrt;
 static bool js_running;
+static JSContext *mwc; // master window context
 
 static int js_main(void)
 {
@@ -1333,6 +1334,7 @@ static int js_main(void)
 		fprintf(stderr, "Cannot create javascript runtime environment\n");
 		return -1;
 	}
+	mwc = JS_NewContext(jsrt);
 	return 0;
 }
 
@@ -2756,6 +2758,8 @@ static void createJSContext_0(Frame *f)
 	grab(d);
 	JS_DefinePropertyValueStr(cx, g, "document", JS_DupValue(cx, d),
 	JS_PROP_ENUMERABLE);
+// link to the master window
+	JS_DefinePropertyValueStr(cx, g, "mw$", JS_GetGlobalObject(mwc), 0);
 
 // bind native functions here
     JS_DefinePropertyValueStr(cx, g, "eb$newLocation",
@@ -2948,9 +2952,8 @@ static void setup_window_2(void)
  * OS, configurations, etc. */
 	jsRunScriptWin(startWindowJS, "StartWindow", 1);
 // deminimization debugging is large and slow to parse,
-// only pull it in the first window.
-	if(cf->gsn == 1)
-		jsRunScriptWin(thirdJS, "Third", 1);
+// thus it goes in the master window, once, and shared by all windows.
+	jsRunScriptWin(thirdJS, "Third", 1);
 
 	nav = get_property_object(cx, w, "navigator");
 	if (JS_IsUndefined(nav))
@@ -3663,6 +3666,7 @@ void jsUnroot(void)
 void jsClose(void)
 {
 	if(js_running) {
+		JS_FreeContext(mwc);
 		grabover();
 		JS_FreeRuntime(jsrt);
 	}

@@ -285,6 +285,8 @@ dom$ = {}
 
 // legacy, the third party deminimization stuff is in mw$
 // this is not folded in for the distributed version
+// Some engines create this object in C, so it can be shared.
+if(!window.mw$)
 mw$ = {compiled: false};
 
 // The web console, one argument, print based on debugLevel.
