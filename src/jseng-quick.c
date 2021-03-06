@@ -17,13 +17,119 @@ along with the GPL, general public license, for edbrowse.
 #include <quickjs/quickjs-libc.h>
 
 // to track down memory leaks
+#define LEAK
 #ifdef LEAK
-#define grab(p) if(JS_IsObject(p) || JS_IsString(p)) printf("%p<%d\n", JS_VALUE_GET_OBJ(p), __LINE__)
-#define release(p) if(JS_IsObject(p) || JS_IsString(p)) printf("%p>%d\n", JS_VALUE_GET_OBJ(p), __LINE__)
+// the quick js pointer
+struct qjp { struct qjp *next; void *ptr; short count; short lineno; };
+typedef struct qjp QJP;
+static QJP *qbase;
+
+static void grab2(JSValueConst v, int lineno)
+{
+	QJP *s, *s2 = 0;
+	void *p;
+	if(!JS_IsObject(v))
+		return;
+	p = JS_VALUE_GET_OBJ(v);
+	debugPrint(6, "%p<%d", p, lineno);
+// this isn't efficient at all, but probably won't be in the production system
+	for(s=qbase; s; s=s->next) {
+		if(s->ptr == p && s->lineno == lineno) {
+			++s->count;
+			return;
+		}
+		s2 = s;
+	}
+	s = (QJP*) allocMem(sizeof(QJP));
+	s->count = 1, s->ptr = p, s->next = 0, s->lineno = lineno;
+	if(s2)
+		s2->next = s;
+	else
+		qbase = s;
+}
+
+static void trackPointer(void *p)
+{
+	QJP *s;
+	for(s = qbase; s; s = s->next)
+		if(!p || s->ptr == p) {
+			char mult[8];
+			int z = s->count;
+			char c = (z > 0 ? '<' : '>');
+			if(z < 0)
+				z = -z;
+			mult[0] = 0;
+			if(z > 1)
+				sprintf(mult, "*%d", z);
+			debugPrint(3, "%p%c%d%s", s->ptr, c, s->lineno, mult);
+		}
+}
+
+static void release2(JSValueConst v, int lineno)
+{
+	QJP *s, *s2 = 0, *s3;
+	int n = 0;
+	void *p;
+	if(!JS_IsObject(v))
+		return;
+	p = JS_VALUE_GET_OBJ(v);
+	debugPrint(6, "%p>%d", p, lineno);
+	for(s=qbase; s; s=s->next) {
+		if(s->ptr == p && s->lineno == lineno) {
+			--s->count;
+			return;
+		}
+		if(p == s->ptr)
+			n += s->count;
+		s2 = s;
+	}
+	s = (QJP*) allocMem(sizeof(QJP));
+	s->count = -1, s->ptr = p, s->next = 0, s->lineno = lineno;
+	if(s2)
+		s2->next = s;
+	else
+		qbase = s;
+
+	if(!n) {
+		  debugPrint(1, "quick js pointer underflow, edbrowse is probably going to abort.");
+		trackPointer(p);
+	}
+
+	if(n != 1)
+		return;
+
+// this balances the calls to this pointer, clear them out
+	s2 = 0;
+	for(s = qbase; s; s = s3) {
+		s3 = s->next;
+		if(s->ptr == p) {
+			if(s2)
+				s2->next = s3;
+			else
+				qbase = s3;
+			free(s);
+			continue;
+		}
+		s2 = s;
+	}
+}
+
+static void grabover(void)
+{
+	if(qbase) {
+		  debugPrint(1, "quick js pointer overflow, edbrowse is probably going to abort.");
+		trackPointer(0);
+	}
+}
+
+#define grab(v) grab2(v, __LINE__)
+#define release(v) release2(v, __LINE__)
 #else
-#define grab(p)
-#define release(p)
+#define grab(v)
+#define release(v)
+#define grabover()
 #endif
+
 #define JS_Release(c, v) release(v); JS_FreeValue(c, v)
 
 static void processError(JSContext * cx);
@@ -1150,6 +1256,9 @@ void reconnectTagObject(Tag *t)
 {
 	JSValue cdo;	// contentDocument object
 	cdo = JS_DupValue(cf->cx, *((JSValue*)cf->docobj));
+// this duplication represents a regrab on the document object.
+// It will be freed when the frame is freed, and when the document tag is disconnected.
+	grab(cdo);
 	disconnectTagObject(t);
 	connectTagObject(t, cdo);
 }
@@ -1639,6 +1748,8 @@ jsInterruptCheck(cx);
 		if (parent) {
 			debugPrint(4, "linkage, %s %d created",
 				   p_name, parent->seqno);
+// creating the new tag, with t->jv, represents a regrab
+			grab(p_j);
 			if (parent->action == TAGACT_INPUT) {
 // we need to establish the getter and setter for value
 				set_property_string(parent->f0->cx,
@@ -1836,6 +1947,8 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 {
 	JSValue to;		// timer object
 	JSValue fo;		// function object
+// fo is handled differently, I don't grab and release as there will
+// be just one at the end, and it will become a timer property.
 	JSValue g;		// global object
 	bool cc_error = false;
 	int32_t n = 1000;		// default number of milliseconds
@@ -1875,19 +1988,18 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 		l[0] = argv[0];
 		l[1] = g;
 		fo = JS_Invoke(cx, g, a, 2, l);
-		grab(fo);
 		JS_FreeAtom(cx, a);
 		JS_Release(cx, g);
 		if (JS_IsException(fo)) {
 			processError(cx);
 			cc_error = true;
-			JS_Release(cx, fo);
+			JS_FreeValue(cx, fo);
 			fo = JS_NewCFunction(cx, nat_void, "void", 0);
 		}
 		if (!JS_IsFunction(cx, fo)) {
 			debugPrint(3, "compiled string '%s' does not produce a function", body);
 			cc_error = true;
-			JS_Release(cx, fo);
+			JS_FreeValue(cx, fo);
 			fo = JS_NewCFunction(cx, nat_void, "void", 0);
 		}
 // Now looks like a function object, just like the previous case.
@@ -1929,14 +2041,13 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	to = instantiate(cx, g, fpn, "Timer");
 	if (JS_IsException(to)) {
 		processError(cx);
-		JS_Release(cx, fo);
+		JS_FreeValue(cx, fo);
 		goto done;
 	}
 // classs is overloaded with milliseconds, for debugging
 	JS_SetPropertyStr(cx, to, "class", JS_NewInt32(cx, n));
 // function is contained in an ontimer handler
 // don't free fo after this line
-	release(fo);
 	JS_SetPropertyStr(cx, to, "ontimer", fo);
 	JS_SetPropertyStr(cx, to, "backlink", JS_NewAtomString(cx, fpn));
 	JS_SetPropertyStr(cx, to, "tsn", JS_NewInt32(cx, ++timer_sn));
@@ -3551,6 +3662,8 @@ void jsUnroot(void)
 
 void jsClose(void)
 {
-	if(js_running)
+	if(js_running) {
+		grabover();
 		JS_FreeRuntime(jsrt);
+	}
 }
