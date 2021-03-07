@@ -198,10 +198,10 @@ static char *get_property_string(JSContext *cx, JSValueConst parent, const char 
 	grab(v);
 	if (proptype != EJ_PROP_NONE) {
 		s = JS_ToCString(cx, v);
-		if (!s)
-			s = emptyString;
 		s0 = cloneString(s);
 		JS_FreeCString(cx, s);
+		if (!s0)
+			s0 = emptyString;
 	}
 	JS_Release(cx, v);
 	return s0;
@@ -998,6 +998,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 			processError(cx);
 		JS_Release(cx, r);
 	}
+	JS_FreeCString(cx, s);
 	jsSourceFile = NULL;
 	delete_property(cx, *((JSValue*)t->f0->docobj), "currentScript");
 // onload handler? Should this run even if the script fails?
@@ -1933,6 +1934,7 @@ static JSValue nat_log_element(JSContext * cx, JSValueConst this, int argc, JSVa
 	set_property_string(cx, newobj, "innerHTML", emptyString);
 // pass the newly created node over to edbrowse
 	domSetsLinkage2('c', newobj, tagname);
+	JS_FreeCString(cx, tagname);
 	debugPrint(5, "log out");
 	return JS_UNDEFINED;
 }
@@ -2568,11 +2570,10 @@ static JSValue nat_setcook(JSContext * cx, JSValueConst this, int argc, JSValueC
 		const char *s = strchr(newcook, '=');
 		if(s && s > newcook) {
 			JSValue v = JS_GetPropertyStr(cx, *((JSValue*)cf->winobj), "eb$url");
-			grab(v);
 			const char *u = JS_ToCString(cx, v);
 			receiveCookie(u, newcook);
 			JS_FreeCString(cx, u);
-			JS_Release(cx, v);
+			JS_FreeValue(cx, v);
 		}
 	}
 	JS_FreeCString(cx, newcook);
