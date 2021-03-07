@@ -130,7 +130,7 @@ static void grabover(void)
 #define grabover()
 #endif
 
-#define JS_Release(c, v) release(v); JS_FreeValue(c, v)
+#define JS_Release(c, v) release(v),JS_FreeValue(c, v)
 
 static void processError(JSContext * cx);
 static void uptrace(JSContext * cx, JSValueConst node);
@@ -628,6 +628,7 @@ void delete_property_doc(const Frame *f, const char *name)
 
 static JSValue instantiate_array(JSContext *cx, JSValueConst parent, const char *name)
 {
+	debugPrint(5, "new Array");
 	JSValue a = JS_NewArray(cx);
 	grab(a);
 	set_property_object(cx, parent, name, a);
@@ -639,9 +640,11 @@ static JSValue instantiate(JSContext *cx, JSValueConst parent, const char *name,
 {
 	JSValue o; // the new object
 	if (!classname) {
+		debugPrint(5, "new Object");
 		o = JS_NewObject(cx);
 		grab(o);
 	} else {
+		debugPrint(5, "new %s", classname);
 		JSValue g= JS_GetGlobalObject(cx);
 		JSValue v, l[1];
 		v = JS_GetPropertyStr(cx, g, classname);
@@ -675,8 +678,10 @@ static JSValue instantiate_array_element(JSContext *cx, JSValueConst parent, int
 	JSValue o; // the new object
 	if (!classname) {
 		o = JS_NewObject(cx);
+		debugPrint(5, "new Object for %d", idx);
 		grab(o);
 	} else {
+		debugPrint(5, "new %s for %d", classname, idx);
 		JSValue g = JS_GetGlobalObject(cx);
 		JSValue v, l[1];
 		v = JS_GetPropertyStr(cx, g, classname);
@@ -1187,6 +1192,8 @@ static void uptrace(JSContext * cx, JSValueConst node)
 			JS_Release(cx, node);
 		first = false;
 		pntype = top_proptype(cx, pn);
+		if(pntype == EJ_PROP_NONE)
+			break;
 		if(pntype == EJ_PROP_NULL) {
 			debugPrint(3, "null");
 			JS_Release(cx, pn);
