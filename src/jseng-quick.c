@@ -69,6 +69,7 @@ static void release2(JSValueConst v, int lineno)
 {
 	QJP *s, *s2 = 0, *s3;
 	int n = 0;
+	bool adjusted = false;
 	void *p;
 	if(!JS_IsObject(v))
 		return;
@@ -77,28 +78,34 @@ static void release2(JSValueConst v, int lineno)
 	for(s=qbase; s; s=s->next) {
 		if(s->ptr == p && s->lineno == lineno) {
 			--s->count;
-			return;
+			adjusted = true;
 		}
 		if(p == s->ptr)
 			n += s->count;
 		s2 = s;
 	}
+
+	if(adjusted)
+		goto check_n;
+
 	s = (QJP*) allocMem(sizeof(QJP));
 	s->count = -1, s->ptr = p, s->next = 0, s->lineno = lineno;
+	--n;
 	if(s2)
 		s2->next = s;
 	else
 		qbase = s;
 
-	if(!n) {
+check_n:
+	if(n < 0) {
 		  debugPrint(1, "quick js pointer underflow, edbrowse is probably going to abort.");
 		trackPointer(p);
 	}
 
-	if(n != 1)
+if(n)
 		return;
 
-// this balances the calls to this pointer, clear them out
+// this release balances the calls to this pointer, clear them out
 	s2 = 0;
 	for(s = qbase; s; s = s3) {
 		s3 = s->next;

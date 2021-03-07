@@ -2080,8 +2080,8 @@ frames[1].contentDocument;
 // Acid expects each test to pass in 30ms, edbrowse can take longer,
 // much longer if db3 is set,
 // and the "slow" error messages are just annoying.
-// This line use to say 33 ms, now 300.
-          } else if (elapsedTest > 300) { // 30fps
+// This line use to say 33 ms, now 400.
+          } else if (elapsedTest > 400) { // 30fps
             errors += 1;
             log += "Test " + zeroPaddedIndex + " passed, but took " + elapsedTest + "ms (less than 30fps)\n";
           }
