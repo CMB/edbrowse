@@ -2429,8 +2429,11 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 		t->inxhr = true;
 		t->f0 = cf;
 		connectTagObject(t, JS_DupValue(cx, this));
+		grab(this);
 // This routine will return, and javascript might stop altogether; do we need
 // to protect this object from garbage collection?
+// I don't think so, since t->jv is holding it, but it's legacy code,
+// and other engines don't work that way, so I'll leave it be for now.
 		JSValue g = JS_GetGlobalObject(cx);
 		set_property_object(cx, g, fpn, this);
 		set_property_string(cx, this, "backlink", fpn);
