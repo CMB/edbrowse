@@ -844,7 +844,7 @@ Object.defineProperty(Validity.prototype, "valid", {
 get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
-z$Element = function() { this.validity = new Validity, this.validity.owner = this};
+Element = z$Element = function() { this.validity = new Validity, this.validity.owner = this};
 z$Element.prototype = new HTMLElement;
 z$Element.prototype.dom$class = "Element";
 z$Element.prototype.selectionStart = 0;
