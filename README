@@ -1,5 +1,5 @@
 edbrowse, a line oriented editor browser.
-Written and maintained by Chris Brannon and Karl Dahlke.
+Written and maintained by Karl Dahlke and others.
 See our home page edbrowse.org for current releases and contact information.
 
 See COPYING for licensing agreements.
@@ -17,12 +17,12 @@ Use this program at your own risk.
 
 ------------------------------------------------------------
 
-Netscape and Explorer are graphical browsers.
+Chrome and Explorer are graphical browsers.
 Lynx and Links are screen browsers.
 This is a command line browser, the only one of its kind.
 The user's guide can be found as doc/usersguide.html in this package,
 or online at http://edbrowse.org/usersguide.html.
-The online guide corresponds to the current release.
+The online guide corresponds to the latest stable release.
 Of course this reasoning is a bit circular.
 You need to use a browser to read the documentation,
 which describes how to use the browser.
@@ -52,7 +52,6 @@ the search/substitute functions in the editor.
 Once you've experienced the power of perl regexp, you'll never
 go back to ed.  So I use the perl-compatible regular expression
 library, /lib/libpcre.so.0, available on most Linux systems.
-
 If you don't have this file, check your installation disks.
 the pcre and pcre-devel packages might be there, just not installed.
 You need version 8.10 or higher.
@@ -76,7 +75,7 @@ Cannot communicate securely with peer: no common encryption algorithm(s).
 You can even see this from the command line.
 	curl https://weloveanimals.me
 You'll either get the communication error or not.
-This happens if openssl is too old
+This happens if openssl is too old,
 or just doesn't support the ciphers that the website expects.
 This is beyond edbrowse, and beyond curl; you have to upgrade openssl.
 
@@ -89,7 +88,7 @@ or follow the instructions at http://www.cmake.org/download/
 
 Once you have cmake, follow the latest tidy-html5 code from:
 git clone git://github.com/htacg/tidy-html5
-cd build/cmake
+cd tidy-html5/build/cmake
 cmake ../..
 make
 make install # as root
@@ -101,8 +100,10 @@ Note that the latest tagged version is 5.1.25, but 5.1.26 and later
 have some fixes for known issues that have been reported upstream.
 
 duktape:
-Finally, you need the Duktape javascript engine and header file.
-If this is not part of your distribution, download from github, compile, and install.
+We used this javascript engine for several years, but we don't use it any more.
+If you want to be able to build edbrowseduk, as a separate target,
+then you need the duktape library. Distributors can skip this step.
+If duktape is not part of your distribution, download from github, compile, and install.
 
 git clone https://github.com/svaarala/duktape.git
 cd duktape
@@ -113,8 +114,24 @@ cd dist/source
 make -f Makefile.sharedlibrary
 make -f Makefile.sharedlibrary install (as root)
 make -f Makefile.cmdline
+#  if you want the duktape shell
 ln -s `pwd`/duk /usr/local/bin/duk (as root)
 you may have to run ldconfig to access this new library.
+
+quickjs:
+This is the javascript engine for edbrowse.
+It is probably not packaged.
+git clone https://github.com/bellard/quickjs
+cd quickjs
+make
+make install  # as root
+
+This builds and installs a static library- libquickjs.a.
+There is no shared library out of the box.
+If you want to distribute a separate package for quickjs, you may wish to
+edit the makefile and build a shared library instead.
+By default, edbrowse links to the static library, and thus the
+quickjs code is part of edbrowse, and a quickjs package is not necessary.
 
 unixODBC:
 If you want database access, you need unixODBC and unixODBC-devel.
@@ -149,7 +166,7 @@ cmake ..
 make
 Be careful here.  Apple distributes an ancient version of tidy-html.
 You're going to have to take steps to insure that they do not collide.
-Perhaps your best bet is to get edbrowse from MacPorts.
+Perhaps your best bet is to get edbrowse from MacPorts if possible.
 
 ------------------------------------------------------------
 
@@ -191,7 +208,8 @@ and http redirection.
 5: messages to and from javascript, url resolution, tidy html nodes.
    Tree of nodes internal to edbrowse.
 6: show javascript to be executed
-7: reformatted regular expressions, breakline chunks.
+7: reformatted regular expressions, breakline chunks,
+JSValues allocated and freed.
 8: text lines freed, debug garbage collection
 9: not used
 
@@ -221,11 +239,17 @@ Run the 2 letter commands, such as qt to quit.
 src/stringfile.c:
 Helper functions to manage memory, strings, files, directories.
 
-src/url.c:
+src/isup.c:
+Internet support routines.
 Split a url into its components.
 Decide if it's a proxy url.
 Resolve relative url into absolute url
 based on the location of the current web page.
+Send and receive cookies.  Maintain the cookie jar.
+Maintain a cache of http files.
+Remember user and password for web pages that require authentication.
+Only the basic method is implemented at this time.
+
 
 src/format.c:
 Arrange text into lines and paragraphs.
@@ -245,16 +269,6 @@ back into html tags if that makes sense.
 Submit/reset forms.
 Render the tree of html nodes into a text buffer.
 Rerender the tree after js has run, and report any changes to the user.
-
-src/cookies.c:
-Send and receive cookies.  Maintain the cookie jar.
-
-src/cache.c:
-Maintain a cache of http files.
-
-src/auth.c:
-Remember user and password for web pages that require authentication.
-Only the basic method is implemented at this time.
 
 src/sendmail.c:
 Send mail (smtp or smtps).  Encode attachments.
@@ -291,19 +305,19 @@ src/decorate.c:
 Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
 
-src/ebjs.c:
-Interface between edbrowse and the javascript engine.
-Functions to manipulate the js objects,
-which then return the results back to edbrowse.
-
 src/jseng-duk.c:
 The javascript engine built around the duktape js library.
 Manage all the js objects corresponding to the web page in edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
-It might be possible, for instance, to build jseng-v8.cpp, based upon v8 etc.
-Earlier versions of edbrowse used jseng-moz.cpp, around the Mozilla Spider Monkey javascript engine.
-We may yet go back to that; duktape is lagging behind.
+
+src/jseng-quick.c:
+The javascript engine built around the quick js library.
+Manage all the js objects corresponding to the web page in edbrowse.
+
+src/jseng-moz.cpp:
+The javascript engine built around the mozilla js library.
+Manage all the js objects corresponding to the web page in edbrowse.
 
 src/js_hello*
 Various hello world files to exercise various javascript engines.
@@ -316,24 +330,31 @@ It is converted into a const string in src/startwindow.c,
 thus src/startwindow.c is not a source file.
 As you write functions to support DOM,
 your first preference is to write them in src/startwindow.js.
-Failing this, write them in C, using the interface in src/ebjs.c.
-Failing this, and as a last resort, write them as native code around the js engine.
+Failing this, write them in C, using the API presented by jseng-quick.c.
+Failing this, and as a last resort, write them as native code within the js engine.
+Obviously this last approach is not engine portable.
+
+src/third.js:
+Third party open source javascript routines that are used for debugging.
+These are snapshots; you will need to update third.js, i.e. grab a new
+snapshot, as this software evolves.
+Distributers don't have to worry about this one,
+it isn't compiled in unless $EBDEMIN is set to 1.
+
+src/endwindow.js:
+This is the close of startwindow.js, and it stands in if third.js is not used.
 
 src/html-tidy.c:
 Use tidy5 to parse html and return a tree of nodes.
 This is another form of encapsulation.
 We could, in the future, write html-foo.c, having the same interface,
-if we prefer parser foo instead.
-
-src/third.js:
-Third party open source javascript routines that are useful to edbrowse.
-These are snapshots; you will need to update third.js, i.e. grab a new
-snapshot, as this software evolves.
-It's a bit of overhead, but we're doing it, so distributors don't have to.
+if we prefer html parser foo instead.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.
 It exercises some of the javascript DOM interactions.
+It also presents frames and hyperlinks and forms and input fields,
+so you can play around.
 
 src/acid3:
 A snapshot of http://acid3.acidtests.org, with modifications,
@@ -357,6 +378,9 @@ src/dbinfx.ec:
 Connect edbrowse directly to Informix.
 Other connectors could be built, e.g. Oracle,
 but it's probably easier just to go through odbc.
+
+src/dbstubs.c:
+Stubs for database functions, if you build edbrowse without database access.
 
 ------------------------------------------------------------
 

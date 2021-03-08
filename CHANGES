@@ -1,12 +1,15 @@
 Here are some changes introduced by recent versions of edbrowse.
 
-3.7.x
+3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross copartment access, as in frames,
-so this is entirely in stall mode.
+so this got no where.
+I'll leave jseng-moz.cpp around, if someone else wants to continue this work.
+
+Switch from duktape js to quick js.
 
 Extend show columns (shc) command to html tables in browse mode.
-This was originally a database command.
+This was originally a database command, and still is.
 
 unfold row (ur) command for a row in a table in html.
 This should be extended to database mode, it's actually more valuable there,

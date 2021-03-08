@@ -1525,6 +1525,9 @@ static JSValue nat_prompt(JSContext * cx, JSValueConst this, int argc, JSValueCo
 		if (s > inbuf && s[-1] == '\n')
 			*--s = 0;
 		retval = inbuf[0] ? inbuf : answer;
+// no answer and no input could leave retval null
+		if(!retval)
+			retval = emptyString;
 	}
 	v = JS_NewAtomString(cx, retval);
 	if(argc > 0)

@@ -8,9 +8,14 @@ provided this copyright notice is included.
 This program uses libcurl.so for http/ftp access.
 This is released under the Mozilla public license (mpl).
 I didn't change any of the source; I merely link to these libraries.
-However, if you wish to release a version of edbrowse with these shared
+If you wish to release a version of edbrowse with these shared
 libraries included,
 or a statically linked executable, you will need to specify both gpl and mpl.
 
-Some aspects of the DOM are third party software, released under the MIT public license.
+Some aspects of the DOM, e.g. Blob,
+are third party software, released under the MIT public license.
 See startwindow.js for this code.
+Also, we employ the quick js engine, which is released under the MIT public license.
+
+In summary: GPL + MIT public license,
++ Mozilla public license if edbrowse is packaged with curl.
