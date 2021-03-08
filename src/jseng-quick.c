@@ -2399,7 +2399,7 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	const char *incoming_payload = JS_ToCString(cx, argv[3]);
 	char *outgoing_xhrheaders = NULL;
 	char *outgoing_xhrbody = NULL;
-	char *a, methchar = '?';
+	char *a;
 	bool rc, async;
 	char *s;
 	int s_l;
@@ -2418,11 +2418,11 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	if (!cw->browseMode)
 		async = false;
 
-	if (incoming_payload && *incoming_payload) {
-		if (incoming_method && stringEqualCI(incoming_method, "post"))
-			methchar = '\1';
-		if (asprintf(&a, "%s%c%s",
-			     incoming_url, methchar, incoming_payload) < 0)
+	if(JS_IsString(argv[1]) && JS_IsString(argv[3]) &&
+	incoming_payload && *incoming_payload &&
+		incoming_method && stringEqualCI(incoming_method, "post")) {
+		if (asprintf(&a, "%s\1%s",
+			     incoming_url, incoming_payload) < 0)
 			i_printfExit(MSG_MemAllocError, 50);
 	} else {
 	a = cloneString(incoming_url);
@@ -2458,7 +2458,9 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 		t->href = (char*)incoming_url;
 // t now has responsibility for incoming_url
 // overloading the innerHTML field
-		t->innerHTML = cloneString(incoming_headers);
+		t->innerHTML = emptyString;
+		if(JS_IsString(argv[2]))
+			t->innerHTML = cloneString(incoming_headers);
 		JS_FreeCString(cx, incoming_headers);
 		if (cw->browseMode)
 			scriptSetsTimeout(t);
