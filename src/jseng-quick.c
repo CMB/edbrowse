@@ -139,6 +139,9 @@ static void grabover(void)
 
 #define JS_Release(c, v) release(v),JS_FreeValue(c, v)
 
+	extern const char startWindowJS[];
+	extern const char thirdJS[];
+
 static void processError(JSContext * cx);
 static void uptrace(JSContext * cx, JSValueConst node);
 static void jsInterruptCheck(JSContext * cx);
@@ -1380,6 +1383,11 @@ static int js_main(void)
 		fprintf(stderr, "Cannot create javascript runtime environment\n");
 		return -1;
 	}
+// default stack size is 256K, which is fine for normal use.
+// If we are deminizing code, the deminimizer is written in javascript,
+// and it eats up the stack.
+	if(strlen(thirdJS) > 50000)
+		JS_SetMaxStackSize(jsrt, 2048*1024);
 	mwc = JS_NewContext(jsrt);
 	return 0;
 }
@@ -2987,8 +2995,6 @@ static void setup_window_2(void)
 	struct utsname ubuf;
 	int i;
 	char save_c;
-	extern const char startWindowJS[];
-	extern const char thirdJS[];
 
 	set_property_object(cx, w, "window", w);
 
