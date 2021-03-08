@@ -3453,7 +3453,7 @@ headerstring+=v1+': '+v2+'\n';
 }
 if(headerstring) alert3("xhr headers " + headerstring.replace(/\n$/,''));
 var urlcopy = this.url;
-if(urlcopy.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
+if(urlcopy.match(/[*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
 alert3("xhr url does not look encoded");
 // but assume it was anyways, cause it should be
 //urlcopy = encodeURI(urlcopy);
