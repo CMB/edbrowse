@@ -1226,9 +1226,47 @@ I don't know how to do this, so for now, just making a standard call.
 
 static void processError(JSContext * cx)
 {
-	if (debugLevel >= 3) {
-		js_std_dump_error(cx);
+	JSValue exc;
+	const char *msg, *stack = 0;
+	JSValue sv; // stack value
+	int lineno = 0;
+	if (debugLevel < 3)
+		return;
+	exc = JS_GetException(cx);
+	if(!JS_IsObject(exc))
+		return; // this should never happen
+	msg = JS_ToCString(cx, exc); // this runs ext.toString()
+	sv = JS_GetPropertyStr(cx, exc, "stack");
+	if(JS_IsString(sv))
+		stack = JS_ToCString(cx, sv);
+	if(stack && jsSourceFile) {
+// pull line number out of the stack trace; this assumes a particular format.
+// First line is first stack frame, and should be @ function (file:line)
+// But what if file contains : or other punctuations?
+// I'll make a modest effort to guard against that.
+		const char *p = strchr(stack, '\n');
+		if(p) {
+			if(p > stack && p[-1] == ')') --p;
+			while(p > stack && isdigit(p[-1])) --p;
+			if(p > stack && p[-1] == ':') --p;
+			if(*p == ':' && isdigit(p[1]))
+				lineno = atoi(p+1);
+			if(lineno < 0) lineno = 0;
+		}
 	}
+// in the duktape version, the line number was off by 1, so I adjusted it;
+// in quick, the line number is accurate, so I have to unadjust it.
+	if(lineno)
+		debugPrint(3, "%s line %d: %s", jsSourceFile, lineno + jsLineno - 1, msg);
+	else
+		debugPrint(3, "%s", msg);
+	if(stack)
+		debugPrint(4, "%s", stack);
+	if(stack)
+		JS_FreeCString(cx, stack);
+	JS_FreeCString(cx, msg);
+	JS_FreeValue(cx, sv);
+	JS_FreeValue(cx, exc);
 }
 
 // This function takes over the JSValue, the caller should not free it.
