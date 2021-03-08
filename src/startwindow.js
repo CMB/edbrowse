@@ -3454,8 +3454,9 @@ headerstring+=v1+': '+v2+'\n';
 if(headerstring) alert3("xhr headers " + headerstring.replace(/\n$/,''));
 var urlcopy = this.url;
 if(urlcopy.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
-alert3("xhr url was not encoded");
-urlcopy = encodeURI(urlcopy);
+alert3("xhr url does not look encoded");
+// but assume it was anyways, cause it should be
+//urlcopy = encodeURI(urlcopy);
 }
 if(data) {
 alert3("xhr data " + data);
@@ -3720,17 +3721,15 @@ sessionStorage.removeItem(sessionStorage.attributes[l-1].name);
 }
 
 /*********************************************************************
-I don't need to do any of these Array methods for mozjs or v8,
+I don't need to do any of these Array methods for mozjs or v8 or quick,
 because these methods are inbuilt.
-The only one they don't have is item, and that isn't documented anywhere,
-so not sure where I picked that one up from.
-I'm just going to leave them all out if not duktape.
+The only one they don't have is item, so I better leave that one in.
 *********************************************************************/
 
-if(window.Duktape) {
 Array.prototype.item = function(x) { return this[x] };
 Object.defineProperty(Array.prototype, "item", { enumerable: false});
 
+if(window.Duktape) {
 Array.prototype.includes = function(x, start) {
 if(typeof start != "number") start = 0;
 var l = this.length;
