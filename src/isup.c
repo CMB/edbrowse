@@ -1449,7 +1449,7 @@ static CURLcode cookieForLibcurl(const struct cookie *c)
 
 /* Should this server really specify this domain in a cookie? */
 /* Domain must be the trailing substring of server. */
-bool domainSecurityCheck(const char *server, const char *domain)
+static bool domainSecurityCheck(const char *server, const char *domain)
 {
 	int i, dl, nd;
 	dl = strlen(domain);
@@ -1477,7 +1477,7 @@ bool domainSecurityCheck(const char *server, const char *domain)
 			if (!--nd)
 				return true;
 	return false;
-}				/* domainSecurityCheck */
+}
 
 /* Let's jump right into it - parse a cookie, as received from a website. */
 bool receiveCookie(const char *url, const char *str)

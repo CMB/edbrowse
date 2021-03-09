@@ -345,7 +345,6 @@ char *decodePostData(const char *data, const char *name, int seqno) ;
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p) ;
 bool patternMatchURL(const char *url, const char *pattern);
 bool frameSecurityFile(const char *thisfile);
-bool domainSecurityCheck(const char *server, const char *domain) ;
 bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;
 void sendCookies(char **s, int *l, const char *url, bool issecure) ;
