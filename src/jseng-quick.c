@@ -1257,16 +1257,20 @@ static void processError(JSContext * cx)
 			if(lineno < 0) lineno = 0;
 		}
 	}
+	if(!jsSourceFile) // no file, just the message
+		debugPrint(3, "%s", msg);
+	else if(lineno)
 // in the duktape version, the line number was off by 1, so I adjusted it;
 // in quick, the line number is accurate, so I have to unadjust it.
-	if(lineno)
 		debugPrint(3, "%s line %d: %s", jsSourceFile, lineno + jsLineno - 1, msg);
+	else if(jsLineno > 1)
+		debugPrint(3, "%s near line %d: %s", jsSourceFile, lineno + jsLineno - 1, msg);
 	else
-		debugPrint(3, "%s", msg);
-	if(stack)
+		debugPrint(3, "%s: %s", jsSourceFile, msg);
+	if(stack) {
 		debugPrint(4, "%s", stack);
-	if(stack)
 		JS_FreeCString(cx, stack);
+	}
 	JS_FreeCString(cx, msg);
 	JS_FreeValue(cx, sv);
 	JS_FreeValue(cx, exc);
