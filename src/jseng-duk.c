@@ -564,6 +564,8 @@ static duk_ret_t getter_cd(duk_context * cx)
 		forceFrameExpand(t);
 	if(!t->f1 || !t->f1->docobj) // should not happen
 		goto fail;
+	if(crossOrigin(t->f0->hbase, t->f1->hbase))
+		goto fail;
 	duk_push_heapptr(cx, t->f1->docobj);
 	return 1;
 fail:
@@ -585,6 +587,8 @@ static duk_ret_t getter_cw(duk_context * cx)
 	if(!t->f1)
 		forceFrameExpand(t);
 	if(!t->f1 || !t->f1->winobj) // should not happen
+		goto fail;
+	if(crossOrigin(t->f0->hbase, t->f1->hbase))
 		goto fail;
 	duk_push_heapptr(cx, t->f1->winobj);
 	return 1;

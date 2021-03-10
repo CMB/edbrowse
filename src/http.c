@@ -2776,7 +2776,78 @@ If a line number, it comes from a user command, you asked to expand the frame.
 If the tag is not null, it is from a getter,
 javascript is trying to access objects within that frame,
 and now we need to expand it on demand.
+crossOrigin() checks for a violation, wherein an evil website tries
+to bring your bank or paypal or something valuable in as a frame, then dip into
+its objects to read your password or other critical data.
+Return true if there is such a violation.
+I don't know the actual criteria, I'm just guessing.
 *********************************************************************/
+
+bool crossOrigin(const char *url1, const char *url2)
+{
+	bool u1, u2;
+	const char *host1, *host2;
+
+// If the bottom url is empty then it is a blank frame, which is fine,
+// or it was some javascript code, which has been moved to another
+// variable, and that's fine.
+	if(!url2)
+		return false;
+
+// If the top url is null then it is a local file with no filename,
+// so unlikely that I'm not gonna worry about it, or it's a blank frame.
+// A blank frame pulling in internet frames below it?
+// I don't know what to make of that, so I don't trust it.
+	if(!url1) {
+		debugPrint(3, "crossorigin: blank over internet");
+		return true;
+	}
+
+	u1 = isURL(url1);
+	u2 = isURL(url2);
+// if the top is a local file, not a url, then you are starting with a base html
+// file on your home computer. You are responsible for this file.
+// You can reference other local files or urls as frames.
+	if(!u1)
+		return false;
+
+// I don't know how the top could be a url and the bottom a local file.
+// The bottom would be resolved against the top, so an attacker
+// who built a wnasty website on example.com, and then tried to access
+// your .ssh/id_rsa file through a frame would actually get
+// example.com/.ssh/id_rsa.
+// That's just another file on example.com.
+// Be that as it may, the result of such an attack would be so hideous,
+// that I'll guard against it here.
+	if(!u2) {
+		debugPrint(3, "crossorigin: internet over local");
+		return true;
+	}
+
+// they are both urls, compare the domains.
+// Neither of them should come out null, but I'll check for that.
+	if(!(host1 = getHostURL(url1))) {
+		debugPrint(3, "crossorigin: top %s unrecognized domain", url1);
+		return true;
+	}
+	host1 = cloneString(host1);
+	if(!(host2 = getHostURL(url2))) {
+		debugPrint(3, "crossorigin: bottom %s unrecognized domain", url2);
+		cnzFree(host1);
+		return true;
+	}
+
+// Compare the two domains. I'm using a routine from the cookie
+// world, assuming the criteria are the same.
+	if(!isInDomain(host1, host2)) {
+		debugPrint(3, "crossorigin: %s over %s", host1, host2);
+		cnzFree(host1);
+		return true;
+	}
+
+	cnzFree(host1);
+	return false;
+}
 
 static int frameContractLine(int ln);
 
@@ -2872,10 +2943,11 @@ int frameExpandLine(int ln, Tag *t)
 // After expansion we need to be able to expand it,
 // because there's something there, well maybe.
 		t->href = cloneString("#");
-// jssrc is the old href and now we are responsible for it
+// jssrc is the old javascript href and now we are responsible for it
 	}
 
 	save_cf = cf = t->f0;
+
 /* have to push a new frame before we read the web page */
 	for (last_f = &(cw->f0); last_f->next; last_f = last_f->next) ;
 	last_f->next = cf = allocZeroMem(sizeof(Frame));

@@ -165,6 +165,7 @@ int prompt_and_read(int prompt, char *buffer, int buffer_length, int error_messa
 int ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data, size_t size, struct i_get *g);
 int bg_jobs(bool iponly);
 CURLcode setCurlURL(CURL * h, const char *url);
+bool crossOrigin(const char *url1, const char *url2);
 bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, Tag *t);
 bool reexpandFrame(void);
@@ -347,6 +348,7 @@ bool patternMatchURL(const char *url, const char *pattern);
 bool frameSecurityFile(const char *thisfile);
 bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;
+bool isInDomain(const char *d, const char *s);
 void sendCookies(char **s, int *l, const char *url, bool issecure) ;
 void mergeCookies(void);
 void setupEdbrowseCache(void);

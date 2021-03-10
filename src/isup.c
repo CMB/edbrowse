@@ -1665,7 +1665,7 @@ void cookiesFromJar(void)
 	freeList(&cookies);
 }
 
-static bool isInDomain(const char *d, const char *s)
+bool isInDomain(const char *d, const char *s)
 {
 	int dl = strlen(d);
 	int sl = strlen(s);
