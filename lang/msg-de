@@ -44,7 +44,7 @@ keine Schlüsselwörter
 Sitzung %d\n
 SendMail Link. Schreiben Sie Ihre Email, sm zum Senden und ^ um zurückzugelangen
 Zeile %d aktualisiert\n
-h\tzeige Hilfe\nq\tbeende Programm\ns\tlese nicht weiter aus diesem Ordner\nn\tweiter mit nächster Nachricht\nd\tlösche Nachricht\nm\tverschiebe Nachricht in anderen Ordner\nv\tzeige alle\nb\tmehrfach verschieben oder löschen\nf\tverschiebe oder lösche von\n<Leer>\tlese und verwalte Email\n/\tsuche nach Wort in Betreff, Absender oder Nachricht\nl\tsetze IMAP-Abrufobergrenze
+h\tzeige Hilfe\nq\tbeende Programm\ns\tlese nicht weiter aus diesem Ordner\nn\tweiter mit nächster Nachricht\nd\tlösche Nachricht\nm\tverschiebe Nachricht in anderen Ordner\nv\tzeige alle\nb\tmehrfach verschieben oder löschen\nf\tverschiebe oder lösche von\n<Leer> oder g\tlese und verwalte Email\n/\tsuche nach Wort in Betreff, Absender oder Nachricht\nl\tsetze IMAP-Abrufobergrenze
 s Zeichenkette, Emails mit der Zeichenkette im Betreff\nf Zeichenkette, Emails mit der Zeichenkette im Absender\nb Zeichenkette, Emails mit der Zeichenkette in der Nachricht\nStandard ist Betreff wenn kein Bezeichner angegeben.
 keine Nachrichten
 Unterbrechung, tippen Sie qt zum verlassen

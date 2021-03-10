@@ -639,7 +639,7 @@ action:
 		delflag = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbfdslmnp /");
+		key = getLetter("h?qvbfdslmnp g/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -668,7 +668,7 @@ imap_done:
 			goto showmessages;
 		}
 
-		if (key == ' ') {
+		if (key == ' ' || key == 'g') {
 /* download the email from the imap server */
 			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
