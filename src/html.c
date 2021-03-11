@@ -927,6 +927,16 @@ t->lic = 0;
 		}
 	}
 
+// If a frame has an onload function, that function might need to run.
+// We don't get to wait around for on-demand expansion; we have to expand.
+// Fortunately this doesn't happen often.
+	for (t = cw->framelist; t; t = t->same) {
+		if(!t->f1 && // not expanded yet
+		!t->expf && // we haven't tried to expand it yet
+		typeof_property_t(t, "onload") == EJ_PROP_FUNCTION)
+			forceFrameExpand(t);
+	}
+
 	if (!async) {
 		if(startbrowse)
 // I think it's ok to use cf here, but let's be safe.

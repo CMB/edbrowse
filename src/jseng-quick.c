@@ -1634,7 +1634,7 @@ static void jsInterruptCheck(JSContext * cx)
 // It didn't stop the script, oh well.
 }
 
-static void forceFrameExpand(Tag *t)
+void forceFrameExpand(Tag *t)
 {
 	Frame *save_cf = cf;
 	const char *save_src = jsSourceFile;

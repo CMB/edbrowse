@@ -4,7 +4,6 @@
 <head id=boom>
 <meta content=Snoopy>
 <title>Edbrowse js regression test</title>
-<base href="http://yyy.zzz.com">
 <!-- tidy5 says this is not a valid tag any more -->
 <bgsound src=whatever.mid>
 <style>
@@ -300,8 +299,12 @@ y directory</A>
 yecht package</A>
 -->
 
+<!-- if I have an onload function, that forces the frame to expand,
+and I don't want it to expand every time, so I call it zonload.
+Take the z away if you want to test the onload feature. -->
+
 <iframe src=http://www.edbrowse.org/jsfrm.html
-onload="alert('expanding the frame dude')">
+zonload="alert('expanding the frame dude')">
 you shouldn't see this stuff
 </iframe>
 <A onclick="alert('first node ' + frames[0].contentDocument.body.firstChild.nodeName)">first node</a>

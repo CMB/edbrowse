@@ -269,6 +269,7 @@ location$2.hash$val = document.location$2.hash$val = u.hash$val;
 document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
+document.contentType = "text/html";
 
 screen = {
 height: 768, width: 1024,

@@ -1782,6 +1782,7 @@ void freeTags(struct ebWindow *w)
 	w->tags = 0;
 	w->numTags = w->allocTags = w->deadTags = 0;
 	w->inputlist = w->scriptlist = w->optlist = w->linklist = 0;
+	w->framelist = 0;
 }				/* freeTags */
 
 Tag *newTag(const Frame *f, const char *name)
@@ -1825,6 +1826,15 @@ Tag *newTag(const Frame *f, const char *name)
 			t2->same = t;
 		else
 			cw->linklist = t;
+	}
+	if (t->action == TAGACT_FRAME) {
+		for (t1 = cw->framelist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->framelist = t;
 	}
 	if (t->action == TAGACT_INPUT || t->action == TAGACT_SELECT ||
 	    t->action == TAGACT_TA) {

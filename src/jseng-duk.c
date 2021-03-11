@@ -534,7 +534,7 @@ static duk_ret_t setter_value(duk_context * cx)
 	return 0;
 }
 
-static void forceFrameExpand(Tag *t)
+void forceFrameExpand(Tag *t)
 {
 	Frame *save_cf = cf;
 	const char *save_src = jsSourceFile;

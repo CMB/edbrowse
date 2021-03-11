@@ -383,6 +383,7 @@ bool has_property_win(const Frame *f, const char *name) ;
 void set_property_object_t(const Tag *t, const char *name, const Tag *t2);
 bool run_function_bool_t(const Tag *t, const char *name);
 bool run_function_bool_win(const Frame *f, const char *name);
+void forceFrameExpand(Tag *t);
 void createJSContext(Frame *f) ;
 void freeJSContext(Frame *f) ;
 void run_ontimer(const Frame *f, const char *backlink);
