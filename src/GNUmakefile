@@ -107,7 +107,7 @@ edbrowsesm: $(EBOBJS) startwindow.o jseng-moz.o
 	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -lmozjs-$(SMV) -lstdc++ -o $@
 
 edbrowseqk: $(EBOBJS) startwindow.o jseng-quick.o
-	$(LINK.o) $^ $(LOADLIBES) $(LDLIBS) -L/usr/local/lib/quickjs -lquickjs -ldl -latomic -o $@
+	$(LINK.o) $^ $(LOADLIBES) -L/usr/local/lib/quickjs -lquickjs $(LDLIBS) -ldl -latomic -o $@
 
 #  some hello world targets, for testing and debugging
 
