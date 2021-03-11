@@ -8,3 +8,4 @@ msg-strings.c
 js_hello_duk
 js_hello_moz
 js_hello_v8
+js_hello_quick

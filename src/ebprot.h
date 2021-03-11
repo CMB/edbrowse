@@ -97,6 +97,7 @@ void jSyncup(bool fromtimer);
 void jClearSync(void);
 void htmlMetaHelper(Tag *t);
 void prepareScript(Tag *t);
+bool isRooted(const Tag *t);
 void runScriptsPending(bool startbrowse);
 void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;

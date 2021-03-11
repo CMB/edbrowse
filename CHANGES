@@ -16,6 +16,7 @@ This should be extended to database mode, it's actually more valuable there,
 since tables can be arbitrarily wide and do not wrap.
 
 Previous (p) command in imap.
+Go (g) command in imap, go to an email, same as space.
 
 3.7.7
 Fix a potential security hole, where one website can bleed into another. Worth making a release just for this.

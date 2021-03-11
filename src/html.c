@@ -741,6 +741,8 @@ that just calls eval(s.text) on a setter,
 would run all the time, whether the new script was connected or not.
 So my 5 implementation would fix one problem and create another.
 Not sure what to do about that.
+The function isRooted(t) determines whether t is rooted;
+this is needed in several places, besides running scripts.
 
 8. Scripts are run in creation order, not in tree order.
 Or maybe the order is arbitrary and not prescribed,
@@ -748,9 +750,18 @@ in which case creation order is fine.
 That is easiest, and it's what I do.
 *********************************************************************/
 
+bool isRooted(const Tag *t)
+{
+	const Tag *up;
+	for(up = t; up; up = up->parent)
+		if(up->action == TAGACT_HEAD || up->action == TAGACT_BODY)
+			return true;
+	return false;
+}
+
 void runScriptsPending(bool startbrowse)
 {
-	Tag *t, *up;
+	Tag *t;
 	char *js_file;
 	const char *a;
 	int ln;
@@ -781,28 +792,8 @@ top:
 		if (t->dead || !t->jslink || t->step >= 3)
 			continue;
 
-/*********************************************************************
-Scripts do not run unless connected to the tree; see point 7
-in the earlier comments.
-Climb up until we reach HEAD or BODY.
-If neither of these, then don't run the script, and in fact it's probably
-unsafe to prepare it.
-1. Maybe it isn't ready, which is why it isn't linked into the tree.
-Maybe script.src is still being constructed.
-We should skip it and try again later.
-2. Maybe it was just an exercise, and will never be used.
-We move into prepareScript(), and set some property of the script object.
-This trigggers garbage collection, and the object goes away.
-Our tag is marked dead in response, but we don't check for that in every step
-of preparation and execution.
-The next time we try to use this object in any way, it blows up.
-So it is best to skate past a script that is not linked into the tree.
-We skip past it here, and it isn't prepared, so it won't execute later.
-*********************************************************************/
-		for(up = t; up; up = up->parent)
-			if(up->action == TAGACT_HEAD || up->action == TAGACT_BODY)
-				break;
-		if (!up)
+// don't execute a script until it is linked into the tree.
+		if(!isRooted(t))
 			continue;
 
 		cf = t->f0;
