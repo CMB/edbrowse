@@ -2967,7 +2967,10 @@ int frameExpandLine(int ln, Tag *t)
 			free(cf);
 			last_f->next = 0;
 			cf = save_cf;
-			return 3;
+// technically this is loaded, even though could be error 404,
+// or incorect content type.
+			run_event_t(t, t->info->name, "onload");
+			return 0;
 		}
 
        /*********************************************************************

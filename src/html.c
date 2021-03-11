@@ -933,6 +933,7 @@ t->lic = 0;
 	for (t = cw->framelist; t; t = t->same) {
 		if(!t->f1 && // not expanded yet
 		!t->expf && // we haven't tried to expand it yet
+		isRooted(t) && // it's in our tree
 		typeof_property_t(t, "onload") == EJ_PROP_FUNCTION)
 			forceFrameExpand(t);
 	}
