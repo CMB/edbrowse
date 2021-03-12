@@ -1693,7 +1693,8 @@ static JSValue getter_cd(JSContext * cx, JSValueConst this, int argc, JSValueCon
 // we have to pass a copy of the document object, so we can retain the original
 	return JS_DupValue(cx, *((JSValue*)t->f1->docobj));
 fail:
-	if((ao = get_property_object(cx, *((JSValue*)t->jv), "content$document"))) {
+	ao = get_property_object(cx, *((JSValue*)t->jv), "content$document");
+	if(JS_IsObject(ao)) {
 		release(ao);
 		return ao;
 }
@@ -1717,7 +1718,8 @@ static JSValue getter_cw(JSContext * cx, JSValueConst this, int argc, JSValueCon
 // we have to pass a copy of the window object, so we can retain the original
 	return JS_DupValue(cx, *((JSValue*)t->f1->winobj));
 fail:
-	if((ao = get_property_object(cx, *((JSValue*)t->jv), "content$window"))) {
+	ao = get_property_object(cx, *((JSValue*)t->jv), "content$document");
+	if(JS_IsObject(ao)) {
 		release(ao);
 		return ao;
 }
