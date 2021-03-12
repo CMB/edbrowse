@@ -83,6 +83,7 @@ typedef void *jsobjtype;
 
 extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // line number
+extern char frameContent[];
 
 /*********************************************************************
 duktape is not threadsafe, so says the programmer's guide.

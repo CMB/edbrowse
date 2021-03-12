@@ -1374,6 +1374,11 @@ static JSValue nat_false(JSContext * cx, JSValueConst this, int argc, JSValueCon
 	return JS_FALSE;
 }
 
+static JSValue nat_array(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
+{
+	return JS_NewArray(cx);
+}
+
 const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 static JSRuntime *jsrt;
@@ -1634,14 +1639,36 @@ static void jsInterruptCheck(JSContext * cx)
 // It didn't stop the script, oh well.
 }
 
+char frameContent[60];
+
 void forceFrameExpand(Tag *t)
 {
+	if(t->expf)
+		return; // already expanded
 	Frame *save_cf = cf;
 	const char *save_src = jsSourceFile;
 	int save_lineno = jsLineno;
 	bool save_plug = pluginsOn;
+	JSValue cd2, cw2;
 	pluginsOn = false;
+	frameContent[0] = 0;
 	frameExpandLine(0, t);
+	if(!t->f1) { // didn't work
+// create some dummy objects for window and document.
+		JSContext *cx = t->f0->cx;
+		cd2 = instantiate(cx, *((JSValue*)t->jv), "content$document", 0);
+		cw2 = instantiate(cx, *((JSValue*)t->jv), "content$window", 0);
+		set_property_string(cx, cd2, "contentType", frameContent);
+// acid3 test 14 and 15 need getElementsByTagName to exist.
+		JS_SetPropertyStr(cx, cd2, "getElementsByTagName",
+		JS_NewCFunction(cx, nat_array, "tagname_stub", 0));
+		JS_Release(cx, cd2);
+		JS_Release(cx, cw2);
+// technically this is loaded, even though could be error 404,
+// or incorect content type, etc.
+// The onload function didn't run after browse; run it now.
+		run_event_t(t, t->info->name, "onload");
+	}
 	cf = save_cf;
 	jsSourceFile = save_src;
 	jsLineno = save_lineno;
@@ -1652,6 +1679,7 @@ void forceFrameExpand(Tag *t)
 static JSValue getter_cd(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	Tag *t;
+	JSValue ao; // alternate object
 	jsInterruptCheck(cx);
 	t = tagFromObject(this);
 	if(!t)
@@ -1665,12 +1693,17 @@ static JSValue getter_cd(JSContext * cx, JSValueConst this, int argc, JSValueCon
 // we have to pass a copy of the document object, so we can retain the original
 	return JS_DupValue(cx, *((JSValue*)t->f1->docobj));
 fail:
+	if((ao = get_property_object(cx, *((JSValue*)t->jv), "content$document"))) {
+		release(ao);
+		return ao;
+}
 	return JS_NULL;
 }
 
 static JSValue getter_cw(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	Tag *t;
+	JSValue ao; // alternate object
 	jsInterruptCheck(cx);
 	t = tagFromObject(this);
 	if(!t)
@@ -1684,6 +1717,10 @@ static JSValue getter_cw(JSContext * cx, JSValueConst this, int argc, JSValueCon
 // we have to pass a copy of the window object, so we can retain the original
 	return JS_DupValue(cx, *((JSValue*)t->f1->winobj));
 fail:
+	if((ao = get_property_object(cx, *((JSValue*)t->jv), "content$window"))) {
+		release(ao);
+		return ao;
+}
 	return JS_NULL;
 }
 

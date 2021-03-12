@@ -2066,6 +2066,7 @@ static bool readFile(const char *filename, const char *post, bool newwin,
 			debugPrint(3,
 				   "frame suppressed because content type is %s",
 				   g.content);
+			strcpy(frameContent, g.content);
 			nzFree(serverData);
 			serverData = 0;
 			serverDataLen = 0;

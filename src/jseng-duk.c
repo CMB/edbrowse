@@ -534,13 +534,18 @@ static duk_ret_t setter_value(duk_context * cx)
 	return 0;
 }
 
+char frameContent[60];
+
 void forceFrameExpand(Tag *t)
 {
+	if(t->expf)
+		return; // already expanded
 	Frame *save_cf = cf;
 	const char *save_src = jsSourceFile;
 	int save_lineno = jsLineno;
 	bool save_plug = pluginsOn;
 	pluginsOn = false;
+	frameContent[0] = 0;
 	frameExpandLine(0, t);
 	cf = save_cf;
 	jsSourceFile = save_src;
