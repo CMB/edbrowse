@@ -131,13 +131,13 @@ static void grabover(void)
 
 #define grab(v) grab2(v, __LINE__)
 #define release(v) release2(v, __LINE__)
+#define JS_Release(c, v) release(v),JS_FreeValue(c, v)
 #else
 #define grab(v)
 #define release(v)
 #define grabover()
+#define JS_Release(c, v) JS_FreeValue(c, v)
 #endif
-
-#define JS_Release(c, v) release(v),JS_FreeValue(c, v)
 
 	extern const char startWindowJS[];
 	extern const char thirdJS[];
@@ -1385,12 +1385,25 @@ static JSRuntime *jsrt;
 static bool js_running;
 static JSContext *mwc; // master window context
 
-static int js_main(void)
+/*********************************************************************
+There is a serious stackoverflow bug,
+that I don't have time or space to describe here.
+See http://www.eklhad.net/sov.zip
+Thus js_main is global instead of static,
+so it can be called from main(), the lowest point in the stack.
+If it is called for the first time from a function in .ebrc,
+a higher point in the stack, that triggers the bug.
+Unfortunately this sets up javascript, whether you are going to use it or not.
+*********************************************************************/
+
+void js_main(void)
 {
+	if(js_running)
+		return;
 	jsrt = JS_NewRuntime();
 	if (!jsrt) {
 		fprintf(stderr, "Cannot create javascript runtime environment\n");
-		return -1;
+		return;
 	}
 // default stack size is 256K, which is fine for normal use.
 // If we are deminizing code, the deminimizer is written in javascript,
@@ -1398,7 +1411,7 @@ static int js_main(void)
 	if(strlen(thirdJS) > 50000)
 		JS_SetMaxStackSize(jsrt, 2048*1024);
 	mwc = JS_NewContext(jsrt);
-	return 0;
+	js_running = true;
 }
 
 // base64 encode
@@ -2999,11 +3012,10 @@ void createJSContext(Frame *f)
 {
 	if (!allowJS)
 		return;
-	if (!js_running) {
-		if (js_main())
-			i_puts(MSG_JSEngineRun);
-		else
-			js_running = true;
+	js_main();
+	if(!js_running) {
+		i_puts(MSG_JSEngineRun);
+		return;
 	}
 	createJSContext_0(f);
 	if (f->cx) {
@@ -3763,3 +3775,4 @@ void jsClose(void)
 		JS_FreeRuntime(jsrt);
 	}
 }
+

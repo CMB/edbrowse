@@ -175,7 +175,7 @@ void reconnectTagObject(Tag *t)
 		connectTagObject(t, cdo);
 }
 
-static int js_main(void)
+static int js_start(void)
 {
 	effects = initString(&eff_l);
 	context0 =
@@ -2146,7 +2146,7 @@ void createJSContext(Frame *f)
 	if (!allowJS)
 		return;
 	if (!js_running) {
-		if (js_main())
+		if (js_start())
 			i_puts(MSG_JSEngineRun);
 		else
 			js_running = true;
@@ -3998,3 +3998,5 @@ void jsClose(void)
 	if(js_running)
 		duk_destroy_heap(context0);
 }
+
+void js_main(void) { } // stub

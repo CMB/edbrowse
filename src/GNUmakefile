@@ -90,7 +90,7 @@ edbrowse-infx: $(EBOBJS) startwindow.o dbops.o dbinfx.o jseng-duk.o
 	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) startwindow.o dbops.o dbinfx.o $(LDLIBS) -lduktape
 
 clean:
-	rm -f *.o edbrowse \
+	rm -f *.o edbrowse edbrowseqk edbrowsesm \
 	startwindow.c ebrc.c msg-strings.c
 
 #  The mozilla version, highly experimental

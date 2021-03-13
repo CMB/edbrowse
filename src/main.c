@@ -723,6 +723,8 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, catchSig);
 
+	js_main();
+
 	cx = 0;
 	while (argc) {
 		char *file = *argv;

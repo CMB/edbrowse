@@ -604,7 +604,9 @@ JS_SetProperty(cx, thisobj, "val$ue", args[0]);
 	return true;
 }
 
-static void forceFrameExpand(Tag *t)
+char frameContent[60];
+
+void forceFrameExpand(Tag *t)
 {
 	Frame *save_cf = cf;
 	bool save_plug = pluginsOn;
@@ -4264,3 +4266,5 @@ void jsClose(void)
 	JS_DestroyContext(cxa);
 	    JS_ShutDown();
 }
+
+void js_main(void) { } // stub
