@@ -974,7 +974,7 @@ var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
-z$Image = function(){};
+Image = z$Image = function(){};
 z$Image.prototype = new HTMLElement;
 z$Image.prototype.dom$class = "Image";
 z$Frame = function(){};
