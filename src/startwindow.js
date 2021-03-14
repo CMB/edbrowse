@@ -1104,22 +1104,24 @@ for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
 eval('Object.defineProperty(' + cn + '.prototype, "' + u + '", { \
-get: function() { if(!this.href$2) this.href$2 = new URL; return this.href$2; }, \
-set: function(h) { if(h.dom$class == "URL") h = h.toString(); \
+get: function() { return this.href$2 ? this.href$2 : ""}, \
+set: function(h) { if(h instanceof URL || h.dom$class == "URL") h = h.toString(); \
 if(h === null || h === undefined) h = ""; \
 var w = my$win(); \
-if(typeof h !== "string") { alert3("hrefset " + typeof h); \
+if(typeof h != "string") { alert3("hrefset " + typeof h); \
 w.hrefset$p.push("' + cn + '"); \
 w.hrefset$a.push(h); \
 return; } \
-var last_href = (this.href$2 ? this.href$2.href$val : null); \
-if(!this.href$2) { this.href$2 = new URL(h ? eb$resolveURL(w.eb$base,h) : h) } else { if(!this.href$2.href$val && h) h =  eb$resolveURL(w.eb$base,h); \
-this.href$2.href = h; }  \
-var next_href = this.href$2.href$val; \
+/* h is a string version of the url. Dont know what to do if h is empty. */ \
+if(!h) return; \
+var last_href = (this.href$2 ? this.href$2.toString() : null); \
+/* resolve h against the base */ \
+h = eb$resolveURL(w.eb$base,h); \
+this.href$2 = new URL(h); \
 /* special code for setting frame.src, redirect to a new page. */ \
-if(this.dom$class == "Frame" && this.eb$expf && last_href != next_href && next_href) { \
+if(this.dom$class == "Frame" && this.eb$expf && last_href != h) { \
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
-if(w == this.contentWindow) { w.location = next_href; return; } \
+if(w == this.contentWindow) { w.location = h; return; } \
 delete this.eb$expf; \
 eb$unframe(this); /* fix links on the edbrowse side */ \
 /* I can force the opening of this new frame, but should I? */ \
