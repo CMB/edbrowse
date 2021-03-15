@@ -444,7 +444,7 @@ which replaces the web page you are looking at.
 This side effect does not take place in the constructor, which establishes the initial url.
 *********************************************************************/
 
-URL = function() {
+URL = z$URL = function() {
 var h = "";
 if(arguments.length > 0) h= arguments[0];
 this.href = h;
@@ -1117,7 +1117,7 @@ if(!h) return; \
 var last_href = (this.href$2 ? this.href$2.toString() : null); \
 /* resolve h against the base */ \
 h = eb$resolveURL(w.eb$base,h); \
-this.href$2 = new URL(h); \
+this.href$2 = new z$URL(h); \
 /* special code for setting frame.src, redirect to a new page. */ \
 if(this.dom$class == "Frame" && this.eb$expf && last_href != h) { \
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
@@ -1975,7 +1975,7 @@ if(dom$.implicitMember(this, name)) return null;
 if(!this.attributes) return null;
 if(!this.attributes[name]) return null;
 var v = this.attributes[name].value;
-if(v.dom$class == "URL") return v.toString();
+if(v.dom$class == "URL" || v instanceof URL) return v.toString();
 var t = typeof v;
 if(t == "undefined") return null;
 // possibly any object should run through toString(), as we did with URL, idk
@@ -2214,7 +2214,15 @@ if(item === "ownerDocument") continue; // handled by createElement
 if(node1[item].dom$class == "URL") {
 var u = node1[item];
 if(debug) alert3("copy URL " + item);
-node2[item] = new URL(u.href);
+node2[item] = new z$URL(u.href);
+continue;
+}
+
+// some sites displace my URL with theirs
+if(node1[item] instanceof URL) {
+var u = node1[item];
+if(debug) alert3("copy URL " + item);
+node2[item] = new URL(u.toString());
 continue;
 }
 
@@ -3246,7 +3254,7 @@ var mismatch = false;
 var u = this.createElement(s);
 if(!u) return null;
 if(!nsurl) nsurl = "";
-u.namespaceURI = new URL(nsurl);
+u.namespaceURI = new z$URL(nsurl);
 // prefix and url have to fit together, I guess.
 // I don't understand any of this.
 if(!s.match(/:/)) {
@@ -3784,7 +3792,7 @@ Object.defineProperty(window, "location", {
 get: function() { return window.location$2; },
 set: function(h) {
 if(!window.location$2) {
-window.location$2 = new URL(h);
+window.location$2 = new z$URL(h);
 } else {
 window.location$2.href = h;
 }
@@ -3793,7 +3801,7 @@ Object.defineProperty(document, "location", {
 get: function() { return this.location$2; },
 set: function(h) {
 if(!this.location$2) {
-this.location$2 = new URL(h);
+this.location$2 = new z$URL(h);
 } else {
 this.location$2.href = h;
 }
