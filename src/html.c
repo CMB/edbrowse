@@ -3024,9 +3024,16 @@ skip_execution:
 	if (!jt->isInterval || jt->deleted) {
 		if(jt->backlink)
 			delete_property_win(jt->f, jt->backlink);
+		t = jt->t;
 		delFromList(jt);
 		nzFree(jt->backlink);
 		nzFree(jt);
+		if(t) {
+// this will free the xhr object and allow for garbage collection.
+			disconnectTagObject(t);
+			t->dead = true;
+			t->action = TAGACT_NOP;
+		}
 	} else {
 		int n = jt->jump_sec * 1000 + jt->jump_ms;
 		if(n < cf->jtmin)

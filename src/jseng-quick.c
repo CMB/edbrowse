@@ -2542,7 +2542,6 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 
 // async and sync are completely different
 	if (async) {
-		const char *fpn = fakePropName();
 // I'm going to put the tag in cf, the current frame, and hope that's right,
 // hope that xhr runs in a script that runs in the current frame.
 		Tag *t =     newTag(cf, cw->browseMode ? "object" : "script");
@@ -2555,12 +2554,7 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 		grab(this);
 // This routine will return, and javascript might stop altogether; do we need
 // to protect this object from garbage collection?
-// I don't think so, since t->jv is holding it, but it's legacy code,
-// and other engines don't work that way, so I'll leave it be for now.
-		JSValue g = JS_GetGlobalObject(cx);
-		set_property_object(cx, g, fpn, this);
-		set_property_string(cx, this, "backlink", fpn);
-		JS_FreeValue(cx, g);
+// No - because t->jv will protect it until it runs.
 		t->href = (char*)incoming_url;
 // t now has responsibility for incoming_url
 // overloading the innerHTML field
