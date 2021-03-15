@@ -144,7 +144,8 @@ static void grabover(void)
 
 static void processError(JSContext * cx);
 static void uptrace(JSContext * cx, JSValueConst node);
-static void jsInterruptCheck(JSContext * cx);
+static bool jsCheckAndThrow(JSContext * cx);
+#define jsInterruptCheck(cx) if(jsCheckAndThrow(cx)) return JS_EXCEPTION
 static Tag *tagFromObject(JSValueConst v);
 static int run_function_onearg(JSContext *cx, JSValueConst parent, const char *name, JSValueConst child);
 static bool run_event(JSContext *cx, JSValueConst obj, const char *pname, const char *evname);
@@ -391,6 +392,7 @@ static JSValue getter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 
 static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	JSValue c1, c2;
 	char *run;
 	int run_l;
@@ -399,7 +401,6 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 	if (!h)			// should never happen
 		return JS_UNDEFINED;
 	debugPrint(5, "setter h in");
-	jsInterruptCheck(cx);
 // remove the preexisting children.
 	c1 = JS_GetPropertyStr(cx, this, "childNodes");
 	grab(c1);
@@ -1552,12 +1553,12 @@ static JSValue nat_media(JSContext * cx, JSValueConst this, int argc, JSValueCon
 
 static JSValue nat_logputs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	const char *s = JS_ToCString(cx, argv[1]);
 	int32_t minlev = 99;
 	JS_ToInt32(cx, &minlev, argv[0]);
 	if (debugLevel >= minlev && s && *s)
 		debugPrint(3, "%s", s);
-	jsInterruptCheck(cx);
 	JS_FreeCString(cx, s);
 	return JS_UNDEFINED;
 }
@@ -1642,14 +1643,18 @@ static JSValue nat_confirm(JSContext * cx, JSValueConst this, int argc, JSValueC
 
 // Sometimes control c can interrupt long running javascript, if the script
 // calls our native methods.
-static void jsInterruptCheck(JSContext * cx)
+static bool jsCheckAndThrow(JSContext * cx)
 {
 	if (!intFlag)
-		return;
-// throw an exception here; not sure how to do that yet.
-  puts("js interrupt throw exception not yet implemented.");
+		return false;
+// throw an exception here, and return true.
 // That should stop things, unless we're in a try catch block.
-// It didn't stop the script, oh well.
+	JSValue e = JS_NewError(cx);
+	JS_SetPropertyStr(cx, e, "name", JS_NewAtomString(cx, "user interrupt"));
+// By throwing e, javascript takes it over,
+// it is linked to context, we don't have to free it.
+	JS_Throw(cx, e);
+	return true;
 }
 
 char frameContent[60];
@@ -1691,9 +1696,9 @@ void forceFrameExpand(Tag *t)
 // contentDocument getter setter; this is a bit complicated.
 static JSValue getter_cd(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	Tag *t;
 	JSValue ao; // alternate object
-	jsInterruptCheck(cx);
 	t = tagFromObject(this);
 	if(!t)
 		goto fail;
@@ -1716,9 +1721,9 @@ fail:
 
 static JSValue getter_cw(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	Tag *t;
 	JSValue ao; // alternate object
-	jsInterruptCheck(cx);
 	t = tagFromObject(this);
 	if(!t)
 		goto fail;
@@ -1858,8 +1863,6 @@ JSValueConst b_j, const char *b_name)
 // there is a document. Don't run any side effects in this case.
 	if (!cw->tags)
 		return;
-
-jsInterruptCheck(cx);
 
 	if (type == 'c') {	/* create */
 		parent = tagFromObject2(JS_DupValue(cx, p_j), p_name);
@@ -2047,12 +2050,12 @@ domSetsLinkage(type, p_j, p_name, JS_UNDEFINED, emptyString, JS_UNDEFINED, empty
 
 static JSValue nat_log_element(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	JSValue newobj = argv[0];
 	const char *tagname = JS_ToCString(cx, argv[1]);
 	if (JS_IsUndefined(newobj) || !tagname)
 		return JS_UNDEFINED;
 	debugPrint(5, "log in");
-	jsInterruptCheck(cx);
 // create the innerHTML member with its setter, this has to be done in C.
 	set_property_string(cx, newobj, "innerHTML", emptyString);
 // pass the newly created node over to edbrowse
@@ -2351,6 +2354,7 @@ done:
 
 static JSValue nat_apch1(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	if(append0(cx, this, argc, argv, false))
 		return JS_DupValue(cx, argv[0]);
 	return JS_NULL;
@@ -2358,6 +2362,7 @@ static JSValue nat_apch1(JSContext * cx, JSValueConst this, int argc, JSValueCon
 
 static JSValue nat_apch2(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	if(append0(cx, this, argc, argv, true))
 		return JS_DupValue(cx, argv[0]);
 	return JS_NULL;
@@ -2365,6 +2370,7 @@ static JSValue nat_apch2(JSContext * cx, JSValueConst this, int argc, JSValueCon
 
 static JSValue nat_insbf(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	int i, length, mark;
 	JSValue child, item, cn;
 	const char *thisname, *childname, *itemname;
@@ -2427,6 +2433,7 @@ done:
 
 static JSValue nat_removeChild(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	int i, length, mark;
 	JSValue child, cn;
 	const char *thisname, *childname;
@@ -2498,6 +2505,7 @@ fail:
 
 static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	struct i_get g;
 	const char *incoming_url = JS_ToCString(cx, argv[0]);
 	const char *incoming_method = JS_ToCString(cx, argv[1]);
@@ -2579,7 +2587,6 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	outgoing_xhrbody = g.buffer;
 	cnzFree(incoming_url);
 	JS_FreeCString(cx, incoming_headers);
-	jsInterruptCheck(cx);
 	if (outgoing_xhrheaders == NULL)
 		outgoing_xhrheaders = emptyString;
 	if (outgoing_xhrbody == NULL)
@@ -2755,6 +2762,7 @@ static bool rootTag(JSValue start, Tag **tp)
 // querySelectorAll
 static JSValue nat_qsa(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	JSValue start = JS_UNDEFINED, a;
 	Tag **tlist, *t;
 	const char *selstring = JS_ToCString(cx, argv[0]);
@@ -2764,7 +2772,6 @@ static JSValue nat_qsa(JSContext * cx, JSValueConst this, int argc, JSValueConst
 	}
 	if (JS_IsUndefined(start))
 		start = this;
-	jsInterruptCheck(cx);
 // node.querySelectorAll makes this equal to node.
 // If you just call querySelectorAll, this is undefined.
 // Then there's window.querySelectorAll and document.querySelectorAll
@@ -2783,6 +2790,7 @@ static JSValue nat_qsa(JSContext * cx, JSValueConst this, int argc, JSValueConst
 // querySelector
 static JSValue nat_qs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	JSValue start = JS_UNDEFINED;
 	Tag *t;
 	const char *selstring = JS_ToCString(cx, argv[0]);
@@ -2792,7 +2800,6 @@ static JSValue nat_qs(JSContext * cx, JSValueConst this, int argc, JSValueConst 
 	}
 	if (JS_IsUndefined(start))
 		start = this;
-	jsInterruptCheck(cx);
 	if(!rootTag(start, &t)) {
 		JS_FreeCString(cx, selstring);
 		return JS_UNDEFINED;
@@ -2807,12 +2814,12 @@ static JSValue nat_qs(JSContext * cx, JSValueConst this, int argc, JSValueConst 
 // querySelector0
 static JSValue nat_qs0(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	JSValue start;
 	Tag *t;
 	bool rc;
 	const char *selstring = JS_ToCString(cx, argv[0]);
 	start = this;
-	jsInterruptCheck(cx);
 	if(!rootTag(start, &t)) {
 		JS_FreeCString(cx, selstring);
 		return JS_FALSE;
@@ -2824,10 +2831,10 @@ static JSValue nat_qs0(JSContext * cx, JSValueConst this, int argc, JSValueConst
 
 static JSValue nat_cssApply(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	jsInterruptCheck(cx);
 	int32_t n;
 	JSValue node = argv[1];
 	Tag *t;
-	jsInterruptCheck(cx);
 	JS_ToInt32(cx, &n, argv[0]);
 	t = tagFromObject(node);
 	if(t)
