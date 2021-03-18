@@ -1332,7 +1332,7 @@ static Tag *tagFromObject(JSValueConst v)
 	if (!tagList)
 		i_printfExit(MSG_NullListInform);
 	if(!JS_IsObject(v)) {
-		debugPrint(1, "tagFromObject(nothing)");
+		debugPrint(3, "tagFromObject(nothing)");
 		return 0;
 	}
 	for (i = 0; i < cw->numTags; ++i) {
@@ -1340,7 +1340,7 @@ static Tag *tagFromObject(JSValueConst v)
 		if (t->jslink && JS_VALUE_GET_OBJ(*((JSValue*)t->jv)) == JS_VALUE_GET_OBJ(v) && !t->dead)
 			return t;
 	}
-	debugPrint(1, "tagFromObject() returns null");
+	debugPrint(3, "tagFromObject() returns null");
 	return 0;
 }
 
@@ -1348,6 +1348,9 @@ static Tag *tagFromObject(JSValueConst v)
 static Tag *tagFromObject2(JSValueConst v, const char *tagname)
 {
 	Tag *t;
+// For the future, if the tag is not created, we should release(v),
+// since that value will never be taken over by a tag.
+// Well I think the tag is always created.
 	if (!tagname)
 		return 0;
 	t = newTag(cf, tagname);
@@ -1763,7 +1766,7 @@ static JSValue nat_unframe(JSContext * cx, JSValueConst this, int argc, JSValueC
 		Frame *f, *f1;
 		t = tagFromObject(argv[0]);
 		if (!t) {
-			debugPrint(1, "unframe couldn't find tag");
+			debugPrint(3, "unframe couldn't find tag");
 			goto done;
 		}
 		                if (!(cdt = t->firstchild) || cdt->action != TAGACT_DOC) {
@@ -1897,8 +1900,16 @@ JSValueConst b_j, const char *b_name)
 		return;
 
 	parent = tagFromObject(p_j);
-	add = tagFromObject(a_j);
-	if (!parent || !add)
+// If parent node has been removed, we don't have to keep its linkage current.
+	if (!parent)
+		return;
+// Lower objects could be disconnected, and no reconnected into the tree.
+// See the block comment above underKill().
+	if(!(add = tagFromObject(a_j))) {
+		grab(a_j);
+		add = tagFromObject2(JS_DupValue(cx, a_j), a_name);
+	}
+	if(!add)
 		return;
 
 	if (type == 'r') {
@@ -1953,7 +1964,9 @@ JSValueConst b_j, const char *b_name)
 
 	if (type == 'b') {	/* insertBefore */
 		before = tagFromObject(b_j);
-		if (!before)
+// creating a new tag won't help here; this object has to be
+// in the tree, or how can we insert before?
+		if(!before)
 			return;
 		debugPrint(4, "linkage, %s %d linked into %s %d before %s %d",
 			   a_name, add->seqno, p_name, parent->seqno,
@@ -3813,10 +3826,15 @@ There is no tag corresponding to p.
 tagFromObject() fails.
 We can't honor this node in our edbrowse tree, and it won't be rendered.
 It shouldn't core dump or anything horrible, but it won't be right.
-If this ever happens in the real world,
-enhance tagFromObject to create a new tag, if one cannot be found,
-following the native code for createElement().
-I don't feel like tackling that now.
+I work around this unlikely possibility by creating the tag again,
+if it cannot be found.
+This is in domSetsLinkage().
+But this is no fix!
+All the tags were disconnected, including the ones below the saved node.
+I'd have to traverse the subtree below this node and create new tags for all
+the nodes beneath, and link them properly, to resurrect that paragraph.
+Unless someone shows me that this happens in the real world,
+I'm not gonna work that hard.
 *********************************************************************/
 
 void underKill(Tag *t)
