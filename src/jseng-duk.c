@@ -4048,3 +4048,30 @@ static void killTag(Tag *t)
 
 	underKill(t);
 }
+
+// set the base url, stored in eb$base.
+// This is per engine, because it should be readonly, for security reasons.
+void set_basehref(const char *h)
+{
+	jsobjtype cx = cf->cx;
+	if (!h)
+		h = emptyString;
+	duk_push_global_object(cx);
+	duk_push_string(cx, "eb$base");
+	duk_push_string(cx, h);
+	duk_def_prop(cx, -3,
+		     (DUK_DEFPROP_HAVE_VALUE |
+		      DUK_DEFPROP_CLEAR_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+	duk_pop(cx);		// don't need global any more
+// This is special code for snapshot simulations.
+// If the file jslocal is present, push base over to window.location,
+// as though you were running that page.
+	if (!access("jslocal", 4) && h[0]) {
+		run_function_bool_win(cf, "eb$base$snapshot");
+		nzFree(cf->fileName);
+		cf->fileName = cloneString(h);
+	}
+}
+

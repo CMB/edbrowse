@@ -3855,3 +3855,23 @@ void underKill(Tag *t)
 	t->firstchild = NULL;
 }
 
+// set the base url, stored in eb$base.
+// This is per engine, because it should be readonly, for security reasons.
+void set_basehref(const char *h)
+{
+	JSContext *cx = cf->cx;
+	JSValue g = JS_GetGlobalObject(cx);
+	if (!h)
+		h = emptyString;
+	JS_DefinePropertyValueStr(cx, g, "eb$base", JS_NewAtomString(cx, h), 0);
+// This is special code for snapshot simulations.
+// If the file jslocal is present, push base over to window.location,
+// as though you were running that page.
+	if (!access("jslocal", 4) && h[0]) {
+		run_function_bool_win(cf, "eb$base$snapshot");
+		nzFree(cf->fileName);
+		cf->fileName = cloneString(h);
+	}
+	JS_FreeValue(cx, g);
+}
+

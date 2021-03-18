@@ -251,7 +251,6 @@ resizable = true;
 directories = false;
 name = "unspecifiedFrame";
 
-eb$base = "";
 function eb$base$snapshot() {
 document.URL = eb$base;
 var u = new URL(eb$base);
