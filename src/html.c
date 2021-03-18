@@ -2013,6 +2013,7 @@ bool infPush(int tagno, char **post_string)
 		const char *tolist[2], *atlist[2];
 		const char *name = form->name;
 		int newlen = strlen(pfs) - actlen;	/* the new string could be longer than post */
+		char key;
 		decodeMailURL(action, &addr, &subj, 0);
 		tolist[0] = addr;
 		tolist[1] = 0;
@@ -2032,11 +2033,19 @@ bool infPush(int tagno, char **post_string)
 				name ? name : "?");
 		strcpy(q + strlen(q), pfs + actlen);
 		nzFree(pfs);
-		i_printf(MSG_MailSending, addr);
-		SLEEP(1);
-		rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0, false);
-		if (rc)
-			i_puts(MSG_MailSent);
+		printf("sending mail to %s", addr);
+		if(subj)
+			printf(", subject %s", subj);
+		printf(", is this ok? ");
+		fflush(stdout);
+		key = getLetter("ynYN");
+		puts("");
+		if(key == 'y' || key == 'Y') {
+			rc = sendMail(localAccount, tolist, q, -1, atlist, 0, 0, false);
+			if (rc)
+				i_puts(MSG_MailSent);
+		} else
+			rc = true;
 		nzFree(addr);
 		nzFree(subj);
 		nzFree(q);
