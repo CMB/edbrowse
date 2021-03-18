@@ -1138,7 +1138,16 @@ bool bubble_event_t(const Tag *t, const char *name)
 	rc = run_function_onearg(cx, *((JSValue*)t->jv), "dispatchEvent", e);
 	if (rc && get_property_bool(cx, e, "prev$default"))
 		rc = false;
-	unlink_event(cx, *((JSValue*)t->jv));
+/*********************************************************************
+Why would we need to test whether t is connected to its object?
+We already know it is.
+dispatchEvent could run some javascript on the node connected with t,
+like onclick code, and that in turn could set innerHTML,
+and that in turn could replace t with a new node, thereby disconnecting it.
+Seems contrived, but it actually happens.
+*********************************************************************/
+	if(t->jslink)
+		unlink_event(cx, *((JSValue*)t->jv));
 	JS_Release(cx, e);
 	return rc;
 }
