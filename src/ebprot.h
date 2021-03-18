@@ -146,7 +146,6 @@ void tag_gc(void);
 void tag_gc(void);
 void htmlNodesIntoTree(int start, Tag *attach);
 void underKill(Tag *t);
-void killTag(Tag *t);
 void html_from_setter( Tag *innerParent, const char *h);
 
 /* sourcefile=http.c */

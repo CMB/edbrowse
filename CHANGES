@@ -3,8 +3,9 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross copartment access, as in frames,
-so this got no where.
-I'll leave jseng-moz.cpp around, if someone else wants to continue this work.
+so this didn't get very far.
+I'll leave jseng-moz.cpp around, if someone else wants to continue this work,
+or use this as a C++ framework for v8.
 
 Switch from duktape js to quick js.
 

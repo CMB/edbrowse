@@ -18,6 +18,7 @@ along with the GPL, general public license.
 
 static void processError(duk_context * cx);
 static void jsInterruptCheck(duk_context * cx);
+static void 		killTag(Tag *t);
 // The level 0 functions live right next to the engine, and in the interest
 // of encapsulation, they should not be called outside of this file.
 static enum ej_proptype typeof_property_0(jsobjtype cx, jsobjtype obj, const char *name) ;
@@ -4000,3 +4001,50 @@ void jsClose(void)
 }
 
 void js_main(void) { } // stub
+
+void underKill(Tag *t)
+{
+	Tag *u, *v;
+	for (u = t->firstchild; u; u = v) {
+		v = u->sibling;
+		u->sibling = u->parent = 0;
+		u->deleted = true;
+		if (!u->jslink)
+			killTag(u);
+	}
+	t->firstchild = NULL;
+}
+
+static void killTag(Tag *t)
+{
+	Tag *c, *parent;
+	debugPrint(4, "kill tag %s %d", t->info->name, t->seqno);
+	t->dead = true;
+	++cw->deadTags;
+	if (t->balance) {
+		t->balance->dead = true;
+		++cw->deadTags;
+	}
+	t->deleted = true;
+
+// unlink it from the tree above.
+	parent = t->parent;
+	if (parent) {
+		t->parent = NULL;
+		if (parent->firstchild == t)
+			parent->firstchild = t->sibling;
+		else {
+			c = parent->firstchild;
+			if (c) {
+				for (; c->sibling; c = c->sibling) {
+					if (c->sibling != t)
+						continue;
+					c->sibling = t->sibling;
+					break;
+				}
+			}
+		}
+	}
+
+	underKill(t);
+}

@@ -80,7 +80,7 @@ or just doesn't support the ciphers that the website expects.
 This is beyond edbrowse, and beyond curl; you have to upgrade openssl.
 
 tidy:
-Edbrowse now uses the tidy-html5 HTML parser.  So there are a couple
+Edbrowse uses the tidy-html5 HTML parser.  So there are a couple
 of things to install for this prerequisite.
 The tidy-html5 compilation process uses cmake.  Please either use your
 package manager to get cmake (for instance, apt-get install cmake),
@@ -431,7 +431,7 @@ This is done by jSideEffects() in html.c.
 In other words, any action that might in any way involve js
 must begin with jSyncup() and end with jSideEffects().
 Once this is done, the tree of tags is rerendered,
-and the new buffer is compared with the old using a very simple diff algorithm.
+and the new buffer is compared with the old using a simple diff algorithm.
 Edbrowse tells you if any lines have changed.
 
 Line 357 has been updated.
@@ -474,6 +474,6 @@ document.head is the head of your document <head>,
 document.body is the body <body>,
 document.body.firstChild is the first node under <body>, and so on.
 showscripts() shows all the javascripts, even those dynamically created.
-Such debugging is perhaps beyond the scope of this README file.
+Such debugging is beyond the scope of this README file.
 Read the Debugging Javascript article in the edbrowse wiki.
 

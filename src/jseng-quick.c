@@ -3777,3 +3777,54 @@ void jsClose(void)
 	}
 }
 
+/*********************************************************************
+Here's a little web page that shows an object memory leak.
+	<body>hi <div id=snork></div>
+	<script> var dd = document.getElementById("snork");
+	while(true) { dd.innerHTML = 'a bunch of tags and text';
+	alert("x"); } </script> </body>
+The x's slow down and down, but they don't under duktape, they clip along
+at a steady pace.
+In quick the tags hold the objects away from garbage collection, but in
+duktape the objects collect away, then notify us, and we mark the tags dead.
+duktape cleans things up for us and we respond.
+quick doesn't do that, and the objects accumulate.
+Mozilla is more like quick, but I'm not maintaining sm at this time.
+So what can we do here in quick?
+underKill() disconnects all the tags from their objects.
+quick js can then garbage collect them away.
+But there's a risk.
+Imagine a web page that has a global variable
+var p = document.getElementById("my-favorite-paragraph");
+This node is in some html, that is displaced by new html, as we set
+innerHTML = "some new stuff";
+All those tags are gone.
+Then they call document.body.appendNode(p), restoring that little paragraph.
+There is no tag corresponding to p.
+tagFromObject() fails.
+We can't honor this node in our edbrowse tree, and it won't be rendered.
+It shouldn't core dump or anything horrible, but it won't be right.
+If this ever happens in the real world,
+enhance tagFromObject to create a new tag, if one cannot be found,
+following the native code for createElement().
+I don't feel like tackling that now.
+*********************************************************************/
+
+void underKill(Tag *t)
+{
+	Tag *u, *v;
+	for (u = t->firstchild; u; u = v) {
+		v = u->sibling;
+		u->sibling = u->parent = 0;
+		u->deleted = u->dead = true;
+		++cw->deadTags;
+		if (t->balance) {
+			t->balance->dead = true;
+			++cw->deadTags;
+		}
+		disconnectTagObject(u);
+		underKill(u);
+	}
+	t->firstchild = NULL;
+}
+
