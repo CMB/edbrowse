@@ -2084,7 +2084,7 @@ static JSValue nat_log_element(JSContext * cx, JSValueConst this, int argc, JSVa
 	return JS_UNDEFINED;
 }
 
-static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv, bool isInterval)
+static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv, bool isInterval)
 {
 	JSValue to;		// timer object
 	JSValue fo;		// function object
@@ -2100,7 +2100,7 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	const char *s, *fpn;
 
 	if (argc == 0)
-		return;		// no args
+		return JS_NULL;
 
 	debugPrint(5, "timer in");
 // if second parameter is missing, leave milliseconds at 1000.
@@ -2145,7 +2145,7 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 // Now looks like a function object, just like the previous case.
 	} else {
 // oops, not a function or a string.
-		return;
+		return JS_NULL;
 	}
 
 // pull the function name out of the body, if that makes sense.
@@ -2181,8 +2181,12 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	if (JS_IsException(to)) {
 		processError(cx);
 		JS_FreeValue(cx, fo);
-		goto done;
+		JS_FreeValue(cx, g);
+		JS_Release(cx, to);
+		debugPrint(5, "timer fail");
+		return JS_NULL;
 	}
+
 // classs is overloaded with milliseconds, for debugging
 	JS_SetPropertyStr(cx, to, "class", JS_NewInt32(cx, n));
 // function is contained in an ontimer handler
@@ -2190,25 +2194,21 @@ static void set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	JS_SetPropertyStr(cx, to, "ontimer", fo);
 	JS_SetPropertyStr(cx, to, "backlink", JS_NewAtomString(cx, fpn));
 	JS_SetPropertyStr(cx, to, "tsn", JS_NewInt32(cx, ++timer_sn));
-
 	domSetsTimeout(n, fname, fpn, isInterval);
-
-done:
-	JS_Release(cx, to);
 	JS_FreeValue(cx, g);
 	debugPrint(5, "timer out");
+	release(to);
+	return to;
 }
 
 static JSValue nat_setTimeout(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	set_timeout(cx, this, argc, argv, false);
-	return JS_UNDEFINED;
+	return set_timeout(cx, this, argc, argv, false);
 }
 
 static JSValue nat_setInterval(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	set_timeout(cx, this, argc, argv, true);
-	return JS_UNDEFINED;
+	return set_timeout(cx, this, argc, argv, true);
 }
 
 static JSValue nat_clearTimeout(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
