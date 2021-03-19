@@ -1967,6 +1967,14 @@ static void createJSContext_0(Frame *f)
 		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 		      DUK_DEFPROP_CLEAR_WRITABLE |
 		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
+
+// the master window, where things are shared
+	duk_push_string(cx, "mw$");
+	duk_push_heapptr(cx, context0_obj);
+	duk_def_prop(cx, 0,
+		     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+		      DUK_DEFPROP_CLEAR_WRITABLE |
+		      DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	duk_pop(cx);
 
 // bind native functions here
