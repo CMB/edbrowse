@@ -2197,8 +2197,6 @@ static void setup_window_2(void)
 	struct utsname ubuf;
 	int i;
 	char save_c;
-	extern const char startWindowJS[];
-	extern const char thirdJS[];
 
 	set_property_object_0(cx, w, "window", w);
 

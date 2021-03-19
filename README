@@ -80,12 +80,13 @@ or just doesn't support the ciphers that the website expects.
 This is beyond edbrowse, and beyond curl; you have to upgrade openssl.
 
 tidy:
-Edbrowse uses the tidy-html5 HTML parser.  So there are a couple
-of things to install for this prerequisite.
-The tidy-html5 compilation process uses cmake.  Please either use your
+Edbrowse uses the tidy-html5 HTML parser.
+It is often available as a package, and it hasn't changed much in the past
+couple years, so you can probably use it as is.
+If you need to compile it, then follow these instructions.
+The tidy-html5 build process uses cmake.  Please either use your
 package manager to get cmake (for instance, apt-get install cmake),
 or follow the instructions at http://www.cmake.org/download/
-
 Once you have cmake, follow the latest tidy-html5 code from:
 git clone git://github.com/htacg/tidy-html5
 cd tidy-html5/build/cmake
@@ -102,7 +103,7 @@ have some fixes for known issues that have been reported upstream.
 duktape:
 We used this javascript engine for several years, but we don't use it any more.
 If you want to be able to build edbrowseduk, as a separate target,
-then you need the duktape library. Distributors can skip this step.
+then you need the duktape library. Most distributors can skip this step.
 If duktape is not part of your distribution, download from github, compile, and install.
 
 git clone https://github.com/svaarala/duktape.git
@@ -125,7 +126,6 @@ git clone https://github.com/bellard/quickjs
 cd quickjs
 make
 make install  # as root
-
 This builds and installs a static library- libquickjs.a.
 There is no shared library out of the box.
 If you want to distribute a separate package for quickjs, you may wish to
@@ -145,28 +145,16 @@ unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
 Compiling edbrowse:
 
-cmake can be used to build and install edbrowse in Windows, linux, or Mac OS X.
-visual C studio is assumed on Windows.
-cd build
-cmake .. [options]
-make
-Or, on linux, you can use the traditional makefiles.
+For a time, edbrowse could be built on windows using cmake.
+We have some legacy files for this purpose,
+but it is no longer supported.
+On other systems, you should be able to use make.
 cd src
 make
-Linux makefile supports the environment variables EBDEBUG=on for
-symbolic debugging via gdb, and EBDEMIN=on for dynamic deminimization
-of javascript within edbrowse - also for debugging.
-Users and distributers will not need these options.
-
-On Mac OS X, you'll need to install tidy-html5.  It's not in macports
-yet.  Tell cmake about its location like this:
-export TIDY_ROOT=/path/to/tidy-html5
-cd build
-cmake ..
-make
-Be careful here.  Apple distributes an ancient version of tidy-html.
-You're going to have to take steps to insure that they do not collide.
-Perhaps your best bet is to get edbrowse from MacPorts if possible.
+The makefile supports the environment variable EBDEBUG=on for
+symbolic debugging via gdb and javascript deminimization.
+Distributors should not set this flag; it introduces security risks
+that are not a concern to us when debugging.
 
 ------------------------------------------------------------
 
@@ -187,10 +175,6 @@ which is in the tools directory, and is taken from the Linux kernel source.
 In other words, the indenting style is the same as the Linux kernel.
 If you modify some source, you may want to run it through
 ../tools/Lindent before the commit.
-
-In the interest of portability to Window Studio C, please keep variable
-definitions at the top of each function or block.
-A variable should not be defined after an executable statement.
 
 ------------------------------------------------------------
 

@@ -84,16 +84,10 @@ typedef void *jsobjtype;
 extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // line number
 extern char frameContent[];
-
-/*********************************************************************
-duktape is not threadsafe, so says the programmer's guide.
-So javascript runs in the foreground as we push buttons etc,
-or, there is at most one thread running javascript in the background,
-if we choose to implement that.
-Here is the js background thread. It is 0 if no thread is running.
-*********************************************************************/
-
-extern pthread_t jsbt;
+	extern const char startWindowJS[];
+	extern const char thirdJS[];
+// this is crude but it works.
+#define WithDebugging (strlen(thirdJS) > 5000)
 
 enum ej_proptype {
 	EJ_PROP_NONE,

@@ -139,9 +139,6 @@ static void grabover(void)
 #define JS_Release(c, v) JS_FreeValue(c, v)
 #endif
 
-	extern const char startWindowJS[];
-	extern const char thirdJS[];
-
 static void processError(JSContext * cx);
 static void uptrace(JSContext * cx, JSValueConst node);
 static bool jsCheckAndThrow(JSContext * cx);
@@ -1421,7 +1418,7 @@ void js_main(void)
 // default stack size is 256K, which is fine for normal use.
 // If we are deminizing code, the deminimizer is written in javascript,
 // and it eats up the stack.
-	if(strlen(thirdJS) > 50000)
+	if(WithDebugging)
 		JS_SetMaxStackSize(jsrt, 2048*1024);
 	mwc = JS_NewContext(jsrt);
 	js_running = true;

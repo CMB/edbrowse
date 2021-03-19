@@ -3547,8 +3547,6 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	struct utsname ubuf;
 	int i;
 	char save_c;
-	extern const char startWindowJS[];
-	extern const char thirdJS[];
 
 // startwindow.js stored as an internal string
 	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
