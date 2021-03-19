@@ -11867,14 +11867,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   });
   require('/tools/entry-point.js');
 }.call(this, this));
+
 mw$.esprima = esprima;
 mw$.escodegen = escodegen;
+
+// Mark the master window as irrevocably compiled.
+Object.defineProperty(mw$, "compiled", {value:true, writable:false, configurable:false, enumerable:true});
+
 } else { // master compile
 esprima = mw$.esprima;
 escodegen = mw$.escodegen;
 }
-
-// This should be the last line of this file.
-// It indicates all functions have been compiled.
-mw$.compiled = true;
-
