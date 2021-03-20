@@ -3107,7 +3107,8 @@ static void setup_window_2(void)
 	mt = mimetypes;
 	for (i = 0; i < maxMime; ++i, ++mt) {
 		int len;
-/* po is the plugin object and mo is the mime object */
+// po is the plugin object and mo is the mime object
+// This structure isn't really right.
 		JSValue po = instantiate_array_element(cx, navpi, i, 0);
 		JSValue mo = instantiate_array_element(cx, navmt, i, 0);
 		if (JS_IsUndefined(po) || JS_IsUndefined(mo))
@@ -3131,6 +3132,8 @@ static void setup_window_2(void)
 		mt->program[len] = 0;
 		set_property_string(cx, po, "name", mt->program);
 		mt->program[len] = save_c;
+		set_property_number(cx, po, "length", 1);
+		set_property_object(cx, po, "0", mo);
 		JS_Release(cx, mo);
 		JS_Release(cx, po);
 	}

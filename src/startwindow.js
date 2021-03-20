@@ -272,7 +272,8 @@ document.contentType = "text/html";
 
 screen = {
 height: 768, width: 1024,
-availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0};
+availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
+colorDepth: 24};
 
 // window.alert is a simple wrapper around native puts.
 // Some web pages overwrite alert.
