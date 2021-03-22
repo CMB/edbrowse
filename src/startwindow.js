@@ -2506,13 +2506,20 @@ var l = pathway.length;
 while(l) {
 t = pathway[--l];
 e.eventPhase = (l?1:2); // capture or current target
-var fn = "on" + e.type;
-if(typeof t[fn] == "function") {
+var fn1 = "on" + e.type;
+var fn2 = fn1 + "$$fn";
+if(typeof t[fn2] == "function") {
 if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
 e.currentTarget = t;
-if(!t[fn + "$$array"] && my$win().eventDebug) alert3("fire assigned");
-var r = t[fn](e);
-if(!t[fn + "$$array"] && my$win().eventDebug) alert3("endfire assigned");
+var r = t[fn2](e);
+if((typeof r == "boolean" || typeof r == "number") && !r) return false;
+if(e.cancelled) return !e.defaultPrevented;
+} else if(typeof t[fn1] == "function") {
+if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
+e.currentTarget = t;
+if(my$win().eventDebug) alert3("fire assigned");
+var r = t[fn1](e);
+if(my$win().eventDebug) alert3("endfire assigned");
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.defaultPrevented;
 }
@@ -2522,14 +2529,11 @@ if(!e.bubbles) return !e.defaultPrevented;
 while(l < pathway.length) {
 t = pathway[l++];
 e.eventPhase = 3;
-var fn = "on" + e.type;
-if(typeof t[fn] == "function") {
-// If function was just put here, not part of addEventListener,
-// don't run it on the second phase or you're running it twice.
-if(!t[fn + "$$array"]) continue;
+var fn2 = "on" + e.type + "$$fn";
+if(typeof t[fn2] == "function") {
 if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
 e.currentTarget = t;
-var r = t[fn](e);
+var r = t[fn2](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.defaultPrevented;
 }
@@ -2565,6 +2569,8 @@ detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev
 
 eb$listen = document.eb$listen = function(ev, handler, iscapture, addon) {
 if(addon) ev = "on" + ev;
+var evfn = ev + "$$fn";
+var evarray = ev + "$$array"; // array of handlers
 var iscap = false, once = false, passive = false;
 // legacy, iscapture could be boolean, or object, or missing
 var captype = typeof iscapture;
@@ -2584,26 +2590,15 @@ if(passive) handler.do$passive = true;
 // event handler serial number, for debugging
 if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
 if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
-var evarray = ev + "$$array"; // array of handlers
-var evnest = ev + "$$nest"; // array of handlers
-var evorig = ev + "$$orig"; // original handler from html
 
 if(!this[evarray]) {
 /* attaching the first handler */
-var a = [];
-/* was there already a function from before? */
-var prev_fn = this[ev];
-if(prev_fn) this[evorig] = prev_fn;
-
+if(my$win().eventDebug)  alert3("establish " + this.nodeName + "." + evfn);
 eval(
-'this["'+ev+'"] = function(e){ var rc, a = this["' + evarray + '"]; \
-if(++this["'+evnest+'"]>1&&my$win().eventDebug) alert3(this.nodeName+".'+ev+' recursion "+this["'+evnest+'"]); \
-if(this["'+evnest+'"]>=10) { alert(this.nodeName+".'+ev+' too much recursion!"); window.eventRecursion(); } \
-if(this["' + evorig + '"] && e.eventPhase < 3) { \
-var ehsn = this["' + evorig + '"].ehsn; \
-if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
-alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = this["' + evorig + '"](e); alert3("endfire orig" + (ehsn.length ? " handler " + ehsn : "")); \
-if((typeof rc == "boolean" || typeof rc == "number") && !rc) { --this["'+evnest+'"]; return false; } } \
+'this["'+evfn+'"] = function(e){ var rc, a = this["' + evarray + '"]; \
+if(this["' + ev + '"] && e.eventPhase < 3) { \
+alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1)); rc = this["' + ev + '"](e); alert3("endfire orig");} \
+if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
 for(var i = 0; i<a.length; ++i) { var h = a[i];if(h.did$run) continue; \
 if(e.eventPhase== 1 && !h.do$capture || e.eventPhase == 3 && !h.do$bubble) continue; \
@@ -2611,17 +2606,17 @@ var ehsn = h.ehsn; \
 if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
 h.did$run = true; alert3("fire tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = h.call(this,e); alert3("endfire handler " + ehsn); \
 if(h.do$once) { alert3("once"); this.removeEventListener(e.type, h, h.do$capture); } \
-if((typeof rc == "boolean" || typeof rc == "number") && !rc) { --this["'+evnest+'"]; return false; } \
+if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
 i = -1; \
-} --this["'+evnest+'"]; return true; };');
+} return true; };');
 
-this[evarray] = a;
-this[evnest] = 0;
+this[evarray] = [];
 }
 
+var prev_fn = this[ev];
 if(prev_fn && handler == prev_fn) {
 if(my$win().eventDebug) alert3("handler duplicates orig");
-delete this[evorig];
+delete this[ev];
 }
 
 for(var j=0; j<this[evarray].length; ++j)
@@ -2641,15 +2636,8 @@ eb$unlisten = document.eb$unlisten = function(ev, handler, iscapture, addon) {
 var ehsn = (handler.ehsn ? handler.ehsn : 0);
 if(addon) ev = "on" + ev;
 if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
-
 var evarray = ev + "$$array"; // array of handlers
-var evorig = ev + "$$orig"; // original handler from html
 // remove original html handler after other events have been added.
-if(this[evorig] == handler) {
-delete this[evorig];
-return;
-}
-// remove original html handler when no other events have been added.
 if(this[ev] == handler) {
 delete this[ev];
 return;
@@ -3244,7 +3232,7 @@ var evname = evs[j];
 eval(cn + '["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?(this.'+evname+'$$array?"clobber ":"displace "):"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"clobber ":"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();

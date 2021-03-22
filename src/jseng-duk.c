@@ -3232,8 +3232,13 @@ static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const ch
 {
 	int rc;
 	jsobjtype eo;	// created event object
-	if(typeof_property_0(cx, obj, evname) != EJ_PROP_FUNCTION)
-		return true;
+	const char *evname2 = tack_fn(evname);
+// evname2 is the addEventListener system; try that first.
+	if(!evname2 || typeof_property_0(cx, obj, evname2) != EJ_PROP_FUNCTION) {
+		if(typeof_property_0(cx, obj, evname) != EJ_PROP_FUNCTION)
+			return true;
+		evname2 = evname;
+	}
 	if (debugLevel >= 3) {
 		if (debugEvent) {
 			int seqno = get_property_number_0(cx, obj, "eb$seqno");
@@ -3244,7 +3249,7 @@ static bool run_event_0(jsobjtype cx, jsobjtype obj, const char *pname, const ch
 	set_property_object_0(cx, eo, "target", obj);
 	set_property_object_0(cx, eo, "currentTarget", obj);
 	set_property_number_0(cx, eo, "eventPhase", 2);
-	rc = run_function_onearg_0(cx, obj, evname, eo);
+	rc = run_function_onearg_0(cx, obj, evname2, eo);
 	unlink_event_0(cx, obj);
 // no return or some other return is treated as true in this case
 	if (rc < 0)

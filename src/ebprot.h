@@ -112,6 +112,7 @@ void runningError(int msg, ...);
 void rerender(bool notify);
 void delTags(int startRange, int endRange);
 void runOnload(void);
+const char *tack_fn(const char *e);
 void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterval);
 void scriptSetsTimeout( Tag *t);
 bool timerWait(int *delay_sec, int *delay_ms);
@@ -404,7 +405,6 @@ void delete_property_win(const Frame *f, const char *name);
 void delete_property_doc(const Frame *f, const char *name);
 bool get_property_bool_t(const Tag *t, const char *name);
 enum ej_proptype typeof_property_t(const Tag *t, const char *name);
-#define handlerPresent(t, name) (typeof_property_t(t, name) == EJ_PROP_FUNCTION)
 int get_property_number_t(const Tag *t, const char *name);
 char * get_property_string_t(const Tag *t, const char *name);
 char *get_dataset_string_t(const Tag *t, const char *name);

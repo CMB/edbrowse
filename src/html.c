@@ -33,6 +33,14 @@ void dwStart(void)
 	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
 }
 
+bool handlerPresent(const Tag *t, const char *name)
+{
+	const char *name2 = tack_fn(name);
+	return (typeof_property_t(t, name) == EJ_PROP_FUNCTION ||
+	(name2 && typeof_property_t(t, name2) == EJ_PROP_FUNCTION));
+}
+
+// called with click, dblclick, reset, or submit
 bool tagHandler(int seqno, const char *name)
 {
 	Tag *t = tagList[seqno];
@@ -62,7 +70,7 @@ bool tagHandler(int seqno, const char *name)
 	if (stringEqual(name, "onchange"))
 		t->onchange = true;
 	return true;
-}				/* tagHandler */
+}
 
 static void formReset(const Tag *form);
 
@@ -901,11 +909,9 @@ afterscript:
 // after each pass, see if there is a link onload to run.
 	for (t = cw->linklist; t; t = t->same) {
 		if(t->lic == 1 && t->jslink && !t->dead) {
-			if(handlerPresent(t, "onload")) {
-				run_event_t(t, "link", "onload");
-				change = true;
-			}
-t->lic = 0;
+			run_event_t(t, "link", "onload");
+			t->lic = 0;
+			change = true;
 		}
 	}
 
@@ -1023,6 +1029,7 @@ but this is called only once per browse,
 so no impact on performance if we invoke a script,
 so for now I'm taking the easy way out.
 jsRunScript is protected.
+This precaution is only needed for duktape.
 *********************************************************************/
 		jsRunScriptWin("document.readyState='complete'",
 			    "readyState", 1);
@@ -2685,23 +2692,38 @@ void runOnload(void)
 			++fn;
 		if (!t->jslink)
 			continue;
-		if (action == TAGACT_BODY && handlerPresent(t, "onload"))
+		if (action == TAGACT_BODY)
 			run_event_t(t, "body", "onload");
 		if (action == TAGACT_BODY && t->onunload)
 			unloadHyperlink("document.body.onunload", "Body");
-		if (action == TAGACT_FORM && handlerPresent(t, "onload"))
+		if (action == TAGACT_FORM)
 			run_event_t(t, "form", "onload");
 /* tidy5 says there is no form.onunload */
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];
-			sprintf(formfunction, "document.forms[%d].onunload",
-				fn);
+			sprintf(formfunction, "document.forms[%d].onunload", fn);
 			unloadHyperlink(formfunction, "Form");
 		}
-		if (action == TAGACT_H && handlerPresent(t, "onload"))
+		if (action == TAGACT_H)
 			run_event_t(t, "h1", "onload");
 	}
-}				/* runOnload */
+}
+
+// In one place, tack on the $$fn to turn onfoo into onfoo$$fn
+const char *tack_fn(const char *e)
+{
+	static char buf[64];
+	int l = strlen(e);
+	if(l + 4 >= sizeof(buf)) {
+		debugPrint(3, "%s$$fn too long", e);
+		return 0;
+	}
+// ontimer is our simulated event handler.
+	if(stringEqual(e, "ontimer"))
+		return 0;
+	sprintf(buf, "%s$$fn", e);
+	return buf;
+}
 
 /*********************************************************************
 Manage js timers here.
