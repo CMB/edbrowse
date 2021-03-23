@@ -1284,10 +1284,11 @@ CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
 this.ownerDocument = my$doc();
-this.sheet = new CSSStyleSheet;
 };
 CSSStyleDeclaration.prototype = new HTMLElement;
 CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
+// sheet on demand
+Object.defineProperty(CSSStyleDeclaration.prototype, "sheet", { get: function(){ if(!this.sheet$2) this.sheet$2 = new CSSStyleSheet; return this.sheet$2; }});
 // these are default properties of a style object
 CSSStyleDeclaration.prototype.animationDelay =
 CSSStyleDeclaration.prototype.animationDuration =
@@ -1474,7 +1475,8 @@ if(created) {
 // is there anything there?
 for(var k in s) {
 if(!s.hasOwnProperty(k)) continue;
-if(!k.match(/\$(\$scy|pri)$/)) continue;
+if(k == "element" || k == "ownerDocument")
+continue;
 e.style$2 = s;
 s.element = e;
 break;
