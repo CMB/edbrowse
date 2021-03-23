@@ -352,7 +352,7 @@ char *get_dataset_string_t(const Tag *t, const char *p)
 		return 0;
 	if (!strncmp(p, "data-", 5)) {
 		char *k;
-		JSValue ds = get_property_object(cx, *((JSValue*)t->jv), "dataset");
+		JSValue ds = get_property_object(cx, *((JSValue*)t->jv), "dataset$2");
 		if(JS_IsUndefined(ds))
 			return 0;
 		k = cloneString(p + 5);
@@ -3217,7 +3217,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	JSValue oa;		// option array
 	JSValue oo;		// option object
 	JSValue so;		// style object
-	JSValue ato;		// attributes object
 	JSValue fo;		// form object
 	JSValue cn; // childNodes
 	JSValue selobj = *((JSValue*)sel->jv); // select object
@@ -3241,15 +3240,12 @@ void establish_js_option(Tag *t, Tag *sel)
 		JS_Release(cx, fo);
 	}
 	cn = instantiate_array(cx, oo, "childNodes");
-	ato = instantiate(cx, oo, "attributes", "NamedNodeMap");
-	set_property_object(cx, ato, "owner", oo);
 	so = instantiate(cx, oo, "style", "CSSStyleDeclaration");
 	set_property_object(cx, so, "element", oo);
 
 connectTagObject(t, oo);
 
 	JS_Release(cx, so);
-	JS_Release(cx, ato);
 	JS_Release(cx, cn);
 	JS_Release(cx, oa);
 }
@@ -3257,16 +3253,13 @@ connectTagObject(t, oo);
 void establish_js_textnode(Tag *t, const char *fpn)
 {
 	JSContext *cx = cf->cx;
-	JSValue so, ato, cn;
+	JSValue so, cn;
 	 JSValue tagobj = instantiate(cx, *((JSValue*)cf->winobj), fpn, "TextNode");
 	cn = instantiate_array(cx, tagobj, "childNodes");
-	ato = instantiate(cx, tagobj, "attributes", "NamedNodeMap");
-	set_property_object(cx, ato, "owner", tagobj);
 	so = instantiate(cx, tagobj, "style", "CSSStyleDeclaration");
 	set_property_object(cx, so, "element", tagobj);
 	connectTagObject(t, tagobj);
 	JS_Release(cx, so);
-	JS_Release(cx, ato);
 	JS_Release(cx, cn);
 }
 
@@ -3324,8 +3317,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
 	JSValue so;	/* obj.style */
-	JSValue ato;	/* obj.attributes */
-	JSValue ds; // dataset
 	JSValue ca; // child array
 	char upname[MAXTAGNAME];
 	char classtweak[MAXTAGNAME + 4];
@@ -3447,12 +3438,7 @@ Don't do any of this if the tag is itself <style>. */
 			tcn = emptyString;
 		set_property_string(cx, io, "class", tcn);
 		set_property_string(cx, io, "last$class", tcn);
-		ato = instantiate(cx, io, "attributes", "NamedNodeMap");
-		set_property_object(cx, ato, "owner", io);
-		JS_Release(cx, ato);
 		set_property_object(cx, io, "ownerDocument", *((JSValue*)cf->docobj));
-		ds = instantiate(cx, io, "dataset", 0);
-		JS_Release(cx, ds);
 
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&

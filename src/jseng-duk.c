@@ -3335,7 +3335,7 @@ char *get_dataset_string_t(const Tag *t, const char *p)
 		return 0;
 	if (!strncmp(p, "data-", 5)) {
 		char *k = cloneString(p + 5);
-		jsobjtype ds = get_property_object_0(cx, t->jv, "dataset");
+		jsobjtype ds = get_property_object_0(cx, t->jv, "dataset$2");
 		if(!ds)
 			return 0;
 		camelCase(k);
@@ -3471,7 +3471,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	jsobjtype oa;		// option array
 	jsobjtype oo;		// option object
 	jsobjtype so;		// style object
-	jsobjtype ato;		// attributes object
 	jsobjtype fo;		// form object
 	jsobjtype selobj = sel->jv; // select object
 
@@ -3488,8 +3487,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	if (fo)
 		set_property_object_0(cx, oo, "form", fo);
 	instantiate_array_0(cx, oo, "childNodes");
-	ato = instantiate_0(cx, oo, "attributes", "NamedNodeMap");
-	set_property_object_0(cx, ato, "owner", oo);
 	so = instantiate_0(cx, oo, "style", "CSSStyleDeclaration");
 	set_property_object_0(cx, so, "element", oo);
 
@@ -3499,11 +3496,9 @@ connectTagObject(t, oo);
 void establish_js_textnode(Tag *t, const char *fpn)
 {
 	duk_context *cx = cf->cx;
-	jsobjtype so, ato;
+	jsobjtype so;
 	 jsobjtype tagobj = instantiate_0(cx, cf->winobj, fpn, "TextNode");
 	instantiate_array_0(cx, tagobj, "childNodes");
-	ato = instantiate_0(cx, tagobj, "attributes", "NamedNodeMap");
-	set_property_object_0(cx, ato, "owner", tagobj);
 	so = instantiate_0(cx, tagobj, "style", "CSSStyleDeclaration");
 	set_property_object_0(cx, so, "element", tagobj);
 	connectTagObject(t, tagobj);
@@ -3563,7 +3558,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
 	jsobjtype so = 0;	/* obj.style */
-	jsobjtype ato = 0;	/* obj.attributes */
 	char upname[MAXTAGNAME];
 	char classtweak[MAXTAGNAME + 4];
 
@@ -3679,10 +3673,6 @@ Don't do any of this if the tag is itself <style>. */
 			tcn = emptyString;
 		set_property_string_0(cx, io, "class", tcn);
 		set_property_string_0(cx, io, "last$class", tcn);
-		ato = instantiate_0(cx, io, "attributes", "NamedNodeMap");
-		set_property_object_0(cx, ato, "owner", io);
-		set_property_object_0(cx, io, "ownerDocument", cf->docobj);
-		instantiate_0(cx, io, "dataset", 0);
 
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&

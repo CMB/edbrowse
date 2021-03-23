@@ -1283,9 +1283,7 @@ dom$.dataCamel = function(t) { return dom$.camelCase(t.replace(/^data-/,"")); }
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
-	 this.attributes = new NamedNodeMap;
 this.ownerDocument = my$doc();
-this.attributes.owner = this;
 this.sheet = new CSSStyleSheet;
 };
 CSSStyleDeclaration.prototype = new HTMLElement;
@@ -1635,8 +1633,6 @@ c.style.element = c;
  * I have to treat a text node like an html node. */
 c.childNodes = [];
 c.parentNode = null;
-c.attributes = new NamedNodeMap;
-c.attributes.owner = c;
 eb$logElement(c, "text");
 return c;
 }
@@ -1933,7 +1929,7 @@ Attr = function(){ this.specified = false; this.owner = null; this.name = ""};
 Attr.prototype.dom$class = "Attr";
 Object.defineProperty(Attr.prototype, "value", {
 get: function() { var n = this.name;
-return n.substr(0,5) == "data-" ? (this.owner.dataset ? this.owner.dataset[dom$.dataCamel(n)] :  null)  : this.owner[n]; },
+return n.substr(0,5) == "data-" ? (this.owner.dataset$2 ? this.owner.dataset$2[dom$.dataCamel(n)] :  null)  : this.owner[n]; },
 set: function(v) {
 this.owner.setAttribute(this.name, v);
 this.specified = true;
@@ -1972,7 +1968,7 @@ document.getAttribute = function(name) {
 name = name.toLowerCase();
 if(dom$.implicitMember(this, name)) return null;
 // has to be a real attribute
-if(!this.attributes) return null;
+if(!this.attributes$2) return null;
 if(!this.attributes[name]) return null;
 var v = this.attributes[name].value;
 if(v.dom$class == "URL" || v instanceof URL) return v.toString();
@@ -1997,6 +1993,7 @@ return;
 }
 if(dom$.implicitMember(this, name)) return;
 var oldv = null;
+// referencing attributes should create it on demand, but if it doesn't...
 if(!this.attributes) this.attributes = new NamedNodeMap;
 if(!this.attributes[name]) {
 var a = new Attr();
@@ -2013,6 +2010,7 @@ oldv = this.attributes[name].value;
 }
 if(v !== "from@@html") {
 if(name.substr(0,5) == "data-") {
+// referencing dataset should create it on demand, but if it doesn't...
 if(!this.dataset) this.dataset = {};
 this.dataset[dom$.dataCamel(name)] = v;
 } else this[name] = v;
@@ -2026,6 +2024,7 @@ this.setAttribute(name, v);
 }
 
 document.removeAttribute = function(name) {
+if(!this.attributes$2) return;
     name = name.toLowerCase();
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
@@ -2035,7 +2034,7 @@ return;
 var oldv = null;
 if(name.substr(0,5) == "data-") {
 var n = dom$.dataCamel(name);
-if(this.dataset && this.dataset[n]) { oldv = this.dataset[n]; delete this.dataset[n]; }
+if(this.dataset$2 && this.dataset$2[n]) { oldv = this.dataset$2[n]; delete this.dataset$2[n]; }
 } else {
     if (this[name]) { oldv = this[name]; delete this[name]; }
 }
@@ -2063,10 +2062,11 @@ if(space && !name.match(/:/)) name = space + ":" + name;
 this.removeAttribute(name);
 }
 
-document.getAttributeNode = function(name) {
-    name = name.toLowerCase();
 // this returns null if no such attribute, is that right,
 // or should we return a new Attr node with no value?
+document.getAttributeNode = function(name) {
+if(!this.attributes$2) return null;
+    name = name.toLowerCase();
 return this.attributes[name] ? this.attributes[name] : null;
 /*
 a = new Attr;
@@ -2278,10 +2278,8 @@ node2.style = dom$.eb$clone(node1.style, false);
 node2.style.element = node2;
 }
 
-if (node1.attributes.dom$class == "NamedNodeMap") {
+if (node1.attributes$2) { // has attributes
 if(debug) alert3("copy attributes");
-node2.attributes = new NamedNodeMap;
-node2.attributes.owner = node2;
 for(var l=0; l<node1.attributes.length; ++l) {
 if(debug) alert3("copy attribute " + node1.attributes[l].name);
 node2.setAttribute(node1.attributes[l].name, node1.attributes[l].value);
@@ -2781,6 +2779,9 @@ Again, leading ; to avert a parsing ambiguity.
 
 ; (function() {
 var c = window.HTMLElement;
+// These subordinate objects are on-demand.
+Object.defineProperty( c.prototype, "dataset", { get: function(){ return this.dataset$2 ? this.dataset$2 : this.dataset$2 = {}; }});
+Object.defineProperty( c.prototype, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = my$doc(); return this.attributes$2;}});
 // get elements below
 c.prototype.getElementsByTagName = document.getElementsByTagName;
 c.prototype.getElementsByName = document.getElementsByName;
@@ -3343,12 +3344,9 @@ c.element = c;
 c.style = new CSSStyleDeclaration;
 c.style.element = c;
 }
-c.dataset = {};
 c.childNodes = [];
 if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
-c.attributes = new NamedNodeMap;
-c.attributes.owner = c;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");
 c.setAttribute("type", "");
@@ -4148,7 +4146,7 @@ return;
 }
 this.target = target;
 this.attr = this.kids = this.subtree = false;
-if(cfg.attributes) this.attr = true;
+if(cfg.attributes$2) this.attr = true;
 if(cfg.childList) this.kids = true;
 if(cfg.subtree) this.subtree = true;
 this.active = true;

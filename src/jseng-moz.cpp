@@ -1251,7 +1251,7 @@ if(!obj)
 return 0;
 	if (!strncmp(p, "data-", 5)) {
 		char *k = cloneString(p + 5);
-JS::RootedObject ds(cxa, get_property_object_0(obj, "dataset"));
+JS::RootedObject ds(cxa, get_property_object_0(obj, "dataset$2"));
 		if(!ds)
 			return 0;
 		camelCase(k);
@@ -3649,7 +3649,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	JS::RootedObject oa(cxa);		// option array
 	JS::RootedObject oo(cxa);		// option object
 	JS::RootedObject so(cxa);		// style object
-	JS::RootedObject ato(cxa);		// attributes object
 	JS::RootedObject fo(cxa);		// form object
 	JS::RootedObject selobj(cxa); // select object
 
@@ -3668,8 +3667,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	if (fo)
 		set_property_object_0(oo, "form", fo);
 	instantiate_array_0(oo, "childNodes");
-	ato = instantiate_0(oo, "attributes", "NamedNodeMap");
-	set_property_object_0(ato, "owner", oo);
 	so = instantiate_0(oo, "style", "CSSStyleDeclaration");
 	set_property_object_0(so, "element", oo);
 
@@ -3679,13 +3676,10 @@ connectTagObject(t, oo);
 void establish_js_textnode(Tag *t, const char *fpn)
 {
 	JS::RootedObject so(cxa);		// style object
-	JS::RootedObject ato(cxa);		// attributes object
 	        JSAutoCompartment ac(cxa, tagToCompartment(t));
 	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 JS::RootedObject tagobj(cxa,  instantiate_0(g, fpn, "TextNode"));
 	instantiate_array_0(tagobj, "childNodes");
-	ato = instantiate_0(tagobj, "attributes", "NamedNodeMap");
-	set_property_object_0(ato, "owner", tagobj);
 	so = instantiate_0(tagobj, "style", "CSSStyleDeclaration");
 	set_property_object_0(so, "element", tagobj);
 	connectTagObject(t, tagobj);
@@ -3744,7 +3738,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
 	JS::RootedObject so(cxa);	/* obj.style */
-	JS::RootedObject ato(cxa);	/* obj.attributes */
 	char upname[MAXTAGNAME];
 	char classtweak[MAXTAGNAME + 4];
 
@@ -3863,10 +3856,7 @@ Don't do any of this if the tag is itself <style>. */
 			tcn = emptyString;
 		set_property_string_0(io, "class", tcn);
 		set_property_string_0(io, "last$class", tcn);
-		ato = instantiate_0(io, "attributes", "NamedNodeMap");
-		set_property_object_0(ato, "owner", io);
 		set_property_object_0(io, "ownerDocument", doc);
-		instantiate_0(io, "dataset", 0);
 
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&
