@@ -372,7 +372,7 @@ char *get_style_string_t(const Tag *t, const char *name)
 	char *result;
 	if(!t->jslink || !allowJS)
 		return 0;
-	so = get_property_object(cx, *((JSValue*)t->jv), "style");
+	so = get_property_object(cx, *((JSValue*)t->jv), "style$2");
 	if(JS_IsUndefined(so))
 		return 0;
 	result = get_property_string(cx, so, name);
@@ -3216,7 +3216,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	int idx = t->lic;
 	JSValue oa;		// option array
 	JSValue oo;		// option object
-	JSValue so;		// style object
 	JSValue fo;		// form object
 	JSValue cn; // childNodes
 	JSValue selobj = *((JSValue*)sel->jv); // select object
@@ -3240,12 +3239,9 @@ void establish_js_option(Tag *t, Tag *sel)
 		JS_Release(cx, fo);
 	}
 	cn = instantiate_array(cx, oo, "childNodes");
-	so = instantiate(cx, oo, "style", "CSSStyleDeclaration");
-	set_property_object(cx, so, "element", oo);
 
 connectTagObject(t, oo);
 
-	JS_Release(cx, so);
 	JS_Release(cx, cn);
 	JS_Release(cx, oa);
 }
@@ -3253,13 +3249,10 @@ connectTagObject(t, oo);
 void establish_js_textnode(Tag *t, const char *fpn)
 {
 	JSContext *cx = cf->cx;
-	JSValue so, cn;
+	JSValue cn;
 	 JSValue tagobj = instantiate(cx, *((JSValue*)cf->winobj), fpn, "TextNode");
 	cn = instantiate_array(cx, tagobj, "childNodes");
-	so = instantiate(cx, tagobj, "style", "CSSStyleDeclaration");
-	set_property_object(cx, so, "element", tagobj);
 	connectTagObject(t, tagobj);
-	JS_Release(cx, so);
 	JS_Release(cx, cn);
 }
 
@@ -3316,7 +3309,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *href_url = t->href;
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
-	JSValue so;	/* obj.style */
 	JSValue ca; // child array
 	char upname[MAXTAGNAME];
 	char classtweak[MAXTAGNAME + 4];
@@ -3415,20 +3407,13 @@ That's how it was for a long time, but I think we only do this on form.
 			JS_Release(cx, ca);
 		}
 
-/* deal with the 'styles' here.
-object will get 'style' regardless of whether there is
-anything to put under it, just like it gets childNodes whether
-or not there are any.  After that, there is a conditional step.
-If this node contains style='' of one or more name-value pairs,
+/* If this node contains style='' of one or more name-value pairs,
 call out to process those and add them to the object.
 Don't do any of this if the tag is itself <style>. */
-		if (t->action != TAGACT_STYLE) {
-			so = instantiate(cx, io, "style", "CSSStyleDeclaration");
-			set_property_object(cx, so, "element", io);
-/* now if there are any style pairs to unpack,
- processStyles can rely on obj.style existing */
-			if (stylestring)
-				processStyles(so, stylestring);
+		if (stylestring && t->action != TAGACT_STYLE) {
+// This call creates the styl object on demand.
+			JSValue so = get_property_object(cx, io, "style");
+			processStyles(so, stylestring);
 			JS_Release(cx, so);
 		}
 
@@ -3472,9 +3457,6 @@ Don't do any of this if the tag is itself <style>. */
 		if(JS_IsUndefined(ca))
 			return;
 		io = ca;
-		so = instantiate(cx, io, "style", "CSSStyleDeclaration");
-		set_property_object(cx, so, "element", io);
-		JS_Release(cx, so);
 	}
 
 	set_property_string(cx, io, "name", (symname ? symname : emptyString));

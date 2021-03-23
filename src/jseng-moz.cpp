@@ -1303,7 +1303,7 @@ JSAutoCompartment ac(cxa, tagToCompartment(t));
 JS::RootedObject obj(cxa, tagToObject(t));
 if(!obj)
 return 0;
-JS::RootedObject style(cxa, get_property_object_0(obj, "style"));
+JS::RootedObject style(cxa, get_property_object_0(obj, "style$2"));
 if(!style)
 return 0;
 return get_property_string_0(style, name);
@@ -3648,7 +3648,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	int idx = t->lic;
 	JS::RootedObject oa(cxa);		// option array
 	JS::RootedObject oo(cxa);		// option object
-	JS::RootedObject so(cxa);		// style object
 	JS::RootedObject fo(cxa);		// form object
 	JS::RootedObject selobj(cxa); // select object
 
@@ -3667,21 +3666,16 @@ void establish_js_option(Tag *t, Tag *sel)
 	if (fo)
 		set_property_object_0(oo, "form", fo);
 	instantiate_array_0(oo, "childNodes");
-	so = instantiate_0(oo, "style", "CSSStyleDeclaration");
-	set_property_object_0(so, "element", oo);
 
 connectTagObject(t, oo);
 }
 
 void establish_js_textnode(Tag *t, const char *fpn)
 {
-	JS::RootedObject so(cxa);		// style object
 	        JSAutoCompartment ac(cxa, tagToCompartment(t));
 	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 JS::RootedObject tagobj(cxa,  instantiate_0(g, fpn, "TextNode"));
 	instantiate_array_0(tagobj, "childNodes");
-	so = instantiate_0(tagobj, "style", "CSSStyleDeclaration");
-	set_property_object_0(so, "element", tagobj);
 	connectTagObject(t, tagobj);
 }
 
@@ -3834,20 +3828,14 @@ That's how it was for a long time, but I think we only do this on form.
 				set_property_object_0(io, "options", ca);
 		}
 
-/* deal with the 'styles' here.
-object will get 'style' regardless of whether there is
-anything to put under it, just like it gets childNodes whether
-or not there are any.  After that, there is a conditional step.
-If this node contains style='' of one or more name-value pairs,
+/* If this node contains style='' of one or more name-value pairs,
 call out to process those and add them to the object.
 Don't do any of this if the tag is itself <style>. */
-		if (t->action != TAGACT_STYLE) {
-			so = instantiate_0(io, "style", "CSSStyleDeclaration");
-			set_property_object_0(so, "element", io);
-/* now if there are any style pairs to unpack,
- processStyles can rely on obj.style existing */
-			if (stylestring)
-				processStyles(so, stylestring);
+		if (stylestring && t->action != TAGACT_STYLE) {
+// This call creates the styl object on demand.
+			JS::RootedObject so(cxa);
+			so = get_property_object_0(io, "style");
+			processStyles(so, stylestring);
 		}
 
 /* Other attributes that are expected by pages, even if they
@@ -3887,8 +3875,6 @@ Don't do any of this if the tag is itself <style>. */
 			return;
 		if(!(io = instantiate_array_element_0(io, length, "z$Element")))
 			return;
-		so = instantiate_0(io, "style", "CSSStyleDeclaration");
-		set_property_object_0(so, "element", io);
 	}
 
 	set_property_string_0(io, "name", (symname ? symname : emptyString));

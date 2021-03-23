@@ -1404,7 +1404,7 @@ Huh???
 Well we have to do the same so here we go.
 *********************************************************************/
 
-if(e.style) {
+if(e.style$2) {
 for(var k in e.style) {
 if(!e.style.hasOwnProperty(k)) continue;
 if(k.match(/\$(\$scy|pri)$/)) continue;
@@ -1435,6 +1435,7 @@ return s;
 dom$.computeStyleInline = function(e) {
 var s;
 var w = my$win();
+var created = false;
 
 e.last$class = e.class, e.last$id = e.id;
 
@@ -1443,21 +1444,9 @@ e.last$class = e.class, e.last$id = e.id;
 if(e.dom$class == "CSSStyleDeclaration") return;
 if(e.nodeType != 1 && e.nodeType != 3) return;
 
-// style object should already be there
-if(!e.style) {
-e.style = new CSSStyleDeclaration;
-e.style.element = e;
-}
-s = e.style;
-
-// This is called on a (possibly large) subtree of nodes,
-// so please verify the css style sheets before hand.
-// dom$.cssGather(false, this);
-
+if(s = e.style$2) {
 // Unlike the above, we remove previous values that were set by css,
 // because css is being reapplied.
-// I don't know if we should just do this for the node that changed,
-// or for all its descendants.
 for(var k in s) {
 if(!s.hasOwnProperty(k)) continue;
 if(!k.match(/\$(\$scy|pri)$/)) continue;
@@ -1466,12 +1455,32 @@ if(k.match(/\$\$scy$/) && s[k] == 100000) continue;
 delete s[k];
 delete s[k.replace(/\$(\$scy|pri)$/, "")];
 }
+} else {
+// create a style object, but if it comes up empty, we'll remove it again.
+s = new CSSStyleDeclaration;
+created = true;
+}
+
+// This is called on a (possibly large) subtree of nodes,
+// so please verify the css style sheets before hand.
+// dom$.cssGather(false, this);
 
 // apply all the css rules
 w.soj$ = s;
 eb$cssApply(w.document.eb$ctx, e);
 delete w.soj$;
 // style has been recomputed
+if(created) {
+// is there anything there?
+for(var k in s) {
+if(!s.hasOwnProperty(k)) continue;
+if(!k.match(/\$(\$scy|pri)$/)) continue;
+e.style$2 = s;
+s.element = e;
+break;
+}
+}
+
 // descend into the children
 if(e.childNodes)
 for(var i=0; i<e.childNodes.length; ++i)
@@ -1624,8 +1633,6 @@ document.createTextNode = function(t) {
 if(t == undefined) t = "";
 var c = new TextNode(t);
 c.ownerDocument = this;
-c.style = new CSSStyleDeclaration;
-c.style.element = c;
 /* A text node chould never have children, and does not need childNodes array,
  * but there is improper html out there <text> <stuff> </text>
  * which has to put stuff under the text node, so against this
@@ -2206,8 +2213,10 @@ continue;
 if(typeof node1[item] === "object") {
 // An object, not an array.
 
-if(item === "style") continue; // handled later
-if(item === "attributes") continue; // handled later
+// skip the on-demand background objects
+if(item === "style$2") continue;
+if(item === "attributes$2") continue;
+if(item === "dataset$2") continue;
 if(item === "ownerDocument") continue; // handled by createElement
 
 // Check for URL objects.
@@ -2260,6 +2269,7 @@ continue;
 }
 
 if (typeof node1[item] === 'number') {
+if(item == "eb$seqno" || item == "eb$gsn") continue;
 if(debug) alert3("copy number " + item + " = " + node1[item]);
 node2[item] = node1[item];
 continue;
@@ -2273,9 +2283,9 @@ continue;
 }
 
 // copy style object if present and its subordinate strings.
-if (node1.style && node1.style.dom$class == "CSSStyleDeclaration") {
-node2.style = dom$.eb$clone(node1.style, false);
-node2.style.element = node2;
+if (node1.style$2 && node1.style$2.dom$class == "CSSStyleDeclaration") {
+node2.style$2 = dom$.eb$clone(node1.style$2, false);
+node2.style$2.element = node2;
 }
 
 if (node1.attributes$2) { // has attributes
@@ -2782,6 +2792,7 @@ var c = window.HTMLElement;
 // These subordinate objects are on-demand.
 Object.defineProperty( c.prototype, "dataset", { get: function(){ return this.dataset$2 ? this.dataset$2 : this.dataset$2 = {}; }});
 Object.defineProperty( c.prototype, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = my$doc(); return this.attributes$2;}});
+Object.defineProperty( c.prototype, "style", { get: function(){ if(!this.style$2) this.style$2 = new CSSStyleDeclaration, this.style$2.element = this; return this.style$2;}});
 // get elements below
 c.prototype.getElementsByTagName = document.getElementsByTagName;
 c.prototype.getElementsByName = document.getElementsByName;
@@ -3300,7 +3311,8 @@ case "image": t = "img";
 case "img": c = new z$Image; break;
 case "link": c = new z$Link; break;
 case "meta": c = new z$Meta; break;
-case "cssstyledeclaration": case "style": c = new CSSStyleDeclaration; break;
+case "cssstyledeclaration": case "style":
+c = new CSSStyleDeclaration; c.element = c; break;
 case "script": c = new z$Script; break;
 case "div": c = new z$Div; break;
 case "label": c = new z$Label; break;
@@ -3336,14 +3348,6 @@ default:
 c = new HTMLElement;
 }
 
-/* ok, for some element types this perhaps doesn't make sense,
-* but for most visible ones it does and I doubt it matters much */
-if(c.dom$class == "CSSStyleDeclaration") {
-c.element = c;
-} else {
-c.style = new CSSStyleDeclaration;
-c.style.element = c;
-}
 c.childNodes = [];
 if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
@@ -3612,6 +3616,7 @@ return a + " " + c + "__" + sn + b;
 
 // pages seem to want document.style to exist
 document.style = new CSSStyleDeclaration;
+document.style.element = document;
 document.style.bgcolor = "white";
 
 document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, document.DOCUMENT_NODE = 9, document.DOCUMENT_TYPE_NODE = 10, document.DOCUMENT_FRAGMENT_NODE = 11;
@@ -3895,7 +3900,7 @@ eb$visible = function(t) {
 // see the DIS_ values in eb.h
 var c, rc = 0;
 var so; // style object
-if(!t || !(so = t.style)) return 0;
+if(!t) return 0;
 // If class has changed, recompute style.
 // If id has changed, recompute style, but I don't think that ever happens.
 if(t.class != t.last$class || t.id != t.last$id) {
@@ -3908,6 +3913,7 @@ delete w.rr$start;
 }
 dom$.computeStyleInline(t);
 }
+if(!(so = t.style$2)) return 0;
 if(so.display == "none" || so.visibility == "hidden") {
 rc = 1;
 // It is hidden, does it come to light on hover?

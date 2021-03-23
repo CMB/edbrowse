@@ -3358,7 +3358,7 @@ char *get_style_string_t(const Tag *t, const char *name)
 	jsobjtype so; // style object
 	if(!t->jslink || !allowJS)
 		return 0;
-	so = get_property_object_0(t->f0->cx, t->jv, "style");
+	so = get_property_object_0(t->f0->cx, t->jv, "style$2");
 	return so ? get_property_string_0(t->f0->cx, so, name) : 0;
 }
 
@@ -3470,7 +3470,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	int idx = t->lic;
 	jsobjtype oa;		// option array
 	jsobjtype oo;		// option object
-	jsobjtype so;		// style object
 	jsobjtype fo;		// form object
 	jsobjtype selobj = sel->jv; // select object
 
@@ -3487,8 +3486,6 @@ void establish_js_option(Tag *t, Tag *sel)
 	if (fo)
 		set_property_object_0(cx, oo, "form", fo);
 	instantiate_array_0(cx, oo, "childNodes");
-	so = instantiate_0(cx, oo, "style", "CSSStyleDeclaration");
-	set_property_object_0(cx, so, "element", oo);
 
 connectTagObject(t, oo);
 }
@@ -3496,11 +3493,8 @@ connectTagObject(t, oo);
 void establish_js_textnode(Tag *t, const char *fpn)
 {
 	duk_context *cx = cf->cx;
-	jsobjtype so;
 	 jsobjtype tagobj = instantiate_0(cx, cf->winobj, fpn, "TextNode");
 	instantiate_array_0(cx, tagobj, "childNodes");
-	so = instantiate_0(cx, tagobj, "style", "CSSStyleDeclaration");
-	set_property_object_0(cx, so, "element", tagobj);
 	connectTagObject(t, tagobj);
 }
 
@@ -3557,7 +3551,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *href_url = t->href;
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
-	jsobjtype so = 0;	/* obj.style */
 	char upname[MAXTAGNAME];
 	char classtweak[MAXTAGNAME + 4];
 
@@ -3651,20 +3644,13 @@ That's how it was for a long time, but I think we only do this on form.
 				set_property_object_0(cx, io, "options", ca);
 		}
 
-/* deal with the 'styles' here.
-object will get 'style' regardless of whether there is
-anything to put under it, just like it gets childNodes whether
-or not there are any.  After that, there is a conditional step.
-If this node contains style='' of one or more name-value pairs,
+/* If this node contains style='' of one or more name-value pairs,
 call out to process those and add them to the object.
 Don't do any of this if the tag is itself <style>. */
-		if (t->action != TAGACT_STYLE) {
-			so = instantiate_0(cx, io, "style", "CSSStyleDeclaration");
-			set_property_object_0(cx, so, "element", io);
-/* now if there are any style pairs to unpack,
- processStyles can rely on obj.style existing */
-			if (stylestring)
-				processStyles(so, stylestring);
+		if (stylestring && t->action != TAGACT_STYLE) {
+// This call creates the styl object on demand.
+			jsobjtype so = get_property_object_0(cx, io, "style");
+			processStyles(so, stylestring);
 		}
 
 /* Other attributes that are expected by pages, even if they
@@ -3703,8 +3689,6 @@ Don't do any of this if the tag is itself <style>. */
 			return;
 		if(!(io = instantiate_array_element_0(cx, io, length, "z$Element")))
 			return;
-		so = instantiate_0(cx, io, "style", "CSSStyleDeclaration");
-		set_property_object_0(cx, so, "element", io);
 	}
 
 	set_property_string_0(cx, io, "name", (symname ? symname : emptyString));

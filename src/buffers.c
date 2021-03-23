@@ -269,7 +269,7 @@ void displayLine(int n)
 		    || c == '\x0f')
 			expand = true;
 		if (cmd == 'l') {
-/* show tabs and backspaces, ed style */
+// show tabs and backspaces via > <
 			if (c == '\b')
 				c = '<';
 			if (c == '\t')
