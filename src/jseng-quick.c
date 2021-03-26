@@ -17,7 +17,7 @@ along with the GPL, general public license, for edbrowse.
 #include <quickjs/quickjs-libc.h>
 
 // to track down memory leaks
-#define LEAK
+#define NO_LEAK
 #ifdef LEAK
 // the quick js pointer
 struct qjp { struct qjp *next; void *ptr; short count; short lineno; };

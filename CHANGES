@@ -9,6 +9,10 @@ or use this as a C++ framework for v8.
 
 Switch from duktape js to quick js.
 
+Create subordinate objects, like the style object, on-demand,
+instead of making them part of every node automatically.
+This should cut down on objet proliferation.
+
 Extend show columns (shc) command to html tables in browse mode.
 This was originally a database command, and still is.
 
