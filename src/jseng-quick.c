@@ -1466,6 +1466,25 @@ static JSValue nat_atob(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	return v;
 }
 
+// object keys, just for debugging from jdb
+static JSValue nat_ok(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
+{
+	uint32_t p_len = 0;
+	if(argc >= 1 && JS_IsObject(argv[0])) {
+		JSPropertyEnum *p_list;
+		int i;
+		JS_GetOwnPropertyNames(cx, &p_list, &p_len, argv[0], JS_GPN_STRING_MASK);
+		for(i=0; i<p_len; ++i) {
+			const char *s = JS_AtomToCString(cx, p_list[i].atom);
+			puts(s);
+			JS_FreeCString(cx, s);
+			JS_FreeAtom(cx, p_list[i].atom);
+		}
+		  free(p_list);
+	}
+	return JS_NewInt32(cx, p_len);
+}
+
 static JSValue nat_new_location(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	const char *s = emptyString;
@@ -2901,6 +2920,8 @@ static void createJSContext_0(Frame *f)
 	JS_DefinePropertyValueStr(cx, g, "mw$", JS_GetGlobalObject(mwc), 0);
 
 // bind native functions here
+    JS_DefinePropertyValueStr(cx, g, "natok",
+JS_NewCFunction(cx, nat_ok, "nat_ok", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$newLocation",
 JS_NewCFunction(cx, nat_new_location, "new_location", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "my$win",

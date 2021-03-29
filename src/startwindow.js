@@ -444,7 +444,7 @@ which replaces the web page you are looking at.
 This side effect does not take place in the constructor, which establishes the initial url.
 *********************************************************************/
 
-URL = z$URL = function() {
+z$URL = URL = function() {
 var h = "";
 if(arguments.length > 0) h= arguments[0];
 this.href = h;
@@ -845,7 +845,7 @@ Object.defineProperty(Validity.prototype, "valid", {
 get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
-Element = z$Element = function() { this.validity = new Validity, this.validity.owner = this};
+z$Element = Element = function() { this.validity = new Validity, this.validity.owner = this};
 z$Element.prototype = new HTMLElement;
 z$Element.prototype.dom$class = "Element";
 z$Element.prototype.selectionStart = 0;
@@ -974,7 +974,7 @@ var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
-Image = z$Image = function(){};
+z$Image = Image = function(){};
 z$Image.prototype = new HTMLElement;
 z$Image.prototype.dom$class = "Image";
 z$Frame = function(){};
