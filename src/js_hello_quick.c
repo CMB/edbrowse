@@ -41,6 +41,25 @@ printf("\n");
     return JS_UNDEFINED;
 }
 
+static JSValue nat_plist(JSContext *cx, JSValueConst this_val,
+                        int argc, JSValueConst *argv)
+{
+JSValue g = JS_GetGlobalObject(cx);
+JSPropertyEnum *p_list;
+uint32_t p_len;
+int i;
+JS_GetOwnPropertyNames(cx, &p_list, &p_len, g, JS_GPN_STRING_MASK);
+for(i=0; i<p_len; ++i) {
+const char *s = JS_AtomToCString(cx, p_list[i].atom);
+puts(s);
+JS_FreeCString(cx, s);
+JS_FreeAtom(cx, p_list[i].atom);
+}
+JS_FreeValue(cx, g);
+  free(p_list);
+return JS_NewInt32(cx, p_len);
+}
+
 static JSValue test_getter(JSContext *cx, JSValueConst this_val,
                         int argc, JSValueConst *argv)
 {
@@ -101,7 +120,7 @@ JSValue val;
 const char *result;
 const char *first = "'hello world, the answer is ' + 6*7;";
 JSAtom a;
-char line[80];
+char line[200];
 
 selectLanguage();
 
@@ -126,6 +145,8 @@ nonstandard attributes, like not writable, then you have to do this.
 *********************************************************************/
     JS_DefinePropertyValueStr(cx[0], wo[0], "print",
 JS_NewCFunction(cx[0], nat_puts, "eb$puts", 1), 0);
+    JS_DefinePropertyValueStr(cx[0], wo[0], "plist",
+JS_NewCFunction(cx[0], nat_plist, "eb$plist", 1), 0);
 
 /*********************************************************************
 sample getter setter, just in window 1.

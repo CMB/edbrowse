@@ -18,6 +18,7 @@ along with the GPL, general public license, for edbrowse.
 
 // to track down memory leaks
 #define NO_LEAK
+// Warning, if you turn this feature on it slows things down.
 #ifdef LEAK
 // the quick js pointer
 struct qjp { struct qjp *next; void *ptr; short count; short lineno; };
