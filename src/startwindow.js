@@ -3551,7 +3551,7 @@ XMLHttpRequest.prototype.statusText = "";
 // Then the line numbers in the error messages actually mean something.
 // This is only called when debugging is on. Users won't invoke this machinery.
 // Argument is the script object.
-// escodegen.generate and esprima.parse are found in third.js.
+// escodegen.generate and esprima.parse are found in demin.js.
 dom$.eb$demin = function(s) {
 if( s.dom$class != "Script") return;
 if(s.demin) return; // already expanded
@@ -4346,11 +4346,7 @@ return s+v;
 
 cancelAnimationFrame = eb$voidfunction;
 
-/*********************************************************************
-Code beyond this point is third party, but necessary for the operation of the browser.
-The code in third.js is third party but is only needed for debugging,
-and is not included in the distribution.
-*********************************************************************/
+// Code beyond this point is third party, but necessary for the operation of the browser.
 
 /* Blob.js
  * A Blob, File, FileReader & URL implementation.
@@ -5036,3 +5032,7 @@ and is not included in the distribution.
     blob.stream = stream
   }
 })()
+
+// link in the deminimization code.
+if(mw$.escodegen)
+esprima = mw$.esprima, escodegen = mw$.escodegen;

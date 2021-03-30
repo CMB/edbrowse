@@ -7,10 +7,9 @@ snapshot, as the software evolves.
 
 Being huge, these functions are compiled once in the master window,
 then referenced from every other window.
-Large blocks of code are inside an if(mw$.compiled == false) block,
-so it only recompiles the first time; then the links are at the bottom.
-Sometimes I have to change the functions just a bit to support this,
-e.g. replacing document with my$doc().
+You might have to change the functions slightly,
+e.g. replacing document with my$doc(),
+though I don't see any examples of that here.
 I'll make notes if this is the case.
 
 Third-party libraries: Esprima, which converts javascript code into
@@ -26,9 +25,6 @@ line 2345, which you can follow through on and debug something.)
 Link for Esprima: https://github.com/jquery/esprima.git
 License for Esprima: found below, at the top of the esprima.js source
 *********************************************************************/
-
-
-if(!mw$.compiled) {
 
 
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -11868,13 +11864,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   require('/tools/entry-point.js');
 }.call(this, this));
 
-mw$.esprima = esprima;
-mw$.escodegen = escodegen;
-
+Object.defineProperty(Object.prototype, "constructor",{enumerable:false,writable:false,configurable:false});
 // Mark the master window as irrevocably compiled.
-Object.defineProperty(mw$, "compiled", {value:true, writable:false, configurable:false, enumerable:true});
-
-} else { // master compile
-esprima = mw$.esprima;
-escodegen = mw$.escodegen;
-}
+Object.defineProperty( this, "compiled", {value:true, writable:false, configurable:false, enumerable:true});

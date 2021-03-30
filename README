@@ -318,15 +318,20 @@ Failing this, write them in C, using the API presented by jseng-quick.c.
 Failing this, and as a last resort, write them as native code within the js engine.
 Obviously this last approach is not engine portable.
 
-src/third.js:
-Third party open source javascript routines that are used for debugging.
-These are snapshots; you will need to update third.js, i.e. grab a new
-snapshot, as this software evolves.
+src/shared.js:
+Functions or classes that can safely be shared amongst all edbrowse windows.
+This saves time and memory.
+
+src/demin.js:
+Third party open source javascript routines that are used for debugging
+and deminimization.
+These are snapshots; you will need to update demin.js, i.e. grab a new
+snapshot, as that software evolves.
 Distributers don't have to worry about this one,
 it isn't compiled in unless $EBDEMIN is set to 1.
 
 src/endwindow.js:
-This is the close of startwindow.js, and it stands in if third.js is not used.
+This is the close of shared.js, and it stands in if demin.js is not used.
 
 src/html-tidy.c:
 Use tidy5 to parse html and return a tree of nodes.

@@ -1430,9 +1430,22 @@ JSValue mwo; // master window object
 	mwc = JS_NewContext(jsrt);
 	mwo = JS_GetGlobalObject(mwc);
 // shared functions and classes
+	jsSourceFile = "shared.js";
+	jsLineno = 1;
 	r = JS_Eval(mwc, sharedJS, strlen(sharedJS),
-	"shared.js", JS_EVAL_TYPE_GLOBAL);
+	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+// If you want to see the errors, you have to run 3dbrowse -db3
+// cause this stuff starts from main().
+	if(JS_IsException(r))
+		processError(mwc);
 	JS_FreeValue(mwc, r);
+	jsSourceFile = "demin.js";
+	r = JS_Eval(mwc, deminJS, strlen(deminJS),
+	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+	if(JS_IsException(r))
+		processError(mwc);
+	JS_FreeValue(mwc, r);
+	jsSourceFile = 0;
 	JS_FreeValue(mwc, mwo);
 	js_running = true;
 }
@@ -3115,9 +3128,6 @@ static void setup_window_2(void)
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
 	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
-// deminimization debugging is large and slow to parse,
-// thus it goes in the master window, once, and shared by all windows.
-	jsRunScriptWin(deminJS, "demin.js", 1);
 
 	nav = get_property_object(cx, w, "navigator");
 	if (JS_IsUndefined(nav))

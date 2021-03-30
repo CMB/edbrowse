@@ -192,6 +192,7 @@ static int js_start(void)
 	context0_obj = duk_get_heapptr(context0, -1);
 	duk_pop(context0);
 	duk_peval_string(context0, sharedJS);
+	duk_peval_string(context0, deminJS);
 	return 0;
 }
 
@@ -2205,7 +2206,6 @@ static void setup_window_2(void)
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
 	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
-	jsRunScriptWin(deminJS, "demin.js", 1);
 
 	nav = get_property_object_0(cx, w, "navigator");
 	if (nav == NULL)
