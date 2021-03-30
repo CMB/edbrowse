@@ -1045,8 +1045,7 @@ const char *filename, 			int lineno)
 /* like the above but throw away the result */
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(cf, *((JSValue*)cf->winobj), str, filename, lineno);
-	nzFree(s);
+	char *s = jsRunScriptResult(cf, *((JSValue*)cf->winobj), str, filename, lineno); 	nzFree(s);
 }
 
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
@@ -1414,6 +1413,8 @@ Unfortunately this sets up javascript, whether you are going to use it or not.
 
 void js_main(void)
 {
+JSValue mwo; // master window object
+	JSValue r;
 	if(js_running)
 		return;
 	jsrt = JS_NewRuntime();
@@ -1427,6 +1428,12 @@ void js_main(void)
 	if(WithDebugging)
 		JS_SetMaxStackSize(jsrt, 2048*1024);
 	mwc = JS_NewContext(jsrt);
+	mwo = JS_GetGlobalObject(mwc);
+// shared functions and classes
+	r = JS_Eval(mwc, sharedJS, strlen(sharedJS),
+	"shared.js", JS_EVAL_TYPE_GLOBAL);
+	JS_FreeValue(mwc, r);
+	JS_FreeValue(mwc, mwo);
 	js_running = true;
 }
 
@@ -1893,7 +1900,7 @@ JSValueConst b_j, const char *b_name)
 	char *jst;		// javascript string
 	JSContext *cx = cf->cx;
 
-// Some functions in third.js create, link, and then remove nodes, before
+// Some functions in demin.js create, link, and then remove nodes, before
 // there is a document. Don't run any side effects in this case.
 	if (!cw->tags)
 		return;
@@ -3107,10 +3114,10 @@ static void setup_window_2(void)
 /* the js window/document setup script.
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
-	jsRunScriptWin(startWindowJS, "StartWindow", 1);
+	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
 // deminimization debugging is large and slow to parse,
 // thus it goes in the master window, once, and shared by all windows.
-	jsRunScriptWin(thirdJS, "Third", 1);
+	jsRunScriptWin(deminJS, "demin.js", 1);
 
 	nav = get_property_object(cx, w, "navigator");
 	if (JS_IsUndefined(nav))

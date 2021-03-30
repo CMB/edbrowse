@@ -85,9 +85,10 @@ extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // line number
 extern char frameContent[];
 	extern const char startWindowJS[];
-	extern const char thirdJS[];
+	extern const char deminJS[];
+	extern const char sharedJS[];
 // this is crude but it works.
-#define WithDebugging (strlen(thirdJS) > 5000)
+#define WithDebugging (strlen(deminJS) > 5000)
 
 enum ej_proptype {
 	EJ_PROP_NONE,

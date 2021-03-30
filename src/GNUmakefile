@@ -58,11 +58,11 @@ dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
 ifneq ($(EBDEMIN),)
-startwindow.c: startwindow.js third.js
-	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/third.js thirdJS src/startwindow.c
+startwindow.c: shared.js startwindow.js demin.js
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/demin.js deminJS src/shared.js sharedJS src/startwindow.c
 else
-startwindow.c: startwindow.js endwindow.js
-	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/endwindow.js thirdJS src/startwindow.c
+startwindow.c: shared.js startwindow.js endwindow.js
+	cd .. ; ./tools/buildsourcestring.pl src/startwindow.js startWindowJS src/endwindow.js deminJS src/shared.js sharedJS src/startwindow.c
 endif
 
 ebrc.c: ../lang/ebrc-* ../doc/usersguide*.html

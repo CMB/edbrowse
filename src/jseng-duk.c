@@ -191,6 +191,7 @@ static int js_start(void)
 	duk_put_prop_string(context0, -2, "compiled");
 	context0_obj = duk_get_heapptr(context0, -1);
 	duk_pop(context0);
+	duk_peval_string(context0, sharedJS);
 	return 0;
 }
 
@@ -723,7 +724,7 @@ static void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *res
 	int action;
 	char *jst;		// javascript string
 
-// Some functions in third.js create, link, and then remove nodes, before
+// Some functions in demin.js create, link, and then remove nodes, before
 // there is a document. Don't run any side effects in this case.
 	if (!cw->tags)
 		return;
@@ -2203,8 +2204,8 @@ static void setup_window_2(void)
 /* the js window/document setup script.
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
-	jsRunScriptWin(startWindowJS, "StartWindow", 1);
-	jsRunScriptWin(thirdJS, "Third", 1);
+	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
+	jsRunScriptWin(deminJS, "demin.js", 1);
 
 	nav = get_property_object_0(cx, w, "navigator");
 	if (nav == NULL)
