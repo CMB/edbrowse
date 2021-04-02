@@ -8,6 +8,7 @@ A website might innocently do that.
 Nail down prototype and some methods that might innocently be called.
 *********************************************************************/
 
+Object.defineProperty(this, "Object",{writable:false,configurable:false});
 Object.defineProperty(Object, "prototype",{writable:false,configurable:false});
 Object.defineProperty(Object.prototype, "toString",{enumerable:false,writable:false,configurable:false});
 Object.defineProperty(Object.prototype, "toLocaleString",{enumerable:false,writable:false,configurable:false});
@@ -19,5 +20,10 @@ Object.defineProperty(Object.prototype, "hasOwnProperty",{enumerable:false,writa
 Object.defineProperty(Object.prototype, "isPrototypeOf",{enumerable:false,writable:false,configurable:false});
 Object.defineProperty(Object.prototype, "propertyIsEnumerable",{enumerable:false,writable:false,configurable:false});
 
-// That's it for object, and that's all we're doing for now.
-// This is a placeholder.
+Object.defineProperty(this, "Function",{writable:false,configurable:false});
+Object.defineProperty(Function, "prototype",{writable:false,configurable:false});
+Object.defineProperty(Function.prototype, "call",{enumerable:false,writable:false,configurable:false});
+Object.defineProperty(Function.prototype, "apply",{enumerable:false,writable:false,configurable:false});
+Object.defineProperty(Function.prototype, "bind",{enumerable:false,writable:false,configurable:false});
+Object.defineProperty(Function.prototype, "toString",{enumerable:false,writable:false,configurable:false});
+

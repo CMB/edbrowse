@@ -68,11 +68,11 @@ ok = $ok = Object.keys;
 function alert3(s) { eb$logputs(3, s); }
 function alert4(s) { eb$logputs(4, s); }
 
-// Dump the tree below a node, this is for debugging.
 document.nodeName = "DOCUMENT"; // in case you want to start at the top.
 document.tagName = "document";
 window.nodeName = "WINDOW";
 
+// Dump the tree below a node, this is for debugging.
 // Print the first line of text for a text node, and no braces
 // because nothing should be below a text node.
 // You can make this more elaborate and informative if you wish.
