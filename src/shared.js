@@ -1,3 +1,4 @@
+// stringname=sharedJS
 /*********************************************************************
 Javascript that loads and runs in the master window.
 Functions and classses defined here can be shared by all the edbrowse windows,

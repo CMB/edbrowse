@@ -14,7 +14,7 @@ sub prt($) { print shift; }
 
 my $nargs = $#ARGV;
 if($nargs < 2) {
-prt "Usage: buildsourcestring.pl file1 string1 file2 string2 ... outfile\n";
+prt "Usage: buildsourcestring.pl file1 file2 ... outfile\n";
 exit 1;
 }
 
@@ -29,11 +29,12 @@ $outbase =~ s,.*/,,;
     print OUTF "/* $outbase: this file is machine generated; */\n\n";
 
 #  loop over input files
-for(my $j = 0; $j < $nargs; $j += 2) {
+for(my $j = 0; $j < $nargs; $j += 1) {
 my $infile = $ARGV[$j];
 my $inbase = $infile;
 $inbase =~ s,.*/,,;
-my $stringname = $ARGV[$j+1];
+my $stringname = $inbase;
+$stringname =~ s/-/_/g;
 
 if ( -f $infile ) {
     if (!open  INF, "<$infile") {
@@ -42,6 +43,15 @@ if ( -f $infile ) {
     }
     my @lines = <INF>;
     close INF;
+    if ($inbase =~ /\.js$/) {
+        if ($lines[0] =~ /stringname=([a-zA-Z_][a-zA-Z_0-9]*)/) {
+            $stringname = "$1";
+            shift @lines;
+        } else {
+            prt("Unable to determine string name.\n");
+            exit(1);
+        }
+    }
     print OUTF "/* source file $inbase */\n";
     print OUTF "const char ${stringname}[] = {\n";
     my ($line);

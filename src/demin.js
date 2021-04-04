@@ -1,3 +1,4 @@
+// stringname=deminJS
 /*********************************************************************
 This file contains third party open source javascript routines
 that are useful to edbrowse.

@@ -6,10 +6,6 @@ use strict;
 use warnings;
 
 my $s = join ' ', glob "lang/ebrc-*";
-$s =~ s/ebrc-\w+/$& $&/g;
-# Some inconsistency has evolved here,
-# file name is hyphen, but C string has to be an underscore.
-$s =~ s/ ebrc-/ ebrc_/g;
 
 #  Extract the quick reference guides.
 my @guides = glob "doc/usersguide*.html";
@@ -35,7 +31,7 @@ print F2 "$_\n";
 }
 close F1;
 close F2;
-$s = "src/$p2 $p2 $s";
+$s = "src/$p2 $s";
 }
 
 # Ready to go.

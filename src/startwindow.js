@@ -1,3 +1,4 @@
+// stringname=startWindowJS
 /*********************************************************************
 This file contains support javascript functions used by a browser.
 They are easier to write here in javascript, then in C using the js api.
