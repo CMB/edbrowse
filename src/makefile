@@ -26,6 +26,8 @@ CXXFLAGS += $(DEBUGFLAGS)
 
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
+# LDFLAGS for quickjs.  For FreeBSD, remove -latomic.
+QUICKJS_LDFLAGS = -L/usr/local/lib/quickjs -lquickjs -ldl -latomic
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
@@ -43,7 +45,7 @@ EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h
-jseng-duk.o jseng-moz.o : eb.h ebprot.h messages.h
+jseng-duk.o jseng-moz.o jseng-quick.o : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: $(EDBR_JS_ASSETS)
@@ -57,8 +59,8 @@ msg-strings.c: ../lang/msg-*
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) jseng-duk.o
-	$(CC) $(EBOBJS) jseng-duk.o -lduktape $(LDFLAGS) -o $@
+edbrowse: $(EBOBJS) jseng-quick.o
+	$(CC) $(EBOBJS) jseng-quick.o $(QUICKJS_LDFLAGS) $(LDFLAGS)  -o $@
 
 #  You probably need to be root to do this.
 install:
@@ -77,6 +79,9 @@ clean:
 	rm -f *.o edbrowse edbrowseqk edbrowsesm \
 	startwindow.c ebrc.c msg-strings.c
 
+edbrowseduk: $(EBOBJS) jseng-duk.o
+	$(CC) $(EBOBJS) jseng-duk.o -lduktape $(LDFLAGS) -o $@
+
 #  The mozilla version, highly experimental
 #  need packages libmozjs-52-0 and libmozjs-52-dev, or higher.
 #  Set SMV to your spider monkey version.
@@ -88,8 +93,6 @@ CXXFLAGS += -Wno-psabi -I/usr/include/mozjs-$(SMV)
 edbrowsesm: $(EBOBJS) jseng-moz.o
 	$(CC) $(EBOBJS) jseng-moz.o $(LDFLAGS) -lmozjs-$(SMV) -lstdc++ -o $@
 
-edbrowseqk: $(EBOBJS) jseng-quick.o
-	$(CC) $(EBOBJS) jseng-quick.o $(QUICKJS_LDFLAGS) $(LDFLAGS)  -o $@
 
 #  some hello world targets, for testing and debugging
 
