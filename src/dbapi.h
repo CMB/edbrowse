@@ -38,7 +38,6 @@ typedef union {
 	void *ptr;
 } LF;
 
-typedef void (*fnptr) ();	/* function pointer */
 typedef long date;
 typedef long interval;
 typedef long money;

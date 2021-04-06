@@ -148,7 +148,7 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 			pdir = tolower(pdir);
 			inquote = '"';
 		}
-		if (t - perc >= sizeof(fmt))
+		if ((unsigned)(t - perc) >= sizeof(fmt))
 			errorPrint("2percent directive in lineFormat too long");
 		strncpy(fmt, perc, t - perc);
 		fmt[t - perc] = 0;
@@ -881,7 +881,7 @@ static bool setTable(void)
 	int cid, nc, i, part1, part2, part3, part4;
 	const char *s = cf->fileName;
 	const char *t = strchr(s, ']');
-	if (t - s >= sizeof(myTab))
+	if ((unsigned)(t - s) >= sizeof(myTab))
 		errorPrint("2table name too long, limit %d characters",
 			   sizeof(myTab) - 4);
 	strncpy(myTab, s, t - s);
@@ -1502,7 +1502,7 @@ The cursors should be sorted by this key.
 
 static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements */
 			const char *orderby,	/* which fetched column is the unique key */
-			fnptr f,	/* call this function for differences */
+			int (*f)(char, char*, char*, int),	/* call this function for differences */
 			char delim)
 {				/* sql_mkunld() delimiter, or call mkinsupd if delim = 0 */
 	short cid1, cid2;	/* the cursor ID numbers */
@@ -1706,7 +1706,7 @@ void syncup_table(const char *table1, const char *table2,	/* the two tables */
 	if (otherclause)
 		len += strlen(otherclause);
 	len += strlen(keycol);
-	if (len + 30 > sizeof(stmt1))
+	if ((unsigned)len + 30 > sizeof(stmt1))
 		errorPrint
 		    ("2constructed select statement in syncup_table() is too long");
 
@@ -1725,7 +1725,7 @@ void syncup_table(const char *table1, const char *table2,	/* the two tables */
 		sprintf(stmt2, "select * from %s order by %s", table2, keycol);
 	}
 
-	cursor_comm(stmt1, stmt2, keycol, (fnptr) syncup_comm_fn, 0);
+	cursor_comm(stmt1, stmt2, keycol,  syncup_comm_fn, 0);
 }				/* syncup_table */
 
 int goSelect(int *startLine, char **rbuf)
