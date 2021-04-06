@@ -52,7 +52,7 @@ the search/substitute functions in the editor.
 Once you've experienced the power of perl regexp, you'll never
 go back to ed.  So I use the perl-compatible regular expression
 library, /lib/libpcre.so.0, available on most Linux systems.
-If you don't have this file, check your installation disks.
+If you don't have this file, check your available packages.
 the pcre and pcre-devel packages might be there, just not installed.
 You need version 8.10 or higher.
 
@@ -136,8 +136,7 @@ quickjs code is part of edbrowse, and a quickjs package is not necessary.
 unixODBC:
 If you want database access, you need unixODBC and unixODBC-devel.
 Select the odbc option via:
-make BUILD_EDBR_ODBC=on in the src directory, or from build,
-cmake -DBUILD_EDBR_ODBC:BOOL=ON ..
+make BUILD_EDBR_ODBC=on in the src directory.
 ODBC has been very stable for a long time.
 unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
@@ -151,10 +150,9 @@ but it is no longer supported.
 On other systems, you should be able to use make.
 cd src
 make
-The makefile supports the environment variable EBDEBUG=on for
-symbolic debugging via gdb and javascript deminimization.
-Distributors should not set this flag; it introduces security risks
-that are not a concern to us when debugging.
+The makefile supports the environment variables EBDEBUG=on for
+symbolic debugging via gdb, and EBDEMIN=on for javascript deminimization.
+Distributors should not set these flags.
 
 ------------------------------------------------------------
 
@@ -244,7 +242,7 @@ src/http.c:
 Send the http request, and read the data from the web server.
 Handles https connections as well,
 and 301/302 redirection.
-ftp, sftp, download files, possibly in the background.
+gopher, ftp, sftp, download files, possibly in the background.
 
 src/html.c:
 Manage the html tags and the tree of nodes.
@@ -302,10 +300,11 @@ Manage all the js objects corresponding to the web page in edbrowse.
 src/jseng-moz.cpp:
 The javascript engine built around the mozilla js library.
 Manage all the js objects corresponding to the web page in edbrowse.
+This is C++, but it plays nicely with the rest of edbrowse in C.
 
 src/js_hello*
 Various hello world files to exercise various javascript engines.
-These are stand alone programs; build them (on linux) by make hello.
+These are stand alone programs; build them by make hello.
 
 src/startwindow.js:
 Javascript that is run at the start of each session.
@@ -328,7 +327,7 @@ and deminimization.
 These are snapshots; you will need to update demin.js, i.e. grab a new
 snapshot, as that software evolves.
 Distributers don't have to worry about this one,
-it isn't compiled in unless $EBDEMIN is set to 1.
+it isn't compiled in unless $EBDEMIN is set to on.
 
 src/endwindow.js:
 This is the close of shared.js, and it stands in if demin.js is not used.
