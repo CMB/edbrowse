@@ -532,7 +532,7 @@ top:
 /* A bug in my keyboard causes nulls to be entered from time to time. */
 			c = 0;
 			i = 0;
-			while (i < sizeof(line) - 1 && (c = line[i]) != '\n') {
+			while ((unsigned)i < sizeof(line) - 1 && (c = line[i]) != '\n') {
 				if (c == 0)
 					line[i] = ' ';
 				++i;
@@ -609,7 +609,7 @@ addchar:
 				memcpy(s + j, t, l);
 				j += l;
 			} else {
-				t[j++] = (c <= 0xff ? c : '?');
+				t[j++] = ((c&0x80) ? '?' : c);
 			}
 			continue;
 		}
@@ -1958,7 +1958,7 @@ success:
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
-static bool readFile(const char *filename, const char *post, bool newwin,
+static bool readFile(const char *filename, bool newwin,
 		     int fromframe, const char *fromthis)
 {
 	char *rbuf;		/* read buffer */
@@ -2379,14 +2379,14 @@ intext:
 			     !isURL(filename));
 	nzFree(rbuf);
 	return rc;
-}				/* readFile */
+}
 
 /* from the command line */
 bool readFileArgv(const char *filename, int fromframe)
 {
 	bool newwin = !fromframe;
 	cmd = 'e';
-	return readFile(filename, emptyString, newwin, fromframe,
+	return readFile(filename, newwin, fromframe,
 			(newwin ? 0 : cw->f0.fileName));
 }				/* readFileArgv */
 
@@ -6670,7 +6670,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 			save_pg = pluginsOn;
 			if (emode)
 				pluginsOn = false;
-			j = readFile(line, emptyString, (cmd != 'r'), 0,
+			j = readFile(line, (cmd != 'r'), 0,
 				     thisfile);
 			pluginsOn = save_pg;
 		}
@@ -6897,7 +6897,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, emptyString, (cmd != 'r'), 0, 0);
+			j = readFile(line, (cmd != 'r'), 0, 0);
 			if (!serverData)
 				fileSize = -1;
 			return j;

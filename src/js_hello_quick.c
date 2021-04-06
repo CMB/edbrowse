@@ -46,8 +46,7 @@ static JSValue nat_plist(JSContext *cx, JSValueConst this_val,
 {
 JSValue g = JS_GetGlobalObject(cx);
 JSPropertyEnum *p_list;
-uint32_t p_len;
-int i;
+uint32_t p_len, i;
 JS_GetOwnPropertyNames(cx, &p_list, &p_len, g, JS_GPN_STRING_MASK);
 for(i=0; i<p_len; ++i) {
 const char *s = JS_AtomToCString(cx, p_list[i].atom);

@@ -716,7 +716,7 @@ static Tag *tagFromObject2(jsobjtype v, const char *tagname)
 	return t;
 }				/* tagFromObject2 */
 
-static void domSetsLinkage(bool after, char type, jsobjtype p_j, const char *rest)
+static void domSetsLinkage(char type, jsobjtype p_j, const char *rest)
 {
 	Tag *parent, *add, *before, *c, *t;
 	jsobjtype *a_j, *b_j;
@@ -903,7 +903,7 @@ static void linkageNow(duk_context * cx, char linkmode, jsobjtype o)
 {
 	jsInterruptCheck(cx);
 	debugPrint(4, "linkset %s", effects + 2);
-	domSetsLinkage(false, linkmode, o, strchr(effects, ',') + 1);
+	domSetsLinkage(linkmode, o, strchr(effects, ',') + 1);
 	nzFree(effects);
 	effects = initString(&eff_l);
 }
@@ -3427,7 +3427,7 @@ void set_property_string_doc(const Frame *f, const char *name, const char *v)
 
 // Run some javascript code under the named object, usually window.
 // Pass the return value of the script back as a string.
-static char *jsRunScriptResult(const Frame *f, jsobjtype obj, const char *str,
+static char *jsRunScriptResult(const Frame *f, const char *str,
 const char *filename, 			int lineno)
 {
 	char *result;
@@ -3442,25 +3442,25 @@ const char *filename, 			int lineno)
 	jsSourceFile = NULL;
 	debugPrint(5, "< ok");
 	return result;
-}				/* jsRunScriptResult */
+}
 
 /* like the above but throw away the result */
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(cf, cf->winobj, str, filename, lineno);
+	char *s = jsRunScriptResult(cf, str, filename, lineno);
 	nzFree(s);
 }
 
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(t->f0, t->f0->winobj, str, filename, lineno);
+	char *s = jsRunScriptResult(t->f0, str, filename, lineno);
 	nzFree(s);
 }
 
 char *jsRunScriptWinResult(const char *str,
 const char *filename, 			int lineno)
 {
-return jsRunScriptResult(cf, cf->winobj, str, filename, lineno);
+return jsRunScriptResult(cf, str, filename, lineno);
 }
 
 // Functions that help decorate the DOM tree, called from decorate.c.

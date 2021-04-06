@@ -1599,7 +1599,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 /* Anything nonascii makes it 8bit */
 			ce = "7bit";
 			for (s = val; *s; ++s)
-				if (*s < 0) {
+				if (*s & 0x80) {
 					ce = "8bit";
 					break;
 				}
@@ -2714,7 +2714,7 @@ const char *tack_fn(const char *e)
 {
 	static char buf[64];
 	int l = strlen(e);
-	if(l + 4 >= sizeof(buf)) {
+	if((unsigned)l + 4 >= sizeof(buf)) {
 		debugPrint(3, "%s$$fn too long", e);
 		return 0;
 	}
@@ -3369,7 +3369,7 @@ nocolorend:
 // back up to :
 		u0 = backColon(u1);
 		if (*u0++ != ':' ||
-		    u1 - u0 != strlen(recolor) || memcmp(u0, recolor, u1 - u0))
+		    (unsigned)(u1 - u0) != strlen(recolor) || memcmp(u0, recolor, u1 - u0))
 			goto yescolor;
 		if (!u2) {
 // it's the same color, orange inside orange
@@ -3518,6 +3518,7 @@ nocolor:
 			++listnest;
 		else
 			--listnest;
+
 	case TAGACT_DL:
 	case TAGACT_DT:
 	case TAGACT_DD:

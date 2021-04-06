@@ -1025,7 +1025,7 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 
 // Run some javascript code under the named object, usually window.
 // Pass the return value of the script back as a string.
-static char *jsRunScriptResult(const Frame *f, JSValue obj, const char *str,
+static char *jsRunScriptResult(const Frame *f, const char *str,
 const char *filename, 			int lineno)
 {
 	char *result;
@@ -1045,19 +1045,19 @@ const char *filename, 			int lineno)
 /* like the above but throw away the result */
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(cf, *((JSValue*)cf->winobj), str, filename, lineno); 	nzFree(s);
+	char *s = jsRunScriptResult(cf, str, filename, lineno); 	nzFree(s);
 }
 
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno)
 {
-	char *s = jsRunScriptResult(t->f0, *((JSValue*)t->f0->winobj), str, filename, lineno);
+	char *s = jsRunScriptResult(t->f0, str, filename, lineno);
 	nzFree(s);
 }
 
 char *jsRunScriptWinResult(const char *str,
 const char *filename, 			int lineno)
 {
-return jsRunScriptResult(cf, *((JSValue*)cf->winobj), str, filename, lineno);
+return jsRunScriptResult(cf, str, filename, lineno);
 }
 
 static JSValue create_event(JSContext *cx, JSValueConst parent, const char *evname)
@@ -1489,10 +1489,9 @@ static JSValue nat_atob(JSContext * cx, JSValueConst this, int argc, JSValueCons
 // object keys, just for debugging from jdb
 static JSValue nat_ok(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	uint32_t p_len = 0;
+	uint32_t p_len = 0, i;
 	if(argc >= 1 && JS_IsObject(argv[0])) {
 		JSPropertyEnum *p_list;
-		int i;
 		JS_GetOwnPropertyNames(cx, &p_list, &p_len, argv[0], JS_GPN_STRING_MASK);
 		for(i=0; i<p_len; ++i) {
 			const char *s = JS_AtomToCString(cx, p_list[i].atom);

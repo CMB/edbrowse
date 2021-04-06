@@ -58,13 +58,13 @@ struct PROTOCOL {
 	"gopher", 70, false, true, true}, {
 	"magnet", 0, false, false, false}, {
 	"irc", 0, false, true, false}, {
-"", 0},};
+"", 0, false, false, false},};
 
 static int protocolByName(const char *p, int l)
 {
 	int i;
 	for (i = 0; protocols[i].prot[0]; i++)
-		if (strlen(protocols[i].prot) == l &&
+		if ((int)strlen(protocols[i].prot) == l &&
 		    memEqualCI(protocols[i].prot, p, l))
 			return i;
 	return -1;
@@ -570,7 +570,7 @@ const char *getHostURL(const char *url)
 		return 0;
 	if (!s)
 		return emptyString;
-	if (l >= sizeof(hostbuf)) {
+	if ((unsigned)l >= sizeof(hostbuf)) {
 		setError(MSG_DomainLong);
 		return 0;
 	}
@@ -1456,7 +1456,7 @@ static bool domainSecurityCheck(const char *server, const char *domain)
 /* x.com or x.y.z */
 	if (dl < 5)
 		return false;
-	if (dl > strlen(server))
+	if (dl > (int)strlen(server))
 		return false;
 	i = strlen(server) - dl;
 	if (!stringEqualCI(server + i, domain))
@@ -2585,7 +2585,7 @@ addWebAuthorization(const char *url,
 		if (a->proxy == proxy &&
 		    a->port == port &&
 		    stringEqualCI(a->host, host) &&
-		    (proxy || (dl == strlen(a->directory)
+		    (proxy || (dl == (int)strlen(a->directory)
 			       && !memcmp(a->directory, dir, dl)))) {
 			char *s = cloneString(credentials);
 			char *t = a->user_password;

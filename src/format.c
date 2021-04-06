@@ -643,7 +643,7 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
 		if (visible) {
 // each foreign char or emoji counts as one.
 // Ignore all but the first byte of a utf8.
-			if ((char)c >= 0	// ascii
+			if (!(c&0x80)	// ascii
 			    || (c & 0x40) == 0x40)
 				++colno;
 			continue;
@@ -1037,7 +1037,7 @@ bool isEmailAddress(const char *s)
 		return false;
 	for (; *s; ++s) {
 		char c = *s;
-		if (c < 0)	// nonascii
+		if (c&0x80)	// nonascii
 			return false;
 		if (atfound) {
 			if (!isalnum(c) && c != '.' && c != '-')
@@ -1146,7 +1146,7 @@ isogo:
 		if ((buf[i + 1] & 0xc0) != 0x80)
 			goto isogo;
 		c <<= 2;
-		for (j = i + 2; c < 0; ++j, c <<= 1)
+		for (j = i + 2; c&0x80; ++j, c <<= 1)
 			if ((buf[j] & 0xc0) != 0x80)
 				goto isogo;
 		++utfcount;
@@ -1172,7 +1172,7 @@ Don't forget to free it when you're done.
 *********************************************************************/
 
 /* only 8859-1 and 8859-2 so far */
-static const int iso_unicodes[2][128] = {
+static const unsigned int iso_unicodes[2][128] = {
 	{
 /*********************************************************************
 The first 32 nonascii chars in iso8859-1 are control characters,
@@ -1229,7 +1229,7 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	int nacount = 0;
 	uchar c;
 	uchar *outbuf;
-	const int *isoarray = iso_unicodes[type8859 - 1];
+	const unsigned int *isoarray = iso_unicodes[type8859 - 1];
 	int ucode;
 	char *s;
 
@@ -1274,8 +1274,8 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	int i, j, k;
 	uchar c;
 	uchar *outbuf;
-	const int *isoarray = iso_unicodes[type8859 - 1];
-	int ucode;
+	const unsigned int *isoarray = iso_unicodes[type8859 - 1];
+	unsigned int ucode;
 
 	if (!inbuflen) {
 		*outbuf_p = (uchar *) emptyString;
@@ -1331,7 +1331,7 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 /* unicodes not found in our iso class are converted into stars */
 		c <<= 1;
 		++i;
-		for (++i; c < 0; ++i, c <<= 1) {
+		for (++i; c&0x80; ++i, c <<= 1) {
 			if ((outbuf[i] & 0xc0) != 0x80)
 				break;
 		}
@@ -1491,7 +1491,7 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	unsigned int unicode;
 	int isbig;
 	int k, l;
-	const int *isoarray = iso_unicodes[type8859 - 1];
+	const unsigned int *isoarray = iso_unicodes[type8859 - 1];
 
 	if (!inbuflen) {
 		*outbuf_p = emptyString;

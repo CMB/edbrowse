@@ -253,7 +253,7 @@ bool javaOK(const char *url)
 		return false;
 	if (isDataURI(url))
 		return true;
-	for (j = 0; j < ebhosts_avail; ++j)
+	for (j = 0; (unsigned)j < ebhosts_avail; ++j)
 		if (ebhosts[j].type == 'j' &&
 		    patternMatchURL(url, ebhosts[j].host))
 			return false;
@@ -263,7 +263,7 @@ bool javaOK(const char *url)
 /* Return true if the cert for this host should be verified. */
 bool mustVerifyHost(const char *url)
 {
-	int i;
+	unsigned i;
 	if (!verifyCertificates)
 		return false;
 	for (i = 0; i < ebhosts_avail; i++)
@@ -286,7 +286,7 @@ if we don't match any of the proxy entries.
 const char *findProxyForURL(const char *url)
 {
 	struct ebhost *px = ebhosts;
-	int i;
+	unsigned i;
 	char prot[MAXPROTLEN], host[MAXHOSTLEN];
 
 	if (!getProtHostURL(url, prot, host)) {
@@ -330,7 +330,7 @@ domain:
 const char *findAgentForURL(const char *url)
 {
 	struct ebhost *px = ebhosts;
-	int i;
+	unsigned i;
 	for (i = 0; i < ebhosts_avail; ++i, ++px)
 		if (px->type == 'a' && patternMatchURL(url, px->host))
 			return userAgents[px->n];
@@ -344,7 +344,8 @@ const char *mailRedirect(const char *to, const char *from,
 	int slen = strlen(subj);
 	int tlen = strlen(to);
 	int mlen;		// length of match string
-	int i, k;
+	unsigned i;
+	int k;
 	struct ebhost *f = ebhosts;
 	const char *m, *r;	// match and redirect
 
@@ -875,7 +876,8 @@ bool runEbFunction(const char *line)
 	int argl[10];		/* lengths of args */
 	const char *s;
 	char *t, *new;
-	int j, l, nest;
+	int l, nest;
+	unsigned j;
 	const char *ip;		/* think instruction pointer */
 	const char *endl;	/* end of line to be processed */
 	bool nofail, ok;
@@ -1160,7 +1162,7 @@ void readConfigFile(void)
 	int sn = 0;		/* script number */
 	char stack[MAXNEST];
 	char last[24];
-	int lidx = 0;
+	unsigned lidx = 0;
 	struct MACCOUNT *act;
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
@@ -1844,7 +1846,7 @@ nokeyword:
 			goto putback;
 		}
 
-		if (++nest >= sizeof(stack))
+		if ((unsigned)(++nest) >= sizeof(stack))
 			cfgLine0(MSG_EBRC_TooDeeply);
 		stack[nest] = c;
 
@@ -1881,7 +1883,7 @@ const char *fetchReplace(const char *u)
 	if (!browseLocal)
 		return 0;
 	s = strchr(u, '?');
-	l = (s ? s - u : strlen(u));
+	l = (s ? s - u : (int)strlen(u));
 	while (j) {
 		if (!strncmp(j->url, u, l) && j->url[l] == 0)
 			return j->locf;

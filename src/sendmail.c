@@ -336,7 +336,7 @@ empty:
 		v = s;
 		while (s > t && isspaceByte(s[-1]))
 			--s;
-		if (s - t >= sizeof(subjectLine)) {
+		if ((unsigned)(s - t) >= sizeof(subjectLine)) {
 			setError(MSG_SubjectLong, sizeof(subjectLine) - 1);
 			goto freefail;
 		}
@@ -431,7 +431,7 @@ empty:
 		c = buf[i];
 		if (c == '\0')
 			++nullcount;
-		if (c < 0)
+		if (c & 0x80)
 			++nacount;
 		if (c != '\n')
 			continue;

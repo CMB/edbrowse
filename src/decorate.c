@@ -1612,8 +1612,8 @@ void tag_gc(void)
 // first one has to be the unknown
 const struct tagInfo availableTags[] = {
 	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
-	{"doctype", "doctype", TAGACT_DOCTYPE},
-	{"html", "html", TAGACT_HTML},
+	{"doctype", "doctype", TAGACT_DOCTYPE, 0, 0},
+	{"html", "html", TAGACT_HTML, 0, 0},
 	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
 	{"object", "an html object", TAGACT_OBJECT, 5, 3},
 	{"a", "an anchor", TAGACT_A, 0, 1},
@@ -1710,7 +1710,7 @@ const struct tagInfo availableTags[] = {
 	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
 	{"span", "an html span", TAGACT_SPAN, 0, 1},
 	{"frameset", "a frame set", TAGACT_JS, 0, 0},
-	{"", NULL, 0}
+	{"", NULL, 0, 0, 0}
 };
 
 static void freeTag(Tag *t)

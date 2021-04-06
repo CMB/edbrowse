@@ -3,8 +3,8 @@ CC ?=		cc
 CXX ?=		c++
 PREFIX ?=	/usr/local
 bindir = $(prefix)/bin
-CFLAGS +=	-I/usr/local/include -Wall -Wextra -D_FILE_OFFSET_BITS=64
-CXXFLAGS +=	-I/usr/local/include -Wall -Wextra -D_FILE_OFFSET_BITS=64
+CFLAGS +=	-I/usr/local/include -Wall -Wno-unused -Wextra -D_FILE_OFFSET_BITS=64
+CXXFLAGS +=	-I/usr/local/include -Wall -Wno-unused -Wextra -D_FILE_OFFSET_BITS=64
 BUILD_EDBR_ODBC ?= off
 PLATFORM_CFLAGS != ./make-helper.sh --platform-cflags
 CFLAGS += $(PLATFORM_CFLAGS)
@@ -76,7 +76,7 @@ edbrowse-infx: $(EBOBJS) dbops.o dbinfx.o jseng-duk.o
 	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) dbops.o dbinfx.o $(LDFLAGS) -lduktape
 
 clean:
-	rm -f *.o edbrowse edbrowseqk edbrowsesm \
+	rm -f *.o edbrowse edbrowseqk edbrowsesm edbrowseduk \
 	startwindow.c ebrc.c msg-strings.c
 
 edbrowseduk: $(EBOBJS) jseng-duk.o

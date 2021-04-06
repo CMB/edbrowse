@@ -266,6 +266,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 	int nattr;		/* number of attributes */
 	int i;
 
+
 	switch (tidyNodeGetType(node)) {
 	case TidyNode_Text:
 		name = "text";
@@ -303,7 +304,7 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		tidyNodeGetValue(tdoc, node, &tnv);
 		if (tnv.size) {
 // check here for &#0; or &#2; both of those are bad!
-			for (i = 0; i < tnv.size; ++i)
+			for (i = 0; (unsigned)i < tnv.size; ++i)
 				if (tnv.bp[i] == 0
 				    || tnv.bp[i] == InternalCodeChar)
 					tnv.bp[i] = InternalCodeCharAlternate;

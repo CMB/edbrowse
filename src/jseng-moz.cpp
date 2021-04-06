@@ -172,7 +172,7 @@ u = 0;
 	while(u) ++n, u = u->prev;
 	printf("%d", n);
 	l = (void**)&o;
-	if(l[1] == (void*)rw0 && !o_tail || l[1] == (void*)(o_tail->m))
+	if((l[1] == (void*)rw0 && !o_tail) || l[1] == (void*)(o_tail->m))
 	printf(" flat");
 puts("");
 }
@@ -3094,7 +3094,7 @@ jsInterruptCheck();
 		outgoing_xhrheaders = emptyString;
 	if (outgoing_xhrbody == NULL)
 		outgoing_xhrbody = emptyString;
-asprintf(&a, "%d\r\n\r\n%d\r\n\r\n%s%s",
+asprintf(&a, "%d\r\n\r\n%ld\r\n\r\n%s%s",
 rc, g.code, outgoing_xhrheaders, outgoing_xhrbody);
 	nzFree(outgoing_xhrheaders);
 	nzFree(outgoing_xhrbody);
@@ -3127,7 +3127,7 @@ args.rval().setUndefined();
         JS::RootedObject thisobj(cxa, JS_THIS_OBJECT(cxa, vp));
 int a_l;
 char *a = initString(&a_l);
-for(int i=0; i<argc; ++i)
+for(unsigned i=0; i<argc; ++i)
 stringAndString(&a, &a_l, stringize(args[i]));
 	Frame *f, *save_cf = cf;
 	f = doc2frame(thisobj);
@@ -3553,7 +3553,7 @@ JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 
 // Third party debugging stuff. Just in window 1.
 	if(sn == 1)
-		jsRunScriptWin(thirdJS, "third.js", 1);
+		jsRunScriptWin(deminJS, "demin.js", 1);
 
 // For debugging, so I don't have to recompile every time.
 	if(!access("extra.js", 4))
@@ -3745,7 +3745,7 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	else
 		sprintf(classtweak, "z$%s", classname);
 
-	        JSAutoCompartment ac(cxa, frameToCompartment(cf));
+	JSAutoCompartment ac(cxa, frameToCompartment(cf));
 	JS::RootedObject g(cxa, JS::CurrentGlobalOrNull(cxa));
 	JS::RootedObject doc(cxa, get_property_object_0(g, "document"));
 	if(owntag)

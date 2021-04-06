@@ -1494,7 +1494,7 @@ static bool envExpand(const char *line, const char **expanded)
 	l = 0;
 	for (s = line + 1; isalnum(*s) || *s == '_'; ++s)
 		++l;
-	if (l >= sizeof(var1) || isdigit(line[1]) || (*s && *s != '/')) {
+	if ((unsigned)l >= sizeof(var1) || isdigit(line[1]) || (*s && *s != '/')) {
 /* invalid syntax, put things back */
 		s = line;
 		goto dollars;
@@ -1520,7 +1520,7 @@ static bool envExpand(const char *line, const char **expanded)
 		goto dollars;
 	}
 	l = strlen(udir);
-	if (l >= sizeof(varline))
+	if ((unsigned)l >= sizeof(varline))
 		goto longline;
 	strcpy(varline, udir);
 	t = varline + l;

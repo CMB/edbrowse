@@ -169,7 +169,7 @@ execScript("'hello world, it is '+new Date()");
 if(iaflag) {
 // end with q to quit
 char *line;
-while(line = (char*)inputLine()) {
+while((line = (char*)inputLine())) {
 perl2c(line);
 if(stringEqual(line, "q") || stringEqual(line, "qt"))
 break;

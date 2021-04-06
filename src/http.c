@@ -266,7 +266,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 				end = strchr(realm, ' ');
 			}
 			if (end) {
-				int sz = end - realm;
+				unsigned sz = end - realm;
 				if (sz > sizeof(g->auth_realm) - 1)
 					sz = sizeof(g->auth_realm) - 1;
 				memcpy(g->auth_realm, realm, sz);
@@ -381,7 +381,7 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 
 	if (g->down_state == 2 || g->down_state == 4) {	/* to disk */
 		rc = write(g->down_fd, incoming, num_bytes);
-		if (rc == num_bytes) {
+		if ((unsigned)rc == num_bytes) {
 			if (g->down_state == 4) {
 #if 0
 // Deliberately delay background download, to get several running in parallel
@@ -955,7 +955,7 @@ mimestream:
 			goto curl_fail;
 		curlret =
 		    curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE,
-				     postb_l ? postb_l : strlen(post));
+				     postb_l ? (unsigned)postb_l : strlen(post));
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 	} else {
@@ -2569,6 +2569,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 {
 	FILE *f = debugFile ? debugFile : stdout;
 
+
 // There's a special case where this function is used
 // by the imap client to see if the server is move capable.
 	if (ismc & isimap && info_desc == CURLINFO_HEADER_IN &&
@@ -2591,7 +2592,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		if (!g->last_curlin)
 			fprintf(f, "curl<\n");
 		prettify_network_text(data, size, f);
-	} else;			/* Do nothing.  We don't care about this piece of data. */
+	}
 
 	if (info_desc == CURLINFO_HEADER_IN)
 		g->last_curlin = true;

@@ -27,4 +27,5 @@ Object.defineProperty(Function.prototype, "call",{enumerable:false,writable:fals
 Object.defineProperty(Function.prototype, "apply",{enumerable:false,writable:false,configurable:false});
 Object.defineProperty(Function.prototype, "bind",{enumerable:false,writable:false,configurable:false});
 Object.defineProperty(Function.prototype, "toString",{enumerable:false,writable:false,configurable:false});
+Object.defineProperty(Function.prototype, "constructor",{enumerable:false,writable:false,configurable:false});
 
