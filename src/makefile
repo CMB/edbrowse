@@ -2,7 +2,7 @@
 CC ?=		cc
 CXX ?=		c++
 PREFIX ?=	/usr/local
-bindir = $(prefix)/bin
+bindir = $(PREFIX)/bin
 CFLAGS +=	-I/usr/local/include -Wall -Wno-unused -Wextra -D_FILE_OFFSET_BITS=64
 CXXFLAGS +=	-I/usr/local/include -Wall -Wno-unused -Wextra -D_FILE_OFFSET_BITS=64
 BUILD_EDBR_ODBC ?= off
