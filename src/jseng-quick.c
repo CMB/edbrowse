@@ -1446,6 +1446,7 @@ JSValue mwo; // master window object
 		processError(mwc);
 	JS_FreeValue(mwc, r);
 	jsSourceFile = 0;
+	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, SHARECLASS), JS_PROP_ENUMERABLE);
 	JS_FreeValue(mwc, mwo);
 	js_running = true;
 }

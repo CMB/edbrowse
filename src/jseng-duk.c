@@ -188,7 +188,12 @@ static int js_start(void)
 	}
 	duk_push_global_object(context0);
 	duk_push_false(context0);
-	duk_put_prop_string(context0, -2, "compiled");
+	duk_put_prop_string(context0, 0, "compiled");
+	duk_push_string(context0, "share");
+	duk_push_int(context0, SHARECLASS);
+	duk_def_prop(context0, 0,
+	     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
+	      DUK_DEFPROP_CLEAR_WRITABLE |       DUK_DEFPROP_CLEAR_CONFIGURABLE));
 	context0_obj = duk_get_heapptr(context0, -1);
 	duk_pop(context0);
 	duk_peval_string(context0, sharedJS);
