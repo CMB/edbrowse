@@ -2098,7 +2098,7 @@ dom$.eb$clone = function(node1,deep) {
 var node2;
 var i, j;
 var kids = null;
-var debug = my$win().cloneDebug;
+var debug = db$flags(2);
 
 if(node1.dom$class == "CSSStyleDeclaration") {
 if(debug) alert3("copy style");
@@ -2504,7 +2504,7 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 document.createEvent = function(unused) { return new Event; }
 
 document.dispatchEvent = function (e) {
-if(my$win().eventDebug) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno:"?") + " " + e.type);
+if(db$flags(1)) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno:"?") + " " + e.type);
 e.target = this;
 var t = this;
 var pathway = [];
@@ -2520,17 +2520,17 @@ e.eventPhase = (l?1:2); // capture or current target
 var fn1 = "on" + e.type;
 var fn2 = fn1 + "$$fn";
 if(typeof t[fn2] == "function") {
-if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
+if(db$flags(1)) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn2](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.defaultPrevented;
 } else if(typeof t[fn1] == "function") {
-if(my$win().eventDebug) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
+if(db$flags(1)) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
 e.currentTarget = t;
-if(my$win().eventDebug) alert3("fire assigned");
+if(db$flags(1)) alert3("fire assigned");
 var r = t[fn1](e);
-if(my$win().eventDebug) alert3("endfire assigned");
+if(db$flags(1)) alert3("endfire assigned");
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
 if(e.cancelled) return !e.defaultPrevented;
 }
@@ -2542,7 +2542,7 @@ t = pathway[l++];
 e.eventPhase = 3;
 var fn2 = "on" + e.type + "$$fn";
 if(typeof t[fn2] == "function") {
-if(my$win().eventDebug) alert3("bubble " + t.nodeName + "." + e.type);
+if(db$flags(1)) alert3("bubble " + t.nodeName + "." + e.type);
 e.currentTarget = t;
 var r = t[fn2](e);
 if((typeof r == "boolean" || typeof r == "number") && !r) return false;
@@ -2600,11 +2600,11 @@ if(once) handler.do$once = true;
 if(passive) handler.do$passive = true;
 // event handler serial number, for debugging
 if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
-if(my$win().eventDebug)  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
+if(db$flags(1))  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
 
 if(!this[evarray]) {
 /* attaching the first handler */
-if(my$win().eventDebug)  alert3("establish " + this.nodeName + "." + evfn);
+if(db$flags(1))  alert3("establish " + this.nodeName + "." + evfn);
 eval(
 'this["'+evfn+'"] = function(e){ var rc, a = this["' + evarray + '"]; \
 if(this["' + ev + '"] && e.eventPhase < 3) { \
@@ -2626,13 +2626,13 @@ this[evarray] = [];
 
 var prev_fn = this[ev];
 if(prev_fn && handler == prev_fn) {
-if(my$win().eventDebug) alert3("handler duplicates orig");
+if(db$flags(1)) alert3("handler duplicates orig");
 delete this[ev];
 }
 
 for(var j=0; j<this[evarray].length; ++j)
 if(this[evarray][j] == handler) {
-if(my$win().eventDebug) alert3("handler is duplicate, move to the end");
+if(db$flags(1)) alert3("handler is duplicate, move to the end");
 this[evarray].splice(j, 1);
 break;
 }
@@ -2646,7 +2646,7 @@ this[evarray].push(handler);
 eb$unlisten = document.eb$unlisten = function(ev, handler, iscapture, addon) {
 var ehsn = (handler.ehsn ? handler.ehsn : 0);
 if(addon) ev = "on" + ev;
-if(my$win().eventDebug)  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
+if(db$flags(1))  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
 var evarray = ev + "$$array"; // array of handlers
 // remove original html handler after other events have been added.
 if(this[ev] == handler) {
@@ -3247,7 +3247,7 @@ var evname = evs[j];
 eval(cn + '["' + evname + '$$watch"] = true');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
-set: function(f) { if(my$win().eventDebug) alert3((this.'+evname+'?"clobber ":"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
+set: function(f) { if(db$flags(1)) alert3((this.'+evname+'?"clobber ":"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
 if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
@@ -3960,7 +3960,7 @@ document.xmlVersion = 0;
 // This is only meaningful in duktape.
 if(window.Duktape) {
 Duktape.errCreate = function (e) {
-if(my$win().throwDebug) {
+if(db$flags(3)) {
 var n = e.lineNumber;
 var msg = "";
 if(typeof n === "number")

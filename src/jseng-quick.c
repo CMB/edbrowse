@@ -1389,6 +1389,20 @@ static JSValue nat_false(JSContext * cx, JSValueConst this, int argc, JSValueCon
 	return JS_FALSE;
 }
 
+static JSValue nat_dbf(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
+{
+	int32_t n = 0;
+	int rc = 0;
+	if(argc >= 1)
+		JS_ToInt32(cx, &n, argv[0]);
+	switch(n) {
+		case 1: rc = debugEvent; break;
+		case 2: rc = debugClone; break;
+		case 3: rc = debugThrow; break;
+	}
+	return JS_NewBool(cx, rc);
+}
+
 static JSValue nat_array(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	return JS_NewArray(cx);
@@ -2966,6 +2980,8 @@ JS_NewCFunction(cx, nat_null, "null", 0), 0);
 JS_NewCFunction(cx, nat_true, "true", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$falsefunction",
 JS_NewCFunction(cx, nat_false, "false", 0), 0);
+    JS_DefinePropertyValueStr(cx, g, "db$flags",
+JS_NewCFunction(cx, nat_dbf, "debug_flags", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "scroll",
 JS_NewCFunction(cx, nat_void, "scroll", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "scrollTo",
@@ -3199,12 +3215,6 @@ static void setup_window_2(void)
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string(cx, d, "domain", getHostURL(cf->fileName));
-	if (debugClone)
-		set_property_bool(cx, w, "cloneDebug", true);
-	if (debugEvent)
-		set_property_bool(cx, w, "eventDebug", true);
-	if (debugThrow)
-		set_property_bool(cx, w, "throwDebug", true);
 }
 
 void freeJSContext(Frame *f)

@@ -5009,8 +5009,6 @@ et_go:
 		debugClone ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugClone + MSG_DebugCloneOff);
-		if (isJSAlive)
-			set_property_bool_win(cf, "cloneDebug", debugClone);
 		return true;
 	}
 
@@ -5018,8 +5016,6 @@ et_go:
 		debugClone = (line[4] == '+');
 		if (helpMessagesOn)
 			i_puts(debugClone + MSG_DebugCloneOff);
-		if (isJSAlive)
-			set_property_bool_win(cf, "cloneDebug", debugClone);
 		return true;
 	}
 
@@ -5027,8 +5023,6 @@ et_go:
 		debugEvent ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugEvent + MSG_DebugEventOff);
-		if (isJSAlive)
-			set_property_bool_win(cf, "eventDebug", debugEvent);
 		return true;
 	}
 
@@ -5036,8 +5030,6 @@ et_go:
 		debugEvent = (line[4] == '+');
 		if (helpMessagesOn)
 			i_puts(debugEvent + MSG_DebugEventOff);
-		if (isJSAlive)
-			set_property_bool_win(cf, "eventDebug", debugEvent);
 		return true;
 	}
 
@@ -5045,8 +5037,6 @@ et_go:
 		debugThrow ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugThrow + MSG_DebugThrowOff);
-		if (isJSAlive)
-			set_property_bool_win(cf, "throwDebug", debugThrow);
 		return true;
 	}
 
@@ -5054,8 +5044,6 @@ et_go:
 		debugThrow = (line[5] == '+');
 		if (helpMessagesOn)
 			i_puts(debugThrow + MSG_DebugThrowOff);
-		if (isJSAlive)
-			set_property_bool_win(cf, "throwDebug", debugThrow);
 		return true;
 	}
 

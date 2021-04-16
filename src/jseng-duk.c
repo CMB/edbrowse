@@ -68,6 +68,19 @@ static duk_ret_t nat_false(duk_context * cx)
 	return 1;
 }
 
+static duk_ret_t nat_dbf(duk_context * cx)
+{
+	int n = duk_get_int(cx, -1), rc = 0;
+	switch(n) {
+		case 1: rc = debugEvent; break;
+		case 2: rc = debugClone; break;
+		case 3: rc = debugThrow; break;
+	}
+	duk_pop(cx);
+	duk_push_boolean(cx, rc);
+	return 1;
+}
+
 const char *jsSourceFile;	// sourcefile providing the javascript
 int jsLineno;			// line number
 
@@ -2009,6 +2022,8 @@ static void createJSContext_0(Frame *f)
 	duk_put_global_string(cx, "eb$truefunction");
 	duk_push_c_function(cx, nat_false, 0);
 	duk_put_global_string(cx, "eb$falsefunction");
+	duk_push_c_function(cx, nat_dbf, 1);
+	duk_put_global_string(cx, "db$flags");
 	duk_push_c_function(cx, nat_void, 0);
 	duk_put_global_string(cx, "scroll");
 	duk_push_c_function(cx, nat_void, 0);
@@ -2273,12 +2288,6 @@ static void setup_window_2(void)
 		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
 		    "locreplace", 1);
 	set_property_string_0(cx, d, "domain", getHostURL(cf->fileName));
-	if (debugClone)
-		set_property_bool_0(cx, w, "cloneDebug", true);
-	if (debugEvent)
-		set_property_bool_0(cx, w, "eventDebug", true);
-	if (debugThrow)
-		set_property_bool_0(cx, w, "throwDebug", true);
 }
 
 static void freeJSContext_0(Frame *f)
