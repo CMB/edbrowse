@@ -89,7 +89,6 @@ extern char frameContent[];
 	extern const char sharedJS[];
 // this is crude but it works.
 #define WithDebugging (strlen(deminJS) > 5000)
-#define SHARECLASS 1
 
 enum ej_proptype {
 	EJ_PROP_NONE,

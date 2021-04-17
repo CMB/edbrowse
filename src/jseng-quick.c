@@ -16,6 +16,8 @@ along with the GPL, general public license, for edbrowse.
 
 #include <quickjs/quickjs-libc.h>
 
+#define SHARECLASS 1
+
 // to track down memory leaks
 #define NO_LEAK
 // Warning, if you turn this feature on it slows things down.
@@ -1413,57 +1415,6 @@ int jsLineno;			// line number
 static JSRuntime *jsrt;
 static bool js_running;
 static JSContext *mwc; // master window context
-
-/*********************************************************************
-There is a serious stackoverflow bug,
-that I don't have time or space to describe here.
-See http://www.eklhad.net/sov.zip
-Thus js_main is global instead of static,
-so it can be called from main(), the lowest point in the stack.
-If it is called for the first time from a function in .ebrc,
-a higher point in the stack, that triggers the bug.
-Unfortunately this sets up javascript, whether you are going to use it or not.
-*********************************************************************/
-
-void js_main(void)
-{
-JSValue mwo; // master window object
-	JSValue r;
-	if(js_running)
-		return;
-	jsrt = JS_NewRuntime();
-	if (!jsrt) {
-		fprintf(stderr, "Cannot create javascript runtime environment\n");
-		return;
-	}
-// default stack size is 256K, which is fine for normal use.
-// If we are deminizing code, the deminimizer is written in javascript,
-// and it eats up the stack.
-	if(WithDebugging)
-		JS_SetMaxStackSize(jsrt, 2048*1024);
-	mwc = JS_NewContext(jsrt);
-	mwo = JS_GetGlobalObject(mwc);
-// shared functions and classes
-	jsSourceFile = "shared.js";
-	jsLineno = 1;
-	r = JS_Eval(mwc, sharedJS, strlen(sharedJS),
-	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
-// If you want to see the errors, you have to run 3dbrowse -db3
-// cause this stuff starts from main().
-	if(JS_IsException(r))
-		processError(mwc);
-	JS_FreeValue(mwc, r);
-	jsSourceFile = "demin.js";
-	r = JS_Eval(mwc, deminJS, strlen(deminJS),
-	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
-	if(JS_IsException(r))
-		processError(mwc);
-	JS_FreeValue(mwc, r);
-	jsSourceFile = 0;
-	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, SHARECLASS), JS_PROP_ENUMERABLE);
-	JS_FreeValue(mwc, mwo);
-	js_running = true;
-}
 
 // base64 encode
 static JSValue nat_btoa(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
@@ -2930,6 +2881,102 @@ static JSValue nat_cssText(JSContext * cx, JSValueConst this, int argc, JSValueC
 	return JS_UNDEFINED;
 }
 
+/*********************************************************************
+There is a serious stackoverflow bug,
+that I don't have time or space to describe here.
+See http://www.eklhad.net/sov.zip
+Thus js_main is global instead of static,
+so it can be called from main(), the lowest point in the stack.
+If it is called for the first time from a function in .ebrc,
+a higher point in the stack, that triggers the bug.
+Unfortunately this sets up javascript, whether you are going to use it or not.
+*********************************************************************/
+
+void js_main(void)
+{
+JSValue mwo; // master window object
+	JSValue r;
+	if(js_running)
+		return;
+	jsrt = JS_NewRuntime();
+	if (!jsrt) {
+		fprintf(stderr, "Cannot create javascript runtime environment\n");
+		return;
+	}
+// default stack size is 256K, which is fine for normal use.
+// If we are deminizing code, the deminimizer is written in javascript,
+// and it eats up the stack.
+	if(WithDebugging)
+		JS_SetMaxStackSize(jsrt, 2048*1024);
+	mwc = JS_NewContext(jsrt);
+	mwo = JS_GetGlobalObject(mwc);
+#if SHARECLASS
+/*********************************************************************
+Why put native functions in the master window, to be shared?
+It's native, how much space can it take up?
+Well, it produces a function object, and this way all the windows
+can have pointers to those objects, instead of function objects per window.
+Ok, but that's pretty tiny.
+Well, all our js functions and classes call these native methods,
+and if any of these classes are in the master window,
+then the native methods have to be there too.
+*********************************************************************/
+
+    JS_DefinePropertyValueStr(mwc, mwo, "natok",
+JS_NewCFunction(mwc, nat_ok, "nat_ok", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$puts",
+JS_NewCFunction(mwc, nat_puts, "puts", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$wlf",
+JS_NewCFunction(mwc, nat_wlf, "wlf", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "btoa",
+JS_NewCFunction(mwc, nat_btoa, "btoa", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "atob",
+JS_NewCFunction(mwc, nat_atob, "atob", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$voidfunction",
+JS_NewCFunction(mwc, nat_void, "void", 0), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$nullfunction",
+JS_NewCFunction(mwc, nat_null, "null", 0), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$truefunction",
+JS_NewCFunction(mwc, nat_true, "true", 0), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$falsefunction",
+JS_NewCFunction(mwc, nat_false, "false", 0), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "db$flags",
+JS_NewCFunction(mwc, nat_dbf, "debug_flags", 0), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$logputs",
+JS_NewCFunction(mwc, nat_logputs, "logputs", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "prompt",
+JS_NewCFunction(mwc, nat_prompt, "prompt", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "confirm",
+JS_NewCFunction(mwc, nat_confirm, "confirm", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "win$close",
+JS_NewCFunction(mwc, nat_win_close, "win_close", 0), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$resolveURL",
+JS_NewCFunction(mwc, nat_resolveURL, "resolveURL", 2), JS_PROP_ENUMERABLE);
+#endif
+
+// shared functions and classes
+	jsSourceFile = "shared.js";
+	jsLineno = 1;
+	r = JS_Eval(mwc, sharedJS, strlen(sharedJS),
+	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+// If you want to see the errors, you have to run 3dbrowse -db3
+// cause this stuff starts from main().
+	if(JS_IsException(r))
+		processError(mwc);
+	JS_FreeValue(mwc, r);
+	jsSourceFile = "demin.js";
+	r = JS_Eval(mwc, deminJS, strlen(deminJS),
+	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+	if(JS_IsException(r))
+		processError(mwc);
+	JS_FreeValue(mwc, r);
+	jsSourceFile = 0;
+	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, SHARECLASS), JS_PROP_ENUMERABLE);
+
+	JS_FreeValue(mwc, mwo);
+	js_running = true;
+}
+
 static void createJSContext_0(Frame *f)
 {
 	JSContext * cx;
@@ -2953,21 +3000,14 @@ static void createJSContext_0(Frame *f)
 // link to the master window
 	JS_DefinePropertyValueStr(cx, g, "mw$", JS_GetGlobalObject(mwc), 0);
 
+#if !SHARECLASS
 // bind native functions here
     JS_DefinePropertyValueStr(cx, g, "natok",
 JS_NewCFunction(cx, nat_ok, "nat_ok", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$newLocation",
-JS_NewCFunction(cx, nat_new_location, "new_location", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "my$win",
-JS_NewCFunction(cx, nat_mywin, "mywin", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "my$doc",
-JS_NewCFunction(cx, nat_mydoc, "mydoc", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$puts",
 JS_NewCFunction(cx, nat_puts, "puts", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$wlf",
 JS_NewCFunction(cx, nat_wlf, "wlf", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$media",
-JS_NewCFunction(cx, nat_media, "media", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "btoa",
 JS_NewCFunction(cx, nat_btoa, "btoa", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "atob",
@@ -2982,6 +3022,12 @@ JS_NewCFunction(cx, nat_true, "true", 0), 0);
 JS_NewCFunction(cx, nat_false, "false", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "db$flags",
 JS_NewCFunction(cx, nat_dbf, "debug_flags", 0), 0);
+    JS_DefinePropertyValueStr(cx, g, "eb$logputs",
+JS_NewCFunction(cx, nat_logputs, "logputs", 2), 0);
+    JS_DefinePropertyValueStr(cx, g, "prompt",
+JS_NewCFunction(cx, nat_prompt, "prompt", 2), 0);
+    JS_DefinePropertyValueStr(cx, g, "confirm",
+JS_NewCFunction(cx, nat_confirm, "confirm", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "scroll",
 JS_NewCFunction(cx, nat_void, "scroll", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "scrollTo",
@@ -2996,16 +3042,30 @@ JS_NewCFunction(cx, nat_void, "scrollByPages", 0), 0);
 JS_NewCFunction(cx, nat_void, "focus", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "blur",
 JS_NewCFunction(cx, nat_void, "blur", 0), 0);
+    JS_DefinePropertyValueStr(cx, d, "focus",
+JS_NewCFunction(cx, nat_void, "docfocus", 0), 0);
+    JS_DefinePropertyValueStr(cx, d, "blur",
+JS_NewCFunction(cx, nat_void, "docblur", 0), 0);
+    JS_DefinePropertyValueStr(cx, d, "close",
+JS_NewCFunction(cx, nat_void, "docclose", 0), 0);
+    JS_DefinePropertyValueStr(cx, g, "close",
+JS_NewCFunction(cx, nat_win_close, "win_close", 0), 0);
+    JS_DefinePropertyValueStr(cx, g, "eb$resolveURL",
+JS_NewCFunction(cx, nat_resolveURL, "resolveURL", 2), 0);
+#endif
+
+    JS_DefinePropertyValueStr(cx, g, "eb$newLocation",
+JS_NewCFunction(cx, nat_new_location, "new_location", 1), 0);
+    JS_DefinePropertyValueStr(cx, g, "my$win",
+JS_NewCFunction(cx, nat_mywin, "mywin", 0), 0);
+    JS_DefinePropertyValueStr(cx, g, "my$doc",
+JS_NewCFunction(cx, nat_mydoc, "mydoc", 0), 0);
+    JS_DefinePropertyValueStr(cx, g, "eb$media",
+JS_NewCFunction(cx, nat_media, "media", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$unframe",
 JS_NewCFunction(cx, nat_unframe, "unframe", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$unframe2",
 JS_NewCFunction(cx, nat_unframe2, "unframe2", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$logputs",
-JS_NewCFunction(cx, nat_logputs, "logputs", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "prompt",
-JS_NewCFunction(cx, nat_prompt, "prompt", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "confirm",
-JS_NewCFunction(cx, nat_confirm, "confirm", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$logElement",
 JS_NewCFunction(cx, nat_log_element, "log_element", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "setTimeout",
@@ -3016,8 +3076,6 @@ JS_NewCFunction(cx, nat_clearTimeout, "clearTimeout", 1), 0);
 JS_NewCFunction(cx, nat_setInterval, "setInterval", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "clearInterval",
 JS_NewCFunction(cx, nat_clearTimeout, "clearInterval", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "close",
-JS_NewCFunction(cx, nat_win_close, "win_close", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$fetchHTTP",
 JS_NewCFunction(cx, nat_fetchHTTP, "fetchHTTP", 4), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$parent",
@@ -3026,8 +3084,6 @@ JS_NewCFunction(cx, nat_parent, "parent", 0), 0);
 JS_NewCFunction(cx, nat_top, "top", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$frameElement",
 JS_NewCFunction(cx, nat_fe, "fe", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$resolveURL",
-JS_NewCFunction(cx, nat_resolveURL, "resolveURL", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$formSubmit",
 JS_NewCFunction(cx, nat_formSubmit, "formSubmit", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$formReset",
@@ -3068,12 +3124,6 @@ JS_NewCFunction(cx, nat_apch2, "apch2", 1), 0);
 JS_NewCFunction(cx, nat_insbf, "insbf", 2), 0);
     JS_DefinePropertyValueStr(cx, d, "removeChild",
 JS_NewCFunction(cx, nat_removeChild, "removeChild", 1), 0);
-    JS_DefinePropertyValueStr(cx, d, "focus",
-JS_NewCFunction(cx, nat_void, "docfocus", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "blur",
-JS_NewCFunction(cx, nat_void, "docblur", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "close",
-JS_NewCFunction(cx, nat_void, "docclose", 0), 0);
 
 // document.eb$ctx is the context number
 	JS_DefinePropertyValueStr(cx, d, "eb$ctx", JS_NewInt32(cx, f->gsn), 0);

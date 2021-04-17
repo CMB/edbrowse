@@ -52,6 +52,23 @@ querySelector0 = function() { return false; }
 eb$cssText = function(){}
 }
 
+// the third party deminimization stuff is in mw$
+// this is not folded in for the distributed version
+// Some engines create this object in C, so it can be shared.
+if(!window.mw$)
+mw$ = {compiled: false, share:false};
+
+if(mw$.share) { // point to native methods in the master window
+natok = mw$.natok, eb$wlf = mw$.eb$wlf, eb$puts = mw$.eb$puts, db$flags = mw$.db$flags;
+eb$voidfunction = mw$.eb$voidfunction, eb$nullfunction = mw$.eb$nullfunction, eb$truefunction = mw$.eb$truefunction, eb$falsefunction = mw$.eb$falsefunction;
+scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = focus = blur = eb$voidfunction;
+document.close = document.focus = document.blur = eb$voidfunction;
+close = mw$.win$close;
+eb$resolveURL = mw$.eb$resolveURL;
+atob = mw$.atob, btoa = mw$.btoa;
+eb$logputs = mw$.eb$logputs, prompt = mw$.prompt, confirm = mw$.confirm;
+}
+
 self = window;
 Object.defineProperty(window, "parent", {get: eb$parent});
 Object.defineProperty(window, "top", {get: eb$top});
@@ -65,61 +82,13 @@ Object.defineProperty(window, "frameElement", {get: eb$frameElement});
 And that does happen, e.g. the react system, so $ok is an alias for this. */
 ok = $ok = Object.keys;
 
-// print an error inline, at debug level 3 or higher.
-function alert3(s) { eb$logputs(3, s); }
-function alert4(s) { eb$logputs(4, s); }
-
 document.nodeName = "DOCUMENT"; // in case you want to start at the top.
 document.tagName = "document";
 window.nodeName = "WINDOW";
 
-// Dump the tree below a node, this is for debugging.
-// Print the first line of text for a text node, and no braces
-// because nothing should be below a text node.
-// You can make this more elaborate and informative if you wish.
-dumptree = function(top) {
-var nn = top.nodeName.toLowerCase();
-var extra = "";
-if(nn === "#text" && top.data) {
-extra = top.data;
-extra = extra.replace(/^[ \t\n]*/, "");
-var l = extra.indexOf('\n');
-if(l >= 0) extra = extra.substr(0,l);
-if(extra.length > 120) extra = extra.substr(0,120);
-}
-if(nn === "option" && top.text)
-extra = top.text;
-if(nn === "a" && top.href)
-extra = top.href.toString();
-if(nn === "base" && top.href)
-extra = top.href.toString();
-if(extra.length) extra = ' ' + extra;
-// some tags should never have anything below them so skip the parentheses notation for these.
-if((nn == "base" || nn == "meta" || nn == "link" ||nn == "#text" || nn == "image" || nn == "option" || nn == "input" || nn == "script") &&
-(!top.childNodes || top.childNodes.length == 0)) {
-alert(nn + extra);
-return;
-}
-alert(nn + " {" + extra);
-if(top.dom$class == "Frame") {
-if(top.eb$expf) top.contentWindow.dumptree(top.contentDocument);
-} else if(top.childNodes) {
-for(var i=0; i<top.childNodes.length; ++i) {
-var c = top.childNodes[i];
-dumptree(c);
-}
-}
-alert("}");
-}
-
-uptrace = function(t) {
-while(t) {
-var msg = t.nodeName;
-if(t.class) msg += "." + t.class;
-if(t.id) msg += "#" + t.id;
-alert(msg);
-t = t.parentNode;
-}
+if(mw$.share) {
+alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
+dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 }
 
 /*********************************************************************
@@ -276,20 +245,10 @@ height: 768, width: 1024,
 availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
 colorDepth: 24};
 
-// window.alert is a simple wrapper around native puts.
-// Some web pages overwrite alert.
-alert = eb$puts;
-
 // Build a lot of the DOM in dom$,
 // so all those support functions aren't cluttering up window.
 
 dom$ = {}
-
-// legacy, the third party deminimization stuff is in mw$
-// this is not folded in for the distributed version
-// Some engines create this object in C, so it can be shared.
-if(!window.mw$)
-mw$ = {compiled: false};
 
 // The web console, one argument, print based on debugLevel.
 // First a helper function, then the console object.

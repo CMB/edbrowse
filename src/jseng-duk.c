@@ -202,8 +202,10 @@ static int js_start(void)
 	duk_push_global_object(context0);
 	duk_push_false(context0);
 	duk_put_prop_string(context0, 0, "compiled");
+// I'm not gonna mess with sharing in the duktape world,
+// the entire duktape port is deprecated anyways.
 	duk_push_string(context0, "share");
-	duk_push_int(context0, SHARECLASS);
+	duk_push_int(context0, 0);
 	duk_def_prop(context0, 0,
 	     (DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_ENUMERABLE |
 	      DUK_DEFPROP_CLEAR_WRITABLE |       DUK_DEFPROP_CLEAR_CONFIGURABLE));
