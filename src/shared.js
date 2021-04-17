@@ -352,6 +352,175 @@ return;
 }
 }
 
+// Here comes the Iterator and Walker.
+// I wouldn't bother, except for some tests in acid3.
+NodeFilter = {
+SHOW_ALL:-1,
+SHOW_ELEMENT:1,
+SHOW_ATTRIBUTE:2,
+SHOW_TEXT:4,
+SHOW_CDATA_SECTION:8,
+SHOW_ENTITY_REFERENCE:16,
+SHOW_ENTITY:32,
+SHOW_PROCESSING_INSTRUCTION:64,
+SHOW_COMMENT:128,
+SHOW_DOCUMENT:256,
+SHOW_DOCUMENT_TYPE:512,
+SHOW_DOCUMENT_FRAGMENT:1024,
+SHOW_NOTATION:2048,
+// not sure of the values for these
+FILTER_ACCEPT:1,
+FILTER_REJECT:2,
+FILTER_SKIP:3,
+};
+
+// This implementation only works on the nodes of a tree
+// created object is in the master context; is that ever a problem?
+function createNodeIterator(root, mask, callback, unused) {
+var o = {}; // the created iterator object
+if(typeof callback != "function") callback = null;
+o.callback = callback;
+if(typeof mask != "number")
+mask = 0xffffffff;
+// let's reuse some software
+if(typeof root == "object") {
+o.list = eb$gebtn(root, "*");
+if(!root.nodeType)
+alert3("NodeIterator root object is not a node");
+} else {
+o.list = [];
+alert3("NodeIterator root is not an object");
+}
+// apply filters
+var i, j;
+for(i=j=0; i<o.list.length; ++i) {
+var alive = true;
+var nt = o.list[i].nodeType;
+if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT))
+alive = false;
+if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT))
+alive = false;
+if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT))
+alive = false;
+if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT))
+alive = false;
+if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT))
+alive = false;
+if(alive)
+o.list[j++] = o.list[i];
+}
+o.list.length = j;
+o.idx = 0;
+o.bump = function(incr) {
+var n = this.idx;
+if(incr > 0) --n;
+while(true) {
+n += incr;
+if(n < 0 || n >= this.list.length) return null;
+var a = this.list[n];
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { if(incr > 0) ++n; this.idx = n; return a; }
+// I don't understand the difference between skip and reject
+}
+}
+o.nextNode = function() { return this.bump(1); }
+o.previousNode = function() { return this.bump(-1); }
+return o;
+}
+
+function createTreeWalker(root, mask, callback, unused) {
+var o = {}; // the created iterator object
+if(typeof callback != "function") callback = null;
+o.callback = callback;
+if(typeof mask != "number")
+mask = 0xffffffff;
+if(typeof root == "object") {
+o.list = eb$gebtn(root, "*");
+if(!root.nodeType)
+alert3("TreeWalker root object is not a node");
+o.currentNode = root;
+} else {
+o.list = [];
+alert3("TreeWalker root is not an object");
+o.currentNode = null;
+}
+// apply filters
+var i, j;
+for(i=j=0; i<o.list.length; ++i) {
+var alive = true;
+var nt = o.list[i].nodeType;
+if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT))
+alive = false;
+if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT))
+alive = false;
+if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT))
+alive = false;
+if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT))
+alive = false;
+if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT))
+alive = false;
+if(alive)
+o.list[j++] = o.list[i];
+}
+o.list.length = j;
+o.bump = function(incr) {
+var n = this.list.indexOf(this.currentNode);
+if(n < 0 || n >= this.list.length) return null;
+while(true) {
+n += incr;
+if(n < 0 || n >= this.list.length) return null;
+var a = this.list[n];
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+}
+o.nextNode = function() { return this.bump(1); }
+o.previousNode = function() { return this.bump(-1); }
+o.endkid = function(incr) {
+if(typeof this.currentNode != "object") return null;
+var a = incr > 0 ? this.currentNode.firstChild : this.currentNode.lastChild;
+while(a) {
+if(this.list.indexOf(a) >= 0) {
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+a = incr > 0 ? a.nextSibling() : a.previousSibling();
+}
+return null;
+}
+o.firstChild = function() { return this.endkid(1); }
+o.lastChild = function() { return this.endkid(-1); }
+o.nextkid = function(incr) {
+if(typeof this.currentNode != "object") return null;
+var a = incr > 0 ? this.currentNode.nextSibling : this.currentNode.previousSibling;
+while(a) {
+if(this.list.indexOf(a) >= 0) {
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+a = incr > 0 ? a.nextSibling() : a.previousSibling();
+}
+return null;
+}
+o.nextSibling = function() { return this.nextkid(1); }
+o.previousSibling = function() { return this.nextkid(-1); }
+o.parentNode = function() {
+if(typeof this.currentNode != "object") return null;
+var a = this.currentNode.parentNode;
+if(a && this.list.indexOf(a) >= 0) {
+var rc = NodeFilter.FILTER_ACCEPT;
+if(this.callback) rc = this.callback(a);
+if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
+}
+return null;
+}
+return o;
+}
+
 // lock down
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$newLocation","eb$logElement",
@@ -359,6 +528,7 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
 "dispatchEvent","addEventListener","removeEventListener","attachOn",
 "attachEvent","detachEvent","eb$listen","eb$unlisten",
+"NodeFilter","createNodeIterator","createTreeWalker",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
