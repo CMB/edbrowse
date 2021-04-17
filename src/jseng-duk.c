@@ -2046,7 +2046,7 @@ static void createJSContext_0(Frame *f)
 	duk_push_c_function(cx, nat_unframe2, 1);
 	duk_put_global_string(cx, "eb$unframe2");
 	duk_push_c_function(cx, nat_logputs, 2);
-	duk_put_global_string(cx, "eb$logputs");
+	duk_put_global_string(cx, "logputs");
 	duk_push_c_function(cx, nat_prompt, DUK_VARARGS);
 	duk_put_global_string(cx, "prompt");
 	duk_push_c_function(cx, nat_confirm, 1);

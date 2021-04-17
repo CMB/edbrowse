@@ -31,8 +31,8 @@ Object.defineProperty(Function.prototype, "constructor",{enumerable:false,writab
 
 alert = eb$puts;
 // print an error inline, at debug level 3 or higher.
-function alert3(s) { eb$logputs(3, s); }
-function alert4(s) { eb$logputs(4, s); }
+function alert3(s) { logputs(3, s); }
+function alert4(s) { logputs(4, s); }
 
 // Dump the tree below a node, this is for debugging.
 // Print the first line of text for a text node, and no braces
@@ -396,16 +396,11 @@ var i, j;
 for(i=j=0; i<o.list.length; ++i) {
 var alive = true;
 var nt = o.list[i].nodeType;
-if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT))
-alive = false;
-if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT))
-alive = false;
-if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT))
-alive = false;
-if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT))
-alive = false;
-if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT))
-alive = false;
+if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT)) alive = false;
+if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT)) alive = false;
+if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT)) alive = false;
+if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT)) alive = false;
+if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT)) alive = false;
 if(alive)
 o.list[j++] = o.list[i];
 }
@@ -450,16 +445,11 @@ var i, j;
 for(i=j=0; i<o.list.length; ++i) {
 var alive = true;
 var nt = o.list[i].nodeType;
-if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT))
-alive = false;
-if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT))
-alive = false;
-if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT))
-alive = false;
-if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT))
-alive = false;
-if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT))
-alive = false;
+if(nt == 9 && !(mask&NodeFilter.SHOW_DOCUMENT)) alive = false;
+if(nt == 3 && !(mask&NodeFilter.SHOW_TEXT)) alive = false;
+if(nt == 1 && !(mask&NodeFilter.SHOW_ELEMENT)) alive = false;
+if(nt == 11 && !(mask&NodeFilter.SHOW_DOCUMENT_FRAGMENT)) alive = false;
+if(nt == 8 && !(mask&NodeFilter.SHOW_COMMENT)) alive = false;
 if(alive)
 o.list[j++] = o.list[i];
 }
@@ -521,6 +511,62 @@ return null;
 return o;
 }
 
+logtime = function(debug, level, obj) {
+var today=new Date;
+var h=today.getHours();
+var m=today.getMinutes();
+var s=today.getSeconds();
+// add a zero in front of numbers<10
+if(h < 10) h = "0" + h;
+if(m < 10) m = "0" + m;
+if(s < 10) s = "0" + s;
+logputs(debug, "console " + level + " [" + h + ":" + m + ":" + s + "] " + obj);
+}
+
+defport = {
+http: 80,
+https: 443,
+pop3: 110,
+pop3s: 995,
+imap: 220,
+imaps: 993,
+smtp: 25,
+submission: 587,
+smtps: 465,
+proxy: 3128,
+ftp: 21,
+sftp: 22,
+scp: 22,
+ftps: 990,
+tftp: 69,
+gopher: 70,
+finger: 79,
+telnet: 23,
+smb: 139
+};
+
+// returns default port as an integer, based on protocol
+function setDefaultPort(p) {
+var port = 0;
+p = p.toLowerCase().replace(/:/, "");
+if(defport.hasOwnProperty(p)) port = defport[p];
+return port;
+}
+
+function camelCase(t) {
+return t.replace(/-./g, function(f){return f[1].toUpperCase()});
+}
+function dataCamel(t) { return camelCase(t.replace(/^data-/,"")); }
+
+isabove = function(a, b) {
+var j = 0;
+while(b) {
+if(b == a) { var e = new Error; e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
+if(++j == 1000) { alert3("isabove loop"); break; }
+b = b.parentNode;
+}
+}
+
 // lock down
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$newLocation","eb$logElement",
@@ -529,6 +575,7 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "dispatchEvent","addEventListener","removeEventListener","attachOn",
 "attachEvent","detachEvent","eb$listen","eb$unlisten",
 "NodeFilter","createNodeIterator","createTreeWalker",
+"logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});

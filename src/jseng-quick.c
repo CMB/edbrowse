@@ -2943,7 +2943,7 @@ JS_NewCFunction(mwc, nat_true, "true", 0), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_false, "false", 0), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "db$flags",
 JS_NewCFunction(mwc, nat_dbf, "debug_flags", 0), JS_PROP_ENUMERABLE);
-    JS_DefinePropertyValueStr(mwc, mwo, "eb$logputs",
+    JS_DefinePropertyValueStr(mwc, mwo, "logputs",
 JS_NewCFunction(mwc, nat_logputs, "logputs", 2), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "prompt",
 JS_NewCFunction(mwc, nat_prompt, "prompt", 2), JS_PROP_ENUMERABLE);
@@ -3027,7 +3027,7 @@ JS_NewCFunction(cx, nat_true, "true", 0), 0);
 JS_NewCFunction(cx, nat_false, "false", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "db$flags",
 JS_NewCFunction(cx, nat_dbf, "debug_flags", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$logputs",
+    JS_DefinePropertyValueStr(cx, g, "logputs",
 JS_NewCFunction(cx, nat_logputs, "logputs", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "prompt",
 JS_NewCFunction(cx, nat_prompt, "prompt", 2), 0);

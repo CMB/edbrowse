@@ -27,7 +27,6 @@ document = {};
 // or console.log, or anything present in the command line js interpreter.
 if(!window.print) print = console.log;
 eb$puts = print;
-eb$logputs = function(a,b) { print(b); }
 eb$nullfunction = function() { return null; }
 eb$voidfunction = function() { }
 eb$truefunction = function() { return true; }
@@ -67,7 +66,7 @@ document.close = document.focus = document.blur = eb$voidfunction;
 close = mw$.win$close;
 eb$resolveURL = mw$.eb$resolveURL;
 atob = mw$.atob, btoa = mw$.btoa;
-eb$logputs = mw$.eb$logputs, prompt = mw$.prompt, confirm = mw$.confirm;
+prompt = mw$.prompt, confirm = mw$.confirm;
 eb$newLocation = mw$.eb$newLocation, eb$logElement = mw$.eb$logElement;
 }
 
@@ -264,25 +263,11 @@ colorDepth: 24};
 
 dom$ = {}
 
-// The web console, one argument, print based on debugLevel.
-// First a helper function, then the console object.
-dom$.eb$logtime = function(debug, level, obj) {
-var today=new Date;
-var h=today.getHours();
-var m=today.getMinutes();
-var s=today.getSeconds();
-// add a zero in front of numbers<10
-if(h < 10) h = "0" + h;
-if(m < 10) m = "0" + m;
-if(s < 10) s = "0" + s;
-eb$logputs(debug, "console " + level + " [" + h + ":" + m + ":" + s + "] " + obj);
-}
-
 console = {
-log: function(obj) { dom$.eb$logtime(3, "log", obj); },
-info: function(obj) { dom$.eb$logtime(3, "info", obj); },
-warn: function(obj) { dom$.eb$logtime(3, "warn", obj); },
-error: function(obj) { dom$.eb$logtime(3, "error", obj); },
+log: function(obj) { mw$.logtime(3, "log", obj); },
+info: function(obj) { mw$.logtime(3, "info", obj); },
+warn: function(obj) { mw$.logtime(3, "warn", obj); },
+error: function(obj) { mw$.logtime(3, "error", obj); },
 timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new Date).getTime(); }
 };
 
@@ -523,37 +508,6 @@ this.rebuild(); },
 enumerable:true
 });
 
-dom$.eb$defport = {
-http: 80,
-https: 443,
-pop3: 110,
-pop3s: 995,
-imap: 220,
-imaps: 993,
-smtp: 25,
-submission: 587,
-smtps: 465,
-proxy: 3128,
-ftp: 21,
-sftp: 22,
-scp: 22,
-ftps: 990,
-tftp: 69,
-gopher: 70,
-finger: 79,
-telnet: 23,
-smb: 139
-};
-
-/* returns default port as an integer, based on protocol */
-dom$.eb$setDefaultPort = function(p) {
-var port = 0;
-p = p.toLowerCase().replace(/:/, "");
-if(dom$.eb$defport.hasOwnProperty(p))
-port = dom$.eb$defport[p];
-return port;
-}
-
 Object.defineProperty(URL.prototype, "href", {
   get: function() {return this.href$val; },
   set: function(v) {
@@ -604,7 +558,7 @@ this.port$val = parseInt(this.port$val);
 } else {
 this.hostname$val = this.host$val;
 // should we be filling in a default port here?
-this.port$val = dom$.eb$setDefaultPort(this.protocol$val);
+this.port$val = mw$.setDefaultPort(this.protocol$val);
 }
 // perhaps set protocol to http if it looks like a url?
 // as in edbrowse foo.bar.com
@@ -1249,11 +1203,6 @@ else
 list.splice(idx, 0, r);
 }
 
-dom$.camelCase = function(t) {
-return t.replace(/-./g, function(f){return f[1].toUpperCase()});
-}
-dom$.dataCamel = function(t) { return dom$.camelCase(t.replace(/^data-/,"")); }
-
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
@@ -1271,23 +1220,23 @@ CSSStyleDeclaration.prototype.transitionDuration ="";
 CSSStyleDeclaration.prototype.textTransform = "none", // acid test 46
 CSSStyleDeclaration.prototype.toString = function() { return "style object" };
 CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
-p = dom$.camelCase(p);
+p = mw$.camelCase(p);
                 if (this[p] == undefined)                
                         this[p] = "";
                         return this[p];
 };
 CSSStyleDeclaration.prototype.getProperty = function(p) {
-p = dom$.camelCase(p);
+p = mw$.camelCase(p);
 return this[p] ? this[p] : "";
 };
 CSSStyleDeclaration.prototype.setProperty = function(p, v, prv) {
-p = dom$.camelCase(p);
+p = mw$.camelCase(p);
 this[p] = v;
 var pri = p + "$pri";
 this[pri] = (prv === "important");
 };
 CSSStyleDeclaration.prototype.getPropertyPriority = function(p) {
-p = dom$.camelCase(p);
+p = mw$.camelCase(p);
 var pri = p + "$pri";
 return this[pri] ? "important" : "";
 };
@@ -1685,25 +1634,14 @@ before we put it somewhere else.
 This is a call to removeChild, also native, which unlinks in js,
 and passses the remove side effect back to edbrowse.
 The same reasoning holds for insertBefore.
-These functions also check for a hierarchy error using isabove().
-In fact we may as well throw the exception here.
+These functions also check for a hierarchy error using isabove(),
+which throws an exception.
 *********************************************************************/
-
-dom$.isabove = function(a, b) {
-var j = 0;
-while(b) {
-if(b == a) { var e = new Error; e.HIERARCHY_REQUEST_ERR = e.code = 3; throw e; }
-if(++j == 1000) { alert3("isabove loop"); break; }
-b = b.parentNode;
-}
-}
-
-dom$.treeBump = function(t) { if(t.ownerDocument) ++t.ownerDocument.tree$n; }
 
 document.appendChild = function(c) {
 if(!c) return null;
 if(c.nodeType == 11) return dom$.appendFragment(this, c);
-dom$.isabove(c, this);
+mw$.isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$apch2(c);
 mutFixup(this, false, c, null);
@@ -1712,7 +1650,7 @@ return r;
 
 document.prependChild = function(c) {
 var v;
-dom$.isabove(c, this);
+mw$.isabove(c, this);
 if(this.childNodes.length) v = this.insertBefore(c, this.childNodes[0]);
 else v = this.appendChild(c);
 return v;
@@ -1721,7 +1659,7 @@ return v;
 document.insertBefore = function(c, t) {
 if(!c) return null;
 if(!t) return this.appendChild(c);
-dom$.isabove(c, this);
+mw$.isabove(c, this);
 if(c.nodeType == 11) return dom$.insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$insbf(c, t);
@@ -1806,7 +1744,7 @@ Attr = function(){ this.specified = false; this.owner = null; this.name = ""};
 Attr.prototype.dom$class = "Attr";
 Object.defineProperty(Attr.prototype, "value", {
 get: function() { var n = this.name;
-return n.substr(0,5) == "data-" ? (this.owner.dataset$2 ? this.owner.dataset$2[dom$.dataCamel(n)] :  null)  : this.owner[n]; },
+return n.substr(0,5) == "data-" ? (this.owner.dataset$2 ? this.owner.dataset$2[mw$.dataCamel(n)] :  null)  : this.owner[n]; },
 set: function(v) {
 this.owner.setAttribute(this.name, v);
 this.specified = true;
@@ -1889,7 +1827,7 @@ if(v !== "from@@html") {
 if(name.substr(0,5) == "data-") {
 // referencing dataset should create it on demand, but if it doesn't...
 if(!this.dataset) this.dataset = {};
-this.dataset[dom$.dataCamel(name)] = v;
+this.dataset[mw$.dataCamel(name)] = v;
 } else this[name] = v;
 }
 mutFixup(this, true, name, oldv);
@@ -1910,7 +1848,7 @@ return;
 }
 var oldv = null;
 if(name.substr(0,5) == "data-") {
-var n = dom$.dataCamel(name);
+var n = mw$.dataCamel(name);
 if(this.dataset$2 && this.dataset$2[n]) { oldv = this.dataset$2[n]; delete this.dataset$2[n]; }
 } else {
     if (this[name]) { oldv = this[name]; delete this[name]; }
@@ -2689,7 +2627,7 @@ z$Select.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 // should only be options!
 if(!(newobj.dom$class == "Option")) return newobj;
-dom$.isabove(newobj, this);
+mw$.isabove(newobj, this);
 if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 var l = this.childNodes.length;
 if(newobj.defaultSelected) newobj.selected = true, this.selectedIndex = l;
@@ -2702,7 +2640,7 @@ var i;
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(!(newobj.dom$class == "Option")) return newobj;
-dom$.isabove(newobj, this);
+mw$.isabove(newobj, this);
 if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 for(i=0; i<this.childNodes.length; ++i)
 if(this.childNodes[i] == item) {
