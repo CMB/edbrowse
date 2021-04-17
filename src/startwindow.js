@@ -67,6 +67,7 @@ close = mw$.win$close;
 eb$resolveURL = mw$.eb$resolveURL;
 atob = mw$.atob, btoa = mw$.btoa;
 eb$logputs = mw$.eb$logputs, prompt = mw$.prompt, confirm = mw$.confirm;
+eb$newLocation = mw$.eb$newLocation, eb$logElement = mw$.eb$logElement;
 }
 
 self = window;

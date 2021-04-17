@@ -85,6 +85,7 @@ t = t.parentNode;
 
 // lock down
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
+"eb$newLocation","eb$logElement",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});

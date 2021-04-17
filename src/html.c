@@ -3110,7 +3110,7 @@ void domOpensWindow(const char *href, const char *name)
 	stringAndString(&cf->dw, &cf->dw_l, r);
 	nzFree(r);
 	stringAndString(&cf->dw, &cf->dw_l, "</A><br>\n");
-}				/* javaOpensWindow */
+}
 
 /* the new string, the result of the render operation */
 static char *ns;

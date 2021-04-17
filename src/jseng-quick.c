@@ -2952,6 +2952,10 @@ JS_NewCFunction(mwc, nat_confirm, "confirm", 1), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_win_close, "win_close", 0), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$resolveURL",
 JS_NewCFunction(mwc, nat_resolveURL, "resolveURL", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$newLocation",
+JS_NewCFunction(mwc, nat_new_location, "new_location", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$logElement",
+JS_NewCFunction(mwc, nat_log_element, "log_element", 2), JS_PROP_ENUMERABLE);
 #endif
 
 // shared functions and classes
@@ -3052,10 +3056,12 @@ JS_NewCFunction(cx, nat_void, "docclose", 0), 0);
 JS_NewCFunction(cx, nat_win_close, "win_close", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$resolveURL",
 JS_NewCFunction(cx, nat_resolveURL, "resolveURL", 2), 0);
-#endif
-
     JS_DefinePropertyValueStr(cx, g, "eb$newLocation",
 JS_NewCFunction(cx, nat_new_location, "new_location", 1), 0);
+    JS_DefinePropertyValueStr(cx, g, "eb$logElement",
+JS_NewCFunction(cx, nat_log_element, "log_element", 2), 0);
+#endif
+
     JS_DefinePropertyValueStr(cx, g, "my$win",
 JS_NewCFunction(cx, nat_mywin, "mywin", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "my$doc",
@@ -3066,8 +3072,6 @@ JS_NewCFunction(cx, nat_media, "media", 1), 0);
 JS_NewCFunction(cx, nat_unframe, "unframe", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$unframe2",
 JS_NewCFunction(cx, nat_unframe2, "unframe2", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$logElement",
-JS_NewCFunction(cx, nat_log_element, "log_element", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "setTimeout",
 JS_NewCFunction(cx, nat_setTimeout, "setTimeout", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "clearTimeout",
