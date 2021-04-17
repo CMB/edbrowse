@@ -2100,20 +2100,6 @@ var i, j;
 var kids = null;
 var debug = db$flags(2);
 
-if(node1.dom$class == "CSSStyleDeclaration") {
-if(debug) alert3("copy style");
-node2 = new CSSStyleDeclaration;
-for (var item in node1){
-if(!node1.hasOwnProperty(item)) continue;
-if (typeof node1[item] === 'string' ||
-typeof node1[item] === 'number') {
-if(debug) alert3("copy stattr " + item);
-node2[item] = node1[item];
-}
-}
-return node2;
-}
-
 // WARNING: don't use instanceof Array here.
 // Array is a different class in another frame.
 if(Array.isArray(node1.childNodes))
@@ -2132,6 +2118,8 @@ else if(node1.nodeName == "#comment")
 node2 = document.createComment();
 else if(node1.nodeName == "#document-fragment")
 node2 = document.createDocumentFragment();
+else if(node1.dom$class == "CSSStyleDeclaration")
+node2 = document.createElement("style");
 else
 node2 = document.createElement(node1.nodeName);
 if(node1 == dom$.cloneRoot1) dom$.cloneRoot2 = node2;
@@ -2214,13 +2202,15 @@ continue;
 }
 
 if(typeof node1[item] === "object") {
-// An object, not an array.
+// An object, but not an array.
 
 // skip the on-demand background objects
 if(item === "style$2") continue;
 if(item === "attributes$2") continue;
 if(item === "dataset$2") continue;
 if(item === "ownerDocument") continue; // handled by createElement
+
+if(node1[item] === null) { node2[item] = null; continue; }
 
 // Check for URL objects.
 if(node1[item].dom$class == "URL") {
@@ -2264,7 +2254,7 @@ if(item == "value" &&
 continue;
 if(debug) {
 var showstring = node1[item];
-if(showstring.length > 20) showstring = "long";
+if(showstring.length > 140) showstring = "long";
 alert3("copy string " + item + " = " + showstring);
 }
 node2[item] = node1[item];
@@ -2287,8 +2277,17 @@ continue;
 
 // copy style object if present and its subordinate strings.
 if (node1.style$2 && node1.style$2.dom$class == "CSSStyleDeclaration") {
-node2.style$2 = dom$.eb$clone(node1.style$2, false);
+if(debug) alert3("copy style");
+node2.style$2 = new CSSStyleDeclaration;
 node2.style$2.element = node2;
+for (var l in node1.style$2){
+if(!node1.style$2.hasOwnProperty(l)) continue;
+if (typeof node1.style$2[l] === 'string' ||
+typeof node1.style$2[l] === 'number') {
+if(debug) alert3("copy stattr " + l);
+node2.style$2[l] = node1.style$2[l];
+}
+}
 }
 
 if (node1.attributes$2) { // has attributes
@@ -3315,7 +3314,7 @@ case "img": c = new z$Image; break;
 case "link": c = new z$Link; break;
 case "meta": c = new z$Meta; break;
 case "cssstyledeclaration": case "style":
-c = new CSSStyleDeclaration; c.element = c; break;
+c = new CSSStyleDeclaration; c.element = null; break;
 case "script": c = new z$Script; break;
 case "div": c = new z$Div; break;
 case "label": c = new z$Label; break;
