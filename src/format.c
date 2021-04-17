@@ -1161,7 +1161,9 @@ isogo:
 	bothcount *= 6;
 	if (utfcount * 7 >= bothcount)
 		*utf8_p = true;
-	if (isocount * 7 >= bothcount)
+// a sequence of ascii, like times +- 7, can look like utf8.
+// If 2/3 of the nonascii chars look like iso, I'll call it iso.
+	if (isocount * 9 >= bothcount)
 		*iso_p = true;
 }				/* looks_8859_utf8 */
 
