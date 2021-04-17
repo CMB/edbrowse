@@ -90,6 +90,8 @@ window.nodeName = "WINDOW";
 if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
+document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
+document.nodeContains = mw$.nodeContains;
 }
 
 /*********************************************************************
@@ -1647,112 +1649,6 @@ top: 0, bottom: 0, left: 0, right: 0,
 x: 0, y: 0,
 width: 0, height: 0
 }
-}
-
-// implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
-// These are recursive as they descend through the tree of nodes.
-
-document.getElementsByTagName = function(s) {
-if(!s) { // missing or null argument
-alert3("getElementsByTagName(type " + typeof s + ")");
-return [];
-}
-s = s.toLowerCase();
-return dom$.eb$gebtn(this, s);
-}
-
-dom$.eb$gebtn = function(top, s) {
-var a = [];
-if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
-a.push(top);
-if(top.childNodes) {
-// don't descend into another frame.
-// The frame has no children through childNodes, so we don't really need this line.
-if(top.dom$class != "Frame")
-for(var i=0; i<top.childNodes.length; ++i) {
-var c = top.childNodes[i];
-a = a.concat(dom$.eb$gebtn(c, s));
-}
-}
-return a;
-}
-
-document.getElementsByName = function(s) {
-if(!s) { // missing or null argument
-alert3("getElementsByName(type " + typeof s + ")");
-return [];
-}
-s = s.toLowerCase();
-return dom$.eb$gebn(this, s);
-}
-
-dom$.eb$gebn = function(top, s) {
-var a = [];
-if(s === '*' || (top.name && top.name.toLowerCase() === s))
-a.push(top);
-if(top.childNodes) {
-if(top.dom$class != "Frame")
-for(var i=0; i<top.childNodes.length; ++i) {
-var c = top.childNodes[i];
-a = a.concat(dom$.eb$gebn(c, s));
-}
-}
-return a;
-}
-
-document.getElementById = function(s) {
-if(!s) { // missing or null argument
-alert3("getElementById(type " + typeof s + ")");
-return null;
-}
-s = s.toLowerCase();
-var a = dom$.eb$gebi(this, s);
-return a.length ? a[0] : null;
-}
-
-// this could stop when it finds the first match, it just doesn't
-dom$.eb$gebi = function(top, s) {
-var a = [];
-if(s === '*' || (top.id && top.id.toLowerCase() === s))
-a.push(top);
-if(top.childNodes) {
-if(top.dom$class != "Frame")
-for(var i=0; i<top.childNodes.length; ++i) {
-var c = top.childNodes[i];
-a = a.concat(dom$.eb$gebi(c, s));
-}
-}
-return a;
-}
-
-document.getElementsByClassName = function(s) {
-s = s.toLowerCase();
-return dom$.eb$gebcn(this, s);
-}
-
-dom$.eb$gebcn = function(top, s) {
-var a = [];
-if(s === '*' || (top.class && top.class.toLowerCase() === s))
-a.push(top);
-if(top.childNodes) {
-if(top.dom$class != "Frame")
-for(var i=0; i<top.childNodes.length; ++i) {
-var c = top.childNodes[i];
-a = a.concat(dom$.eb$gebcn(c, s));
-}
-}
-return a;
-}
-
-document.nodeContains = function(n) {  return dom$.eb$cont(this, n); }
-
-dom$.eb$cont = function(top, n) {
-if(top === n) return true;
-if(!top.childNodes) return false;
-if(top.dom$class == "Frame") return false;
-for(var i=0; i<top.childNodes.length; ++i)
-if(dom$.eb$cont(top.childNodes[i], n)) return true;
-return false;
 }
 
 /*********************************************************************
@@ -3587,7 +3483,7 @@ document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, do
 //but offer the legacy document.all.tags method.
 document.all = {};
 document.all.tags = function(s) {
-return dom$.eb$gebtn(document.body, s.toLowerCase());
+return mw$.eb$gebtn(document.body, s.toLowerCase());
 }
 
 eb$demin = dom$.eb$demin;
@@ -3961,7 +3857,7 @@ if(typeof mask != "number")
 mask = 0xffffffff;
 // let's reuse some software
 if(typeof root == "object") {
-o.list = dom$.eb$gebtn(root, "*");
+o.list = mw$.eb$gebtn(root, "*");
 if(!root.nodeType)
 alert3("NodeIterator root object is not a node");
 } else {
@@ -4013,7 +3909,7 @@ o.callback = callback;
 if(typeof mask != "number")
 mask = 0xffffffff;
 if(typeof root == "object") {
-o.list = dom$.eb$gebtn(root, "*");
+o.list = mw$.eb$gebtn(root, "*");
 if(!root.nodeType)
 alert3("TreeWalker root object is not a node");
 o.currentNode = root;

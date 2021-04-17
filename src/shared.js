@@ -83,9 +83,117 @@ t = t.parentNode;
 }
 }
 
+// implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
+// These are recursive as they descend through the tree of nodes.
+
+function getElementsByTagName(s) {
+if(!s) { // missing or null argument
+alert3("getElementsByTagName(type " + typeof s + ")");
+return [];
+}
+s = s.toLowerCase();
+return eb$gebtn(this, s);
+}
+
+function eb$gebtn(top, s) {
+var a = [];
+if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
+a.push(top);
+if(top.childNodes) {
+// don't descend into another frame.
+// The frame has no children through childNodes, so we don't really need this line.
+if(top.dom$class != "Frame")
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+a = a.concat(eb$gebtn(c, s));
+}
+}
+return a;
+}
+
+function getElementsByName(s) {
+if(!s) { // missing or null argument
+alert3("getElementsByName(type " + typeof s + ")");
+return [];
+}
+s = s.toLowerCase();
+return eb$gebn(this, s);
+}
+
+function eb$gebn(top, s) {
+var a = [];
+if(s === '*' || (top.name && top.name.toLowerCase() === s))
+a.push(top);
+if(top.childNodes) {
+if(top.dom$class != "Frame")
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+a = a.concat(eb$gebn(c, s));
+}
+}
+return a;
+}
+
+function getElementById(s) {
+if(!s) { // missing or null argument
+alert3("getElementById(type " + typeof s + ")");
+return null;
+}
+s = s.toLowerCase();
+var a = eb$gebi(this, s);
+return a.length ? a[0] : null;
+}
+
+// this could stop when it finds the first match, it just doesn't
+function eb$gebi(top, s) {
+var a = [];
+if(s === '*' || (top.id && top.id.toLowerCase() === s))
+a.push(top);
+if(top.childNodes) {
+if(top.dom$class != "Frame")
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+a = a.concat(eb$gebi(c, s));
+}
+}
+return a;
+}
+
+function getElementsByClassName(s) {
+s = s.toLowerCase();
+return eb$gebcn(this, s);
+}
+
+function eb$gebcn(top, s) {
+var a = [];
+if(s === '*' || (top.class && top.class.toLowerCase() === s))
+a.push(top);
+if(top.childNodes) {
+if(top.dom$class != "Frame")
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+a = a.concat(eb$gebcn(c, s));
+}
+}
+return a;
+}
+
+function nodeContains(n) {  return eb$cont(this, n); }
+
+function eb$cont(top, n) {
+if(top === n) return true;
+if(!top.childNodes) return false;
+if(top.dom$class == "Frame") return false;
+for(var i=0; i<top.childNodes.length; ++i)
+if(eb$cont(top.childNodes[i], n)) return true;
+return false;
+}
+
 // lock down
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$newLocation","eb$logElement",
+"getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
+"eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
