@@ -2207,70 +2207,6 @@ if(t === this) return DOCUMENT_POSITION_CONTAINS;
 return DOCUMENT_POSITION_DISCONNECTED;
 }
 
-// classList
-// First the functions that will hang off the array to be returned.
-dom$.classListRemove = function() {
-for(var i=0; i<arguments.length; ++i) {
-for(var j=0; j<this.length; ++j) {
-if(arguments[i] != this[j]) continue;
-this.splice(j, 1);
---j;
-}
-}
-this.node.class = this.join(' ');
-}
-
-dom$.classListAdd = function() {
-for(var i=0; i<arguments.length; ++i) {
-for(var j=0; j<this.length; ++j)
-if(arguments[i] == this[j]) break;
-if(j == this.length) this.push(arguments[i]);
-}
-this.node.class = this.join(' ');
-}
-
-dom$.classListReplace = function(o, n) {
-if(!o) return;
-if(!n) { this.remove(o); return; }
-for(var j=0; j<this.length; ++j)
-if(o == this[j]) { this[j] = n; break; }
-this.node.class = this.join(' ');
-}
-
-dom$.classListContains = function(t) {
-if(!t) return false;
-for(var j=0; j<this.length; ++j)
-if(t == this[j]) return true;
-return false;
-}
-
-dom$.classListToggle = function(t, force) {
-if(!t) return false;
-if(arguments.length > 1) {
-if(force) this.add(t); else this.remove(t);
-return force;
-}
-if(this.contains(t)) { this.remove(t); return false; }
-this.add(t); return true;
-}
-
-dom$.classList = function(node) {
-var c = node.class;
-if(!c) c = "";
-// turn string into array
-var a = c.replace(/^\s+/, "").replace(/\s+$/, "").split(/\s+/);
-// remember the node you came from
-a.node = node;
-// attach functions
-a.remove = dom$.classListRemove;
-a.add = dom$.classListAdd;
-a.replace = dom$.classListReplace;
-a.contains = dom$.classListContains;
-a.toggle = dom$.classListToggle;
-return a;
-}
-
-// The Event class and various handlers.
 Event = function(etype){
     // event state is kept read-only by forcing
     // a new object for each event.  This may not
@@ -2517,7 +2453,7 @@ set: function(h) { dom$.outer$1(this,h); }});
 c.prototype.injectSetup = dom$.injectSetup;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
-Object.defineProperty(c.prototype, "classList", { get : function() { return dom$.classList(this);}});
+Object.defineProperty(c.prototype, "classList", { get : function() { return mw$.classList(this);}});
 Object.defineProperty(c.prototype, "textContent", {
 get: function() { return dom$.textUnder(this, 0); },
 set: function(s) { return dom$.newTextUnder(this, s, 0); }});

@@ -567,6 +567,68 @@ b = b.parentNode;
 }
 }
 
+// Functions that support classList
+function classListRemove() {
+for(var i=0; i<arguments.length; ++i) {
+for(var j=0; j<this.length; ++j) {
+if(arguments[i] != this[j]) continue;
+this.splice(j, 1);
+--j;
+}
+}
+this.node.class = this.join(' ');
+}
+
+function classListAdd() {
+for(var i=0; i<arguments.length; ++i) {
+for(var j=0; j<this.length; ++j)
+if(arguments[i] == this[j]) break;
+if(j == this.length) this.push(arguments[i]);
+}
+this.node.class = this.join(' ');
+}
+
+function classListReplace(o, n) {
+if(!o) return;
+if(!n) { this.remove(o); return; }
+for(var j=0; j<this.length; ++j)
+if(o == this[j]) { this[j] = n; break; }
+this.node.class = this.join(' ');
+}
+
+function classListContains(t) {
+if(!t) return false;
+for(var j=0; j<this.length; ++j)
+if(t == this[j]) return true;
+return false;
+}
+
+function classListToggle(t, force) {
+if(!t) return false;
+if(arguments.length > 1) {
+if(force) this.add(t); else this.remove(t);
+return force;
+}
+if(this.contains(t)) { this.remove(t); return false; }
+this.add(t); return true;
+}
+
+function classList(node) {
+var c = node.class;
+if(!c) c = "";
+// turn string into array
+var a = c.replace(/^\s+/, "").replace(/\s+$/, "").split(/\s+/);
+// remember the node you came from
+a.node = node;
+// attach functions
+a.remove = classListRemove;
+a.add = classListAdd;
+a.replace = classListReplace;
+a.contains = classListContains;
+a.toggle = classListToggle;
+return a;
+}
+
 // lock down
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$newLocation","eb$logElement",
@@ -576,6 +638,7 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "attachEvent","detachEvent","eb$listen","eb$unlisten",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
+"classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
