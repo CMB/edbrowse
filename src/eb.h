@@ -450,6 +450,7 @@ struct ebWindow {
  * and used thereafter for hyperlinks, fill-out forms, etc. */
 	struct htmlTag **tags;
 	int numTags, allocTags, deadTags;
+int ehsn;
 	struct htmlTag *scriptlist, *inputlist, *optlist, *linklist;
 	struct htmlTag *framelist;
 	bool mustrender:1;

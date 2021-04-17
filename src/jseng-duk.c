@@ -71,12 +71,13 @@ static duk_ret_t nat_false(duk_context * cx)
 static duk_ret_t nat_dbf(duk_context * cx)
 {
 	int n = duk_get_int(cx, -1), rc = 0;
+	duk_pop(cx);
 	switch(n) {
 		case 1: rc = debugEvent; break;
 		case 2: rc = debugClone; break;
 		case 3: rc = debugThrow; break;
+		case 4: duk_push_int(cx, ++cw->ehsn); return 1;
 	}
-	duk_pop(cx);
 	duk_push_boolean(cx, rc);
 	return 1;
 }

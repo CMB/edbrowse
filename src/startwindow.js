@@ -43,6 +43,7 @@ eb$getter_cd = function() { return null; }
 eb$getter_cw = function() { return null; }
 eb$formSubmit = function() { print("submit"); }
 eb$formReset = function() { print("reset"); }
+eb$listen = eb$unlisten = addEventListener = removeEventListener = eb$voidfunction;
 my$win = function() { return window; }
 my$doc = function() { return document; }
 document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
@@ -92,6 +93,15 @@ alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
+document.dispatchEvent = mw$.dispatchEvent;
+addEventListener = document.addEventListener = mw$.addEventListener;
+removeEventListener = document.removeEventListener = mw$.removeEventListener;
+if(mw$.attachOn) {
+attachEvent = document.attachEvent = mw$.attachEvent;
+detachEvent = document.detachEvent = mw$.detachEvent;
+}
+eb$listen = document.eb$listen = mw$.eb$listen;
+eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 }
 
 /*********************************************************************
@@ -2321,8 +2331,6 @@ a.toggle = dom$.classListToggle;
 return a;
 }
 
-dom$.ehsn = 0; // event handler sequence number
-
 // The Event class and various handlers.
 Event = function(etype){
     // event state is kept read-only by forcing
@@ -2357,169 +2365,6 @@ Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
 
 document.createEvent = function(unused) { return new Event; }
-
-document.dispatchEvent = function (e) {
-if(db$flags(1)) alert3("dispatch " + this.nodeName + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno:"?") + " " + e.type);
-e.target = this;
-var t = this;
-var pathway = [];
-while(t) {
-pathway.push(t);
-if(t.nodeType == 9) break; // don't go past document up to a higher frame
-t=t.parentNode;
-}
-var l = pathway.length;
-while(l) {
-t = pathway[--l];
-e.eventPhase = (l?1:2); // capture or current target
-var fn1 = "on" + e.type;
-var fn2 = fn1 + "$$fn";
-if(typeof t[fn2] == "function") {
-if(db$flags(1)) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
-e.currentTarget = t;
-var r = t[fn2](e);
-if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return !e.defaultPrevented;
-} else if(typeof t[fn1] == "function") {
-if(db$flags(1)) alert3((l?"capture ":"current ") + t.nodeName + "." + e.type);
-e.currentTarget = t;
-if(db$flags(1)) alert3("fire assigned");
-var r = t[fn1](e);
-if(db$flags(1)) alert3("endfire assigned");
-if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return !e.defaultPrevented;
-}
-}
-if(!e.bubbles) return !e.defaultPrevented;
-++l; // step up from the target
-while(l < pathway.length) {
-t = pathway[l++];
-e.eventPhase = 3;
-var fn2 = "on" + e.type + "$$fn";
-if(typeof t[fn2] == "function") {
-if(db$flags(1)) alert3("bubble " + t.nodeName + "." + e.type);
-e.currentTarget = t;
-var r = t[fn2](e);
-if((typeof r == "boolean" || typeof r == "number") && !r) return false;
-if(e.cancelled) return !e.defaultPrevented;
-}
-}
-return !e.defaultPrevented;
-};
-
-/*********************************************************************
-This is our addEventListener function.
-It is bound to window, which is ok because window has such a function
-to listen to load and unload.
-Later on we will bind it to document and to other nodes via
-class.prototype.addEventListener = addEventListener,
-to cover all the instantiated objects in one go.
-first arg is a string like click, second arg is a js handler,
-Third arg is not used cause I don't understand it.
-It calls a lower level function to do the work, which is also called by
-attachEvent, as these are almost exactly the same functions.
-A similar design applies for removeEventListener and detachEvent.
-However, attachEvent is deprecated, and probably shouldn't be used.
-I have it enabled for now...
-This is frickin complicated, so set eventDebug to debug it.
-*********************************************************************/
-
-dom$.attachOn = true;
-
-addEventListener = document.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
-removeEventListener = document.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
-if(dom$.attachOn) {
-attachEvent = document.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, true, false); }
-detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, false); }
-}
-
-eb$listen = document.eb$listen = function(ev, handler, iscapture, addon) {
-if(addon) ev = "on" + ev;
-var evfn = ev + "$$fn";
-var evarray = ev + "$$array"; // array of handlers
-var iscap = false, once = false, passive = false;
-// legacy, iscapture could be boolean, or object, or missing
-var captype = typeof iscapture;
-if(captype == "boolean" && iscapture) iscap = true;
-if(captype == "object") {
-if(iscapture.capture || iscapture.useCapture) iscap = true;
-if(iscapture.once) once = true;
-if(iscapture.passive) passive = true; // don't know how to implement this yet
-}
-if(!handler) {
-alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " for " + (iscap?"capture":"bubble") + " with null handler");
-return;
-}
-if(iscap) handler.do$capture = true; else handler.do$bubble = true;
-if(once) handler.do$once = true;
-if(passive) handler.do$passive = true;
-// event handler serial number, for debugging
-if(!handler.ehsn) handler.ehsn = ++dom$.ehsn;
-if(db$flags(1))  alert3((addon ? "listen " : "attach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + handler.ehsn + " for " + (handler.do$capture?"capture":"bubble"));
-
-if(!this[evarray]) {
-/* attaching the first handler */
-if(db$flags(1))  alert3("establish " + this.nodeName + "." + evfn);
-eval(
-'this["'+evfn+'"] = function(e){ var rc, a = this["' + evarray + '"]; \
-if(this["' + ev + '"] && e.eventPhase < 3) { \
-alert3("fire orig tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1)); rc = this["' + ev + '"](e); alert3("endfire orig");} \
-if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
-for(var i = 0; i<a.length; ++i) a[i].did$run = false; \
-for(var i = 0; i<a.length; ++i) { var h = a[i];if(h.did$run) continue; \
-if(e.eventPhase== 1 && !h.do$capture || e.eventPhase == 3 && !h.do$bubble) continue; \
-var ehsn = h.ehsn; \
-if(ehsn) ehsn = "" + ehsn; else ehsn = ""; /* from int to string */ \
-h.did$run = true; alert3("fire tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + (ehsn.length ? " handler " + ehsn : "")); rc = h.call(this,e); alert3("endfire handler " + ehsn); \
-if(h.do$once) { alert3("once"); this.removeEventListener(e.type, h, h.do$capture); } \
-if((typeof rc == "boolean" || typeof rc == "number") && !rc) return false; \
-i = -1; \
-} return true; };');
-
-this[evarray] = [];
-}
-
-var prev_fn = this[ev];
-if(prev_fn && handler == prev_fn) {
-if(db$flags(1)) alert3("handler duplicates orig");
-delete this[ev];
-}
-
-for(var j=0; j<this[evarray].length; ++j)
-if(this[evarray][j] == handler) {
-if(db$flags(1)) alert3("handler is duplicate, move to the end");
-this[evarray].splice(j, 1);
-break;
-}
-
-this[evarray].push(handler);
-}
-
-// here is unlisten, the opposite of listen.
-// what if every handler is removed and there is an empty array?
-// the assumption is that this is not a problem.
-eb$unlisten = document.eb$unlisten = function(ev, handler, iscapture, addon) {
-var ehsn = (handler.ehsn ? handler.ehsn : 0);
-if(addon) ev = "on" + ev;
-if(db$flags(1))  alert3((addon ? "unlisten " : "detach ") + this.nodeName + "." + ev + " tag " + (this.eb$seqno >= 0 ? this.eb$seqno : -1) + " handler " + ehsn);
-var evarray = ev + "$$array"; // array of handlers
-// remove original html handler after other events have been added.
-if(this[ev] == handler) {
-delete this[ev];
-return;
-}
-// If other events have been added, check through the array.
-if(this[evarray]) {
-var a = this[evarray]; // shorthand
-for(var i = 0; i<a.length; ++i)
-if(a[i] == handler) {
-if(iscapture && a[i].do$capture || !iscapture && a[i].do$bubble) {
-a.splice(i, 1);
-return;
-}
-}
-}
-}
 
 MediaQueryList = function() {
 this.nodeName = "MediaQueryList";
@@ -2721,7 +2566,7 @@ c.prototype.eb$listen = eb$listen;
 c.prototype.eb$unlisten = eb$unlisten;
 c.prototype.addEventListener = addEventListener;
 c.prototype.removeEventListener = removeEventListener;
-if(dom$.attachOn) {
+if(mw$.attachOn) {
 c.prototype.attachEvent = dom$.attachEvent;
 c.prototype.detachEvent = detachEvent;
 }

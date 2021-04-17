@@ -1401,6 +1401,7 @@ static JSValue nat_dbf(JSContext * cx, JSValueConst this, int argc, JSValueConst
 		case 1: rc = debugEvent; break;
 		case 2: rc = debugClone; break;
 		case 3: rc = debugThrow; break;
+		case 4: return JS_NewInt32(cx, ++cw->ehsn);
 	}
 	return JS_NewBool(cx, rc);
 }
