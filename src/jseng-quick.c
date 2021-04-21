@@ -1092,8 +1092,13 @@ static bool run_event(JSContext *cx, JSValueConst obj, const char *pname, const 
 	}
 	if (debugLevel >= 3) {
 		if (debugEvent) {
-			int seqno = get_property_number(cx, obj, "eb$seqno");
-			debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
+			if(stringEqual(evname, "ontimer")) {
+				int seqno = get_property_number(cx, obj, "tsn");
+				debugPrint(3, "trigger %s %d %s", pname, seqno, evname);
+			} else {
+				int seqno = get_property_number(cx, obj, "eb$seqno");
+				debugPrint(3, "trigger %s tag %d %s", pname, seqno, evname);
+			}
 		}
 	}
 	eo = create_event(cx, obj, evname);
