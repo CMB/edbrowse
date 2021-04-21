@@ -2662,6 +2662,7 @@ static void build_doclist(Tag *top)
 {
 	doclist_n = 0;
 	doclist_a = 500;
+	nzFree(doclist);
 	doclist = allocMem((doclist_a + 1) * sizeof(Tag *));
 	if (top) {
 		build1_doclist(top);
@@ -2743,6 +2744,7 @@ static Tag **qsaInternal(const char *selstring, Tag *top)
 		skiproot = false;
 	a = qsa2(d0);
 	nzFree(doclist);
+	doclist = 0;
 	cssPiecesFree(d0);
 	return a;
 }

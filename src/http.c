@@ -1254,8 +1254,11 @@ they go where they go, so this doesn't come up very often.
 		if (allowRedirection &&
 		    ((g->code >= 301 && g->code <= 303) ||
 		     (g->code >= 307 && g->code <= 308))) {
-			if (redir)
-				redir = resolveURL(g->urlcopy, redir);
+			if (redir) {
+				char *new_redir = resolveURL(g->urlcopy, redir);
+				nzFree(redir);
+				redir = new_redir;
+			}
 			still_fetching = false;
 			if (redir == NULL) {
 				/* Redirected, but we don't know where to go. */
@@ -1473,6 +1476,8 @@ void *httpConnectBack2(void *ptr)
 	g.tsn = ++tsn;
 	debugPrint(3, "jsbg thread %d", tsn);
 	rc = httpConnect(&g);
+	nzFree(g.referrer);
+	nzFree(g.cfn);
 	t->loadsuccess = rc;
 	if (!rc)
 		t->hcode = g.code;
@@ -1530,6 +1535,8 @@ void *httpConnectBack3(void *ptr)
 			a[--l] = 0;
 		t->value = a;
 	}
+	nzFree(g.referrer);
+	nzFree(g.cfn);
 	nzFree(outgoing_headers);
 	nzFree(outgoing_body);
 	nzFree(t->innerHTML);

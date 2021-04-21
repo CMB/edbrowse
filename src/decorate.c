@@ -1095,6 +1095,8 @@ static void link_css(Tag *t)
 		g.uriEncoded = true;
 		g.url = t->href;
 		if (httpConnect(&g)) {
+			nzFree(g.referrer);
+			nzFree(g.cfn);
 			if (g.code == 200) {
 				a = force_utf8(g.buffer, g.length);
 				if (!a)
