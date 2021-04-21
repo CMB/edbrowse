@@ -509,7 +509,7 @@ top:
 						newlocation);
 					nzFree(newlocation);
 					newlocation = 0;
-					/* to free next time */
+/* to free next time */
 					last_rl = s;
 					return (uchar *) s;
 				}
@@ -528,9 +528,7 @@ top:
 		last_rl = readline("");
 		if ((last_rl != NULL) && *last_rl)
 			add_history(last_rl);
-		s = cloneString(last_rl);
-		free(last_rl);
-		last_rl = s;
+		s = last_rl;
 	} else {
 		while (fgets(line, sizeof(line), stdin)) {
 /* A bug in my keyboard causes nulls to be entered from time to time. */
@@ -557,12 +555,10 @@ top:
 		}
 		goto interrupt;
 tty_complete:
-		if (last_rl) {
+		if (last_rl)
 			s = last_rl;
-		} else {
-			s = cloneString(line);
-			last_rl = s;
-		}
+		else
+			s = line;
 	}
 
 	if (!s) {
@@ -2040,10 +2036,8 @@ static bool readFile(const char *filename, bool newwin,
 				nzFree(cw->saveURL);
 				cw->saveURL = cloneString(g.cfn);
 			}
-		} else {
+		} else
 			nzFree(g.referrer);
-			nzFree(g.cfn);
-		}
 
 /* We got some data.  Any warnings along the way have been printed,
  * like 404 file not found, but it's still worth continuing. */
