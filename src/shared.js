@@ -629,6 +629,37 @@ a.toggle = classListToggle;
 return a;
 }
 
+// support functions for mutation records
+function mrList(x) {
+if(Array.isArray(x)) {
+// return a copy of the array
+return [].concat(x);
+}
+if(typeof x == "number") return [];
+return x ? [x] : [];
+}
+
+function mrKids(r, b, y, z) {
+r.target = b;
+r.type = "childList";
+r.oldValue = null;
+r.addedNodes = mrList(y);
+r.removedNodes = mrList(z);
+r.nextSibling = r.previousSibling = null; // this is for innerHTML
+// if adding a single node then we can just compute the siblings
+if(y && y.nodeType && y.parentNode)
+r.previousSibling = y.previousSibling, r.nextSibling = y.nextSibling;
+// if z is a node it is removeChild(), and is gone,
+// and y is the integer where it was.
+if(z && z.nodeType && typeof y == "number") {
+var c = b.childNodes;
+var l = c.length;
+r.nextSibling = y < l ? c[y] : null;
+--y;
+r.previousSibling = y >= 0 ? c[y] : null;
+}
+}
+
 // lock down
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$newLocation","eb$logElement",
@@ -639,6 +670,7 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
+"mrList","mrKids",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});

@@ -3586,37 +3586,8 @@ And an attribute change record etc.
 So they are expecting an array of change records.
 I send an array of length 1, 1 record, right now.
 It's just easier.
+Support functions are in shared.js.
 *********************************************************************/
-
-dom$.mrList = function(x) {
-if(Array.isArray(x)) {
-// return a copy of the array
-return [].concat(x);
-}
-if(typeof x == "number") return [];
-return x ? [x] : [];
-}
-
-dom$.mrKids = function(r, b, y, z) {
-r.target = b;
-r.type = "childList";
-r.oldValue = null;
-r.addedNodes = dom$.mrList(y);
-r.removedNodes = dom$.mrList(z);
-r.nextSibling = r.previousSibling = null; // this is for innerHTML
-// if adding a single node then we can just compute the siblings
-if(y && y.nodeType && y.parentNode)
-r.previousSibling = y.previousSibling, r.nextSibling = y.nextSibling;
-// if z is a node it is removeChild(), and is gone,
-// and y is the integer where it was.
-if(z && z.nodeType && typeof y == "number") {
-var c = b.childNodes;
-var l = c.length;
-r.nextSibling = y < l ? c[y] : null;
---y;
-r.previousSibling = y >= 0 ? c[y] : null;
-}
-}
 
 mutFixup = function(b, isattr, y, z) {
 var w = my$win();
@@ -3641,7 +3612,7 @@ continue;
 // ok a child of b has changed
 if(o.kids && o.target == b) {
 r = new MutationRecord;
-dom$.mrKids(r, b, y, z);
+mw$.mrKids(r, b, y, z);
 o.callback([r], o);
 continue;
 }
@@ -3650,7 +3621,7 @@ if(!o.subtree) continue;
 for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
 if(o.subtree && o.target == t) {
 r = new MutationRecord;
-dom$.mrKids(r, b, y, z);
+mw$.mrKids(r, b, y, z);
 o.callback([r], o);
 break;
 }
