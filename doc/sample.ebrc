@@ -206,7 +206,7 @@ nojs = paypal.com
 #  Every time you fetch a web page from the internet,
 #  your browser identifies itself to the host.
 #  This is done automatically.
-#  Edbrose identifies itself as "edbrowse/3.4.8",
+#  Edbrowse identifies itself as "edbrowse/3.4.8",
 #  where the number after the slash indicates the current version of edbrowse.
 #  All well and good, but some websites have no respect for edbrowse.
 #  You can specify different agents in this config file,

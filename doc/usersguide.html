@@ -9,6 +9,7 @@ portable, C,
 javascript,
 secure, ssl,
 blind, script, accessible">
+<meta charset="UTF-8">
 <TITLE> edbrowse documentation </TITLE>
 <LINK REL="SHORTCUT ICON" href="pc.ico">
         <style type="text/css">
@@ -31,7 +32,7 @@ p.cen { text-align: center; }
 
 <H2> Chapter 0, <A NAME=top> Contents </A> </H2>
 
-<H4> Chapter 1, Preface </H4>
+<H3> Chapter 1, Preface </H3>
 
 <UL>
 <LI><A HREF=#maint> Maintainer </A>
@@ -43,7 +44,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#lang> Other Languages </A>
 </UL>
 
-<H4> Chapter 2, Quick Reference Guide </H4>
+<H3> Chapter 2, Quick Reference Guide </H3>
 
 <UL>
 <LI><A HREF=#guide> Quick Reference Guide </A>
@@ -52,7 +53,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#wiki> Edbrowse Wiki </A>
 </UL>
 
-<H4> Chapter 3, The Editor </H4>
+<H3> Chapter 3, The Editor </H3>
 
 <UL>
 <LI><A HREF=#dev> Important Deviations From /bin/ed </A>
@@ -67,7 +68,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#race> Race Conditions </A>
 </UL>
 
-<H4> Chapter 4, Web Browser </H4>
+<H3> Chapter 4, Web Browser </H3>
 
 <UL>
 <LI><A HREF=#url> Accessing A URL </A>
@@ -96,7 +97,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#frame> Frames </A>
 </UL>
 
-<H4> Chapter 5, Javascript </H4>
+<H3> Chapter 5, Javascript </H3>
 
 <UL>
 <LI><A HREF=#js> Introduction to Javascript </A>
@@ -106,7 +107,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#jex> Javascript Debugger </A>
 </UL>
 
-<H4> Chapter 6, Edbrowse Scripts and the Configuration File </H4>
+<H3> Chapter 6, Edbrowse Scripts and the Configuration File </H3>
 
 <UL>
 <LI><A HREF=#cfg> The Config File </A>
@@ -119,7 +120,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#sampcfg> A Sample Config File </A>
 </UL>
 
-<H4> Chapter 7, Mail Client </H4>
+<H3> Chapter 7, Mail Client </H3>
 
 <UL>
 <LI><A HREF=#sm> Send Mail </A>
@@ -132,7 +133,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#imap> Imap Client </A>
 </UL>
 
-<H4> Chapter 8, Database Access </H4>
+<H3> Chapter 8, Database Access </H3>
 
 <UL>
 <LI><A HREF=#sqlb> Building edbrowse with Database Access </A>
@@ -470,7 +471,7 @@ Commands that are designated (toggle), such as js to turn javascript on and off,
 Thus js toggles javascript, js+ enables javascript, and js- disables javascript.
 The + and - variants are not listed.
 Toggle prints the state of the feature, on or off, if help messages are enabled or if the debug level is at least 1.
-Seting or clearing a mode only prints the message if help messages are on.
+Setting or clearing a mode only prints the message if help messages are on.
 
 <P>
 Leave the Program
@@ -612,7 +613,7 @@ dr : directory is readonly
 <br>sort-s : reverse size
 <br>rf : refresh directory scan, useful if you have changed ls or sort parameters
 <br>M : move this directory to an empty session and back up
-<br> d : delete the file or move it to your trash can; theree is no undo
+<br> d : delete the file or move it to your trash can; there is no undo
 <br>g/\.o$/d : delete all the .o files
 <br>.m3 : move this file to the directory in session 3; there is no undo
 <br>.t3 : copy this file to the directory in session 3; there is no undo
@@ -869,7 +870,7 @@ That's probably not what you want, so be careful when changing directories.
 
 <LI><P>
 r operates on the current line by default,
-rather then the last line.
+rather than the last line.
 Use $r to read a file at the end of your working text.
 
 <LI><P>
@@ -988,7 +989,7 @@ You might need to use s.2 if the sentence begins with Mr. Flintstone.
 Type s by itself for s//%.
 
 <LI><P>
-The sg command makes searches and substitutions global across editting sessions.
+The sg command makes searches and substitutions global across editing sessions.
 This is a toggle, so type sg again to keep search strings local to their sessions.
 As with any toggle, you can enter sg+ or sg-.
 If you want to look at all instances of "foo" in all the files in the current directory,
@@ -1228,7 +1229,7 @@ Processing of the config file stops at the first error, so you really want a cle
 
 <P>
 From within edbrowse, a file name of -c is treated as the config file.
-You can switch to a new session, view, edit, save, and reaply the config file without ever leaving edbrowse.
+You can switch to a new session, view, edit, save, and reapply the config file without ever leaving edbrowse.
 
 <P>
 If the first arguments are -c filename, edbrowse uses filename as its config file, rather than the default file under your home directory.
@@ -1372,7 +1373,7 @@ Either way you can display and edit the data, and write it to a file.
 However, edbrowse tries to "do the right thing" for dos text files.
 It converts crlf to and from newline if it believes the file is text;
 and it leaves binary data alone.
-This happens automatically under dos; it can be supressed with the iu command under unix, if you really want to see the carriage returns.
+This happens automatically under dos; it can be suppressed with the iu command under unix, if you really want to see the carriage returns.
 
 <P>
 Although this approach is satisfactory for utf8,
@@ -1566,7 +1567,7 @@ to invoke your program on that file.
 This sounds involved, but it is merely macro substitution, implemented in a few lines of code.
 If 'x is present in a shell escape, and is not next to any letters or digits,
 edbrowse replaces it with the text on the line labeled x.
-If your filename contains spaces, run !program "'x",
+If your filename contains spaces, run !program "'x"
 to make sure the entire file name is one argument to the running program.
 
 <P>
@@ -1626,7 +1627,7 @@ var/ 4096 Sep  3 2015 04:59
 <P>
 All entries are directories under the root directory,
 thus they all end in /.
-The birst entry is bin@/ because bin is a symbolic link to usr/bin
+The first entry is bin@/ because bin is a symbolic link to usr/bin
 (most systems are configured this way),
 and /usr/bin is a directory.
 The size of /proc is 0, because /proc is a virtual filesystem.
@@ -1659,7 +1660,7 @@ type ,lc to convert all the file names to lower case.
 It's that simple.
 
 <P>
-If you want to upcase a particular word, type s/word/uc/.
+If you want to uppercase a particular word, type s/word/uc/.
 This converts the word to upper case.
 All the other substitution suffixes apply.
 To change foo, Foo, FOo, and FOO to FOO, everywhere,
@@ -1686,7 +1687,7 @@ if that makes any sense.
 Once bl is issued,
 physical lines will contain sentences or phrases, as delimited by punctuation,
 or by the newline/return characters embedded in the original text, or by the format line length.
-A long line that has no spaces cannot be cut, and ramins long.
+A long line that has no spaces cannot be cut, and remains long.
 
 <P>
 If one of the original lines, delimited by newline or return,
@@ -1782,7 +1783,7 @@ This feature is not in high demand.
 <P>
 Instead of invoking `e filename', you can invoke `e http://this.that.com/file.html',
 and the editor will retrieve the named file using the http protocol.
-The source (i.e. raw html) is made available for edit.
+The source (i.e. raw html) is made available for editing.
 You can modify it or save it on your local machine.
 Because the text was retrieve from another machine,
 it cannot be written back to that machine,
@@ -2253,7 +2254,7 @@ You can use &amp;3 or &amp;&amp;&amp;, similar to ^, but only do so when you kno
 how far back you want to go.
 An alternative, if you often want to go back to the table of contents, is to
 mark the current position with kr, then return to it via the label 'r.
-Even with this label set, &amp; is often more convenient, since it takes you back to the last heading you jumped on, whence you can procede down the table of contents to the next section that interests you.
+Even with this label set, &amp; is often more convenient, since it takes you back to the last heading you jumped on, whence you can proceed down the table of contents to the next section that interests you.
 
 <H3> <A NAME=move> The M Command </A> </H3>
 
@@ -2652,12 +2653,12 @@ How do you know which fields are red?
 Enter the colors command to find out.
 This is a toggle command, so colors+ and colors- will work.
 Words, sentences, or entire sections will be surrounded by color indicators.
-In this example, Brirthday is in red, because February doesn't have 29 days.
+In this example, Birthday is in red, because February doesn't have 29 days.
 The rest of the input form is in black.
 </p>
 
 <P>
-:black≪First name &lt;Johhn&gt;
+:black≪First name &lt;John&gt;
 <br>
 Last name &lt;Smith&gt;
 <br>
@@ -2709,9 +2710,9 @@ Here is how it might look.
 &lt; A  # capture the URLs
 &gt; 144  # size of the URLs
 &lt; ,p  # let's see them
-&gt; &lt;br&gt;&lt;A HREF=www.kangaroo-info.com&gt;
+&gt; &lt;br&gt;&lt;a href='http://www.kangaroo-info.com'&gt;
 &gt; more information about kangaroos
-&gt;  &lt;/A&gt;
+&gt;  &lt;/a&gt;
 &gt; send us mail:info@kangaroo.org
 &lt; 4d  # don't need the email address
 &lt; w+ $bookmarks  # append this url to the bookmark file
@@ -2951,7 +2952,7 @@ or ftp mode passive by `ftpa-'.
 <P>
 Gopher is similar to ftp, providing an easy way to download files from a public site.
 Edbrowse supports this via the gopher:// protocol.
-Once again, directory listings are converted into html, so you can activate a hyperlink and procede to a submenu or download a file.
+Once again, directory listings are converted into html, so you can activate a hyperlink and proceed to a submenu or download a file.
 
 <H3> <A NAME=proxy> Proxy Servers </A> </H3>
 
@@ -3090,7 +3091,7 @@ but javascript evolves, like any other language or standard,
 and I just couldn't keep up.
 
 <P>
-The third version uses an open source javascript engine, originally Mozilla js, and now, as of version 3.7.0, Duktape js.
+The third version uses an open source javascript engine, originally Mozilla js, then Duktape, and now, as of version 3.8.0, Quick js.
 This allows me to leverage, rather than reinvent, some 70,000 lines of code -
 and somebody else is maintaining that code as javascript evolves.
 
@@ -3258,7 +3259,7 @@ It is best to enter jdb with debug level 3, so you can see any javascript syntax
 This feature is for developers, and is not very helpful for end users.
 
 <P>
-If the output of any command is long, you can redirect it into a file by using the ^&gt symbol, as in expression ^&gt; file.
+If the output of any command is long, you can redirect it into a file by using the ^&gt; symbol, as in expression ^&gt; file.
 I didn't want to use &gt; since that is a valid javascript operator.
 A predefined ok (object keys) command lists all the members of an object.
 showscripts() shows you the scripts in the current document, even generated scripts.
@@ -3286,7 +3287,7 @@ Repeat until there are no errors.
 Processing of the config file stops at the first error, so you really want a clean run.
 Remember that `edbrowse -c', from the command line, will edit the config file directly.
 Also, from within edbrowse, a file name of -c is treated as the config file.
-You can switch to a new session, view, edit, save, and reaply the config file without ever leaving edbrowse.
+You can switch to a new session, view, edit, save, and reapply the config file without ever leaving edbrowse.
 
 
 <P>
@@ -3367,7 +3368,7 @@ cachesize = 200
 Edbrowse stores some web pages locally, in a cache, so that they can be fetched directly from your computer when you visit them again.
 (All modern browsers do this.)
 You can specify the cache directory where these files are stored.
-If omited, edbrowse selects ~/.ebcache on Unix, or a directory in your temp area on Windows.
+If omitted, edbrowse selects ~/.ebcache on Unix, or a directory in your temp area on Windows.
 On a multiuser system, your cache should be private, since it literally contains the web pages you are looking at.
 Separate users should not share the same cache space.
 The cache directory is created mode 0700, if it does not already exist.
@@ -3660,9 +3661,9 @@ function+gg {
 <br>
 &nbsp;&nbsp;b http://www.google.com
 <br>
-&nbsp;&nbsp;/<>/ i=~0
+&nbsp;&nbsp;/&lt;&gt;/ i=~0
 <br>
-&nbsp;&nbsp;/</ i1*
+&nbsp;&nbsp;/&lt;/ i1*
 <br>
 &nbsp;&nbsp;/h3/p
 <br>
@@ -3834,7 +3835,7 @@ program = mpg123 -q -C %i
 <P>
 This example handles an mp3 file or an mp3 stream.
 That works because mpg123 will play a local file or an mp3 stream from the internet.
-If mpg123 was limited to loca files on your computer, we would have to add the keyword down_url, whereupon a url is downloaded to a temp file and then played.
+If mpg123 was limited to local files on your computer, we would have to add the keyword down_url, whereupon a url is downloaded to a temp file and then played.
 The autoplay feature can be disabled with the pg command that turns plugins on and off.
 
 <P>
@@ -3849,7 +3850,7 @@ This is very efficient; no need to read the file into memory or create a tempora
 <P>
 In some cases the stream is not indicated by protocol or suffix.
 A youtube video, for example, looks like just another html page; yet it can be played by a music player.
-use the urlmatch atribute for this.
+use the urlmatch attribute for this.
 
 <P>
 urlmatch = .youtube.com/watch?
@@ -3897,7 +3898,7 @@ so I thought it worthwhile going through html, even though it adds another step.
 The best documentation is an example,
 so I have provided a sample config file with fake data.
 It is well commented.
-You can see a copy <A HREF=sample.ebrc>here</A>.
+You can see a <A HREF=sample.ebrc>sample config file</A> here.
 Also available in
 <A href=sample_fr.ebrc>French</A>
 and
@@ -4309,7 +4310,7 @@ place an exclamation mark at the start, i.e. !fred.
 If an email is redirected to a file, and it includes attachments,
 edbrowse will ask you what to do with those attachments,
 as though you had used the w command to save the mail yourself.
-If your friend has send you a program (attached) that he wants you to look at, just hit return
+If your friend has sent you a program (attached) that he wants you to look at, just hit return
 to save it to the default filename.
 If your friend's mail has some kind of logo, or background image, that you don't care about,
 type x and it will go away.
