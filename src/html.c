@@ -3162,13 +3162,19 @@ static void tagInStream(int tagno)
 /* see if a number or star is pending, waiting to be printed */
 static void liCheck(Tag *t)
 {
-	Tag *ltag;	/* the list tag */
+	Tag *ltag;	/* the start list tag */
 	if (listnest && (ltag = findOpenList(t)) && ltag->post) {
 		char olbuf[32];
 		if (ltag->ninp)
 			tagInStream(ltag->ninp);
 		if (ltag->action == TAGACT_OL) {
-			int j = ++ltag->lic;
+			int j = ++ltag->lic, k;
+			Tag *tli = tagList[ltag->ninp];
+// this checks for <li value=7>, but does not check for javascript
+// dynamically setting value after the html is parsed.
+// Add that in someday.
+			if(tli->value && (k = stringIsNum(tli->value)) >= 0)
+				ltag->lic = j = k;
 			sprintf(olbuf, "%d. ", j);
 		} else {
 			strcpy(olbuf, "* ");
