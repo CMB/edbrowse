@@ -121,7 +121,7 @@ void runTimer(void);
 void domOpensWindow(const char *href, const char *name) ;
 struct htmlTag *line2tr(int ln);
 bool showHeaders(int ln);
-const char *findHeading(Tag *t, int colno);
+const char *findHeading(const Tag *t, int colno);
 
 /* sourcefile=html-tidy.c */
 void html2nodes(const char *htmltext, bool startpage);

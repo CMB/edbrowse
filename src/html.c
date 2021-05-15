@@ -4052,12 +4052,16 @@ static struct htmlTag *line2table(int ln)
 // Clearly this routine has to be expanded to cover more html layouts.
 bool showHeaders(int ln)
 {
-	struct htmlTag *t = line2table(ln), *u;
+	const Tag *t = line2table(ln), *u;
 	int colno;
 	if(!t)
 		return false;
 	t = t->firstchild;
-// skip past <thead> and down to <tr>
+	for(u = t; u; u = u->sibling)
+		if(u->action == TAGACT_THEAD) {
+			t = u;
+			break;
+		}
 	if(t && t->action == TAGACT_THEAD)
 		t = t->firstchild;
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
@@ -4086,9 +4090,10 @@ fail:
 }
 
 // return a column heading by number, the same logic as above.
-const char *findHeading(Tag *t, int colno)
+const char *findHeading(const Tag *t, int colno)
 {
 	int j = 0;
+	const Tag *u;
 	if(!t->parent ||
 	((t = t->parent)->action != TAGACT_TABLE &&
 	t->action != TAGACT_THEAD &&
@@ -4101,7 +4106,11 @@ const char *findHeading(Tag *t, int colno)
 			return 0;
 	}
 	t = t->firstchild;
-// skip past <thead> and down to <tr>
+	for(u = t; u; u = u->sibling)
+		if(u->action == TAGACT_THEAD) {
+			t = u;
+			break;
+		}
 	if(t && t->action == TAGACT_THEAD)
 		t = t->firstchild;
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
@@ -4114,7 +4123,7 @@ const char *findHeading(Tag *t, int colno)
 		if(t->action == TAGACT_TD) {
 			if(++j == colno) {
 // this is the header we want, descend to the text field
-				Tag *u = t->firstchild;
+				u = t->firstchild;
 				if(u && u->action == TAGACT_TEXT)
 					return u->textval ? u->textval : "?";
 				return 0;
