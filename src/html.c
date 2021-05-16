@@ -3152,6 +3152,34 @@ static void swapArrow(void)
 	}
 }
 
+// Is this table a matrix of data, or just for layout purposes?
+// 0 means we can't tell, 1 is data, 2 is presentation
+// t is the cell.
+static int tableType(const Tag *t)
+{
+	const char *role;
+	if(stringEqual(t->info->name, "th"))
+		return 1;
+	t = t->parent;
+	if(!t || t->action != TAGACT_TR)
+		return 0;
+	while((t = t->parent)) {
+		if(t->action == TAGACT_TABLE)
+			break;
+	}
+	if(!t) // no table
+		return 0;
+	role = attribVal(t, "role");
+	if(role && stringEqual(role, "presentation"))
+		return 2;
+// descend and look for caption or thead
+	for(t = t->firstchild; t; t = t->sibling)
+		if(t->action == TAGACT_THEAD ||
+		stringEqual(t->info->name, "caption"))
+			return 1;
+	return 0;
+}
+
 static void tagInStream(int tagno)
 {
 	char buf[32];
@@ -3730,7 +3758,8 @@ nop:
 					--j;
 				ns[j] = 0;
 				ns_l = j;
-				stringAndChar(&ns, &ns_l, TableCellChar);
+				j = tableType(t);
+				stringAndChar(&ns, &ns_l, "\3\4 "[j]);
 			}
 		} else {
 // unfolded row, find the column number.

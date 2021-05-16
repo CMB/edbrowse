@@ -88,6 +88,10 @@ static void cellDelimiters(char *buf)
 	char *s;
 
 	for (s = buf; *s; ++s) {
+		if (*s == DataCellChar) {
+			*s = '|';
+			continue;
+		}
 		if (*s == TableCellChar) {
 			*s = '|';
 			lastcell = s;
