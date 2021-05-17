@@ -150,7 +150,7 @@ Convert javascript or css files from utf16 or utf32 into utf8 before processing.
 
 3.7.1:
 Automatically expand a frame when javascript tries to access its objects.
-Otherwise it won't expand unti you expand it explicitly.
+Otherwise it won't expand until you expand it explicitly.
 This saves resources; don't fetch and expand a frame unless it is needed.
 
 ^c interrupts javascript, if that javascript calls our native methods. It also interrupts http fetch.

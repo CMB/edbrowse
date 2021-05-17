@@ -3161,8 +3161,12 @@ static int tableType(const Tag *t)
 	if(stringEqual(t->info->name, "th"))
 		return 1;
 	t = t->parent;
+// no containing row; don't know
 	if(!t || t->action != TAGACT_TR)
 		return 0;
+// row header = data
+	if(stringEqual(t->firstchild->info->name, "th"))
+		return 1;
 	while((t = t->parent)) {
 		if(t->action == TAGACT_TABLE)
 			break;
@@ -3745,7 +3749,7 @@ nop:
 	case TAGACT_TD:
 		if (!retainTag)
 			break;
-		if(stringEqual(t->info->name, "th") || !(ltag = t->parent)
+		if(!(ltag = t->parent)
 		|| ltag->action != TAGACT_TR || !ltag->ur) {
 // Traditional table format, pipe separated,
 // on one line if it fits, or wraps in unpredictable ways if it doesn't.
@@ -4085,14 +4089,13 @@ bool showHeaders(int ln)
 	int colno;
 	if(!t)
 		return false;
-	t = t->firstchild;
-	for(u = t; u; u = u->sibling)
-		if(u->action == TAGACT_THEAD) {
-			t = u;
+	for(t = t->firstchild; t; t = t->sibling) {
+		if(t->action == TAGACT_THEAD)
 			break;
-		}
-	if(t && t->action == TAGACT_THEAD)
-		t = t->firstchild;
+	}
+	if(!t)
+		goto fail;
+	t = t->firstchild;
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
 		goto fail;
 	t = t->firstchild;
