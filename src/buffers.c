@@ -46,7 +46,7 @@ static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "dDijJlmnpstX";
+static const char global_cmd[] = "dDijJlmnpstX=";
 
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
