@@ -5659,6 +5659,13 @@ bool runCommand(const char *line)
 		if (!getRangePart(line, &startRange, &line))
 			return (globSub = false);
 		endRange = startRange;
+		if(line[0] == 'j' || line[0] == 'J') { // special case, 5j
+			endRange = startRange + 1;
+			if (endRange > cw->dol) {
+				setError(MSG_EndJoin);
+				return false;
+			}
+		}
 		if (line[0] == ',') {
 			++line;
 			endRange = cw->dol;	/* new default */
