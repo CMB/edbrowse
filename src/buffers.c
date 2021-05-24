@@ -1642,9 +1642,7 @@ static bool moveCopy(void)
 		return false;
 	}
 	if (cmd == 'm' && (dl == er || dl == sr)) {
-		if (globSub)
-			setError(MSG_NoChange);
-		return false;
+		return true;
 	}
 
 	undoPush();
