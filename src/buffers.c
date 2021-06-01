@@ -46,7 +46,7 @@ static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "dDijJlmnpstX=";
+static const char global_cmd[] = "!dDijJlmnpstX=";
 
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
@@ -2859,7 +2859,7 @@ static bool shellEscape(const char *line)
 			return false;
 		}
 		interactive_shell_cmd = get_interactive_shell(sh);
-		eb_system(interactive_shell_cmd, true);
+		eb_system(interactive_shell_cmd, !globSub);
 		nzFree(interactive_shell_cmd);
 		return true;
 	}
@@ -2871,7 +2871,7 @@ static bool shellEscape(const char *line)
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
-	eb_system(newline, true);
+	eb_system(newline, !globSub);
 	free(newline);
 	return true;
 }				/* shellEscape */
@@ -5579,13 +5579,10 @@ bool runCommand(const char *line)
 	if (!globSub) {
 		madeChanges = false;
 
-/* Allow things like comment, or shell escape, but not if we're
- * in the midst of a global substitute, as in g/x/ !echo hello world */
+// Allow things like comment, or quit, but not if we're
+// in the midst of a global substitute, as in g/x/ q
 		if (first == '#')
 			return true;
-
-		if (first == '!')
-			return shellEscape(line + 1);
 
 /* Watch for successive q commands. */
 		lastq = lastqq, lastqq = 0;
@@ -5599,6 +5596,9 @@ bool runCommand(const char *line)
 		if (j != 2)
 			return j;
 	}
+
+	if (first == '!')
+		return shellEscape(line + 1);
 
 	startRange = endRange = cw->dot;	/* default range */
 /* Just hit return to read the next line. */
