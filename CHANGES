@@ -2,7 +2,7 @@ Here are some changes introduced by recent versions of edbrowse.
 
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
-I have no idea how to do cross copartment access, as in frames,
+I have no idea how to do cross compartment access, as in frames,
 so this didn't get very far.
 I'll leave jseng-moz.cpp around, if someone else wants to continue this work,
 or use this as a C++ framework for v8.
@@ -11,7 +11,7 @@ Switch from duktape js to quick js.
 
 Create subordinate objects, like the style object, on-demand,
 instead of making them part of every node automatically.
-This should cut down on objet proliferation.
+This should cut down on object proliferation.
 
 Extend show columns (shc) command to html tables in browse mode.
 This was originally a database command, and still is.

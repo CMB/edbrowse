@@ -119,10 +119,11 @@ static void anchorSwap(char *buf)
 	int n, cnt;
 	char tag[20];
 
-	static const char from[] =
-	    "\x1b\x95\x99\x9c\x9d\x91\x92\x93\x94\xa0\xad\x96\x97\x85";
-	static const char becomes[] = "_*'`'`'`' ----";
-/* I use to convert a6 and c2 to hyphen space, not sure why */
+// this is transliteration, like /bin/tr
+// I use to convert a6 and c2 to hyphen space, not sure why
+	static const char from[] = "\x1b\x95\x99\x9c\x9d\x91\x92\x93\x94\xa0\xad\x96\x97\x85";
+// x goes away, like tr -d
+	static const char becomes[] = "_*'`'`'`' x---";
 
 /* Transliterate a few characters.  One of them is 0xa0 to space,
  * so we need to do this now, before the anchors swap with whitespace.
@@ -161,6 +162,8 @@ static void anchorSwap(char *buf)
 				if (ss) {
 					c = becomes[ss - from];
 					++s;
+					if(c == 'x')
+						continue;
 					goto put1;
 				}
 			}
@@ -178,8 +181,11 @@ static void anchorSwap(char *buf)
 
 /* Now assuming iso8859-1, which is practically deprecated */
 		ss = strchr(from, c);
-		if (ss)
+		if (ss) {
 			c = becomes[ss - from];
+			if(c == 'x')
+				continue;
+		}
 
 #if 0
 // Should we modify empty anchors in any way?
