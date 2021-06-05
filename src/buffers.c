@@ -1169,7 +1169,7 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 
 	addToMap(linecount, destl);
 	return true;
-}				/* addTextToBuffer */
+}
 
 /* Pass input lines straight into the buffer, until the user enters . */
 
@@ -2594,7 +2594,7 @@ endline:
 	if (startRange == 1 && endRange == cw->dol)
 		cw->changeMode = false;
 	return true;
-}				/* writeFile */
+}
 
 static bool readContext(int cx)
 {
@@ -6139,6 +6139,35 @@ replaceframe:
 			return writeContext(cx);
 		}
 		selfFrame();
+		if(first == '!') { // read from a command, like ed
+			FILE *p = popen(line + 1, "w");
+			if (!p) {
+				setError(MSG_NoSpawn, line + 1, errno);
+				return false;
+			}
+			for (i = startRange; i <= endRange; ++i) {
+				if(i == 0) // empty buffer
+					continue;
+				pst s = fetchLine(i, (cw->browseMode ? 1 : -1));
+				int len = pstLength(s);
+				bool alloc_s = cw->browseMode;
+				if (i == cw->dol && cw->nlMode)
+					--len;
+// in directory mode we don't write the suffix or attribute information
+				if (fwrite(s, len, 1, p) <= 0) {
+		// This could happen if the system doesn't accept all the input and closes the pipe.
+		// I don't know what to do here, so just return.
+					if (alloc_s)
+						free(s);
+					break;
+				}
+				if (alloc_s)
+					free(s);
+			}		/* loop over lines */
+			pclose(p);
+			i_puts(MSG_OK);
+			return true;
+		}
 		if (!first)
 			line = cf->fileName;
 		if (!line) {
@@ -6886,6 +6915,26 @@ afterdelete:
 	if (cmd == 'r') {
 		if (cx)
 			return readContext(cx);
+		if(first == '!') { // read from a command, like ed
+			char *outdata;
+			int outlen;
+			FILE *p = popen(line + 1, "r");
+			if (!p) {
+				setError(MSG_NoSpawn, line + 1, errno);
+				return false;
+			}
+			rc = fdIntoMemory(fileno(p), &outdata, &outlen);
+			pclose(p);
+			if (!rc)
+				return false;
+// Warning, we don't convert output from iso8859 or other formats to utf8,
+// like we do when reading from a file; just assume it is proper.
+			rc = addTextToBuffer((pst)outdata, outlen, endRange, true);
+			nzFree(outdata);
+			if(rc)
+				debugPrint(1, "%d", outlen);
+			return rc;
+		}
 		if (first) {
 			if (cw->sqlMode && !isSQL(line)) {
 				strcpy(newline, cf->fileName);

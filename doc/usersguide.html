@@ -565,6 +565,8 @@ f : print the name of the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
 <br>w/ : write to the lass component of the filename
+<br>5,7w !command : send lines 5 through 7 to a shell command
+<br>11r !command : put the output of the shell command after line 11
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names
