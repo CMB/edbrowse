@@ -546,6 +546,8 @@ s/x/y/ : replace x with y on the current line
 <br>g/x/ p : print every line that has an x
 <br>v/x/ p : print every line that does not have an x
 <br>v/x/i l : list every line that does not have x or X
+<br>g/x/ -r foo : read the file foo before every line that has an x
+<br>g/x/ -,.w !command : run the prior and current line through a command, for each line that contains x
 <br>lc : convert line to lower case
 <br>mc : convert line to mixed case
 <br>uc : convert line to upper case
@@ -943,6 +945,14 @@ P (prompt) is not implemented.
 <LI><P>
 missing line numbers before or after the comma are assumed to be 1 and $.
 This is consistent with ,p -- to print the entire file.
+
+<LI><P>
+g continues to sweep until alll marked lines are operated on.
+Most versions of ed will not do this.
+Example: a file with 10 lines, 1 through 10, run g/[89]/;p
+Line 8 matches, and lines 8 through 10 are moved to the start.
+At this point ed stops, but I sweep again, and discover the second line, that contains 9, and move that block to the beginning.
+Neither implementation is particularly right or wrong, as far as I can tell.
 
 <LI><P>
 You cannot enter one command across two physical lines

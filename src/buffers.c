@@ -46,7 +46,7 @@ static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "!dDijJlmnpstX=";
+static const char global_cmd[] = "!dDijJlmnprstwX=";
 
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
@@ -6139,7 +6139,8 @@ replaceframe:
 			return writeContext(cx);
 		}
 		selfFrame();
-		if(first == '!') { // read from a command, like ed
+
+		if(first == '!') { // write to a command, like ed
 			FILE *p = popen(line + 1, "w");
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
@@ -6165,9 +6166,11 @@ replaceframe:
 					free(s);
 			}		/* loop over lines */
 			pclose(p);
-			i_puts(MSG_OK);
+			if(!globSub)
+				i_puts(MSG_OK);
 			return true;
 		}
+
 		if (!first)
 			line = cf->fileName;
 		if (!line) {
@@ -6915,6 +6918,7 @@ afterdelete:
 	if (cmd == 'r') {
 		if (cx)
 			return readContext(cx);
+
 		if(first == '!') { // read from a command, like ed
 			char *outdata;
 			int outlen;
@@ -6935,6 +6939,7 @@ afterdelete:
 				debugPrint(1, "%d", outlen);
 			return rc;
 		}
+
 		if (first) {
 			if (cw->sqlMode && !isSQL(line)) {
 				strcpy(newline, cf->fileName);

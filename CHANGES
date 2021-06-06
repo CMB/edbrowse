@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.8.1
+Make several changes so that edbrowse is more like ed,
+allowing more commands under g/re/,
+and 'a,'bw !shellcommand, etc.
+
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross compartment access, as in frames,
