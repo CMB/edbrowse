@@ -6292,6 +6292,7 @@ replaceframe:
 	}
 
 	if (cmd == '<') {	/* run a function */
+		cw->dot = endRange;
 		return runEbFunction(line);
 	}
 

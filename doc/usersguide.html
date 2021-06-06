@@ -943,8 +943,12 @@ x (encryption) is not implemented.
 P (prompt) is not implemented.
 
 <LI><P>
-missing line numbers before or after the comma are assumed to be 1 and $.
+missing line numbers before and after the comma are assumed to be 1 and $.
 This is consistent with ,p -- to print the entire file.
+However, if one line number is supplied then the other is required.
+You can't type 3, or ,3 .
+Nor does edbrowse recognize 3;5p, as some versions of ed do.
+The comma is the range separator, and ;p means .,$p.
 
 <LI><P>
 g continues to sweep until alll marked lines are operated on.
