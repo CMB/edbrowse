@@ -1475,7 +1475,7 @@ static void pushAttributes(const Tag *t)
 			0
 		};
 		static const char *const dotrue[] = {
-			"required",
+			"required", "hidden", "aria-hidden",
 			"multiple", "readonly", "disabled", "async", 0
 		};
 

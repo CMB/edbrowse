@@ -3479,6 +3479,7 @@ eb$visible = function(t) {
 var c, rc = 0;
 var so; // style object
 if(!t) return 0;
+if(t.hidden || t["aria-hidden"]) return 1;
 // If class has changed, recompute style.
 // If id has changed, recompute style, but I don't think that ever happens.
 if(t.class != t.last$class || t.id != t.last$id) {
