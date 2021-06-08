@@ -1793,6 +1793,14 @@ if(t == "undefined") return null;
 return v; }
 document.hasAttribute = function(name) { return this.getAttribute(name) !== null; }
 
+document.getAttributeNames = function(name) {
+var a = [];
+if(!this.attributes$2) return a;
+for(var l = 0; l < this.attributes$2.length; ++l)
+a.push(this.attributes$2[l].name);
+return a;
+}
+
 document.getAttributeNS = function(space, name) {
 if(space && !name.match(/:/)) name = space + ":" + name;
 return this.getAttribute(name);
@@ -2417,6 +2425,7 @@ c.prototype.hasAttributeNS = document.hasAttributeNS;
 c.prototype.markAttribute = document.markAttribute;
 c.prototype.getAttribute = document.getAttribute;
 c.prototype.getAttributeNS = document.getAttributeNS;
+c.prototype.getAttributeNames = document.getAttributeNames;
 c.prototype.setAttribute = document.setAttribute;
 c.prototype.setAttributeNS = document.setAttributeNS;
 c.prototype.removeAttribute = document.removeAttribute;

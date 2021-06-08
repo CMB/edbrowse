@@ -7,6 +7,7 @@ un navigateur, et un client de courrier électronique. ">
 éditeur, navigateur, client mail, portable, C, javascript,
 securité, ssl, aveugle, script, accessible, accessibilité">
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
 <title>Edbrowse documentation</title>
 <LINK REL="SHORTCUT ICON" href="pc. ico">
         <style type="text/css">
@@ -28,7 +29,7 @@ p. cen { text-align: center; }
 
 <H2> Chapitre 0, <A NAME=top> Table des matières </A> </H2>
 
-<h4> Chapitre 1, préface </h4>
+<h3> Chapitre 1, préface </h3>
 
 <ul>
 <li><a href="#maint"> Mainteneur </a></li>
@@ -40,7 +41,7 @@ p. cen { text-align: center; }
 <li><a href="#lang"> Autres langues </a></li>
 </ul>
 
-<h4> Chapitre 2, guide de référence rapide</h4>
+<h3> Chapitre 2, guide de référence rapide</h3>
 
 <ul>
 <li><a href="#guide"> Guide de référence rapide </a></li>
@@ -49,7 +50,7 @@ p. cen { text-align: center; }
 <li><a href="#wiki"> Wiki Edbrowse </a></li>
 </ul>
 
-<h4> Chapitre 3, l'éditeur </h4>
+<h3> Chapitre 3, l'éditeur </h3>
 
 <ul>
 <li><a href="#dev"> Différences importantes par rapport à /bin/ed </a></li>
@@ -64,7 +65,7 @@ p. cen { text-align: center; }
 <li><a href="#race"> Comportement </a></li>
 </ul>
 
-<h4> Chapitre 4, navigateur web </h4>
+<h3> Chapitre 4, navigateur web </h3>
 
 <ul>
 <li><a href="#url"> Accès à une URL </a></li>
@@ -93,7 +94,7 @@ p. cen { text-align: center; }
 <li><a href="#frame"> Cadres </a></li>
 </ul>
 
-<h4> Chapitre 5, Javascript </h4>
+<h3> Chapitre 5, Javascript </h3>
 
 <ul>
 <li><a href="#js"> Introduction à Javascript </a></li>
@@ -103,7 +104,7 @@ p. cen { text-align: center; }
 <li><a href="#jex"> Debugger Javascript </a></li>
 </ul>
 
-<h4> Chapitre 6, scripts d'Edbrowse et le fichier de configuration </h4>
+<h3> Chapitre 6, scripts d'Edbrowse et le fichier de configuration </h3>
 
 <ul>
 <li><a href="#cfg"> Le fichier de configuration </a></li>
@@ -116,7 +117,7 @@ p. cen { text-align: center; }
 <li><a href="#sampcfg"> Un exemple de fichier de configuration </a></li>
 </ul>
 
-<h4> Chapitre 7, client de courrier </h4>
+<h3> Chapitre 7, client de courrier </h3>
 
 <ul>
 <li><a href="#sm"> Envoi de courrier </a></li>
@@ -129,7 +130,7 @@ p. cen { text-align: center; }
 <li><a href=#imap> Client Imap </a>
 </ul>
 
-<h4> Chapitre 8, Accéder aux bases de données </h4>
+<h3> Chapitre 8, Accéder aux bases de données </h3>
 
 <ul>
 <li><a href="#sqlb"> Compiler Edbrowse avec l'accès aux bases de données </a></li>
@@ -498,9 +499,11 @@ s/x/y/ : remplace x par y dans la ligne courante
 <br>sg : les chaînes de substitution sont globales pour toutes les sessions (bascule)
 <br>sw : recherche circulaire (bascule)
 <br>su8: Utiliser utf-8 dans recherche et remplacement (bascule)
-<br>g/x/ p : affiche toutes les lignes contenant x x
+<br>g/x/ p : affiche toutes les lignes contenant x 
 <br>v/x/ p : affiche toutes les lignes ne contenant pas x
 <br>v/x/i l : liste toutes les lignes ne contenant ni x ni X
+<br>g/x/ -r foo : lit le fichier foo jusqu'à une ligne contenant x
+<br>g/x/ -,.w !commande : exécute les lignes courante et précédente en'commande', pour toutes les lignes contenant x
 <br>lc : conversion de la ligne courante en minuscules
 <br>mc : majuscules en début de mot dans la ligne courante
 <br>uc : conversion de la ligne courante en majuscules
@@ -520,6 +523,8 @@ f : affiche le nom du fichier courant
 <br>w foo: sauvegarde le tampon courant sous le nom 'foo'
 <br>w+ foo : ajoute au fichier 'foo' le contenu du tampon courant
 <br>w/ : sauvegarde sous le nom de la dernière partie du nom de fichier courant
+<br>5,7w !commande : envoie les lignes 5 à 7 à une commande shell
+<br>11r !commande : affiche la sortie de la commande shell après la ligne 11
 <br>e ~/projets/edbrowse/src/buf*.c : expanse les méta-caractères s'il y a correspondance exacte
 <br>e $EBSRC/buf*.c :  expansion de variable
 <br>bflist : liste des buffers, des sessions edbrowse and leurs noms de fichiers
@@ -916,6 +921,18 @@ P (message de sollicitation) n'est pas implémenté.
 <li>
 on assume que le numéro de ligne absent avant ou après la virgule est 1 et $. 
 C'est conforme à «,p --» pour afficher le fichier entier. 
+Cependant, si un numéro de ligne est donné, alors l'autre numéro de ligne est obligatoire. Vous ne pouvez taper 3, ou ,3.
+Edbrowse ne reconnait non plus 3;5p, comme certaines versions de ed.
+La virgule est le séparteur d'intervalle et ;p signifie .,$p.
+</li>
+
+<li><P>
+g continue l'opération pour toutes les lignes marquées.
+La plupart des versions de ed ne le font pas.
+Exemple : un fichier de 10 lignes, de 1 à 10, on lance g/[89];p 
+La ligne 8 correspond, et les lignes 8 à 10 sont déplacées au début. 
+Arrivé à ce point, ed s'arrêtre, mais moi je continue, et découvre la 2ème ligne, qui contient 9, et je déplace le bloc au début. 
+L'une ou l'autre des implémentations est particulièrement juste ou fausse, d'après ce que je peux en dire.
 </li>
 
 <p>
@@ -1565,7 +1582,7 @@ Ceci semble compliqué, mais c'est en fait une simple macro de substitution,
 programmée en quelques lignes de code. 
 Si 'x est présent dans une commande shell, et n'est pas suivi ou précédé de 
 chiffres ou lettres, il est remplacé par le texte présent sur la ligne étiquetée x. 
-Si votre nom de fichier contient les espaces, tapez '!programme «'x», 
+Si votre nom de fichier contient les espaces, tapez '!programme «'x»  
 pour assurer que le nom de fichier entier est l'argument du programme appelé. 
 
 <p>
@@ -2662,9 +2679,9 @@ Voici à quoi elle pourrait ressembler :
 &lt; A # capture des URLs
 &gt; 144 # taille des URLs
 &lt; ,p # affichons-les
-&gt; &lt;A HREF=www. kangaroo-info.com&gt;
+&gt; &lt;br&gt;&lt;a href='http://www.kangaroo-info.com'&gt;
 &gt; plus d'informations sur des kangourous
-&gt; &lt;/A&gt;
+&gt; &lt;/a&gt;
 &gt; nous écrire:info@kangaroo.org
 &lt; 4d # nous n'avons pas besoin de l'adresse mail
 &lt; w+ $bookmarks # ajoute cette URL au fichier de signets
@@ -2762,7 +2779,7 @@ Ne le modifiez pas si vous avez des pages web actives : vous risquez
 d'imprévisibles comportements. 
 
 <p>
-Pour parler de comportements, ne surfez dans des instances différentes de Edbrowse 
+Pour parler de comportements, ne surfez pas dans des instances différentes de Edbrowse 
 dans différentes consoles virtuelles. Au lieu de cela, ne lancez qu'une 
 seule instance de Edbrowse avec des pages différentes dans des tampons 
 différents. Des instances parallèles de Edbrowse peuvent chacune écrire dans 
@@ -3040,8 +3057,8 @@ mais Javascript évolue, comme n'importe quelle autre langue ou standard,
 et je ne pouvais plus suivre. 
 
 <p>
-La troisième version utilise un moteur Javascript open source, d'abord Mozilla js, et 
-maintenant, depuis la version 3. 7. 0, Duktape js. 
+La troisième version utilise un moteur Javascript open source, d'abord Mozilla js, ensuite Duktape, et 
+maintenant, depuis la version 3. 8. 0, Quick js. 
 Ceci me permet de m'appuyer, plutôt que de réinventer, sur environ 70000 lignes de code - 
 et quelqu'un d'autre maintient ce code à mesure que Javascript évolue. 
 
@@ -3641,9 +3658,9 @@ function+gg {
 <br>
 &nbsp;&nbsp;b http://www.google.com
 <br>
-&nbsp;&nbsp;/<>/ i=~0
+&nbsp;&nbsp;/&lt;&gt;/ i=~0
 <br>
-&nbsp;&nbsp;/</ i1*
+&nbsp;&nbsp;/&lt;/ i1*
 <br>
 &nbsp;&nbsp;/h3/p
 <br>
@@ -3885,7 +3902,7 @@ même si c'est un peu plus compliqué.
 
 La meilleure documentation étant un exemple, je vous propose un fichier de configuration 
 exemple avec de fausses données; Il est bien commenté. 
-Vous pouvez le télécharger <A HREF=http://Edbrowse.org/sample. ebrc>ici</a>. 
+Vous pouvez le télécharger <A HREF=http://Edbrowse.org/sample.ebrc>exemple de fichier de configuration</a>. 
 Egalement disponible en
 <A href=sample_fr. ebrc>Français</A>
 and
