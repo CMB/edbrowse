@@ -5613,12 +5613,10 @@ bool runCommand(const char *line)
 	}
 
 	if (first == ',') {
-		didRange = true;
-		++line;
 		startRange = 1;
 		if (cw->dol == 0)
 			startRange = 0;
-		endRange = cw->dol;
+		goto range2;
 	}
 
 	if (first == ';') {
@@ -5665,6 +5663,7 @@ bool runCommand(const char *line)
 			}
 		}
 		if (line[0] == ',') {
+range2:
 			++line;
 			endRange = cw->dol;	/* new default */
 			first = *line;
@@ -6141,28 +6140,43 @@ replaceframe:
 		selfFrame();
 
 		if(first == '!') { // write to a command, like ed
+			int l = 0;
 			FILE *p = popen(line + 1, "w");
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
 			}
+// Compute file size ahead of time; shell command could start
+// printing stuff before we send it all the lines.
 			for (i = startRange; i <= endRange; ++i) {
 				if(i == 0) // empty buffer
 					continue;
 				pst s = fetchLine(i, (cw->browseMode ? 1 : -1));
 				int len = pstLength(s);
-				bool alloc_s = cw->browseMode;
+				if (i == cw->dol && cw->nlMode)
+					--len;
+				l += len;
+				if (cw->browseMode)
+					free(s);
+			}		/* loop over lines */
+			if(!globSub)
+				printf("%d\n", l);
+			for (i = startRange; i <= endRange; ++i) {
+				if(i == 0) // empty buffer
+					continue;
+				pst s = fetchLine(i, (cw->browseMode ? 1 : -1));
+				int len = pstLength(s);
 				if (i == cw->dol && cw->nlMode)
 					--len;
 // in directory mode we don't write the suffix or attribute information
 				if (fwrite(s, len, 1, p) <= 0) {
 		// This could happen if the system doesn't accept all the input and closes the pipe.
 		// I don't know what to do here, so just return.
-					if (alloc_s)
+					if (cw->browseMode)
 						free(s);
 					break;
 				}
-				if (alloc_s)
+				if (cw->browseMode)
 					free(s);
 			}		/* loop over lines */
 			pclose(p);
