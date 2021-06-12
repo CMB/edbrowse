@@ -6,7 +6,7 @@
 text based, command line, interactive,
 editor, browser, mail client,
 portable, C,
-javascript,
+Javascript,
 secure, ssl,
 blind, script, accessible">
 <meta charset="UTF-8">
@@ -198,7 +198,7 @@ Chris Brannon</A> wrote or modified at least 20% of the code,
 and provided valuable ideas for the overall design.
 <A href=mailto:arthompson1990@gmail.com>
 Adam Thompson</A>
-converted the javascript interface from C to C++, as required by Mozilla JS versions 2,
+converted the Javascript interface from C to C++, as required by Mozilla JS versions 2,
 and he continues to direct the project's overall architecture.
 <A href=mailto:kevin@carhart.net>
 Kevin Carhart</A>
@@ -243,7 +243,7 @@ Edbrowse presents the following features:
 <LI><P> Edbrowse can edit multiple files or browse multiple websites simultaneously, and transfer blocks of text between them in a manner similar to cut&amp;paste.
 For instance, <code>edbrowse *.c</code> accesses all the C sourcefiles in the current directory.
 <LI><P> The regular expressions of ed have been replaced with Perl Compatible Regular Expressions, which have more power and flexibility. This simplifies the task of finding or modifying text in a large document. You can, for instance, replace each instance of the word foo, not foot or food, but foo by itself, in upper or lower case, with the word bar, as long as foo is not followed by an exclamation point or a question mark. The change in regular expressions means edbrowse is not 100% backward compatible with ed, though it is close.
-<LI><P> Edbrowse can fetch a web page from the internet as easily as it opens a file on the current computer, using http, https, ftp, or gopher.
+<LI><P> Edbrowse can fetch a web page from the Internet as easily as it opens a file on the current computer, using http, https, ftp, or gopher.
 Once the page is fetched into the active buffer, it can be browsed or rendered as text, using the b command.
 This supplements the other one-letter commands which were already part of ed.
 Once the page is browsed, the user can go to hyperlinks, or fill out and submit forms.
@@ -296,7 +296,7 @@ edbrowse home page</A>.
 <P>
 This documentation assumes you are familiar with ed.
 In fact it helps if you are fluent in ed.
-Experience with internet browsers and the associated terminology is also helpful.
+Experience with Internet browsers and the associated terminology is also helpful.
 
 <H3> <A NAME=lang> Other Languages </A> </H3>
 
@@ -388,7 +388,7 @@ When an output or error message is displayed,
 accented letters are printed using single bytes, vectoring through an iso8859 page,
 unless the string utf8 or utf-8 appears in $LANG,
 whence the nonascii characters are generated using utf8.
-Similarly, the contents of a buffer, be it a local document or an internet website,
+Similarly, the contents of a buffer, be it a local document or an Internet website,
 are displayed as single bytes or multi-byte sequences,
 according to $LANG.
 Bear in mind, utf8 has become the standard, and edbrowse may not display text or error messages through iso8859 pages for long.
@@ -467,8 +467,8 @@ Here are the ed and edbrowse commands, all in one place.
 This is a quick reference guide.
 Most of these commands will not make sense until you read the rest of the documentation.
 <!-- qrg start -->
-Commands that are designated (toggle), such as js to turn javascript on and off, also admit a + or - suffix to explicitly enable or disable the feature.
-Thus js toggles javascript, js+ enables javascript, and js- disables javascript.
+Commands that are designated (toggle), such as js to turn Javascript on and off, also admit a + or - suffix to explicitly enable or disable the feature.
+Thus js toggles Javascript, js+ enables Javascript, and js- disables Javascript.
 The + and - variants are not listed.
 Toggle prints the state of the feature, on or off, if help messages are enabled or if the debug level is at least 1.
 Setting or clearing a mode only prints the message if help messages are on.
@@ -626,7 +626,7 @@ Browse an html file or a web page
 <P>
 b : browse the current file, either html, or email, or rendered by plugin
 <br>b foo.html : edit the file foo.html and browse it
-<br>b url : fetch url from the internet and browse it
+<br>b url : fetch url from the Internet and browse it
 <br>nostack b url : don't push a new window, replace the current window using the new url
 <br>ub : unbrowse a file
 <br>ft : show the title of the current web page (file title)
@@ -649,7 +649,7 @@ pdd : progress of download indicated by dots
 <br>ftpa : ftp active mode (toggle)
 <br>bg : download files in background (toggle)
 <br>bglist : list background downloads, complete or in progress
-<br>jsbg : download javascript files in background (toggle)
+<br>jsbg : download Javascript files in background (toggle)
 <P>
 Interact with a Web Page
 <P>
@@ -676,8 +676,8 @@ g : go to the link on the current line
 <br>ur : unfold a row in an html table
 <br>M4 : move this web page to session 4 and back up to the previous page
 <br>M : move this web page to an empty session and back up
-<br>js : allow javascript (toggle)
-<br>rr : rerender the screen, to reflect asynchronous javascript changes
+<br>js : allow Javascript (toggle)
+<br>rr : rerender the screen, to reflect asynchronous Javascript changes
 <br>rr 75 : rerender the screen automatically every 75 seconds
 <br>showall : show all hover and invisible text (toggle)
 <br>colors : show the colors on the page
@@ -711,18 +711,18 @@ Debug
 <P>
 db3 : set debug level, 0 through 9
 <br>db&gt;/tmp/edbrowse.out : redirect debugging output to a file
-<br>demin : deminimize javascript (toggle)
-<br>timers : disable javascript timers (toggle)
+<br>demin : deminimize Javascript (toggle)
+<br>timers : disable Javascript timers (toggle)
 <br>dbcn : enable cloneNode debugging (toggle)
 <br>dbev : enable event debugging (toggle)
 <br>dberr : enable js error debugging (toggle)
 <br>dbcss : enable css debugging (toggle)
-<br>trace : inject trace points into the javascript (toggle)
-<br>jdb : javascript debugger, bye to exit
+<br>trace : inject trace points into the Javascript (toggle)
+<br>jdb : Javascript debugger, bye to exit
 <br>ok(o) : list all the members of an object, some may not be enumerable
 <br>showscripts() : show scripts anywhere in the tree
 <br>searchscripts(string) : look for a string in the scripts
-<br>snapshot() : snapshot the javascript and css files for local debugging
+<br>snapshot() : snapshot the Javascript and css files for local debugging
 <br>aloop(array, string_on[i]) : execute string on each member of the array
 <br>uptrace(node) : climb up the tree from a given node
 <br>dumptree(node) : show the tree below a given node
@@ -752,7 +752,7 @@ You may want to use 22, or 23, or whatever makes sense relative to your screen.
 Another approach is to simply hit return, again and again, and proceed line by line.
 
 <P>
-Once you are use to regular expressions, you can jump to any part of the document,
+Once you are used to regular expressions, you can jump to any part of the document,
 even a large document, in record time simply by searching for a unique text fragment.
 This comes with practice.
 If your search string is not unique,
@@ -1263,7 +1263,7 @@ Edbrowse reads these files into corresponding sessions
 and starts in session 1.
 If there are no arguments, edbrowse starts in session 1
 with no text and no associated file.
-If the file is a url, then that web page is fetched from the internet and browsed.
+If the file is a url, then that web page is fetched from the Internet and browsed.
 Finally, if the file begins with a less than sign,
 edbrowse "&lt;func arg1 arg2",
 then the named edbrowse function is run with its arguments.
@@ -1405,7 +1405,7 @@ in alphabetical order,
 according to your locale.
 This is the same order as /bin/ls, and is determined by the environment variable $LC_COLLATE.
 Set LC_COLLATE=C for traditional ascii order.
-Note: the Raspberry Pi (raspbian) seems to have a bug, wherein LC_ALL trumps LC_COLLATE. It's not suppose to but it does.
+Note: the Raspberry Pi (raspbian) seems to have a bug, wherein LC_ALL trumps LC_COLLATE. It's not supposed to but it does.
 So unset LC_ALL and set the other LC_ variables individually, according to your taste.
 Make sure LC_MESSAGES is set, so you can interact with linux in your language.
 
@@ -1754,11 +1754,11 @@ Authors of ed and other editors had to scramble.
 You can't remove a link, write to temp,
 and move the temp file over to the link.
 It isn't a link any more, it's a regular file,
-and your filesystem is not what it use to be.
+and your filesystem is not what it used to be.
 For one thing, the true file, pointed to by the (symbolic) link,
 has not been changed at all.
 This is not what you want!
-So people rewrote there editors to disable this feature if the named file is
+So people rewrote their editors to disable this feature if the named file is
 a link to some other file.
 They had to revert back to the old truncate and write paradigm,
 and hope that nothing bad happens in between.
@@ -1839,7 +1839,7 @@ This is because the resource has moved
 and the original computer was kind enough to give you the new address.
 If debugging is set to 2 or higher,
 you might see a series of three or four different URLs
-as the editor is redirected across the internet.
+as the editor is redirected across the Internet.
 Finally it retrieves your document,
 and the current file name holds the correct and latest URL.
 You might want to update your bookmark file accordingly.
@@ -1996,7 +1996,7 @@ If you do want to edit the text, as pure text,
 enter the `et' command (edit as text).
 You will not be able to return to the html that produced this page,
 nor can you follow a hyperlink or submit a fill-out form.
-The browsable text has become plain text, with no internet semantics.
+The browsable text has become plain text, with no Internet semantics.
 
 <P>
 The command `b file.html' is shorthand for `e file.html', followed by `b'.
@@ -2087,7 +2087,7 @@ This is analogous to the refresh button on Netscape and Explorer.
 <P>
 If a web page is updated every minute, e.g. with the latest stock prices for your favorite companies,
 you can type rf to fetch the latest copy of this web page.
-This assumes the intervening internet servers are not caching the web page
+This assumes the intervening Internet servers are not caching the web page
 and handing you the same out-of-date copy over and over again.
 
 <P>
@@ -2216,7 +2216,7 @@ Note that the entire state of an editing session is saved and reproduced,
 including the file name,
 the last search/replace strings for substitutions,
 the hyperlinks and forms,
-the compiled javascript,
+the compiled Javascript,
 everything!
 
 <P>
@@ -2282,7 +2282,7 @@ Now you are back to the previous page.
 
 <P>
 It is generally unsafe to make a copy of a running web page,
-with all its javascript objects etc,
+with all its Javascript objects etc,
 so the M command <em>moves</em> the page out of the way,
 and takes you back to the previous page.
 Note, this command works just as well with files.
@@ -2348,7 +2348,7 @@ which tell edbrowse how to play various audio files.
 These must be set up, or the pb command won't work.
 It will say something like,
 "I don't know how to process an mp3 file".
-This is consistent with other browsers, which use plugins to play multimedia files that are retrieved from the internet.
+This is consistent with other browsers, which use plugins to play multimedia files that are retrieved from the Internet.
 
 <H3> <A NAME=heading> Headings </A> </H3>
 
@@ -2517,7 +2517,7 @@ when there are multiple input fields, or multiple buttons, on the current line.
 <H3> <A NAME=textarea> Text Areas </A> </H3>
 
 <P>
-Some internet forms allow you to type freely, as in "Please enter your comments here."
+Some Internet forms allow you to type freely, as in "Please enter your comments here."
 This is done inside a window within the screen,
 having a fixed number of rows and columns,
 although that is usually an artificial constraint.
@@ -2578,7 +2578,7 @@ press the button via i3*.
 The reset button puts the input fields back to their original values,
 as supplied by the web page when it was first loaded.
 The submit button sends the form to the remote server and waits for a response.
-This is similar to following an internet link,
+This is similar to following an Internet link,
 but in this case you are sending some data along with the request.
 Type "kangaroo" into a search engine and you'll soon be reading a web page about kangaroos.
 As with any other link, you can use the ^ key to go back.
@@ -2602,7 +2602,7 @@ It becomes part of the virtual URL.
 This only applies to the get method; the post method sends the data through another channel.
 
 <P>
-Remember that buttons can run javascript, without being type submit or reset.
+Remember that buttons can run Javascript, without being type submit or reset.
 These are all pressed by the i* command.
 If more than one button is on the current line, any style of button, then i* is not sufficient; you have to specify which button, as in i3*.
 
@@ -2643,16 +2643,16 @@ the injected characters or emojis are helpful visual reminders of the nodes they
 however, there are a few websites where the injected text is explanatory, and might be worth reading at least once.
 
 <P>
-Finally, the showall command shows the sections that are rendered invisible by css or javascript.
+Finally, the showall command shows the sections that are rendered invisible by css or Javascript.
 These are in quotes and braces, e.g. `{hello world}'.
 These might be hidden because they are not relevant to you, or to your current situation.
 Why show the checkout link if there is nothing in your shopping cart?
-However, edbrowse javascript is still a work in progress, and sometimes a bug keeps a section invisible, when it should be shown.
+However, edbrowse Javascript is still a work in progress, and sometimes a bug keeps a section invisible, when it should be shown.
 Thus you might want to see what you are missing.
 
 <P>
-The showall command does not show or hide text unless javascript is enabled.
-Without javascript, all the hover text and all the invisible sections are shown.
+The showall command does not show or hide text unless Javascript is enabled.
+Without Javascript, all the hover text and all the invisible sections are shown.
 
 <H3> <A NAME=colors> Colors on the Page </A> </H3>
 
@@ -2698,7 +2698,7 @@ Also, you can configure your adapter to read these higher unicodes any way you l
 </p>
 
 <p>
-Colors come from css, and css doesn't run without javascript, thus this feature only works with javascript enabled.
+Colors come from css, and css doesn't run without Javascript, thus this feature only works with Javascript enabled.
 </p>
 <H3> <A NAME=addr> Web And Email Addresses </A> </H3>
 
@@ -2780,7 +2780,7 @@ the text of the newly created hyperlink is the title of the current page.
 If there is no title, the text of the link is drawn from the url,
 which is definitely suboptimal.
 In that case you might want to change the text of the link.
-fortunately, most internet pages have a title.
+fortunately, most Internet pages have a title.
 
 <P>
 One last warning about adding links to your bookmark file.
@@ -2800,7 +2800,7 @@ And when we do, you should write a "bookmark append" macro that looks like this.
 <P>
 Now you can type &lt;bma to add a link to your favorites,
 and you don't have to worry about typos.
-It's shorter than `w+ $bookmarks' anyways.
+It's shorter than `w+ $bookmarks' anyway.
 
 <H3> <A NAME=cook> Cookies </A> </H3>
 
@@ -2875,7 +2875,7 @@ A website could fake you out by putting the word secure in the submit text.
 
 <P>
 Note that generic buttons, besides the submit button, can also submit your form
-through javascript.
+through Javascript.
 I don't know if that button is going to submit the form or not,
 and I don't want to put the word "secure" on every button on the page.
 I only add it to the submit button,
@@ -2908,7 +2908,7 @@ As a general rule,
 secure http is really quite safe, and you can use it to send sensitive information across the Net.
 It's probably safer than giving your credit card number to the clerk on the phone,
 who use to take your order before there was e-commerce.
-so it's ok to be a little bit paranoid,
+so it's OK to be a little bit paranoid,
 in fact it's probably a good idea,
 but don't let that stop you from making your online purchases.
 
@@ -2925,7 +2925,7 @@ The file is retrieved, and placed in a new buffer.
 Type w/ to save it locally, which is what a traditional ftp client would do.
 Of course the download could fail, in which case you will receive an error message.
 If it was interrupted
-due to some internet glitch,
+due to some Internet glitch,
 you can always issue the command again and hope for better luck.
 
 <P>
@@ -2981,7 +2981,7 @@ Here are just a few of them:
 The proxy server may be able to store previously-accessed webpages
 (known as caching).
 If your connection to the proxy is faster than your connection to the rest of the Internet,
-then caching insures that frequently-accessed web pages load quickly.
+then caching ensures that frequently-accessed web pages load quickly.
 <LI><P>Policies.
 Some firewall administrators require their users to use
 a proxy server.
@@ -3087,7 +3087,7 @@ or create fancy visual effects.
 
 <P>
 The first version of edbrowse, written in perl, ignored javascript completely,
-and that was ok for a while,
+and that was OK for a while,
 but more and more sites use javascript,
 and these websites were simply inaccessible.
 Most of the e-commerce sites fall into this category.
@@ -3133,8 +3133,8 @@ You can also disable javascript for specific domains.
 This will be discussed later in the edbrowse config file.
 
 <P>
-If a page is slow to browse, it may be running a lot of javascript, or it could be fetching files from the internet.
-In either case, you can interrupt the process by hitting control C.
+If a page is slow to browse, it may be running a lot of javascript, or it could be fetching files from the Internet.
+In either case, you can interrupt the process by hitting Control-C.
 Javascript stops at a breakpoint, if it can, and the page browses with the information it has at hand.
 This is fine if you're just reading a newspaper article and you don't want to wait for all the advertising to come into place,
 but you should never do this on an e-commerce site, or a banking site, or a site whose operation is mission critical.
@@ -3143,7 +3143,7 @@ You might wind up ordering a $37,000 elephant instead of
 $37 worth of printer supplies.
 
 <P>
-If you have been hitting control C for 45 seconds with no reaction,
+If you have been hitting Control-C for 45 seconds with no reaction,
 edbrowse forcibly interrupts the running javascript and issues this message.
 <P>
 No reaction for 45 seconds, operations aborted, results are unpredictable!
@@ -3151,7 +3151,7 @@ No reaction for 45 seconds, operations aborted, results are unpredictable!
 This is drastic, but some websites fall into an infinite loop, and this is better than being locked out of edbrowse forever.
 Javascript is disabled at this point.
 You can turn it back on - at your own risk.
-The javascript engine was interrupted in mid operation, and it's behavior is unpredictable if it starts executing somewhere else.
+The javascript engine was interrupted in mid operation, and its behavior is unpredictable if it starts executing somewhere else.
 However, I have tried it a few times and it seems to work.
 </p>
 
@@ -3230,7 +3230,7 @@ Onclose {Body}
 Remember, the popup link is a simple html link to another web page,
 while the Close link calls a javascript function on the current page.
 However, this javascript function usually links to another web page,
-so don't be surprised if you find yourself somewhere else on the internet.
+so don't be surprised if you find yourself somewhere else on the Internet.
 In either case, popup or popunder, you can use the back key to return to the
 page you were looking at.
 If you need access to a popup window and the main page in parallel,
@@ -3293,7 +3293,7 @@ bflist, bglist, timers, demin, and shell escapes.
 
 <P>
 At startup, edbrowse reads and parses a config file.
-It's ok if this file is missing, but if it is present
+It's OK if this file is missing, but if it is present
 it should be syntactically correct.
 If there is an error, edit the config file, fix the error, and type `config' to reapply.
 Repeat until there are no errors.
@@ -3341,7 +3341,7 @@ jar = /home/mylogin/.ebsys/cookie-jar
 
 <P>
 This is a simple keyword = value syntax.
-It's ok if the filename has embedded spaces, or even an equals sign.
+It's OK if the filename has embedded spaces, or even an equals sign.
 No need to quote it.
 
 <P>
@@ -3439,7 +3439,7 @@ These continue to run, even after edbrowse exits,
 and they will print "download complete" messages when they finish.
 
 <P>
-Foreground downloads, or any internet fetch for that matter, prints progress dots,
+Foreground downloads, or any Internet fetch for that matter, prints progress dots,
 but you can suppress these with the pdq (progress of download quiet) command.
 Another option is the pdc (progress of download by count) command.
 This prints megabytes downloaded and megabytes total.
@@ -3503,7 +3503,7 @@ This is the hotmail protocol, and it is as secure as *465; just different.
 <P>
 Use +587 to authenticate yourself without encryption.
 This is sometimes done when you are directly connected to the mail server
-and traffic is not flowing across the internet,
+and traffic is not flowing across the Internet,
 but the server still wants to make sure you are you.
 
 <P>
@@ -3557,7 +3557,7 @@ Other fields might hold phone/fax numbers, street address, anything you like.
 
 <H3> <A NAME=agent> User Agent </A> </H3>
 
-Every time you fetch a web page from the internet,
+Every time you fetch a web page from the Internet,
 your browser identifies itself to the host.
 This is done automatically.
 Edbrowse identifies itself as "edbrowse/3.5.1",
@@ -3616,7 +3616,7 @@ i.e. read input commands from this macro.
 And macros can invoke other macros
 by using a &lt; command in the body.
 Almost any edbrowse command is fair game.
-A macro can fetch web pages from the internet,
+A macro can fetch web pages from the Internet,
 fill out forms, submit requests, and send mail.
 
 <P>
@@ -3847,7 +3847,7 @@ program = mpg123 -q -C %i
 
 <P>
 This example handles an mp3 file or an mp3 stream.
-That works because mpg123 will play a local file or an mp3 stream from the internet.
+That works because mpg123 will play a local file or an mp3 stream from the Internet.
 If mpg123 was limited to local files on your computer, we would have to add the keyword down_url, whereupon a url is downloaded to a temp file and then played.
 The autoplay feature can be disabled with the pg command that turns plugins on and off.
 
@@ -4168,7 +4168,7 @@ When you save a formatted message, you'll notice some text like
 This tells you where to find the original, unformatted message:
 $HOME/.Trash/rawmail/12345.
 As mentioned previously, it's a good idea to run a weekly cron job to clean
-out the trash bin; if that cron job removes subdirectories, it will insure
+out the trash bin; if that cron job removes subdirectories, it will ensure
 that raw mail does not accumulate indefinitely.
 
 <H3> <A NAME=mailfmt> Formatted Mail </A> </H3>
@@ -4552,7 +4552,7 @@ Since odbc connects to everything, it will probably meet your needs.
 
 When a file name is of a certain format, with http:// in front,
 it is deemed to be a url.
-Edbrowse does not look on your computer for the file; it goes out to the internet.
+Edbrowse does not look on your computer for the file; it goes out to the Internet.
 Similarly, when the file name has a certain format,
 it is assumed to be a table or view in the database.
 If you have a table called customers, follow it up with a right bracket.
