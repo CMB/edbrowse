@@ -733,6 +733,8 @@ z$Body.prototype. scrollHeight = 768;
 z$Body.prototype.scrollWidth = 1024;
 z$Body.prototype.scrollTop = 0;
 z$Body.prototype.scrollLeft = 0;
+// document.body.innerHTML =
+z$Body.prototype.eb$dbih = function(s){this.innerHTML = s}
 
 z$Base = function(){};
 z$Base.prototype = new HTMLElement;

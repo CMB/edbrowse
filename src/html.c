@@ -768,8 +768,15 @@ void runScriptsPending(bool startbrowse)
 		if (!f->dw)
 			continue;
 		cf = f;
-		stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-		runGeneratedHtml(cf->bodytag, cf->dw);
+// completely different behavior before and after browse
+// After browse, it clobbers the page.
+		if(cw->browseMode) {
+			run_function_onestring_t(cf->bodytag, "eb$dbih",
+			strstr(cf->dw, "<body>")+6);
+		} else {
+			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
+			runGeneratedHtml(cf->bodytag, cf->dw);
+		}
 		nzFree(cf->dw);
 		cf->dw = 0;
 		cf->dw_l = 0;
@@ -895,12 +902,20 @@ afterscript:
 
 /* look for document.write from this script */
 		if (cf->dw) {
-			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
-			runGeneratedHtml(t, cf->dw);
+// completely different behavior before and after browse
+// After browse, it clobbers the page.
+			if(cw->browseMode) {
+				run_function_onestring_t(cf->bodytag,
+				"eb$dbih",
+				strstr(cf->dw, "<body>")+6);
+			} else {
+				stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
+				runGeneratedHtml(t, cf->dw);
+				run_function_onearg_win(cf, "eb$uplift", t);
+			}
 			nzFree(cf->dw);
 			cf->dw = 0;
 			cf->dw_l = 0;
-			run_function_onearg_win(cf, "eb$uplift", t);
 		}
 
 		change = true;
