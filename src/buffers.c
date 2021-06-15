@@ -6159,7 +6159,7 @@ replaceframe:
 				if (cw->browseMode)
 					free(s);
 			}		/* loop over lines */
-			if(!globSub)
+			if(!globSub && debugLevel >= 1)
 				printf("%d\n", l);
 			for (i = startRange; i <= endRange; ++i) {
 				if(i == 0) // empty buffer
@@ -6628,7 +6628,11 @@ replaceframe:
 rebrowse:
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
 //  printf("ifetch %d %s\n", uriEncoded, line);
-		if (!noStack && sameURL(line, cf->fileName)) {
+
+// If we got here from typing g in directory mode, and directory had /
+// at the end, and if the file starts with #, then the sameURL test passes,
+// and we go down a completely unintended path.
+		if (!noStack && sameURL(line, cf->fileName) && !cw->dirMode) {
 			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
 				return false;
