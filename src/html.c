@@ -3321,11 +3321,19 @@ nocolorend:
 	if (!opentag && ti->bits & TAG_NOSLASH)
 		return;
 
-	if (opentag && t->jslink) {
+	if (opentag) {
 // what is the visibility now?
 		uchar v_now = 2;
-		t->disval =
-		    run_function_onearg_win(f, "eb$visible", t);
+		if(allowJS && t->jslink) {
+			t->disval =
+			    run_function_onearg_win(f, "eb$visible", t);
+		} else {
+// allow html to hide sections, even if js is not running.
+			t->disval = 0;
+			if(attribVal(t, "hidden") ||
+			attribVal(t, "aria-hidden"))
+				t->disval = 1;
+		}
 		if (t->disval == 1)
 			v_now = 1;
 		if (t->disval == 2)

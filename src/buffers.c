@@ -5125,7 +5125,7 @@ et_go:
 		showHover ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(showHover + MSG_HoverOff);
-		if (cw->browseMode && isJSAlive)
+		if (cw->browseMode)
 			rerender(false);
 		return true;
 	}
