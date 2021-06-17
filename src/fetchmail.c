@@ -253,6 +253,13 @@ static void setFolders(CURL * handle)
 			*t = 0;
 			f->name = s;
 			s = t + 1;
+// \Noselect \UnMarked  not sure what this means but it derails,
+// we need to focus on Noselect
+			t = strchr(f->name, '\\');
+			if(t) {
+				while(t > f->name && t[-1] == ' ') --t;
+				*t = 0;
+			}
 /* the null folder at the top, like /, isn't really a folder. */
 			if (stringEqual(f->name, "Noselect"))
 				continue;
