@@ -329,6 +329,7 @@ static CURLcode getMailData(CURL * handle)
 {
 	static bool first_call = true;
 	CURLcode res;
+//  puts("get data");
 	callback_data.buffer = initString(&callback_data.length);
 	callback_data.move_capable = false;
 	res = curl_easy_perform(handle);
@@ -953,10 +954,29 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 /* subject next, I'll assume it is always quoted */
 		while (*t == ' ')
 			++t;
-		if (*t != '"')
-			continue;
-		++t;
-		u = nextRealQuote(t);
+
+// comcast imap sometimes has number in braces, don't know why
+		if(*t == '{') {
+			++t;
+			while(isdigit(*t))
+				++t;
+			if(*t == '}')
+				++t;
+		// with number in braces, subject is on next line.
+// isspace takes us past crlf
+			while(isspace(*t))
+				++t;
+		}
+
+//  printf("%d,%d,%d|%s|\n", mailstring_l, t-mailstring, strlen(t), t);
+
+		if (*t == '"') {
+			++t;
+			u = nextRealQuote(t);
+		} else {
+			u = strstr(t, " ((\"");
+		}
+
 		if (!u)
 			continue;
 		*u = 0;
