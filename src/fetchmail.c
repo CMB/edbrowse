@@ -169,7 +169,7 @@ struct MIF {
 	char *subject, *from, *reply;
 	char *refer;
 	time_t sent;
-	bool seen, gone;
+	bool seen, gone, line2;
 };
 
 /* folders at the top of an imap system */
@@ -510,6 +510,8 @@ static void printEnvelope(const struct MIF *mif)
 	if (!mif->seen)
 		stringAndChar(&envp, &envp_l, '*');
 #endif
+	if(mif->line2 && debugLevel >= 3)
+		stringAndString(&envp, &envp_l, "~ ");
 	stringAndString(&envp, &envp_l, mif->from);
 	stringAndString(&envp, &envp_l, ": ");
 	stringAndString(&envp, &envp_l, mif->subject);
@@ -598,9 +600,11 @@ static int bulkMoveDelete(CURL * handle, struct FOLDER *f,
 		}
 	}
 
+	curl_easy_setopt(handle, CURLOPT_VERBOSE, (debugLevel >= 4));
 	return yesdel;
 
 abort:
+	curl_easy_setopt(handle, CURLOPT_VERBOSE, (debugLevel >= 4));
 	return -1;
 }
 
@@ -893,7 +897,11 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 	int j;
 	char *t, *u;
 	CURLcode res;
+	int sublength;
 	char cust_cmd[80];
+
+// need the debug output to see the second line of the envelope
+	curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
 
 	for (j = 0; j < f->nfetch; ++j) {
 		struct MIF *mif = f->mlist + j;
@@ -918,9 +926,15 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 
 		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		m2ie = 1;
 		res = getMailData(handle);
+		if(m2iel) {
+			stringAndString(&mailstring, &mailstring_l, m2iel);
+			nzFree(m2iel);
+			m2iel = 0;
+		}
+		m2ie = 0;
 		if (res != CURLE_OK) {
-//abort:
 			ebcurl_setError(res, mailbox_url, 2, emptyString);
 		}
 
@@ -955,11 +969,10 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		while (*t == ' ')
 			++t;
 
-// comcast imap sometimes has number in braces, don't know why
+// imap sometimes has number in braces, don't know why
+		sublength = -1;
 		if(*t == '{') {
-			++t;
-			while(isdigit(*t))
-				++t;
+			 sublength = strtol(t+1, &t, 10);
 			if(*t == '}')
 				++t;
 		// with number in braces, subject is on next line.
@@ -974,7 +987,10 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 			++t;
 			u = nextRealQuote(t);
 		} else {
-			u = strstr(t, " ((\"");
+			mif->line2 = true;
+			u = t + sublength;
+			if(sublength <= 0 || u - mailstring >= mailstring_l)
+				u = 0;
 		}
 
 		if (!u)
