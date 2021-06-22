@@ -40,7 +40,7 @@ static int numTables;
 volatile bool intFlag;
 time_t intStart;
 bool ismc, isimap, passMail;
-// next two variables work around curl bug 5965
+// next two variables work around curl bug 7284
 bool m2ie;
 char *m2iel;
 bool inInput, listNA;

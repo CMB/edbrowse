@@ -291,7 +291,7 @@ extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool curlActive; // is curl running?
 extern bool ismc;		/* Is the program running as a mail client? */
 extern bool isimap;		/* Is the program running as an imap client? */
-// next two variables work around curl bug 5965
+// next two variables work around curl bug 7284
 extern bool m2ie;  // manage 2-line imap envelope
 extern char *m2iel; // the second line that we don't see
 extern bool down_bg;		// download in background
