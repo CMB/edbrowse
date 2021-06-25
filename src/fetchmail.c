@@ -2253,6 +2253,21 @@ static struct MHINFO *headerGlean(char *start, char *end)
 					*vr = 0;
 				}
 			}
+			if (linetype == 'f') {
+				int l1, l2;
+				++s;
+				l1 = strlen(w->from);
+				l2 = t - s;
+				if(l1 + l2 > MHLINE)
+					l2 = MHLINE - l1;
+				strncpy(w->from + l1, s, l2);
+				if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
+					vl = w->from;
+					vr = vl + strlen(vl);
+					isoDecode(vl, &vr);
+					mhReformat(w->from);
+				}
+			}
 			continue;
 		}
 
@@ -2347,9 +2362,11 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			linetype = 'f';
 			if (w->from[0])
 				continue;
-			isoDecode(vl, &vr);
-			strncpy(w->from, vl, vr - vl);
-			mhReformat(w->from);
+			if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
+				isoDecode(vl, &vr);
+				strncpy(w->from, vl, vr - vl);
+				mhReformat(w->from);
+			}
 			continue;
 		}
 
