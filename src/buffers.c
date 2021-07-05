@@ -2892,8 +2892,9 @@ static const char valid_laddr[] = "0123456789-'.$+/?";
 
 static bool
 regexpCheck(const char *line, bool isleft, bool ebmuck,
+// result parameters
 	    char **rexp, const char **split)
-{				/* result parameters */
+{
 	static char re[MAXRE + 20];
 	const char *start;
 	char *e = re;
@@ -2978,6 +2979,10 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				continue;
 			}
 			if (d == delim || (ebmuck && !isleft && d == '&')) {
+// this next line is for ?/?? searching backwards for ?
+// We can't pass bare ? to pcre or it is interpreted
+				if(d == '?')
+					*e++ = '\\';
 				*e++ = d;
 				continue;
 			}
@@ -3156,8 +3161,10 @@ top:
 
 /* Get the start or end of a range.
  * Pass the line containing the address. */
-static bool getRangePart(const char *line, int *lineno, const char **split)
-{				/* result parameters */
+static bool getRangePart(const char *line, int *lineno,
+// result parameters
+const char **split)
+{
 	int ln = cw->dot;	/* this is where we start */
 	char first = *line;
 
@@ -5226,7 +5233,7 @@ no_action:
 /* Return the number of unbalanced punctuation marks.
  * This is used by the next routine. */
 static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
-{				/* result parameters */
+{
 	char *t, *open;
 	char *p = (char *)fetchLine(ln, 1);
 	bool change;
@@ -7281,4 +7288,4 @@ int fieldIsChecked(int tagno)
 	if (locateTagInBuffer(tagno, &ln, &p, &s, &t))
 		return (*s == '+');
 	return -1;
-}				/* fieldIsChecked */
+}
