@@ -837,7 +837,7 @@ imap_done:
 				} else {
 					delflag = true;
 				}
-			}
+			} else goto action;
 		}
 
 		if (key == 'd') {
