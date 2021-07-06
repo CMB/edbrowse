@@ -6187,7 +6187,7 @@ replaceframe:
 					free(s);
 			}		/* loop over lines */
 			pclose(p);
-			if(!globSub)
+			if(!globSub && debugLevel > 0)
 				i_puts(MSG_OK);
 			return true;
 		}

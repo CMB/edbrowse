@@ -1737,7 +1737,7 @@ int eb_system(const char *cmd, bool print_on_success)
 {
 	int system_ret = system(cmd);
 	if (system_ret != -1) {
-		if (print_on_success)
+		if (print_on_success && debugLevel > 0)
 			i_puts(MSG_OK);
 	} else {
 		i_printf(MSG_SystemCmdFail, system_ret);

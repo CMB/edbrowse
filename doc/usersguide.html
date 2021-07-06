@@ -846,10 +846,13 @@ The # character has no special significance in the middle of a line.
 
 <LI><P>
 Lines beginning with ! implement a shell escape.
-The ! character has no special significance in the middle of a line.
+The ! character has no special significance in the middle of a line,
+unless it is starting a shell command under a global regexp,
+or as part of a read or write command.
 The ! alone spawns an interactive subshell - type exit to return to edbrowse.
 The work "ok" is printed when the shell command is finished -
 thus you can tell when a no-output command is done.
+Use db0 to suppress this ok acknowledgement.
 
 <LI><P>
 Type `cd dirname' to change directories.
@@ -878,6 +881,7 @@ Use $r to read a file at the end of your working text.
 
 <LI><P>
 The w+ command appends to the file.
+Some versions of ed use W for this operation.
 Some versions of ed use w&gt; for this operation,
 but for 40 years &gt; has been the industry standard for write with truncate,
 so using &gt; for append is somewhat confusing.
@@ -951,7 +955,7 @@ The comma is the range separator, and ;p means .,$p.
 <LI><P>
 g continues to sweep until all marked lines are operated on.
 Most versions of ed will not do this.
-Example: a file with 10 lines, 1 through 10, run g/[89]/;p
+Example: a file with 10 lines, 1 through 10, run g/[89]/;m0
 Line 8 matches, and lines 8 through 10 are moved to the start.
 At this point ed stops, but I sweep again, and discover the second line, that contains 9, and move that block to the beginning.
 Neither implementation is particularly right or wrong, as far as I can tell.
