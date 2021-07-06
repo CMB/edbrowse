@@ -4,7 +4,7 @@
 <meta name="description" content="documentation Edbrowse, un éditeur orienté texte, 
 un navigateur, et un client de courrier électronique. ">
 <meta name="keywords" content="orienté texte, ligne de commande, interactif,
-éditeur, navigateur, client mail, portable, C, javascript,
+éditeur, navigateur, client mail, portable, C, Javascript,
 securité, ssl, aveugle, script, accessible, accessibilité">
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta charset="UTF-8">
@@ -164,7 +164,7 @@ et un aperçu de ses possibilités.
 
 <h3> <a name="copy"> Copyright </a> </h3>
 
-Ce programme est copyright &copy; Karl Dahlke (et d'autres auteurs et contributeurs), 2000-2018. 
+Ce programme est copyright &copy; Karl Dahlke (et d'autres auteurs et contributeurs), 2000-2021. 
 Il est mis à disposition par les auteurs sous la licence publique générale GNU (GPL), 
 définie par la Free Software Fondation. 
 Il peut être utilisé dans n'importe quel but, et redistribué, 
@@ -189,7 +189,7 @@ Chris Brannon</a> a écrit ou modifié au moins 20% du code,
 et a fourni de bonnes idées pour l'architecture générale. 
 <a href="mailto:arthompson1990@gmail.com">
 Adam Thompson</a>
- a porté l'interface javascript de C à C++, portage requis par les versions 2 de Mozilla JS, 
+ a porté l'interface Javascript de C à C++, portage requis par les versions 2 de Mozilla JS, 
 et il continue à superviser l'architecture générale du projet. 
  <A href=mailto:kevin@carhart.net>
 Kevin Carhart</A>
@@ -230,7 +230,7 @@ Les fonctionnalités de Edbrowse:
 transférer des portions de texte entre eux à la manière d'un copier-coller. 
 Par exemple, <code>edbrowse *.c</code> accède à tous les fichiers sources C du répertoire courant. 
 <li><p> Les expressions régulières de ed ont été remplacées par les expressions régulières compatibles Perl, plus puissantes et plus flexibles. Ceci facilite les opérations de recherche/remplacement de texte dans un document long. Vous pouvez, par exemple, remplacer chaque instance du mot foo, mais pas food ou foot, seulement foo, en majuscles ou en minuscules, avec le mot bar, tant que foo n'est pas suivi d'un point d'exclamation ou d'interrogation. Ces modifications dans les expressions régulières indiquent que Edbrowse n'est pas à 100% Ccompatible avec ed, bien que très proche. 
-<li><p> Edbrowse peut récupérer une page web de l'internet aussi facilement qu'il ouvre un fichier de 
+<li><p> Edbrowse peut récupérer une page web de l'Internet aussi facilement qu'il ouvre un fichier de 
 l'ordinateur local, en utilisant hht, hhtps, ftp ou gopher. 
 Dès que la page est chargée dans le tampon courant, elle peut être naviguée ou affichée en texte brut, par la commande b. 
 Ceci ajoute une autre commande aux commandes en une lettre déjà présentes dans ed. 
@@ -353,7 +353,7 @@ avec la <a href="http://edbrowse.org/usersguide_fr.html">documentation</a>
 sur un octet, c'est-à-dire en iso8859, à moins que la chaîne 
 utf8 ou utf-8 soit présente dans $LANG, auquel cas les caractères non-ascii sont 
 générés en utf8. 
-De même, le contenu d'un tampon, qu'il soit un fichier local ou un site internet, 
+De même, le contenu d'un tampon, qu'il soit un fichier local ou un site Internet, 
 est affiché en séquences de 8 bits ou en séquences de 2 octets, conformément à $LANG. 
 Gardez à l'esprit que utf8 est devenu le standard, et Edbrowse ne pourra plus afficher 
 de texte ou des messages d'erreur en iso8859 dans quelque temps.  
@@ -396,7 +396,7 @@ caractère unique, et pcre se comportera comme attendu.
 La recherche de ni.o fonctionnera de nouveau. 
 Pour désactiver temporairement l'utf8 dans la  recherche/remplacement, utilisez la commande su8. 
 
-<p> Quelques pages internet peuvent s'afficher en plusieurs langues. Par exemple, 
+<p> Quelques pages Internet peuvent s'afficher en plusieurs langues. Par exemple, 
 twitter.com a une version anglaise, une version française, et ainsi de suite. 
 Il est possible de sélectionner la langue à l'appel d'une page. Edbrowse l'implémente 
 via le mot-clé localizeweb dans son fichier de configuration. 
@@ -423,7 +423,7 @@ Liste de toutes les commandes d'ed et d'Edbrowse, toutes regroupées.
 C'est un guide de référence rapide. 
 La plupart de ces commandes n'auront pas de sens si vous ne lisez pas le reste de la documentation. 
 <!-- qrg start -->
-Les commandes désignées "bascule" comme js pour activer ou désactiver javascript, 
+Les commandes désignées "bascule" comme js pour activer ou désactiver Javascript, 
 admettent également en suffixe un + ou un - pour activer ou désactiver explicitement la fonctionnalité. 
 Les variantes + et - ne sont pas listées. 
 La commande "bascule" affiche l'état de la fonctionnalité, active ou non, si les messages d'aide sont activés ou si le niveau de déboguage est au moins à 1. 
@@ -605,7 +605,7 @@ pdd : indicateur d'avancement du téléchargement indiqué par des points
 <br>ftpa : mode ftp actif ou passif (bascule)
 <br>bg : télécharge les fichiers en tâche de fond (bascule)
 <br>bglist : liste les téléchargements en tâche de fond, terminés ou en cours
-<br>jsbg : télécharge les fichiers javascript en arrière-plan (bascule)
+<br>jsbg : télécharge les fichiers Javascript en arrière-plan (bascule)
 <p>
 Interagir avec une page Web
 <p>
@@ -632,8 +632,8 @@ g : suit le lien sur la ligne courante
 <br>ur : déploie une ligne d'une table html
 <br>M4 : déplace cette page web en session 4 et revient à la page précédente
 <br>M : déplace cette page web dans une session vide et sauvegarde
-<br>js : activation javascript (bascule)
-<br>rr : rafraîchit  l'écran, afin de refléter les modifications javascript asynchrones 
+<br>js : activation Javascript (bascule)
+<br>rr : rafraîchit  l'écran, afin de refléter les modifications Javascript asynchrones 
 <br>rr 75 : rafraîchit l'écran toutes les 75 secondes
 <br>showall : affiche le texte survolé (bascule)
 <br>colors : montre les couleurs sur la page
@@ -667,18 +667,18 @@ Deboguage
 <p>
 db3 : niveau de déboguage (de 0 à 7)
 <br>db&gt;/tmp/edbrowse.out : redirige la sortie du debbugger dans un fichier
-<br>demin : deminimise javascript (bascule)
-<br>timers : désactive les timers javascript (bascule)
+<br>demin : deminimise Javascript (bascule)
+<br>timers : désactive les timers Javascript (bascule)
 <br>dbcn : active debugging cloneNode (bascule)
 <br>dbev : active debugging event (bascule)
 <br>dberr : active debugging erreurs js (bascule)
 <br>dbcss : active debugging css (bascule)
-<br>trace : injecte des points de traçage dans le javascript (bascule)
-<br>jdb : débugger javascript : bye pour le quitter
+<br>trace : injecte des points de traçage dans le Javascript (bascule)
+<br>jdb : débugger Javascript : bye pour le quitter
 <br>ok(o) : affiche tous les membres d'un objet, certains pouvant être non énumérables
 <br>showscripts() : montre tous les scripts de l'arbre
 <br>searchscripts(string) : recherche de chaîne dans les scripts
-<br>snapshot() : instantané de javascript et css pour déboguage local
+<br>snapshot() : instantané de Javascript et css pour déboguage local
 <br>aloop(array, string_on[i]) : exécute la chaîne pour chaque membre du tableau
 <br>uptrace(node) : remonte dans l'arbre à partir du noeud fourni
 <br>dumptree(node) : montre l'arbre sous le noeud fourni
@@ -804,10 +804,13 @@ Le caractère # n'a aucune signification spéciale au milieu d'une ligne.
 </li>
 <p><li>
 Les lignes commençant par ! appellent un shell. 
-le caractère ! n'a aucune signification spéciale au milieu d'une ligne. 
+le caractère ! n'a aucune signification spéciale au milieu d'une ligne, 
+à moins que ce soit le débur d'une commande shell dans uns expression régulière 
+ou un une partie d'une commande de lecture ou écriture.
 ! seul appelle un shell interactif – dans ce shell, taper «exit» pour revenir à Edbrowse. 
 Le mot «ok» est affiché lorsque vous quittez le shell- ainsi vous êtes prévenu 
 à l'achèvement d'une commande sans sorties. 
+Utilisez db0 pour supprimer ce ok de confirmation.
 </li>
 <p><li>
 Taper «cd répertoire » pour changer de répertoire. 
@@ -840,6 +843,7 @@ Employer $r pour lire un fichier à ajouter à la fin de votre texte.
 <p>
 <li>
 La commande «w+» ajoute au fichier. 
+Quelques versions de ed utilisent W pour cette opération. 
 Quelques versions de ed utilisent «w&gt;» pour cette opération, mais pendant 40 ans «&gt;» 
 a été le standard pour écrire avec troncature. Donc utiliser «&gt;» pour ajouter 
 présente un risque de confusion. Et «w&gt;&gt;» est trop maladroit, ainsi j'emploie «w+». 
@@ -921,8 +925,7 @@ P (message de sollicitation) n'est pas implémenté.
 <li>
 on assume que le numéro de ligne absent avant ou après la virgule est 1 et $. 
 C'est conforme à «,p --» pour afficher le fichier entier. 
-Cependant, si un numéro de ligne est donné, alors l'autre numéro de ligne est obligatoire. Vous ne pouvez taper 3, ou ,3.
-Edbrowse ne reconnait non plus 3;5p, comme certaines versions de ed.
+Edbrowse ne reconnait pas 3;5p, comme certaines versions de ed.
 La virgule est le séparteur d'intervalle et ;p signifie .,$p.
 </li>
 
@@ -1259,7 +1262,7 @@ Les plugins seront décrits plus tard.
 Les arguments de edbrowse sont les fichiers à éditer. Edbrowse charge ces fichiers dans des 
 sessions correspondantes et démarre en session 1. 
 S'il n'y a aps d'arguments, edbrowse démarre en session 1 sans texte ni fichier associé. 
-Si le fichier est une url, alors la page web est récupérée sur l'internet 
+Si le fichier est une url, alors la page web est récupérée sur l'Internet 
 et décodée. 
 Finalement, si le fichier commence par signe inférieur à,
 edbrowse "&lt;func arg1 arg2",
@@ -2153,7 +2156,7 @@ affichée à l'écran.
 
 <p>
 Ce dispositif semble plutôt idiot lorsqu'on est en mode édition, mais il se comprend en 
-surfant sur l'internet. 
+surfant sur l'Internet. 
 Souvent nous descendons en suivant deux ou trois liens, 
 pour finir par nous trouver dans un cul-de-sac. 
 «Je n'ai pas voulu aller ici. » En tapant la touche retour arrière à plusieurs reprises, 
@@ -2166,7 +2169,7 @@ où vous voulez revenir.
 <p>
 Notez que l'état entier d'une session d'édition est mémorisé et reproductible, 
 y compris le nom de fichier, la dernière recherche/remplacement, 
-les chaînes de substitution, les hyperliens et des formulaires, le javascript compilé, tout !
+les chaînes de substitution, les hyperliens et des formulaires, le Javascript compilé, tout !
 
 <p>
 La pile ne doit pas être confondue avec l'édition simultanée de plusieurs fichiers, 
@@ -2175,7 +2178,7 @@ En fait chaque session d'édition, e1 e2 e3…, a sa propre pile interne.
 Les sessions simultanées sont appropriées quand vous devez se déplacer dans les deux sens 
 entre deux fichiers, ou copier/coller entre eux. 
 Cependant, une session, avec sa pile interne, est habituellement suffisante pour surfer 
-sur l'internet. 
+sur l'Internet. 
 
 <p>
 Si une commande de navigation échoue, vous donnant un tampon vide sans intérêt, 
@@ -2296,7 +2299,7 @@ qui indique à Edbrowse comment jouer les fichiers wav, mp3, etc.
 Ceux-ci doivent être configurés, sans quoi la commande «pb» ne fonctionnera pas. 
 Elle affichera quelque chose comme «je ne sais pas traiter un fichier mp3». 
 C'est conforme à d'autres navigateurs, qui emploient des extensions pour jouer les 
-fichiers multimedia en provenance de l'internet. 
+fichiers multimedia en provenance de l'Internet. 
 
 <H3> <A NAME=heading> Titres </A> </H3>
 
@@ -2556,7 +2559,7 @@ Ceci ne s'applique que pour la méthode get; la méthode post envoie les donnée
 autre canal. 
 
 <p>
-Souvenez-vous que des boutons peuvent lancer du javascript, sans être du type submit ou reset. 
+Souvenez-vous que des boutons peuvent lancer du Javascript, sans être du type submit ou reset. 
 Tous ces boutons peuvent être enfoncés par la commande i*. 
 Si plus d'un bouton est présent sur la ligne courante, n'importe quel style de bouton,
  alors i* n'est pas suffisant; vous devez spécifier quel bouton, comme dans i3*. 
@@ -2601,7 +2604,7 @@ qu'ils décorent, et sont rarement indispensables; cependant, il y a de rares si
 injécté est explicatif, et devrait être lu en premier. 
 
 <P>
-Finalement, la commande showall affiche les sections rendues invisibles par css ou javascript. 
+Finalement, la commande showall affiche les sections rendues invisibles par css ou Javascript. 
 Elles sont affichées entre signes supérieur et inférieur, et accolades, par ex. &lt;{bonjour monde}&gt;. 
 Elles peuvent être cachées parce non pertinentes pour vous, ou dans la situation actuelle. 
 Pourquoi afficher le lien de commande si votre panier d'achats est vide ?
@@ -2610,8 +2613,8 @@ alors qu'elle devrait être affichée.
 C'est pourquoi vous pouvez souhaiter de voir ce que vous manquez. 
 
 <P>
-La commande showall n'affiche ni ne cache les textes-bulles si javascript n'est pas activé. 
-Sans javascript, toutes les bulles et toutes les sections invisibles sont affichées. 
+La commande showall n'affiche ni ne cache les textes-bulles si Javascript n'est pas activé. 
+Sans Javascript, toutes les bulles et toutes les sections invisibles sont affichées. 
 
 <H3> <A NAME="colors"> Couleurs dans la page </A> </H3>
 
@@ -2654,8 +2657,8 @@ Mais vous pouvez configurer votre adapatateur pour afficher ces unicodes comme v
 par exemple, "couleur début" et "couleur fin".
 
 <p>
-Les couleurs provenant de css, et le css ne fonctionnant pas sans javascript, cette fonctionnalité 
-n'est possible qu'avec javascript activé.
+Les couleurs provenant de css, et le css ne fonctionnant pas sans Javascript, cette fonctionnalité 
+n'est possible qu'avec Javascript activé.
 
 <h3> <a name="addr"> Web et adresses mail </a> </h3>
 
@@ -2731,7 +2734,7 @@ ou le cours actuel de n'importe quelle action.
 Avec la commande A, le texte du nouveau lien hypertexte créé est le titre de la page courante. 
 S'il n'y a pas de titre, le texte du lien est repris de l'URL, lequel est vraiment suboptimal. 
 Dans ce cas, vous pourriez changer le texte du lien. 
-Heureusement, la majorité des pages internet ont un titre. 
+Heureusement, la majorité des pages Internet ont un titre. 
 
 <p>
 Un dernier avertissement au sujet des ajouts à votre fichier de signets. 
@@ -2863,7 +2866,7 @@ Elle vous indiquera toujours de revenir à son  site Web et de vous y connecter.
 La sécurité d'Internet est complexe, c'est le moins qu'on puisse dire, 
 et dépasse la portée de ce document. 
 En règle générale, le HTTP sécurisé est vraiment tout à fait sûr, et vous pouvez l'utiliser 
-pour envoyer des informations sensibles à travers l'internet. 
+pour envoyer des informations sensibles à travers l'Internet. 
 Il est probablement plus sûr que de donner votre numéro de carte bancaire par téléphone, 
 pratique courante avant l'e-commerce. 
 Ainsi il faut rester un peu paranoïnaque, en fait c'est probablement une bonne idée, 
@@ -2879,7 +2882,7 @@ n'a pas d'importance.
 Le fichier est récupéré, et placé dans un nouveau tampon. Tapez w/ pour le sauvegarder 
 sur votre machine, ce qu'un client ftp traditionnel fait normalement. Bien sûr, le 
 téléchargement peut échouer, auquel cas vous recevrez un message d'erreur. C'est une 
-simple interruption, due à une quelconque erreur sur l'internet, vous pourrez toujours 
+simple interruption, due à une quelconque erreur sur l'Internet, vous pourrez toujours 
 retaper la commande et espérer avoir plus de chance. 
 
 <p>
@@ -3043,7 +3046,7 @@ ou créer des effets visuels de fantaisie.
 
 <p>
 La première version de Edbrowse, écrite en Perl, ignorait Javascript complètement, 
-et cela a fonctionné un temps, mais de plus en plus sites internet emploient Javascript, 
+et cela a fonctionné un temps, mais de plus en plus sites Internet emploient Javascript, 
 et ces sites Web étaient simplement inaccessibles. 
 La plupart des emplacements d'e-commerce entrent dans cette catégorie. 
 Si vous voulez faire des achats, ou contrôler votre compte bancaire en ligne, 
@@ -3088,33 +3091,33 @@ avec Javascript désactivé.
 Consultez l'avertissement au début du présent guide. 
 
 <p>
-Vous pouvez également désactiver Javascript pour des sites internet spécifiques. 
+Vous pouvez également désactiver Javascript pour des sites Internet spécifiques. 
 Ceci sera discuté plus tard, quand nous décrirons le fichier de configuration d'Edbrowse. 
 
 <p>
-Si la navigation dans une page est lente, il est possible que beaucoup de javascript s'exécute, 
+Si la navigation dans une page est lente, il est possible que beaucoup de Javascript s'exécute, 
 ou que des fichiers soient en train de se télécharger. 
-Dans les deux cas, vous pouvez interrompre le processus en tapant contrôle C. 
+Dans les deux cas, vous pouvez interrompre le processus en tapant Contrôle-C. 
 Javascript stoppe et la page est décodée avec les informations disponibles. 
 Cela va bien si vous consultez un article de journal et que vous ne voulez pas attendre l'affichage 
 de toutes les publicités. 
 Mais vous ne devriez jamais faire cela sur un site de e-commerce, ou un site bancaire, ou un site avec des opérations critiques. 
-Si javascript ne va pas à son terme, nous ne pouvons garantir la bonne marche des opérations 
+Si Javascript ne va pas à son terme, nous ne pouvons garantir la bonne marche des opérations 
 sur ce site web. Vous risquez d'envoyer une commande pour un éléplant à 37000 Euros au lieu de 
 consommables d'impression à 37 Euros. 
 
 <p>
-Si vous avez tapé Contre-C sans réaction après 45 secondes, Edbrowse arrête en force javascript 
+Si vous avez tapé Contrôle-C sans réaction après 45 secondes, Edbrowse arrête en force Javascript 
 avec ce message :
 <p>
 Pas de réaction depuis 45 secondes, opérations annulées, résultats imprévisibles !
 
 <p>
-C'est drasique, mais quelques sites internet entrent en boucle infinie, et il est préférable 
+C'est drasique, mais quelques sites Internet entrent en boucle infinie, et il est préférable 
 de les bouetr hors de Edbrowse. 
-A ce moment, javascript est désactivé. 
+A ce moment, Javascript est désactivé. 
 Vous pouvez le réactiver, à vos risques et périls. 
-Le moteur javascript a été interrompu en cours d'opération, et son comportement est imprévisible 
+Le moteur Javascript a été interrompu en cours d'opération, et son comportement est imprévisible 
 si il redémarre à un autre endroit. 
 Cependant, j'ai essayé quelquefois, et cela a semblé fonctionner.
 
@@ -3218,18 +3221,18 @@ Cependant, si vous élaborez une réponse dans une zone de saisie multiligne, ce
 
 <h3> <A NAME=jex> Debugger Javascript </A> </H3>
 
-En mode navigation, la commande "jdb" (debugger javascript) redirige tous les entrées suivantes 
-vers le moteur javascript, contenant les objets associés à page web courante, spécifiquement le 
+En mode navigation, la commande "jdb" (debugger Javascript) redirige tous les entrées suivantes 
+vers le moteur Javascript, contenant les objets associés à page web courante, spécifiquement le 
 cadre associé à la ligne courante. 
 Tapez un point, ou bye, pour revenir à edbrowse. 
 Il est préférable d'entre la commande jdb avec un niveau de débogage à 3, pour voir ainsi toutes les 
-erreurs javascript de syntaxe ou de référence. Cette fonctionnalité est destinée aux 
+erreurs Javascript de syntaxe ou de référence. Cette fonctionnalité est destinée aux 
 développeurs, et n'est pas très utile à l'utilisateur final. 
 
 <p>
 Si la sortie d'une commande est longue, vous pouvez la rediriger vers un fichier en utilisant 
 le symbole ^&gt, comme dans l'expression : ^&gt; fichier. 
-Je ne peux utiliser &gt; car c'est un opérateur javascript valide. 
+Je ne peux utiliser &gt; car c'est un opérateur Javascript valide. 
 Une commande prédéfinie ok (object keys) liste tous les membres d'un objet. 
 showscripts() affiche tous les scripts du document courant, y compris les scripts générés. 
 Ils seront conservés dans $ss. 
@@ -3238,7 +3241,7 @@ Utilisez aloop(0,5,expression) pour évaluer expression lancée de 0 à 4.
 Utilisez aloop(y,expression) pour lancer expression sur un tableau y
 
 <p>
-Quelques commandes de Edbrowse sont valides dans le debugger javascript. 
+Quelques commandes de Edbrowse sont valides dans le debugger Javascript. 
 les voici : les commandes db (niveau de debug), e nombre (pour aller dans une autre session edbrowse 
 et consulter un autre fichier), bflist, bglist, timers, demin, et les commandes shell. 
 
@@ -3402,7 +3405,7 @@ Ces téléchargements se poursuivront, même après avoir quitté Edbrowse, et a
 "téléchargement terminé" à leur achèvement. 
 
 <p>
-Des téléchargements au premier plan, ou n'importe quel tâche internet de ce type, 
+Des téléchargements au premier plan, ou n'importe quel tâche Internet de ce type, 
 affichent une échelle de progression sous forme de points, mais vous pouvez 
 supprimer cette échelle par la commande pdq ("progress of download quiet"). 
 Une autre option est pdc ("progress of download by count" : progression par comptage). 
@@ -3474,7 +3477,7 @@ après un échange en clair. C'est le protocole hotmail, aussi sûr que *465, se
 
 <p>
 Utilisez +587 pour vous identifier sans cryptage. C'est parfois le cas lorsque vous êtes 
-directement connecté au serveur mail, sans passer par l'internet, mais lorsque le serveur 
+directement connecté au serveur mail, sans passer par l'Internet, mais lorsque le serveur 
 veut s'assurer qu'il s'agit bien de vous. 
 
 <p>secure
@@ -3603,6 +3606,9 @@ Contrairement à beaucoup de choses dans le monde Unix, les noms de macros sont 
 à la casse. Ainsi, fairececi, faireCeci, faireCeci sont tous équivalents. 
 Egalement, si vous définissez de multiples macros sous le même nom, c'est le premier
 qui l'emporte. Edbrowse ignore silencieusement les définitions suivantes. 
+
+<P>
+Les noms de fonctions sont alphanumériques, et peuvent même débuter par un chiffre.   function:123 { }
 
 <p>
 Normalement, Edbrowse continue de fonctionner, qu'une commande réussisse ou pas. 
@@ -3835,7 +3841,7 @@ program = mpg123 -q -C %i
 
 <p>
 Cet exemple traite un fichier mp3 ou un flot de données mp3. 
-Ceci fonctionne parce que mpg123 peut jouer un fichier local ou un flot venant de l'internet. 
+Ceci fonctionne parce que mpg123 peut jouer un fichier local ou un flot venant de l'Internet. 
 Si mpg123 est limité aux fichiers locaux sur votre ordinateur, vous devrez ajouter le mot-clé 
 down_url : l'url sera téléchargée dans un fichier temporarire et jouée ensuite. 
 Le lancement automatique peut être désactivé avec la commande pg qui active ou désactive les plugins. 
@@ -4177,7 +4183,7 @@ Si vous voulez «interagir» avec ce mail, vous devez le sauvegarder
 non formaté  dans un fichier, finir votre session mail, éditer ce fichier, 
 et taper «b» pour naviguer dedans. 
 A ce moment l'affichage HTML sera actif, comme si vous regardiez une page Web 
-sur un site internet. 
+sur un site Internet. 
 
 <h3> <a name="filter"> Filtrage de courrier </a> </h3>
 
@@ -4269,7 +4275,7 @@ envoyez «viens m'embrasser» à x, et il a disparu.
 
 <p>
 Vous pouvez également employer ce dispositif pour bloquer les avertissements 
-d'autres fournisseurs d'accès internet, se plaignant que vous leur avez envoyé 
+d'autres fournisseurs d'accès Internet, se plaignant que vous leur avez envoyé 
 des mails infectés par des virus. 
 Vous non, naturellement, parce que vous êtes linux, avec un client non-standard. 
 Votre adresse de réponse a été récupérée, et vous recevez donc l'avertissement 
