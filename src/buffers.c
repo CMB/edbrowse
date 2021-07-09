@@ -321,7 +321,7 @@ static bool jdb_passthrough(const char *s)
 		"dberr", "dberr+", "dberr-",
 		"dbcn", "dbcn+", "dbcn-",
 		"dbev", "dbev+", "dbev-",
-		"dbcss", "dbcss+", "dbcss-",
+		"dbcss", "dbcss+", "dbcss-", "db",
 		"timers", "timers+", "timers-",
 		"demin", "demin+", "demin-",
 		"bflist", "bglist", "help", 0
@@ -4237,6 +4237,11 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if(stringEqual(line, "db")) {
+		printf("%d\n", debugLevel);
+		return true;
+	}
+
 	if (stringEqual(line, "bw")) {
 		cw->changeMode = false;
 		cw->quitMode = true;
@@ -4276,6 +4281,26 @@ static int twoLetter(const char *line, const char **runThis)
 		currentAgent = t;
 		if (helpMessagesOn || debugLevel >= 1)
 			eb_puts(currentAgent);
+		return true;
+	}
+
+	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
+	    && !line[3]) {
+		debugLevel = line[2] - '0';
+		return true;
+	}
+
+	if (!strncmp(line, "db>", 3)) {
+		setDebugFile(line + 3);
+		return true;
+	}
+
+	if(stringEqual(line, "ua")) {
+		for (n = 0; n < MAXAGENT; ++n)
+			if(currentAgent == userAgents[n]) {
+				printf("%d: %s\n", n, currentAgent);
+				break;
+			}
 		return true;
 	}
 
