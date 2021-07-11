@@ -729,13 +729,18 @@ int main(int argc, char **argv)
 
 	js_main();
 
+// This sanity check on number of files assumes they are all files,
+// not functions to execute.
+	if(argc >= MAXSESSION)
+		i_printfExit(MSG_ManyOpen, MAXSESSION - 1);
+
 	cx = 0;
 	while (argc) {
 		char *file = *argv;
 		char *file2 = NULL;	// will be allocated
 		++cx;
 		if (cx == MAXSESSION)
-			i_printfExit(MSG_ManyOpen, MAXSESSION);
+			i_printfExit(MSG_ManyOpen, MAXSESSION - 1);
 		cxSwitch(cx, false);
 		if (cx == 1)
 			runEbFunction("init");
