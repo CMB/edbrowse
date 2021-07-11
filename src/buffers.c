@@ -144,7 +144,7 @@ addchar:
 		goto addchar;
 	}			/* loop over p */
 	*t = c;			/* terminating character */
-}				/* removeHiddenNumbers */
+}
 
 /* Fetch line n from the current buffer, or perhaps another buffer.
  * This returns an allocated copy of the string,
@@ -179,7 +179,7 @@ static pst fetchLineContext(int n, int show, int cx)
 	if (show && lw->browseMode)
 		removeHiddenNumbers(p, '\n');
 	return p;
-}				/* fetchLineContext */
+}
 
 pst fetchLine(int n, int show)
 {
@@ -2837,6 +2837,25 @@ static char *get_interactive_shell(const char *sh)
 #endif
 }				/* get_interactive_shell */
 
+static char *ascmd = emptyString; // allocated shell command
+static char *bangbang(const char *line)
+{
+	char *s;
+	int n;
+	if(line[0] != '!') {
+		nzFree(ascmd);
+		return (ascmd = cloneString(line));
+	}
+	if(!line[1]) // just !!
+		return ascmd;
+// put more stuff on the end
+	n = strlen(ascmd) + strlen(line);
+	s = allocMem(n);
+	sprintf(s, "%s%s", ascmd, line + 1);
+	nzFree(ascmd);
+	return (ascmd = s);
+}
+
 static bool shellEscape(const char *line)
 {
 	char *sh, *newline;
@@ -2864,7 +2883,7 @@ static bool shellEscape(const char *line)
 		return true;
 	}
 
-	newline = apostropheMacros(line);
+	newline = apostropheMacros(bangbang(line));
 	if (!newline)
 		return false;
 
@@ -2874,7 +2893,7 @@ static bool shellEscape(const char *line)
 	eb_system(newline, !globSub);
 	free(newline);
 	return true;
-}				/* shellEscape */
+}
 
 /* Valid delimiters for search/substitute.
  * note that \ is conspicuously absent, not a valid delimiter.
@@ -6173,7 +6192,7 @@ replaceframe:
 
 		if(first == '!') { // write to a command, like ed
 			int l = 0;
-			FILE *p = popen(line + 1, "w");
+			FILE *p = popen(bangbang(line + 1), "w");
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
@@ -6978,7 +6997,7 @@ afterdelete:
 		if(first == '!') { // read from a command, like ed
 			char *outdata;
 			int outlen;
-			FILE *p = popen(line + 1, "r");
+			FILE *p = popen(bangbang(line + 1), "r");
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
