@@ -58,7 +58,7 @@ static void freeMailInfo(struct MHINFO *w)
 	nzFree(w->tolist);
 	nzFree(w->cclist);
 	nzFree(w);
-}				/* freeMailInfo */
+}
 
 static bool ignoreImages;
 
@@ -122,7 +122,7 @@ static void writeAttachment(struct MHINFO *w)
 			close(fh);
 		}
 	}
-}				/* writeAttachment */
+}
 
 static void writeAttachments(struct MHINFO *w)
 {
@@ -133,7 +133,7 @@ static void writeAttachments(struct MHINFO *w)
 		foreach(v, w->components)
 		    writeAttachments(v);
 	}
-}				/* writeAttachments */
+}
 
 /* string to hold the returned data from the mail server */
 static char *mailstring;
@@ -158,7 +158,7 @@ static void setLimit(const char *t)
 	if (imapfetch < 10)
 		imapfetch = 10;
 	i_printf(MSG_FetchN, imapfetch);
-}				/* setLimit */
+}
 
 /* mail message in a folder */
 struct MIF {
@@ -320,7 +320,7 @@ static struct FOLDER *folderByName(char *line)
 	else
 		i_printf(MSG_NoFolderMatch, line);
 	return 0;
-}				/* folderByName */
+}
 
 /* data block for the curl ccallback write function in http.c */
 static struct i_get callback_data;
@@ -364,7 +364,7 @@ static size_t imap_header_callback(char *i, size_t size,
 		fflush(stdout);
 	}
 	return b;
-}				/* imap_header_callback */
+}
 
 /* after the email has been fetched via pop3 or imap */
 static void undosOneMessage(void)
@@ -722,7 +722,7 @@ imap_done:
 				t[-1] = 0, --mailstring_l;
 			t = strrchr(mailstring, '\n');
 			if (t && t - 2 >= mailstring &&
-			    !strncmp(t - 2, "\n)\nA", 4)) {
+			    !strncmp(t - 2, "\n)\n", 3) && strstr(t, "Fetch completed")) {
 				--t;
 				*t = 0;
 				mailstring_l = t - mailstring;
@@ -958,12 +958,16 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 // We don't use this date because it isn't standardized,
 // it's whatever the sender's email client puts on the Date field.
 // We use INTERNALDATE later.
-		if (*t != '"')
-			continue;
-		t = strchr(++t, '"');
-		if (!t)
-			continue;
-		++t;
+		if(!strncmp(t, "NIL", 3)) {
+			t += 3;
+		} else {
+			if (*t != '"')
+				continue;
+			t = strchr(++t, '"');
+			if (!t)
+				continue;
+			++t;
+	}
 
 /* subject next, I'll assume it is always quoted */
 		while (*t == ' ')
