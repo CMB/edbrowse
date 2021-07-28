@@ -2884,9 +2884,16 @@ void scriptSetsTimeout(Tag *t)
 static struct jsTimer *soonest(void)
 {
 	struct jsTimer *t, *best_t = 0;
+	const struct ebWindow *w;
 	if (listIsEmpty(&timerList))
 		return 0;
 	foreach(t, timerList) {
+// Browsing a new web page in the current session pushes the old one, like ^z
+// in Linux. The prior page suspends, and the timers suspend.
+// ^ is like fg, bringing it back to life.
+		w = t->f->owner;
+		if(sessionList[w->sno].lw != w)
+			continue;
 		if (!best_t || t->sec < best_t->sec ||
 		    (t->sec == best_t->sec && t->ms < best_t->ms))
 			best_t = t;

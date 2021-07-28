@@ -428,6 +428,7 @@ struct ebWindow {
  * Use the back command to pop the stack.
  * The back command follows this link, which is 0 if you are at the top. */
 	struct ebWindow *prev;
+	int sno; // session number
 /* This is right out of the source for ed.  Current and last line numbers. */
 	int dot, dol;
 /* remember dot and dol for the raw text, when in browse mode */

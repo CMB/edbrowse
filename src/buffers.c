@@ -717,7 +717,7 @@ static struct ebWindow *createWindow(void)
 	restoreSubstitutionStrings(nw);
 	nw->f0.gsn = ++gfsn;
 	return nw;
-}				/* createWindow */
+}
 
 /* for debugging */
 static void print_pst(pst p)
@@ -964,6 +964,7 @@ static void cxInit(int cx)
 	if (sessionList[cx].lw)
 		i_printfExit(MSG_DoubleInit, cx);
 	sessionList[cx].fw = sessionList[cx].lw = lw;
+	lw->sno = cx;
 	if (cx > maxSession)
 		maxSession = cx;
 }				/* cxInit */
@@ -6345,6 +6346,7 @@ replaceframe:
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		w = createWindow();
+		w->sno = context;
 		w->prev = cw;
 		cw = w;
 		selfFrame();
@@ -6719,6 +6721,7 @@ rebrowse:
 		changeFileName = 0;	/* should already be zero */
 		thisfile = cf->fileName;
 		w = createWindow();
+		w->sno = context;
 		cw = w;		/* we might wind up putting this back */
 		selfFrame();
 		cf->uriEncoded = uriEncoded;
