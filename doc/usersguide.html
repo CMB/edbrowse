@@ -631,6 +631,7 @@ b : browse the current file, either html, or email, or rendered by plugin
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the Internet and browse it
 <br>nostack b url : don't push a new window, replace the current window using the new url
+<br>^ b url : same as nostack
 <br>ub : unbrowse a file
 <br>ft : show the title of the current web page (file title)
 <br>fd : show the description of the current web page
@@ -2267,7 +2268,9 @@ Typing . will produce the same line you saw before.
 <P>
 Use the nostack prefix to replace the current web page, rather than pushing it onto the stack.
 For example, `nostack b www.ibm.com' replaces your current web page with ibm.com, and ^ will not take you back to where you were, because that page is gone.
-Most people will not use this feature very often.
+`^ b www.ibm.com' does the same thing.
+The ^ prefix indicates we already popped the stack, and now you can't go back.
+This feature saves resources, if you know you don't need that web page any more.
 
 <P>
 Following an internal link to another section in the current document

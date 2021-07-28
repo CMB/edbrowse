@@ -5642,6 +5642,8 @@ bool runCommand(const char *line)
 // force a noStack
 		if (!strncmp(line, "nostack ", 8))
 			noStack = true, line += 8, first = *line;
+		if (!strncmp(line, "^ ", 2))
+			noStack = true, line += 2, first = *line;
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);
