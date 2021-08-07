@@ -1279,7 +1279,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype == INP_TA) {
-		setError(MSG_Textarea, t->lic);
+		setError((t->lic ? MSG_Textarea : MSG_Textarea0), t->lic);
 		return false;
 	}
 

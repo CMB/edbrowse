@@ -140,7 +140,7 @@ static char *mailstring;
 static int mailstring_l;
 static char *mailbox_url, *message_url;
 
-static int imapfetch = 100;
+int imapfetch = 100;
 static bool earliest;
 
 static void setLimit(const char *t)

@@ -762,7 +762,7 @@ enum {
 	MSG_ShowFirst,
 	MSG_Previous,
 	MSG_NoPrevMail,
-	MSG_notused665,
+	MSG_Textarea0,
 	MSG_notused666,
 	MSG_notused667,
 	MSG_notused668,

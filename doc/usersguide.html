@@ -3409,6 +3409,15 @@ When the cache is full, edbrowse deletes the 100 oldest files and marches on.
 Edbrowse does not retain more than 10,000 files, even if the cache could hold more.
 
 <P>
+imapfetch = 40
+
+<P>
+Fetch the last 40 emails when calling up a folder through imap.
+The fetch count must be between  10 and 1000.
+In the interactive imap client, you can specify -40, for the first 40 emails (in time order), but that can't be done from the config file.
+I assume you are always starting with the most recent emails.
+
+<P>
 webtimer = 30
 <br>
 mailtimer = 180

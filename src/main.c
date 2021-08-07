@@ -1145,7 +1145,7 @@ static const char *const keywords[] = {
 	"downdir", "maildir", "agent",
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
-	"agentsite", "localizeweb", "notused33", "novs", "cachesize",
+	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
 	"adbook", 0
 };
 
@@ -1639,6 +1639,15 @@ putc:
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
+			continue;
+
+		case 33:	/* imap fetch limit */
+			imapfetch = atoi(v);
+			if (imapfetch <= 10)
+				imapfetch = 10;
+// there isn't an upper limit when set interactively, so idk
+			if (imapfetch >= 1000)
+				imapfetch = 1000;
 			continue;
 
 		case 34:	/* novs */
