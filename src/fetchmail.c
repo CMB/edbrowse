@@ -293,7 +293,7 @@ static void setFolders(CURL * handle)
 	f = topfolders;
 	for (i = 0; i < n_folders; ++i, ++f)
 		examineFolder(handle, f, true);
-}				/* setFolders */
+}
 
 static struct FOLDER *folderByName(char *line)
 {
@@ -383,7 +383,7 @@ static void undosOneMessage(void)
 	}
 	mailstring_l = k;
 	mailstring[k] = 0;
-}				/* undosOneMessage */
+}
 
 static char presentMail(void);
 static void envelopes(CURL * handle, struct FOLDER *f);
@@ -401,7 +401,7 @@ static void cleanFolder(struct FOLDER *f)
 	nzFree(f->mlist);
 	f->mlist = NULL;
 	f->nmsgs = f->nfetch = f->unread = 0;
-}				/* cleanFolder */
+}
 
 /* search through imap server for a particular string */
 /* Return true if the search ran successfully and found some messages. */
@@ -498,7 +498,7 @@ none:
 	envelopes(handle, f);
 
 	return true;
-}				/* imapSearch */
+}
 
 static void printEnvelope(const struct MIF *mif)
 {
@@ -868,7 +868,7 @@ imap_done:
 	}
 
 	puts("end of folder");
-}				/* scanFolder */
+}
 
 // \" is an escaped quote inside the string.
 static char *nextRealQuote(char *p)
@@ -1103,7 +1103,7 @@ dosize:
 		mif->size = atoi(t);
 
 	}
-}				/* envelopes */
+}
 
 /* examine the specified folder, gather message envelopes */
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
@@ -1180,7 +1180,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 	else
 		i_printf(MSG_MessagesX, f->nmsgs);
-}				/* examineFolder */
+}
 
 /* find the last mail in the local unread directory */
 static int unreadMax, unreadMin, unreadCount;
@@ -1207,7 +1207,7 @@ static void unreadStats(void)
 			++unreadCount;
 		}
 	}
-}				/* unreadStats */
+}
 
 static char *umf;		/* unread mail file */
 static char *umf_end;
@@ -1240,7 +1240,7 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 		ebcurl_setError(res, mailbox_url, 2, emptyString);
 
 	return handle;
-}				/* newFetchmailHandle */
+}
 
 static void get_mailbox_url(const struct MACCOUNT *account)
 {
@@ -1250,8 +1250,10 @@ static void get_mailbox_url(const struct MACCOUNT *account)
 	if (account->inssl)
 		scheme = "pop3s";
 
-	if (isimap)
+	if (isimap) {
 		scheme = (account->inssl ? "imaps" : "imap");
+		loadAddressBook();
+	}
 
 	if (asprintf(&url,
 		     "%s://%s:%d/", scheme, account->inurl,
@@ -1262,7 +1264,7 @@ static void get_mailbox_url(const struct MACCOUNT *account)
 			     strlen(scheme) + strlen(account->inurl) + 8);
 	}
 	mailbox_url = url;
-}				/* get_mailbox_url */
+}
 
 /* reads message into mailstring, it's up to you to free it */
 static CURLcode fetchOneMessage(CURL * handle, int message_number)
