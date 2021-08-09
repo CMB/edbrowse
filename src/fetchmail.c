@@ -608,7 +608,9 @@ abort:
 	return -1;
 }
 
+
 /* scan through the messages in a folder */
+static char postkey;
 static void scanFolder(CURL * handle, struct FOLDER *f)
 {
 	struct MIF *mif;
@@ -649,9 +651,10 @@ reaction:
 		printEnvelope(mif);
 action:
 		delflag = false;
+		postkey = 0;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbfdslmnp g/");
+		key = getLetter("h?qvbfdslmnp gwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -679,6 +682,9 @@ imap_done:
 				i_printf(MSG_MessagesX, f->nmsgs);
 			goto showmessages;
 		}
+
+		if(strchr("wWuUa", key))
+			postkey = key, key = ' ';
 
 		if (key == ' ' || key == 'g') {
 /* download the email from the imap server */
@@ -729,6 +735,7 @@ imap_done:
 			}
 			key = presentMail();
 /* presentMail has already freed mailstring */
+			postkey = 0;
 		}
 
 		if (key == 'p') {
@@ -1671,7 +1678,7 @@ static char presentMail(void)
 /* display the next page of mail and get a command from the keyboard */
 	displine = 1;
 paging:
-	if (!delflag) {		/* show next page */
+	if (!delflag && !postkey) {		/* show next page */
 		if (displine <= cw->dol) {
 			for (j = 0; j < 20 && displine <= cw->dol;
 			     ++j, ++displine) {
@@ -1689,12 +1696,16 @@ key_command:
 	if (delflag)
 		goto writeMail;
 
+	if(postkey) {
+		key = postkey, postkey = 0;
+	} else {
 /* interactive prompt depends on whether there is more text or not */
-	printf("%c ", displine > cw->dol ? '?' : '*');
-	fflush(stdout);
-	key = getLetter((isimap ? "qvbfh? npwWuUasdm" : "qh? nwud"));
-	printf("\b\b\b");
-	fflush(stdout);
+		printf("%c ", displine > cw->dol ? '?' : '*');
+		fflush(stdout);
+		key = getLetter((isimap ? "qvbfh? npwWuUasdm" : "qh? nwud"));
+		printf("\b\b\b");
+		fflush(stdout);
+	}
 
 	switch (key) {
 	case 'q':
