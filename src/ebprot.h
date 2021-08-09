@@ -103,7 +103,7 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
 char *htmlParse(char *buf, int remote) ;
 bool htmlTest(void) ;
 void infShow(int tagno, const char *search) ;
-void itext(void);
+bool itext(int d);
 bool infReplace(int tagno, const char *newtext, bool notify);
 bool infPush(int tagno, char **post_string);
 void domSetsTagValue(Tag *t, const char *newtext);

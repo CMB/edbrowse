@@ -677,6 +677,7 @@ g : go to the link on the current line
 <br>i3? : describe the third input field on the current line
 <br>ipass2 : prompt for the content of the second input field, disabling echo
 <br>ib : allocate an input buffer for this textarea
+<br>ib7 : use buffer 7 for this input textarea
 <br>shc : show columns of an html table
 <br>ur : unfold a row in an html table
 <br>M4 : move this web page to session 4 and back up to the previous page
@@ -2570,7 +2571,11 @@ Type e2 to move to session 2, prepare your comments,
 then type e1 to return to the input form.
 
 <P>
-On most web pages the text area starts out blank,
+Alternatively, use ib100 to associate session 100 with this input textarea.
+This can be useful in scripts, whence you know where your buffers are and can populate them with text.
+
+<P>
+On most web pages, the text area starts out blank,
 whence buffer 2 will be empty,
 but this is not always the case.
 Be sure to check for pre-existing text before you start typing your thoughts.

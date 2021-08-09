@@ -4009,7 +4009,7 @@ char *render(int start)
 
 // Create buffers for text areas, so the user can type in comments or whatever
 // and send them to the website in a fill-out form.
-void itext(void)
+bool itext(int d)
 {
 	int ln = cw->dot;	// line number
 	pst p;			// the raw line to scan
@@ -4031,7 +4031,7 @@ void itext(void)
 		t = tagList[n];
 		if (t->itype != INP_TA || t->lic)
 			continue;
-		t->lic = sideBuffer(0, t->value, -1, 0);
+		t->lic = sideBuffer(d, t->value, -1, 0);
 		change = true;
 		sprintf(newtext, "buffer %d", t->lic);
 // updateFieldInBuffer is crazy inefficient in that it searches through the
@@ -4044,12 +4044,12 @@ void itext(void)
 		break;
 	}
 
-	if (change)
+	if (change) {
 		displayLine(ln);
-	else if (inp)
-		i_puts(MSG_NoChange);
-	else
-		i_puts(MSG_NoInputFields);
+		return true;
+	}
+		setError(inp ? MSG_NoChange : MSG_NoInputFields);
+	return false;
 }
 
 struct htmlTag *line2tr(int ln)

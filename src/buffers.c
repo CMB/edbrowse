@@ -4641,7 +4641,14 @@ et_go:
 		return rc;
 	}
 
-	if (stringEqual(line, "ib")) {
+	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
+		int d = 0;
+		char *s;
+		if(isdigit(line[2])) {
+			d = strtol(line + 2, &s, 10);
+			if(*s)
+				return 2;
+		}
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
@@ -4651,8 +4658,11 @@ et_go:
 			setError(MSG_EmptyBuffer);
 			return false;
 		}
-		itext();
-		return true;
+		if(d) {
+			if(!cxCompare(d) || (cxActive(d) && !cxQuit(d, 0)))
+				return false;
+		}
+		return itext(d);
 	}
 
 	if (stringEqual(line, "f/") || stringEqual(line, "w/")) {
@@ -5273,7 +5283,7 @@ et_go:
 no_action:
 	*runThis = line;
 	return 2;		/* no change */
-}				/* twoLetter */
+}
 
 /* Return the number of unbalanced punctuation marks.
  * This is used by the next routine. */
@@ -7080,7 +7090,8 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	int svcx = context;
 	bool rc;
 	if (cx) {
-		cxQuit(cx, 3);
+		if(cxActive(cx))
+			cxQuit(cx, 3);
 	} else {
 		for (cx = 1; cx < MAXSESSION; ++cx)
 			if (!sessionList[cx].lw)
@@ -7109,7 +7120,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	/* back to original context */
 	cxSwitch(svcx, false);
 	return cx;
-}				/* sideBuffer */
+}
 
 void freeEmptySideBuffer(int n)
 {
