@@ -342,7 +342,7 @@ extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
 extern bool showHover; // messages that appear when you hover
 extern bool doColors;
-extern int context;		/* which session (buffer) are we in? */
+extern int context;		// which session (buffer) are we in?
 extern pst linePending;
 extern char *changeFileName;
 extern char *addressFile;	/* your address book */

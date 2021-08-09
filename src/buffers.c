@@ -221,7 +221,7 @@ static int apparentSize(int cx, bool browsing)
 		return -1;
 	}
 	return apparentSizeW(w, browsing);
-}				/* apparentSize */
+}
 
 /* get the directory suffix for a file.
  * This only makes sense in directory mode. */
@@ -945,7 +945,7 @@ bool cxCompare(int cx)
 		return true;	/* ok */
 	setError(MSG_SessionCurrent, cx);
 	return false;
-}				/*cxCompare */
+}
 
 /* is a context active? */
 bool cxActive(int cx)
@@ -956,7 +956,7 @@ bool cxActive(int cx)
 		return true;
 	setError(MSG_SessionInactive, cx);
 	return false;
-}				/* cxActive */
+}
 
 static void cxInit(int cx)
 {
@@ -967,7 +967,7 @@ static void cxInit(int cx)
 	lw->sno = cx;
 	if (cx > maxSession)
 		maxSession = cx;
-}				/* cxInit */
+}
 
 bool cxQuit(int cx, int action)
 {
@@ -1023,11 +1023,12 @@ bool cxQuit(int cx, int action)
 	}
 
 	return true;
-}				/* cxQuit */
+}
 
 /* Switch to another edit session.
  * This assumes cxCompare has succeeded - we're moving to a different context.
  * Pass the context number and an interactive flag. */
+static int cx_previous;
 void cxSwitch(int cx, bool interactive)
 {
 	bool created = false;
@@ -1048,7 +1049,7 @@ void cxSwitch(int cx, bool interactive)
 	cw = nw;
 	selfFrame();
 	cs = sessionList + cx;
-	context = cx;
+	cx_previous = context, context = cx;
 	if (interactive && debugLevel) {
 		if (created)
 			i_printf(MSG_SessionNew);
@@ -1064,7 +1065,7 @@ void cxSwitch(int cx, bool interactive)
 /* The next line is required when this function is called from main(),
  * when the first arg is a url and there is a second arg. */
 	startRange = endRange = cw->dot;
-}				/* cxSwitch */
+}
 
 static struct lineMap *newpiece;
 
@@ -1117,7 +1118,7 @@ static void addToMap(int nlines, int destl)
 	cw->map = newmap;
 	free(newpiece);
 	newpiece = 0;
-}				/* addToMap */
+}
 
 /* Add a block of text into the buffer; uses addToMap(). */
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
@@ -1234,7 +1235,7 @@ static char *makeAbsPath(const char *f)
 	}
 	sprintf(path, "%s/%s", cw->baseDirName, f);
 	return path;
-}				/* makeAbsPath */
+}
 
 // Compress a/b/.. back to a, when going to a parent directory
 static void stripDotDot(char *path)
@@ -5664,6 +5665,11 @@ bool runCommand(const char *line)
 	if (first == '!')
 		return shellEscape(line + 1);
 
+	if(stringEqual(line, "eret")) {
+		sprintf(newline, "e%d", cx_previous);
+		line = newline;
+	}
+
 	startRange = endRange = cw->dot;	/* default range */
 /* Just hit return to read the next line. */
 	first = *line;
@@ -7063,7 +7069,7 @@ afterdelete:
 
 	setError(MSG_CNYI, icmd);
 	return (globSub = false);
-}				/* runCommand */
+}
 
 bool edbrowseCommand(const char *line, bool script)
 {
