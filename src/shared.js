@@ -1370,4 +1370,3 @@ Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 Object.defineProperty(URL, "createObjectURL", {writable:false,configurable:false});
 Object.defineProperty(URL, "revokeObjectURL", {writable:false,configurable:false});
-snork=77

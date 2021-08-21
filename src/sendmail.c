@@ -152,7 +152,7 @@ freefail:
 	nzFree(buf);
 	adbooktime = mtime;
 	return true;
-}				/* loadAddressBook */
+}
 
 const char *reverseAlias(const char *reply)
 {
@@ -165,7 +165,7 @@ const char *reverseAlias(const char *reply)
 			return a;
 		}
 	return 0;		/* not found */
-}				/* reverseAlias */
+}
 
 static char *qpEncode(const char *line)
 {
@@ -186,7 +186,7 @@ static char *qpEncode(const char *line)
 	}
 
 	return newbuf;
-}				/* qpEncode */
+}
 
 /* Return 0 if there was no need to encode */
 static char *isoEncode(char *start, char *end)
@@ -228,7 +228,7 @@ package:
 	sprintf(t, "=?ISO-8859-1?%c?%s?=", code, s);
 	nzFree(s);
 	return t;
-}				/* isoEncode */
+}
 
 /*********************************************************************
 Return a string that defines the charset of the outgoing mail.
@@ -249,7 +249,7 @@ static char *charsetString(const char *ct, const char *ce)
 			sprintf(buf, "; charset=iso-8859-%d", type8859);
 	}
 	return buf;
-}				/* charsetString */
+}
 
 /* Read a file into memory, mime encode it,
  * and return the type of encoding and the encoded data.
@@ -562,7 +562,7 @@ success:
 freefail:
 	nzFree(buf);
 	return false;
-}				/* encodeAttachment */
+}
 
 static char *mailTimeString(void)
 {
@@ -592,7 +592,7 @@ This is an internet standard, it's suppose to be English.
 	strftime(buf + 12, sizeof(buf) - 12, "%Y %H:%M:%S %z", cur_tm);
 
 	return buf;
-}				/* mailTimeString */
+}
 
 static char *messageTimeID(void)
 {
@@ -629,7 +629,7 @@ static void appendAttachment(const char *s, char **out, int *l)
 	}
 /* Small bug here - an attachment that is not base64 encoded,
  * and had no newline at the end, now has one. */
-}				/* appendAttachment */
+}
 
 char *makeBoundary(void)
 {
@@ -1032,8 +1032,17 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 /* Also, suppress filename if this is an alternate presentation. */
 			if (!nalt && !strchr(s, '"')
 			    && (ismc || stringIsNum(s) < 0)) {
-				sprintf(serverLine, "; name=\"%s\"", s);
-				stringAndString(&out, &j, serverLine);
+// for security reasons, and convenience, don't present the absolute path.
+				const char *s2 = strrchr(s, '/');
+				if(s2) {
+					if(!*++s2)
+// attaching a directory?  This just shouldn't happen.
+						s2 = 0;
+				} else s2 = s;
+				if(s2) {
+					sprintf(serverLine, "; name=\"%s\"", s2);
+					stringAndString(&out, &j, serverLine);
+				}
 			}
 			sprintf(serverLine,
 				"%sContent-Transfer-Encoding: %s%s%s", eol, ce,
