@@ -617,7 +617,7 @@ static char *messageTimeID(void)
 		cur_tm->tm_year + 1900, cur_tm->tm_mon, cur_tm->tm_mday,
 		cur_tm->tm_hour, cur_tm->tm_min, cur_tm->tm_sec);
 	return buf;
-}				/* messageTimeID */
+}
 
 static void appendAttachment(const char *s, char **out, int *l)
 {
@@ -648,7 +648,7 @@ char *makeBoundary(void)
 	static char boundary[24];
 	sprintf(boundary, "nextpart-eb-%06d", rand() % 1000000);
 	return boundary;
-}				/* makeBoundary */
+}
 
 struct smtp_upload {
 	const char *data;
@@ -677,7 +677,7 @@ static size_t smtp_upload_callback(char *buffer_for_curl, size_t size,
 	cur_pos = upload->pos + to_send;
 	upload->pos = cur_pos;
 	return to_send;
-}				/* smtp_upload_callback */
+}
 
 static char *buildSMTPURL(const struct MACCOUNT *account)
 {
@@ -701,7 +701,7 @@ static char *buildSMTPURL(const struct MACCOUNT *account)
 		i_printfExit(MSG_NoMem);
 
 	return url;
-}				/* buildSMTPURL */
+}
 
 static struct curl_slist *buildRecipientSList(const char **recipients)
 {
@@ -715,7 +715,7 @@ static struct curl_slist *buildRecipientSList(const char **recipients)
 	}
 
 	return recipient_slist;
-}				/* buildRecipientSList */
+}
 
 static CURL *newSendmailHandle(const struct MACCOUNT *account,
 			       const char *outurl, const char *reply,
@@ -776,7 +776,7 @@ new_handle_cleanup:
 	}
 
 	return handle;
-}				/* newSendmailHandle */
+}
 
 typedef struct tagsmtp_upload {
 	const char *data;
@@ -829,9 +829,9 @@ sendMail(int account, const char **recipients, const char *body,
 	char *from, *fromiso, *reply;
 	const struct MACCOUNT *a, *ao, *localMail;
 	const char *s, *boundary;
-	char reccc[MAXRECAT];
+	char reccc[MAXRECAT + MAXCC];
 	char *t;
-	int nat, nat2, cx, i, j;
+	int nat, nrec, cx, i, j;
 	char *out = 0;
 	bool sendmail_success = false;
 	bool mustmime = false;
@@ -850,26 +850,36 @@ sendMail(int account, const char **recipients, const char *body,
 	ao = a->outssl ? a : localMail;
 	doSignature = dosig;
 
-	nat = nat2 = 0;		/* number of attachments */
-	if (attachments) {
-		while (attachments[nat])
-			++nat;
-	}
+	nat = 0;		/* number of attachments */
+	while (attachments[nat])
+		++nat;
 
+// attachments from the mail descriptor
 	for (j=0; a->cclist[j]; ++j)
 		if(a->cctype[j])
-			++nat2;
+			attachments[nat++] = a->cclist[j];
+	attachments[nat] = 0;
 
-	if (nat + nat2)
+	if (nat)
 		mustmime = true;
 
-	if (nalt && nalt < nat + nat2) {
+	if (nalt && nalt < nat) {
 		setError(MSG_AttAlternate);
 		return false;
 	}
 
 	if (!loadAddressBook())
 		return false;
+
+	nrec = 0;		/* number of recipients */
+	while (recipients[nrec])
+		++nrec;
+
+// recipients from the mail descriptor
+	for (j=0; a->cclist[j]; ++j)
+		if(!a->cctype[j])
+			recipients[nrec++] = a->cclist[j];
+	recipients[nrec] = 0;
 
 /* set copy flags */
 	for (j = 0; (s = recipients[j]); ++j) {
@@ -1094,13 +1104,13 @@ bool validAccount(int n)
 		return false;
 	}
 	return true;
-}				/* validAccount */
+}
 
 bool sendMailCurrent(int sm_account, bool dosig)
 {
-	const char *reclist[MAXRECAT + 1];
+	const char *reclist[MAXRECAT + MAXCC + 1];
 	char *recmem;
-	const char *atlist[MAXRECAT + 1];
+	const char *atlist[MAXRECAT + MAXCC + 1];
 	char *atmem;
 	char *s, *t;
 	char cxbuf[4];

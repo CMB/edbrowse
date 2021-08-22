@@ -3573,6 +3573,30 @@ illegal</A> to use these lines for deceptive purposes.
 Make sure they identify you, and that the reply address is indeed one of your email accounts.
 
 <P>
+to = address
+<br>
+cc = address
+<br>
+bcc = address
+
+<P>
+Specify a recipient; every email you send through this account will go to that recipient.
+cc is carbon copy and bcc is blind carbon copy.
+gmail.com keeps a copy of every email you send, but most mail servers don't do that.
+If you want to replicate this behavior, include cc = your-address in the mail descriptor,
+whence every mail you send out goes back to yourself.
+A filter on the mail server can redirect mail from you into a sent folder.
+That is the only practical use I know of for this feature.
+
+<P>
+attach = file
+
+<P>
+The named file is sent, as an attachment, on every email you send through this account.
+If it is a work account, you might want an image or logo to be part of every email.
+That is the only practical use I know of for this feature.
+
+<P>
 adbook = /home/mylogin/.ebsys/address-book
 <P>
 When specifying recipients, you can use aliases instead of full email addresses.

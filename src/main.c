@@ -156,7 +156,7 @@ static void catchSig(int n)
 	} else {
 		pthread_kill(t1, SIGINT);
 	}
-}				/* catchSig */
+}
 
 void setDataSource(char *v)
 {
@@ -176,7 +176,7 @@ void setDataSource(char *v)
 		return;
 	*v++ = 0;
 	dbpw = v;
-}				/* setDataSource */
+}
 
 void ebClose(int n)
 {
@@ -187,7 +187,7 @@ void ebClose(int n)
 		eb_curl_global_cleanup();
 	}
 	exit(n);
-}				/* ebClose */
+}
 
 static struct ebhost {
 // j = nojs, v = novs, p = proxy, f = function,
@@ -213,14 +213,14 @@ static void add_ebhost(char *host, char type)
 	}
 	ebhosts[ebhosts_avail].host = host;
 	ebhosts[ebhosts_avail++].type = type;
-}				/* add_ebhost */
+}
 
 static void delete_ebhosts(void)
 {
 	nzFree(ebhosts);
 	ebhosts = NULL;
 	ebhosts_avail = ebhosts_max = 0;
-}				/* delete_ebhosts */
+}
 
 static void add_proxy(char *v)
 {
@@ -261,7 +261,7 @@ bool javaOK(const char *url)
 		    patternMatchURL(url, ebhosts[j].host))
 			return false;
 	return true;
-}				/* javaOK */
+}
 
 /* Return true if the cert for this host should be verified. */
 bool mustVerifyHost(const char *url)
@@ -664,6 +664,7 @@ int main(int argc, char **argv)
 
 	if (ismc) {
 		char **reclist, **atlist;
+		char **reclist2, **atlist2;
 		char *s, *body;
 		int nat, nalt, nrec;
 
@@ -718,8 +719,18 @@ int main(int argc, char **argv)
 		nrec = atlist - argv;
 		memmove(reclist, reclist + 1, sizeof(char *) * nrec);
 		atlist[-1] = 0;
-		if (sendMail(account, (const char **)reclist, body, 1,
-			     (const char **)atlist, 0, nalt, true))
+
+// Make room for possible recipients or attachments in the mail descriptor.
+		atlist2 = allocMem(sizeof(char*) * (nat + MAXCC + 1));
+		memcpy(atlist2, atlist, sizeof(char*) * nat);
+		atlist2[nat] = 0;
+		reclist2 = allocMem(sizeof(char*) * (nrec + MAXCC + 1));
+		memcpy(reclist2, reclist, sizeof(char*) * nrec);
+		reclist2[nrec] = 0;
+// These don't get freed, but we're going to exit anyways.
+
+		if (sendMail(account, (const char **)reclist2, body, 1,
+			     (const char **)atlist2, 0, nalt, true))
 			exit(0);
 		showError();
 		exit(1);

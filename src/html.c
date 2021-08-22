@@ -2032,7 +2032,7 @@ bool infPush(int tagno, char **post_string)
 /* Handle the mail method here and now. */
 	if (form->bymail) {
 		char *addr, *subj, *q;
-		const char *tolist[2], *atlist[2];
+		const char *tolist[MAXCC + 2], *atlist[MAXCC + 2];
 		const char *name = form->name;
 		int newlen = strlen(pfs) - actlen;	/* the new string could be longer than post */
 		char key;
