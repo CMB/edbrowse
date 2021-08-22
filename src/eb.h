@@ -142,6 +142,7 @@ typedef uchar *pst;		/* perl string */
 #define MAXPROTLEN 12
 #define MAXUSERPASS 80 // user name or password
 #define MAXACCOUNT 100 // number of email accounts
+#define MAXCC 10 // max automatic cc or bcc that you can include in a mail account
 #define MAXAGENT 50 // number of user agents
 #define MAXMIME 40 // number of mime types
 #define MAXPROXY 200 // number of proxy entries
@@ -239,12 +240,14 @@ long long hcl;			/* http content length */
 	int newloc_d;
 };
 
-struct MACCOUNT {		/* pop3 account */
+struct MACCOUNT { // email account, pop3 or imap
 	char *login, *password, *from, *reply;
 	char *inurl, *outurl;
 	int inport, outport;
 	uchar inssl, outssl;
 	bool nofetch, imap, secure;
+	const char *cclist[MAXCC + 1]; // extra cc directives
+	uchar cctype[MAXCC]; // cc or bcc or attach
 };
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */

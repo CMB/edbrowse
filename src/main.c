@@ -1132,13 +1132,14 @@ void unreadConfigFile(void)
 
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
 #define MAILWORDS 0
-#define MIMEWORDS 8
-#define TABLEWORDS 16
-#define GLOBALWORDS 20
+#define MIMEWORDS 12
+#define TABLEWORDS 20
+#define GLOBALWORDS 24
 
 static const char *const keywords[] = {
 	"inserver", "outserver", "login", "password", "from", "reply",
 	"inport", "outport",
+	"to", "cc", "bcc", "attach",
 	"type", "desc", "suffix", "protocol", "program",
 	"content", "outtype", "urlmatch",
 	"tname", "tshort", "cols", "keycol",
@@ -1470,50 +1471,63 @@ putc:
 			act->outport = atoi(v);
 			continue;
 
-		case 8:	/* type */
+		case 8: case 9: case 10: case 11: // to cc bcc attach
+			for (j=0; act->cclist[j]; ++j)  ;
+			if(j == MAXCC) {
+				cfgLine1(MSG_MailDirect, MAXCC);
+			} else {
+// ^ means cc, ? means bcc
+				if(n == 9) *--v = '^';
+				if(n == 10) *--v = '?';
+				act->cclist[j] = v;
+				act->cctype[j] = (n == 11);
+			}
+			continue;
+
+		case 12:	/* type */
 			mt->type = v;
 			continue;
 
-		case 9:	/* desc */
+		case 13:	/* desc */
 			mt->desc = v;
 			continue;
 
-		case 10:	/* suffix */
+		case 14:	/* suffix */
 			mt->suffix = v;
 			continue;
 
-		case 11:	/* protocol */
+		case 15:	/* protocol */
 			mt->prot = v;
 			continue;
 
-		case 12:	/* program */
+		case 16:	/* program */
 			mt->program = v;
 			continue;
 
-		case 13:	/* content */
+		case 17:	/* content */
 			mt->content = v;
 			continue;
 
-		case 14:	/* outtype */
+		case 18:	/* outtype */
 			c = tolower(*v);
 			if (c != 'h' && c != 't')
 				cfgLine0(MSG_EBRC_Outtype);
 			mt->outtype = c;
 			continue;
 
-		case 15:	/* urlmatch */
+		case 19:	/* urlmatch */
 			mt->urlmatch = v;
 			continue;
 
-		case 16:	/* tname */
+		case 20:	/* tname */
 			td->name = v;
 			continue;
 
-		case 17:	/* tshort */
+		case 21:	/* tshort */
 			td->shortname = v;
 			continue;
 
-		case 18:	/* cols */
+		case 22:	/* cols */
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
 					cfgLine1(MSG_EBRC_ManyCols, MAXTCOLS);
@@ -1526,7 +1540,7 @@ putc:
 			}
 			continue;
 
-		case 19:	/* keycol */
+		case 23:	/* keycol */
 			if (!isdigitByte(*v))
 				cfgLine0(MSG_EBRC_KeyNotNb);
 			td->key1 = (uchar) strtol(v, &v, 10);
@@ -1536,13 +1550,13 @@ putc:
 				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
 			continue;
 
-		case 20:	/* downdir */
+		case 24:	/* downdir */
 			downDir = v;
 			if (fileTypeByName(v, false) != 'd')
 				cfgAbort1(MSG_EBRC_NotDir, v);
 			continue;
 
-		case 21:	/* maildir */
+		case 25:	/* maildir */
 			mailDir = v;
 			if (fileTypeByName(v, false) != 'd')
 				cfgAbort1(MSG_EBRC_NotDir, v);
@@ -1558,7 +1572,7 @@ putc:
 			sprintf(mailReply, "%s/.reply", v);
 			continue;
 
-		case 22:	/* agent */
+		case 26:	/* agent */
 			for (j = 0; j < MAXAGENT; ++j)
 				if (!userAgents[j])
 					break;
@@ -1567,7 +1581,7 @@ putc:
 			userAgents[j] = v;
 			continue;
 
-		case 23:	/* jar */
+		case 27:	/* jar */
 			cookieFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
@@ -1579,7 +1593,7 @@ putc:
 			close(j);
 			continue;
 
-		case 24:	/* nojs */
+		case 28:	/* nojs */
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
@@ -1588,20 +1602,20 @@ putc:
 			add_ebhost(v, 'j');
 			continue;
 
-		case 25:	/* cachedir */
+		case 29:	/* cachedir */
 			nzFree(cacheDir);
 			cacheDir = cloneString(v);
 			continue;
 
-		case 26:	/* webtimer */
+		case 30:	/* webtimer */
 			webTimeout = atoi(v);
 			continue;
 
-		case 27:	/* mailtimer */
+		case 31:	/* mailtimer */
 			mailTimeout = atoi(v);
 			continue;
 
-		case 28:	/* certfile */
+		case 32:	/* certfile */
 			sslCerts = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
@@ -1612,15 +1626,15 @@ putc:
 			close(j);
 			continue;
 
-		case 29:	/* datasource */
+		case 33:	/* datasource */
 			setDataSource(v);
 			continue;
 
-		case 30:	/* proxy */
+		case 34:	/* proxy */
 			add_proxy(v);
 			continue;
 
-		case 31:	// agentsite
+		case 35:	// agentsite
 			spaceCrunch(v, true, true);
 			q = strchr(v, ' ');
 			if (!q || strchr(q + 1, ' ') ||
@@ -1635,13 +1649,13 @@ putc:
 			ebhosts[ebhosts_avail - 1].n = j;
 			continue;
 
-		case 32:	/* localizeweb */
+		case 36:	/* localizeweb */
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
 			continue;
 
-		case 33:	/* imap fetch limit */
+		case 37:	/* imap fetch limit */
 			imapfetch = atoi(v);
 			if (imapfetch <= 10)
 				imapfetch = 10;
@@ -1650,7 +1664,7 @@ putc:
 				imapfetch = 1000;
 			continue;
 
-		case 34:	/* novs */
+		case 38:	/* novs */
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
@@ -1659,7 +1673,7 @@ putc:
 			add_ebhost(v, 'v');
 			continue;
 
-		case 35:	/* cachesize */
+		case 39:	/* cachesize */
 			cacheSize = atoi(v);
 			if (cacheSize <= 0)
 				cacheSize = 0;
@@ -1667,7 +1681,7 @@ putc:
 				cacheSize = 10000;
 			continue;
 
-		case 36:	/* adbook */
+		case 40:	/* adbook */
 			addressFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
@@ -1879,7 +1893,7 @@ putback:
 
 	if (maxAccount && !localAccount)
 		localAccount = 1;
-}				/* readConfigFile */
+}
 
 // local replacements for javascript and css
 struct JSR {

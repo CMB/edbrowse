@@ -663,7 +663,7 @@ showing first %d of %d messages\n
 previous
 no previous email
 this is a textarea, use the ib command to create a new buffer
-0
+.ebrc: line %d, too many default directives in your mail descriptor, limit %d
 0
 0
 0

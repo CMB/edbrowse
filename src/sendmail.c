@@ -423,6 +423,18 @@ empty:
 			ct = "text/html";
 	}
 
+// alternative from a buffer is usually html; this doesn't fly if wev
+// send it over as plain text. This is a crude test.
+// Just look for a leading <
+	if(!strncmp(file, "<buffer ", 8)) {
+		for (i = 0; i < buflen; ++i) {
+			c = buf[i];
+			if(!isspace(c)) break;
+		}
+		if(i < buflen && c == '<')
+			ct = "text/html";
+	}
+
 /* Count the nonascii characters */
 	nacount = nullcount = nlcount = 0;
 	longline = false;
@@ -806,7 +818,7 @@ smtp_cleanup:
 	curl_slist_free_all(recipient_slist);
 	nzFree(smtp_url);
 	return smtp_success;
-}				/* sendMailSMTP */
+}
 
 /* Send mail to the smtp server. */
 bool
@@ -819,7 +831,7 @@ sendMail(int account, const char **recipients, const char *body,
 	const char *s, *boundary;
 	char reccc[MAXRECAT];
 	char *t;
-	int nat, cx, i, j;
+	int nat, nat2, cx, i, j;
 	char *out = 0;
 	bool sendmail_success = false;
 	bool mustmime = false;
@@ -838,14 +850,20 @@ sendMail(int account, const char **recipients, const char *body,
 	ao = a->outssl ? a : localMail;
 	doSignature = dosig;
 
-	nat = 0;		/* number of attachments */
+	nat = nat2 = 0;		/* number of attachments */
 	if (attachments) {
 		while (attachments[nat])
 			++nat;
 	}
-	if (nat)
+
+	for (j=0; a->cclist[j]; ++j)
+		if(a->cctype[j])
+			++nat2;
+
+	if (nat + nat2)
 		mustmime = true;
-	if (nalt && nalt < nat) {
+
+	if (nalt && nalt < nat + nat2) {
 		setError(MSG_AttAlternate);
 		return false;
 	}
@@ -1063,7 +1081,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	sendmail_success = sendMailSMTP(ao, reply, recipients, out);
 	nzFree(out);
 	return sendmail_success;
-}				/* sendMail */
+}
 
 bool validAccount(int n)
 {
@@ -1088,7 +1106,7 @@ bool sendMailCurrent(int sm_account, bool dosig)
 	char cxbuf[4];
 	int lr, la, ln;
 	char *refline = 0;
-	int nrec = 0, nat = 0, nalt = 0;
+	int nrec, nat, nalt;
 	int account = localAccount;
 	int j;
 	bool rc = false;
@@ -1117,6 +1135,8 @@ bool sendMailCurrent(int sm_account, bool dosig)
 
 	if (!validAccount(account))
 		return false;
+
+	nrec = nat = nalt = 0;
 
 	recmem = initString(&lr);
 	atmem = initString(&la);
@@ -1215,6 +1235,7 @@ bool sendMailCurrent(int sm_account, bool dosig)
 
 	if (sm_account)
 		account = sm_account;
+
 	if (!subj) {
 		setError(((ln > cw->dol) + MSG_MailFirstLine), ln);
 		goto done;
@@ -1231,6 +1252,7 @@ bool sendMailCurrent(int sm_account, bool dosig)
 		reclist[j] = s;
 	}
 	reclist[j] = 0;
+
 	for (s = atmem, j = 0; *s; s = t + 1, ++j) {
 		t = strchr(s, '\n');
 		*t = 0;
@@ -1250,4 +1272,4 @@ done:
 	if (rc)
 		i_puts(MSG_OK);
 	return rc;
-}				/* sendMailCurrent */
+}
