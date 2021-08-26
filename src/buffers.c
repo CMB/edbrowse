@@ -6102,9 +6102,8 @@ replaceframe:
 	}
 
 	if (cmd == 'q') {
-		if (cx)
-			if (!cxCompare(cx) || !cxActive(cx))
-				return false;
+		if (cx && (!cxCompare(cx) || !cxActive(cx)))
+			return false;
 		else {
 			cx = context;
 			if (first) {
