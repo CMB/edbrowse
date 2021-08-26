@@ -5794,9 +5794,6 @@ Should the newly entered row be unfolded? idk
 		}
 		for(i = startRange; i <= endRange; ++i)
 			if((w = line2tr(i)))
-				w->inur = false;
-		for(i = startRange; i <= endRange; ++i)
-			if((w = line2tr(i)) && !w->inur)
 				w->inur = true, w->ur ^= 1;
 		rerender(true);
 		return true;
