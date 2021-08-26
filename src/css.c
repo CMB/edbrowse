@@ -812,7 +812,7 @@ top:
 						nzFree(g.buffer);
 						if (debugLevel >= 3)
 							i_printf(MSG_GetCSS,
-								 g.url, g.code);
+								g.url, g.code);
 					}
 				} else {
 					if (debugLevel >= 3)
