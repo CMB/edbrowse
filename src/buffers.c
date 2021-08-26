@@ -5337,11 +5337,9 @@ static bool balanceLine(const char *line)
 			direction = -1;
 		}
 		unbalanced(c, d, endRange, &backward, &forward);
-		if (direction > 0) {
-			if ((level = forward) == 0) {
-				setError(MSG_BalanceNoOpen, c);
-				return false;
-			}
+		if (direction > 0 && (level = forward) == 0) {
+			setError(MSG_BalanceNoOpen, c);
+			return false;
 		} else {
 			if ((level = backward) == 0) {
 				setError(MSG_BalanceNoOpen, d);
