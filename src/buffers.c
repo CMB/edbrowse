@@ -4078,10 +4078,8 @@ static int substituteText(const char *line)
 	}
 
 	if (!lastSubst) {
-		if (!globSub) {
-			if (!errorMsg[0])
-				setError(bl_mode ? MSG_NoChange : MSG_NoMatch);
-		}
+		if (!globSub && !errorMsg[0])
+			setError(bl_mode ? MSG_NoChange : MSG_NoMatch);
 		return false;
 	}
 	cw->dot = lastSubst;
