@@ -3029,12 +3029,11 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				*e++ = '\\';
 		}
 
-		if (c == '$' && !isleft && isdigitByte(d)) {
+		if (c == '$' && !isleft && isdigitByte(d))
 			if (d == '0' || isdigitByte(line[2])) {
 				setError(MSG_RexpDollar);
 				return false;
 			}
-		}
 		/* dollar digit on the right */
 		if (!isleft && c == '&' && ebmuck) {
 			*e++ = '$';
