@@ -1132,10 +1132,9 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n') {
 			++linecount;
-			if (sizeof(int) == 4) {
+			if (sizeof(int) == 4)
 				if (linecount + cw->dol > MAXLINES)
 					i_printfExit(MSG_LineLimit);
-			}
 		}
 
 	if (destl == cw->dol)
