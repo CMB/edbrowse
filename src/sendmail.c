@@ -178,9 +178,8 @@ static char *qpEncode(const char *line)
 			char expand[4];
 			sprintf(expand, "=%02X", (uchar) c);
 			stringAndString(&newbuf, &l, expand);
-		} else {
+		} else
 			stringAndChar(&newbuf, &l, c);
-		}
 	}
 
 	return newbuf;
