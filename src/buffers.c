@@ -1778,10 +1778,10 @@ static int dircmp(const void *s, const void *t)
 			rc = 1;
 		if(!rc) {
 // Honor sub-second timestamp precision if the operating system supports it.
-		if (q->u.spec.tv_nsec < r->u.spec.tv_nsec)
-			rc = -1;
-		if (q->u.spec.tv_nsec > r->u.spec.tv_nsec)
-			rc = 1;
+			if (q->u.spec.tv_nsec < r->u.spec.tv_nsec)
+				rc = -1;
+			if (q->u.spec.tv_nsec > r->u.spec.tv_nsec)
+				rc = 1;
 		}
 #else
 		if (q->u.t < r->u.t)
