@@ -4497,11 +4497,10 @@ pwd:
 	if (stringEqual(line, "config")) {
 		readConfigFile();
 		setupEdbrowseCache();
-		if (curlActive) {
+		if (curlActive)
 			if (cookieFile)
 				curl_easy_setopt(global_http_handle,
 						 CURLOPT_COOKIEJAR, cookieFile);
-		}
 		return true;
 	}
 
