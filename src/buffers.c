@@ -6303,10 +6303,9 @@ replaceframe:
 			setError(MSG_NoBackup);
 			return false;
 		}
-		if (cx) {
-			if (!cxCompare(cx))
-				return false;
-		} else {
+		if (cx && !cxCompare(cx))
+			return false;
+		else {
 			cx = sideBuffer(0, emptyString, 0, NULL);
 			if (cx == 0)
 				return false;
