@@ -2730,13 +2730,11 @@ static void debrowseSuffix(char *s)
 {
 	if (!s)
 		return;
-	while (*s) {
+	for(; s++; s)
 		if (*s == '.' && stringEqual(s, ".browse")) {
 			*s = 0;
 			return;
 		}
-		++s;
-	}
 }				/* debrowseSuffix */
 
 // macro substitutions within the command line.
