@@ -3150,18 +3150,16 @@ top:
 	if (ci)
 		re_opt |= PCRE_CASELESS;
 
-	if (re_utf8) {
-		if (cons_utf8 && !cw->binMode && try8 >= 0) {
-			if (try8 == 0) {
-				const char *s = getenv("PCREUTF8");
-				if (s && stringEqual(s, "off")) {
-					try8 = -1;
-					goto top;
-				}
-			}
-			try8 = 1;
-			re_opt |= PCRE_UTF8;
+	if (re_utf8 && cons_utf8 && !cw->binMode && try8 >= 0) {
+		if (try8 == 0) {
+		        const char *s = getenv("PCREUTF8");
+		        if (s && stringEqual(s, "off")) {
+		    	    try8 = -1;
+		    	    goto top;
+		        }
 		}
+		try8 = 1;
+		re_opt |= PCRE_UTF8;
 	}
 
 	re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
