@@ -4515,7 +4515,7 @@ pwd:
 				setError(MSG_NoBrowse);
 				return false;
 			}
-		return showHeaders(cw->dot);
+			return showHeaders(cw->dot);
 		}
 		showColumns();
 		return true;
