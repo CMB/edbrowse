@@ -1836,52 +1836,48 @@ nokeyword:
 		if (!strchr("fmertsb", c) && !nest)
 			cfgLine0(MSG_EBRC_StatNotInFn);
 
-		if (c == 'm') {
-			mailblock = 1;
-			if (maxAccount == MAXACCOUNT)
-				cfgAbort1(MSG_EBRC_ManyAcc, MAXACCOUNT);
-			act = accounts + maxAccount;
-			continue;
-		}
+		switch (c) {
+			case 'm':
+				mailblock = 1;
+				if (maxAccount == MAXACCOUNT)
+					cfgAbort1(MSG_EBRC_ManyAcc, MAXACCOUNT);
+				act = accounts + maxAccount;
+				break;
 
-		if (c == 'e') {
-			mimeblock = true;
-			if (maxMime == MAXMIME)
-				cfgAbort1(MSG_EBRC_ManyTypes, MAXMIME);
-			mt = mimetypes + maxMime;
-			continue;
-		}
+			case 'e':
+				mimeblock = true;
+				if (maxMime == MAXMIME)
+					cfgAbort1(MSG_EBRC_ManyTypes, MAXMIME);
+				mt = mimetypes + maxMime;
+				break;
 
-		if (c == 'b') {
-			tabblock = true;
-			if (numTables == MAXDBT)
-				cfgAbort1(MSG_EBRC_ManyTables, MAXDBT);
-			td = dbtables + numTables;
-			continue;
-		}
+			case 'b':
+				tabblock = true;
+				if (numTables == MAXDBT)
+					cfgAbort1(MSG_EBRC_ManyTables, MAXDBT);
+				td = dbtables + numTables;
+				break;
 
-		if (c == 'r') {
-			mailblock = 2;
-			continue;
-		}
+			case 'r':
+				mailblock = 2;
+				break;
 
-		if (c == 't') {
-			mailblock = 3;
-			continue;
-		}
+			case 't':
+				mailblock = 3;
+				break;
 
-		if (c == 's') {
-			mailblock = 4;
-			continue;
-		}
+			case 's':
+				mailblock = 4;
+				break;
 
-		if (c == 'f') {
-			stack[++nest] = c;
-			sn = ebhosts_avail;
-			t[-1] = 0;
-			add_ebhost(t, 'f');
-			ebhosts[sn].prot = s + 2;
-			goto putback;
+			case 'f':
+				stack[++nest] = c;
+				sn = ebhosts_avail;
+				t[-1] = 0;
+				add_ebhost(t, 'f');
+				ebhosts[sn].prot = s + 2;
+				goto putback;
+				break;
 		}
 
 		if ((unsigned)(++nest) >= sizeof(stack))
