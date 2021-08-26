@@ -5983,13 +5983,12 @@ replaceframe:
 		line = configFile;
 
 /* env variable and wild card expansion */
-	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
+	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line))
 		if (cmd != 'r' || !cw->sqlMode) {
 			if (!envFile(line, &line))
 				return false;
 			first = *line;
 		}
-	}
 
 	if (cmd == 'z') {
 		if (isdigitByte(first)) {
