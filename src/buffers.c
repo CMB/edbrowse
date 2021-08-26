@@ -1870,16 +1870,18 @@ static bool readDirectory(const char *filename)
 		}
 		ftype = tolower(ftype);
 		c = 0;
-		if (ftype == 'd')
-			c = '/';
-		if (ftype == 's')
-			c = '^';
-		if (ftype == 'c')
-			c = '<';
-		if (ftype == 'b')
-			c = '*';
-		if (ftype == 'p')
-			c = '|';
+		switch (ftype) {
+			case 'd':
+				c = '/';
+			case 's':
+				c = '^';
+			case 'c':
+				c = '<';
+			case 'b':
+				c = '*';
+			case 'p':
+				c = '|';
+		}
 		if (c) {
 			if (!cw->dirMode)
 				*t = c, *++t = '\n';
