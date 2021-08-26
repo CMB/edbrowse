@@ -309,10 +309,8 @@ const char *findProxyForURL(const char *url)
 			while (*s) {
 				t = strchr(s, '|');
 				if (t)
-					*t = 0;
-				rc = stringEqualCI(s, prot);
-				if (t)
 					*t = '|';
+				rc = stringEqualCI(s, prot);
 				if (rc)
 					goto domain;
 				if (!t)
