@@ -5340,11 +5340,9 @@ static bool balanceLine(const char *line)
 		if (direction > 0 && (level = forward) == 0) {
 			setError(MSG_BalanceNoOpen, c);
 			return false;
-		} else {
-			if ((level = backward) == 0) {
-				setError(MSG_BalanceNoOpen, d);
-				return false;
-			}
+		} else if ((level = backward) == 0) {
+			setError(MSG_BalanceNoOpen, d);
+			return false;
 		}
 	} else {
 
