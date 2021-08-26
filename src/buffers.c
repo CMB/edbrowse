@@ -6102,10 +6102,10 @@ replaceframe:
 	}
 
 	if (cmd == 'q') {
-		if (cx) {
+		if (cx)
 			if (!cxCompare(cx) || !cxActive(cx))
 				return false;
-		} else {
+		else {
 			cx = context;
 			if (first) {
 				setError(MSG_QAfter);
