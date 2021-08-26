@@ -360,9 +360,7 @@ const char *mailRedirect(const char *to, const char *from,
 
 		switch (type) {
 		case 'r':
-			if (stringEqualCI(m, from))
-				return r;
-			if (stringEqualCI(m, reply))
+			if (stringEqualCI(m, from) || stringEqualCI(m, reply))
 				return r;
 			if (*m == '@' && mlen < rlen &&
 			    stringEqualCI(m, reply + rlen - mlen))
