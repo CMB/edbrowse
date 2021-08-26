@@ -96,7 +96,7 @@ static int closeString(char *s, char delim)
 	int pc = 0;		// paren count
 	if (delim == '"' || delim == '\'')
 		qc = delim;
-	for (i = 0; (c = s[i]); ++i) {
+	for (i = 0; c = s[i]; ++i) {
 		if (c == qc) {	// close quote
 			if (delim == qc)
 				return i + 1;
