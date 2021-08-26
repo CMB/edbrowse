@@ -3152,11 +3152,11 @@ top:
 
 	if (re_utf8 && cons_utf8 && !cw->binMode && try8 >= 0) {
 		if (try8 == 0) {
-		        const char *s = getenv("PCREUTF8");
-		        if (s && stringEqual(s, "off")) {
-		    	    try8 = -1;
-		    	    goto top;
-		        }
+			const char *s = getenv("PCREUTF8");
+			if (s && stringEqual(s, "off")) {
+				try8 = -1;
+				goto top;
+			}
 		}
 		try8 = 1;
 		re_opt |= PCRE_UTF8;
