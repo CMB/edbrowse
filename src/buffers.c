@@ -6135,9 +6135,7 @@ replaceframe:
 	if (cmd == 'f') {
 		selfFrame();
 		if (cx) {
-			if (!cxCompare(cx))
-				return false;
-			if (!cxActive(cx))
+			if (!cxCompare(cx) || !cxActive(cx))
 				return false;
 			s = sessionList[cx].lw->f0.fileName;
 			if (s)
