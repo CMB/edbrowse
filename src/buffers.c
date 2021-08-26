@@ -3715,15 +3715,13 @@ findField(const char *line, int ftype, int n,
 /* Second time through, maybe the url is in plain text. */
 	nmh = 0;
 	s = line;
-	while (true) {
+	while (c != '\n') {
 /* skip past weird characters */
 		while ((c = *s) != '\n') {
 			if (strchr(urlok, c))
 				break;
 			++s;
 		}
-		if (c == '\n')
-			break;
 		ss = s;
 		while (strchr(urlok, *s))
 			++s;
