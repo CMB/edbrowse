@@ -122,10 +122,8 @@ freefail:
 		/* nl */
 		if ((c == ' ' || c == '\t') && (state == 0 || state == 2))
 			continue;
-		if (state == 0)
-			state = 1;
-		if (state == 2)
-			state = 3;
+		if (state == 0 || state == 2)
+			state++
 		*t++ = c;
 	}
 
