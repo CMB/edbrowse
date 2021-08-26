@@ -3590,12 +3590,7 @@ replaceText(const char *line, int len, const char *rhs,
 			break;
 	}			/* loop matching the regular expression */
 
-	if (!instance) {
-		nzFree(r);
-		return false;
-	}
-
-	if (!global &&instance < nth) {
+	if (!instance || (!global && instance < nth) {
 		nzFree(r);
 		return false;
 	}
