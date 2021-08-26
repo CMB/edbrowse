@@ -258,7 +258,7 @@ bool javaOK(const char *url)
 		return true;
 	for (j = 0; (unsigned)j < ebhosts_avail; ++j)
 		if (ebhosts[j].type == 'j' &&
-		    patternMatchURL(url, ebhosts[j].host))
+			patternMatchURL(url, ebhosts[j].host))
 			return false;
 	return true;
 }
@@ -271,7 +271,7 @@ bool mustVerifyHost(const char *url)
 		return false;
 	for (i = 0; i < ebhosts_avail; i++)
 		if (ebhosts[i].type == 'v' &&
-		    patternMatchURL(url, ebhosts[i].host))
+			patternMatchURL(url, ebhosts[i].host))
 			return false;
 	return true;
 }				/* mustVerifyHost */
@@ -363,7 +363,7 @@ const char *mailRedirect(const char *to, const char *from,
 			if (stringEqualCI(m, from) || stringEqualCI(m, reply))
 				return r;
 			if (*m == '@' && mlen < rlen &&
-			    stringEqualCI(m, reply + rlen - mlen))
+				stringEqualCI(m, reply + rlen - mlen))
 				return r;
 			break;
 
