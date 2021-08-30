@@ -166,7 +166,7 @@ struct MIF {
 	int seqno;
 	int size;
 	char *cbase;		/* allocated string containing the following */
-	char *subject, *from, *reply;
+	char *subject, *from, *to, *reply;
 // references, principal recipient, carbon recipient
 	char *refer, *prec, *ccrec;
 	time_t sent;
@@ -900,34 +900,42 @@ static char *nextRealQuote(char *p)
 	return r;
 }
 
-static bool grabEmailFromEnvelope(char **t0, char **u0)
+static bool grabEmailFromEnvelope(char **t0,
+char **name, char **addr)
 {
 	char *t = *t0, *u;
-// skip past NIL or NIL NIL
-	if (!strncmp(t, "NIL ", 4))
+	if(!strncmp(t, "NIL ", 4)) {
 		t += 4;
-	if (!strncmp(t, "NIL ", 4))
-		t += 4;
-// I assume these fields are quoted
-	if (*t != '"')
+	} else {
+		if(*t != '"')
+			return false;
+		u = nextRealQuote(++t);
+		if (!u)
+			return false;
+		*u = 0;
+		if(name)
+			*name = t;
+		*t0 = t = u + 2;
+	}
+// next should come NIL "email" "domain"
+	if (strncmp(t, "NIL \"", 5))
 		return false;
-	*t0 = ++t;
+	t += 5;
 	u = strchr(t, '"');
 	if (!u)
 		return false;
 	*u = '@';
-	++u;
-	while (*u == ' ')
-		++u;
+	u += 2;
 	if (*u != '"')
 		return false;
-	++u;
-	strmove(strchr(t, '@') + 1, u);
+	strmove(strchr(t, '@') + 1, u + 1);
 	u = strchr(t, '"');
 	if (!u)
 		return false;
+	if(addr)
+		*addr = t;
 	*u = 0;
-	*u0 = u;
+	*t0 = u + 1;
 	return true;
 }
 
@@ -980,6 +988,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->cbase = mailstring;
 		mif->subject = emptyString;
 		mif->from = emptyString;
+		mif->to = emptyString;
 		mif->reply = emptyString;
 		mif->prec = emptyString;
 		mif->ccrec = emptyString;
@@ -1050,23 +1059,12 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 			++t;
 		if (strncmp(t, "((\"", 3))
 			goto doref;
-		t += 3;
-		u = nextRealQuote(t);
-		if (!u)
+		t += 2;
+		if (!grabEmailFromEnvelope(&t, &mif->from, &mif->reply))
 			goto doref;
-		*u = 0;
-		mif->from = t;
-		t = u + 1;
-
-		while (*t == ' ')
-			++t;
-		if (!grabEmailFromEnvelope(&t, &u))
-			goto doref;
-		mif->reply = t;
-		t = u + 1;
 
 // We have parsed from-reply in block 1, block 4 contains the recipients,
-// I think, I'm not sure.
+// Don't know what is in blocks 2 and 3.
 		u = strstr(t, "(("); // block 2
 		if(!u)
 			goto doref;
@@ -1079,22 +1077,23 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		if(!u)
 			goto doref;
 		t = u + 2;
-		if (!grabEmailFromEnvelope(&t, &u))
+		if (!grabEmailFromEnvelope(&t, &mif->to, &mif->prec))
 			goto doref;
-		mif->prec = t;
-		t = u + 1;
 
 // block 5 is the carbon copies, I guess, I don't know.
 // It doesn't have to be there.
+// Block 6 is bcc.
+#if 0
 		u = strstr(t, ")) (("); // block 5
+		u = strstr(t, ")) NIL (("); // block 6
 		if(!u)
 			goto doref;
 		t = u + 5;
-		if (!grabEmailFromEnvelope(&t, &u))
+		if (!grabEmailFromEnvelope(&t, &f->ccrec, 0))
 			goto doref;
-		mif->ccrec = t;
-		t = u + 1;
-//  printf("%s %s %s\n", mif->reply, mif->prec, mif->ccrec);
+#endif
+
+//  printf("%s %s %s %s\n", mif->from, mif->reply, mif->to, mif->prec);
 
 doref:
 /* find the reference string, for replies */
