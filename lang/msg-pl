@@ -318,7 +318,7 @@ edbrowse nie został skompilowany z dostępem do bazy danych
 brakujący alias w wierszu książki adresowej %d
 brakujący ':' w wierszu książki adresowej %d
 alias w wierszu książki adresowej %d jest zbyt długi, limit 15 znaków
-email w wierszu książki adresowej %d jest zbyt długi, limit 63 znaków
+email w wierszu książki adresowej %d jest zbyt długi, limit %d znaków
 email w wierszu książki adresowej %d nie zawiera '@'
 w emailu nie może być spacji, wiersz %d książki adresowej
 niedrukowalny znak w Twoim aliasie lub emailu, wiersz %d książki adresowej

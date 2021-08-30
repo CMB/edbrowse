@@ -318,7 +318,7 @@ o edbrowse não foi compilado com acesso a bancos de dado
 faltando apelido na linha %d do catálogo de endereços
 faltando : na linha %d do catálogo de endereços
 o apelido na linha %d do catálogo de endereços é comprido demais; o limite é de 15 caracteres
-o e-mail na linha %d do catálogo de endereços é comprido demais; o limite é de 63 caracteres
+o e-mail na linha %d do catálogo de endereços é comprido demais; o limite é de %d caracteres
 o e-mail na linha %d do catálogo de endereços não possui uma @
 impossível deixar espaços em branco em endereços de e-mail; linha %d do catálogo de endereços
 caracteres não imprimíveis no apelido ou no e-mail; linha %d do catálogo de endereços

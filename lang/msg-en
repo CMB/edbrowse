@@ -318,7 +318,7 @@ edbrowse was not compiled with database access
 missing alias in address book line %d
 missing : in address book line %d
 alias in address book line %d is too long, limit 15 characters
-email in address book line %d is too long, limit 63 characters
+email in address book line %d is too long, limit %d characters
 email in address book line %d does not have an @
 cannot handle whitespace in email, address book line %d
 unprintable characters in your alias or email, address book line %d

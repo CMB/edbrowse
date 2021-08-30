@@ -17,8 +17,8 @@ static char subjectLine[400];
 static int mailAccount;
 
 static struct ALIAS {
-	char name[16];
-	char email[64];
+	char brief[16];
+	char email[112];
 } *addressList;
 static int nads;		/* number of addresses */
 static time_t adbooktime;
@@ -91,8 +91,8 @@ freefail:
 					goto freefail;
 				}
 				++v;
-				if (t - v >= 64) {
-					setError(MSG_ABMailLong, ln - 1);
+				if (t - v >= 112) {
+					setError(MSG_ABMailLong, ln - 1, 112 - 1);
 					goto freefail;
 				}
 				if (!strchr(v, '@')) {
@@ -140,8 +140,8 @@ freefail:
 		j = 0;
 		for (s = buf; *s; s = t + 1, ++j) {
 			t = strchr(s, ':');
-			memcpy(addressList[j].name, s, t - s);
-			addressList[j].name[t - s] = 0;
+			memcpy(addressList[j].brief, s, t - s);
+			addressList[j].brief[t - s] = 0;
 			s = t + 1;
 			t = strchr(s, '\n');
 			memcpy(addressList[j].email, s, t - s);
@@ -159,7 +159,7 @@ const char *reverseAlias(const char *reply)
 	int i;
 	for (i = 0; i < nads; ++i)
 		if (stringEqual(reply, addressList[i].email)) {
-			const char *a = addressList[i].name;
+			const char *a = addressList[i].brief;
 			if (*a == '!')
 				break;
 			return a;
@@ -900,7 +900,7 @@ sendMail(int account, const char **recipients, const char *body,
 			continue;
 		t = 0;
 		for (i = 0; i < nads; ++i) {
-			const char *a = addressList[i].name;
+			const char *a = addressList[i].brief;
 			if (*a == '-' || *a == '!')
 				++a;
 			if (!stringEqual(s, a))
