@@ -167,7 +167,8 @@ struct MIF {
 	int size;
 	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *reply;
-	char *refer, *prec;
+// references, principal recipient, this recipient
+	char *refer, *prec, *trec;
 	time_t sent;
 	bool seen, gone, line2;
 };
@@ -899,6 +900,37 @@ static char *nextRealQuote(char *p)
 	return r;
 }
 
+static bool grabEmailFromEnvelope(char **t0, char **u0)
+{
+	char *t = *t0, *u;
+// skip past NIL or NIL NIL
+	if (!strncmp(t, "NIL ", 4))
+		t += 4;
+	if (!strncmp(t, "NIL ", 4))
+		t += 4;
+// I assume these fields are quoted
+	if (*t != '"')
+		return false;
+	*t0 = ++t;
+	u = strchr(t, '"');
+	if (!u)
+		return false;
+	*u = '@';
+	++u;
+	while (*u == ' ')
+		++u;
+	if (*u != '"')
+		return false;
+	++u;
+	strmove(strchr(t, '@') + 1, u);
+	u = strchr(t, '"');
+	if (!u)
+		return false;
+	*u = 0;
+	*u0 = u;
+	return true;
+}
+
 static void envelopes(CURL * handle, struct FOLDER *f)
 {
 	int j;
@@ -950,6 +982,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->from = emptyString;
 		mif->reply = emptyString;
 		mif->prec = emptyString;
+		mif->trec = emptyString;
 
 		t = strstr(mailstring, "ENVELOPE (");
 		if (!t) {
@@ -1027,30 +1060,8 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 
 		while (*t == ' ')
 			++t;
-		if (strncmp(t, "NIL", 3))
+		if (!grabEmailFromEnvelope(&t, &u))
 			goto doref;
-		t += 3;
-		while (*t == ' ')
-			++t;
-/* again assuming each field is quoted */
-		if (*t != '"')
-			goto doref;
-		++t;
-		u = strchr(t, '"');
-		if (!u)
-			goto doref;
-		*u = '@';
-		++u;
-		while (*u == ' ')
-			++u;
-		if (*u != '"')
-			goto doref;
-		++u;
-		strmove(strchr(t, '@') + 1, u);
-		u = strchr(t, '"');
-		if (!u)
-			goto doref;
-		*u = 0;
 		mif->reply = t;
 		t = u + 1;
 
@@ -1068,51 +1079,21 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		if(!u)
 			goto doref;
 		t = u + 2;
-		if(!strncmp(t, "NIL", 3)) {
-			t += 3;
-		} else {
-			if (*t != '"')
-				goto doref;
-			t = strchr(++t, '"');
-			if (!t)
-				goto doref;
-			++t;
-	}
-		++t;
-		if(!strncmp(t, "NIL", 3)) {
-			t += 3;
-		} else {
-			if (*t != '"')
-				goto doref;
-			t = strchr(++t, '"');
-			if (!t)
-				goto doref;
-			++t;
-	}
-		++t;
-/* again assuming each field is quoted */
-		if (*t != '"')
+		if (!grabEmailFromEnvelope(&t, &u))
 			goto doref;
-		++t;
-		u = strchr(t, '"');
-		if (!u)
-			goto doref;
-		*u = '@';
-		++u;
-		while (*u == ' ')
-			++u;
-		if (*u != '"')
-			goto doref;
-		++u;
-		strmove(strchr(t, '@') + 1, u);
-		u = strchr(t, '"');
-		if (!u)
-			goto doref;
-		*u = 0;
 		mif->prec = t;
 		t = u + 1;
-// block 5 is this recipient, which should just be you,
-// so no need to capture that.
+
+// block 5 is this recipient, which should just be you.
+// Capture it so we can compare with principal recipient.
+		u = strstr(t, "(("); // block 5
+		if(!u)
+			goto doref;
+		t = u + 2;
+		if (!grabEmailFromEnvelope(&t, &u))
+			goto doref;
+		mif->trec = t;
+		t = u + 1;
 
 doref:
 /* find the reference string, for replies */
@@ -1364,7 +1345,7 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 	close(umfd);
 
 	return res;
-}				/* fetchOneMessage */
+}
 
 static CURLcode deleteOneMessage(CURL * handle)
 {
@@ -1376,7 +1357,7 @@ static CURLcode deleteOneMessage(CURL * handle)
 		return res;
 	res = getMailData(handle);
 	return res;
-}				/* deleteOneMessage */
+}
 
 static CURLcode count_messages(CURL * handle, int *message_count)
 {
@@ -1526,7 +1507,7 @@ refresh:
 
 	*message_count = num_messages;
 	return CURLE_OK;
-}				/* count_messages */
+}
 
 /* Returns number of messages fetched */
 int fetchMail(int account)
@@ -1591,7 +1572,7 @@ fetchmail_cleanup:
 	nzFree(mailstring);
 	mailstring = initString(&mailstring_l);
 	return nfetch;
-}				/* fetchMail */
+}
 
 /* fetch from all accounts except those with nofetch or imap set */
 int fetchAllMail(void)
@@ -1621,7 +1602,7 @@ int fetchAllMail(void)
 	}
 
 	return nfetch;
-}				/* fetchAllMail */
+}
 
 static void readReplyInfo(void);
 static void writeReplyInfo(const char *addstring);
@@ -1670,7 +1651,7 @@ void scanMail(void)
 	}			/* loop over mail messages */
 
 	exit(0);
-}				/* scanMail */
+}
 
 /* a mail message is in mailstring, present it to the user */
 /* Return the key that was pressed.
@@ -1951,7 +1932,7 @@ afterinput:
 	if (delflag)
 		return 'd';
 	return strchr("smvbfp", key) ? key : 'n';
-}				/* presentMail */
+}
 
 /* Here are the common keywords for mail header lines.
  * These are in alphabetical order, so you can stick more in as you find them.
@@ -2047,7 +2028,7 @@ bool emailTest(void)
 	}			/* loop over lines */
 
 	return false;
-}				/* emailTest */
+}
 
 void mail64Error(int err)
 {
@@ -2059,7 +2040,7 @@ void mail64Error(int err)
 		runningError(MSG_AttAfterChars);
 		break;
 	}			/* switch on error code */
-}				/* mail64Error */
+}
 
 static void unpackQP(struct MHINFO *w)
 {
@@ -2087,7 +2068,7 @@ static void unpackQP(struct MHINFO *w)
 	}
 	w->end = r;
 	*r = 0;
-}				/* unpackQP */
+}
 
 /* Look for the name of the attachment and boundary */
 static void ctExtras(struct MHINFO *w, const char *s, const char *t)
@@ -2152,7 +2133,7 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 			break;
 		}
 	}			/* multi or alt */
-}				/* ctExtras */
+}
 
 static void isoDecode(char *vl, char **vrp)
 {
@@ -2250,7 +2231,7 @@ finish:
 	}
 
 	*vrp = vr;
-}				/* isoDecode */
+}
 
 /* mail header reformat, to/from utf8 */
 static void mhReformat(char *line)
