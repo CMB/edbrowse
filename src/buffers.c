@@ -6756,7 +6756,7 @@ rebrowse:
 			if (body)
 				ql += strlen(body);
 			q = allocMem(ql + 1);
-			sprintf(q, "to:%s\nSubject:%s\n%s", addr,
+			sprintf(q, "to:%s\nsubject:%s\n%s", addr,
 				subj ? subj : "Hello", body ? body : "");
 			j = addTextToBuffer((pst) q, ql, 0, false);
 			nzFree(q);

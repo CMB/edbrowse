@@ -18,7 +18,8 @@ static int mailAccount;
 
 static struct ALIAS {
 	char brief[16];
-	char email[112];
+	char email[100];
+	char fullname[100 + 4];
 } *addressList;
 static int nads;		/* number of addresses */
 static time_t adbooktime;
@@ -81,6 +82,7 @@ freefail:
 				goto freefail;
 			}
 			if (state == 3) {
+				bool greater = false;
 				++nads;
 				while (isspaceByte(t[-1]))
 					--t;
@@ -91,23 +93,24 @@ freefail:
 					goto freefail;
 				}
 				++v;
-				if (t - v >= 112) {
-					setError(MSG_ABMailLong, ln - 1, 112 - 1);
+				if (t - v >= 100) {
+					setError(MSG_ABMailLong, ln - 1, 100 - 1);
 					goto freefail;
 				}
 				if (!strchr(v, '@')) {
 					setError(MSG_ABNoAt, ln - 1);
 					goto freefail;
 				}
-				if (strpbrk(v, " \t")) {
-					setError(MSG_ABMailSpaces, ln - 1);
-					goto freefail;
-				}
 
 				while (last < t) {
 					if (!isprintByte(*last)) {
-						setError(MSG_AbMailUnprintable,
-							 ln - 1);
+						setError(MSG_AbMailUnprintable, ln - 1);
+						goto freefail;
+					}
+					if(*last == '>')
+						greater = true;
+					if ((*last == ' ' || *last == '\t') && !greater) {
+						setError(MSG_ABMailSpaces, ln - 1);
 						goto freefail;
 					}
 					++last;
@@ -146,9 +149,15 @@ freefail:
 			t = strchr(s, '\n');
 			memcpy(addressList[j].email, s, t - s);
 			addressList[j].email[t - s] = 0;
+			addressList[j].fullname[0] = 0;
+			if ((v = strchr(addressList[j].email, '>'))) {
+				*v++ = 0;
+				sprintf(addressList[j].fullname,
+				"%s <%s>", v, addressList[j].email);
+			}
 		}
 	}
-	/* aliases are present */
+
 	nzFree(buf);
 	adbooktime = mtime;
 	return true;
@@ -906,6 +915,8 @@ sendMail(int account, const char **recipients, const char *body,
 			if (!stringEqual(s, a))
 				continue;
 			t = addressList[i].email;
+			if(addressList[i].fullname[0])
+				t = addressList[i].fullname;
 			debugPrint(3, " %s becomes %s", s, t);
 			break;
 		}
