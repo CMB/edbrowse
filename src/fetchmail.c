@@ -167,7 +167,7 @@ struct MIF {
 	int size;
 	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *reply;
-	char *refer;
+	char *refer, *prec;
 	time_t sent;
 	bool seen, gone, line2;
 };
@@ -728,7 +728,7 @@ imap_done:
 				t[-1] = 0, --mailstring_l;
 			t = strrchr(mailstring, '\n');
 			if (t && t - 2 >= mailstring &&
-			    !strncmp(t - 2, "\n)\n", 3) && strstr(t, "Fetch completed")) {
+			    !strncmp(t - 2, "\n)\n", 3) && strstr(t, " OK ")) {
 				--t;
 				*t = 0;
 				mailstring_l = t - mailstring;
@@ -949,6 +949,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->subject = emptyString;
 		mif->from = emptyString;
 		mif->reply = emptyString;
+		mif->prec = emptyString;
 
 		t = strstr(mailstring, "ENVELOPE (");
 		if (!t) {
@@ -1052,6 +1053,66 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		*u = 0;
 		mif->reply = t;
 		t = u + 1;
+
+// We have parsed from-reply in block 1, block 4 contains principal recipient,
+// I think, I'm not sure.
+		u = strstr(t, "(("); // block 2
+		if(!u)
+			goto doref;
+		t = u + 2;
+		u = strstr(t, "(("); // block 3
+		if(!u)
+			goto doref;
+		t = u + 2;
+		u = strstr(t, "(("); // block 4
+		if(!u)
+			goto doref;
+		t = u + 2;
+		if(!strncmp(t, "NIL", 3)) {
+			t += 3;
+		} else {
+			if (*t != '"')
+				goto doref;
+			t = strchr(++t, '"');
+			if (!t)
+				goto doref;
+			++t;
+	}
+		++t;
+		if(!strncmp(t, "NIL", 3)) {
+			t += 3;
+		} else {
+			if (*t != '"')
+				goto doref;
+			t = strchr(++t, '"');
+			if (!t)
+				goto doref;
+			++t;
+	}
+		++t;
+/* again assuming each field is quoted */
+		if (*t != '"')
+			goto doref;
+		++t;
+		u = strchr(t, '"');
+		if (!u)
+			goto doref;
+		*u = '@';
+		++u;
+		while (*u == ' ')
+			++u;
+		if (*u != '"')
+			goto doref;
+		++u;
+		strmove(strchr(t, '@') + 1, u);
+		u = strchr(t, '"');
+		if (!u)
+			goto doref;
+		*u = 0;
+		mif->prec = t;
+		t = u + 1;
+// block 5 is this recipient, which should just be you,
+// so no need to capture that.
 
 doref:
 /* find the reference string, for replies */
