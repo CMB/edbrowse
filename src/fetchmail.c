@@ -167,8 +167,8 @@ struct MIF {
 	int size;
 	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *reply;
-// references, principal recipient, this recipient
-	char *refer, *prec, *trec;
+// references, principal recipient, carbon recipient
+	char *refer, *prec, *ccrec;
 	time_t sent;
 	bool seen, gone, line2;
 };
@@ -982,7 +982,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->from = emptyString;
 		mif->reply = emptyString;
 		mif->prec = emptyString;
-		mif->trec = emptyString;
+		mif->ccrec = emptyString;
 
 		t = strstr(mailstring, "ENVELOPE (");
 		if (!t) {
@@ -1065,7 +1065,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->reply = t;
 		t = u + 1;
 
-// We have parsed from-reply in block 1, block 4 contains principal recipient,
+// We have parsed from-reply in block 1, block 4 contains the recipients,
 // I think, I'm not sure.
 		u = strstr(t, "(("); // block 2
 		if(!u)
@@ -1084,16 +1084,17 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->prec = t;
 		t = u + 1;
 
-// block 5 is this recipient, which should just be you.
-// Capture it so we can compare with principal recipient.
-		u = strstr(t, "(("); // block 5
+// block 5 is the carbon copies, I guess, I don't know.
+// It doesn't have to be there.
+		u = strstr(t, ")) (("); // block 5
 		if(!u)
 			goto doref;
-		t = u + 2;
+		t = u + 5;
 		if (!grabEmailFromEnvelope(&t, &u))
 			goto doref;
-		mif->trec = t;
+		mif->ccrec = t;
 		t = u + 1;
+//  printf("%s %s %s\n", mif->reply, mif->prec, mif->ccrec);
 
 doref:
 /* find the reference string, for replies */
