@@ -142,6 +142,30 @@ static char *mailbox_url, *message_url;
 
 int imapfetch = 100;
 static bool earliest;
+static const char envelopeFormatChars[] = "tfsdz";
+// to from subject date size
+static char envelopeFormat[6] = {'f', 's'}; // default is from subject
+
+static bool setEnvelopeFormat(const char *s)
+{
+	char c;
+	int i, j;
+	char count[6];
+// check
+	for(j=0; (c = s[j]); ++j)
+		if(!strchr(envelopeFormatChars, c))
+			return false;
+	memset(count, 0, sizeof(count));
+	for(i=0; (c = *s); ++s) {
+		j = strchr(envelopeFormatChars, c) - envelopeFormatChars;
+		if(count[j])
+			continue;
+		count[j] = 1;
+		envelopeFormat[i++] = c;
+	}
+	envelopeFormat[i] = 0;
+	return true;
+}
 
 static void setLimit(const char *t)
 {
@@ -506,6 +530,8 @@ static void printEnvelope(const struct MIF *mif)
 	char *envp;		// print the envelope concisely
 	char *envp_end;
 	int envp_l;
+	int i;
+	char c;
 	envp = initString(&envp_l);
 #if 0
 	if (!mif->seen)
@@ -513,18 +539,34 @@ static void printEnvelope(const struct MIF *mif)
 #endif
 	if(mif->line2 && debugLevel >= 3)
 		stringAndString(&envp, &envp_l, "~ ");
-	stringAndString(&envp, &envp_l, mif->from);
-	stringAndString(&envp, &envp_l, ": ");
-	stringAndString(&envp, &envp_l, mif->subject);
-	if (mif->sent) {
-		stringAndChar(&envp, &envp_l, ' ');
-		stringAndString(&envp, &envp_l, conciseTime(mif->sent));
+
+	for (i = 0; (c = envelopeFormat[i]); ++i) {
+		if(i)
+			stringAndString(&envp, &envp_l, " | ");
+		switch(c) {
+		case 'f':
+			stringAndString(&envp, &envp_l, mif->from[0] ? mif->from : mif->reply);
+			break;
+		case 't':
+			stringAndString(&envp, &envp_l, mif->to[0] ? mif->to : mif->prec);
+			break;
+		case 's':
+			stringAndString(&envp, &envp_l, mif->subject);
+			break;
+		case 'd':
+			if (mif->sent)
+				stringAndString(&envp, &envp_l, conciseTime(mif->sent));
+			break;
+		case 'z':
+			stringAndString(&envp, &envp_l, conciseSize(mif->size));
+			break;
+		}
 	}
-	stringAndChar(&envp, &envp_l, ' ');
-	stringAndString(&envp, &envp_l, conciseSize(mif->size));
+
 	envp_end = envp + envp_l;
 	isoDecode(envp, &envp_end);
 	*envp_end = 0;
+
 // Resulting line could contain utf8, use the portable puts routine.
 	eb_puts(envp);
 	nzFree(envp);
@@ -655,7 +697,7 @@ action:
 		postkey = 0;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbfdslmnp gwWuUa/");
+		key = getLetter("h?qvbfdsmnp gwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -805,6 +847,7 @@ imap_done:
 			break;
 		}
 
+#if 0
 		if (key == 'l') {
 			i_printf(MSG_Limit);
 			fflush(stdout);
@@ -813,6 +856,7 @@ imap_done:
 			setLimit(inputline);
 			goto action;
 		}
+#endif
 
 		if (key == 'm') {
 			struct FOLDER *g;
@@ -1419,6 +1463,10 @@ refresh:
 			setLimit(t + 1);
 			goto input;
 		}
+
+		if (*t == 'e' && isspace(t[1]) &&
+		setEnvelopeFormat(t + 2))
+			goto input;
 
 		if (!strncmp(t, "create ", 7)) {
 			char *w;

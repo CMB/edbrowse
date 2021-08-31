@@ -44,7 +44,7 @@ brak słów kluczowych
 sesja %d\n
 Odnośnik SendMail. Stwórz wiadomość, wpisz 'sm' by wysłać, potem '^' by wrócić
 wiersz %d został zaktualizowany\n
-h\twyświetl pomoc\nq\tzakończ ten program\ns\tzakończ odczyt tego katalogu\nn\tidź do następnej wiadomości\nd\tusuń tę wiadomość\nm\tprzenieś tę wiadomość do innego katalogu\nspacja lub g\twczytaj wiadomość i zarządzaj nią\n/\tszukaj słów w temacie, polu nadawcy lub treści\nl\tustaw limit pobierania IMAP\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki\ns\tzakończ czytanie poczty z tego katalogu
+h\twyświetl pomoc\nq\tzakończ ten program\ns\tzakończ odczyt tego katalogu\nn\tidź do następnej wiadomości\nd\tusuń tę wiadomość\nm\tprzenieś tę wiadomość do innego katalogu\nspacja lub g\twczytaj wiadomość i zarządzaj nią\n/\tszukaj słów w temacie, polu nadawcy lub treści\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki\ns\tzakończ czytanie poczty z tego katalogu
 s string, wiadomości zawierające 'string' w temacie\nf string, wiadomości zawierające 'string' w polu nadawcy\nb string, wiadomości zawierające 'string' w treści\ngdy brak literowego polecenia, szukaj domyślnie w temacie.
 brak wiadomości
 przerwanie, wpisz 'qt' by zakończyć
