@@ -426,7 +426,7 @@ enum {
 	MSG_NoFolderMatch,
 	MSG_ManyFolderMatch,
 	MSG_Search,
-	MSG_Limit,
+	MSG_Envelope,
 	MSG_MoveTo,
 	MSG_SectionIgnored,
 	MSG_FileXEmpty,

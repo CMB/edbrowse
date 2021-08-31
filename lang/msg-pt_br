@@ -326,7 +326,7 @@ a última linha do catálogo de endereços não possui terminação
 nenhuma pastas contém %s\n
 várias pastas contém %s\n
 buscar 
-limite 
+0
 mover para 
 aviso: a URL do formulário especifica uma sessão %s que será ignorada\n
 arquivo %s vazio

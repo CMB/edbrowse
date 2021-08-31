@@ -153,10 +153,12 @@ static bool setEnvelopeFormat(const char *s)
 	char count[6];
 // check
 	for(j=0; (c = s[j]); ++j)
-		if(!strchr(envelopeFormatChars, c))
+		if(!strchr(envelopeFormatChars, c) && !isspace(c))
 			return false;
 	memset(count, 0, sizeof(count));
 	for(i=0; (c = *s); ++s) {
+		if(isspace(c))
+			continue;
 		j = strchr(envelopeFormatChars, c) - envelopeFormatChars;
 		if(count[j])
 			continue;
@@ -697,7 +699,7 @@ action:
 		postkey = 0;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbfdsmnp gwWuUa/");
+		key = getLetter("h?qvbefdsmnp gwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -857,6 +859,15 @@ imap_done:
 			goto action;
 		}
 #endif
+
+		if (key == 'e') {
+			i_printf(MSG_Envelope);
+			fflush(stdout);
+			if (!fgets(inputline, sizeof(inputline), stdin))
+				goto imap_done;
+			setEnvelopeFormat(inputline);
+			goto reaction;
+		}
 
 		if (key == 'm') {
 			struct FOLDER *g;
