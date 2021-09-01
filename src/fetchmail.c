@@ -1092,6 +1092,11 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		while (*t == ' ')
 			++t;
 
+		if(!strncmp(t, "NIL ", 4)) { // missing subject
+			t += 4;
+			goto doreply;
+		}
+
 // imap sometimes has number in braces, don't know why
 		sublength = -1;
 		if(*t == '{') {
@@ -1124,6 +1129,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		mif->subject = t;
 		t = u + 1;
 
+doreply:
 		while (*t == ' ')
 			++t;
 		if (strncmp(t, "((\"", 3))
