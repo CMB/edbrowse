@@ -9,6 +9,8 @@ Allow for to, cc, bcc, or attach in a mail descriptor.
 
 User can change the format of the imap envelope, which fields to print and in what order.
 
+Support email>name in the addressbook, wherein name is sent in the outgoing email.
+
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross compartment access, as in frames,

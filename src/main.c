@@ -274,7 +274,7 @@ bool mustVerifyHost(const char *url)
 		    patternMatchURL(url, ebhosts[i].host))
 			return false;
 	return true;
-}				/* mustVerifyHost */
+}
 
 /*********************************************************************
 Given a protocol and a domain, find the proxy server
@@ -402,7 +402,7 @@ const char *mailRedirect(const char *to, const char *from,
 
 	r = reverseAlias(reply);
 	return r;
-}				/* mailRedirect */
+}
 
 static void setupEdbrowseTempDirectory(void)
 {
@@ -458,7 +458,7 @@ static void setupEdbrowseTempDirectory(void)
 		}
 		chmod(ebUserDir, 0700);
 	}
-}				/* setupEdbrowseTempDirectory */
+}
 
 /*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
  *  set PATH=F:\Projects\software\bin;%PATH% ...
@@ -881,7 +881,7 @@ static const char *balance(const char *ip, int direction)
 	}
 
 	return ip;
-}				/* balance */
+}
 
 #define MAXNEST 20		// nested blocks
 /* Run an edbrowse function, as defined in the config file. */
@@ -1078,7 +1078,7 @@ fail:
 	nzFree(fncopy);
 	nzFree(allargs);
 	return false;
-}				/* runEbFunction */
+}
 
 struct DBTABLE *findTableDescriptor(const char *sn)
 {
@@ -1088,7 +1088,7 @@ struct DBTABLE *findTableDescriptor(const char *sn)
 		if (stringEqual(td->shortname, sn))
 			return td;
 	return 0;
-}				/* findTableDescriptor */
+}
 
 struct DBTABLE *newTableDescriptor(const char *name)
 {
@@ -1101,7 +1101,7 @@ struct DBTABLE *newTableDescriptor(const char *name)
 	td->name = td->shortname = cloneString(name);
 	td->ncols = 0;		/* it's already 0 */
 	return td;
-}				/* newTableDescriptor */
+}
 
 static char *configMemory;
 
@@ -1158,7 +1158,7 @@ static const char *const keywords[] = {
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
-	"adbook", 0
+	"adbook", "envelope", 0
 };
 
 /* Read the config file and populate the corresponding data structures. */
@@ -1692,11 +1692,15 @@ putc:
 				cacheSize = 10000;
 			continue;
 
-		case 40:	/* adbook */
+		case 40:	// adbook
 			addressFile = v;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_AbNotFile, v);
+			continue;
+
+		case 41:	// envelope
+			setEnvelopeFormat(v);
 			continue;
 
 		default:

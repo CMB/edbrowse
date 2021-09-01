@@ -54,6 +54,7 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 /* sourcefile=fetchmail.c */
+bool setEnvelopeFormat(const char *s);
 int fetchMail(int account);
 int fetchAllMail(void);
 void scanMail(void);
@@ -85,7 +86,7 @@ uchar base64Bits(char c);
 int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
-uchar fromHex(char d, char e) ;
+uchar fromHex(char d, char e);
 char *closeColor(const char *s);
 
 /* sourcefile=html.c */
@@ -99,8 +100,8 @@ void htmlMetaHelper(Tag *t);
 void prepareScript(Tag *t);
 bool isRooted(const Tag *t);
 void runScriptsPending(bool startbrowse);
-void preFormatCheck(int tagno, bool * pretag, bool * slash) ;
-char *htmlParse(char *buf, int remote) ;
+void preFormatCheck(int tagno, bool * pretag, bool * slash);
+char *htmlParse(char *buf, int remote);
 bool htmlTest(void) ;
 void infShow(int tagno, const char *search) ;
 bool itext(int d);

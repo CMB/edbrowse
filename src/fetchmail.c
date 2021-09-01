@@ -145,16 +145,30 @@ static bool earliest;
 static const char envelopeFormatChars[] = "tfsdz";
 // to from subject date size
 static char envelopeFormat[6] = {'f', 's'}; // default is from subject
+static char envelopeFormatDef[6] = { 'f', 's'};
 
-static bool setEnvelopeFormat(const char *s)
+bool setEnvelopeFormat(const char *s)
 {
 	char c;
+	bool something = false;
 	int i, j;
 	char count[6];
+
 // check
-	for(j=0; (c = s[j]); ++j)
-		if(!strchr(envelopeFormatChars, c) && !isspace(c))
+	for(j=0; (c = s[j]); ++j) {
+		if(isspace(c))
+			continue;
+		something = true;
+		if(!strchr(envelopeFormatChars, c))
 			return false;
+	}
+
+// e command alone resurrects the default
+	if(!something) {
+		strcpy(envelopeFormat, envelopeFormatDef);
+		return true;
+	}
+
 	memset(count, 0, sizeof(count));
 	for(i=0; (c = *s); ++s) {
 		if(isspace(c))
@@ -1475,9 +1489,14 @@ refresh:
 			goto input;
 		}
 
-		if (*t == 'e' && isspace(t[1]) &&
-		setEnvelopeFormat(t + 2))
-			goto input;
+		if (*t == 'e') {
+			if(!t[1]) {
+				setEnvelopeFormat("");
+				goto input;
+			}
+			if(isspace(t[1]) && setEnvelopeFormat(t + 2))
+				goto input;
+		}
 
 		if (!strncmp(t, "create ", 7)) {
 			char *w;
@@ -1579,6 +1598,9 @@ int fetchMail(int account)
 	CURLcode res = CURLE_OK;
 	const char *url_for_error;
 	int message_count = 0, message_number;
+
+// remember the envelope format we got from the config file
+	strcpy(envelopeFormatDef, envelopeFormat);
 
 	get_mailbox_url(a);
 	url_for_error = mailbox_url;
@@ -2304,7 +2326,7 @@ static void mhReformat(char *line)
 		tbuf[MHLINE - 1] = 0;
 	strcpy(line, tbuf);
 	nzFree(tbuf);
-}				/* mhReformat */
+}
 
 static void extractLessGreater(char *s)
 {
@@ -2315,7 +2337,7 @@ static void extractLessGreater(char *s)
 		*vr = 0;
 		strmove(s, vl + 1);
 	}
-}				/* extractLessGreater */
+}
 
 /* Now that we know it's mail, see what information we can
  * glean from the headers.
@@ -2792,7 +2814,7 @@ textonly:
 	w->start = start = s;
 
 	return w;
-}				/* headerGlean */
+}
 
 static char *headerShow(struct MHINFO *w, bool top)
 {
@@ -2926,7 +2948,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 		strcat(buf, mailIsHtml ? "<P>\n" : "\n");
 	strcpy(lastsubject, w->subject);
 	return buf;
-}				/* headerShow */
+}
 
 /* Depth first block of text determines the type */
 static int mailTextType(struct MHINFO *w)
