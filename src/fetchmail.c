@@ -3152,7 +3152,7 @@ bool setupReply(bool all)
 
 		p = (char *)fetchLine(j, 1);
 
-		if (memEqualCI(p, "subject:", 8)) {
+		if (memEqualCI(p, "subject:", 8) || memEqualCI(p, "sub:", 4)) {
 			linetype[j] = 's';
 			subln = j;
 			goto nextline;

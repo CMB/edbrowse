@@ -332,11 +332,12 @@ empty:
 		}
 		while (*s == ' ' || *s == '\t')
 			++s;
-		if (!memEqualCI(s, "subject:", 8)) {
+		if (!memEqualCI(s, "subject:", 8)
+		&& !memEqualCI(s, "sub:", 4)) {
 			setError(MSG_SubjectStart);
 			goto freefail;
 		}
-		s += 8;
+		s += (s[3] == ':' ? 4 : 8);
 		while (*s == ' ' || *s == '\t')
 			++s;
 		t = s;
@@ -1257,7 +1258,7 @@ bool sendMailCurrent(int sm_account, bool dosig)
 			continue;
 		}
 
-		if (memEqualCI(line, "subject:", 8)) {
+		if (memEqualCI(line, "subject:", 8) || memEqualCI(line, "sub:", 4)) {
 			while (*line == ' ' || *line == '\t')
 				++line;
 			subj = true;
