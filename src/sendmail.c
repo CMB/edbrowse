@@ -109,7 +109,7 @@ freefail:
 					}
 					if(*last == '>')
 						greater = true;
-					if ((*last == ' ' || *last == '\t') && !greater) {
+					if ((*last == ' ' || *last == '\t') && !greater && last > v) {
 						setError(MSG_ABMailSpaces, ln - 1);
 						goto freefail;
 					}
