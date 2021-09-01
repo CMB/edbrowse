@@ -716,9 +716,21 @@ static struct curl_slist *buildRecipientSList(const char **recipients)
 {
 	struct curl_slist *recipient_slist = NULL;
 	const char **r;
+	const char *r1, *r2, *r3;
 
 	for (r = recipients; *r; r++) {
-		recipient_slist = curl_slist_append(recipient_slist, *r);
+// do not include names here
+		r1 = *r;
+		r2 = strchr(r1, '<');
+		r3 = strchr(r1, '>');
+		if(r2 && r3) {
+// Yeah, this is const, and I'm casting it so I can change it,
+// but only for a second then I put it back.
+			*(char*)r3 = 0;
+			recipient_slist = curl_slist_append(recipient_slist, r2 + 1);
+			*(char*)r3 = '>';
+		} else
+			recipient_slist = curl_slist_append(recipient_slist, r1);
 		if (recipient_slist == NULL)
 			i_printfExit(MSG_NoMem);
 	}
