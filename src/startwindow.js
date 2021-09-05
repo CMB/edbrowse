@@ -3153,12 +3153,6 @@ for(i=0; i<s.text.length; ++i)
 if(s.text.substr(i,1) === '\n') ++linecount;
 if(s.text.length / linecount <= 120) return;
 
-// Ok, run it through the deminimizer.
-if(window.escodegen) {
-s.original = s.text;
-s.text = escodegen.generate(esprima.parse(s.text));
-s.expanded = true;
-
 /*********************************************************************
 You're not gonna believe this.
 paypal.com, and perhaps other websites, use an obfuscator, that hangs forever
@@ -3173,23 +3167,29 @@ and expects it to be  a simple compact return statement.
 If it spreads across multiple lines (as happens with deminimization),
 or if it includes tracing software, then it all blows up.
 https://www.paypal.com/auth/createchallenge/381145a4bcdc015f/recaptchav3.js
-The following regexp tries to put removeCookie back the way it was,
-before I deminimized it.
-Once put back, my tracing code will not recognize it,
-I only inject trace points into deminimized code,
-so that should not cause any further trouble.
+I can put it back the way it was, or just not deminimize that particular script.
+There are pros and cons either way.
+For now I'm taking the simpler approach, and leaving the script alone.
+Watch for the compact removeCookie function, that is my flag.
 There may be other obfuscators out there, and other cleanup
 procedures that we have to endure, and maintain, as the obfuscators evolve.
-Some scripts are megabytes, so don't do the replacement unless our troublesome
-string is present.
 *********************************************************************/
 
-// Watch out, tools/uncomment will muck with this regexp if we're not careful!
-// I escape some spaces with \ so they don't get crunched away.
+if(s.text.indexOf("removeCookie':function(){return'dev'") > 0) {
+alert("deminimization skipped due to removeCookie test");
+return;
+}
+/* If you wanna fix this one after the fact:
 var trouble = /'removeCookie': *function *\(\)\ *{\n *return *'dev';\n *}/;
 if(trouble.test(s.text))
 s.text = s.text.replace(trouble, "'removeCookie':function(){return'dev';}");
+*/
 
+// Ok, run it through the deminimizer.
+if(window.escodegen) {
+s.original = s.text;
+s.text = escodegen.generate(esprima.parse(s.text));
+s.expanded = true;
 } else {
 alert("deminimization not available");
 }
