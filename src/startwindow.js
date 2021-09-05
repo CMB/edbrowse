@@ -56,7 +56,7 @@ eb$cssText = function(){}
 // this is not folded in for the distributed version
 // Some engines create this object in C, so it can be shared.
 if(!window.mw$)
-mw$ = {compiled: false, share:false};
+mw$ = {compiled: false, share:false, URL:{}};
 
 if(mw$.share) { // point to native methods in the master window
 natok = mw$.natok, eb$wlf = mw$.eb$wlf, eb$puts = mw$.eb$puts, db$flags = mw$.db$flags;
@@ -3158,6 +3158,38 @@ if(window.escodegen) {
 s.original = s.text;
 s.text = escodegen.generate(esprima.parse(s.text));
 s.expanded = true;
+
+/*********************************************************************
+You're not gonna believe this.
+paypal.com, and perhaps other websites, use an obfuscator, that hangs forever
+if you're javascript engine doesn't do exactly what it's suppose to.
+As I write this, edbrowse + quickjs works, however, it fails if you deminimize
+the code for debugging. And it fails even more if you add trace points.
+They deliberately set it up to fail if the js code is deminimized.
+They don't want you to understand it.
+There is a deceptive function called removeCookie, that has nothing to do
+with cookies. Another function tests removeCookie.toString(),
+and expects it to be  a simple compact return statement.
+If it spreads across multiple lines (as happens with deminimization),
+or if it includes tracing software, then it all blows up.
+https://www.paypal.com/auth/createchallenge/381145a4bcdc015f/recaptchav3.js
+The following regexp tries to put removeCookie back the way it was,
+before I deminimized it.
+Once put back, my tracing code will not recognize it,
+I only inject trace points into deminimized code,
+so that should not cause any further trouble.
+There may be other obfuscators out there, and other cleanup
+procedures that we have to endure, and maintain, as the obfuscators evolve.
+Some scripts are megabytes, so don't do the replacement unless our troublesome
+string is present.
+*********************************************************************/
+
+// Watch out, tools/uncomment will muck with this regexp if we're not careful!
+// I escape some spaces with \ so they don't get crunched away.
+var trouble = /'removeCookie': *function *\(\)\ *{\n *return *'dev';\n *}/;
+if(trouble.test(s.text))
+s.text = s.text.replace(trouble, "'removeCookie':function(){return'dev';}");
+
 } else {
 alert("deminimization not available");
 }
