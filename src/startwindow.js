@@ -1181,7 +1181,9 @@ AudioContext.prototype.dom$class = "AudioContext";
 // Document class, I don't know what to make of this,
 // but my stubs for frames needs it.
 Document = function(){};
+Document.prototype = new HTMLElement;
 Document.prototype.dom$class = "Document";
+Document.prototype.getElementById = document.getElementById;
 
 CSSStyleSheet = function() { this.cssRules = []};
 CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";
@@ -2998,6 +3000,15 @@ var f = this.owner.createElement("iframe");
 var d = f.contentDocument; // this is the created document
 d.title = t;
 return d;
+},
+createDocument: function(uri, str, t) {
+// I don't know if this is right at all, but it's quick and easy
+var doc = document.createElementNS(uri, "document");
+var below = document.createElementNS(uri, str);
+if(!doc || !below) { alert3("createDocument unable to create document or " + str + " tag for namespace " + uri); return null; }
+doc.appendChild(below);
+doc.documentElement = below;
+return doc;
 }
 };
 
