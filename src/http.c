@@ -47,12 +47,12 @@ static void lock_share(CURL * handle, curl_lock_data data,
 {
 /* TODO error handling. */
 	pthread_mutex_lock(&share_mutex);
-}				/* lock_share */
+}
 
 static void unlock_share(CURL * handle, curl_lock_data data, void *userptr)
 {
 	pthread_mutex_unlock(&share_mutex);
-}				/* unlock_share */
+}
 
 void eb_curl_global_init(void)
 {
@@ -115,13 +115,13 @@ void eb_curl_global_init(void)
 
 libcurl_init_fail:
 	i_printfExit(MSG_LibcurlNoInit);
-}				/* eb_curl_global_init */
+}
 
 void eb_curl_global_cleanup(void)
 {
 	curl_easy_cleanup(global_http_handle);
 	curl_global_cleanup();
-}				/* eb_curl_global_cleanup */
+}
 
 static void setup_download(struct i_get *g);
 static CURL *http_curl_init(struct i_get *g);
@@ -176,7 +176,7 @@ static char *find_http_header(struct i_get *g, const char *name)
 	}
 
 	return NULL;
-}				/* find_http_header */
+}
 
 static void scan_http_headers(struct i_get *g, bool fromCallback)
 {
@@ -299,7 +299,7 @@ static void scan_http_headers(struct i_get *g, bool fromCallback)
 		}
 		nzFree(v);
 	}
-}				/* scan_http_headers */
+}
 
 static void i_get_free(struct i_get *g, bool nodata)
 {
@@ -2898,7 +2898,7 @@ bool frameExpand(bool expand, int ln1, int ln2)
 	if (problem == 2)
 		setError(MSG_FrameNoURL);
 	return (problem == 0);
-}				/* frameExpand */
+}
 
 /* Problems: 0, frame expanded successfully.
  1 line is not a frame.
@@ -3049,6 +3049,7 @@ So check for serverData null here. Once again we pop the frame.
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
+	debugPrint(3, "parse html from frame");
 	htmlGenerated = false;
 	htmlNodesIntoTree(start + 1, cdt);
 	prerender(0);
@@ -3074,6 +3075,7 @@ cdt doesn't have or need an object; it's a place holder.
 		rebuildSelectors();
 	}
 	cnzFree(jssrc);
+	debugPrint(3, "end parse html from frame");
 
 	if (cf->fileName) {
 		int j = strlen(cf->fileName);
@@ -3105,7 +3107,7 @@ static int frameContractLine(int ln)
 		return 1;
 	t->contracted = true;
 	return 0;
-}				/* frameContractLine */
+}
 
 bool reexpandFrame(void)
 {
@@ -3173,6 +3175,7 @@ bool reexpandFrame(void)
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
+	debugPrint(3, "parse html from frame replace");
 	htmlGenerated = false;
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
@@ -3191,6 +3194,7 @@ bool reexpandFrame(void)
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
+	debugPrint(3, "end parse html from frame replace");
 
 	j = strlen(cf->fileName);
 	cf->fileName = reallocMem(cf->fileName, j + 8);

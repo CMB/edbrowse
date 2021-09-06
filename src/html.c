@@ -461,6 +461,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 {
 	int l = cw->numTags;
 
+	debugPrint(3, "parse html from docwrite");
 	if (t)
 		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
 	else
@@ -472,6 +473,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 	htmlNodesIntoTree(l, t);
 	prerender(false);
 	decorate(0);
+	debugPrint(3, "end parse html from docwrite");
 }				/* runGeneratedHtml */
 
 /* helper function to prepare an html script.
@@ -1012,6 +1014,7 @@ char *htmlParse(char *buf, int remote)
 /* call the tidy parser to build the html nodes */
 	html2nodes(buf, true);
 	nzFree(buf);
+	debugPrint(3, "parse html from browse");
 	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);
 	prerender(false);
@@ -1056,6 +1059,7 @@ This precaution is only needed for duktape.
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
+	debugPrint(3, "end parse html from browse");
 
 	a = render(0);
 	debugPrint(6, "|%s|\n", a);
