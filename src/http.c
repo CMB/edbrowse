@@ -333,7 +333,7 @@ static CURLcode fetch_internet(struct i_get *g)
 	if (g->is_http)
 		scan_http_headers(g, false);
 	return curlret;
-}				/* fetch_internet */
+}
 
 /* Callback used by libcurl. Captures data from http, ftp, pop3, gopher.
  * download states:
@@ -455,7 +455,7 @@ curl_progress(void *data_p, double dl_total, double dl_now,
 		ret = 1;
 	}
 	return ret;
-}				/* curl_progress */
+}
 
 static void
 unpackUploadedFile(const char *post, const char *boundary,
@@ -502,7 +502,7 @@ unpackUploadedFile(const char *post, const char *boundary,
 	b1 += strlen(b1);
 	*postb = post2;
 	*postb_l = b1 - post2;
-}				/* unpackUploadedFile */
+}
 
 // Date format is:    Mon, 03 Jan 2000 21:29:33 GMT|[+-]nnnn
 			// Or perhaps:     Sun Nov  6 08:49:37 1994
@@ -709,7 +709,7 @@ f4:
 fail:
 	debugPrint(3, "parseHeaderDate fails on %s", date0);
 	return 0;
-}				/* parseHeaderDate */
+}
 
 bool parseRefresh(char *ref, int *delay_p)
 {
@@ -749,7 +749,7 @@ bool parseRefresh(char *ref, int *delay_p)
 	i_printf(MSG_GarbledRefresh, ref);
 	*delay_p = 0;
 	return false;
-}				/* parseRefresh */
+}
 
 bool shortRefreshDelay(const char *r, int d)
 {
@@ -758,7 +758,7 @@ bool shortRefreshDelay(const char *r, int d)
 		return true;
 	i_printf(MSG_RedirectDelayed, r, d);
 	return false;
-}				/* shortRefreshDelay */
+}
 
 // encode the url, if it was supplied by the user.
 // Otherwise just make a copy.
@@ -798,7 +798,7 @@ static void urlSanitize(struct i_get *g, const char *post)
 		strmove((char *)portloc, s);
 		g->urlcopy_l = strlen(g->urlcopy);
 	}
-}				/* urlSanitize */
+}
 
 bool httpConnect(struct i_get *g)
 {
@@ -1430,7 +1430,7 @@ curl_fail:
 	i_get_free(g, false);
 	g->referrer = referrer;
 	return transfer_status;
-}				/* httpConnect */
+}
 
 static int tsn;			// thread sequence number
 
@@ -2802,7 +2802,8 @@ and now we need to expand it on demand.
 crossOrigin() checks for a violation, wherein an evil website tries
 to bring your bank or paypal or something valuable in as a frame, then dip into
 its objects to read your password or other critical data.
-Return true if there is such a violation.
+Return true if it's ok to procede, however,
+I may put an Origin: header on the tag if such is needed.
 I don't know the actual criteria, I'm just guessing. I'm starting with:
 https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 *********************************************************************/
@@ -2817,7 +2818,7 @@ static bool crossOrigin(Tag *t, const char *url2)
 // or it was some javascript code, which has been moved to another
 // variable, and that's fine.
 	if(!url2)
-		return false;
+		return true;
 
 // If the top url is null then it is a local file with no filename,
 // so unlikely that I'm not gonna worry about it, or it's a blank frame.
@@ -2825,7 +2826,7 @@ static bool crossOrigin(Tag *t, const char *url2)
 // I don't know what to make of that, so I don't trust it.
 	if(!url1) {
 		debugPrint(3, "crossorigin violation: blank over internet");
-		return true;
+		return false;
 	}
 
 	u1 = isURL(url1);
@@ -2834,7 +2835,7 @@ static bool crossOrigin(Tag *t, const char *url2)
 // file on your home computer. You are responsible for this file.
 // You can reference other local files or urls as frames.
 	if(!u1)
-		return false;
+		return true;
 
 // I don't know how the top could be a url and the bottom a local file.
 // The bottom would be resolved against the top, so an attacker
@@ -2846,20 +2847,20 @@ static bool crossOrigin(Tag *t, const char *url2)
 // that I'll guard against it here.
 	if(!u2) {
 		debugPrint(3, "crossorigin violation: internet over local");
-		return true;
+		return false;
 	}
 
 // they are both urls, compare the domains.
 // Neither of them should come out null, but I'll check for that.
 	if(!(host1 = getHostURL(url1))) {
 		debugPrint(3, "crossorigin: top %s unrecognized domain", url1);
-		return true;
+		return false;
 	}
 	host1 = cloneString(host1);
 	if(!(host2 = getHostURL(url2))) {
 		debugPrint(3, "crossorigin: bottom %s unrecognized domain", url2);
 		cnzFree(host1);
-		return true;
+		return false;
 	}
 
 // Compare the two domains. I'm using a routine from the cookie
@@ -2874,11 +2875,11 @@ static bool crossOrigin(Tag *t, const char *url2)
 		orig_head = allocMem(strlen(url1) + 10);
 		sprintf(orig_head, "Origin: %s\n", url1);
 		t->custom_h = orig_head;
-		return false;
+		return true;
 	}
 
 	cnzFree(host1);
-	return false;
+	return true;
 }
 
 static int frameContractLine(int ln);
@@ -2991,7 +2992,7 @@ int frameExpandLine(int ln, Tag *t)
 
 	if (s) {
 		bool rc = false;
-		if(!crossOrigin(t, s))
+		if(crossOrigin(t, s))
 			rc = readFileArgv(s, (fromget ? 2 : 1), t->custom_h);
 		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
