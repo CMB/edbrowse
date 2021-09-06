@@ -796,7 +796,7 @@ int main(int argc, char **argv)
 			cf->firstURL = cloneString(file);
 			if (isSQL(file))
 				cw->sqlMode = true;
-			rc = readFileArgv(file, 0);
+			rc = readFileArgv(file, 0, 0);
 			if (fileSize >= 0)
 				debugPrint(1, "%d", fileSize);
 			fileSize = -1;

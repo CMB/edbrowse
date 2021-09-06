@@ -1505,7 +1505,7 @@ void *httpConnectBack3(void *ptr)
 	g.thisfile = cf->fileName;
 	g.uriEncoded = true;
 	g.url = t->href;
-	g.custom_h = t->innerHTML;
+	g.custom_h = t->custom_h;
 	g.headers_p = &outgoing_headers;
 	g.down_force = 2;
 	g.tsn = ++tsn;
@@ -1539,8 +1539,8 @@ void *httpConnectBack3(void *ptr)
 	nzFree(g.cfn);
 	nzFree(outgoing_headers);
 	nzFree(outgoing_body);
-	nzFree(t->innerHTML);
-	t->innerHTML = 0;
+	nzFree(t->custom_h);
+	t->custom_h = 0;
 	return NULL;
 }
 
@@ -2803,11 +2803,13 @@ crossOrigin() checks for a violation, wherein an evil website tries
 to bring your bank or paypal or something valuable in as a frame, then dip into
 its objects to read your password or other critical data.
 Return true if there is such a violation.
-I don't know the actual criteria, I'm just guessing.
+I don't know the actual criteria, I'm just guessing. I'm starting with:
+https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 *********************************************************************/
 
-bool crossOrigin(const char *url1, const char *url2)
+static bool crossOrigin(Tag *t, const char *url2)
 {
+	const char *url1 = t->f0->hbase;
 	bool u1, u2;
 	const char *host1, *host2;
 
@@ -2822,7 +2824,7 @@ bool crossOrigin(const char *url1, const char *url2)
 // A blank frame pulling in internet frames below it?
 // I don't know what to make of that, so I don't trust it.
 	if(!url1) {
-		debugPrint(3, "crossorigin: blank over internet");
+		debugPrint(3, "crossorigin violation: blank over internet");
 		return true;
 	}
 
@@ -2843,7 +2845,7 @@ bool crossOrigin(const char *url1, const char *url2)
 // Be that as it may, the result of such an attack would be so hideous,
 // that I'll guard against it here.
 	if(!u2) {
-		debugPrint(3, "crossorigin: internet over local");
+		debugPrint(3, "crossorigin violation: internet over local");
 		return true;
 	}
 
@@ -2863,9 +2865,16 @@ bool crossOrigin(const char *url1, const char *url2)
 // Compare the two domains. I'm using a routine from the cookie
 // world, assuming the criteria are the same.
 	if(!isInDomain(host1, host2)) {
-		debugPrint(3, "crossorigin: %s over %s", host1, host2);
+		char *orig_head;
+		debugPrint(3, "crossorigin attempt: %s over %s", host1, host2);
+// We need to send origin as an http header.
+// Should it be the domain, or the entire url?
+// The wiki simple minimal example includes the protocol, so I'll go with url.
 		cnzFree(host1);
-		return true;
+		orig_head = allocMem(strlen(url1) + 10);
+		sprintf(orig_head, "Origin: %s\n", url1);
+		t->custom_h = orig_head;
+		return false;
 	}
 
 	cnzFree(host1);
@@ -2981,7 +2990,9 @@ int frameExpandLine(int ln, Tag *t)
 		   (s ? s : (jssrc ? "javascript" : "empty")));
 
 	if (s) {
-		bool rc = readFileArgv(s, (fromget ? 2 : 1));
+		bool rc = false;
+		if(!crossOrigin(t, s))
+			rc = readFileArgv(s, (fromget ? 2 : 1), t->custom_h);
 		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
@@ -3138,7 +3149,7 @@ bool reexpandFrame(void)
 	cf->uriEncoded = false;
 	nzFree(cf->firstURL);
 	cf->firstURL = 0;
-	rc = readFileArgv(cf->fileName, 2);
+	rc = readFileArgv(cf->fileName, 2, 0);
 	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 		fileSize = -1;	/* don't print 0 */

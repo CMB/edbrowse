@@ -184,7 +184,7 @@ static pst fetchLineContext(int n, int show, int cx)
 pst fetchLine(int n, int show)
 {
 	return fetchLineContext(n, show, context);
-}				/* fetchLine */
+}
 
 static int apparentSizeW(const struct ebWindow *w, bool browsing)
 {
@@ -211,7 +211,7 @@ static int apparentSizeW(const struct ebWindow *w, bool browsing)
 	if (w->nlMode)
 		--size;
 	return size;
-}				/* apparentSizeW */
+}
 
 static int apparentSize(int cx, bool browsing)
 {
@@ -238,12 +238,12 @@ static char *dirSuffixContext(int n, int cx)
 		suffix[2] = 0;
 	}
 	return suffix;
-}				/* dirSuffixContext */
+}
 
 static char *dirSuffix(int n)
 {
 	return dirSuffixContext(n, context);
-}				/* dirSuffix */
+}
 
 /* Display a line to the screen, with a limit on output length. */
 void displayLine(int n)
@@ -304,7 +304,7 @@ void displayLine(int n)
 
 	free(line);
 	nzFree(output);
-}				/* displayLine */
+}
 
 static void printDot(void)
 {
@@ -312,7 +312,7 @@ static void printDot(void)
 		displayLine(cw->dot);
 	else
 		i_puts(MSG_Empty);
-}				/* printDot */
+}
 
 // These commands pass through jdb and on to normal edbrowse processing.
 static bool jdb_passthrough(const char *s)
@@ -1961,7 +1961,7 @@ success:
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
 static bool readFile(const char *filename, bool newwin,
-		     int fromframe, const char *fromthis)
+		     int fromframe, const char *fromthis, const char *orig_head)
 {
 	char *rbuf;		/* read buffer */
 	int readSize;		/* should agree with fileSize */
@@ -2024,6 +2024,7 @@ static bool readFile(const char *filename, bool newwin,
 			g.uriEncoded = uriEncoded;
 		g.url = filename;
 		g.thisfile = fromthis;
+		g.custom_h = orig_head;
 		rc = httpConnect(&g);
 		serverData = g.buffer;
 		serverDataLen = g.length;
@@ -2384,13 +2385,13 @@ intext:
 }
 
 /* from the command line */
-bool readFileArgv(const char *filename, int fromframe)
+bool readFileArgv(const char *filename, int fromframe, const char *orig_head)
 {
 	bool newwin = !fromframe;
 	cmd = 'e';
 	return readFile(filename, newwin, fromframe,
-			(newwin ? 0 : cw->f0.fileName));
-}				/* readFileArgv */
+			(newwin ? 0 : cw->f0.fileName), orig_head);
+}
 
 /* Write a range to a file. */
 static bool writeFile(const char *name, int mode)
@@ -6794,7 +6795,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 			if (emode)
 				pluginsOn = false;
 			j = readFile(line, (cmd != 'r'), 0,
-				     thisfile);
+				     thisfile, 0);
 			pluginsOn = save_pg;
 		}
 		w->undoable = w->changeMode = false;
@@ -7042,7 +7043,7 @@ afterdelete:
 				strmove(strchr(newline, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, (cmd != 'r'), 0, 0);
+			j = readFile(line, (cmd != 'r'), 0, 0, 0);
 			if (!serverData)
 				fileSize = -1;
 			return j;

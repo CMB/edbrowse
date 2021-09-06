@@ -1732,6 +1732,7 @@ static void freeTag(Tag *t)
 	nzFree(t->href);
 	nzFree(t->js_file);
 	nzFree(t->innerHTML);
+	nzFree(t->custom_h);
 
 	a = (char **)t->attributes;
 	if (a) {

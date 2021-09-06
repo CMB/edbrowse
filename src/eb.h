@@ -610,6 +610,7 @@ struct htmlTag {
 // class is reserved word in c++, so use jclass for javascript class
 	char *name, *id, *jclass, *nodeName, *value, *href;
 	const char *rvalue; /* for reset */
+	char *custom_h; // http headers for a frame or xhr tag
 	char *innerHTML; /* the html string under this tag */
 	int inner;		/* for inner html */
 	int highspec; // specificity of a selector that matches this node

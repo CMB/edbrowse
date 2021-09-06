@@ -1731,8 +1731,6 @@ static JSValue getter_cd(JSContext * cx, JSValueConst this, int argc, JSValueCon
 		forceFrameExpand(t);
 	if(!t->f1 || !t->f1->jslink) // should not happen
 		goto fail;
-	if(crossOrigin(t->f0->hbase, t->f1->hbase))
-		goto fail;
 // we have to pass a copy of the document object, so we can retain the original
 	return JS_DupValue(cx, *((JSValue*)t->f1->docobj));
 fail:
@@ -1755,8 +1753,6 @@ static JSValue getter_cw(JSContext * cx, JSValueConst this, int argc, JSValueCon
 	if(!t->f1)
 		forceFrameExpand(t);
 	if(!t->f1 || !t->f1->jslink) // should not happen
-		goto fail;
-	if(crossOrigin(t->f0->hbase, t->f1->hbase))
 		goto fail;
 // we have to pass a copy of the window object, so we can retain the original
 	return JS_DupValue(cx, *((JSValue*)t->f1->winobj));
@@ -2600,10 +2596,9 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 // No - because t->jv will protect it until it runs.
 		t->href = (char*)incoming_url;
 // t now has responsibility for incoming_url
-// overloading the innerHTML field
-		t->innerHTML = emptyString;
+		t->custom_h = emptyString;
 		if(JS_IsString(argv[2]))
-			t->innerHTML = cloneString(incoming_headers);
+			t->custom_h = cloneString(incoming_headers);
 		JS_FreeCString(cx, incoming_headers);
 		if (cw->browseMode)
 			scriptSetsTimeout(t);

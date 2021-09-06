@@ -2,6 +2,7 @@
 <html>
 <!-- browse length 630, 643 with hover -->
 <head id=boom>
+<base href=http://yyy.zzz.com>
 <meta content=Snoopy>
 <title>Edbrowse js regression test</title>
 <!-- tidy5 says this is not a valid tag any more -->
