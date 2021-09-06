@@ -772,7 +772,7 @@ void runScriptsPending(bool startbrowse)
 		cf = f;
 // completely different behavior before and after browse
 // After browse, it clobbers the page.
-		if(cw->browseMode) {
+		if(cf->browseMode) {
 			run_function_onestring_t(cf->bodytag, "eb$dbih",
 			strstr(cf->dw, "<body>")+6);
 		} else {
@@ -906,7 +906,7 @@ afterscript:
 		if (cf->dw) {
 // completely different behavior before and after browse
 // After browse, it clobbers the page.
-			if(cw->browseMode) {
+			if(cf->browseMode) {
 				run_function_onestring_t(cf->bodytag,
 				"eb$dbih",
 				strstr(cf->dw, "<body>")+6);

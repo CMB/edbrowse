@@ -3087,6 +3087,7 @@ cdt doesn't have or need an object; it's a place holder.
 		rebuildSelectors();
 	}
 	cnzFree(jssrc);
+	cf->browseMode = true;
 	debugPrint(3, "end parse html from frame");
 
 	if (cf->fileName) {
@@ -3188,6 +3189,7 @@ bool reexpandFrame(void)
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
 	debugPrint(3, "parse html from frame replace");
+	cf->browseMode = false;
 	htmlGenerated = false;
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
@@ -3206,6 +3208,7 @@ bool reexpandFrame(void)
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
+	cf->browseMode = true;
 	debugPrint(3, "end parse html from frame replace");
 
 	j = strlen(cf->fileName);

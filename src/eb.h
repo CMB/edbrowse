@@ -401,6 +401,7 @@ struct ebFrame {
 	bool baseset; // <base> tag has been seen
 	bool uriEncoded; // filename is url encoded
 	bool jslink; // linke to javascript
+	bool browseMode;
 	short jtmin;
 	char *dw;		/* document.write string */
 	int dw_l;		/* length of the above */

@@ -115,7 +115,7 @@ static void finishBrowse(void)
 		cf->fileName = reallocMem(cf->fileName, j + 8);
 		strcat(cf->fileName, ".browse");
 	}
-	cw->browseMode = true;
+	cw->browseMode = cf->browseMode = true;
 }
 
 /* Catch interrupt and react appropriately. */
@@ -1139,7 +1139,7 @@ void unreadConfigFile(void)
 	setDataSource(NULL);
 	setHTTPLanguage(eb_language);
 	delete_ebhosts();
-}				/* unreadConfigFile */
+}
 
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
 #define MAILWORDS 0

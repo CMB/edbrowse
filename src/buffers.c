@@ -4333,7 +4333,7 @@ static int twoLetter(const char *line, const char **runThis)
 		rc = setupReply(line[2] == 'a');
 		if (rc && cw->browseMode) {
 			ub = false;
-			cw->browseMode = false;
+			cw->browseMode = cf->browseMode = false;
 			goto et_go;
 		}
 		return rc;
@@ -4585,7 +4585,7 @@ pwd:
 		}
 		undoCompare();
 		cw->undoable = false;
-		cw->browseMode = false;
+		cw->browseMode = cf->browseMode = false;
 		cf->render2 = false;
 		if (cf->render1b)
 			cf->render1 = cf->render1b = false;
@@ -7295,13 +7295,13 @@ bool browseCurrentBuffer(void)
 	if (!rc) {
 /* should never happen */
 		fileSize = -1;
-		cw->browseMode = true;
+		cw->browseMode = cf->browseMode = true;
 		return false;
 	}
 
 	if (bmode == 2)
 		cw->dot = cw->dol;
-	cw->browseMode = true;
+	cw->browseMode = cf->browseMode = true;
 	fileSize = apparentSize(context, true);
 	cw->mustrender = false;
 	time(&cw->nextrender);
