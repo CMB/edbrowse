@@ -83,7 +83,8 @@ Object.defineProperty(window, "frameElement", {get: eb$frameElement});
 And that does happen, e.g. the react system, so $ok is an alias for this. */
 ok = $ok = Object.keys;
 
-document.nodeName = "DOCUMENT"; // in case you want to start at the top.
+window.nodeName = "WINDOW"; // in case you want to start at the top.
+document.nodeName = "DOCUMENT"; // in case you want to start at document.
 document.tagName = "document";
 window.nodeName = "WINDOW";
 
@@ -93,11 +94,11 @@ dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
 document.dispatchEvent = mw$.dispatchEvent;
-addEventListener = document.addEventListener = mw$.addEventListener;
-removeEventListener = document.removeEventListener = mw$.removeEventListener;
+addEventListener = document.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
+removeEventListener = document.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
 if(mw$.attachOn) {
-attachEvent = document.attachEvent = mw$.attachEvent;
-detachEvent = document.detachEvent = mw$.detachEvent;
+attachEvent = document.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, true, false); }
+detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, false); }
 }
 eb$listen = document.eb$listen = mw$.eb$listen;
 eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
@@ -2829,7 +2830,8 @@ for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
 // there are lots more events, onmouseout etc, that we don't responnd to,
 // should we watch for them anyways?
-var evs = ["onload", "onunload", "onclick", "onchange", "oninput", "onsubmit", "onreset"];
+var evs = ["onload", "onunload", "onclick", "onchange", "oninput",
+"onsubmit", "onreset", "onmessage"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
 eval(cn + '["' + evname + '$$watch"] = true');

@@ -257,13 +257,6 @@ This is frickin complicated, so set eventDebug to debug it.
 
 attachOn = true;
 
-function addEventListener(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
-function removeEventListener(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
-if(attachOn) {
-function attachEvent(ev, handler) { this.eb$listen(ev,handler, true, false); }
-function detachEvent(ev, handler) { this.eb$unlisten(ev,handler, true, false); }
-}
-
 function eb$listen(ev, handler, iscapture, addon) {
 if(addon) ev = "on" + ev;
 var evfn = ev + "$$fn";
