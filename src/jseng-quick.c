@@ -420,10 +420,8 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 
 // Put some tags around the html, so tidy can parse it.
 	run = initString(&run_l);
-	stringAndString(&run, &run_l, "<!DOCTYPE public><body>\n");
+	stringAndString(&run, &run_l, "<!DOCTYPE public><body>");
 	stringAndString(&run, &run_l, h);
-	if (*h && h[strlen(h) - 1] != '\n')
-		stringAndChar(&run, &run_l, '\n');
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects

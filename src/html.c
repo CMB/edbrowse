@@ -127,7 +127,7 @@ static Tag *locateOptionByName(const Tag *sel,
 		return pm;
 	*pmc = (pmcount > 0);
 	return 0;
-}				/* locateOptionByName */
+}
 
 static Tag *locateOptionByNum(const Tag *sel, int n)
 {
@@ -144,7 +144,7 @@ static Tag *locateOptionByNum(const Tag *sel, int n)
 			return t;
 	}
 	return 0;
-}				/* locateOptionByNum */
+}
 
 static bool
 locateOptions(const Tag *sel, const char *input,
@@ -248,7 +248,7 @@ fail:
 	if (disp_p)
 		*disp_p = 0;
 	return false;
-}				/* locateOptions */
+}
 
 /*********************************************************************
 Sync up the javascript variables with the input fields.
@@ -336,7 +336,7 @@ void jSyncup(bool fromtimer)
 	}			/* loop over tags */
 
 	debugPrint(4, "jSyncup ends");
-}				/* jSyncup */
+}
 
 void jClearSync(void)
 {
@@ -355,7 +355,7 @@ void jClearSync(void)
 		}
 	}
 #endif
-}				/* jClearSync */
+}
 
 /*********************************************************************
 This function is called for a new web page, by http refresh,
@@ -388,7 +388,7 @@ static void gotoLocation(char *url, int delay, bool rf)
 	newloc_f = cf;
 	if (!delay)
 		js_redirects = true;
-}				/* gotoLocation */
+}
 
 /* helper function for meta tag */
 void htmlMetaHelper(Tag *t)
@@ -466,7 +466,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 		debugPrint(4, "parse under %s %d", t->info->name, t->seqno);
 	else
 		debugPrint(4, "parse under top");
-	debugPrint(4, "Generated {%s}", h);
+	debugGenerated(h);
 
 	html2nodes(h, false);
 	htmlGenerated = true;
@@ -776,7 +776,7 @@ void runScriptsPending(bool startbrowse)
 			run_function_onestring_t(cf->bodytag, "eb$dbih",
 			strstr(cf->dw, "<body>")+6);
 		} else {
-			stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
+			stringAndString(&cf->dw, &cf->dw_l, "</body>");
 			runGeneratedHtml(cf->bodytag, cf->dw);
 		}
 		nzFree(cf->dw);
@@ -911,7 +911,7 @@ afterscript:
 				"eb$dbih",
 				strstr(cf->dw, "<body>")+6);
 			} else {
-				stringAndString(&cf->dw, &cf->dw_l, "</body>\n");
+				stringAndString(&cf->dw, &cf->dw_l, "</body>");
 				runGeneratedHtml(t, cf->dw);
 				run_function_onearg_win(cf, "eb$uplift", t);
 			}
@@ -997,7 +997,7 @@ static bool jsDoorway(void)
 	}
 	debugPrint(3, "no js doorway");
 	return false;
-}				/* jsDoorway */
+}
 
 char *htmlParse(char *buf, int remote)
 {
@@ -3215,7 +3215,7 @@ static void tagInStream(int tagno)
 	char buf[32];
 	sprintf(buf, "%c%d*", InternalCodeChar, tagno);
 	stringAndString(&ns, &ns_l, buf);
-}				/* tagInStream */
+}
 
 /* see if a number or star is pending, waiting to be printed */
 static void liCheck(Tag *t)
@@ -3241,7 +3241,7 @@ static void liCheck(Tag *t)
 			stringAndString(&ns, &ns_l, olbuf);
 		ltag->post = false;
 	}
-}				/* liCheck */
+}
 
 static Tag *deltag;
 
@@ -3992,7 +3992,7 @@ unparen:
 			tagInStream(tagno);
 		break;
 	}			/* switch */
-}				/* renderNode */
+}
 
 /* returns an allocated string */
 char *render(int start)
@@ -4009,7 +4009,7 @@ char *render(int start)
 	traverse_callback = renderNode;
 	traverseAll(start);
 	return ns;
-}				/* render */
+}
 
 // Create buffers for text areas, so the user can type in comments or whatever
 // and send them to the website in a fill-out form.
