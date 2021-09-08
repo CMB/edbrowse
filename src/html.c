@@ -3582,6 +3582,11 @@ nocolor:
 		(opentag ? "\f``" : "''\f"));
 		break;
 
+	case TAGACT_SVG:
+		if (!invisible && opentag)
+			stringAndString(&ns, &ns_l, "graphics");
+		break;
+
 	case TAGACT_OL:
 	case TAGACT_UL:
 		t->lic = t->slic;
