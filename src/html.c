@@ -3535,8 +3535,8 @@ nocolor:
 		break;
 
 // check for span onclick and make it look like a link.
-// Maybe we should do more than span, but just span for now.
-	case TAGACT_SPAN:
+// Same for div, maybe for others too.
+	case TAGACT_SPAN: case TAGACT_DIV:
 // If nothing in the span then the title becomes important.
 		a = 0, u = 0;
 		if (!t->firstchild && opentag) {
@@ -3594,7 +3594,6 @@ nocolor:
 	case TAGACT_DL:
 	case TAGACT_DT:
 	case TAGACT_DD:
-	case TAGACT_DIV:
 	case TAGACT_OBJECT:
 	case TAGACT_BR:
 	case TAGACT_P:
