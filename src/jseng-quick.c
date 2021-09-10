@@ -2880,6 +2880,17 @@ static JSValue nat_cssText(JSContext * cx, JSValueConst this, int argc, JSValueC
 	return JS_UNDEFINED;
 }
 
+static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
+{
+	JSContext *pcx;
+	int safety = 0;
+	while(JS_ExecutePendingJob(jsrt, &pcx)) {
+		if(++safety == 10)
+			break;
+	}
+	return JS_UNDEFINED;
+}
+
 /*********************************************************************
 There is a serious stackoverflow bug,
 that I don't have time or space to describe here.
@@ -2955,6 +2966,8 @@ JS_NewCFunction(mwc, nat_resolveURL, "resolveURL", 2), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_new_location, "new_location", 1), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$logElement",
 JS_NewCFunction(mwc, nat_log_element, "log_element", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$jobs",
+JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 #endif
 
 // shared functions and classes
