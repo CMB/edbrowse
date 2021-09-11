@@ -2988,7 +2988,9 @@ static int my_ExecutePendingJob(void)
     list_del(&e->link);
     ctx = e->ctx;
     if (frameFromContext(ctx)) {
+	debugPrint(3, "exec pending for context %d", cf->gsn);
 	res = e->job_func(ctx, e->argc, (JSValueConst *)e->argv);
+	debugPrint(3, "exec complete");
 	cw = save_cw, cf = save_cf;
     } else
 	res = JS_UNDEFINED;

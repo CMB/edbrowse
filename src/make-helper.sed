@@ -10,4 +10,4 @@ s/;.*/;/
 s/.*\*/    void */
 s/JSGCPhaseEnum/uchar/
 s/BOOL/uchar/
-s/list_head job_list;/&};/
+s/list_head job_list;/&\n};/
