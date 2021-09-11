@@ -12,10 +12,10 @@ extern "C" {
 
 /* sourcefile=buffers.c */
 void removeHiddenNumbers(pst p, uchar terminate);
-pst fetchLine(int n, int show) ;
-void displayLine(int n) ;
-void initializeReadline(void) ;
-pst inputLine(void) ;
+pst fetchLine(int n, int show);
+void displayLine(int n);
+void initializeReadline(void);
+pst inputLine(void);
 bool cxCompare(int cx) ;
 bool cxActive(int cx) ;
 bool cxQuit(int cx, int action) ;
@@ -117,7 +117,7 @@ const char *tack_fn(const char *e);
 void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterval);
 void scriptSetsTimeout( Tag *t);
 bool timerWait(int *delay_sec, int *delay_ms);
-void delTimers(Frame *f);
+void delTimers(const Frame *f);
 void runTimer(void);
 void domOpensWindow(const char *href, const char *name) ;
 struct htmlTag *line2tr(int ln);
@@ -386,6 +386,7 @@ void set_property_object_t(const Tag *t, const char *name, const Tag *t2);
 bool run_function_bool_t(const Tag *t, const char *name);
 bool run_function_bool_win(const Frame *f, const char *name);
 void forceFrameExpand(Tag *t);
+void delPendings(const Frame *f);
 void js_main(void);
 void createJSContext(Frame *f) ;
 void freeJSContext(Frame *f) ;

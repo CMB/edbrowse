@@ -82,7 +82,7 @@ static void finishBrowse(void)
 // set all scripts to complete
 	for (t = cw->scriptlist; t; t = t->same)
 		t->step = 6;
-// kill any timers
+// kill any timers or pendings
 	for (f = &cw->f0; f; f = f->next)
 		delTimers(f);
 	if (allowJS) {

@@ -2929,14 +2929,13 @@ and to assume that source is in a directory parallel to edbrowse.
 I sanitize the struct along the way, so I don't have to have all the typedefs.
 Example: SnorkHork *foo may as well be void *foo for all I care.
 Long as I keep job_list the same.
+And I don't need anything beyond job_list.
 A sed script takes care of this.
-So far, I only tackle item 1 in this list; make sure cf and cw are correct.
-I don't clean pending jobs from quit sessions, which could be disastrous,
-and I don't skip over jobs of background windows.
-Ouch.
-Hopefully that functionality will come.
+So far, I tackle items 1 and 3 in this list.
+I don't skip over jobs of background windows.
+Hopefully that functionality will come soon.
 This is all a lot more involved than it should be.
-Ok, first struct list_heade from list.h.
+Ok, here is some stuffe from quickjs/list.h.
 *********************************************************************/
 
 struct list_head {
@@ -2944,20 +2943,15 @@ struct list_head {
     struct list_head *next;
 };
 
-typedef struct JSJobEntry {
-    struct list_head link;
-    JSContext *ctx;
-    JSJobFunc *job_func;
-    int argc;
-    JSValue argv[0];
-} JSJobEntry;
-
-#include "modified_runtime.h"
-
 #define offsetof(type, field) ((size_t) &((type *)0)->field)
 #define list_entry(el, type, member) \
     ((type *)((uint8_t *)(el) - offsetof(type, member)))
 #define list_empty(l) ((l)->next == (l))
+#define list_for_each(el, head) \
+  for(el = (head)->next; el != (head); el = el->next)
+#define list_for_each_safe(el, el1, head)                \
+    for(el = (head)->next, el1 = el->next; el != (head); \
+        el = el1, el1 = el->next)
 
 static inline void list_del(struct list_head *el)
 {
@@ -2969,6 +2963,16 @@ static inline void list_del(struct list_head *el)
     el->prev = NULL; /* fail safe */
     el->next = NULL; /* fail safe */
 }
+
+typedef struct JSJobEntry {
+    struct list_head link;
+    JSContext *ctx;
+    JSJobFunc *job_func;
+    int argc;
+    JSValue argv[0];
+} JSJobEntry;
+
+#include "modified_runtime.h"
 
 static int my_ExecutePendingJob(void)
 {
@@ -3005,7 +3009,34 @@ static int my_ExecutePendingJob(void)
     return ret;
 }
 
-// don't need these any more
+void delPendings(const Frame *f)
+{
+    JSJobEntry *e;
+				struct list_head *l, *l1;
+    int i, ret, delcount = 0;
+	struct modifiedRuntime *mrt = (struct modifiedRuntime *) jsrt;
+
+    if(!f->jslink)
+	return;
+
+    list_for_each_safe(l, l1, &mrt->job_list) {
+	e = list_entry(l, JSJobEntry, link);
+	if (f->cx != e->ctx)
+	    continue;
+	list_del(&e->link);
+	++delcount;
+	for(i = 0; i < e->argc; i++)
+	    JS_FreeValue(e->ctx, e->argv[i]);
+	js_free(e->ctx, e);
+    }
+
+    if(delcount)
+	debugPrint(3, "%d pendings deleted", delcount);
+}
+
+// don't need these quick macros any more
+#undef list_for_each
+#undef list_for_each_safe
 #undef list_empty
 #undef list_entry
 #undef offsetof

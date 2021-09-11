@@ -454,7 +454,7 @@ void htmlMetaHelper(Tag *t)
 	}
 
 	nzFree(copy);
-}				/* htmlMetaHelper */
+}
 
 /* pre is the predecoration from edbrowse-js, if appropriate */
 static void runGeneratedHtml(Tag *t, const char *h)
@@ -474,7 +474,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 	prerender(false);
 	decorate(0);
 	debugPrint(3, "end parse html from docwrite");
-}				/* runGeneratedHtml */
+}
 
 /* helper function to prepare an html script.
  * steps: 1 parsed as html, 2 decorated with a coresponding javascript object
@@ -634,7 +634,7 @@ success:
 
 fail:
 	t->step = 6;
-}				/* prepareScript */
+}
 
 static bool is_subframe(Frame *f1, Frame *f2)
 {
@@ -972,7 +972,7 @@ afterscript:
 	}
 
 	cf = save_cf;
-}				/* runScriptsPending */
+}
 
 void preFormatCheck(int tagno, bool * pretag, bool * slash)
 {
@@ -983,7 +983,7 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash)
 		*pretag = (t->action == TAGACT_PRE);
 		*slash = t->slash;
 	}
-}				/* preFormatCheck */
+}
 
 /* is there a doorway from html to js? */
 static bool jsDoorway(void)
@@ -1011,10 +1011,10 @@ char *htmlParse(char *buf, int remote)
 	cf->baseset = false;
 	cf->hbase = cloneString(cf->fileName);
 
+	debugPrint(3, "parse html from browse");
 /* call the tidy parser to build the html nodes */
 	html2nodes(buf, true);
 	nzFree(buf);
-	debugPrint(3, "parse html from browse");
 	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);
 	prerender(false);
@@ -1033,24 +1033,7 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
-
-/*********************************************************************
-		set_property_string(cf->docobj, "readyState", "complete");
-This should work, and does almost every time, except for
-https://www.digicatapult.org.uk/
-which calls https://ajax.cloudflare.com/cdn-cgi/scripts/7089c43e/cloudflare-static/rocket-loader.min.js
-which replaces readyState with a getter and no setter.
-If we try to set it using this unprotected duktape call it aborts.
-I could add protection around set_property_string, or write a protected version
-thereof, and some day I might have to do that,
-but this is called only once per browse,
-so no impact on performance if we invoke a script,
-so for now I'm taking the easy way out.
-jsRunScript is protected.
-This precaution is only needed for duktape.
-*********************************************************************/
-		jsRunScriptWin("document.readyState='complete'",
-			    "readyState", 1);
+		set_property_string_doc(cf, "readyState", "complete");
 
 		run_event_doc(cf, "document", "onreadystatechange");
 		run_event_win(cf, "window", "onfocus");
@@ -2944,7 +2927,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	return true;
 }
 
-void delTimers(Frame *f)
+void delTimers(const Frame *f)
 {
 	int delcount = 0;
 	struct jsTimer *jt, *jnext;
@@ -2957,7 +2940,10 @@ void delTimers(Frame *f)
 			nzFree(jt);
 		}
 	}
-	debugPrint(3, "%d timers deleted", delcount);
+	if(delcount)
+		debugPrint(3, "%d timers deleted", delcount);
+
+	delPendings(f);
 }
 
 void runTimer(void)

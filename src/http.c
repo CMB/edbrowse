@@ -1644,7 +1644,7 @@ static void ftp_ls_line(struct i_get *g, char *line)
 
 	prepHtmlString(g, line);
 	stringAndChar(&g->buffer, &g->length, '\n');
-}				/* ftp_ls_line */
+}
 
 /* ftp_listing: convert an FTP-style listing to html. */
 /* Repeatedly calls ftp_ls_line to parse each line of the data. */
@@ -1673,7 +1673,7 @@ static void ftp_listing(struct i_get *g)
 
 	stringAndString(&g->buffer, &g->length, "</body></html>\n");
 	nzFree(incomingData);
-}				/* ftp_listing */
+}
 
 /* Format a line from a gopher directory. */
 static void gopher_ls_line(struct i_get *g, char *line)
@@ -1786,7 +1786,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 		prepHtmlString(g, s);
 	}
 	stringAndChar(&g->buffer, &g->length, '\n');
-}				/* gopher_ls_line */
+}
 
 /* gopher_listing: convert a gopher-style listing to html. */
 /* Repeatedly calls gopher_ls_line to parse each line of the data. */
@@ -1815,7 +1815,7 @@ static void gopher_listing(struct i_get *g)
 
 	stringAndString(&g->buffer, &g->length, "</body></html>\n");
 	nzFree(incomingData);
-}				/* gopher_listing */
+}
 
 // action: 0 traditional set, 1 print, 2 print and exit
 void ebcurl_setError(CURLcode curlret, const char *url, int action,
@@ -1923,7 +1923,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 		nl();
 	if (action == 2)
 		exit(2);
-}				/* ebcurl_setError */
+}
 
 /* Like httpConnect, but for ftp */
 static bool ftpConnect(struct i_get *g, char *creds_buf)
@@ -3057,11 +3057,11 @@ So check for serverData null here. Once again we pop the frame.
 	cdt->parent = t, t->firstchild = cdt;
 	cdt->attributes = allocZeroMem(sizeof(char*));
 	cdt->atvals = allocZeroMem(sizeof(char*));
+	debugPrint(3, "parse html from frame");
 /* call the tidy parser to build the html nodes */
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
-	debugPrint(3, "parse html from frame");
 	htmlGenerated = false;
 	htmlNodesIntoTree(start + 1, cdt);
 	prerender(0);
@@ -3184,11 +3184,11 @@ bool reexpandFrame(void)
 		createJSContext(cf);
 
 	start = cw->numTags;
+	debugPrint(3, "parse html from frame replace");
 /* call the tidy parser to build the html nodes */
 	html2nodes(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
-	debugPrint(3, "parse html from frame replace");
 	cf->browseMode = false;
 	htmlGenerated = false;
 	htmlNodesIntoTree(start, cdt);
