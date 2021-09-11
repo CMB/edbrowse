@@ -150,6 +150,7 @@ void htmlNodesIntoTree(int start, Tag *attach);
 void underKill(Tag *t);
 void html_from_setter( Tag *innerParent, const char *h);
 void debugGenerated(const char *h);
+bool frameFromContext(jsobjtype cx);
 
 /* sourcefile=http.c */
 void eb_curl_global_init(void);

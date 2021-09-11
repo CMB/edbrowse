@@ -46,7 +46,19 @@ EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h
 jseng-duk.o jseng-moz.o jseng-quick.o : eb.h ebprot.h messages.h
+jseng-quick.o : modified_runtime.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
+
+#  As of this writing, quickjs is not packaged or distributed.
+#  You have to build it from source, just like edbrowse.
+#  It is then not unreasonable for me to dip into that source if I need to,
+#  and to assume that source is in a directory parallel to edbrowse.
+#  I Pull the Runtime structure out of the source, and sanitize it,
+#  so the important member, job_list, is in position.
+#  Then I can access it directly, without going through the api.
+#  Yeah this is really chancy, but here we go.
+modified_runtime.h :
+	@if [ ! -f ../../quickjs/quickjs.c ] ; then echo "Sorry, you must git and build quickjs in a directory parallel to edbrowse; ../../quickjs/quickjs.c not found"; else sed -f make-helper.sed <../../quickjs/quickjs.c > modified_runtime.h; fi
 
 startwindow.c: $(EDBR_JS_ASSETS)
 	$(PERL) ../tools/buildsourcestring.pl $(EDBR_JS_ASSETS) startwindow.c

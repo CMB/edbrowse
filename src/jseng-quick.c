@@ -2880,11 +2880,140 @@ static JSValue nat_cssText(JSContext * cx, JSValueConst this, int argc, JSValueC
 	return JS_UNDEFINED;
 }
 
+/*********************************************************************
+Ok, I have some splainin to do.
+The quickjs function JS_ExecutePendingJob() executes the next pending job,
+usually from a Promise call. It can be in any context.
+We have no control over that.
+Thus it could be a promise call from any edbrowse frame in any session.
+That's not enough control for us, for many reasons.
+1. I employ two very important global variables, which is bad programming,
+but this is a part time volunteer gig and sometimes I'm lazy.
+Somehow, cw and cf have to be set before the job runs,
+or our side effects, like innerHTML, won't work properly.
+I have to call frameFromContext before the job runs, somewhere
+inside JS_ExecutePendingJob().
+Alternatively, I could call frameFromContext from all of my native methods,
+that is, you go from js into the edbrowse world, and I make sure cf and cw
+are correct, but that's kind of a pain in the ass.
+On the other hand, trying to get inside of the quickjs function,
+which is suppose to be opaque to me, has its own risks. Well let's continue.
+2. If an edbrowse session quits, I should clean up and throw away
+any pending jobs associated with that context.
+I do this for timers, but timers are my own creation so that's easy.
+Again, I have to dip into the internal list of pending jobs if I am to do this.
+3. In a perfect world, I would skip over jobs in contexts
+that have been pushed onto the edbrowse stack.
+Again, I do this with timers.
+So I have to go from context to window, and if that window isn't at the top of the stack,
+just skip it for now, cause it may pop up to the top of the stack later.
+All this together compels me to try to get inside of JS_ExecutePendingJob().
+You'll see below I copied their code, so I can modify it;
+I call it my_ExecutePendingJob().
+Ok, but I have to bring in some other machinery to support it.
+I copied some primitives for managing linked lists, from list.h,
+and they are remarkably similar to the ones I invented for edbrowse.
+Their list_empty is my listEmpty, etc.
+Great minds think alike.
+But the real problem is the JSRuntime. The API leaves it opaque,
+struct JSRuntime, with no mention of the members.
+I have to know where, in this structure, to find the list of jobs.
+And that could change version to version.
+So, gross as it is, I dip into quickjs.c and pull out the struct.
+That means quickjs.c has to be there.
+As of this writing, quickjs is not packaged or distributed.
+You have to build it from source, just like edbrowse.
+It is then not unreasonable for me to dip into that source if I need to,
+and apparently I need to,
+and to assume that source is in a directory parallel to edbrowse.
+I sanitize the struct along the way, so I don't have to have all the typedefs.
+Example: SnorkHork *foo may as well be void *foo for all I care.
+Long as I keep job_list the same.
+A sed script takes care of this.
+So far, I only tackle item 1 in this list; make sure cf and cw are correct.
+I don't clean pending jobs from quit sessions, which could be disastrous,
+and I don't skip over jobs of background windows.
+Ouch.
+Hopefully that functionality will come.
+This is all a lot more involved than it should be.
+Ok, first struct list_heade from list.h.
+*********************************************************************/
+
+struct list_head {
+    struct list_head *prev;
+    struct list_head *next;
+};
+
+typedef struct JSJobEntry {
+    struct list_head link;
+    JSContext *ctx;
+    JSJobFunc *job_func;
+    int argc;
+    JSValue argv[0];
+} JSJobEntry;
+
+#include "modified_runtime.h"
+
+#define offsetof(type, field) ((size_t) &((type *)0)->field)
+#define list_entry(el, type, member) \
+    ((type *)((uint8_t *)(el) - offsetof(type, member)))
+#define list_empty(l) ((l)->next == (l))
+
+static inline void list_del(struct list_head *el)
+{
+    struct list_head *prev, *next;
+    prev = el->prev;
+    next = el->next;
+    prev->next = next;
+    next->prev = prev;
+    el->prev = NULL; /* fail safe */
+    el->next = NULL; /* fail safe */
+}
+
+static int my_ExecutePendingJob(void)
+{
+    JSContext *ctx;
+    JSJobEntry *e;
+    JSValue res;
+    int i, ret;
+	struct modifiedRuntime *mrt = (struct modifiedRuntime *) jsrt;
+	Frame *save_cf = cf;
+	struct ebWindow *save_cw = cw;
+
+    if (list_empty(&mrt->job_list))
+        return 0;
+
+    // get the first pending job and execute it
+    e = list_entry(mrt->job_list.next, JSJobEntry, link);
+    list_del(&e->link);
+    ctx = e->ctx;
+    if (frameFromContext(ctx)) {
+	res = e->job_func(ctx, e->argc, (JSValueConst *)e->argv);
+	cw = save_cw, cf = save_cf;
+    } else
+	res = JS_UNDEFINED;
+    for(i = 0; i < e->argc; i++)
+        JS_FreeValue(ctx, e->argv[i]);
+    if (JS_IsException(res))
+        ret = -1;
+    else
+        ret = 1;
+    JS_FreeValue(ctx, res);
+    js_free(ctx, e);
+    return ret;
+}
+
+// don't need these any more
+#undef list_empty
+#undef list_entry
+#undef offsetof
+
+// this is temporary, we will be polling on a timer
+// to execute these pending jobs.
 static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	JSContext *pcx;
 	int safety = 0;
-	while(JS_ExecutePendingJob(jsrt, &pcx)) {
+	while(my_ExecutePendingJob()) {
 		if(++safety == 10)
 			break;
 	}
@@ -3742,7 +3871,7 @@ I'm bringing the tags back to life.
 
 	if (!sel->multiple)
 		set_property_number(cx, *((JSValue*)sel->jv), "selectedIndex", sel->lic);
-}				/* rebuildSelector */
+}
 
 void rebuildSelectors(void)
 {

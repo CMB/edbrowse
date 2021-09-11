@@ -2137,3 +2137,24 @@ void debugGenerated(const char *h)
 		debugPrint(4, "Generated ↑%s↑", h1);
 	*(char*)h2 = '<';
 }
+
+// Find window and frame based on the js context. Set cw and cf accordingly.
+// This is inefficient, but is not called very often.
+bool frameFromContext(jsobjtype cx)
+{
+	int i;
+	struct ebWindow *w;
+	Frame *f;
+	for (i = 0; i < MAXSESSION; ++i) {
+		for (w = sessionList[i].lw; w; w = w->prev) {
+			for (f = &(w->f0); f; f = f->next) {
+				if(f->cx == cx) {
+					cf = f, cw = w;
+					return true;
+				}
+			}
+		}
+	}
+	debugPrint(3, "frameFromContext cannot find the frame, job is not executed");
+	return false;
+}
