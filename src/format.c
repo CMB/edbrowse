@@ -170,7 +170,7 @@ static void anchorSwap(char *buf)
 /* copy the utf8 sequence as is */
 			*w++ = c;
 			++s;
-			c <<= 1;
+			c = (char) ((uchar)c << 1);
 			while ((c & 0x80) && ((d = *s) & 0xc0) == 0x80) {
 				*w++ = d;
 				++s;
@@ -422,7 +422,7 @@ hence it would send a newline if there was one.
 		}
 		s = a;
 	}
-}				/* anchorSwap */
+}
 
 /*********************************************************************
 Format text, and break lines at sentence/phrase boundaries.
@@ -480,7 +480,7 @@ static void debugChunk(const char *chunk, int len)
 		fprintf(f, "%c", c);
 	}
 	fprintf(f, ">%d.%d\n", colno, lspace);
-}				/* debugChunk */
+}
 
 static void appendOneChar(char c)
 {
@@ -488,7 +488,7 @@ static void appendOneChar(char c)
 		bl_overflow = true;
 	else
 		*bl_cursor++ = c;
-}				/* appendOneChar */
+}
 
 static bool spaceNotInInput(void)
 {
@@ -511,7 +511,7 @@ static bool spaceNotInInput(void)
 			return false;
 	}
 	return true;
-}				/* spaceNotInInput */
+}
 
 static void appendSpaceChunk(const char *chunk, int len, bool premode)
 {
@@ -636,7 +636,7 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 			colno += 4;
 	}
 	lspace = 1;
-}				/* appendSpaceChunk */
+}
 
 static void appendPrintableChunk(const char *chunk, int len, bool premode)
 {
@@ -692,7 +692,7 @@ static void appendPrintableChunk(const char *chunk, int len, bool premode)
 	lcomma -= i;
 	lright -= i;
 	lany -= i;
-}				/* appendPrintableChunk */
+}
 
 /* Break up a line using the above routines.
  * The new lines are put in a fixed array.
