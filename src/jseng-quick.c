@@ -3012,6 +3012,7 @@ delete_and_go:
 	debugPrint(3, "exec complete");
 	JS_FreeValue(ctx, res);
 	++safety;
+	jSideEffects();
 	goto delete_and_go;
     }
 
