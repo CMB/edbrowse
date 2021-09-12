@@ -2931,9 +2931,6 @@ Example: SnorkHork *foo may as well be void *foo for all I care.
 Long as I keep job_list the same.
 And I don't need anything beyond job_list.
 A sed script takes care of this.
-So far, I tackle items 1 and 3 in this list.
-I don't skip over jobs of background windows.
-Hopefully that functionality will come soon.
 This is all a lot more involved than it should be.
 Ok, here is some stuffe from quickjs/list.h.
 *********************************************************************/
@@ -2974,39 +2971,51 @@ typedef struct JSJobEntry {
 
 #include "modified_runtime.h"
 
-static int my_ExecutePendingJob(void)
+static void my_ExecutePendingJob(void)
 {
     JSContext *ctx;
     JSJobEntry *e;
+				struct list_head *l, *l1;
     JSValue res;
-    int i, ret;
+    int i, safety = 0;
 	struct modifiedRuntime *mrt = (struct modifiedRuntime *) jsrt;
 	Frame *save_cf = cf;
 	struct ebWindow *save_cw = cw;
 
+// high runner case
     if (list_empty(&mrt->job_list))
-        return 0;
+        return;
 
-    // get the first pending job and execute it
-    e = list_entry(mrt->job_list.next, JSJobEntry, link);
-    list_del(&e->link);
-    ctx = e->ctx;
-    if (frameFromContext(ctx)) {
+// step through the jobs
+    list_for_each_safe(l, l1, &mrt->job_list) {
+	if(safety == 4) // I'm only going to do four of these
+	    break;
+	e = list_entry(l, JSJobEntry, link);
+	ctx = e->ctx;
+	if (!frameFromContext(ctx)) {
+delete_and_go:
+	    list_del(&e->link);
+	    for(i = 0; i < e->argc; i++)
+		JS_FreeValue(ctx, e->argv[i]);
+	    js_free(ctx, e);
+	    continue;
+	}
+
+// Browsing a new web page in the current session pushes the old one, like ^z
+// in Linux. The prior page suspends, and the timers and pendings suspend.
+// ^ is like fg, bringing it back to life.
+	if(sessionList[cw->sno].lw != cw)
+	    continue;
+
 	debugPrint(3, "exec pending for context %d", cf->gsn);
 	res = e->job_func(ctx, e->argc, (JSValueConst *)e->argv);
 	debugPrint(3, "exec complete");
-	cw = save_cw, cf = save_cf;
-    } else
-	res = JS_UNDEFINED;
-    for(i = 0; i < e->argc; i++)
-        JS_FreeValue(ctx, e->argv[i]);
-    if (JS_IsException(res))
-        ret = -1;
-    else
-        ret = 1;
-    JS_FreeValue(ctx, res);
-    js_free(ctx, e);
-    return ret;
+	JS_FreeValue(ctx, res);
+	++safety;
+	goto delete_and_go;
+    }
+
+    cw = save_cw, cf = save_cf;
 }
 
 void delPendings(const Frame *f)
@@ -3045,11 +3054,7 @@ void delPendings(const Frame *f)
 // to execute these pending jobs.
 static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	int safety = 0;
-	while(my_ExecutePendingJob()) {
-		if(++safety == 10)
-			break;
-	}
+	my_ExecutePendingJob();
 	return JS_UNDEFINED;
 }
 
