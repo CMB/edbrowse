@@ -2765,6 +2765,7 @@ struct jsTimer {
 	bool isInterval;
 	bool running;
 	bool deleted;
+	bool pending;
 	int jump_sec;		/* for interval */
 	int jump_ms;
 	int tsn;
@@ -2823,13 +2824,17 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 
 // now adding a timer
 	jt = allocZeroMem(sizeof(struct jsTimer));
-	if(n < cf->jtmin)
-		n = cf->jtmin;
-	if(!n)
-		n = 10;
-	if (n < timerSpread)
-		n += timerStep;
-	cf->jtmin = n;
+	if(stringEqual(jsrc, "@@pending"))
+		jt->pending = true;
+	else {
+		if(n < cf->jtmin)
+			n = cf->jtmin;
+		if(!n)
+			n = 10;
+		if (n < timerSpread)
+			n += timerStep;
+		cf->jtmin = n;
+	}
 	jt->sec = n / 1000;
 	jt->ms = n % 1000;
 	if ((jt->isInterval = isInterval))
@@ -2875,12 +2880,15 @@ static struct jsTimer *soonest(void)
 	if (listIsEmpty(&timerList))
 		return 0;
 	foreach(t, timerList) {
+		if(!t->pending) {
+// regular timer, not the pending jobs timer
 // Browsing a new web page in the current session pushes the old one, like ^z
 // in Linux. The prior page suspends, and the timers suspend.
 // ^ is like fg, bringing it back to life.
-		w = t->f->owner;
-		if(sessionList[w->sno].lw != w)
-			continue;
+			w = t->f->owner;
+			if(sessionList[w->sno].lw != w)
+				continue;
+		}
 		if (!best_t || t->sec < best_t->sec ||
 		    (t->sec == best_t->sec && t->ms < best_t->ms))
 			best_t = t;
@@ -2958,6 +2966,16 @@ void runTimer(void)
 	if (!(jt = soonest()) ||
 	    (jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms)))
 		goto done;
+
+	if(jt->pending) { // pending jobs
+		my_ExecutePendingJob();
+		int n = jt->jump_sec * 1000 + jt->jump_ms;
+		jt->sec = now_sec + n / 1000;
+		jt->ms = now_ms + n % 1000;
+		if (jt->ms >= 1000)
+			jt->ms -= 1000, ++jt->sec;
+		goto done;
+	}
 
 	if (!gotimers)
 		goto skip_execution;

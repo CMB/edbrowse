@@ -2971,7 +2971,7 @@ typedef struct JSJobEntry {
 
 #include "modified_runtime.h"
 
-static void my_ExecutePendingJob(void)
+void my_ExecutePendingJob(void)
 {
     JSContext *ctx;
     JSJobEntry *e;
@@ -3157,6 +3157,8 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, SHARECLASS), JS_PROP_ENUMERABLE);
 
 	JS_FreeValue(mwc, mwo);
+// start the jobs pending timer
+	domSetsTimeout(300, "@@pending", 0, true);
 	js_running = true;
 }
 
@@ -4050,6 +4052,8 @@ void jsClose(void)
 	if(js_running) {
 		JS_FreeContext(mwc);
 		grabover();
+// release the timer for pending jobs
+	domSetsTimeout(0, "-", 0, false);
 		JS_FreeRuntime(jsrt);
 	}
 }

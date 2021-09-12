@@ -386,6 +386,7 @@ void set_property_object_t(const Tag *t, const char *name, const Tag *t2);
 bool run_function_bool_t(const Tag *t, const char *name);
 bool run_function_bool_win(const Frame *f, const char *name);
 void forceFrameExpand(Tag *t);
+void my_ExecutePendingJob(void);
 void delPendings(const Frame *f);
 void js_main(void);
 void createJSContext(Frame *f) ;

@@ -13,6 +13,8 @@ Support email>name in the addressbook, wherein name is sent in the outgoing emai
 
 A partial implementation of cross origin resource sharing.
 
+Poll for pending jobs and run them. These usually come from Promise.
+
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross compartment access, as in frames,
