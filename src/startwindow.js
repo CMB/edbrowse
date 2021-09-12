@@ -2468,6 +2468,7 @@ c.prototype.injectSetup = dom$.injectSetup;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw$.classList(this);}});
+c.prototype.cl$present = true;
 Object.defineProperty(c.prototype, "textContent", {
 get: function() { return dom$.textUnder(this, 0); },
 set: function(s) { return dom$.newTextUnder(this, s, 0); }});

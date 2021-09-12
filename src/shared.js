@@ -84,7 +84,6 @@ t = t.parentNode;
 }
 
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
-// These are recursive as they descend through the tree of nodes.
 
 function getElementsByTagName(s) {
 if(!s) { // missing or null argument
@@ -160,19 +159,32 @@ return a;
 }
 
 function getElementsByClassName(s) {
-s = s.toLowerCase();
-return eb$gebcn(this, s);
+if(!s) { // missing or null argument
+alert3("getElementsByTagName(type " + typeof s + ")");
+return [];
+}
+s = s.toLowerCase() . replace (/^\s+/, '') . replace (/\s+$/, '');
+if(s === "") return [];
+var sa = s.split(/\s+/);
+return eb$gebcn(this, sa);
 }
 
-function eb$gebcn(top, s) {
+function eb$gebcn(top, sa) {
 var a = [];
-if(s === '*' || (top.class && top.class.toLowerCase() === s))
-a.push(top);
+if(top.cl$present) {
+var i;
+for(i=0; i<sa.length; ++i) {
+var w = sa[i];
+if(w === '*') { a.push(top); break; }
+if(!top.classList.contains(w)) break;
+}
+if(i == sa.length) a.push(top);
+}
 if(top.childNodes) {
 if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebcn(c, s));
+a = a.concat(eb$gebcn(c, sa));
 }
 }
 return a;
