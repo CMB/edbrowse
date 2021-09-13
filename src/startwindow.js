@@ -3366,51 +3366,6 @@ The only one they don't have is item, so I better leave that one in.
 Array.prototype.item = function(x) { return this[x] };
 Object.defineProperty(Array.prototype, "item", { enumerable: false});
 
-if(window.Duktape) {
-Array.prototype.includes = function(x, start) {
-if(typeof start != "number") start = 0;
-var l = this.length;
-if(start < 0) start += l;
-if(start < 0) start = 0;
-for(var i=start; i<l; ++i)
-if(this[i] === x) return true;
-return false;
-}
-Object.defineProperty(Array.prototype, "includes", { enumerable: false});
-
-Array.from = function(o) {
-var k = arguments.length;
-var a = [];
-if(!k) return a;
-var l = o.length;
-for(var i=0; i<l; ++i) {
-var fn = null, thisobj = null;
-if(k >= 2) fn = arguments[1];
-if(k >= 3) thisobj = arguments[2];
-var w = o[i];
-if(fn) {
-if(thisobj) w = fn.call(thisobj, w);
-else w = fn(w);
-}
-a.push(w);
-}
-return a;
-}
-
-Array.prototype.map = function(fn, t) {
-var a = [];
-if(!fn) return a; // should never happen
-for(var i = 0; i<this.length; ++i) {
-var w = this[i];
-if(t) w = fn.call(t, w, i, this);
-else w = fn(w, i, this);
-a.push(w);
-}
-return a;
-}
-Object.defineProperty(Array.prototype, "map", { enumerable: false});
-}
-
 // On the first call this setter just creates the url, the location of the
 // current web page, But on the next call it has the side effect of replacing
 // the web page with the new url.
@@ -3604,6 +3559,9 @@ alert3(msg);
     return e;
 }
 }
+// But is there some way we can get a handle on Errors thrown in general?
+ErrorSave = Error;
+function ErrorWrap(msg) { alert3("error " + msg + " thrown"); return new ErrorSave(msg);}
 
 MutationObserver = function(f) {
 var w = my$win();
@@ -3700,86 +3658,6 @@ rastep = 0;
 requestAnimationFrame = function() {
 // This absolutely doesn't do anything. What is edbrowse suppose to do with animation?
 return ++dom$.rastep;
-}
-
-// only duktape needs the es6 stuff
-if(window.Duktape) {
-Set = function() { this.items=[]; }
-Object.defineProperty(Set.prototype, "size", {get:function(){return this.items.length}});
-Set.prototype.has = function(x) {return this.items.indexOf(x) >= 0;}
-Set.prototype.add = function(x) {if(!this.has(x)) this.items.push(x); return x; }
-Set.prototype.clear = function(){this.items.length = 0;}
-Set.prototype.delete = function(x) {var i = this.items.indexOf(x); if(i < 0) return false; this.items.splice(i,1); return true; }
-Set.prototype.forEach = function(fn,t) {
-for(var i=0; i<this.items.length; ++i)
-if(t) fn.call(t,this.items[i]); else fn(this.items[i]);
-}
-
-Map = function() { this.keys = [], this.items=[]; }
-Object.defineProperty(Map.prototype, "size", {get:function(){return this.items.length}});
-Map.prototype.clear = function(){this.items.length = this.keys.length = 0;}
-Map.prototype.delete = function(k) {
-for(var i=0; i<this.keys.length; ++i)
-if(this.keys[i] === k) {
-this.keys.splice(i,1), this.items.splice(i,1);
-return true;
-}
-return false;
-}
-Map.prototype.get = function(k) {
-for(var i=0; i<this.keys.length; ++i)
-if(this.keys[i] === k)
-return this.items[i];
-return undefined;
-}
-Map.prototype.has = function(k) {
-for(var i=0; i<this.keys.length; ++i)
-if(this.keys[i] === k)
-return true;
-return false;
-}
-Map.prototype.set = function(k,v) {
-for(var i=0; i<this.keys.length; ++i)
-if(this.keys[i] === k) {
-this.items[i] = v;
-return this;
-}
-this.keys.push(k), this.items.push(v);
-return this;
-}
-Map.prototype.forEach = function(fn,t) {
-for(var i=0; i<this.items.length; ++i)
-if(t) fn.call(t,this.keys[i], this.items[i]); else fn(this.keys[i], this.items[i]);
-}
-
-Reflect = function() {};
-Reflect.prototype.get = function(target,propertyKey) {
-return target[propertyKey];
-}
-
-String.prototype.padStart = function(l2, v) {
-var l1 = this.length;
-var s = new String(this);
-if(l2 <= l1) return s;
-var l0 = l1;
-if(!v) v = " ";
-var l3 = v.length;
-while(l1+l3 <= l2) s = v+s, l1 += l3;
-if(l1 == l2) return s;
-v = v.substr(0,l2-l1);
-return s.substr(0,l1-l0) + v + s.substr(l1-l0);
-}
-String.prototype.padEnd = function(l2, v) {
-var l1 = this.length;
-var s = new String(this);
-if(l2 <= l1) return s;
-if(!v) v = " ";
-var l3 = v.length;
-while(l1+l3 <= l2) s = s+v, l1 += l3;
-if(l1 == l2) return s;
-v = v.substr(0,l2-l1);
-return s+v;
-}
 }
 
 cancelAnimationFrame = eb$voidfunction;
