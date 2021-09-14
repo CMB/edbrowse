@@ -29,6 +29,10 @@ properly nested, tidy really jumps the tracks.
 And we don't use <optgroup> anyways.
 The third is changing <code> to <zode> since <pre><code> blocks lose the line
 breaks, and we don't do anything with <code> anyways.
+These are blind substitutions, and I don't like them.
+If <code> appears in a string, or as part of javascript, or json, I'm up the creek!
+I could try to parse the html at some level, to know they are tags,
+but at that point I'm practically rewriting tidy.
 *********************************************************************/
 
 char *tidyPreprocess(const char *h)

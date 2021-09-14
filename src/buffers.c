@@ -5173,7 +5173,12 @@ et_go:
 
 	if(!strncmp(line, "selsep=", 7)) {
 		char oldsep = selsep;
-		c = line[7] ? line[7] : ',';
+		if(!(c = line[7])) {
+			printf("%c\n", selsep);
+			return true;
+		}
+		if(c == selsep)
+			return true;
 		if(charInOptions(c)) {
 			setError(MSG_OptionC, c);
 			return 0;

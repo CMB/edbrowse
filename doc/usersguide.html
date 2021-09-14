@@ -676,8 +676,9 @@ g : go to the link on the current line
 <br>s/$/,oran : add the option orange to the select list
 <br>s/,red/ : remove red from the select list
 <br>selsep=| : change the separator between items in a select list
-<br>i&lt;5 : read buffer 5 into the input field
-<br>i&lt;foo : read file foo into the current input field.
+<br>selsep= : print the separator
+<br>i&lt;5 : read buffer 5 into the text input field, one line of text
+<br>i&lt;foo : read file foo into the text input field, one line of text
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
 <br>i$* : push the last button on the current line
@@ -2507,7 +2508,8 @@ s/$/,3 adds german to the list.
 <P>
 What if one of the options contains a comma?
 Use selsep=| to change the separator to |.
-In fact, you may want to set your preferred separator in your init function.
+This may print several update messages, as lines are updated on all your buffers, even those in the background; this is a global change.
+You may want to set your preferred separator in your init function.
 Characters like | or ` or ^ are unlikely to appear in options.
 
 <P>
