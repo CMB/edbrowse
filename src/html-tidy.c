@@ -25,30 +25,49 @@ Return null if there is no need to change the text.
 Otherwise return an allocated string.
 The first workaround here is the expansion of < > inside a textarea.
 The second is changing tag optgroup to zptgroup, cause if <optgroup> is not
-properly nested, tidy really jumps off the track.
+properly nested, tidy really jumps the tracks.
+And we don't use <optgroup> anyways.
+The third is changing <code> to <zode> since <pre><code> blocks lose the line
+breaks, and we don't do anything with <code> anyways.
 *********************************************************************/
 
 char *tidyPreprocess(const char *h)
 {
 	char *ns = 0;		/* the new string */
-	char *ns0 = 0;
+ bool first = false;
 	int l;
-	char *inside, *expanded;
-	const char *lg, *s = strcasestr(h, "<optgroup");
-	if(s) {
-		char *u;
-		h = u = ns = ns0 = cloneString(h);
+	char *inside, *expanded, *u;
+	const char *lg, *s, *h0;
+
+	if(strcasestr(h, "<optgroup")) {
+		u = ns = cloneString(h);
 		while((u = strcasestr(u, "<optgroup")))
 			u[1] = 'z';
 		u = ns;
 		while((u = strcasestr(u, "/optgroup>")))
 			u[1] = 'z';
+		first = true;
+		h = ns;
+	}
+
+	if(strcasestr(h, "<code>")) {
+		u = ns = cloneString(h);
+		while((u = strcasestr(u, "<code>")))
+			u[1] = 'z';
+		u = ns;
+		while((u = strcasestr(u, "/code>")))
+			u[1] = 'z';
+		if(first)
+			cnzFree(h);
+		first = true;
+		h = ns;
 	}
 
 	s = strcasestr(h, "<textarea");
 	if (!s)
 		return ns;
 
+	h0 = h;
 	ns = initString(&l);
 	stringAndBytes(&ns, &l, h, s - h);
 	h = s;
@@ -78,7 +97,8 @@ char *tidyPreprocess(const char *h)
 		h = s;
 	}
 	stringAndString(&ns, &l, h);
-	nzFree(ns0);
+	if(first)
+		cnzFree(h0);
 	return ns;
 }
 
