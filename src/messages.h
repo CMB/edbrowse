@@ -765,7 +765,7 @@ enum {
 	MSG_Textarea0,
 	MSG_MailDirect,
 	MSG_OptionC,
-	MSG_notused668,
+	MSG_FileC,
 	MSG_notused669,
 	MSG_notused670,
 };

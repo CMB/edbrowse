@@ -1050,7 +1050,7 @@ char *htmlParse(char *buf, int remote)
 	nzFree(a);
 
 	return newbuf;
-}				/* htmlParse */
+}
 
 /* See if there are simple tags like <p> or </font> */
 bool htmlTest(void)
@@ -1132,7 +1132,7 @@ bool htmlTest(void)
  * And we need at least 4 such tags.
  * Remember, you can always override by putting <html> at the top. */
 	return (cnt >= 4 && cnt * 300 >= fsize);
-}				/* htmlTest */
+}
 
 /* Show an input field */
 void infShow(int tagno, const char *search)
@@ -1190,7 +1190,7 @@ void infShow(int tagno, const char *search)
 		else
 			i_printf(MSG_NoOptionsMatch, search);
 	}
-}				/* infShow */
+}
 
 static bool inputDisabled(const Tag *t)
 {
@@ -1242,7 +1242,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 
 	if (fromForm)
 		i_printf(MSG_NoTagFound, tagno, newtext);
-}				/* updateFieldInBuffer */
+}
 
 /* Update an input field. */
 bool infReplace(int tagno, const char *newtext, bool notify)
@@ -1304,12 +1304,50 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype == INP_FILE) {
-		if (!envFile(newtext, &newtext))
-			return false;
-		if (newtext[0] && access(newtext, 4)) {
-			setError(MSG_FileAccess, newtext);
-			return false;
+		int u_l;
+		char *u = initString(&u_l);
+		if(!newtext[0]) { // empty
+			updateFieldInBuffer(tagno, newtext, notify, true);
+			return true;
 		}
+		if(!t->multiple) {
+			if (!envFile(newtext, &newtext))
+				return false;
+			if (newtext[0] && access(newtext, 4)) {
+				setError(MSG_FileAccess, newtext);
+				return false;
+			}
+			u = cloneString(newtext);
+		} else {
+			const char *v = newtext, *w, *z2;
+			char *z;
+			while(*v) {
+				if(!(w = strchr(v, selsep)))
+					w = v + strlen(v);
+				z = pullString(v, w-v);
+				v = *w ? w+1 : w; // point to next file
+				if(!*z) { // empty
+					nzFree(z);
+					continue;
+				}
+				if (!envFile(z, &z2)) {
+					nzFree(z), nzFree(u);
+					return false;
+				}
+				if (z2[0] && access(z2, 4)) {
+					setError(MSG_FileAccess, z2);
+					nzFree(z), nzFree(u);
+					return false;
+				}
+				if(*u)
+					stringAndChar(&u, &u_l, selsep);
+				stringAndString(&u, &u_l, z2);
+				nzFree(z);
+			}
+		}
+		updateFieldInBuffer(tagno, u, notify, true);
+		nzFree(u);
+		return true;
 	}
 
 	if (itype == INP_TEXT && t->lic && newlen > t->lic) {
@@ -1373,7 +1411,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	return true;
-}				/* infReplace */
+}
 
 /*********************************************************************
 Reset or submit a form.
@@ -1428,7 +1466,7 @@ static void resetVar(Tag *t)
 					    "selectedIndex", t->lic);
 	} else
 		set_property_string_t(t, "value", w);
-}				/* resetVar */
+}
 
 static void formReset(const Tag *form)
 {
@@ -1474,7 +1512,7 @@ static void formReset(const Tag *form)
 	}			/* loop over tags */
 
 	i_puts(MSG_FormReset);
-}				/* formReset */
+}
 
 /* Fetch a field value (from a form) to post. */
 /* The result is allocated */
@@ -1496,7 +1534,7 @@ static char *fetchTextVar(const Tag *t)
 
 /* Revert to the default value */
 	return cloneString(t->value);
-}				/* fetchTextVar */
+}
 
 static bool fetchBoolVar(const Tag *t)
 {
@@ -1782,22 +1820,41 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 		}
 
 		if (itype == INP_FILE) {	/* the only one left */
+			if (!(form->post & form->mime)) {
+				setError(MSG_FilePost);
+				goto fail;
+			}
 			dynamicvalue = fetchTextVar(t);
 			if (!dynamicvalue)
 				continue;
 			if (!*dynamicvalue)
 				continue;
-			if (!(form->post & form->mime)) {
-				setError(MSG_FilePost);
+			if(!t->multiple) {
+				rc = postNameVal(name, dynamicvalue, fsep, 3);
 				nzFree(dynamicvalue);
-				goto fail;
+				dynamicvalue = NULL;
+				if (!rc)
+					goto fail;
+			} else {
+				const char *v = dynamicvalue, *w;
+				char *z;
+				while(*v) {
+					if(!(w = strchr(v, selsep)))
+						w = v + strlen(v);
+					z = pullString(v, w-v);
+					v = *w ? w+1 : w; // point to next file
+					if(!*z) { // empty
+						nzFree(z);
+						continue;
+					}
+					rc = postNameVal(name, z, fsep, 3);
+					nzFree(z);
+					if (!rc)
+						goto fail;
+				}
+				nzFree(dynamicvalue);
 			}
-			rc = postNameVal(name, dynamicvalue, fsep, 3);
-			nzFree(dynamicvalue);
-			dynamicvalue = NULL;
-			if (rc)
-				continue;
-			goto fail;
+			continue;
 		}
 
 		i_printfExit(MSG_UnexSubmitForm);
@@ -1817,7 +1874,7 @@ success:
 
 fail:
 	return false;
-}				/* formSubmit */
+}
 
 /*********************************************************************
 Push the reset or submit button.
@@ -2068,7 +2125,7 @@ bool infPush(int tagno, char **post_string)
 
 	*post_string = pfs;
 	return true;
-}				/* infPush */
+}
 
 void domSubmitsForm(Tag *t, bool reset)
 {
@@ -2096,6 +2153,106 @@ void domSetsTagValue(Tag *t, const char *newtext)
 	}
 	nzFree(t->value);
 	t->value = cloneString(newtext);
+}
+
+bool charInOptions(char c)
+{
+	const struct ebWindow *w;
+	const Tag *t;
+	int i;
+	for(i = 0; i < MAXSESSION; ++i) {
+		for(w = sessionList[i].lw; w; w = w->prev) {
+			if(!w->browseMode)
+				continue;
+			for (t = w->optlist; t; t = t->same)
+				if(t->textval && strchr(t->textval, c) &&
+				t->controller && t->controller->multiple)
+					return true;
+		}
+	}
+	return false;
+}
+
+void charFixOptions(char c)
+{
+	struct ebWindow *w, *save_w = cw;
+	Tag *t;
+	int i, j;
+	char *u;
+	for(i = 0; i < MAXSESSION; ++i) {
+		for(w = sessionList[i].lw; w; w = w->prev) {
+			if(!w->browseMode)
+				continue;
+			for(j = 0; j < w->numTags; ++j) {
+				t = w->tags[j];
+				if(t->action != TAGACT_INPUT || !t->value ||
+				t->itype != INP_SELECT || !t->multiple)
+					continue;
+				for(u = t->value; *u; ++u)
+					if(*u == c)
+						*u = selsep;
+			}
+			cw = w, rerender(cw == save_w ? 0 : -1);
+		}
+	}
+	cw = save_w;
+}
+
+bool charInFiles(char c)
+{
+	const struct ebWindow *w;
+	const Tag *t;
+	int i, j;
+	char *u;
+	for(i = 0; i < MAXSESSION; ++i) {
+		for(w = sessionList[i].lw; w; w = w->prev) {
+			if(!w->browseMode)
+				continue;
+			for(j = 0; j < w->numTags; ++j) {
+				t = w->tags[j];
+				if(t->action != TAGACT_INPUT ||
+				t->itype != INP_FILE || !t->multiple ||
+				!(u = fetchTextVar(t)))
+					continue;
+				if(strchr(u, c)) {
+					nzFree(u);
+					return true;
+				}
+				nzFree(u);
+			}
+		}
+	}
+	return false;
+}
+
+void charFixFiles(char c)
+{
+	struct ebWindow *w, *save_w = cw;
+	Tag *t;
+	int i, j;
+	char *u, *v;
+	for(i = 0; i < MAXSESSION; ++i) {
+		for(w = sessionList[i].lw; w; w = w->prev) {
+			if(!w->browseMode)
+				continue;
+			cw = w;
+			for(j = 0; j < w->numTags; ++j) {
+				t = w->tags[j];
+				if(t->action != TAGACT_INPUT ||
+				t->itype != INP_FILE || !t->multiple ||
+				!(u = fetchTextVar(t)))
+					continue;
+				for(v = u; *v; ++v)
+					if(*v == c)
+						*v = selsep;
+  printf("u,%s\n", u);
+				updateFieldInBuffer(t->seqno, u, false, false);
+				nzFree(t->value);
+				t->value = u;
+			}
+		}
+	}
+	cw = save_w;
 }
 
 /* Javascript errors, we need to see these no matter what. */
@@ -2465,7 +2622,7 @@ static int hovcount, invcount, injcount;
 
 /* Rerender the buffer and notify of any lines that have changed */
 int rr_interval = 20;
-void rerender(bool rr_command)
+void rerender(int rr_command)
 {
 	char *a, *snap, *newbuf;
 	int j;
@@ -2482,7 +2639,7 @@ void rerender(bool rr_command)
 // not sure if we have to do this here
 	rebuildSelectors();
 
-	if (rr_command) {
+	if (rr_command > 0) {
 // You might have changed some input fields on the screen, then typed rr
 		jSyncup(true);
 	}
@@ -2498,7 +2655,7 @@ void rerender(bool rr_command)
 	newbuf = htmlReformat(a);
 	nzFree(a);
 
-	if (rr_command && debugLevel >= 3) {
+	if (rr_command > 0 && debugLevel >= 3) {
 		char buf[120];
 		buf[0] = 0;
 		if (hovcount)
@@ -2522,7 +2679,7 @@ void rerender(bool rr_command)
 /* the high runner case, most of the time nothing changes,
  * and we can check that efficiently with strcmp */
 	if (stringEqual(newbuf, snap)) {
-		if (rr_command)
+		if (rr_command > 0)
 			i_puts(MSG_NoChange);
 		nzFree(newbuf);
 		nzFree(snap);
@@ -2559,10 +2716,13 @@ If the text is the same every time that's fine, but it's new tags each time,
 and new internal numbers each time, and that use to trip this algorithm.
 *********************************************************************/
 
+	if(rr_command < 0)
+		goto done;
+
 	removeHiddenNumbers((pst) snap, 0);
 	removeHiddenNumbers((pst) newbuf, 0);
 	if (stringEqual(snap, newbuf)) {
-		if (rr_command)
+		if (rr_command > 0)
 			i_puts(MSG_NoChange);
 		goto done;
 	}
@@ -2613,7 +2773,7 @@ and new internal numbers each time, and that use to trip this algorithm.
 done:
 	nzFree(newbuf);
 	nzFree(snap);
-}				/* rerender */
+}
 
 /* mark the tags on the deleted lines as deleted */
 void delTags(int startRange, int endRange)

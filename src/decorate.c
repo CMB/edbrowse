@@ -627,49 +627,6 @@ char *displayOptions(const Tag *sel)
 	return opt;
 }
 
-bool charInOptions(char c)
-{
-	const struct ebWindow *w;
-	const Tag *t;
-	int i;
-	for(i = 0; i < MAXSESSION; ++i) {
-		for(w = sessionList[i].lw; w; w = w->prev) {
-			if(!w->browseMode)
-				continue;
-			for (t = w->optlist; t; t = t->same)
-				if(t->textval && strchr(t->textval, c) &&
-				t->controller && t->controller->multiple)
-					return true;
-		}
-	}
-	return false;
-}
-
-void charFixOptions(char c)
-{
-	struct ebWindow *w, *save_w = cw;
-	Tag *t;
-	int i, j;
-	char *u;
-	for(i = 0; i < MAXSESSION; ++i) {
-		for(w = sessionList[i].lw; w; w = w->prev) {
-			if(!w->browseMode)
-				continue;
-			for(j = 0; j < w->numTags; ++j) {
-				t = w->tags[j];
-				if(t->action != TAGACT_INPUT || !t->value ||
-				t->itype != INP_SELECT || !t->multiple)
-					continue;
-				for(u = t->value; *u; ++u)
-					if(*u == c)
-						*u = selsep;
-			}
-			cw = w, rerender(false);
-		}
-	}
-	cw = save_w;
-}
-
 static void prerenderNode(Tag *t, bool opentag)
 {
 	int itype;		/* input type */

@@ -462,7 +462,7 @@ top:
 			time(&now);
 			if (now >= cw->nextrender) {
 				jSyncup(true);
-				rerender(false);
+				rerender(0);
 			}
 		}
 
@@ -637,7 +637,7 @@ addchar:
 			puts("bye");
 			jSideEffects();
 // in case you changed objects that in turn change the screen.
-			rerender(false);
+			rerender(0);
 		} else {
 			char *resfile = NULL;
 			char *result;
@@ -4280,7 +4280,7 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_JavaOff);
 			return false;
 		}
-		rerender(true);
+		rerender(1);
 		return true;
 	}
 
@@ -5183,7 +5183,13 @@ et_go:
 			setError(MSG_OptionC, c);
 			return 0;
 		}
+		if(charInFiles(c)) {
+			setError(MSG_FileC, c);
+			return 0;
+		}
 		selsep = c;
+// FixFiles has to be first, as FixOptions runs rerender
+		charFixFiles(oldsep);
 		charFixOptions(oldsep);
 		return true;
 	}
@@ -5207,7 +5213,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(showHover + MSG_HoverOff);
 		if (cw->browseMode)
-			rerender(false);
+			rerender(0);
 		return true;
 	}
 
@@ -5216,7 +5222,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(showHover + MSG_HoverOff);
 		if (cw->browseMode && isJSAlive)
-			rerender(false);
+			rerender(0);
 		return true;
 	}
 
@@ -5225,7 +5231,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(doColors + MSG_ColorOff);
 		if (cw->browseMode && isJSAlive)
-			rerender(false);
+			rerender(0);
 		return true;
 	}
 
@@ -5234,7 +5240,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(doColors + MSG_ColorOff);
 		if (cw->browseMode && isJSAlive)
-			rerender(false);
+			rerender(0);
 		return true;
 	}
 
@@ -5834,7 +5840,7 @@ Should the newly entered row be unfolded? idk
 		for(i = startRange; i <= endRange; ++i)
 			if((w = line2tr(i)) && !w->inur)
 				w->inur = true, w->ur ^= 1;
-		rerender(true);
+		rerender(1);
 		return true;
 	}
 
@@ -5892,7 +5898,7 @@ replaceframe:
 		}
 /* even if one frame failed to expand, another might, so always rerender */
 		selfFrame();
-		rerender(false);
+		rerender(0);
 		return true;
 	}
 
