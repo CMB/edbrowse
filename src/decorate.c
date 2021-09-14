@@ -620,7 +620,7 @@ char *displayOptions(const Tag *sel)
 		if (!t->checked)
 			continue;
 		if (*opt)
-			stringAndChar(&opt, &opt_l, ',');
+			stringAndChar(&opt, &opt_l, selsep);
 		stringAndString(&opt, &opt_l, t->textval);
 	}
 

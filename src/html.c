@@ -179,14 +179,14 @@ locateOptions(const Tag *sel, const char *input,
 	while (*s) {
 		e = 0;
 		if (sel->multiple)
-			e = strchr(s, ',');
+			e = strchr(s, selsep);
 		if (!e)
 			e = s + strlen(s);
 		len = e - s;
 		strncpy(iopt, s, len);
 		iopt[len] = 0;
 		s = e;
-		if (*s == ',')
+		if (*s == selsep)
 			++s;
 
 		t = locateOptionByName(sel, iopt, &pmc, true);
@@ -218,7 +218,7 @@ locateOptions(const Tag *sel, const char *input,
 
 		if (disp_p) {
 			if (*disp)
-				stringAndChar(&disp, &disp_l, ',');
+				stringAndChar(&disp, &disp_l, selsep);
 			stringAndString(&disp, &disp_l, t->textval);
 		}
 
@@ -3722,10 +3722,22 @@ nop:
 		if (itype < INP_RADIO) {
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
-			else if (itype == INP_SUBMIT || itype == INP_IMAGE)
-				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Submit));
-			else if (itype == INP_RESET)
+			else if (itype == INP_SUBMIT || itype == INP_IMAGE) {
+				u = (char *)i_getString(MSG_Submit);
+				if ((a = attribVal(t, "alt"))) {
+					u = altText(a);
+					a = NULL;
+	/* see if js has changed the alt tag */
+					if (allowJS && t->jslink) {
+						char *aa =
+						    get_property_string_t(t, "alt");
+						if (aa)
+							u = altText(aa);
+						nzFree(aa);
+					}
+				}
+				stringAndString(&ns, &ns_l, u);
+			} else if (itype == INP_RESET)
 				stringAndString(&ns, &ns_l,
 						i_getString(MSG_Reset));
 			else if (itype == INP_BUTTON)

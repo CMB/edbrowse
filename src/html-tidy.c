@@ -19,22 +19,36 @@ This routine preprocesses the html text to work around
 any shortcomings of tidy that are not worth fixing just for edbrowse,
 or have not been fixed yet.
 Other shortcomings are easier to manage after the fact,
-dealing with the tree of nodes - see nestedAnchors() in decorate.c.
-But some things must be managed prior to dity parse.
+dealing with the tree of nodes - see nestedAnchors() in decorate.c for example.
+But some things must be managed prior to tidy parse.
 Return null if there is no need to change the text.
 Otherwise return an allocated string.
-The only workaround here is the expansion of < > inside a textarea.
+The first workaround here is the expansion of < > inside a textarea.
+The second is changing tag optgroup to zptgroup, cause if <optgroup> is not
+properly nested, tidy really jumps off the track.
 *********************************************************************/
 
 char *tidyPreprocess(const char *h)
 {
-	char *ns;		/* the new string */
+	char *ns = 0;		/* the new string */
+	char *ns0 = 0;
 	int l;
 	char *inside, *expanded;
-	const char *lg, *s = strcasestr(h, "<textarea");
-/* most web pages don't have textareas */
+	const char *lg, *s = strcasestr(h, "<optgroup");
+	if(s) {
+		char *u;
+		h = u = ns = ns0 = cloneString(h);
+		while((u = strcasestr(u, "<optgroup")))
+			u[1] = 'z';
+		u = ns;
+		while((u = strcasestr(u, "/optgroup>")))
+			u[1] = 'z';
+	}
+
+	s = strcasestr(h, "<textarea");
 	if (!s)
-		return NULL;
+		return ns;
+
 	ns = initString(&l);
 	stringAndBytes(&ns, &l, h, s - h);
 	h = s;
@@ -64,8 +78,9 @@ char *tidyPreprocess(const char *h)
 		h = s;
 	}
 	stringAndString(&ns, &l, h);
+	nzFree(ns0);
 	return ns;
-}				/* tidyPreprocess */
+}
 
 /* the tidy structure corresponding to the html */
 static TidyDoc tdoc;
@@ -89,7 +104,7 @@ static void traverseNode(TidyNode node, int level)
 		traverseNode(child, level + 1);
 
 	(*traverse_tidycall) (node, level, false);
-}				/* traverseNode */
+}
 
 static void traverseTidy(void)
 {
@@ -107,7 +122,7 @@ static Bool TIDY_CALL tidyErrorHandler(TidyDoc tdoc, TidyReportLevel lvl,
 	if (debugLevel >= 4 && lvl != TidyInfo)
 		debugPrint(4, "%s", mssg);
 	return no;
-}				/* tidyErrorHandler */
+}
 
 /* the entry point */
 void html2nodes(const char *htmltext, bool startpage)
@@ -149,7 +164,7 @@ void html2nodes(const char *htmltext, bool startpage)
 	traverseTidy();
 
 	tidyRelease(tdoc);
-}				/* html2nodes */
+}
 
 /* this is strictly for debugging, level >= 5 */
 static void printNode(TidyNode node, int level, bool opentag)
@@ -226,7 +241,7 @@ static void printNode(TidyNode node, int level, bool opentag)
 /* Get the next attribute */
 		tattr = tidyAttrNext(tattr);
 	}
-}				/* printNode */
+}
 
 /* remove tags from start and end of a string, for innerHTML */
 static void tagStrip(char *line)
@@ -256,7 +271,7 @@ static void tagStrip(char *line)
 		}
 		--s;
 	}
-}				/* tagStrip */
+}
 
 static void convertNode(TidyNode node, int level, bool opentag)
 {
@@ -351,4 +366,4 @@ static void convertNode(TidyNode node, int level, bool opentag)
 		}
 	}
 
-}				/* convertNode */
+}

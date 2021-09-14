@@ -301,6 +301,7 @@ extern char *m2iel; // the second line that we don't see
 extern bool down_bg;		// download in background
 extern bool down_jsbg;		// download javascript in background
 extern char showProgress; // feedback as a file is downloaded
+extern char selsep; // selection separator
 extern char eb_language[];		/* edbrowse language, determined by $LANG */
 extern  const char *const supported_languages[];
 extern int eb_lang; // encoded version of the above, for languages that we recognize

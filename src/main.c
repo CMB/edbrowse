@@ -24,6 +24,7 @@ int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[MAXAGENT + 1];
 char *currentAgent;
+char selsep = ',';
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool blockJS;
 bool ftpActive;
