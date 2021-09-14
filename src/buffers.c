@@ -6632,6 +6632,7 @@ replaceframe:
 				first = *line;
 				debugPrint(5, "scmd = %c", scmd);
 				cw->dot = endRange;
+
 				p = (char *)fetchLine(cw->dot, -1);
 				j = 1;
 				if (scmd == '*')
@@ -6656,9 +6657,14 @@ replaceframe:
 				cw->undoable = false;
 
 				if (c == '<') {
+					Tag *t = tagList[tagno];
 					if (globSub) {
 						setError(MSG_IG);
 						return (globSub = false);
+					}
+					if (t->itype == INP_TA) {
+						setError((t->lic ? MSG_Textarea : MSG_Textarea0), t->lic);
+						return false;
 					}
 					allocatedLine = lessFile(line);
 					if (!allocatedLine)
@@ -7089,7 +7095,7 @@ bool edbrowseCommand(const char *line, bool script)
 		eeCheck();
 	}
 	return rc;
-}				/* edbrowseCommand */
+}
 
 /* Take some text, usually empty, and put it in a side buffer. */
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
@@ -7142,7 +7148,7 @@ void freeEmptySideBuffer(int n)
 		return;
 /* We could have added a line, then deleted it */
 	cxQuit(n, 3);
-}				/* freeEmptySideBuffer */
+}
 
 bool browseCurrentBuffer(void)
 {
@@ -7307,7 +7313,7 @@ bool browseCurrentBuffer(void)
 	time(&cw->nextrender);
 	cw->nextrender += 2;
 	return true;
-}				/* browseCurrentBuffer */
+}
 
 bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 {
@@ -7341,7 +7347,7 @@ bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	}
 
 	return false;
-}				/* locateTagInBuffer */
+}
 
 char *getFieldFromBuffer(int tagno)
 {
@@ -7351,7 +7357,7 @@ char *getFieldFromBuffer(int tagno)
 		return pullString1(s, t);
 	/* line has been deleted, revert to the reset value */
 	return 0;
-}				/* getFieldFromBuffer */
+}
 
 int fieldIsChecked(int tagno)
 {

@@ -1303,7 +1303,7 @@ done:
 	nzFree(atmem);
 	if (!rc && intFlag)
 		setError(MSG_Interrupted);
-	if (rc)
+	if (rc && debugLevel >= 1)
 		i_puts(MSG_OK);
 	return rc;
 }
