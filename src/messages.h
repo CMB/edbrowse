@@ -764,7 +764,7 @@ enum {
 	MSG_NoPrevMail,
 	MSG_Textarea0,
 	MSG_MailDirect,
-	MSG_notused667,
+	MSG_OptionC,
 	MSG_notused668,
 	MSG_notused669,
 	MSG_notused670,

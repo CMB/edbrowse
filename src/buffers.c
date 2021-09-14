@@ -5171,6 +5171,18 @@ et_go:
 		return true;
 	}
 
+	if(!strncmp(line, "selsep=", 7)) {
+		char oldsep = selsep;
+		c = line[7] ? line[7] : ',';
+		if(charInOptions(c)) {
+			setError(MSG_OptionC, c);
+			return 0;
+		}
+		selsep = c;
+		charFixOptions(oldsep);
+		return true;
+	}
+
 	if (stringEqual(line, "hf")) {
 		showHiddenFiles ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

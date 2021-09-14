@@ -664,7 +664,7 @@ anterior
 sem e-mail anterior
 isto é uma área de texto; use o comando ib para criar um novo exibidor
 .ebrc: linha %d; diretivas padrão demais nos descritores de correio; limite %d
-0
+opções com %c
 0
 0
 0

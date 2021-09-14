@@ -672,6 +672,12 @@ g : go to the link on the current line
 <br>^ : the back key, go back to the web page you were looking at before
 <br>&amp; : internal link back key, go back to line before following internal link
 <br>i=xyz : set the input field on the current line to xyz
+<br>i=red,green,blue : select the options red, green, and blue
+<br>s/$/,oran : add the option orange to the select list
+<br>s/,red/ : remove red from the select list
+<br>selsep=| : change the separator between items in a select list
+<br>i&lt;5 : read buffer 5 into the input field
+<br>i&lt;foo : read file foo into the current input field.
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
 <br>i$* : push the last button on the current line
@@ -2492,6 +2498,17 @@ If the number you entered is not a perfect match for one of the options, it is t
 If it is not a valid menu number (e.g. out of range),
 edbrowse performs a partial match on the options, looking for those digits as a substring.
 This may seem confusing, but it is usually what you want.
+
+<P>
+If multiple options are allowed, use a comma to separate them.
+i=span,tial will give you spanish, italian.
+s/$/,3 adds german to the list.
+
+<P>
+What if one of the options contains a comma?
+Use selsep=| to change the separator to |.
+In fact, you may want to set your preferred separator in your init function.
+Characters like | or ` or ^ are unlikely to appear in options.
 
 <P>
 If you would like your password to not be displayed on screen when you type it,
