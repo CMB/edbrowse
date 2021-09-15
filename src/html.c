@@ -1143,8 +1143,6 @@ void infShow(int tagno, const char *search)
 	bool show;
 
 	s = inp_types[t->itype];
-	if (*s == ' ')
-		++s;
 	printf("%s", s);
 	if (t->multiple)
 		i_printf(MSG_Many);
@@ -1163,6 +1161,8 @@ void infShow(int tagno, const char *search)
 			i_printf(MSG_Close);
 		}
 	}			/* text area */
+	if (t->rdonly)
+		printf(" readonly");
 	if (t->name)
 		printf(" %s", t->name);
 	nl();
@@ -1181,6 +1181,8 @@ void infShow(int tagno, const char *search)
 		++cnt;
 		if (*search && !strcasestr(v->textval, search))
 			continue;
+		if(v->custom_h)
+			printf("    %s\n", v->custom_h);
 		show = true;
 		printf("%3d %s\n", cnt, v->textval);
 	}
@@ -1548,7 +1550,7 @@ static bool fetchBoolVar(const Tag *t)
 	if (checked < 0)
 		checked = t->rchecked;
 	return checked;
-}				/* fetchBoolVar */
+}
 
 /* Some information on posting forms can be found here.
  * http://www.w3.org/TR/REC-html40/interact/forms.html */
@@ -1569,7 +1571,7 @@ static void postDelimiter(char fsep)
 		fsep = '\n';
 	}
 	stringAndChar(&pfs, &pfs_l, fsep);
-}				/* postDelimiter */
+}
 
 static bool
 postNameVal(const char *name, const char *val, char fsep, uchar isfile)
@@ -1658,7 +1660,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	}			/* switch */
 
 	return true;
-}				/* postNameVal */
+}
 
 static bool formSubmit(const Tag *form, const Tag *submit)
 {
@@ -2267,7 +2269,7 @@ void runningError(int msg, ...)
 	vprintf(i_getString(msg), p);
 	va_end(p);
 	nl();
-}				/* runningError */
+}
 
 /*********************************************************************
 Diff the old screen with the new rendered screen.

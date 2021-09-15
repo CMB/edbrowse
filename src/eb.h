@@ -570,6 +570,7 @@ struct htmlTag {
 	bool dead:1; // removed by garbage collection
 	bool contracted:1; /* frame is contracted */
 	bool multiple:1;
+	bool required:1;
 	bool async:1; // asynchronous script
 	bool intimer:1; // asynchronous script in timer
 	bool inxhr:1; // script is really an xhr

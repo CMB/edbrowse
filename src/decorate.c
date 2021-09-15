@@ -71,6 +71,7 @@ static int nopt;		/* number of options */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
 static Tag *currentForm, *currentSel, *currentOpt, *currentStyle;
+static const char *optg; // option group
 static Tag *currentTitle, *currentScript, *currentTA;
 static Tag *currentA;
 static char *radioCheck;
@@ -793,14 +794,23 @@ static void prerenderNode(Tag *t, bool opentag)
 		}
 		break;
 
+	case TAGACT_OPTG:
+		if(opentag)
+			optg = attribVal(t, "label");
+		else
+			optg = 0;
+		break;
+
 	case TAGACT_OPTION:
 		if (!opentag) {
 			currentOpt = 0;
+			optg = 0;
 			break;
 		}
 		if (!currentSel) {
 			debugPrint(3,
 				   "option appears outside a select statement");
+			optg = 0;
 			break;
 		}
 		currentOpt = t;
@@ -817,6 +827,11 @@ static void prerenderNode(Tag *t, bool opentag)
 		if (!t->value)
 			t->value = emptyString;
 		t->textval = emptyString;
+		if(optg && *optg) {
+// borrow custom_h, opt group is like a custom header
+			t->custom_h = cloneString(optg);
+			optg = 0;
+		}
 		break;
 
 	case TAGACT_STYLE:
@@ -828,6 +843,7 @@ static void prerenderNode(Tag *t, bool opentag)
 		break;
 
 	case TAGACT_SELECT:
+		optg = 0;
 		if (opentag) {
 			currentSel = t;
 			nopt = 0;
@@ -942,6 +958,7 @@ linkPipe(start);
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
 	currentStyle = NULL;
+	optg = NULL;
 	nzFree(radioCheck);
 	radioCheck = 0;
 	traverse_callback = prerenderNode;
@@ -1626,6 +1643,7 @@ const struct tagInfo availableTags[] = {
 	{"textarea", "an input text area", TAGACT_TA, 0, 0},
 	{"select", "an option list", TAGACT_SELECT, 0, 0},
 	{"option", "a select option", TAGACT_OPTION, 0, 0},
+	{"optgroup", "an optiongroup", TAGACT_OPTG, 0, 0},
 	{"sub", "a subscript", TAGACT_SUB, 0, 0},
 	{"sup", "a superscript", TAGACT_SUP, 0, 0},
 	{"ovb", "an overbar", TAGACT_OVB, 0, 0},

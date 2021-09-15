@@ -26,7 +26,6 @@ Otherwise return an allocated string.
 The first workaround here is the expansion of < > inside a textarea.
 The second is changing tag optgroup to zptgroup, cause if <optgroup> is not
 properly nested, tidy really jumps the tracks.
-And we don't use <optgroup> anyways.
 The third is changing <code> to <zode> since <pre><code> blocks lose the line
 breaks, and we don't do anything with <code> anyways.
 These are blind substitutions, and I don't like them.
@@ -44,6 +43,21 @@ char *tidyPreprocess(const char *h)
 	const char *lg, *s, *h0;
 
 	if(strcasestr(h, "<optgroup")) {
+// but maybe it's nested properly.
+		s = h;
+		while (true) {
+			const char *a = strcasestr(s, "<optgroup");
+			const char *b = strcasestr(s, "/optgroup>");
+			if(!a && !b)
+				goto optgroup_ok;
+			if(!a || !b || b < a)
+				break;
+			a = strcasestr(a + 9, "<optgroup");
+			if(a && a < b)
+				break;
+			s = b + 10;
+		}
+// something not balanced properly, have to muck
 		u = ns = cloneString(h);
 		while((u = strcasestr(u, "<optgroup")))
 			u[1] = 'z';
@@ -53,6 +67,7 @@ char *tidyPreprocess(const char *h)
 		first = true;
 		h = ns;
 	}
+optgroup_ok:
 
 	if(strcasestr(h, "<code>")) {
 		u = ns = cloneString(h);
