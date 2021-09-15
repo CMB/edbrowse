@@ -739,11 +739,12 @@ static void prerenderNode(Tag *t, bool opentag)
 			if (a) {
 				if (stringEqualCI(a, "multipart/form-data"))
 					t->mime = true;
-				else if (!stringEqualCI
-					 (a,
+				else if (stringEqualCI(a, "text/plain"))
+					t->plain = true;
+				else if (!stringEqualCI(a, 
 					  "application/x-www-form-urlencoded"))
 					debugPrint(3,
-						   "unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded");
+						   "unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded or text/plain");
 			}
 			if ((a = t->href)) {
 				const char *prot = getProtURL(a);
@@ -2026,6 +2027,8 @@ checkattributes:
 			t->disabled = true;
 		if (stringInListCI(t->attributes, "multiple") >= 0)
 			t->multiple = true;
+		if (stringInListCI(t->attributes, "required") >= 0)
+			t->required = true;
 		if (stringInListCI(t->attributes, "async") >= 0)
 			t->async = true;
 		if ((j = stringInListCI(t->attributes, "name")) >= 0) {

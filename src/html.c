@@ -1573,6 +1573,7 @@ static void postDelimiter(char fsep)
 	stringAndChar(&pfs, &pfs_l, fsep);
 }
 
+static bool formplain;
 static bool
 postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 {
@@ -1589,10 +1590,13 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	postDelimiter(fsep);
 	switch (fsep) {
 	case '&':
-		enc = encodePostData(name, NULL);
-		stringAndString(&pfs, &pfs_l, enc);
+		if(!formplain) {
+			enc = encodePostData(name, NULL);
+			stringAndString(&pfs, &pfs_l, enc);
+			nzFree(enc);
+		} else
+		stringAndString(&pfs, &pfs_l, name);
 		stringAndChar(&pfs, &pfs_l, '=');
-		nzFree(enc);
 		break;
 
 	case '\n':
@@ -1614,9 +1618,12 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 
 	switch (fsep) {
 	case '&':
-		enc = encodePostData(val, NULL);
-		stringAndString(&pfs, &pfs_l, enc);
-		nzFree(enc);
+		if(!formplain) {
+			enc = encodePostData(val, NULL);
+			stringAndString(&pfs, &pfs_l, enc);
+			nzFree(enc);
+		} else
+		stringAndString(&pfs, &pfs_l, val);
 		break;
 
 	case '\n':
@@ -1678,6 +1685,7 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 
 	if (form->bymail)
 		fsep = '\n';
+	formplain = form->plain;
 	if (form->mime) {
 		fsep = '-';
 		boundary = makeBoundary();
