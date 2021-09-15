@@ -1580,8 +1580,6 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	char *enc;
 	const char *ct, *ce;	/* content type, content encoding */
 
-	if (!name)
-		name = emptyString;
 	if (!val)
 		val = emptyString;
 	if (!*name && !*val)
@@ -1703,12 +1701,12 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 		name = t->name;
 		if (!name)
 			name = t->id;
+		if (!name)
+			name = emptyString;
 
 		if (t == submit) {	/* the submit button you pushed */
 			int namelen;
 			char *nx;
-			if (!name)
-				continue;
 			value = t->value;
 			if (!value || !*value)
 				value = "Submit";
@@ -1730,7 +1728,7 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 			bval = fetchBoolVar(t);
 			if (!bval)
 				continue;
-			if (!name)
+			if (!name[0])
 				if (value && !*value)
 					value = 0;
 			if (itype == INP_CHECKBOX && value == 0)
@@ -1745,6 +1743,8 @@ static bool formSubmit(const Tag *form, const Tag *submit)
  * hope that's not a problem. */
 			dynamicvalue = fetchTextVar(t);
 			postNameVal(name, dynamicvalue, fsep, false);
+			if(t->required && !dynamicvalue && !*dynamicvalue)
+				goto required;
 			nzFree(dynamicvalue);
 			dynamicvalue = NULL;
 			continue;
@@ -1779,12 +1779,16 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 				cxbuf[j] = 0;
 				rc = postNameVal(name, cxbuf, fsep, false);
 				nzFree(cxbuf);
-				if (rc)
-					continue;
-				goto fail;
+				if (!rc)
+					goto fail;
+				if(t->required && !j)
+					goto required;
+				continue;
 			}
 
 			postNameVal(name, 0, fsep, false);
+			if(t->required)
+				goto required;
 			continue;
 		}
 
@@ -1806,9 +1810,10 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 /* option could have an empty value, usually the null choice,
  * before you have made a selection. */
 			if (!*dynamicvalue) {
+				if(t->required)
+					goto required;
 				if (!t->multiple)
-					postNameVal(name, dynamicvalue, fsep,
-						    false);
+					postNameVal(name, dynamicvalue, fsep, false);
 				continue;
 			}
 /* Step through the options */
@@ -1835,10 +1840,11 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 				goto fail;
 			}
 			dynamicvalue = fetchTextVar(t);
-			if (!dynamicvalue)
+			if (!dynamicvalue || !*dynamicvalue) {
+				if(t->required)
+					goto required;
 				continue;
-			if (!*dynamicvalue)
-				continue;
+			}
 			if(!t->multiple) {
 				rc = postNameVal(name, dynamicvalue, fsep, 3);
 				nzFree(dynamicvalue);
@@ -1883,6 +1889,10 @@ success:
 	return true;
 
 fail:
+	return false;
+
+required:
+	setError(MSG_ReqField, name);
 	return false;
 }
 

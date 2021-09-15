@@ -330,9 +330,9 @@ document.writeln("<script language=JavaScript>document.writeln('Nested Script ')
 </script>
 
 <P class=inject>
-subject: <input type='hidden' name='who' value='eklhad'>
-<input type='hidden' name='password' value='secret'>
-<input type='text' name='subject' size='50' maxlength='80' required>
+subject: <input type=hidden name=who value=eklhad>
+<input type=hidden name=password value=secret>
+<input type=text name=subject size=50 maxlength=80 required>
 <br>State and zip:
 <select name=state onchange=newSelect(this)>
 <option selected value=-->
@@ -497,7 +497,7 @@ Amount of objects to create <input type="text" id="fill_amount" name="fill_amoun
 <input type=button name=goodbye value="jump away"
 onclick="alert('page is being replaced'); window.location.href='http://www.cartercenter.org';">
 <br>Message Body:
-<textarea name='body' rows='6' cols='50'>
+<textarea name=body rows=6 cols=50 required>
 Type your brilliant thoughts here.
 We'll get back to you if we like what you have to say.
 </textarea>
@@ -633,7 +633,7 @@ if(document.getElementsByTagName("head")[0].id != "boom") fail(143);
 
 function submitFunction(me) {
 if(document.forms[0] != me) fail(123);
-if(me.subject.validity.valueMissing) { alert("subject is required"); return false; }
+if(me.subject.validity.valueMissing) { alert("subject is missing"); return false; }
 var where = prompt("Enter m for mail, w for web, a to autosubmit, x to abort.", "x");
 me.action =
 (where == 'm' ? "mailto:eklhad@gmail.com" : "http://localhost:1200/foobar");

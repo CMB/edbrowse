@@ -766,6 +766,6 @@ enum {
 	MSG_MailDirect,
 	MSG_OptionC,
 	MSG_FileC,
-	MSG_notused669,
+	MSG_ReqField,
 	MSG_notused670,
 };

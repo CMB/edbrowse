@@ -17,6 +17,11 @@ Poll for pending jobs and run them. These usually come from Promise.
 
 Allow the user to set the separator between selected options.
 
+enctype=text/plain, <svg>, <optgroup>, upload multiple files,  div.onclick,
+required fields.
+
+Move blob code into shared space.
+
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross compartment access, as in frames,

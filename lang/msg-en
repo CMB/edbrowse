@@ -666,5 +666,5 @@ this is a textarea, use the ib command to create a new buffer
 .ebrc: line %d, too many default directives in your mail descriptor, limit %d
 options contain %c
 files contain %c
-0
+required field %s is empty
 0
