@@ -337,12 +337,11 @@ subject: <input type='hidden' name='who' value='eklhad'>
 <select name=state onchange=newSelect(this)>
 <option selected value=-->
 Please choose one
+<optgroup label=States>
 <option value=AL>
 Alabama
 <option value=AK>
 Alaska
-<option value=AS>
-American Samoa
 <option value=AZ>
 Arizona
 <option value=AR>
@@ -355,16 +354,10 @@ Colorado
 Connecticut
 <option value=DE>
 Delaware
-<option value=DC>
-District Of Columbia
-<option value=FM>
-Federated States Of Micronesia
 <option value=FL>
 Florida
 <option value=GA>
 Georgia
-<option value=GU>
-Guam
 <option value=HI>
 Hawaii
 <option value=ID>
@@ -383,8 +376,6 @@ Kentucky
 Louisiana
 <option value=ME>
 Maine
-<option value=MH>
-Marshall Islands
 <option value=MD>
 Maryland
 <option value=MA>
@@ -415,20 +406,14 @@ New York
 North Carolina
 <option value=ND>
 North Dakota
-<option value=MP>
-Northern Mariana Islands
 <option value=OH>
 Ohio
 <option value=OK>
 Oklahoma
 <option value=OR>
 Oregon
-<option value=PW>
-Palau
 <option value=PA>
 Pennsylvania
-<option value=PR>
-Puerto Rico
 <option value=RI>
 Rhode Island
 <option value=SC>
@@ -443,8 +428,6 @@ Texas
 Utah
 <option value=VT>
 Vermont
-<option value=VI>
-Virgin Islands
 <option value=VA>
 Virginia
 <option value=WA>
@@ -455,8 +438,27 @@ West Virginia
 &#xa0;Wisconsin
 <option value=WY>
 Wyoming
-<option value=BH>
-90210
+</optgroup>
+<optgroup label=Territories>
+<option value=AS>
+American Samoa
+<option value=DC>
+District Of Columbia
+<option value=FM>
+Federated States Of Micronesia
+<option value=GU>
+Guam
+<option value=MH>
+Marshall Islands
+<option value=MP>
+Northern Mariana Islands
+<option value=PW>
+Palau
+<option value=PR>
+Puerto Rico
+<option value=VI>
+Virgin Islands
+</optgroup>
 </select>
 <!-- this generates an error, but not sure why.
 http://www.w3schools.com/html/html_form_input_types.asp -->
