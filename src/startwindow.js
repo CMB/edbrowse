@@ -905,6 +905,10 @@ var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
+z$Datalist = function() {}
+z$Datalist.prototype = new HTMLElement;
+z$Datalist.prototype.dom$class = "Datalist";
+z$Datalist.prototype.multiple = true;
 z$Image = Image = function(){};
 z$Image.prototype = new HTMLElement;
 z$Image.prototype.dom$class = "Image";

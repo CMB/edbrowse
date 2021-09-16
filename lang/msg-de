@@ -665,6 +665,6 @@ kein vorheriger Email
 Das ist ein Textfeld, nutzen Sie \"ib\", um einen neuen Textpuffer anzulegen.
 .ebrc: Zeile %d, zu viele Standard-Anweisungen in Ihrem E-Mail-Deskriptor, maximal %d.
 Option enthält %c
-Dateien enthält %c
-0
+Dateiname enthält %c
+benötigtes Eingabefeld %s ist leer
 0

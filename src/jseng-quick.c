@@ -3686,8 +3686,9 @@ That's how it was for a long time, but I think we only do this on form.
 				return;
 // Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array(cx, io, "childNodes");
-// childNodes and options are the same for Select
-			if (stringEqual(classname, "Select"))
+// childNodes and options are the same for Select and datalist
+			if (stringEqual(classname, "Select") ||
+			stringEqual(classname, "Datalist"))
 				set_property_object(cx, io, "options", ca);
 			JS_Release(cx, ca);
 		}

@@ -844,16 +844,20 @@ static void prerenderNode(Tag *t, bool opentag)
 		break;
 
 	case TAGACT_SELECT:
+	case TAGACT_DATAL:
 		optg = 0;
 		if (opentag) {
 			currentSel = t;
 			nopt = 0;
 			t->itype = INP_SELECT;
-			formControl(t, true);
+			if(action == TAGACT_SELECT)
+				formControl(t, true);
 		} else {
 			currentSel = 0;
-			t->action = TAGACT_INPUT;
-			t->value = displayOptions(t);
+			if(action == TAGACT_SELECT) {
+				t->action = TAGACT_INPUT;
+				t->value = displayOptions(t);
+			}
 		}
 		break;
 
@@ -1261,6 +1265,10 @@ Needless to say that's not good!
 // don't break, just return;
 		return;
 
+	case TAGACT_DATAL:
+		domLink(t, "Datalist", 0, 0, 0, 4);
+		break;
+
 	case TAGACT_A:
 		domLink(t, "Anchor", "href", "links", 0, 4);
 		break;
@@ -1643,6 +1651,7 @@ const struct tagInfo availableTags[] = {
 	{"title", "the title", TAGACT_TITLE, 0, 0},
 	{"textarea", "an input text area", TAGACT_TA, 0, 0},
 	{"select", "an option list", TAGACT_SELECT, 0, 0},
+	{"datalist", "an input list", TAGACT_DATAL, 0, 0},
 	{"option", "a select option", TAGACT_OPTION, 0, 0},
 	{"optgroup", "an optiongroup", TAGACT_OPTG, 0, 0},
 	{"sub", "a subscript", TAGACT_SUB, 0, 0},
