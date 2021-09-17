@@ -3925,11 +3925,8 @@ void rebuildSelectors(void)
 
 	for (i1 = 0; i1 < cw->numTags; ++i1) {
 		t = tagList[i1];
-		if (!t->jslink)
-			continue;
-		if (t->action != TAGACT_INPUT)
-			continue;
-		if (t->itype != INP_SELECT)
+		if (!t->jslink || (t->action != TAGACT_DATAL &&
+		(t->action != TAGACT_INPUT || t->itype != INP_SELECT)))
 			continue;
 
 // there should always be an options array, if not then move on
