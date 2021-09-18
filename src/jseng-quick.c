@@ -917,6 +917,7 @@ static char *run_script(JSContext *cx, const char *s)
 	JSValue r;
 	char *s2 = 0;
 	const char *s3;
+	int commapresent;
 
 // special debugging code to replace bp@ and trace@ with expanded macros.
 // Warning: breakpoints and tracing can change the flow of execution
@@ -937,15 +938,36 @@ static char *run_script(JSContext *cx, const char *s)
 			if (!v1)
 				break;
 			stringAndBytes(&s2, &l, u, v1 - u);
+
+// The macros for bp and trace start and end with ;
+// That keeps them separate from what goes on around them.
+// But it also makes it impossible to write exp,exp,bp@(huh),exp
+// watch for comma on either side, and if so, omit the ;
+
+			while(l && s2[l-1] == ' ')
+				s2[--l] = 0;
+			commapresent = (l && s2[l-1] == ',');
+
 			stringAndString(&s2, &l, (*v1 == 'b' ?
-						  ";(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\""
-						  :
-						  ";(function(arg$,l$ne){ if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\""));
+			  ";(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\""
+			+ commapresent
+			  :
+			  ";(function(arg$,l$ne){ if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\""
+			+ commapresent
+			) );
+
+// paste in the argument to bp@(x) or trace@(x)
 			v1 = strchr(v1, '(') + 1;
 			v2 = strchr(v1, ')');
 			stringAndBytes(&s2, &l, v1, v2 - v1);
 			stringAndString(&s2, &l, "\");");
+
 			u = ++v2;
+			while(*u == ' ') ++u;
+			if(*u == ',' || *u == ';') {
+// commapresent on the other side, don't need trailing ;
+				s2[--l] = 0;
+			}
 		}
 		stringAndString(&s2, &l, u);
 	}
