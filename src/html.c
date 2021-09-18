@@ -2265,7 +2265,6 @@ void charFixFiles(char c)
 				for(v = u; *v; ++v)
 					if(*v == c)
 						*v = selsep;
-  printf("u,%s\n", u);
 				updateFieldInBuffer(t->seqno, u, false, false);
 				nzFree(t->value);
 				t->value = u;
@@ -2273,6 +2272,51 @@ void charFixFiles(char c)
 		}
 	}
 	cw = save_w;
+}
+
+// getElementById in C.
+// Don't scan through all tags; we have to stay within our frame.
+static bool anchorlook;
+static const char *idsearch;
+static const Tag *gebi_r(const Tag *t); // recursive
+const Tag *gebi_c(const Tag *t, const char *id, bool lookname)
+{
+	int action;
+	if(!id || !*id)
+		return 0;
+	while (true) {
+		action = t->action;
+// don't go past document and up to a higher frame
+		if(action == TAGACT_HTML || action == TAGACT_FRAME)
+			return 0;
+		if(action == TAGACT_BODY)
+			break;
+		if(!(t = t->parent))
+			return 0; // should never happen
+	}
+// t is <body> at the top of the current frame
+	idsearch = id;
+	anchorlook = lookname;
+	return gebi_r(t);
+}
+
+static const Tag *gebi_r(const Tag *t)
+{
+	const Tag *c; // children
+	const Tag *u;
+	if(t->id && stringEqual(t->id, idsearch))
+		return t;
+	if (anchorlook && t->action == TAGACT_A &&
+	t->name && stringEqual(t->name, idsearch))
+		return t;
+// do not descend into a new frame
+	if(t->action == TAGACT_FRAME)
+		return 0;
+// look through children
+	for (c = t->firstchild; c; c = c->sibling)
+		if((u = gebi_r(c)))
+			return u;
+	return 0;
 }
 
 /* Javascript errors, we need to see these no matter what. */
@@ -2456,7 +2500,7 @@ mark_e:
 done:
 	newChunkStart = f2;
 	newChunkEnd = e2;
-}				/* frontBackDiff */
+}
 
 // Believe it or not, I have exercised all the pathways in this routine.
 // It's rather mind numbing.
@@ -2614,7 +2658,7 @@ static void currentTime(void)
 	gettimeofday(&tv, NULL);
 	now_sec = tv.tv_sec;
 	now_ms = tv.tv_usec / 1000;
-}				/* currentTime */
+}
 
 static void silent(int msg, ...)
 {
@@ -2825,7 +2869,7 @@ void delTags(int startRange, int endRange)
 				t->deleted = true;
 		}
 	}
-}				/* delTags */
+}
 
 /* turn an onunload function into a clickable hyperlink */
 static void unloadHyperlink(const char *js_function, const char *where)
@@ -2836,7 +2880,7 @@ static void unloadHyperlink(const char *js_function, const char *where)
 	stringAndString(&cf->dw, &cf->dw_l, "()'>");
 	stringAndString(&cf->dw, &cf->dw_l, where);
 	stringAndString(&cf->dw, &cf->dw_l, "</A><br>");
-}				/* unloadHyperlink */
+}
 
 /* Run the various onload functions */
 /* Turn the onunload functions into hyperlinks */

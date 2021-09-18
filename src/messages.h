@@ -331,7 +331,7 @@ enum {
 	MSG_BrowseEmpty,
 	MSG_Unbrowsable,
 	MSG_BrowseAlready,
-	MSG_NoLable2,
+	MSG_NoLabel2,
 	MSG_BrowseI,
 	MSG_InsertFunction,
 	MSG_LineUpdateRange,

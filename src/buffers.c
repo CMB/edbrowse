@@ -354,12 +354,12 @@ static char *edbrowse_completion(const char *text, int state)
 {
 	rl_completion_append_character = '\0';
 	return rl_filename_completion_function(text, state);
-}				/* edbrowse_completion */
+}
 
 void initializeReadline(void)
 {
 	rl_completion_entry_function = edbrowse_completion;
-}				/* initializeReadline */
+}
 
 #ifdef DOSLIKE
 /* unix can use the select function on a file descriptor, like stdin
@@ -677,7 +677,7 @@ eb_line:
 /* rest of edbrowse expects this line to be nl terminated */
 	s[j] = '\n';
 	return (uchar *) s;
-}				/* inputLine */
+}
 
 static struct {
 	char lhs[MAXRE], rhs[MAXRE];
@@ -694,7 +694,7 @@ static void saveSubstitutionStrings(void)
 	strcpy(globalSubs.lhs, cw->lhs);
 	globalSubs.rhs_yes = cw->rhs_yes;
 	strcpy(globalSubs.rhs, cw->rhs);
-}				/* saveSubstitutionStrings */
+}
 
 static void restoreSubstitutionStrings(struct ebWindow *nw)
 {
@@ -706,7 +706,7 @@ static void restoreSubstitutionStrings(struct ebWindow *nw)
 	strcpy(nw->lhs, globalSubs.lhs);
 	nw->rhs_yes = globalSubs.rhs_yes;
 	strcpy(nw->rhs, globalSubs.rhs);
-}				/* restoreSubstitutionStrings */
+}
 
 /* Create a new window, with default variables. */
 static struct ebWindow *createWindow(void)
@@ -5598,25 +5598,19 @@ static char *showLinks(void)
 	return a;
 }				/* showLinks */
 
-static bool lineHasTag(const char *p, const char *s)
+static bool lineHasTag(const char *p, int tagno)
 {
-	const Tag *t;
 	char c;
 	int j;
-
 	while ((c = *p++) != '\n') {
 		if (c != InternalCodeChar)
 			continue;
 		j = strtol(p, (char **)&p, 10);
-		t = tagList[j];
-		if (t->id && stringEqual(t->id, s))
-			return true;
-		if (t->action == TAGACT_A && t->name && stringEqual(t->name, s))
+		if(j == tagno)
 			return true;
 	}
-
 	return false;
-}				/* lineHasTag */
+}
 
 /*********************************************************************
 Run the entered edbrowse command.
@@ -5632,7 +5626,7 @@ bool runCommand(const char *line)
 	int i, j, n;
 	int writeMode = O_TRUNC;
 	struct ebWindow *w = NULL;
-	const Tag *tag = NULL;	/* event variables */
+	const Tag *tag = 0, *jumptag = 0;
 	bool nogo = true, rc = true;
 	bool emode = false;	// force e, not browse
 	bool postSpace = false, didRange = false;
@@ -6526,6 +6520,7 @@ replaceframe:
 				return false;
 			}
 			cw->dot = endRange;
+			jumptag = tag;
 			if (cw->browseMode && h[0] == '#')
 				emode = false, cmd = 'b';
 			jsh = memEqualCI(h, "javascript:", 11);
@@ -6943,9 +6938,28 @@ redirect:
 		}
 		newhash = cloneString(s);
 		unpercentString(newhash);
+
+// If we got here by clicking on <a href=#stuff> then jumptag is set.
+// If  from b www.xyz.com#stuff, then it is not set,
+// and we have to find the body of what we just browsed.
+		if(!jumptag) {
+			for(i = cw->numTags - 1; i >= 0; --i) {
+				tag = tagList[i];
+				if(tag->action == TAGACT_BODY && !tag->slash) {
+					jumptag = tag;
+					break;
+				}
+			}
+		}
+
+		if(jumptag)
+			jumptag = gebi_c(jumptag, newhash, true);
+		if(!jumptag)
+			goto hashnotfound;
+
 		for (i = 1; i <= cw->dol; ++i) {
 			char *p = (char *)fetchLine(i, -1);
-			if (lineHasTag(p, newhash)) {
+			if (lineHasTag(p, jumptag->seqno)) {
 				struct histLabel *label =
 				    allocMem(sizeof(struct histLabel));
 				label->label = cw->dot;
@@ -6957,7 +6971,9 @@ redirect:
 				return true;
 			}
 		}
-		setError(MSG_NoLable2, newhash);
+
+hashnotfound:
+		setError(MSG_NoLabel2, newhash);
 		nzFree(newhash);
 		return false;
 	}
