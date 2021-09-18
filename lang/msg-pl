@@ -431,8 +431,8 @@ sprawdzić naruszenie więzów
 przekroczenie czasu dostępu do bazy danych
 nie można zmodyfikować widoku
 pole nieaktywne
-SPNEGO curl włączony
-SPNEGO curl wyłączony
+autoryzacja curl SPNEGO wyłączona
+autoryzacja curl SPNEGO włączona
 nie można pobrać lokalnego CSS\n
 nie można pobrać CSS z %s, kod %ld\n
 nie można pobrać CSS\n

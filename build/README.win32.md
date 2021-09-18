@@ -7,7 +7,7 @@ This is a WIN32 build of edbrowse, using cmake for configuration, and generation
  - Tidy - https://github.com/htacg/tidy-html5
  - CURL - http://curl.haxx.se/
  - PCRE - various...
- - Readline - source url?
+ - Readline - http://gnuwin32.sourceforge.net/packages/readline.htm
  - Mozjs-24 - TODO: source url and build - Still working on this.
  - others? ...
  
