@@ -124,7 +124,7 @@ b http://www.google.com
 
 nojs = google.com
 
-# recherche dans le dictionnaire merriam-webster, -1 est le 1er paramètre,
+# recherche dans le dictionnaire Merriam-Webster, -1 est le 1er paramètre,
 # le mot cherché
 # <mv éléphant
 function+mw {

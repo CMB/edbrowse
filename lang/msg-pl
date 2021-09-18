@@ -293,7 +293,7 @@ nie można się połączyć z %s
 pobieranie: 
 Ceryfikat hosta %s nie mógł być zweryfikowany - połączenie SSL anulowane
 nie można odczytać
-h\tpokaż treść tej pomocy\nq\tzakończ ten program\nspace\tprzeczytaj dalszą część tej wiadomości\nn\tprzejdź do następnej wiadomości\nd\tusuń tę wiadomość\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki\ns\tzakończ czytanie poczty z tego katalogu
+h\tpokaż treść tej pomocy\nq\tzakończ ten program\ns\tzakończ czytanie poczty z tego katalogu\nspace\tprzeczytaj dalszą część tej wiadomości\nn\tprzejdź do następnej wiadomości\np\tprzejdź do poprzedniej wiadomości\nd\tusuń tę wiadomość\nm\tprzenieś tę wiadomość do innego katalogu\nv\tpokaż wszystko\nb\tprzenieś lub usuń zbiorczo\nf\tprzenieś lub usuń wiadomości od nadawcy\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki
 strona wymaga autoryzacji
 logowanie anulowane
 fraza wyszukiwania nie może zawierać cudzysłowów
@@ -326,7 +326,7 @@ ostatni wiersz Twojej książki adresowej nie jest zakończony
 żaden katalog nie zawiera %s\n
 wiele katalogów zawiera %s\n
 wyszukaj 
-0
+opakuj (envelope)
 przenieś do 
 uwaga: URL formularza podaje sekcję %s, która zostanie zignorowana\n
 plik %s jest pusty
@@ -350,7 +350,7 @@ wiersz następujący po %d został usunięty\n
 %d wierszy następujących po %d zostało usuniętych\n
 wiersz %d został dodany\n
 wiersze od %d do %d zostały dodane\n
-numeryczna wizualizacja postępu
+postęp
 nie podano żadnych kont pocztowych, sprawdź swój plik konfiguracyjny
 niewłaściwy numer konta %d, użyj liczby od 1 do %d
 nie można wysyłać wiadomości w trybie przeglądarki
@@ -397,7 +397,7 @@ nieoczekiwany błąd podczas wykonywania wzorca powłoki
 ramka nie posiada powiązanej strony web
 wzorzec powłoki pasuje do więcej niż jednego pliku
 wiersz zbyt długi po rozwinięciu zmiennych powłoki
-plik konfiguracyjny nie podaje bazy danych - nie można połączyć
+plik konfiguracyjny nie precyzuje bazy danych - nie można połączyć
 nie można połączyć się z bazą danych - błąd %d
 błąd bazy danych %d
 brak klucza głównego dla tej tabeli
@@ -409,7 +409,7 @@ wiele kolumn pasuje do %s
 brak tabeli %s
 nieprawidłowa nazwa kolumny
 nie można wybrać więcej niż jednej kolumny BLOB
-dane zawierają pionowe kreski - zarezerwowany separator
+dane zawierają pionowe kreski - zastrzeżony separator
 dane zawierają znaki końca linii
 wiersz zawiera zbyt wiele pól, nie wprowadzaj pionowych kresek do tekstu
 wiersz zawiera zbyt mało pól, nie usuwaj pionowych kresek z tekstu
@@ -426,18 +426,18 @@ inny rekord w bazie danych zależy od tego rekordu
 rekord lub tabela są zablokowane
 nie masz uprawnień by zmodyfikować bazę danych w ten sposób
 wykryto blokadę wzajemną (deadlock)
-umieszczono znak zerowy w kolumnie, w której jest to niedozwolone
+umieszczono znak zerowy (null) w kolumnie, w której jest to niedozwolone
 sprawdzić naruszenie więzów
 przekroczenie czasu dostępu do bazy danych
 nie można zmodyfikować widoku
-pole włączony
+pole nieaktywne
 SPNEGO curl włączony
 SPNEGO curl wyłączony
 nie można pobrać lokalnego CSS\n
 nie można pobrać CSS z %s, kod %ld\n
 nie można pobrać CSS\n
-nie deminifikuj JavaScriptu
-deminifikuj JavaScript
+nie deminifikuj (deminify) JavaScriptu
+deminifikuj (deminify) JavaScript
 wyłączone debugowanie błędów JS
 włączone debugowanie błędów JS
 wyłączone debugowanie CSS
@@ -552,7 +552,7 @@ podaj co najmniej jednego odbiorcę i plik do wysłania, przed załącznikami
 zbyt wiele plików otwartych jednocześnie, limit %d
 nieprawidłowa sesja %d w fetchLineContext()
 nieprawidłowy numer wiersza %d w fetchLineContext()
-0
+zbyt wiele metaznaków w ścieżce
 sesja %d poza zakresem w cxActive
 podwójna inicjalizacja w sesji %d
 zamykam nieaktywną sesję %d
@@ -570,8 +570,8 @@ login lub hasło niepoprawne
 sortuj alfabetycznie
 sortuj po rozmiarze
 sortuj po czasie
-konwersja do unix
-konwersja do dos
+konwersja do UNIX
+konwersja do DOS
 po kodzie tagu %d następuje nieprawidłowy znak %c\n
 Brak reakcji w ciągu 45 sekund, operacje anulowane, wyniki nieokreślone!
 Funkcja htmlParse() nie jest wielobieżna (reentrant).
@@ -582,7 +582,7 @@ debugowanie zdarzeń włączone
 nie można utworzyć kontekstu JavaScript
 pobieranie javascript w głównym procesie
 pobieranie javascript w tle
-0
+nie można skopiować %s
 timery wyłączone
 timery włączone
 błąd alokacji %zu bajtów
@@ -601,16 +601,16 @@ wywołanie fopen() z niewłaściwym trybem %s
 '/' w złym miejscu w getDirURL(%s)
 '/' w złym miejscu w %s
 decodePostData(0,0)
-szukaj z zawijaniem
 szukaj bez zawijania
-0
+szukaj z zawijaniem
+brak nagłówków kolumn
 nie można odpowiadać w trybie katalogu
 nie można odpowiadać w trybie bazy danych
 nie można odpowiadać na pusty plik
 nie można odpowiadać na plik binarny
 wiersze tematu i adresu zwrotnego są wymagane
 uwaga, brak identyfikatora wiadomości
-Przykro mi, nagłówki emaila nie są dostępne.\nMusisz zacząć od niesformatowanej wiadomości
+Przykro mi, nagłówki wiadomości nie są dostępne.\nMusisz zacząć od niesformatowanej wiadomości
 l rozwija znaki kontrolne do postaci szesnastkowej (hex)
 l rozwija znaki kontrolne i znaki spoza ASCII do postaci szesnastkowej (hex)
 Uwaga: funkcje wyszukiwania/podstawienia nie wspierają znaków UTF-8,\ngdyź w Twojej bibliotece 'pcre' brakuje takiej funkcjonalności.\nWywołaj 'export PCREUTF8=off' aby wyłączyć tę funkcję i nie widzieć tego ostrzeżenia
@@ -659,12 +659,12 @@ Wykonanie polecenia zakończone niepowodzeniem, system() zwrócił %d
 nie pokazuj kolorów
 pokazuj kolory
 pokazuję ostatnie %d z %d wiadomości\n
-pokazuję pierwszego %d z %d wiadomości\n
-poprzedniego
-brak poprzedniego email
-0
-0
-0
-0
-0
+pokazuję pierwsze %d z %d wiadomości\n
+poprzedni
+brak poprzedniej wiadomości
+to jest pole tekstowe, użyj polecenia 'ib' by utworzyć nowy bufor
+.ebrc: wiersz %d, w Twoim deskryptorze poczty jest zbyt wiele domyślnych dyrektyw, limit %d
+opcja zawiera %c
+nazwa pliku zawiera %c
+wymagane pole %s jest puste
 0

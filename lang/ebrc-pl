@@ -38,13 +38,12 @@ reply = edbrowse@gmail.com
 # downdir = /home/mylogin/downloads
 # Jeśli brakuje tego parametru, ściągane pliki będą zapisane w bieżącej lokalizacji.
 
-#  Tutaj składowane są ciastka (pliki cookie).
+#  Tutaj składowane są ciastka HTTP (pliki cookie).
 #jar = /home/mylogin/outside/cookies
 
 # Katalog z pamięcią podręczną (cache) przeglądarki i rozmiar tej pamięci w megabajtach.
 # cachedir = /b3/ebcache
 # cachesize = 200
-
 
 #  czekaj 30 sekund na odpowiedź serwera web
 webtimer = 30

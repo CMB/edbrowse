@@ -134,7 +134,7 @@ b http://www.google.com
 # Die Google-Suche benötigt kein JavaScript.
 nojs = google.com
 
-# mariam-webster Wörterbuchsuche, ~1 ist der erste Parameter, also das
+# Merriam-Webster Wörterbuchsuche, ~1 ist der erste Parameter, also das
 # nachzuschlagende Wort.
 # <mw Elephant
 function+mw {

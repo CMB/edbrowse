@@ -133,7 +133,7 @@ b http://www.google.com
 # a busca do Google não requer javascript
 nojs = google.com
 
-# procura no dicionário mariam-webster, ~1 é o parámetro 1, a palavra a procurar.
+# procura no dicionário Merriam-Webster, ~1 é o parámetro 1, a palavra a procurar.
 # <mw elephant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1

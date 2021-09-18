@@ -134,7 +134,7 @@ b http://www.google.com
 # google search does not require javascript
 nojs = google.com
 
-#  mariam-webster dictionary lookup, ~1 is parameter 1, the word to look up.
+#  Merriam-Webster dictionary lookup, ~1 is parameter 1, the word to look up.
 #  <mw elephant
 function+mw {
 b http://www.merriam-webster.com/dictionary/~1

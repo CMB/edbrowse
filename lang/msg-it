@@ -293,7 +293,7 @@ impossibile connettersi ad %s
 download: 
 Il certificato per l'host %s non può essere verificato - connessione SSL interrotta
 inaccessibile
-h\tstampa questo messaggio di aiuto\nq\tesce da questo programma\ns\tinterrompe l'acquisizione di messaggi da questo folder\nspazio\tleggi di più di questo messaggio\nn\tprossima email\nd\telimina questa email\nm\tsposta questa email in un altro folder\nv\tvedi tutti\nb\tsposta o eliminatutti gli elementiselezionati\nf\tspostamento o eliminazione per mittente\nw\tscrivi questa email su un file\nW\tscrivi questo messaggio su un file e cancellalo\nu\tscrivi questo messaggio non formattato su un file\nU\tscrivi questo messaggio email non formattato su un file e lo elimina\na\tcontrolla e salva allegato
+h\tstampa questo messaggio di aiuto\nq\tesce da questo programma\ns\tinterrompe l'acquisizione di messaggi da questo folder\nspazio\tleggi di più di questo messaggio\nn\tprossima email\nd\telimina questa email\nm\tsposta questa email in un altro folder\nv\tvedi tutti\nb\tsposta o elimina tutti gli elementi selezionati\nf\tspostamento o eliminazione per mittente\nw\tscrivi questa email su un file\nW\tscrivi questo messaggio su un file e cancellalo\nu\tscrivi questo messaggio non formattato su un file\nU\tscrivi questo messaggio email non formattato su un file e lo elimina\na\tcontrolla e salva allegato
 la pagina web richiede l'autneticazione
 login interrotto
 la stringa di ricerca non può contenere quotes
