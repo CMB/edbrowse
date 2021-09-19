@@ -1357,6 +1357,73 @@ URL = {};
   }
 })()
 
+/*********************************************************************
+MessagePortPolyfill and MessageChannelPolyfill
+https://github.com/rocwind/message-port-polyfill
+MIT license.
+*********************************************************************/
+
+MessagePortPolyfill = /** @class */ (function () {
+function MessagePortPolyfill() {
+this.onmessage = null;
+this.onmessageerror = null;
+this.otherPort = null;
+this.onmessageListeners = [];
+}
+MessagePortPolyfill.prototype.dispatchEvent = function (event) {
+if (this.onmessage) {
+this.onmessage(event);
+}
+this.onmessageListeners.forEach(function (listener) { return listener(event);
+});
+return true;
+};
+MessagePortPolyfill.prototype.postMessage = function (message) {
+if (!this.otherPort) {
+return;
+}
+this.otherPort.dispatchEvent({ data: message });
+};
+MessagePortPolyfill.prototype.addEventListener = function (type, listener) {
+if (type !== 'message') {
+return;
+}
+if (typeof listener !== 'function' ||
+this.onmessageListeners.indexOf(listener) !== -1) {
+return;
+}
+this.onmessageListeners.push(listener);
+};
+MessagePortPolyfill.prototype.removeEventListener = function (type, listener) {
+if (type !== 'message') {
+return;
+}
+var index = this.onmessageListeners.indexOf(listener);
+if (index === -1) {
+return;
+}
+this.onmessageListeners.splice(index, 1);
+};
+MessagePortPolyfill.prototype.start = function () {
+// do nothing at this moment
+};
+MessagePortPolyfill.prototype.close = function () {
+// do nothing at this moment
+};
+return MessagePortPolyfill;
+}());
+MessageChannelPolyfill = /** @class */ (function () {
+function MessageChannelPolyfill() {
+this.port1 = new MessagePortPolyfill();
+this.port2 = new MessagePortPolyfill();
+this.port1.otherPort = this.port2;
+this.port2.otherPort = this.port1;
+}
+return MessageChannelPolyfill;
+}());
+
+// end third party code.
+
 // lock down, for security.
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "eb$newLocation","eb$logElement",
@@ -1369,9 +1436,13 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
 "mrList","mrKids",
 "URL", "File", "FileReader", "Blob",
+"MessagePortPolyfill", "MessageChannelPolyfill",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 Object.defineProperty(URL, "createObjectURL", {writable:false,configurable:false});
 Object.defineProperty(URL, "revokeObjectURL", {writable:false,configurable:false});
+Object.defineProperty(Blob, "text", {writable:false,configurable:false});
+Object.defineProperty(Blob, "stream", {writable:false,configurable:false});
+Object.defineProperty(Blob, "arrayBuffer", {writable:false,configurable:false});

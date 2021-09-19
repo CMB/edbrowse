@@ -15,6 +15,8 @@ A partial implementation of cross origin resource sharing.
 
 Poll for pending jobs and run them. These usually come from Promise.
 
+Implementation of MessagePortPolyfill and MessageChannelPolyfill, third party.
+
 Allow the user to set the separator between selected options.
 
 enctype=text/plain, <svg>, <optgroup>, upload multiple files,  div.onclick,

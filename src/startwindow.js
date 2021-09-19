@@ -3676,4 +3676,6 @@ File = mw$.File
 FileReader = mw$.FileReader
 URL.createObjectURL = mw$.URL.createObjectURL
 URL.revokeObjectURL = mw$.URL.revokeObjectURL
+MessagePortPolyfill = mw$.MessagePortPolyfill;
+MessageChannelPolyfill = mw$.MessageChannelPolyfill;
 
