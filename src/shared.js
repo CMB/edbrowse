@@ -1443,6 +1443,8 @@ Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 Object.defineProperty(URL, "createObjectURL", {writable:false,configurable:false});
 Object.defineProperty(URL, "revokeObjectURL", {writable:false,configurable:false});
-Object.defineProperty(Blob, "text", {writable:false,configurable:false});
-Object.defineProperty(Blob, "stream", {writable:false,configurable:false});
-Object.defineProperty(Blob, "arrayBuffer", {writable:false,configurable:false});
+Object.defineProperty(Blob, "prototype", {writable:false,configurable:false});
+Object.defineProperty(Blob.prototype, "text", {writable:false,configurable:false});
+Object.defineProperty(Blob.prototype, "slice", {writable:false,configurable:false});
+Object.defineProperty(Blob.prototype, "stream", {writable:false,configurable:false});
+Object.defineProperty(Blob.prototype, "arrayBuffer", {writable:false,configurable:false});

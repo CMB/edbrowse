@@ -767,5 +767,5 @@ enum {
 	MSG_OptionC,
 	MSG_FileC,
 	MSG_ReqField,
-	MSG_notused670,
+	MSG_Limit,
 };

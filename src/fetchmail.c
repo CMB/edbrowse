@@ -713,7 +713,7 @@ action:
 		postkey = 0;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbefdsmnp gwWuUa/");
+		key = getLetter("h?qvbefdslmnp gwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -863,7 +863,6 @@ imap_done:
 			break;
 		}
 
-#if 0
 		if (key == 'l') {
 			i_printf(MSG_Limit);
 			fflush(stdout);
@@ -872,7 +871,6 @@ imap_done:
 			setLimit(inputline);
 			goto action;
 		}
-#endif
 
 		if (key == 'e') {
 			i_printf(MSG_Envelope);
