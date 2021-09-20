@@ -1677,6 +1677,8 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 	char fsep = '&';	/* field separator */
 	bool rc;
 	bool bval;
+	const char *eo1 = 0; // enctype override from attribute
+	char *eo2 = 0; // enctype override from js
 
 /* js could rebuild an option list then submit the form. */
 	rebuildSelectors();
@@ -1692,6 +1694,27 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 	}
 	if(form->plain)
 		fsep = 0;
+
+// <input enctype=blah> can override
+	if(submit) {
+		eo1 = attribVal(submit, "enctype");
+		if(submit->jslink && isJSAlive)
+			eo2 = get_property_string_t(submit, "enctype");
+		if(eo2 && *eo2)
+			eo1 = eo2;
+		if(eo1 && *eo1) {
+			fsep = '&';
+			if (stringEqualCI(eo1, "multipart/form-data"))
+				fsep = '-';
+			else if (stringEqualCI(eo1, "text/plain"))
+				fsep = 0;
+			else if (!stringEqualCI(eo1, 
+				  "application/x-www-form-urlencoded"))
+				debugPrint(3,
+					   "unrecognized enctype, plese use multipart/form-data or application/x-www-form-urlencoded or text/plain");
+		}
+		nzFree(eo2);
+	}
 
 	for (t = cw->inputlist; t; t = t->same) {
 		if (t->controller != form)
@@ -1843,8 +1866,8 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 					goto required;
 				continue;
 			}
-			if (!(form->post & form->mime)) {
-				if(form->bymail) {
+			if (!form->post  || fsep != '-') {
+				if(fsep == '\n') {
 					setError(MSG_FilePost);
 					nzFree(dynamicvalue);
 					goto fail;
@@ -1891,7 +1914,7 @@ success:
 		postNameVal(name, value, fsep, false);
 	}			/* loop over tags */
 
-	if (form->mime) {	/* the last boundary */
+	if (fsep == '-') {	// the last boundary
 		stringAndString(&pfs, &pfs_l, "--");
 		stringAndString(&pfs, &pfs_l, boundary);
 		stringAndString(&pfs, &pfs_l, "--\r\n");
