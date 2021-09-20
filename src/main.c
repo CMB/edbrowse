@@ -42,8 +42,6 @@ volatile bool intFlag;
 time_t intStart;
 bool ismc, isimap, passMail;
 // next two variables work around curl bug 7284
-bool m2ie;
-char *m2iel;
 bool inInput, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */

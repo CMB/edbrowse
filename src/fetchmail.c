@@ -388,9 +388,12 @@ static CURLcode getMailData(CURL * handle)
 	return res;
 }
 
-/* imap emails come in through the headers, not the data.
- * No kidding! I don't understand it either.
- * This callback function doesn't use a data block, mailstring is assumed. */
+/*********************************************************************
+imap emails come in through the headers, not the data.
+No kidding! I don't understand it either.
+This callback function doesn't use a data block, mailstring is assumed.
+*********************************************************************/
+
 static size_t imap_header_callback(char *i, size_t size,
 				   size_t nitems, void *data)
 {
@@ -659,11 +662,9 @@ static int bulkMoveDelete(CURL * handle, struct FOLDER *f,
 		}
 	}
 
-	curl_easy_setopt(handle, CURLOPT_VERBOSE, (debugLevel >= 4));
 	return yesdel;
 
 abort:
-	curl_easy_setopt(handle, CURLOPT_VERBOSE, (debugLevel >= 4));
 	return -1;
 }
 
@@ -751,12 +752,19 @@ imap_done:
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 					 cust_cmd);
 			mailstring = initString(&mailstring_l);
-/* I wanted to turn the write function off here, because we don't need it,
- * but turning it off and leaving HEADERFUNCTION on causes a seg fault,
- * I have no idea why.
- * curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, NULL);
- * curl_easy_setopt(handle, CURLOPT_WRITEDATA, NULL);
- */
+
+/*********************************************************************
+I wanted to turn the write function off here, because we don't need it.
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, NULL);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, NULL);
+But turning it off and leaving HEADERFUNCTION on causes a seg fault,
+I have no idea why.
+I have to leave them both on.
+Unless I write more specialized code, this brings in both data and header info,
+so I have to strip some things off after the fact.
+You'll see this after the perform function runs.
+*********************************************************************/
+
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION,
 					 imap_header_callback);
 			callback_data.buffer =
@@ -772,6 +780,7 @@ imap_done:
 				nzFree(mailstring);
 				goto action;
 			}
+
 /* have to strip 2 fetch BODY lines off the front,
  * and ) A018 OK off the end. */
 			t = strchr(mailstring, '\n');
@@ -792,6 +801,7 @@ imap_done:
 				*t = 0;
 				mailstring_l = t - mailstring;
 			}
+
 			key = presentMail();
 /* presentMail has already freed mailstring */
 			postkey = 0;
@@ -1014,9 +1024,6 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 	int sublength;
 	char cust_cmd[80];
 
-// need the debug output to see the second line of the envelope
-	curl_easy_setopt(handle, CURLOPT_VERBOSE, 1);
-
 	for (j = 0; j < f->nfetch; ++j) {
 		struct MIF *mif = f->mlist + j;
 
@@ -1040,16 +1047,45 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 
 		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		m2ie = 1;
+
+/*********************************************************************
+Originally I used the WRITEFUNCTION to ge the enveloope data.
+That returns the untagged line, and that was right 99% of the time.
+That held the entire envelope.
+But once ina while the envelope continued on the next line,
+the bodyline, the other line, whatever you call it.
+For that eventuality I have to use the HEADERFUNCTION as well.
+Both do the same thing, the same function, gather data.
+But now I get the untagged line twice.
+We'll deal with that later.
+*********************************************************************/
+
+		curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, eb_curl_callback);
+		curl_easy_setopt(handle, CURLOPT_HEADERDATA, &callback_data);
 		res = getMailData(handle);
-		if(m2iel) {
-			stringAndString(&mailstring, &mailstring_l, m2iel);
-			nzFree(m2iel);
-			m2iel = 0;
-		}
-		m2ie = 0;
+		curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
+		curl_easy_setopt(handle, CURLOPT_HEADERDATA, NULL);
 		if (res != CURLE_OK) {
 			ebcurl_setError(res, mailbox_url, 2, emptyString);
+		}
+
+/* have to strip the untagged line off the front,
+ * as it appears twice,
+ * and A018 OK off the end. */
+		t = strchr(mailstring, '\n');
+		if (t) {
+			++t;
+			mailstring_l -= (t - mailstring);
+			strmove(mailstring, t);
+		}
+		t = mailstring + mailstring_l;
+		if (t > mailstring && t[-1] == '\n')
+			t[-1] = 0, --mailstring_l;
+		t = strrchr(mailstring, '\n');
+		if (t && strstr(t, " OK ")) {
+			++t;
+			*t = 0;
+			mailstring_l = t - mailstring;
 		}
 
 		mif->cbase = mailstring;

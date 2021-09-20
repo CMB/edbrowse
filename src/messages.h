@@ -14,7 +14,7 @@ blank spaces for messages no longer used.
 Each file lang/msg-* must have exactly this many lines.
 *********************************************************************/
 
-#define EdbrowseMessageCount 670
+#define EdbrowseMessageCount 700
 
 // English
 extern const char *msg_en[], ebrc_en[], qrg_en[];

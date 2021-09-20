@@ -2589,21 +2589,6 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 				break;
 			}
 	}
-//  if(m2ie && info_desc == CURLINFO_HEADER_IN) printf("size %d\n", size);
-	if (m2ie == 1 && info_desc == CURLINFO_HEADER_IN && size > 4 &&
-	data[0] == '*' && !memcmp(data + size - 3, "}\r\n", 3))
-		m2ie = 2;
-	else if (m2ie == 2 && info_desc == CURLINFO_HEADER_IN) {
-		if(m2iel) {
-			debugPrint(3, "m2iel overwrite");
-			nzFree(m2iel);
-		}
-		m2iel = allocMem(size+1);
-		memcpy(m2iel, data, size);
-		m2iel[size] = 0;
-//  printf("m2iel:%s", m2iel);
-		m2ie = 0;
-	}
 	if (debugLevel < 4)
 		return 0;
 
