@@ -44,7 +44,7 @@ sem palavras chave
 sessção %d\n
 linque de correio.  Escreva a carta, digite sm para enviar e depois ^ para voltar.
 linha %d atualizada\n
-h\timprime esta mensagem de ajuda\nq\tsai deste programa\ns\tpára de ler esta pasta\nn\tprossegue para a próxima mensagem\nd\tapaga este e-mail\nm\tmove este e-mail para outra pasta\nv\tver todos\nb\tmove ou apaga em massa\nf\tmove ou apaga por remetente\nspace ou g\tlê e gerencia este e-mail\n/\tbusca palavras em assunto, de ou corpo\nw\tguarda esta mensagem em arquivo\nW\tgrava esta mensagem em arquivo e a apaga\nu\tgrava esta mensagem sem formatação em arquivo\nU\tgrava esta mensagem sem formatação em arquivo e a apaga\na\tprocura e salva anexos\ns\tinterrompe a leitura de e-mails desta pasta
+h\timprime esta mensagem de ajuda\nq\tsai deste programa\ns\tpára de ler esta pasta\nn\tprossegue para a próxima mensagem\np\tvolta à mensagem anterior\nd\tapaga este e-mail\nm\tmove este e-mail para outra pasta\nv\tver todos\nb\tmove ou apaga em massa\nf\tmove ou apaga por remetente\nespaço ou g\tlê e gerencia este e-mail\n/\tbusca palavras em assunto, remetente ou corpo\nw\tsalva esta mensagem em arquivo\nW\tsalva esta mensagem em arquivo e a apaga\nu\tsalva esta mensagem sem formatação em arquivo\nU\tsalva esta mensagem sem formatação em arquivo e a apaga\na\tprocura e salva anexos\ne\tcadeia no formato do envelope\nl\tconfigura limite de obtenção
 s cadeia, e-mails com cadeia no assunto\nf cadeia, e-mails com cadeia na linha de\nb cadeia, e-mails com cadeia no corpo da mensagem\ncaso não haja letra designadora, o assunto é o padrão.
 nenhuma mensagem
 interrompendo; digite qt para sair completamente

@@ -1573,7 +1573,6 @@ static void postDelimiter(char fsep)
 	stringAndChar(&pfs, &pfs_l, fsep);
 }
 
-static bool formplain;
 static bool
 postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 {
@@ -1585,14 +1584,18 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	if (!*name && !*val)
 		return true;
 
-	postDelimiter(fsep);
+	if(fsep)
+		postDelimiter(fsep);
+
 	switch (fsep) {
 	case '&':
-		if(!formplain) {
-			enc = encodePostData(name, NULL);
-			stringAndString(&pfs, &pfs_l, enc);
-			nzFree(enc);
-		} else
+		enc = encodePostData(name, NULL);
+		stringAndString(&pfs, &pfs_l, enc);
+		nzFree(enc);
+		stringAndChar(&pfs, &pfs_l, '=');
+		break;
+
+	case 0:
 		stringAndString(&pfs, &pfs_l, name);
 		stringAndChar(&pfs, &pfs_l, '=');
 		break;
@@ -1616,15 +1619,12 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 
 	switch (fsep) {
 	case '&':
-		if(!formplain) {
-			enc = encodePostData(val, NULL);
-			stringAndString(&pfs, &pfs_l, enc);
-			nzFree(enc);
-		} else
-		stringAndString(&pfs, &pfs_l, val);
+		enc = encodePostData(val, NULL);
+		stringAndString(&pfs, &pfs_l, enc);
+		nzFree(enc);
 		break;
 
-	case '\n':
+	case '\n': case 0:
 		stringAndString(&pfs, &pfs_l, val);
 		stringAndString(&pfs, &pfs_l, eol);
 		break;
@@ -1683,7 +1683,6 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 
 	if (form->bymail)
 		fsep = '\n';
-	formplain = form->plain;
 	if (form->mime) {
 		fsep = '-';
 		boundary = makeBoundary();
@@ -1691,6 +1690,8 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 		stringAndString(&pfs, &pfs_l, boundary);
 		stringAndString(&pfs, &pfs_l, eol);
 	}
+	if(form->plain)
+		fsep = 0;
 
 	for (t = cw->inputlist; t; t = t->same) {
 		if (t->controller != form)
@@ -1835,15 +1836,16 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 		}
 
 		if (itype == INP_FILE) {	/* the only one left */
-			if (!(form->post & form->mime)) {
-				setError(MSG_FilePost);
-				goto fail;
-			}
 			dynamicvalue = fetchTextVar(t);
 			if (!dynamicvalue || !*dynamicvalue) {
 				if(t->required)
 					goto required;
 				continue;
+			}
+			if (!(form->post & form->mime)) {
+				setError(MSG_FilePost);
+				nzFree(dynamicvalue);
+				goto fail;
 			}
 			if(!t->multiple) {
 				rc = postNameVal(name, dynamicvalue, fsep, 3);
