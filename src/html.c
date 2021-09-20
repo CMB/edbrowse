@@ -1836,6 +1836,7 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 		}
 
 		if (itype == INP_FILE) {	/* the only one left */
+			uchar isfile = 3;
 			dynamicvalue = fetchTextVar(t);
 			if (!dynamicvalue || !*dynamicvalue) {
 				if(t->required)
@@ -1843,12 +1844,19 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 				continue;
 			}
 			if (!(form->post & form->mime)) {
-				setError(MSG_FilePost);
-				nzFree(dynamicvalue);
-				goto fail;
+				if(form->bymail) {
+					setError(MSG_FilePost);
+					nzFree(dynamicvalue);
+					goto fail;
+				}
+// we'll try to truck along
+				isfile = 0;
+				if(debugLevel >= 3)
+					i_puts(MSG_FilePost);
 			}
+
 			if(!t->multiple) {
-				rc = postNameVal(name, dynamicvalue, fsep, 3);
+				rc = postNameVal(name, dynamicvalue, fsep, isfile);
 				nzFree(dynamicvalue);
 				dynamicvalue = NULL;
 				if (!rc)
@@ -1856,6 +1864,7 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 			} else {
 				const char *v = dynamicvalue, *w;
 				char *z;
+
 				while(*v) {
 					if(!(w = strchr(v, selsep)))
 						w = v + strlen(v);
@@ -1865,11 +1874,12 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 						nzFree(z);
 						continue;
 					}
-					rc = postNameVal(name, z, fsep, 3);
+					rc = postNameVal(name, z, fsep, isfile);
 					nzFree(z);
 					if (!rc)
 						goto fail;
 				}
+
 				nzFree(dynamicvalue);
 			}
 			continue;
