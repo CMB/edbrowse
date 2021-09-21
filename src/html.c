@@ -1155,7 +1155,7 @@ void infShow(int tagno, const char *search)
 		const char *cols = attribVal(t, "cols");
 		const char *wrap = attribVal(t, "wrap");
 		if (rows && cols) {
-			printf("[%sx%s", rows, cols);
+			printf("[%s×%s", rows, cols);
 			if (wrap && stringEqualCI(wrap, "virtual"))
 				i_printf(MSG_Recommended);
 			i_printf(MSG_Close);
@@ -1667,7 +1667,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	return true;
 }
 
-static bool formSubmit(const Tag *form, const Tag *submit)
+static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 {
 	const Tag *t;
 	int j, itype;
@@ -1698,7 +1698,7 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 // <input enctype=blah> can override
 	if(submit) {
 		eo1 = attribVal(submit, "enctype");
-		if(submit->jslink && isJSAlive)
+		if(submit->jslink && allowJS)
 			eo2 = get_property_string_t(submit, "enctype");
 		if(eo2 && *eo2)
 			eo1 = eo2;
@@ -1866,7 +1866,7 @@ static bool formSubmit(const Tag *form, const Tag *submit)
 					goto required;
 				continue;
 			}
-			if (!form->post  || fsep != '-') {
+			if (!dopost  || fsep != '-') {
 				if(fsep == '\n') {
 					setError(MSG_FilePost);
 					nzFree(dynamicvalue);
@@ -1920,7 +1920,8 @@ success:
 		stringAndString(&pfs, &pfs_l, "--\r\n");
 	}
 
-	i_puts(MSG_FormSubmit);
+	if(debugLevel >= 1)
+		i_puts(MSG_FormSubmit);
 	return true;
 
 fail:
@@ -1950,7 +1951,7 @@ bool infPush(int tagno, char **post_string)
 	const char *action = 0;
 	char *section;
 	const char *prot;
-	bool rc;
+	bool rc, dopost;
 
 	*post_string = 0;
 
@@ -2046,6 +2047,7 @@ bool infPush(int tagno, char **post_string)
 		}
 	}
 
+	dopost = form->post;
 	action = form->href;
 /* But we defer to the js variable */
 	if (form->jslink && allowJS) {
@@ -2057,6 +2059,26 @@ bool infPush(int tagno, char **post_string)
 		}
 		nzFree(jh);
 	}
+
+	if(t) { // submit button pressed
+		const char *va; // value from attribute
+		char *vj; // value from javascript
+		va = attribVal(t, "formmethod");
+		vj = 0;
+		if(t->jslink && allowJS)
+			vj = get_property_string_t(t, "formmethod");
+		if(vj && *vj)
+			va = vj;
+		if(va && *va) {
+			dopost = false;
+			if (stringEqualCI(va, "post"))
+				dopost = true;
+			else if (!stringEqualCI(va, "get"))
+				debugPrint(3, "unrecognized method, please use get or post");
+		}
+		nzFree(vj);
+	}
+
 // if no action, or action is "#", the default is the current location.
 // And yet, with onclick on the submit button, no action means no action,
 // and I believe the same is true for onsubmit.
@@ -2111,22 +2133,22 @@ bool infPush(int tagno, char **post_string)
 		pfs_l = section - pfs;
 	}
 	section = strpbrk(pfs, "?\1");
-	if (section && (*section == '\1' || !(form->bymail | form->post))) {
+	if (section && (*section == '\1' || !(form->bymail | dopost))) {
 		debugPrint(3,
 			   "the url already specifies some data, which will be overwritten by the data in this form");
 		*section = 0;
 		pfs_l = section - pfs;
 	}
 
-	stringAndChar(&pfs, &pfs_l, (form->post ? '\1' : '?'));
+	stringAndChar(&pfs, &pfs_l, (dopost ? '\1' : '?'));
 	actlen = strlen(pfs);
 
-	if (!formSubmit(form, t)) {
+	if (!formSubmit(form, t, dopost)) {
 		nzFree(pfs);
 		return false;
 	}
 
-	debugPrint(3, "%s %s", form->post ? "post" : "get", pfs + actlen);
+	debugPrint(3, "%s %s", dopost ? "post" : "get", pfs + actlen);
 
 /* Handle the mail method here and now. */
 	if (form->bymail) {
