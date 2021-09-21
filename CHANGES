@@ -20,7 +20,7 @@ Implementation of MessagePortPolyfill and MessageChannelPolyfill, third party.
 Allow the user to set the separator between selected options.
 
 enctype=text/plain, <svg>, <optgroup>, upload multiple files,  div.onclick,
-required fields.
+required fields, <input type=submit formattributes>
 
 Move blob code into shared space.
 

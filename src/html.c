@@ -1949,6 +1949,7 @@ bool infPush(int tagno, char **post_string)
 	int itype;
 	int actlen;
 	const char *action = 0;
+	char *action2 = 0; // allocated action
 	char *section;
 	const char *prot;
 	bool rc, dopost;
@@ -2077,6 +2078,13 @@ bool infPush(int tagno, char **post_string)
 				debugPrint(3, "unrecognized method, please use get or post");
 		}
 		nzFree(vj);
+		va = attribVal(t, "formaction");
+		if(t->jslink && allowJS)
+			action2 = vj = get_property_string_t(t, "formaction");
+		if(vj && *vj)
+			va = vj;
+		if(va && *va)
+			action = va;
 	}
 
 // if no action, or action is "#", the default is the current location.
@@ -2085,15 +2093,17 @@ bool infPush(int tagno, char **post_string)
 // Just assume javascript has done the submit.
 	if (!action || !*action || stringEqual(action, "#")) {
 		if (t && (t->onclick | form->onsubmit))
-			return true;
+			goto success;
 		action = f->hbase;
 	}
 
 	prot = getProtURL(action);
 	if (!prot) {
 		if (t && t->onclick)
-			return true;
+			goto success;
 		setError(MSG_FormBadURL);
+fail:
+		nzFree(action2);
 		return false;
 	}
 
@@ -2102,26 +2112,26 @@ bool infPush(int tagno, char **post_string)
 	if (stringEqualCI(prot, "javascript")) {
 		if (!allowJS) {
 			setError(MSG_NJNoForm);
-			return false;
+			goto fail;
 		}
 		jsRunScript_t(form, action, 0, 0);
-		return true;
+		goto success;
 	}
 
 	form->bymail = false;
 	if (stringEqualCI(prot, "mailto")) {
 		if (!validAccount(localAccount))
-			return false;
+			goto fail;
 		form->bymail = true;
 	} else if (stringEqualCI(prot, "http")) {
 		if (form->secure) {
 			setError(MSG_BecameInsecure);
-			return false;
+			goto fail;
 		}
 	} else if (!stringEqualCI(prot, "https") &&
 		   !stringEqualCI(prot, "gopher")) {
 		setError(MSG_SubmitProtBad, prot);
-		return false;
+		goto fail;
 	}
 
 	pfs = initString(&pfs_l);
@@ -2145,7 +2155,7 @@ bool infPush(int tagno, char **post_string)
 
 	if (!formSubmit(form, t, dopost)) {
 		nzFree(pfs);
-		return false;
+		goto fail;
 	}
 
 	debugPrint(3, "%s %s", dopost ? "post" : "get", pfs + actlen);
@@ -2192,6 +2202,7 @@ bool infPush(int tagno, char **post_string)
 		nzFree(addr);
 		nzFree(subj);
 		nzFree(q);
+		nzFree(action2);
 		*post_string = 0;
 		return rc;
 	}
@@ -2201,6 +2212,8 @@ bool infPush(int tagno, char **post_string)
 		strmove(pfs + actlen, pfs + actlen + 1);
 
 	*post_string = pfs;
+success:
+	nzFree(action2);
 	return true;
 }
 
