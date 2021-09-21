@@ -388,6 +388,8 @@ document.styleSheets = [];
 frames = [];
 // to debug a.href = object or other weird things.
 hrefset$p = []; hrefset$a = [];
+// pending jobs, mostly to debug promise functions.
+$pjobs = [];
 
 // symbolic constants for compareDocumentPosition
 DOCUMENT_POSITION_DISCONNECTED = 1;

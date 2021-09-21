@@ -3029,7 +3029,18 @@ delete_and_go:
 	if(sessionList[cw->sno].lw != cw)
 	    continue;
 
-	debugPrint(3, "exec pending for context %d", cf->gsn);
+	if(debugLevel >= 3) {
+// $pjobs is pending jobs, push this one onto the array.
+// Nobody ever cleans these up, which is why it only happens at debug 3.
+		JSValue g = JS_GetGlobalObject(ctx);
+		JSValue v = JS_GetPropertyStr(ctx, g, "$pjobs");
+		int jj = get_property_number(ctx, v, "length");
+		set_array_element_object(ctx, v, jj, e->argv[2]);
+		JS_FreeValue(ctx, v);
+		JS_FreeValue(ctx, g);
+		debugPrint(3, "exec pending for context %d job %d", cf->gsn, jj);
+	}
+
 	res = e->job_func(ctx, e->argc, (JSValueConst *)e->argv);
 	debugPrint(3, "exec complete");
 	JS_FreeValue(ctx, res);
