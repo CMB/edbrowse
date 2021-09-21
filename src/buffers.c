@@ -6763,6 +6763,7 @@ rebrowse:
 		startRange = endRange = 0;
 		changeFileName = 0;	/* should already be zero */
 		thisfile = cf->fileName;
+		jumptag = 0;
 		w = createWindow();
 		w->sno = context;
 		cw = w;		/* we might wind up putting this back */
