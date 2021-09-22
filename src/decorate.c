@@ -12,7 +12,7 @@ foo.innerHTML = string or document.write(string).
 
 /* The current (foreground) edbrowse window and frame.
  * These are replaced with stubs when run within the javascript process. */
-struct ebWindow *cw;
+Window *cw;
 Frame *cf;
 int gfsn;
 
@@ -1593,7 +1593,7 @@ static void freeTag(Tag *t);
 void tag_gc(void)
 {
 	int cx;			/* edbrowse context */
-	struct ebWindow *w, *save_cw;
+	Window *w, *save_cw;
 	Tag *t;
 	int i, j;
 
@@ -1785,7 +1785,7 @@ static void freeTag(Tag *t)
 	free(t);
 }
 
-void freeTags(struct ebWindow *w)
+void freeTags(Window *w)
 {
 	int i, n;
 	Tag *t, **e;
@@ -2174,7 +2174,7 @@ void debugGenerated(const char *h)
 bool frameFromContext(jsobjtype cx)
 {
 	int i;
-	struct ebWindow *w;
+	Window *w;
 	Frame *f;
 	for (i = 0; i < MAXSESSION; ++i) {
 		for (w = sessionList[i].lw; w; w = w->prev) {

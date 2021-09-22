@@ -460,7 +460,7 @@ bool helpUtility(void)
 
 // maybe we already have a buffer with the help guide in it
 	for (cx = 1; cx < MAXSESSION; ++cx) {
-		struct ebWindow *w = sessionList[cx].lw;
+		Window *w = sessionList[cx].lw;
 		if (!w)
 			continue;
 		if (!w->f0.fileName)

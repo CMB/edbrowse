@@ -2931,7 +2931,8 @@ So I have to go from context to window, and if that window isn't at the top of t
 just skip it for now, cause it may pop up to the top of the stack later.
 All this together compels me to try to get inside of JS_ExecutePendingJob().
 You'll see below I copied their code, so I can modify it;
-I call it my_ExecutePendingJob().
+I call it my_ExecutePendingJobs().
+Plural, because I run all the pending jobs, not just the next one.
 Ok, but I have to bring in some other machinery to support it.
 I copied some primitives for managing linked lists, from list.h,
 and they are remarkably similar to the ones I invented for edbrowse.
@@ -2993,7 +2994,7 @@ typedef struct JSJobEntry {
 
 #include "modified_runtime.h"
 
-void my_ExecutePendingJob(void)
+void my_ExecutePendingJobs(void)
 {
     JSContext *ctx;
     JSJobEntry *e;
@@ -3081,13 +3082,39 @@ void delPendings(const Frame *f)
 #undef list_entry
 #undef offsetof
 
+/*********************************************************************
+postMessage() puts a message on a queue, and the target window processes
+it later. Well this is later.
+Run through the foreground windows and use onmessage() to process those messages.
+It's vital we set cw and cf, as we did above, so everything runs
+in the target window, especially building new DOM elements within the tree,
+by DOM calls or innerHTML etc.
+*********************************************************************/
+
+void my_ExecutePendingMessages(void)
+{
+	int i;
+// This mucks with cw and cf, the calling routine must preserve them.
+	for (i = 1; i < MAXSESSION; ++i) {
+		if(!(cw = sessionList[i].lw) ||
+		!cw->browseMode)
+			continue;
+		for (cf = &(cw->f0); cf; cf = cf->next) {
+// javascript has to be set up for this particular frame
+			if(!cf->jslink)
+				continue;
+		}
+	}
+}
+
 // this is temporary, we will be polling on a timer
 // to execute these pending jobs.
 static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	struct ebWindow *save_cw = cw;
+	Window *save_cw = cw;
 	Frame *save_cf = cf;
-	my_ExecutePendingJob();
+	my_ExecutePendingJobs();
+	my_ExecutePendingMessages();
 	cw = save_cw, cf = save_cf;
 	return JS_UNDEFINED;
 }

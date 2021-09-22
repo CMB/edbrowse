@@ -160,7 +160,7 @@ addchar:
 
 static pst fetchLineContext(int n, int show, int cx)
 {
-	struct ebWindow *lw = sessionList[cx].lw;
+	Window *lw = sessionList[cx].lw;
 	struct lineMap *map, *t;
 	int dol;
 	pst p;			/* the resulting copy of the string */
@@ -186,7 +186,7 @@ pst fetchLine(int n, int show)
 	return fetchLineContext(n, show, context);
 }
 
-static int apparentSizeW(const struct ebWindow *w, bool browsing)
+static int apparentSizeW(const Window *w, bool browsing)
 {
 	int ln, size = 0;
 	pst p;
@@ -215,7 +215,7 @@ static int apparentSizeW(const struct ebWindow *w, bool browsing)
 
 static int apparentSize(int cx, bool browsing)
 {
-	const struct ebWindow *w;
+	const Window *w;
 	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
 		setError(MSG_SessionInactive, cx);
 		return -1;
@@ -228,7 +228,7 @@ static int apparentSize(int cx, bool browsing)
 static char *dirSuffixContext(int n, int cx)
 {
 	static char suffix[4];
-	struct ebWindow *lw = sessionList[cx].lw;
+	Window *lw = sessionList[cx].lw;
 
 	suffix[0] = 0;
 	if (lw->dirMode) {
@@ -696,7 +696,7 @@ static void saveSubstitutionStrings(void)
 	strcpy(globalSubs.rhs, cw->rhs);
 }
 
-static void restoreSubstitutionStrings(struct ebWindow *nw)
+static void restoreSubstitutionStrings(Window *nw)
 {
 	if (!searchStringsAll)
 		return;
@@ -709,10 +709,10 @@ static void restoreSubstitutionStrings(struct ebWindow *nw)
 }
 
 /* Create a new window, with default variables. */
-static struct ebWindow *createWindow(void)
+static Window *createWindow(void)
 {
-	struct ebWindow *nw;	/* the new window */
-	nw = allocZeroMem(sizeof(struct ebWindow));
+	Window *nw;	/* the new window */
+	nw = allocZeroMem(sizeof(Window));
 	saveSubstitutionStrings();
 	restoreSubstitutionStrings(nw);
 	nw->f0.gsn = ++gfsn;
@@ -789,7 +789,7 @@ These make undo impossible, so free the lines in the undo window.
 *********************************************************************/
 
 static bool madeChanges;
-static struct ebWindow undoWindow;
+static Window undoWindow;
 
 /* quick sort compare */
 static int qscmp(const void *s, const void *t)
@@ -861,7 +861,7 @@ then free them.
 
 static void undoPush(void)
 {
-	struct ebWindow *uw;
+	Window *uw;
 
 /* if in browse mode, we really shouldn't be here at all!
  * But we could if substituting on an input field, since substitute is also
@@ -892,7 +892,7 @@ static void undoPush(void)
 	}
 }				/* undoPush */
 
-static void freeWindow(struct ebWindow *w)
+static void freeWindow(Window *w)
 {
 	Frame *f, *fnext;
 	struct histLabel *label, *lnext;
@@ -960,7 +960,7 @@ bool cxActive(int cx)
 
 static void cxInit(int cx)
 {
-	struct ebWindow *lw = createWindow();
+	Window *lw = createWindow();
 	if (sessionList[cx].lw)
 		i_printfExit(MSG_DoubleInit, cx);
 	sessionList[cx].fw = sessionList[cx].lw = lw;
@@ -971,7 +971,7 @@ static void cxInit(int cx)
 
 bool cxQuit(int cx, int action)
 {
-	struct ebWindow *w = sessionList[cx].lw;
+	Window *w = sessionList[cx].lw;
 	if (!w)
 		i_printfExit(MSG_QuitNoActive, cx);
 
@@ -1009,7 +1009,7 @@ bool cxQuit(int cx, int action)
 
 	if (action == 2) {
 		while (w) {
-			struct ebWindow *p = w->prev;
+			Window *p = w->prev;
 			freeWindow(w);
 			w = p;
 		}
@@ -1032,7 +1032,7 @@ static int cx_previous;
 void cxSwitch(int cx, bool interactive)
 {
 	bool created = false;
-	struct ebWindow *nw = sessionList[cx].lw;	/* the new window */
+	Window *nw = sessionList[cx].lw;	/* the new window */
 	if (!nw) {
 		cxInit(cx);
 		nw = sessionList[cx].lw;
@@ -1481,8 +1481,8 @@ gone:
 // Move or copy files from one directory to another
 static bool moveFiles(void)
 {
-	struct ebWindow *cw1 = cw;
-	struct ebWindow *cw2 = sessionList[destLine].lw;
+	Window *cw1 = cw;
+	Window *cw2 = sessionList[destLine].lw;
 	char *path1, *path2;
 	int ln, cnt, dol;
 
@@ -2601,7 +2601,7 @@ endline:
 
 static bool readContext(int cx)
 {
-	struct ebWindow *lw;
+	Window *lw;
 	int i, fardol;
 	struct lineMap *t;
 
@@ -2665,7 +2665,7 @@ static bool readContext(int cx)
 
 static bool writeContext(int cx)
 {
-	struct ebWindow *lw;
+	Window *lw;
 	int i, len;
 	struct lineMap *newmap, *t;
 	pst p;
@@ -4872,7 +4872,7 @@ et_go:
 
 	if (stringEqual(line, "bflist")) {
 		for (n = 1; n <= maxSession; ++n) {
-			struct ebWindow *lw = sessionList[n].lw;
+			Window *lw = sessionList[n].lw;
 			if (!lw)
 				continue;
 			printf("%d: ", n);
@@ -5431,7 +5431,7 @@ static bool balanceLine(const char *line)
 }				/* balanceLine */
 
 /* Unfold the buffer into one long, allocated string. */
-bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len)
+bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
 {
 	char *buf;
 	int l, ln;
@@ -5472,7 +5472,7 @@ bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len)
 
 bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 {
-	const struct ebWindow *w = sessionList[cx].lw;
+	const Window *w = sessionList[cx].lw;
 	return unfoldBufferW(w, cr, data, len);
 }				/* unfoldBuffer */
 
@@ -5625,7 +5625,7 @@ bool runCommand(const char *line)
 {
 	int i, j, n;
 	int writeMode = O_TRUNC;
-	struct ebWindow *w = NULL;
+	Window *w = NULL;
 	const Tag *tag = 0, *jumptag = 0;
 	bool nogo = true, rc = true;
 	bool emode = false;	// force e, not browse
@@ -6098,7 +6098,7 @@ replaceframe:
 	}
 
 	if (cmd == 'u') {
-		struct ebWindow *uw = &undoWindow;
+		Window *uw = &undoWindow;
 		struct lineMap *swapmap;
 		if (!cw->undoable) {
 			setError(MSG_NoUndo);
@@ -6322,7 +6322,7 @@ replaceframe:
 		if (!cx)
 			cx = 1;
 		while (cx) {
-			struct ebWindow *prev = cw->prev;
+			Window *prev = cw->prev;
 			if (!prev) {
 				setError(MSG_NoPrevious);
 				return false;
@@ -7177,7 +7177,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 
 void freeEmptySideBuffer(int n)
 {
-	struct ebWindow *side;
+	Window *side;
 	if (!(side = sessionList[n].lw))
 		return;
 	if (side->f0.fileName)

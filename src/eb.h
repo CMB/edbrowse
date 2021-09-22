@@ -486,7 +486,8 @@ int ehsn;
 	struct DBTABLE *table;	/* if in sqlMode */
 	time_t nextrender;
 };
-extern struct ebWindow *cw;	/* current window */
+typedef struct ebWindow Window;
+extern Window *cw;	/* current window */
 #define foregroundWindow (cw == sessionList[context].lw)
 
 /* quickly grab a tag from the current window via its sequence number:
@@ -508,7 +509,7 @@ If ints are larger then I don't even use this constant.
 
 /* An edit session */
 struct ebSession {
-	struct ebWindow *fw, *lw;	/* first window, last window */
+	Window *fw, *lw;	/* first window, last window */
 };
 extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */

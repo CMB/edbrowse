@@ -2247,7 +2247,7 @@ void domSetsTagValue(Tag *t, const char *newtext)
 
 bool charInOptions(char c)
 {
-	const struct ebWindow *w;
+	const Window *w;
 	const Tag *t;
 	int i;
 	for(i = 0; i < MAXSESSION; ++i) {
@@ -2265,7 +2265,7 @@ bool charInOptions(char c)
 
 void charFixOptions(char c)
 {
-	struct ebWindow *w, *save_w = cw;
+	Window *w, *save_w = cw;
 	Tag *t;
 	int i, j;
 	char *u;
@@ -2290,7 +2290,7 @@ void charFixOptions(char c)
 
 bool charInFiles(char c)
 {
-	const struct ebWindow *w;
+	const Window *w;
 	const Tag *t;
 	int i, j;
 	char *u;
@@ -2317,7 +2317,7 @@ bool charInFiles(char c)
 
 void charFixFiles(char c)
 {
-	struct ebWindow *w, *save_w = cw;
+	Window *w, *save_w = cw;
 	Tag *t;
 	int i, j;
 	char *u, *v;
@@ -3170,7 +3170,7 @@ void scriptSetsTimeout(Tag *t)
 static struct jsTimer *soonest(void)
 {
 	struct jsTimer *t, *best_t = 0;
-	const struct ebWindow *w;
+	const Window *w;
 	if (listIsEmpty(&timerList))
 		return 0;
 	foreach(t, timerList) {
@@ -3251,7 +3251,7 @@ void delTimers(const Frame *f)
 void runTimer(void)
 {
 	struct jsTimer *jt;
-	struct ebWindow *save_cw = cw;
+	Window *save_cw = cw;
 	Frame *save_cf = cf;
 	Tag *t;
 
@@ -3262,7 +3262,8 @@ void runTimer(void)
 		goto done;
 
 	if(jt->pending) { // pending jobs
-		my_ExecutePendingJob();
+		my_ExecutePendingJobs();
+		my_ExecutePendingMessages();
 		int n = jt->jump_sec * 1000 + jt->jump_ms;
 		jt->sec = now_sec + n / 1000;
 		jt->ms = now_ms + n % 1000;
