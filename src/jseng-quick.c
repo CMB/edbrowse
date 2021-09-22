@@ -3001,8 +3001,6 @@ void my_ExecutePendingJob(void)
     JSValue res;
     int i, safety = 0;
 	struct modifiedRuntime *mrt = (struct modifiedRuntime *) jsrt;
-	Frame *save_cf = cf;
-	struct ebWindow *save_cw = cw;
 
 // high runner case
     if (list_empty(&mrt->job_list))
@@ -3014,6 +3012,7 @@ void my_ExecutePendingJob(void)
 	    break;
 	e = list_entry(l, JSJobEntry, link);
 	ctx = e->ctx;
+// This line resets cw and cf, and we don't put it back, so the calling routine must restore it.
 	if (!frameFromContext(ctx)) {
 delete_and_go:
 	    list_del(&e->link);
@@ -3031,7 +3030,7 @@ delete_and_go:
 
 	if(debugLevel >= 3) {
 // $pjobs is pending jobs, push this one onto the array.
-// Nobody ever cleans these up, which is why it only happens at debug 3.
+// Nobody ever cleans these up, which is why we only do it at debug 3.
 		JSValue g = JS_GetGlobalObject(ctx);
 		JSValue v = JS_GetPropertyStr(ctx, g, "$pjobs");
 		int jj = get_property_number(ctx, v, "length");
@@ -3048,8 +3047,6 @@ delete_and_go:
 	jSideEffects();
 	goto delete_and_go;
     }
-
-    cw = save_cw, cf = save_cf;
 }
 
 void delPendings(const Frame *f)
@@ -3088,7 +3085,10 @@ void delPendings(const Frame *f)
 // to execute these pending jobs.
 static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	struct ebWindow *save_cw = cw;
+	Frame *save_cf = cf;
 	my_ExecutePendingJob();
+	cw = save_cw, cf = save_cf;
 	return JS_UNDEFINED;
 }
 
