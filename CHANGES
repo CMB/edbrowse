@@ -17,6 +17,8 @@ Poll for pending jobs and run them. These usually come from Promise.
 
 Implementation of MessagePortPolyfill and MessageChannelPolyfill, third party.
 
+Implementation of postMessage.
+
 Allow the user to set the separator between selected options.
 
 enctype=text/plain, <svg>, <optgroup>, upload multiple files,  div.onclick,

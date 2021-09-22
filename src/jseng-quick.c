@@ -739,9 +739,10 @@ Function encounters an error during execution. false.
 
 static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *name)
 {
-	int dbl = 3;		// debug level
+	int dbl = 3;		// debug level to print debug messages
 	int32_t seqno = -1;
 		JSValue v, r, l[1];
+// don't print timer in and out unless debug >= 4
 	if (stringEqual(name, "ontimer")) {
 		dbl = 4;
 		v = JS_GetPropertyStr(cx, parent, "tsn");
@@ -750,6 +751,9 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 			JS_ToInt32(cx, &seqno, v);
 		JS_Release(cx, v);
 	}
+// don't print message function running in and out, it runs all the time!
+	if (stringEqual(name, "onmessage$$running"))
+		dbl = 9;
 	v = JS_GetPropertyStr(cx, parent, name);
 	grab(v);
 	if(!JS_IsFunction(cx, v)) {
@@ -3094,6 +3098,8 @@ by DOM calls or innerHTML etc.
 void my_ExecutePendingMessages(void)
 {
 	int i;
+	JSContext *cx;
+	JSValue *g;
 // This mucks with cw and cf, the calling routine must preserve them.
 	for (i = 1; i < MAXSESSION; ++i) {
 		if(!(cw = sessionList[i].lw) ||
@@ -3103,6 +3109,9 @@ void my_ExecutePendingMessages(void)
 // javascript has to be set up for this particular frame
 			if(!cf->jslink)
 				continue;
+			cx = cf->cx;
+			g = cf->winobj;
+			run_function_bool(cx, *g, "onmessage$$running");
 		}
 	}
 }
@@ -3219,7 +3228,7 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 
 	JS_FreeValue(mwc, mwo);
 // start the jobs pending timer
-	domSetsTimeout(300, "@@pending", 0, true);
+	domSetsTimeout(350, "@@pending", 0, true);
 	js_running = true;
 }
 

@@ -1151,20 +1151,33 @@ if(this.height === 0 || this.width === 0) return "data:,";
 return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
 }
 
-postMessage = function (message,target_origin) {
+onmessage$$queue = [];
+function  postMessage(message,target_origin) {
 if (this.location.protocol + "//" + this.location.hostname == target_origin || target_origin == "*") {
-if (typeof this.onmessage == "function") {
-// whose responsibility is it to add the event handler?   The web developer's?
-// Because we (the browser implementers) don't have any way of knowing what in particular
-// they want the handler to actually do with the message.  Right?
 var me = new Event;
 me.name = "message";
 me.type = "message";
-me.data = message
-this.onmessage(me);
+me.data = message;
+this.onmessage$$queue.push(me);
+alert3("posting message of length " + message.length + " to context " + this.eb$ctx);
+}
+}
+function onmessage$$running() {
+if(window.onmessage$$array && onmessage$$array.length) { // handlers are ready
+while(onmessage$$queue.length) {
+// better run messages fifo
+var me = onmessage$$queue[0];
+onmessage$$queue.splice(0, 1);
+alert3("context " + eb$ctx + " processes message of length " + me.data.length);
+// yeah you really need window.onmessage$$fn, for subtle reasons
+window.onmessage$$fn(me);
+alert3("process message complete");
 }
 }
 }
+Object.defineProperty(window, "onmessage$$queue", {writable:false,configurable:false});
+Object.defineProperty(window, "onmessage$$running", {writable:false,configurable:false});
+Object.defineProperty(window, "postMessage", {writable:false,configurable:false});
 
 /*********************************************************************
 AudioContext, for playing music etc.
