@@ -1151,7 +1151,7 @@ static void connectDatalist(Tag *t)
 		lista = listj;
 	if(!lista)
 		return;
-	if((u = gebi_c(t, "list", false)))
+	if((u = gebi_c(t, lista, false)))
 		t->ninp = u->seqno;
 	nzFree(listj);
 }
@@ -1167,6 +1167,8 @@ void infShow(int tagno, const char *search)
 	connectDatalist(t);
 
 	s = inp_types[t->itype];
+	if(t->ninp && t->itype == INP_TEXT)
+		s = "suggested select";
 	printf("%s", s);
 	if (t->multiple)
 		i_printf(MSG_Many);
@@ -1190,7 +1192,10 @@ void infShow(int tagno, const char *search)
 	if (t->name)
 		printf(" %s", t->name);
 	nl();
-	if (t->itype != INP_SELECT)
+
+	if(t->ninp && t->itype == INP_TEXT)
+		t = tagList[t->ninp];
+	else if (t->itype != INP_SELECT)
 		return;
 
 /* display the options in a pick list */

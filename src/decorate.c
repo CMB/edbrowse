@@ -806,6 +806,11 @@ static void prerenderNode(Tag *t, bool opentag)
 		if (!opentag) {
 			currentOpt = 0;
 			optg = 0;
+// in datalist, the value becomes the text
+			if(currentSel && currentSel->action == TAGACT_DATAL) {
+				nzFree(t->textval);
+				t->textval = cloneString(t->value);
+			}
 			break;
 		}
 		if (!currentSel) {
