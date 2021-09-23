@@ -1168,7 +1168,8 @@ while(onmessage$$queue.length) {
 // better run messages fifo
 var me = onmessage$$queue[0];
 onmessage$$queue.splice(0, 1);
-alert3("context " + eb$ctx + " processes message of length " + me.data.length);
+alert3("context " + eb$ctx + " processes message of length " + me.data.length + " ↑" +
+(me.data.length >= 200 ? "long" : me.data) + "↑");
 // yeah you really need window.onmessage$$fn, for subtle reasons
 window.onmessage$$fn(me);
 alert3("process message complete");
