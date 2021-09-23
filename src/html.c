@@ -1134,13 +1134,37 @@ bool htmlTest(void)
 	return (cnt >= 4 && cnt * 300 >= fsize);
 }
 
-/* Show an input field */
+// Connect an input field to its datalist.
+// I use the field ninp for this, rather nonobvious, sorry.
+static void connectDatalist(Tag *t)
+{
+	const char *lista = 0; // list from attributes
+	char *listj = 0; // list from javascript
+	const Tag *u;
+	if(t->action != TAGACT_INPUT || t->itype != INP_TEXT ||
+	t->ninp)
+		return;
+	lista = attribVal(t, "list");
+	if(t->jslink && allowJS)
+		listj = get_property_string_t(t, "list");
+	if(listj && *listj)
+		lista = listj;
+	if(!lista)
+		return;
+	if((u = gebi_c(t, "list", false)))
+		t->ninp = u->seqno;
+	nzFree(listj);
+}
+
+// Show an input field
 void infShow(int tagno, const char *search)
 {
-	const Tag *t = tagList[tagno], *v;
+	Tag *t = tagList[tagno], *v;
 	const char *s;
 	int cnt;
 	bool show;
+
+	connectDatalist(t);
 
 	s = inp_types[t->itype];
 	printf("%s", s);
