@@ -26,6 +26,7 @@ bool readFileArgv(const char *filename, int fromframe, const char *orig_head);
 Tag *line2frame(int ln);
 bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len);
 bool unfoldBuffer(int cx, bool cr, char **data, int *len);
+bool jump2anchor(const Tag *jumptag, const char *newhash);
 bool runCommand(const char *line);
 bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname);

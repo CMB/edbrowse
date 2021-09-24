@@ -2383,8 +2383,11 @@ const Tag *gebi_c(const Tag *t, const char *id, bool lookname)
 	int action;
 	if(!id || !*id)
 		return 0;
+// this should be easy, but bugs keep popping up.
+//  printf("search %s\n", id);
 	while (true) {
 		action = t->action;
+//  printf("up %d,%s\n", t->seqno, t->info->name);
 // don't go past document and up to a higher frame
 		if(action == TAGACT_HTML || action == TAGACT_FRAME)
 			return 0;
@@ -2403,6 +2406,7 @@ static const Tag *gebi_r(const Tag *t)
 {
 	const Tag *c; // children
 	const Tag *u;
+//  printf("look %d,%s,%s\n", t->seqno, t->info->name, t->id);
 	if(t->id && stringEqual(t->id, idsearch))
 		return t;
 	if (anchorlook && t->action == TAGACT_A &&

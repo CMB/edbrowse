@@ -747,7 +747,7 @@ int main(int argc, char **argv)
 	cx = 0;
 	while (argc) {
 		char *file = *argv;
-		char *file2 = NULL;	// will be allocated
+		char *file2 = 0;	// will be allocated
 		++cx;
 		if (cx == MAXSESSION)
 			i_printfExit(MSG_ManyOpen, MAXSESSION - 1);
@@ -811,9 +811,13 @@ int main(int argc, char **argv)
 			if (rc && isURL(cf->fileName)
 			    && ((cf->mt && cf->mt->outtype)
 				|| isBrowseableURL(cf->fileName))) {
-				if (runCommand("b"))
+				if (runCommand("b")) {
+					char *newhash = findHash(file);
 					debugPrint(1, "%d", fileSize);
-				else
+					if(newhash &&
+					!jump2anchor(0, newhash + 1))
+						showError();
+				} else
 					showError();
 			}
 		}

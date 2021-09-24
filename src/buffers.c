@@ -4355,7 +4355,6 @@ static int twoLetter(const char *line, const char **runThis)
 		bool setmode = false;
 		char *file, *path, *t;
 		const char *s = line + 2;
-		cmd = 'e';	// show error messages
 		skipWhite(&s);
 		if (*s == '=') {
 			setmode = true;
@@ -5609,6 +5608,50 @@ static bool lineHasTag(const char *p, int tagno)
 		if(j == tagno)
 			return true;
 	}
+	return false;
+}
+
+bool jump2anchor(const Tag *jumptag, const char *newhash)
+{
+	int i;
+	const Tag *tag;
+
+// If we got here by clicking on <a href=#stuff> then jumptag is set.
+// If  from b www.xyz.com#stuff, then it is not set,
+// and we have to find the body of what we just browsed.
+	if(!jumptag)
+		jumptag = cf->bodytag;
+// but what if we aren't running js, and bodytag is not set?
+	if(!jumptag) {
+		for(i = cw->numTags - 1; i >= 0; --i) {
+			tag = tagList[i];
+			if(tag->action == TAGACT_BODY && !tag->slash) {
+				jumptag = tag;
+				break;
+			}
+		}
+	}
+	if(jumptag)
+		jumptag = gebi_c(jumptag, newhash, true);
+	if(!jumptag)
+		goto hashnotfound;
+
+	for (i = 1; i <= cw->dol; ++i) {
+		char *p = (char *)fetchLine(i, -1);
+		if (lineHasTag(p, jumptag->seqno)) {
+			struct histLabel *label =
+			    allocMem(sizeof(struct histLabel));
+			label->label = cw->dot;
+			label->prev = cw->histLabel;
+			cw->histLabel = label;
+			cw->dot = i;
+			printDot();
+			return true;
+		}
+	}
+
+hashnotfound:
+	setError(MSG_NoLabel2, newhash);
 	return false;
 }
 
@@ -6939,44 +6982,9 @@ redirect:
 		}
 		newhash = cloneString(s);
 		unpercentString(newhash);
-
-// If we got here by clicking on <a href=#stuff> then jumptag is set.
-// If  from b www.xyz.com#stuff, then it is not set,
-// and we have to find the body of what we just browsed.
-		if(!jumptag) {
-			for(i = cw->numTags - 1; i >= 0; --i) {
-				tag = tagList[i];
-				if(tag->action == TAGACT_BODY && !tag->slash) {
-					jumptag = tag;
-					break;
-				}
-			}
-		}
-
-		if(jumptag)
-			jumptag = gebi_c(jumptag, newhash, true);
-		if(!jumptag)
-			goto hashnotfound;
-
-		for (i = 1; i <= cw->dol; ++i) {
-			char *p = (char *)fetchLine(i, -1);
-			if (lineHasTag(p, jumptag->seqno)) {
-				struct histLabel *label =
-				    allocMem(sizeof(struct histLabel));
-				label->label = cw->dot;
-				label->prev = cw->histLabel;
-				cw->histLabel = label;
-				cw->dot = i;
-				printDot();
-				nzFree(newhash);
-				return true;
-			}
-		}
-
-hashnotfound:
-		setError(MSG_NoLabel2, newhash);
+		rc = jump2anchor(jumptag, newhash);
 		nzFree(newhash);
-		return false;
+		return rc;
 	}
 
 	if (cmd == 'g' || cmd == 'v') {
