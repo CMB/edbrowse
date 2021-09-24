@@ -4306,17 +4306,6 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
-	    && !line[3]) {
-		debugLevel = line[2] - '0';
-		return true;
-	}
-
-	if (!strncmp(line, "db>", 3)) {
-		setDebugFile(line + 3);
-		return true;
-	}
-
 	if(stringEqual(line, "ua")) {
 		for (n = 0; n < MAXAGENT; ++n)
 			if(currentAgent == userAgents[n]) {
