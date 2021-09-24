@@ -735,7 +735,7 @@ imap_done:
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
 			if (!imapSearch(handle, f, inputline))
-				goto action;
+				goto reaction;
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 			else
