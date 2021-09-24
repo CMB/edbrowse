@@ -1817,7 +1817,8 @@ static bool readDirectory(const char *filename)
 		return false;
 	if (!cw->dol) {
 		cw->dirMode = true;
-		i_puts(MSG_DirMode);
+		if(debugLevel >= 1)
+			i_puts(MSG_DirMode);
 		if (lsformat[0])
 			backpiece = allocZeroMem(LMSIZE * (linecount + 2));
 	}
@@ -2368,7 +2369,8 @@ gotdata:
 		setError(MSG_FrameNotHTML);
 		goto badfile;
 	} else if (binaryDetect & !cw->binMode) {
-		i_puts(MSG_BinaryData);
+		if(debugLevel >= 1)
+			i_puts(MSG_BinaryData);
 		cw->binMode = true;
 	}
 
@@ -2658,7 +2660,8 @@ static bool readContext(int cx)
 	}
 	if (binaryDetect & !cw->binMode && lw->binMode) {
 		cw->binMode = true;
-		i_puts(MSG_BinaryData);
+		if(debugLevel >= 1)
+			i_puts(MSG_BinaryData);
 	}
 	return true;
 }				/* readContext */
