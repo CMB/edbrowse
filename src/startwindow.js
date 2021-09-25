@@ -1157,6 +1157,7 @@ if (this.location.protocol + "//" + this.location.hostname == target_origin || t
 var me = new Event;
 me.name = "message";
 me.type = "message";
+me.origin = this.location.protocol + "//" + this.location.hostname;
 me.data = message;
 this.onmessage$$queue.push(me);
 alert3("posting message of length " + message.length + " to context " + this.eb$ctx);
