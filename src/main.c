@@ -791,6 +791,9 @@ int main(int argc, char **argv)
 
 		} else {
 
+			char *newhash = findHash(file);
+			if(newhash)
+				newhash = cloneString(newhash + 1);
 			cf->fileName = cloneString(file);
 			cf->firstURL = cloneString(file);
 			if (isSQL(file))
@@ -804,6 +807,14 @@ int main(int argc, char **argv)
 			} else if (changeFileName) {
 				nzFree(cf->fileName);
 				cf->fileName = changeFileName;
+				if(redirect_count) {
+					nzFree(newhash);
+					newhash = findHash(changeFileName);
+					if(newhash) {
+						*newhash++ = 0;
+						newhash = cloneString(newhash);
+					}
+				}
 				changeFileName = 0;
 			}
 			cw->undoable = cw->changeMode = false;
@@ -812,14 +823,14 @@ int main(int argc, char **argv)
 			    && ((cf->mt && cf->mt->outtype)
 				|| isBrowseableURL(cf->fileName))) {
 				if (runCommand("b")) {
-					char *newhash = findHash(file);
 					debugPrint(1, "%d", fileSize);
 					if(newhash &&
-					!jump2anchor(0, newhash + 1))
+					!jump2anchor(0, newhash))
 						showError();
 				} else
 					showError();
 			}
+			nzFree(newhash);
 		}
 
 		nzFree(file2);
