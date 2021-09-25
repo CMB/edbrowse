@@ -5669,6 +5669,7 @@ bool runCommand(const char *line)
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
 	int tagno;
 	const char *s = NULL;
+		char *p;
 	static char newline[MAXTTYLINE];
 	char *thisfile;
 
@@ -5933,7 +5934,6 @@ replaceframe:
 
 	/* special command for hidden input */
 	if (!strncmp(line, "ipass", 5)) {
-		char *p;
 		char buffer[MAXUSERPASS];
 		int realtotal;
 		bool old_masked;
@@ -6436,7 +6436,7 @@ replaceframe:
 
 	/* go to a file in a directory listing */
 	if (cmd == 'g' && cw->dirMode && (!first || stringEqual(line, "-"))) {
-		char *p, *dirline;
+		char *dirline;
 		const struct MIMETYPE *gmt = 0;	/* the go mime type */
 		emode = (first == '-');
 		if (endRange > startRange) {
@@ -6484,7 +6484,7 @@ replaceframe:
 
 	/* see if it's a go command */
 	if (cmd == 'g' && !(cw->sqlMode | cw->binMode)) {
-		char *p, *h;
+		char *h;
 		int tagno;
 		bool click, dclick;
 		bool jsh, jsgo, jsdead;
@@ -6678,7 +6678,6 @@ replaceframe:
 			}
 
 			if (cmd == 'i' && strchr("?=<*", c)) {
-				char *p;
 				int realtotal;
 				scmd = c;
 				line = s + 1;
@@ -6891,6 +6890,11 @@ we have to make sure it has a protocol. Every url needs a protocol.
 		if (!j)
 			return false;
 		if (changeFileName) {
+// If not browsing, and redriected here by 302, lop of the hash,
+// only cause that is consistent with no redirection.
+			if(redirect_count && cmd != 'b' &&
+			(p = findHash(changeFileName)))
+				*p = 0;
 			nzFree(w->f0.fileName);
 			w->f0.fileName = changeFileName;
 			w->f0.uriEncoded = true;
@@ -6913,6 +6917,7 @@ browse:
 			return false;
 		}
 		if (!cw->browseMode) {
+			int save_count = redirect_count;
 			if (!cw->dol) {
 				setError(MSG_BrowseEmpty);
 				return false;
@@ -6926,6 +6931,7 @@ browse:
 					return false;
 				return true;
 			}
+			redirect_count = save_count;
 		} else if (!first) {
 			setError(MSG_BrowseAlready);
 			return false;
@@ -6957,22 +6963,32 @@ redirect:
 		}
 
 /* Jump to the #section if specified in the url */
-		s = findHash(line);
-		if (!s)
-			return true;
-		++s;
+		if(!redirect_count) {
+			if(!(p = findHash(line)))
+				return true;
 /* Sometimes there's a # in the midst of a long url,
  * probably with post data.  It really screws things up.
  * Here is a kludge to avoid this problem.
  * Some day I need to figure this out. */
-		if (strpbrk(line, "?\1"))
-			return true;
+			if (strpbrk(line, "?\1"))
+				return true;
+			newhash = cloneString(p + 1);
+		} else {
+			if(!(p = findHash(cw->f0.fileName)))
+				return true;
+// have to pull #stuff out and still leave the .browse at the end.
+			s = p + strlen(p) - 7;
+			if(s <= p) // should never happen
+				return true;
+			newhash = pullString1(p + 1, s);
+			strmove(p, s);
+		}
+
 /* Print the file size before we print the line. */
 		if (fileSize >= 0) {
 			debugPrint(1, "%d", fileSize);
 			fileSize = -1;
 		}
-		newhash = cloneString(s);
 		unpercentString(newhash);
 		rc = jump2anchor(jumptag, newhash);
 		nzFree(newhash);
