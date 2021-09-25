@@ -13,6 +13,7 @@
 #include <time.h>
 
 bool curlActive;
+int redirect_count = 0;
 char *serverData;
 int serverDataLen;
 CURL *global_http_handle;
@@ -818,11 +819,12 @@ bool httpConnect(struct i_get *g)
 	int postb_l = 0;
 	bool transfer_status = false;
 	bool proceed_unauthenticated = false;
-	int redirect_count = 0;
 	bool post_request = false;
 	bool head_request = false;
 	uchar sxfirst = 0;
 	int n;
+
+		redirect_count = 0;
 
 	if (!getProtHostURL(url, prot, host)) {
 // only the foreground http thread uses setError,
@@ -839,6 +841,7 @@ bool httpConnect(struct i_get *g)
 		char *f;
 		urlSanitize(g, 0);
 mimestream:
+		redirect_count = 0;
 // don't have to fetch the data, the program can handle it.
 		nzFree(g->buffer);
 		g->buffer = 0;
