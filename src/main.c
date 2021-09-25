@@ -824,9 +824,11 @@ int main(int argc, char **argv)
 				|| isBrowseableURL(cf->fileName))) {
 				if (runCommand("b")) {
 					debugPrint(1, "%d", fileSize);
-					if(newhash &&
-					!jump2anchor(0, newhash))
-						showError();
+					if(newhash) {
+						set_location_hash(newhash);
+						if(!jump2anchor(0, newhash))
+							showError();
+					}
 				} else
 					showError();
 			}

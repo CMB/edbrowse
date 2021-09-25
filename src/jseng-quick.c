@@ -4202,3 +4202,24 @@ void set_basehref(const char *h)
 	JS_FreeValue(cx, g);
 }
 
+/*********************************************************************
+If javascript sets the hash, we're suppose to jump to that location on the
+screen, I think, but if the hash is part of the url,
+and we jump to that location at the start,
+edbrowse needs to set the hash.
+We set it manually, through the back door,
+so we don't triggger any side effects.
+This is just a wrapper, calling its counterpart in js.
+*********************************************************************/
+
+void set_location_hash(const char *h)
+{
+	JSValue g;
+	JSContext *cx;
+	if(!(allowJS && cf->jslink))
+		return; // js not running
+	cx = cf->cx;
+	g = *(JSValue*)cf->winobj;
+	run_function_onearg(cx, g, "set_location_hash", JS_NewAtomString(cx, h));
+}
+

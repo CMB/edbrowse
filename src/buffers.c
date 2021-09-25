@@ -6990,6 +6990,8 @@ redirect:
 			fileSize = -1;
 		}
 		unpercentString(newhash);
+		if(!jumptag) // new web page
+			set_location_hash(newhash);
 		rc = jump2anchor(jumptag, newhash);
 		nzFree(newhash);
 		return rc;

@@ -440,6 +440,7 @@ void set_gcs_number(const char *name, int n);
 void set_gcs_bool(const char *name, bool v);
 void set_gcs_string(const char *name, const char *s);
 void jsClose(void);
+void set_location_hash(const char *h);
 
 #ifdef __cplusplus
 }

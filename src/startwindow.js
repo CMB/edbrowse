@@ -249,6 +249,9 @@ location$2.search$val = document.location$2.search$val = u.search$val;
 location$2.hash$val = document.location$2.hash$val = u.hash$val;
 }
 
+function set_location_hash(h) { h = '#'+h; location$2.hash$val = h;
+location$2.href$val = location$2.href$val.replace(/#.*/, "") + h; }
+
 document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
