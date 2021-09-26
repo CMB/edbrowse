@@ -742,6 +742,10 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 	int dbl = 3;		// debug level to print debug messages
 	int32_t seqno = -1;
 		JSValue v, r, l[1];
+	if(cx != cf->cx) {
+		debugPrint(3, "running function %s in a context that doesn't match frame context %d - function abort!", cf->gsn);
+		return false;
+	}
 // don't print timer in and out unless debug >= 4
 	if (stringEqual(name, "ontimer")) {
 		dbl = 4;
@@ -762,7 +766,7 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 		return false;
 	}
 	if (seqno > 0)
-		debugPrint(dbl, "exec %s timer %d", name, seqno);
+		debugPrint(dbl, "exec %s timer %d context %d", name, seqno, cf->gsn);
 	else
 		debugPrint(dbl, "exec %s", name);
 	r = JS_Call(cx, v, parent, 0, l);
@@ -811,7 +815,7 @@ void run_ontimer(const Frame *f, const char *backlink)
 // timer object from its backlink
 	JSValue to = get_property_object(cx, *((JSValue*)f->winobj), backlink);
 	if(JS_IsUndefined(to)) {
-		debugPrint(3, "could not find timer backlink %s", backlink);
+		debugPrint(3, "could not find timer backlink %s in context %d", backlink, f->gsn);
 		return;
 	}
 	run_event(cx, to, "timer", "ontimer");

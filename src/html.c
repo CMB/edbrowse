@@ -3156,7 +3156,8 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 		foreach(jt, timerList) {
 			if (jt->tsn != seqno)
 				continue;
-			debugPrint(4, "timer %d delete", seqno);
+			debugPrint(3, "timer %d delete from context %d", seqno,
+			jt->f ? jt->f->gsn: -1);
 // a running timer will often delete itself.
 			if (jt->running) {
 				jt->deleted = true;
@@ -3199,7 +3200,8 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 	jt->f = cf;
 	addToListBack(&timerList, jt);
 	seqno = timer_sn;
-	debugPrint(4, "timer %d add", seqno);
+	debugPrint(3, "timer %d add to context %d under %s",
+	seqno, (cf ? cf->gsn : -1), backlink);
 	jt->tsn = seqno;
 }
 
@@ -3218,9 +3220,9 @@ void scriptSetsTimeout(Tag *t)
 	jt->t = t;
 	jt->f = cf;
 	addToListBack(&timerList, jt);
-	debugPrint(3, "timer %s%d=%s",
+	debugPrint(3, "timer %s%d=%s context %d",
 		   (t->action == TAGACT_SCRIPT ? "script" : "xhr"),
-		   ++timer_sn, t->href);
+		   ++timer_sn, t->href, cf->gsn);
 	jt->tsn = timer_sn;
 }
 
@@ -3300,7 +3302,7 @@ void delTimers(const Frame *f)
 		}
 	}
 	if(delcount)
-		debugPrint(3, "%d timers deleted", delcount);
+		debugPrint(3, "%d timers deleted from context %d", delcount, f->gsn);
 
 	delPendings(f);
 }
@@ -3409,7 +3411,7 @@ We need to fix this someday, though it is a very rare corner case.
 			jt->deleted = true;
 	} else {
 // regular timer
-		debugPrint(4, "exec timer %d", jt->tsn);
+		debugPrint(4, "exec timer %d context %d", jt->tsn, jt->f->gsn);
 		run_ontimer(jt->f, jt->backlink);
 		debugPrint(4, "exec complete");
 	}
@@ -3417,6 +3419,8 @@ We need to fix this someday, though it is a very rare corner case.
 skip_execution:
 
 	if (!jt->isInterval || jt->deleted) {
+		debugPrint(3, "timer %d complete in context %d under %s",
+		jt->tsn, (jt->f ? jt->f->gsn : -1), jt->backlink);
 		if(jt->backlink)
 			delete_property_win(jt->f, jt->backlink);
 		t = jt->t;
