@@ -22,7 +22,7 @@ Implementation of postMessage.
 Allow the user to set the separator between selected options.
 
 enctype=text/plain, <svg>, <optgroup>, upload multiple files,  div.onclick,
-required fields, <input type=submit formattributes>
+required fields, <input type=submit formattributes>, <datalist>
 
 Move blob code into shared space.
 

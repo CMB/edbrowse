@@ -1278,9 +1278,10 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 /* Update an input field. */
 bool infReplace(int tagno, const char *newtext, bool notify)
 {
-	const Tag *t = tagList[tagno], *v;
+	Tag *t = tagList[tagno];
+	const Tag *v;
 	const Tag *form = t->controller;
-	char *display;
+	char *display = 0;
 	int itype = t->itype;
 	int itype_minor = t->itype_minor;
 	int newlen = strlen(newtext);
@@ -1331,7 +1332,6 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			return false;
 		locateOptions(t, newtext, &display, 0, false);
 		updateFieldInBuffer(tagno, display, notify, true);
-		nzFree(display);
 	}
 
 	if (itype == INP_FILE) {
@@ -1381,24 +1381,42 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		return true;
 	}
 
-	if (itype == INP_TEXT && t->lic && newlen > t->lic) {
-		setError(MSG_InputLong, t->lic);
-		return false;
-	}
+	if(itype == INP_TEXT) {
+		connectDatalist(t);
+		if (t->ninp) { // the suggested select
+// this is a strange puppy.
+// ` to override
+			if(newtext[0] == '`') {
+				++newtext, --newlen;
+			} else {
+				const Tag *options = tagList[t->ninp];
+				if (!locateOptions(options, newtext, 0, 0, false))
+					return false;
+				locateOptions(options, newtext, &display, 0, false);
+				newtext = display;
+				newlen = strlen(newtext);
+			}
+		}
 
-	if (itype_minor == INP_NUMBER && (*newtext && stringIsNum(newtext) < 0)) {
-		setError(MSG_NumberExpected);
-		return false;
-	}
+		if (t->lic && newlen > t->lic) {
+			setError(MSG_InputLong, t->lic);
+			goto fail;
+		}
 
-	if (itype_minor == INP_EMAIL && (*newtext && !isEmailAddress(newtext))) {
-		setError(MSG_EmailInput);
-		return false;
-	}
+		if (itype_minor == INP_NUMBER && (*newtext && stringIsNum(newtext) < 0)) {
+			setError(MSG_NumberExpected);
+			goto fail;
+		}
 
-	if (itype_minor == INP_URL && (*newtext && !isURL(newtext))) {
-		setError(MSG_UrlInput);
-		return false;
+		if (itype_minor == INP_EMAIL && (*newtext && !isEmailAddress(newtext))) {
+			setError(MSG_EmailInput);
+			goto fail;
+		}
+
+		if (itype_minor == INP_URL && (*newtext && !isURL(newtext))) {
+			setError(MSG_UrlInput);
+			goto fail;
+		}
 	}
 
 	if (itype == INP_RADIO && form && t->name && *newtext == '+') {
@@ -1434,14 +1452,20 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		if (itype != INP_SELECT)
 			bubble_event_t(t, "oninput");
 		if (js_redirects)
-			return true;
+			goto success;
 		bubble_event_t(t, "onchange");
 		if (js_redirects)
-			return true;
+			goto success;
 		jSideEffects();
 	}
 
+success:
+	nzFree(display);
 	return true;
+
+fail:
+	nzFree(display);
+	return false;
 }
 
 /*********************************************************************

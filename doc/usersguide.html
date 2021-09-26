@@ -672,8 +672,9 @@ g : go to the link on the current line
 <br>^ : the back key, go back to the web page you were looking at before
 <br>&amp; : internal link back key, go back to line before following internal link
 <br>i=xyz : set the input field on the current line to xyz
-<br>i=red,green,blue : select the options red, green, and blue
+<br>i=red,green,blue : select the options red, green, and blue from a multiple select list
 <br>s/$/,oran : add the option orange to the select list
+<br>i=`amber : put in your own color if it is a suggested select list
 <br>s/,red/ : remove red from the select list
 <br>selsep=| : change the separator between items in a select list
 <br>selsep= : print the separator
@@ -2449,7 +2450,8 @@ as in i3? for the third field.
 The type of input field is displayed, then its size,
 then the field name.
 If the input field is drawn from a set of options,
-the option list is displayed as well,
+the type is select,
+and the option list is displayed below,
 with menu numbers prepended.
 When you want to select an option,
 you can either type in a substring that determines that option uniquely,
@@ -2471,6 +2473,12 @@ If a select list contains hundreds of options,
 type i?string to see only those options that contain the specified string.
 Type I?mi in a state field and get Michigan, Mississippi, Missouri, and Minnesota.
 Then you can select the option you want by name or by number.
+
+<P>
+If the type is suggested select,
+then you don't have to choose one of these options; you can type in something else.
+A leading ` indicates this.
+Enter `japanese, instead of one of the given languages.
 
 <P>
 Now let's do some data entry.
