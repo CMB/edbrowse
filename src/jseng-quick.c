@@ -1522,15 +1522,20 @@ static JSValue nat_new_location(JSContext * cx, JSValueConst this, int argc, JSV
 
 static JSValue nat_mywin(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+/*********************************************************************
+Do not use JS_GetGlobalObject(cx) for this, in fact don't use it for anything.
+It doesn't do what you think.
+In duktape it does what you want; returns window for the named context.
+In quickjs, it returns the window of where it was compiled.
+That's no help; I could have just said window.
+I specifically set up cf->winobj for the window object, so use that.
+*********************************************************************/
 	return JS_DupValue(cx, *(JSValue*)cf->winobj);
 }
 
 static JSValue nat_mydoc(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-// I wish there was a JS_GetPropertyGlobalStr.
-	JSValue g = *(JSValue*)cf->winobj;
-	JSValue doc = JS_GetPropertyStr(cx, g, "document");
-	return doc;
+	return JS_DupValue(cx, *(JSValue*)cf->docobj);
 }
 
 static JSValue nat_hasFocus(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
