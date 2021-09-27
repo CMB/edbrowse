@@ -52,14 +52,15 @@ querySelector0 = function() { return false; }
 eb$cssText = function(){}
 }
 
-// the third party deminimization stuff is in mw$
-// this is not folded in for the distributed version
-// Some engines create this object in C, so it can be shared.
+// the third party deminimization stuff is in mw$, the master window.
+// Other stuff too, that can be shared.
+// The window should just be there from C, but in case it isn't.
 if(!window.mw$)
 mw$ = {compiled: false, share:false, URL:{}};
 
 if(mw$.share) { // point to native methods in the master window
-natok = mw$.natok, eb$wlf = mw$.eb$wlf, eb$puts = mw$.eb$puts, db$flags = mw$.db$flags;
+my$win = mw$.my$win, my$doc = mw$.my$doc;
+natok = mw$.natok, eb$puts = mw$.eb$puts, db$flags = mw$.db$flags;
 eb$voidfunction = mw$.eb$voidfunction, eb$nullfunction = mw$.eb$nullfunction, eb$truefunction = mw$.eb$truefunction, eb$falsefunction = mw$.eb$falsefunction;
 scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = focus = blur = eb$voidfunction;
 document.close = document.focus = document.blur = eb$voidfunction;
@@ -86,11 +87,12 @@ ok = $ok = Object.keys;
 window.nodeName = "WINDOW"; // in case you want to start at the top.
 document.nodeName = "DOCUMENT"; // in case you want to start at document.
 document.tagName = "document";
-window.nodeName = "WINDOW";
 
 if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
+showscripts = mw$.showscripts, searchscripts = mw$.searchscripts;
+snapshot = mw$.snapshot;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
 document.dispatchEvent = mw$.dispatchEvent;
@@ -103,84 +105,6 @@ detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev
 eb$listen = document.eb$listen = mw$.eb$listen;
 eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
-}
-
-/*********************************************************************
-Show the scripts, where they come from, type, length, whether deminimized.
-This uses getElementsByTagname() so you see all the scripts,
-not just those that were in the original html.
-The list is left in $ss for convenient access.
-*********************************************************************/
-
-showscripts = function() {
-var i, s, m;
-var slist = document.getElementsByTagName("script");
-for(i=0; i<slist.length; ++i) {
-s = slist[i];
-m = i + ": ";
-if(s.type) m += s.type;
-else m += "default";
-m += " ";
-if(s.src) {
-var ss = s.src.toString();
-if(ss.match(/^data:/)) ss = "data";
-m += ss;
-} else {
-m += "inline";
-}
-if(typeof s.text === "string")
-m += " length " + s.text.length;
-else
-m += " length ?";
-if(s.expanded) m += " deminimized";
-alert(m);
-}
-$ss = slist;
-}
-
-searchscripts = function(t) {
-var w = my$win();
-if(!w.$ss) showscripts();
-for(var i=0; i<w.$ss.length; ++i)
-if(w.$ss[i].text && w.$ss[i].text.indexOf(t) >= 0) alert(i);
-}
-
-snapshot = function() {
-var w = my$win();
-// eb$wlf is native to support the snapshot functionality
-eb$wlf('<base href="' + w.eb$base + '">\n', "from");
-var jslocal = "";
-var idx = 0;
-if(!w.$ss) showscripts();
-for(var i=0; i<$ss.length; ++i) {
-var s = $ss[i];
-if(typeof s.text === "string" &&
-(s.src && s.src.length || s.expanded)) {
-var ss = "inline";
-if(s.src && s.src.length) ss = s.src.toString();
-if(ss.match(/^data:/)) continue;
-// assumes the search piece of the url is spurious and unreliable
-ss = ss.replace(/\?.*/, "");
-++idx;
-eb$wlf(s.text, "f" + idx + ".js");
-jslocal += "f" + idx + ".js:" + ss + "\n";
-}
-}
-idx = 0;
-for(var i=0; i<cssSource.length; ++i) {
-var s = cssSource[i];
-if(typeof s.data === "string" && s.data.length &&
-s.src && s.src.length) {
-var ss = s.src.toString();
-// assumes the search piece of the url is spurious and unreliable
-ss = ss.replace(/\?.*/, "");
-++idx;
-eb$wlf(s.data, "f" + idx + ".css");
-jslocal += "f" + idx + ".css:" + ss + "\n";
-}
-}
-eb$wlf(jslocal, "jslocal");
-alert(".   ub   ci+   /<head/r from   w base   qt");
 }
 
 // run an expression in a loop.

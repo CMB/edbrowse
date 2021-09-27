@@ -83,6 +83,87 @@ t = t.parentNode;
 }
 }
 
+/*********************************************************************
+Show the scripts, where they come from, type, length, whether deminimized.
+This uses getElementsByTagname() so you see all the scripts,
+not just those that were in the original html.
+The list is left in $ss for convenient access.
+my$win() is used to get the window of the running context, where you are,
+as there are no scripts in the shared window, where this is compiled.
+*********************************************************************/
+
+function showscripts() {
+var i, s, m;
+var w = my$win(), d = my$doc();
+var slist = d.getElementsByTagName("script");
+for(i=0; i<slist.length; ++i) {
+s = slist[i];
+m = i + ": ";
+if(s.type) m += s.type;
+else m += "default";
+m += " ";
+if(s.src) {
+var ss = s.src.toString();
+if(ss.match(/^data:/)) ss = "data";
+m += ss;
+} else {
+m += "inline";
+}
+if(typeof s.text === "string")
+m += " length " + s.text.length;
+else
+m += " length ?";
+if(s.expanded) m += " deminimized";
+alert(m);
+}
+w.$ss = slist;
+}
+
+function searchscripts(t) {
+var w = my$win();
+if(!w.$ss) showscripts();
+for(var i=0; i<w.$ss.length; ++i)
+if(w.$ss[i].text && w.$ss[i].text.indexOf(t) >= 0) alert(i);
+}
+
+function snapshot() {
+var w = my$win();
+// eb$wlf is native to support the snapshot functionality
+eb$wlf('<base href="' + w.eb$base + '">\n', "from");
+var jslocal = "";
+var idx = 0;
+if(!w.$ss) showscripts();
+for(var i=0; i<w.$ss.length; ++i) {
+var s = w.$ss[i];
+if(typeof s.text === "string" &&
+(s.src && s.src.length || s.expanded)) {
+var ss = "inline";
+if(s.src && s.src.length) ss = s.src.toString();
+if(ss.match(/^data:/)) continue;
+// assumes the search piece of the url is spurious and unreliable
+ss = ss.replace(/\?.*/, "");
+++idx;
+eb$wlf(s.text, "f" + idx + ".js");
+jslocal += "f" + idx + ".js:" + ss + "\n";
+}
+}
+idx = 0;
+for(var i=0; i<w.cssSource.length; ++i) {
+var s = w.cssSource[i];
+if(typeof s.data === "string" && s.data.length &&
+s.src && s.src.length) {
+var ss = s.src.toString();
+// assumes the search piece of the url is spurious and unreliable
+ss = ss.replace(/\?.*/, "");
+++idx;
+eb$wlf(s.data, "f" + idx + ".css");
+jslocal += "f" + idx + ".css:" + ss + "\n";
+}
+}
+eb$wlf(jslocal, "jslocal");
+alert(".   ub   ci+   /<head/r from   w base   qt");
+}
+
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
 
 function getElementsByTagName(s) {
@@ -1426,6 +1507,7 @@ return MessageChannelPolyfill;
 
 // lock down, for security.
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
+"showscripts", "searchscripts", "snapshot",
 "eb$newLocation","eb$logElement",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",

@@ -3164,6 +3164,10 @@ then the native methods have to be there too.
 
     JS_DefinePropertyValueStr(mwc, mwo, "natok",
 JS_NewCFunction(mwc, nat_ok, "nat_ok", 1), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "my$win",
+JS_NewCFunction(mwc, nat_mywin, "mywin", 0), 0);
+    JS_DefinePropertyValueStr(mwc, mwo, "my$doc",
+JS_NewCFunction(mwc, nat_mydoc, "mydoc", 0), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$puts",
 JS_NewCFunction(mwc, nat_puts, "puts", 1), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$wlf",
@@ -3306,10 +3310,6 @@ JS_NewCFunction(cx, nat_new_location, "new_location", 1), 0);
 JS_NewCFunction(cx, nat_log_element, "log_element", 2), 0);
 #endif
 
-    JS_DefinePropertyValueStr(cx, g, "my$win",
-JS_NewCFunction(cx, nat_mywin, "mywin", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "my$doc",
-JS_NewCFunction(cx, nat_mydoc, "mydoc", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$media",
 JS_NewCFunction(cx, nat_media, "media", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$unframe",
