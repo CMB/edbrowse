@@ -1654,7 +1654,9 @@ return MessageChannelPolyfill;
 // end third party code.
 
 // lock down, for security.
-var flist = ["alert","alert3","alert4","dumptree","uptrace",
+var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
+"Error", "String",
+"alert","alert3","alert4","dumptree","uptrace",
 "showscripts", "searchscripts", "snapshot", "aloop",
 "eb$newLocation","eb$logElement",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
@@ -1671,6 +1673,11 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
+
+// some native class prototypes
+var flist = [Date, Promise, Array, Uint8Array, Error, String];
+for(var i=0; i<flist.length; ++i)
+Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 
 Object.defineProperty(URL, "createObjectURL", {writable:false,configurable:false});
 Object.defineProperty(URL, "revokeObjectURL", {writable:false,configurable:false});
