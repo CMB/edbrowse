@@ -1357,34 +1357,13 @@ z$tBody.prototype.insertRow = mw$.insertRow;
 z$tHead.prototype.insertRow = mw$.insertRow;
 z$tFoot.prototype.insertRow = mw$.insertRow;
 
-dom$.deleteRow = function(r) {
-if(r.dom$class != "tRow") return;
-this.removeChild(r);
-}
-z$Table.prototype.deleteRow = dom$.deleteRow;
-z$tBody.prototype.deleteRow = dom$.deleteRow;
-z$tHead.prototype.deleteRow = dom$.deleteRow;
-z$tFoot.prototype.deleteRow = dom$.deleteRow;
+z$Table.prototype.deleteRow = mw$.deleteRow;
+z$tBody.prototype.deleteRow = mw$.deleteRow;
+z$tHead.prototype.deleteRow = mw$.deleteRow;
+z$tFoot.prototype.deleteRow = mw$.deleteRow;
 
-z$tRow.prototype.insertCell = function(idx) {
-if(idx === undefined) idx = -1;
-if(typeof idx !== "number") return null;
-var t = this;
-var n = t.childNodes.length;
-if(idx < 0) idx = n;
-if(idx > n) return null;
-var r = t.ownerDocument.createElement("td");
-if(idx == n)
-t.appendChild(r);
-else
-t.insertBefore(r, t.childNodes[idx]);
-return r;
-}
-
-z$tRow.prototype.deleteCell = function(r) {
-if(r.dom$class != "Cell") return;
-this.removeChild(r);
-}
+z$tRow.prototype.insertCell = mw$.insertCell;
+z$tRow.prototype.deleteCell = mw$.deleteCell;
 
 z$Table.prototype.createCaption = function() {
 if(this.caption) return this.caption;

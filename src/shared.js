@@ -821,6 +821,31 @@ t.rows[idx].parentNode.insertBefore(r, t.rows[idx]);
 return r;
 }
 
+function deleteRow(r) {
+if(r.dom$class != "tRow") return;
+this.removeChild(r);
+}
+
+function insertCell(idx) {
+if(idx === undefined) idx = -1;
+if(typeof idx !== "number") return null;
+var t = this;
+var n = t.childNodes.length;
+if(idx < 0) idx = n;
+if(idx > n) return null;
+var r = my$doc().createElement("td");
+if(idx == n)
+t.appendChild(r);
+else
+t.insertBefore(r, t.childNodes[idx]);
+return r;
+}
+
+function deleteCell(r) {
+if(r.dom$class != "Cell") return;
+this.removeChild(r);
+}
+
 function insertAdjacentHTML(flavor, h) {
 // easiest implementation is just to use the power of innerHTML
 var d = my$doc();
@@ -1666,7 +1691,8 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
-"mrList","mrKids", "rowReindex", "insertRow",
+"mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
+"insertCell", "deleteCell",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
