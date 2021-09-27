@@ -1238,7 +1238,7 @@ for speed and optimization, is lost if the version changes.
 *********************************************************************/
 
 // remember that this is the window object
-dom$.cssGather(false, this);
+mw$.cssGather(false, this);
 
 this.soj$ = s;
 eb$cssApply(this.document.eb$ctx, e);
@@ -1327,7 +1327,7 @@ created = true;
 
 // This is called on a (possibly large) subtree of nodes,
 // so please verify the css style sheets before hand.
-// dom$.cssGather(false, this);
+// mw$.cssGather(false, this);
 
 // apply all the css rules
 w.soj$ = s;
@@ -3200,51 +3200,11 @@ window.constructor = Window;
 // Some websites expect an onhashchange handler from the get-go.
 onhashchange = eb$truefunction;
 
-dom$.cssGather = function(pageload, newwin) {
-var w = my$win();
-if(!pageload && newwin && newwin.eb$visible) w = newwin;
-var d =w.document;
-var css_all = "";
-w.cssSource = [];
-var a, i, t;
-
-a = d.querySelectorAll("link,style");
-for(i=0; i<a.length; ++i) {
-t = a[i];
-if(t.dom$class == "Link") {
-if(t.css$data && (
-t.type && t.type.toLowerCase() == "text/css" ||
-t.rel && t.rel.toLowerCase() == "stylesheet")) {
-w.cssSource.push({data: t.css$data, src:t.href});
-css_all += "@ebdelim0" + t.href + "{}\n";
-css_all += t.css$data;
-}
-}
-if(t.dom$class == "CSSStyleDeclaration") {
-if(t.css$data) {
-w.cssSource.push({data: t.css$data, src:w.eb$base});
-css_all += "@ebdelim0" + w.eb$base + "{}\n";
-css_all += t.css$data;
-}
-}
-}
-
-// If the css didn't change, then no need to rebuild the selectors
-if(!pageload && css_all == w.last$css_all)
-return;
-
-w.last$css_all = css_all;
-w.css$ver++;
-eb$cssDocLoad(w.document.eb$ctx, css_all, pageload);
-}
-
 // Apply rules to a given style object, which is this.
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssTextGet,
 set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
-eb$qs$start = function() {
-dom$.cssGather(true);
-}
+function eb$qs$start() { mw$.cssGather(true); }
 
 /*********************************************************************
 This function doesn't do all it should, and I'm not even sure what it should do.
@@ -3284,7 +3244,7 @@ var w = my$win();
 if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
 else alert4("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
 if(w.rr$start) {
-dom$.cssGather(false, w);
+mw$.cssGather(false, w);
 delete w.rr$start;
 }
 dom$.computeStyleInline(t);

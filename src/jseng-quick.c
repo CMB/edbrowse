@@ -3205,6 +3205,8 @@ JS_NewCFunction(mwc, nat_resolveURL, "resolveURL", 2), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_new_location, "new_location", 1), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$logElement",
 JS_NewCFunction(mwc, nat_log_element, "log_element", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$cssDocLoad",
+JS_NewCFunction(mwc, nat_css_start, "css_start", 3), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$jobs",
 JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 #endif
@@ -3349,8 +3351,6 @@ JS_NewCFunction(cx, nat_setcook, "setcook", 1), 0);
 JS_NewCFunction(cx, getter_cd, "getter_cd", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$getter_cw",
 JS_NewCFunction(cx, getter_cw, "getter_cw", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$cssDocLoad",
-JS_NewCFunction(cx, nat_css_start, "css_start", 3), 0);
     JS_DefinePropertyValueStr(cx, g, "querySelectorAll",
 JS_NewCFunction(cx, nat_qsa, "qsa", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "querySelector",

@@ -846,6 +846,44 @@ if(r.dom$class != "Cell") return;
 this.removeChild(r);
 }
 
+function cssGather(pageload, newwin) {
+var w = my$win();
+if(!pageload && newwin && newwin.eb$visible) w = newwin;
+var d =w.document;
+var css_all = "";
+w.cssSource = [];
+var a, i, t;
+
+a = d.querySelectorAll("link,style");
+for(i=0; i<a.length; ++i) {
+t = a[i];
+if(t.dom$class == "Link") {
+if(t.css$data && (
+t.type && t.type.toLowerCase() == "text/css" ||
+t.rel && t.rel.toLowerCase() == "stylesheet")) {
+w.cssSource.push({data: t.css$data, src:t.href});
+css_all += "@ebdelim0" + t.href + "{}\n";
+css_all += t.css$data;
+}
+}
+if(t.dom$class == "CSSStyleDeclaration") {
+if(t.css$data) {
+w.cssSource.push({data: t.css$data, src:w.eb$base});
+css_all += "@ebdelim0" + w.eb$base + "{}\n";
+css_all += t.css$data;
+}
+}
+}
+
+// If the css didn't change, then no need to rebuild the selectors
+if(!pageload && css_all == w.last$css_all)
+return;
+
+w.last$css_all = css_all;
+w.css$ver++;
+eb$cssDocLoad(w.eb$ctx, css_all, pageload);
+}
+
 function insertAdjacentHTML(flavor, h) {
 // easiest implementation is just to use the power of innerHTML
 var d = my$doc();
@@ -1693,6 +1731,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
 "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
+"cssGather",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
