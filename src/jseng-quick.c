@@ -438,7 +438,7 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 
 // mutation fix up from native code
 	{
-		JSValue g = JS_GetGlobalObject(cx), r;
+		JSValue g = *(JSValue*)cf->winobj, r;
 		JSAtom a = JS_NewAtom(cx, "mutFixup");
 		JSValue l[4];
 		l[0] = this;
@@ -448,7 +448,6 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 		r = JS_Invoke(cx, g, a, 4, l);
 // worked, didn't work, I don't care.
 		JS_FreeValue(cx, r);
-		JS_FreeValue(cx, g);
 		JS_FreeAtom(cx, a);
 	}
 
@@ -654,10 +653,9 @@ static JSValue instantiate(JSContext *cx, JSValueConst parent, const char *name,
 		grab(o);
 	} else {
 		debugPrint(5, "new %s", classname);
-		JSValue g= JS_GetGlobalObject(cx);
+		JSValue g= *(JSValue*)cf->winobj;
 		JSValue v, l[1];
 		v = JS_GetPropertyStr(cx, g, classname);
-		JS_FreeValue(cx, g);
 		grab(v);
 		if(!JS_IsFunction(cx, v)) {
 			debugPrint(3, "no such class %s", classname);
@@ -691,10 +689,9 @@ static JSValue instantiate_array_element(JSContext *cx, JSValueConst parent, int
 		grab(o);
 	} else {
 		debugPrint(5, "new %s for %d", classname, idx);
-		JSValue g = JS_GetGlobalObject(cx);
+		JSValue g = *(JSValue*)cf->winobj;
 		JSValue v, l[1];
 		v = JS_GetPropertyStr(cx, g, classname);
-		JS_FreeValue(cx, g);
 		grab(v);
 		if(!JS_IsFunction(cx, v)) {
 			debugPrint(3, "no such class %s", classname);
@@ -1525,15 +1522,14 @@ static JSValue nat_new_location(JSContext * cx, JSValueConst this, int argc, JSV
 
 static JSValue nat_mywin(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	return JS_GetGlobalObject(cx);
+	return JS_DupValue(cx, *(JSValue*)cf->winobj);
 }
 
 static JSValue nat_mydoc(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 // I wish there was a JS_GetPropertyGlobalStr.
-	JSValue g = JS_GetGlobalObject(cx);
+	JSValue g = *(JSValue*)cf->winobj;
 	JSValue doc = JS_GetPropertyStr(cx, g, "document");
-	JS_FreeValue(cx, g);
 	return doc;
 }
 
@@ -2534,7 +2530,7 @@ JS_SetPropertyStr(cx, child, "parentNode", JS_NULL);
 	debugPrint(5, "remove out");
 // mutation fix up from native code
 	{
-		JSValue g = JS_GetGlobalObject(cx), r;
+		JSValue g = *(JSValue*)cf->winobj, r;
 		JSAtom a = JS_NewAtom(cx, "mutFixup");
 		JSValue l[4];
 		l[0] = this;
@@ -2545,7 +2541,6 @@ JS_SetPropertyStr(cx, child, "parentNode", JS_NULL);
 		r = JS_Invoke(cx, g, a, 4, l);
 // worked, didn't work, I don't care.
 		JS_FreeValue(cx, r);
-		JS_FreeValue(cx, g);
 		JS_FreeAtom(cx, a);
 	}
 
@@ -4016,16 +4011,14 @@ bool has_gcs(const char *name)
 {
 	JSContext * cx = cf->cx;
 	bool l;
-	JSValue g = JS_GetGlobalObject(cx), j;
+	JSValue g = *(JSValue*)cf->winobj, j;
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
 		return false;
 	}
 	        l = has_property(cx, j, name);
 	JS_Release(cx, j);
-	JS_FreeValue(cx, g);
 	return l;
 }
 
@@ -4033,16 +4026,14 @@ enum ej_proptype typeof_gcs(const char *name)
 {
 	enum ej_proptype l;
 	JSContext * cx = cf->cx;
-	JSValue g = JS_GetGlobalObject(cx), j;
+	JSValue g = *(JSValue*)cf->winobj, j;
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
 		return EJ_PROP_NONE;
 	}
 	        l = typeof_property(cx, j, name);
 	JS_Release(cx, j);
-	JS_FreeValue(cx, g);
 	return l;
 }
 
@@ -4050,67 +4041,54 @@ int get_gcs_number(const char *name)
 {
 	JSContext * cx = cf->cx;
 	int l = -1;
-	JSValue g = JS_GetGlobalObject(cx), j;
+	JSValue g = *(JSValue*)cf->winobj, j;
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
 		return -1;
 	}
 		l = get_property_number(cx, j, name);
 	JS_Release(cx, j);
-	JS_FreeValue(cx, g);
 	return l;
 }
 
 void set_gcs_number(const char *name, int n)
 {
 	JSContext * cx = cf->cx;
-	JSValue g = JS_GetGlobalObject(cx), j;
+	JSValue g = *(JSValue*)cf->winobj, j;
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
 		return;
 	}
 	set_property_number(cx, j, name, n);
 	JS_Release(cx, j);
-	JS_FreeValue(cx, g);
 }
 
 void set_gcs_bool(const char *name, bool v)
 {
 	JSContext * cx = cf->cx;
-	JSValue g = JS_GetGlobalObject(cx), j;
+	JSValue g = *(JSValue*)cf->winobj, j;
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
 		return;
 	}
 	set_property_bool(cx, j, name, v);
 	JS_Release(cx, j);
-	JS_FreeValue(cx, g);
 }
 
 void set_gcs_string(const char *name, const char *s)
 {
 	JSContext * cx = cf->cx;
-	JSValue g = JS_GetGlobalObject(cx), j;
+	JSValue g = *(JSValue*)cf->winobj, j;
 	j = get_property_object(cx,  g, soj);
 	if(JS_IsUndefined(j)) {
 		sofail();
-		JS_FreeValue(cx, g);
 		return;
 	}
 	set_property_string(cx, j, name, s);
 	JS_Release(cx, j);
-	JS_FreeValue(cx, g);
-}
-
-void jsUnroot(void)
-{
-// this function isn't needed in the quick world
 }
 
 void jsClose(void)
@@ -4185,7 +4163,7 @@ void underKill(Tag *t)
 void set_basehref(const char *h)
 {
 	JSContext *cx = cf->cx;
-	JSValue g = JS_GetGlobalObject(cx);
+	JSValue g = *(JSValue*)cf->winobj;
 	if (!h)
 		h = emptyString;
 	JS_DefinePropertyValueStr(cx, g, "eb$base", JS_NewAtomString(cx, h), 0);
@@ -4197,7 +4175,6 @@ void set_basehref(const char *h)
 		nzFree(cf->fileName);
 		cf->fileName = cloneString(h);
 	}
-	JS_FreeValue(cx, g);
 }
 
 /*********************************************************************

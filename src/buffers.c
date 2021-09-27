@@ -434,8 +434,6 @@ pst inputLine(void)
 	static char *last_rl, *s;
 	int delay_sec, delay_ms;
 
-	jsUnroot();
-
 top:
 	intFlag = false;
 	inInput = true;

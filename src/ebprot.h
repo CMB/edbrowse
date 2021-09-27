@@ -383,7 +383,6 @@ void cssApply(int frameNumber, Tag *t);
 void cssText(const char *rulestring);
 
 /* sourcefile=jseng-* */
-void jsUnroot(void);
 void disconnectTagObject(Tag *t);
 void reconnectTagObject(Tag *t);
 bool has_property_t(const Tag *t, const char *name) ;
