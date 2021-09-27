@@ -92,7 +92,7 @@ if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 showscripts = mw$.showscripts, searchscripts = mw$.searchscripts;
-snapshot = mw$.snapshot;
+snapshot = mw$.snapshot, aloop = mw$.aloop;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
 document.dispatchEvent = mw$.dispatchEvent;
@@ -105,20 +105,6 @@ detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev
 eb$listen = document.eb$listen = mw$.eb$listen;
 eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
-}
-
-// run an expression in a loop.
-aloop = function(s$$, t$$, exp$$) {
-if(Array.isArray(s$$)) {
-aloop(0, s$$.length, t$$);
-return;
-}
-if(typeof s$$ !== "number" || typeof t$$ !== "number" || typeof exp$$ !== "string") {
-alert("aloop(array, expression) or aloop(start, end, expression)");
-return;
-}
-exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
-eval(exp$$);
 }
 
 // produce a stack for debugging purposes

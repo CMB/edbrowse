@@ -164,6 +164,20 @@ eb$wlf(jslocal, "jslocal");
 alert(".   ub   ci+   /<head/r from   w base   qt");
 }
 
+// run an expression in a loop.
+function aloop(s$$, t$$, exp$$) {
+if(Array.isArray(s$$)) {
+aloop(0, s$$.length, t$$);
+return;
+}
+if(typeof s$$ !== "number" || typeof t$$ !== "number" || typeof exp$$ !== "string") {
+alert("aloop(array, expression) or aloop(start, end, expression)");
+return;
+}
+exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
+my$win().eval(exp$$);
+}
+
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
 
 function getElementsByTagName(s) {
@@ -1507,7 +1521,7 @@ return MessageChannelPolyfill;
 
 // lock down, for security.
 var flist = ["alert","alert3","alert4","dumptree","uptrace",
-"showscripts", "searchscripts", "snapshot",
+"showscripts", "searchscripts", "snapshot", "aloop",
 "eb$newLocation","eb$logElement",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
