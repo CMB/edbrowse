@@ -760,6 +760,65 @@ r.previousSibling = y >= 0 ? c[y] : null;
 }
 }
 
+// It's crude, but just reindex all the rows in a table
+function rowReindex(t) {
+// climb up to find Table
+while(t.dom$class != "Table") {
+if(t.dom$class == "Frame") return;
+t = t.parentNode;
+if(!t) return;
+}
+
+var i, j, n = 0;
+var s; // section
+t.rows.length = 0;
+if(s = t.tHead) {
+for(j=0; j<s.rows.length; ++j)
+t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
+}
+for(i=0; i<t.tBodies.length; ++i) {
+s = t.tBodies[i];
+for(j=0; j<s.rows.length; ++j)
+t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
+}
+if(s = t.tFoot) {
+for(j=0; j<s.rows.length; ++j)
+t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
+}
+
+j = 0;
+for(s=t.firstChild; s; s=s.nextSibling)
+if(s.dom$class == "tRow")
+t.rows.push(s), s.rowIndex = n++, s.sectionRowIndex = j;
+}
+
+// insert row into a table or body or head or foot
+function insertRow(idx) {
+if(idx === undefined) idx = -1;
+if(typeof idx !== "number") return null;
+var t = this;
+var nrows = t.rows.length;
+if(idx < 0) idx = nrows;
+if(idx > nrows) return null;
+var r = t.ownerDocument.createElement("tr");
+if(t.dom$class != "Table") {
+if(idx == nrows) t.appendChild(r);
+else t.insertBefore(r, t.rows[idx]);
+} else {
+// put this row in the same section as the next row
+if(idx == nrows) {
+if(nrows) t.rows[nrows-1].parentNode.appendChild(r);
+else if(t.tHead) t.tHead.appendChild(r);
+else if(t.tBodies.length) t.tBodies[0].appendChild(r);
+else if(t.tFoot) t.tFoot.appendChild(r);
+// No sections, what now? acid test 51 suggests if should not go into the table.
+} else {
+t.rows[idx].parentNode.insertBefore(r, t.rows[idx]);
+}
+}
+return r;
+}
+
 // placeholder for URL class, I'm not comfortable sharing our hand-built
 // URL class yet.
 // But this has to be here for the Blob code.
@@ -1530,7 +1589,7 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
-"mrList","mrKids",
+"mrList","mrKids", "rowReindex", "insertRow",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
 ];
