@@ -125,10 +125,8 @@ freefail:
 		/* nl */
 		if ((c == ' ' || c == '\t') && (state == 0 || state == 2))
 			continue;
-		if (state == 0)
-			state = 1;
-		if (state == 2)
-			state = 3;
+		if (state == 0 || state == 2)
+			state++
 		*t++ = c;
 	}
 
@@ -189,9 +187,8 @@ static char *qpEncode(const char *line)
 			char expand[4];
 			sprintf(expand, "=%02X", (uchar) c);
 			stringAndString(&newbuf, &l, expand);
-		} else {
+		} else
 			stringAndChar(&newbuf, &l, c);
-		}
 	}
 
 	return newbuf;

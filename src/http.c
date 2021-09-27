@@ -2056,7 +2056,7 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 ftp_transfer_fail:
 	if (h)
 		curl_easy_cleanup(h);
-	if (transfer_success == false) {
+	if (!transfer_success) {
 		if (curlret != CURLE_OK)
 			ebcurl_setError(curlret, g->urlcopy,
 					(g->foreground ? 0 : 1), g->error);

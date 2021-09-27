@@ -1130,10 +1130,9 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n') {
 			++linecount;
-			if (sizeof(int) == 4) {
+			if (sizeof(int) == 4)
 				if (linecount + cw->dol > MAXLINES)
 					i_printfExit(MSG_LineLimit);
-			}
 		}
 
 	if (destl == cw->dol)
@@ -1777,10 +1776,10 @@ static int dircmp(const void *s, const void *t)
 			rc = 1;
 		if(!rc) {
 // Honor sub-second timestamp precision if the operating system supports it.
-		if (q->u.spec.tv_nsec < r->u.spec.tv_nsec)
-			rc = -1;
-		if (q->u.spec.tv_nsec > r->u.spec.tv_nsec)
-			rc = 1;
+			if (q->u.spec.tv_nsec < r->u.spec.tv_nsec)
+				rc = -1;
+			if (q->u.spec.tv_nsec > r->u.spec.tv_nsec)
+				rc = 1;
 		}
 #else
 		if (q->u.t < r->u.t)
@@ -1870,16 +1869,18 @@ static bool readDirectory(const char *filename)
 		}
 		ftype = tolower(ftype);
 		c = 0;
-		if (ftype == 'd')
-			c = '/';
-		if (ftype == 's')
-			c = '^';
-		if (ftype == 'c')
-			c = '<';
-		if (ftype == 'b')
-			c = '*';
-		if (ftype == 'p')
-			c = '|';
+		switch (ftype) {
+			case 'd':
+				c = '/';
+			case 's':
+				c = '^';
+			case 'c':
+				c = '<';
+			case 'b':
+				c = '*';
+			case 'p':
+				c = '|';
+		}
 		if (c) {
 			if (!cw->dirMode)
 				*t = c, *++t = '\n';
@@ -2731,13 +2732,11 @@ static void debrowseSuffix(char *s)
 {
 	if (!s)
 		return;
-	while (*s) {
+	for(; s++; s)
 		if (*s == '.' && stringEqual(s, ".browse")) {
 			*s = 0;
 			return;
 		}
-		++s;
-	}
 }				/* debrowseSuffix */
 
 // macro substitutions within the command line.
@@ -3032,12 +3031,11 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				*e++ = '\\';
 		}
 
-		if (c == '$' && !isleft && isdigitByte(d)) {
+		if (c == '$' && !isleft && isdigitByte(d))
 			if (d == '0' || isdigitByte(line[2])) {
 				setError(MSG_RexpDollar);
 				return false;
 			}
-		}
 		/* dollar digit on the right */
 		if (!isleft && c == '&' && ebmuck) {
 			*e++ = '$';
@@ -3154,18 +3152,16 @@ top:
 	if (ci)
 		re_opt |= PCRE_CASELESS;
 
-	if (re_utf8) {
-		if (cons_utf8 && !cw->binMode && try8 >= 0) {
-			if (try8 == 0) {
-				const char *s = getenv("PCREUTF8");
-				if (s && stringEqual(s, "off")) {
-					try8 = -1;
-					goto top;
-				}
+	if (re_utf8 && cons_utf8 && !cw->binMode && try8 >= 0) {
+		if (try8 == 0) {
+			const char *s = getenv("PCREUTF8");
+			if (s && stringEqual(s, "off")) {
+				try8 = -1;
+				goto top;
 			}
-			try8 = 1;
-			re_opt |= PCRE_UTF8;
 		}
+		try8 = 1;
+		re_opt |= PCRE_UTF8;
 	}
 
 	re_cc = pcre_compile(re, re_opt, &re_error, &re_offset, 0);
@@ -3596,12 +3592,7 @@ replaceText(const char *line, int len, const char *rhs,
 			break;
 	}			/* loop matching the regular expression */
 
-	if (!instance) {
-		nzFree(r);
-		return false;
-	}
-
-	if (!global &&instance < nth) {
+	if (!instance || (!global && instance < nth) {
 		nzFree(r);
 		return false;
 	}
@@ -3726,15 +3717,13 @@ findField(const char *line, int ftype, int n,
 /* Second time through, maybe the url is in plain text. */
 	nmh = 0;
 	s = line;
-	while (true) {
+	while (c != '\n') {
 /* skip past weird characters */
 		while ((c = *s) != '\n') {
 			if (strchr(urlok, c))
 				break;
 			++s;
 		}
-		if (c == '\n')
-			break;
 		ss = s;
 		while (strchr(urlok, *s))
 			++s;
@@ -4091,10 +4080,8 @@ static int substituteText(const char *line)
 	}
 
 	if (!lastSubst) {
-		if (!globSub) {
-			if (!errorMsg[0])
-				setError(bl_mode ? MSG_NoChange : MSG_NoMatch);
-		}
+		if (!globSub && !errorMsg[0])
+			setError(bl_mode ? MSG_NoChange : MSG_NoMatch);
 		return false;
 	}
 	cw->dot = lastSubst;
@@ -4500,11 +4487,10 @@ pwd:
 	if (stringEqual(line, "config")) {
 		readConfigFile();
 		setupEdbrowseCache();
-		if (curlActive) {
+		if (curlActive)
 			if (cookieFile)
 				curl_easy_setopt(global_http_handle,
 						 CURLOPT_COOKIEJAR, cookieFile);
-		}
 		return true;
 	}
 
@@ -4519,7 +4505,7 @@ pwd:
 				setError(MSG_NoBrowse);
 				return false;
 			}
-		return showHeaders(cw->dot);
+			return showHeaders(cw->dot);
 		}
 		showColumns();
 		return true;
@@ -5364,16 +5350,12 @@ static bool balanceLine(const char *line)
 			direction = -1;
 		}
 		unbalanced(c, d, endRange, &backward, &forward);
-		if (direction > 0) {
-			if ((level = forward) == 0) {
-				setError(MSG_BalanceNoOpen, c);
-				return false;
-			}
-		} else {
-			if ((level = backward) == 0) {
-				setError(MSG_BalanceNoOpen, d);
-				return false;
-			}
+		if (direction > 0 && (level = forward) == 0) {
+			setError(MSG_BalanceNoOpen, c);
+			return false;
+		} else if ((level = backward) == 0) {
+			setError(MSG_BalanceNoOpen, d);
+			return false;
 		}
 	} else {
 
@@ -5864,9 +5846,6 @@ Should the newly entered row be unfolded? idk
 		}
 		for(i = startRange; i <= endRange; ++i)
 			if((w = line2tr(i)))
-				w->inur = false;
-		for(i = startRange; i <= endRange; ++i)
-			if((w = line2tr(i)) && !w->inur)
 				w->inur = true, w->ur ^= 1;
 		rerender(1);
 		return true;
@@ -6055,13 +6034,12 @@ replaceframe:
 		line = configFile;
 
 /* env variable and wild card expansion */
-	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
+	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line))
 		if (cmd != 'r' || !cw->sqlMode) {
 			if (!envFile(line, &line))
 				return false;
 			first = *line;
 		}
-	}
 
 	if (cmd == 'z') {
 		if (isdigitByte(first)) {
@@ -6175,12 +6153,9 @@ replaceframe:
 	}
 
 	if (cmd == 'q') {
-		if (cx) {
-			if (!cxCompare(cx))
-				return false;
-			if (!cxActive(cx))
-				return false;
-		} else {
+		if (cx && (!cxCompare(cx) || !cxActive(cx)))
+			return false;
+		else {
 			cx = context;
 			if (first) {
 				setError(MSG_QAfter);
@@ -6211,9 +6186,7 @@ replaceframe:
 	if (cmd == 'f') {
 		selfFrame();
 		if (cx) {
-			if (!cxCompare(cx))
-				return false;
-			if (!cxActive(cx))
+			if (!cxCompare(cx) || !cxActive(cx))
 				return false;
 			s = sessionList[cx].lw->f0.fileName;
 			if (s)
@@ -6381,10 +6354,9 @@ replaceframe:
 			setError(MSG_NoBackup);
 			return false;
 		}
-		if (cx) {
-			if (!cxCompare(cx))
-				return false;
-		} else {
+		if (cx && !cxCompare(cx))
+			return false;
+		else {
 			cx = sideBuffer(0, emptyString, 0, NULL);
 			if (cx == 0)
 				return false;
