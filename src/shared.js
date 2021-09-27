@@ -800,7 +800,9 @@ var t = this;
 var nrows = t.rows.length;
 if(idx < 0) idx = nrows;
 if(idx > nrows) return null;
-var r = t.ownerDocument.createElement("tr");
+// Should this be ownerDocument, the context that crated the table,
+// or my$doc(), the running context. I think the latter is safer.
+var r = my$doc().createElement("tr");
 if(t.dom$class != "Table") {
 if(idx == nrows) t.appendChild(r);
 else t.insertBefore(r, t.rows[idx]);
@@ -817,6 +819,79 @@ t.rows[idx].parentNode.insertBefore(r, t.rows[idx]);
 }
 }
 return r;
+}
+
+function insertAdjacentHTML(flavor, h) {
+// easiest implementation is just to use the power of innerHTML
+var d = my$doc();
+var p = d.createElement("p");
+p.innerHTML = h; // the magic
+var s, parent = this.parentNode;
+switch(flavor) {
+case "beforebegin":
+while(s = p.firstChild)
+parent.insertBefore(s, this);
+break;
+case "afterbegin":
+while(s = p.lastChild)
+this.insertBefore(s, this.firstChild);
+break;
+case "beforeend":
+while(s = p.firstChild)
+this.appendChild(s);
+break;
+case "afterend":
+while(s = p.lastChild)
+parent.insertBefore(s, this.nextSibling);
+break;
+}
+}
+
+function htmlString(t) {
+if(t.nodeType == 3) return t.data;
+if(t.nodeType != 1) return "";
+var s = "<" + (t.nodeName ? t.nodeName : "x");
+if(t.class) s += ' class="' + t.class + '"';
+if(t.id) s += ' id="' + t.id + '"';
+s += '>';
+if(t.childNodes)
+for(var i=0; i<t.childNodes.length; ++i)
+s += htmlString(t.childNodes[i]);
+s += "</";
+s += (t.nodeName ? t.nodeName : "x");
+s += '>';
+return s;
+}
+
+function outer$1(t, h) {
+var p = t.parentNode;
+if(!p) return;
+t.innerHTML = h;
+while(t.lastChild) p.insertBefore(t.lastChild, t.nextSibling);
+p.removeChild(t);
+}
+
+// There are subtle differences between contentText and textContent, which I don't grok.
+function textUnder(top, flavor) {
+var t = top.getElementsByTagName("#text");
+var answer = "", part;
+for(var i=0; i<t.length; ++i) {
+var u = t[i];
+if(u.parentNode && u.parentNode.nodeName == "OPTION") continue;
+// any other texts we should skip?
+part = u.data.trim();
+if(!part) continue;
+if(answer) answer += '\n';
+answer += part;
+}
+return answer;
+}
+
+function newTextUnder(top, s, flavor) {
+var l = top.childNodes.length;
+for(var i=l-1; i>=0; --i)
+top.removeChild(top.childNodes[i]);
+top.appendChild(my$doc().createTextNode(s));
 }
 
 // placeholder for URL class, I'm not comfortable sharing our hand-built
@@ -1590,6 +1665,7 @@ var flist = ["alert","alert3","alert4","dumptree","uptrace",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
 "mrList","mrKids", "rowReindex", "insertRow",
+"insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
 ];

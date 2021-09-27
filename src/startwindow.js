@@ -2152,78 +2152,7 @@ q.matches = eb$media(s);
 return q;
 }
 
-document.insertAdjacentHTML = function(flavor, h) {
-// easiest implementation is just to use the power of innerHTML
-var d = my$doc();
-var p = d.createElement("p");
-p.innerHTML = h; // the magic
-var s, parent = this.parentNode;
-switch(flavor) {
-case "beforebegin":
-while(s = p.firstChild)
-parent.insertBefore(s, this);
-break;
-case "afterbegin":
-while(s = p.lastChild)
-this.insertBefore(s, this.firstChild);
-break;
-case "beforeend":
-while(s = p.firstChild)
-this.appendChild(s);
-break;
-case "afterend":
-while(s = p.lastChild)
-parent.insertBefore(s, this.nextSibling);
-break;
-}
-}
-
-dom$.htmlString = function(t) {
-if(t.nodeType == 3) return t.data;
-if(t.nodeType != 1) return "";
-var s = "<" + (t.nodeName ? t.nodeName : "x");
-if(t.class) s += ' class="' + t.class + '"';
-if(t.id) s += ' id="' + t.id + '"';
-s += '>';
-if(t.childNodes)
-for(var i=0; i<t.childNodes.length; ++i)
-s += dom$.htmlString(t.childNodes[i]);
-s += "</";
-s += (t.nodeName ? t.nodeName : "x");
-s += '>';
-return s;
-}
-
-dom$.outer$1 = function(t, h) {
-var p = t.parentNode;
-if(!p) return;
-t.innerHTML = h;
-while(t.lastChild) p.insertBefore(t.lastChild, t.nextSibling);
-p.removeChild(t);
-}
-
-// There are subtle differences between contentText and textContent, which I don't grok.
-dom$.textUnder = function(top, flavor) {
-var t = top.getElementsByTagName("#text");
-var answer = "", part;
-for(var i=0; i<t.length; ++i) {
-var u = t[i];
-if(u.parentNode && u.parentNode.nodeName == "OPTION") continue;
-// any other texts we should skip?
-part = u.data.trim();
-if(!part) continue;
-if(answer) answer += '\n';
-answer += part;
-}
-return answer;
-}
-
-dom$.newTextUnder = function(top, s, flavor) {
-var l = top.childNodes.length;
-for(var i=l-1; i>=0; --i)
-top.removeChild(top.childNodes[i]);
-top.appendChild(document.createTextNode(s));
-}
+document.insertAdjacentHTML = mw$.insertAdjacentHTML;
 
 dom$.injectSetup = function(which) {
 var z = this;
@@ -2337,21 +2266,21 @@ c.prototype.attachEvent = dom$.attachEvent;
 c.prototype.detachEvent = detachEvent;
 }
 c.prototype.dispatchEvent = document.dispatchEvent;
-c.prototype.insertAdjacentHTML = document.insertAdjacentHTML;
+c.prototype.insertAdjacentHTML = mw$.insertAdjacentHTML;
 // outerHTML is dynamic; should innerHTML be?
-Object.defineProperty(c.prototype, "outerHTML", { get: function() { return dom$.htmlString(this);},
-set: function(h) { dom$.outer$1(this,h); }});
+Object.defineProperty(c.prototype, "outerHTML", { get: function() { return mw$.htmlString(this);},
+set: function(h) { mw$.outer$1(this,h); }});
 c.prototype.injectSetup = dom$.injectSetup;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw$.classList(this);}});
 c.prototype.cl$present = true;
 Object.defineProperty(c.prototype, "textContent", {
-get: function() { return dom$.textUnder(this, 0); },
-set: function(s) { return dom$.newTextUnder(this, s, 0); }});
+get: function() { return mw$.textUnder(this, 0); },
+set: function(s) { return mw$.newTextUnder(this, s, 0); }});
 Object.defineProperty(c.prototype, "contentText", {
-get: function() { return dom$.textUnder(this, 1); },
-set: function(s) { return dom$.newTextUnder(this, s, 1); }});
+get: function() { return mw$.textUnder(this, 1); },
+set: function(s) { return mw$.newTextUnder(this, s, 1); }});
 Object.defineProperty(c.prototype, "nodeValue", {
 get: function() { return this.nodeType == 3 ? this.data : null;},
 set: function(h) { if(this.nodeType == 3) this.data = h; }});
