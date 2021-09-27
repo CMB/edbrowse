@@ -2139,6 +2139,7 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 	const char *fstr;	/* function string */
 	const char *s, *fpn;
 
+	g = *(JSValue*)cf->winobj;
 	if (argc == 0)
 		return JS_NULL;
 
@@ -2164,12 +2165,10 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 		JSValue l[2];
 		JSAtom a = JS_NewAtom(cx, "handle$cc");
 		body = JS_ToCString(cx, argv[0]);
-		g = JS_GetGlobalObject(cx);
 		l[0] = argv[0];
 		l[1] = g;
 		fo = JS_Invoke(cx, g, a, 2, l);
 		JS_FreeAtom(cx, a);
-		JS_FreeValue(cx, g);
 		if (JS_IsException(fo)) {
 			processError(cx);
 			cc_error = true;
@@ -2212,7 +2211,6 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 		JS_FreeCString(cx, body);
 	JS_Release(cx, r);
 
-	g = JS_GetGlobalObject(cx);
 	fpn = fakePropName();
 	if (cc_error)
 		debugPrint(3, "compile error on timer %s", fpn);
@@ -2221,7 +2219,6 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 	if (JS_IsException(to)) {
 		processError(cx);
 		JS_FreeValue(cx, fo);
-		JS_FreeValue(cx, g);
 		JS_Release(cx, to);
 		debugPrint(5, "timer fail");
 		return JS_NULL;
@@ -2235,7 +2232,6 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 	JS_SetPropertyStr(cx, to, "backlink", JS_NewAtomString(cx, fpn));
 	JS_SetPropertyStr(cx, to, "tsn", JS_NewInt32(cx, ++timer_sn));
 	domSetsTimeout(n, fname, fpn, isInterval);
-	JS_FreeValue(cx, g);
 	debugPrint(5, "timer out");
 	release(to);
 	return to;
@@ -3103,7 +3099,6 @@ void my_ExecutePendingMessages(void)
 {
 	int i;
 	JSContext *cx;
-	JSValue *g;
 // This mucks with cw and cf, the calling routine must preserve them.
 	for (i = 1; i < MAXSESSION; ++i) {
 		if(!(cw = sessionList[i].lw) ||
@@ -3114,8 +3109,7 @@ void my_ExecutePendingMessages(void)
 			if(!cf->jslink)
 				continue;
 			cx = cf->cx;
-			g = cf->winobj;
-			run_function_bool(cx, *g, "onmessage$$running");
+			run_function_bool(cx, *(JSValue*)cf->winobj, "onmessage$$running");
 		}
 	}
 }
