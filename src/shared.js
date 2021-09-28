@@ -1030,6 +1030,24 @@ if(r.dom$class != "Cell") return;
 this.removeChild(r);
 }
 
+/*********************************************************************
+This is a workaround, when setAttribute is doing something it shouldn't,
+like form.setAttribute("elements") or some such.
+I call these implicit members, we shouldn't mess with them.
+*********************************************************************/
+
+function implicitMember(o, name) {
+return name === "elements" && o.dom$class == "Form" ||
+name === "rows" && (o.dom$class == "Table" || o.dom$class == "tBody" || o.dom$class == "tHead" || o.dom$class == "tFoot") ||
+name === "tBodies" && o.dom$class == "Table" ||
+name === "cells" && o.dom$class == "tRow" ||
+name === "className" ||
+// no clue what getAttribute("style") is suppose to do
+name === "style" ||
+name === "htmlFor" && o.dom$class == "Label" ||
+name === "options" && o.dom$class == "Select";
+}
+
 function cssGather(pageload, newwin) {
 var w = my$win();
 if(!pageload && newwin && newwin.eb$visible) w = newwin;
@@ -2087,6 +2105,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendFragment", "insertFragment",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling",
+"implicitMember",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",

@@ -1334,18 +1334,6 @@ NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerC
 NamedNodeMap.prototype.setNamedItem = function(name, v) { this.owner.setAttribute(name, v);}
 NamedNodeMap.prototype.removeNamedItem = function(name) { this.owner.removeAttribute(name);}
 
-dom$.implicitMember = function(o, name) {
-return name === "elements" && o.dom$class == "Form" ||
-name === "rows" && (o.dom$class == "Table" || o.dom$class == "tBody" || o.dom$class == "tHead" || o.dom$class == "tFoot") ||
-name === "tBodies" && o.dom$class == "Table" ||
-name === "cells" && o.dom$class == "tRow" ||
-name === "className" ||
-// no clue what getAttribute("style") is suppose to do
-name === "style" ||
-name === "htmlFor" && o.dom$class == "Label" ||
-name === "options" && o.dom$class == "Select";
-}
-
 /*********************************************************************
 Set and clear attributes. This is done in 3 different ways,
 the third using attributes as a NamedNodeMap.
@@ -1354,7 +1342,7 @@ This may be overkill - I don't know.
 
 document.getAttribute = function(name) {
 name = name.toLowerCase();
-if(dom$.implicitMember(this, name)) return null;
+if(mw$.implicitMember(this, name)) return null;
 // has to be a real attribute
 if(!this.attributes$2) return null;
 if(!this.attributes[name]) return null;
@@ -1387,7 +1375,7 @@ if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 this.style.cssText = v;
 return;
 }
-if(dom$.implicitMember(this, name)) return;
+if(mw$.implicitMember(this, name)) return;
 var oldv = null;
 // referencing attributes should create it on demand, but if it doesn't...
 if(!this.attributes) this.attributes = new NamedNodeMap;
@@ -1552,7 +1540,7 @@ But the thing is, we don't have to do that, because appendChild
 does it for us, as side effects, for these various classes.
 *********************************************************************/
 
-if(dom$.implicitMember(node1, item)) continue;
+if(mw$.implicitMember(node1, item)) continue;
 
 node2[item] = [];
 
