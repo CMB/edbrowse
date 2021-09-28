@@ -105,7 +105,7 @@ detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev
 eb$listen = document.eb$listen = mw$.eb$listen;
 eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
-rowReindex = mw$.rowReindex;
+rowReindex = mw$.rowReindex, getComputedStyle = mw$.getComputedStyle;
 }
 
 // produce a stack for debugging purposes
@@ -1199,158 +1199,6 @@ return s;
 }
 
 document.defaultView = window;
-getComputedStyle = function(e,pe) {
-	// disregarding pseudoelements for now
-var s;
-
-/*********************************************************************
-Some sites call getComputedStyle on the same node over and over again.
-http://songmeanings.com/songs/view/3530822107858535238/
-Can we remember the previous call and just return the same style object?
-Can we know that nothing has changed in between the two calls?
-I can track when the tree changes, and even the class,
-but what about individual attributes?
-I haven't found a way to do this without breaking acid test 33 and others.
-*********************************************************************/
-
-s = new CSSStyleDeclaration;
-s.element = e;
-
-/*********************************************************************
-What if js has added or removed style objects from the tree?
-Maybe the selectors and rules are different from when they were first compiled.
-Does this ever happen? It does in acid test 33.
-Does it ever happen in the real world? I don't know.
-If not, this is a big waste of time and resources.
-How big? Well not too bad I guess.
-Strings are parsed in C, which is pretty fast,
-but it really falls flat when the css has @import which pulls in another
-css file, and now we have to fetch that file on every call to getComputedStyle.
-Nodes are created, and technically their class changed,
-in that there was no node and no class before, and that induces a call
-to getComputedStyle, and that fetches the file, again.
-The imported css file could be fetched 100 times just to load the page.
-I get around this by the shortcache feature in css.c.
-If the css has changed in any way, I recompile the descriptors
-and increment the css version, stored in css$ver;
-Any information we might have saved about nodes and descriptors,
-for speed and optimization, is lost if the version changes.
-*********************************************************************/
-
-// remember that this is the window object
-mw$.cssGather(false, this);
-
-this.soj$ = s;
-eb$cssApply(this.document.eb$ctx, e);
-delete this.soj$;
-
-/*********************************************************************
-Now for the confusion.
-https://developer.mozilla.org/en-US/docs/Web/API/Window/getComputedStyle
-Very clearly states s is the result of css pages and <style> tags,
-and not javascript assigned values.
-
-  The returned object is the same {CSSStyleDeclaration} type as the object
-  returned from the element's {style} property.
-  However, the two objects have different purposes:
-  * The object from getComputedStyle is read-only,
-  and should be used to inspect the element's style — including those set by a
-  <style> element or an external stylesheet.
-  * The element.style object should be used to set styles on that element,
-  or inspect styles directly added to it from JavaScript manipulation or the
-  global style attribute.
-
-See - if js sets a style attribute directly it is not suppose to carry
-across to the new style object.
-But in stark contradiction to this paragraph,
-browsers carry the style attributes across no matter how they were set.
-Huh???
-Well we have to do the same so here we go.
-*********************************************************************/
-
-if(e.style$2) {
-for(var k in e.style) {
-if(!e.style.hasOwnProperty(k)) continue;
-if(k.match(/\$(\$scy|pri)$/)) continue;
-if(typeof e.style[k] == 'object') continue;
-
-/*********************************************************************
-This should be a real attribute now.
-If it was set by the css system, and is no longer,
-maybe we shouldn't carry it across.
-Acid test: see how the slash comes back to light after class hidden is removed.
-<span id="slash" class="hidden">/</span>
-Specificity indicates it comes from css, except for 100000,
-which is style.cssText = "color:green", and that should carry across.
-*********************************************************************/
-
-if(!s[k] &&  e.style[k+"$$scy"] < 100000) continue;
-
-// Ok carry this one across.
-s[k] = e.style[k];
-}
-}
-
-return s;
-}
-
-// A different version, run when the class or id changes.
-// It writes the changes back to the style node, does not create a new one.
-dom$.computeStyleInline = function(e) {
-var s;
-var w = my$win();
-var created = false;
-
-e.last$class = e.class, e.last$id = e.id;
-
-// don't put a style under a style.
-// There are probably other nodes I should skip too.
-if(e.dom$class == "CSSStyleDeclaration") return;
-if(e.nodeType != 1 && e.nodeType != 3) return;
-
-if(s = e.style$2) {
-// Unlike the above, we remove previous values that were set by css,
-// because css is being reapplied.
-for(var k in s) {
-if(!s.hasOwnProperty(k)) continue;
-if(!k.match(/\$(\$scy|pri)$/)) continue;
-if(k.match(/\$\$scy$/) && s[k] == 100000) continue;
-// this one goes away
-delete s[k];
-delete s[k.replace(/\$(\$scy|pri)$/, "")];
-}
-} else {
-// create a style object, but if it comes up empty, we'll remove it again.
-s = new CSSStyleDeclaration;
-created = true;
-}
-
-// This is called on a (possibly large) subtree of nodes,
-// so please verify the css style sheets before hand.
-// mw$.cssGather(false, this);
-
-// apply all the css rules
-w.soj$ = s;
-eb$cssApply(w.document.eb$ctx, e);
-delete w.soj$;
-// style has been recomputed
-if(created) {
-// is there anything there?
-for(var k in s) {
-if(!s.hasOwnProperty(k)) continue;
-if(k == "element" || k == "ownerDocument")
-continue;
-e.style$2 = s;
-s.element = e;
-break;
-}
-}
-
-// descend into the children
-if(e.childNodes)
-for(var i=0; i<e.childNodes.length; ++i)
-dom$.computeStyleInline(e.childNodes[i]);
-}
 
 z$Table.prototype.insertRow = mw$.insertRow;
 z$tBody.prototype.insertRow = mw$.insertRow;
@@ -3247,7 +3095,7 @@ if(w.rr$start) {
 mw$.cssGather(false, w);
 delete w.rr$start;
 }
-dom$.computeStyleInline(t);
+mw$.computeStyleInline(t);
 }
 if(!(so = t.style$2)) return 0;
 if(so.display == "none" || so.visibility == "hidden") {
