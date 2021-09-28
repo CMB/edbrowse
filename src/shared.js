@@ -745,7 +745,7 @@ It's just easier.
 Support functions mrKids and mrList are below.
 *********************************************************************/
 
-mutFixup = function(b, isattr, y, z) {
+function mutFixup(b, isattr, y, z) {
 var w = my$win();
 var list = w.mutList;
 // most of the time there are no observers, so loop over that first
@@ -813,6 +813,134 @@ var l = c.length;
 r.nextSibling = y < l ? c[y] : null;
 --y;
 r.previousSibling = y >= 0 ? c[y] : null;
+}
+}
+
+/*********************************************************************
+If you append a documentFragment you're really appending all its kids.
+This is called by the various appendChild routines.
+Since we are appending many nodes, I'm not sure what to return.
+*********************************************************************/
+
+function appendFragment(p, frag) { var c; while(c = frag.firstChild) p.appendChild(c); return null; }
+function insertFragment(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return null; }
+
+/*********************************************************************
+Here comes a bunch of stuff regarding the childNodes array,
+holding the children under a given html node.
+The functions eb$apch1 and eb$apch2 are native. They perform appendChild in js.
+The first has no side effects, because the linkage was already performed
+within edbrowse via html, and a linkage side effect would only confuse things.
+The second, eb$apch2, has side effects, as js code calls appendChild
+and those links have to pass back to edbrowse.
+But, the wrapper function appendChild makes another check;
+if the child is already linked into the tree, then we have to unlink it first,
+before we put it somewhere else.
+This is a call to removeChild, also native, which unlinks in js,
+and passses the remove side effect back to edbrowse.
+The same reasoning holds for insertBefore.
+These functions also check for a hierarchy error using isabove(),
+which throws an exception.
+*********************************************************************/
+
+function appendChild(c) {
+if(!c) return null;
+if(c.nodeType == 11) return appendFragment(this, c);
+isabove(c, this);
+if(c.parentNode) c.parentNode.removeChild(c);
+var r = this.eb$apch2(c);
+mutFixup(this, false, c, null);
+return r;
+}
+
+function prependChild(c) {
+var v;
+isabove(c, this);
+if(this.childNodes.length) v = this.insertBefore(c, this.childNodes[0]);
+else v = this.appendChild(c);
+return v;
+}
+
+function insertBefore(c, t) {
+if(!c) return null;
+if(!t) return this.appendChild(c);
+isabove(c, this);
+if(c.nodeType == 11) return insertFragment(this, c, t);
+if(c.parentNode) c.parentNode.removeChild(c);
+var r = this.eb$insbf(c, t);
+mutFixup(this, false, r, null);
+return r;
+}
+
+function replaceChild(newc, oldc) {
+var lastentry;
+var l = this.childNodes.length;
+var nextinline;
+for(var i=0; i<l; ++i) {
+if(this.childNodes[i] != oldc)
+continue;
+if(i == l-1)
+lastentry = true;
+else {
+lastentry = false;
+nextinline = this.childNodes[i+1];
+}
+this.removeChild(oldc);
+if(lastentry)
+this.appendChild(newc);
+else
+this.insertBefore(newc, nextinline);
+break;
+}
+}
+
+function hasChildNodes() { return (this.childNodes.length > 0); }
+
+function eb$getSibling (obj,direction) {
+var pn = obj.parentNode;
+if(!pn) return null;
+var j, l;
+l = pn.childNodes.length;
+for (j=0; j<l; ++j)
+if (pn.childNodes[j] == obj) break;
+if (j == l) {
+// child not found under parent, error
+return null;
+}
+switch(direction) {
+case "previous":
+return (j > 0 ? pn.childNodes[j-1] : null);
+case "next":
+return (j < l-1 ? pn.childNodes[j+1] : null);
+default:
+// the function should always have been called with either 'previous' or 'next' specified
+return null;
+}
+}
+
+function eb$getElementSibling (obj,direction) {
+var pn = obj.parentNode;
+if(!pn) return null;
+var j, l;
+l = pn.childNodes.length;
+for (j=0; j<l; ++j)
+if (pn.childNodes[j] == obj) break;
+if (j == l) {
+// child not found under parent, error
+return null;
+}
+switch(direction) {
+case "previous":
+for(--j; j>=0; --j)
+if(pn.childNodes[j].nodeType == 1) return pn.childNodes[j];
+return null;
+case "next":
+for(++j; j<l; ++j)
+if(pn.childNodes[j].nodeType == 1) return pn.childNodes[j];
+return null;
+default:
+// the function should always have been called with either 'previous' or 'next' specified
+return null;
 }
 }
 
@@ -1956,6 +2084,9 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
 "mutFixup", "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
+"appendFragment", "insertFragment",
+"appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
+"eb$getSibling", "eb$getElementSibling",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",

@@ -1306,133 +1306,11 @@ width: 0, height: 0
 }
 }
 
-/*********************************************************************
-If you append a documentFragment you're really appending all its kids.
-This is called by the various appendChild routines.
-Since we are appending many nodes, I'm not sure what to return.
-*********************************************************************/
-
-dom$.appendFragment = function(p, frag) { var c; while(c = frag.firstChild) p.appendChild(c); return null; }
-dom$.insertFragment = function(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return null; }
-
-/*********************************************************************
-Here comes a bunch of stuff regarding the childNodes array,
-holding the children under a given html node.
-The functions eb$apch1 and eb$apch2 are native. They perform appendChild in js.
-The first has no side effects, because the linkage was already performed
-within edbrowse via html, and a linkage side effect would only confuse things.
-The second, eb$apch2, has side effects, as js code calls appendChild
-and those links have to pass back to edbrowse.
-But, the wrapper function appendChild makes another check;
-if the child is already linked into the tree, then we have to unlink it first,
-before we put it somewhere else.
-This is a call to removeChild, also native, which unlinks in js,
-and passses the remove side effect back to edbrowse.
-The same reasoning holds for insertBefore.
-These functions also check for a hierarchy error using isabove(),
-which throws an exception.
-*********************************************************************/
-
-document.appendChild = function(c) {
-if(!c) return null;
-if(c.nodeType == 11) return dom$.appendFragment(this, c);
-mw$.isabove(c, this);
-if(c.parentNode) c.parentNode.removeChild(c);
-var r = this.eb$apch2(c);
-mutFixup(this, false, c, null);
-return r;
-}
-
-document.prependChild = function(c) {
-var v;
-mw$.isabove(c, this);
-if(this.childNodes.length) v = this.insertBefore(c, this.childNodes[0]);
-else v = this.appendChild(c);
-return v;
-}
-
-document.insertBefore = function(c, t) {
-if(!c) return null;
-if(!t) return this.appendChild(c);
-mw$.isabove(c, this);
-if(c.nodeType == 11) return dom$.insertFragment(this, c, t);
-if(c.parentNode) c.parentNode.removeChild(c);
-var r = this.eb$insbf(c, t);
-mutFixup(this, false, r, null);
-return r;
-}
-
-document.replaceChild = function(newc, oldc) {
-var lastentry;
-var l = this.childNodes.length;
-var nextinline;
-for(var i=0; i<l; ++i) {
-if(this.childNodes[i] != oldc)
-continue;
-if(i == l-1)
-lastentry = true;
-else {
-lastentry = false;
-nextinline = this.childNodes[i+1];
-}
-this.removeChild(oldc);
-if(lastentry)
-this.appendChild(newc);
-else
-this.insertBefore(newc, nextinline);
-break;
-}
-}
-
-document.hasChildNodes = function() { return (this.childNodes.length > 0); }
-
-dom$.eb$getSibling = function (obj,direction) {
-var pn = obj.parentNode;
-if(!pn) return null;
-var j, l;
-l = pn.childNodes.length;
-for (j=0; j<l; ++j)
-if (pn.childNodes[j] == obj) break;
-if (j == l) {
-// child not found under parent, error
-return null;
-}
-switch(direction) {
-case "previous":
-return (j > 0 ? pn.childNodes[j-1] : null);
-case "next":
-return (j < l-1 ? pn.childNodes[j+1] : null);
-default:
-// the function should always have been called with either 'previous' or 'next' specified
-return null;
-}
-}
-
-dom$.eb$getElementSibling = function (obj,direction) {
-var pn = obj.parentNode;
-if(!pn) return null;
-var j, l;
-l = pn.childNodes.length;
-for (j=0; j<l; ++j)
-if (pn.childNodes[j] == obj) break;
-if (j == l) {
-// child not found under parent, error
-return null;
-}
-switch(direction) {
-case "previous":
-for(--j; j>=0; --j)
-if(pn.childNodes[j].nodeType == 1) return pn.childNodes[j];
-return null;
-case "next":
-for(++j; j<l; ++j)
-if(pn.childNodes[j].nodeType == 1) return pn.childNodes[j];
-return null;
-default:
-// the function should always have been called with either 'previous' or 'next' specified
-return null;
-}
-}
+document.appendChild = mw$.appendChild;
+document.prependChild = mw$.prependChild;
+document.replaceChild = mw$.replaceChild;
+document.insertBefore = mw$.insertBefore;
+document.hasChildNodes = mw$.hasChildNodes;
 
 // The Attr class and getAttributeNode().
 Attr = function(){ this.specified = false; this.owner = null; this.name = ""};
@@ -2027,10 +1905,10 @@ Object.defineProperty(c.prototype, "firstChild", { get: function() { return (thi
 Object.defineProperty(c.prototype, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
 Object.defineProperty(c.prototype, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
 Object.defineProperty(c.prototype, "lastElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=u.length-1; i>=0; --i) if(u[i].nodeType == 1) return u[i]; return null; }});
-Object.defineProperty(c.prototype, "nextSibling", { get: function() { return dom$.eb$getSibling(this,"next"); } });
-Object.defineProperty(c.prototype, "nextElementSibling", { get: function() { return dom$.eb$getElementSibling(this,"next"); } });
-Object.defineProperty(c.prototype, "previousSibling", { get: function() { return dom$.eb$getSibling(this,"previous"); } });
-Object.defineProperty(c.prototype, "previousElementSibling", { get: function() { return dom$.eb$getElementSibling(this,"previous"); } });
+Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw$.eb$getSibling(this,"next"); } });
+Object.defineProperty(c.prototype, "nextElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"next"); } });
+Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw$.eb$getSibling(this,"previous"); } });
+Object.defineProperty(c.prototype, "previousElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"previous"); } });
 // children is subtly different from childnodes; this code taken from
 // https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
 Object.defineProperty(c.prototype, 'children', {
@@ -2136,7 +2014,7 @@ if(!parent.elements[s]) parent.elements[s] = child;
 z$Form.prototype.appendChildNative = document.appendChild;
 z$Form.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
-if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
+if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
 this.elements.push(newobj);
@@ -2149,7 +2027,7 @@ z$Form.prototype.insertBeforeNative = document.insertBefore;
 z$Form.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
-if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
+if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
@@ -2255,7 +2133,7 @@ this.removeChild(this.options[idx]);
 z$tBody.prototype.appendChildNative = document.appendChild;
 z$tBody.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
-if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
+if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj.dom$class == "tRow") // shouldn't be anything other than TR
 this.rows.push(newobj), rowReindex(this);
@@ -2265,7 +2143,7 @@ z$tBody.prototype.insertBeforeNative = document.insertBefore;
 z$tBody.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
-if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
+if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj.dom$class == "tRow")
@@ -2310,7 +2188,7 @@ z$tFoot.prototype.removeChild = z$tBody.prototype.removeChild;
 z$Table.prototype.appendChildNative = document.appendChild;
 z$Table.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
-if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
+if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj.dom$class == "tRow") rowReindex(this);
 if(newobj.dom$class == "tBody") {
@@ -2332,7 +2210,7 @@ z$Table.prototype.insertBeforeNative = document.insertBefore;
 z$Table.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
-if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
+if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj.dom$class == "tRow") rowReindex(this);
@@ -2382,7 +2260,7 @@ return item;
 z$tRow.prototype.appendChildNative = document.appendChild;
 z$tRow.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
-if(newobj.nodeType == 11) return dom$.appendFragment(this, newobj);
+if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
 if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
@@ -2392,7 +2270,7 @@ z$tRow.prototype.insertBeforeNative = document.insertBefore;
 z$tRow.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
-if(newobj.nodeType == 11) return dom$.insertFragment(this, newobj, item);
+if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
 if(newobj.nodeName === "TD")
@@ -2903,13 +2781,13 @@ get: function() { return this.childNodes[document.childNodes.length-1]; }});
 Object.defineProperty(document, "lastElementChild", {
 get: function() { return this.childNodes[document.childNodes.length-1]; }});
 Object.defineProperty(document, "nextSibling", {
-get: function() { return dom$.eb$getSibling(this,"next"); }});
+get: function() { return mw$.eb$getSibling(this,"next"); }});
 Object.defineProperty(document, "nextElementSibling", {
-get: function() { return dom$.eb$getElementSibling(this,"next"); }});
+get: function() { return mw$.eb$getElementSibling(this,"next"); }});
 Object.defineProperty(document, "previousSibling", {
-get: function() { return dom$.eb$getSibling(this,"previous"); }});
+get: function() { return mw$.eb$getSibling(this,"previous"); }});
 Object.defineProperty(document, "previousElementSibling", {
-get: function() { return dom$.eb$getElementSibling(this,"previous"); }});
+get: function() { return mw$.eb$getElementSibling(this,"previous"); }});
 
 /*********************************************************************
 Compile a string for a handler such as onclick or onload.
