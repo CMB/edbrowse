@@ -23,10 +23,10 @@ if(typeof window === "undefined") {
 window = this;
 document = {};
 // Stubs for native methods that are normally provided by edbrowse.
-// Example: eb$puts, which we can replace with print,
+// Example: alert, which we can replace with print,
 // or console.log, or anything present in the command line js interpreter.
 if(!window.print) print = console.log;
-eb$puts = print;
+alert = print;
 eb$nullfunction = function() { return null; }
 eb$voidfunction = function() { }
 eb$truefunction = function() { return true; }
@@ -60,7 +60,7 @@ mw$ = {compiled: false, share:false, URL:{}};
 
 if(mw$.share) { // point to native methods in the master window
 my$win = mw$.my$win, my$doc = mw$.my$doc;
-natok = mw$.natok, eb$puts = mw$.eb$puts, db$flags = mw$.db$flags;
+natok = mw$.natok, db$flags = mw$.db$flags;
 eb$voidfunction = mw$.eb$voidfunction, eb$nullfunction = mw$.eb$nullfunction, eb$truefunction = mw$.eb$truefunction, eb$falsefunction = mw$.eb$falsefunction;
 scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = focus = blur = eb$voidfunction;
 document.close = document.focus = document.blur = eb$voidfunction;
@@ -1182,21 +1182,6 @@ return this[pri] ? "important" : "";
 };
 Object.defineProperty(CSSStyleDeclaration.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
-
-dom$.cssTextGet = function() {
-var s = "";
-for(var k in this) {
-if(!k.match(/\$(\$scy|pri)$/)) continue;
-k=k.replace(/\$(\$scy|pri)$/, "");
-var l = this[k];
-if(l.match(/[ \t;"'{}]/)) {
-if(l.match(/"/)) l = "'" + l + "'";
-else l = '"' + l + '"';
-}
-s=s+ k + ':' + l + '; ';
-}
-return s;
-}
 
 document.defaultView = window;
 
@@ -2571,7 +2556,7 @@ if(t == "textarea") c.type = t;
 break;
 case "button": c = new z$Element; c.type = "submit"; break;
 default:
-/* eb$puts("createElement default " + s); */
+/* alert("createElement default " + s); */
 c = new HTMLElement;
 }
 
@@ -3049,7 +3034,7 @@ window.constructor = Window;
 onhashchange = eb$truefunction;
 
 // Apply rules to a given style object, which is this.
-Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: dom$.cssTextGet,
+Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: mw$.cssTextGet,
 set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
 function eb$qs$start() { mw$.cssGather(true); }

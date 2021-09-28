@@ -3173,9 +3173,9 @@ JS_NewCFunction(mwc, nat_ok, "nat_ok", 1), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_mywin, "mywin", 0), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "my$doc",
 JS_NewCFunction(mwc, nat_mydoc, "mydoc", 0), 0);
-    JS_DefinePropertyValueStr(mwc, mwo, "eb$puts",
+    JS_DefinePropertyValueStr(mwc, mwo, "puts",
 JS_NewCFunction(mwc, nat_puts, "puts", 1), JS_PROP_ENUMERABLE);
-    JS_DefinePropertyValueStr(mwc, mwo, "eb$wlf",
+    JS_DefinePropertyValueStr(mwc, mwo, "wlf",
 JS_NewCFunction(mwc, nat_wlf, "wlf", 2), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "btoa",
 JS_NewCFunction(mwc, nat_btoa, "btoa", 1), JS_PROP_ENUMERABLE);
@@ -3205,11 +3205,11 @@ JS_NewCFunction(mwc, nat_resolveURL, "resolveURL", 2), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_new_location, "new_location", 1), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$logElement",
 JS_NewCFunction(mwc, nat_log_element, "log_element", 2), JS_PROP_ENUMERABLE);
-    JS_DefinePropertyValueStr(mwc, mwo, "eb$cssDocLoad",
+    JS_DefinePropertyValueStr(mwc, mwo, "cssDocLoad",
 JS_NewCFunction(mwc, nat_css_start, "css_start", 3), 0);
-    JS_DefinePropertyValueStr(mwc, mwo, "eb$cssApply",
+    JS_DefinePropertyValueStr(mwc, mwo, "cssApply",
 JS_NewCFunction(mwc, nat_cssApply, "cssApply", 2), 0);
-    JS_DefinePropertyValueStr(mwc, mwo, "eb$jobs",
+    JS_DefinePropertyValueStr(mwc, mwo, "jobsPending",
 JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 #endif
 

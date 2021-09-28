@@ -29,7 +29,7 @@ Object.defineProperty(Function.prototype, "bind",{enumerable:false,writable:fals
 Object.defineProperty(Function.prototype, "toString",{enumerable:false,writable:false,configurable:false});
 Object.defineProperty(Function.prototype, "constructor",{enumerable:false,writable:false,configurable:false});
 
-alert = eb$puts;
+alert = puts;
 // print an error inline, at debug level 3 or higher.
 function alert3(s) { logputs(3, s); }
 function alert4(s) { logputs(4, s); }
@@ -128,8 +128,8 @@ if(w.$ss[i].text && w.$ss[i].text.indexOf(t) >= 0) alert(i);
 
 function snapshot() {
 var w = my$win();
-// eb$wlf is native to support the snapshot functionality
-eb$wlf('<base href="' + w.eb$base + '">\n', "from");
+// wlf is native to support the snapshot functionality: write local file.
+wlf('<base href="' + w.eb$base + '">\n', "from");
 var jslocal = "";
 var idx = 0;
 if(!w.$ss) showscripts();
@@ -143,7 +143,7 @@ if(ss.match(/^data:/)) continue;
 // assumes the search piece of the url is spurious and unreliable
 ss = ss.replace(/\?.*/, "");
 ++idx;
-eb$wlf(s.text, "f" + idx + ".js");
+wlf(s.text, "f" + idx + ".js");
 jslocal += "f" + idx + ".js:" + ss + "\n";
 }
 }
@@ -156,11 +156,11 @@ var ss = s.src.toString();
 // assumes the search piece of the url is spurious and unreliable
 ss = ss.replace(/\?.*/, "");
 ++idx;
-eb$wlf(s.data, "f" + idx + ".css");
+wlf(s.data, "f" + idx + ".css");
 jslocal += "f" + idx + ".css:" + ss + "\n";
 }
 }
-eb$wlf(jslocal, "jslocal");
+wlf(jslocal, "jslocal");
 alert(".   ub   ci+   /<head/r from   w base   qt");
 }
 
@@ -881,7 +881,7 @@ return;
 
 w.last$css_all = css_all;
 w.css$ver++;
-eb$cssDocLoad(w.eb$ctx, css_all, pageload);
+cssDocLoad(w.eb$ctx, css_all, pageload);
 }
 
 	// disregarding pseudoelements for now
@@ -928,7 +928,7 @@ Remember that "this" is the window object.
 cssGather(false, this);
 
 this.soj$ = s;
-eb$cssApply(this.eb$ctx, e);
+cssApply(this.eb$ctx, e);
 delete this.soj$;
 
 /*********************************************************************
@@ -1017,7 +1017,7 @@ created = true;
 
 // apply all the css rules
 w.soj$ = s;
-eb$cssApply(w.eb$ctx, e);
+cssApply(w.eb$ctx, e);
 delete w.soj$;
 // style has been recomputed
 if(created) {
@@ -1036,6 +1036,21 @@ break;
 if(e.childNodes)
 for(var i=0; i<e.childNodes.length; ++i)
 computeStyleInline(e.childNodes[i]);
+}
+
+function cssTextGet() {
+var s = "";
+for(var k in this) {
+if(!k.match(/\$(\$scy|pri)$/)) continue;
+k=k.replace(/\$(\$scy|pri)$/, "");
+var l = this[k];
+if(l.match(/[ \t;"'{}]/)) {
+if(l.match(/"/)) l = "'" + l + "'";
+else l = '"' + l + '"';
+}
+s=s+ k + ':' + l + '; ';
+}
+return s;
 }
 
 function insertAdjacentHTML(flavor, h) {
@@ -1885,7 +1900,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
 "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
-"cssGather", "getComputedStyle", "computeStyleInline",
+"cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
