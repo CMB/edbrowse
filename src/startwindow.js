@@ -106,6 +106,7 @@ eb$listen = document.eb$listen = mw$.eb$listen;
 eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
 rowReindex = mw$.rowReindex, getComputedStyle = mw$.getComputedStyle;
+mutFixup = mw$.mutFixup;
 }
 
 // produce a stack for debugging purposes
@@ -3166,62 +3167,6 @@ MutationObserver.prototype.takeRecords = function() { return []}
 
 MutationRecord = function(){};
 MutationRecord.prototype.dom$class = "MutationRecord";
-
-/*********************************************************************
-I'm going to call Fixup from appendChild, removeChild, setAttribute,
-anything that changes something we might be observing.
-If we are indeed observing, I call the callback function right away.
-That's now how we're suppose to do it.
-I am suppose to queue up the change records, then call the callback
-function later, after this script is done, asynchronously, maybe on a timer.
-I could combine a dozen "kids have changed" records into one, to say,
-"hey, the kids have changed."
-And an attribute change record etc.
-So they are expecting an array of change records.
-I send an array of length 1, 1 record, right now.
-It's just easier.
-Support functions are in shared.js.
-*********************************************************************/
-
-mutFixup = function(b, isattr, y, z) {
-var w = my$win();
-var list = w.mutList;
-// most of the time there are no observers, so loop over that first
-// and this function does nothing and doesn't slow things down too much.
-for(var j = 0; j < list.length; ++j) {
-var o = list[j]; // the observer
-if(!o.active) continue;
-var r; // mutation record
-if(isattr) { // the easy case
-if(o.attr && o.target == b) {
-r = new MutationRecord;
-r.type = "attributes";
-r.attributeName = y;
-r.target = b;
-r.oldValue = z;
-o.callback([r], o);
-}
-continue;
-}
-// ok a child of b has changed
-if(o.kids && o.target == b) {
-r = new MutationRecord;
-mw$.mrKids(r, b, y, z);
-o.callback([r], o);
-continue;
-}
-if(!o.subtree) continue;
-// climb up the tree
-for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
-if(o.subtree && o.target == t) {
-r = new MutationRecord;
-mw$.mrKids(r, b, y, z);
-o.callback([r], o);
-break;
-}
-}
-}
-}
 
 mutList = [];
 

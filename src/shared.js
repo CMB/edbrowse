@@ -729,6 +729,62 @@ a.toggle = classListToggle;
 return a;
 }
 
+/*********************************************************************
+I'm going to call Fixup from appendChild, removeChild, setAttribute,
+anything that changes something we might be observing.
+If we are indeed observing, I call the callback function right away.
+That's not how we're suppose to do it.
+I am suppose to queue up the change records, then call the callback
+function later, after this script is done, asynchronously, maybe on a timer.
+I could combine a dozen "kids have changed" records into one, to say,
+"hey, the kids have changed."
+And an attribute change record etc.
+So they are expecting an array of change records.
+I send an array of length 1, 1 record, right now.
+It's just easier.
+Support functions mrKids and mrList are below.
+*********************************************************************/
+
+mutFixup = function(b, isattr, y, z) {
+var w = my$win();
+var list = w.mutList;
+// most of the time there are no observers, so loop over that first
+// whence this function does nothing and doesn't slow things down too much.
+for(var j = 0; j < list.length; ++j) {
+var o = list[j]; // the observer
+if(!o.active) continue;
+var r; // mutation record
+if(isattr) { // the easy case
+if(o.attr && o.target == b) {
+r = new w.MutationRecord;
+r.type = "attributes";
+r.attributeName = y;
+r.target = b;
+r.oldValue = z;
+o.callback([r], o);
+}
+continue;
+}
+// ok a child of b has changed
+if(o.kids && o.target == b) {
+r = new w.MutationRecord;
+mrKids(r, b, y, z);
+o.callback([r], o);
+continue;
+}
+if(!o.subtree) continue;
+// climb up the tree
+for(var t = b; t && t.nodeType == 1; t = t.parentNode) {
+if(o.subtree && o.target == t) {
+r = new w.MutationRecord;
+mrKids(r, b, y, z);
+o.callback([r], o);
+break;
+}
+}
+}
+}
+
 // support functions for mutation records
 function mrList(x) {
 if(Array.isArray(x)) {
@@ -1898,7 +1954,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
-"mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
+"mutFixup", "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
