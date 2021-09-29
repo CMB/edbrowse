@@ -946,6 +946,73 @@ return null;
 }
 }
 
+/*********************************************************************
+Yes, Form is weird.
+If you add an input to a form, it adds under childNodes in the usual way,
+but also must add in the elements[] array.
+Same for insertBefore and removeChild.
+When adding an input element to a form,
+linnk form[element.name] to that element.
+*********************************************************************/
+
+function formname(parent, child) {
+var s;
+if(typeof child.name === "string")
+s = child.name;
+else if(typeof child.id === "string")
+s = child.id;
+else return;
+if(!parent[s]) parent[s] = child;
+if(!parent.elements[s]) parent.elements[s] = child;
+}
+
+function formAppendChild(newobj) {
+if(!newobj) return null;
+if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
+this.appendChildNative(newobj);
+if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
+this.elements.push(newobj);
+newobj.form = this;
+formname(this, newobj);
+}
+return newobj;
+}
+
+function formInsertBefore(newobj, item) {
+if(!newobj) return null;
+if(!item) return this.appendChild(newobj);
+if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
+var r = this.insertBeforeNative(newobj, item);
+if(!r) return null;
+if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
+for(var i=0; i<this.elements.length; ++i)
+if(this.elements[i] == item) {
+this.elements.splice(i, 0, newobj);
+break;
+}
+newobj.form = this;
+formname(this, newobj);
+}
+return newobj;
+}
+
+function formRemoveChild(item) {
+if(!item) return null;
+if(!this.removeChildNative(item))
+return null;
+if(item.nodeName === "INPUT" || item.nodeName === "SELECT") {
+for(var i=0; i<this.elements.length; ++i)
+if(this.elements[i] == item) {
+this.elements.splice(i, 1);
+break;
+}
+delete item.form;
+if(item.name$2 && this[item.name$2] == item) delete this[item.name$2];
+if(item.name$2 && this.elements[item.name$2] == item) delete this.elements[item.name$2];
+}
+return item;
+}
+
 // It's crude, but just reindex all the rows in a table
 function rowReindex(t) {
 // climb up to find Table
@@ -2504,6 +2571,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendFragment", "insertFragment",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling",
+"formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
 "implicitMember",
 "getAttribute", "getAttributeNames", "getAttributeNS",
 "hasAttribute", "hasAttributeNS",

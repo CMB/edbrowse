@@ -1598,73 +1598,12 @@ c.prototype.offsetWidth = 120;
 // of class Document, not the window document, it still has to work.
 Document.prototype.eb$apch1 = document.eb$apch1;
 
-/*********************************************************************
-As promised, Form is weird.
-If you add an input to a form, it adds under childNodes in the usual way,
-but also must add in the elements[] array.
-Same for insertBefore and removeChild.
-When adding an input element to a form,
-linnk form[element.name] to that element.
-*********************************************************************/
-
-dom$.eb$formname = function(parent, child) {
-var s;
-if(typeof child.name === "string")
-s = child.name;
-else if(typeof child.id === "string")
-s = child.id;
-else return;
-if(!parent[s]) parent[s] = child;
-if(!parent.elements[s]) parent.elements[s] = child;
-}
-
 z$Form.prototype.appendChildNative = document.appendChild;
-z$Form.prototype.appendChild = function(newobj) {
-if(!newobj) return null;
-if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
-this.appendChildNative(newobj);
-if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
-this.elements.push(newobj);
-newobj.form = this;
-dom$.eb$formname(this, newobj);
-}
-return newobj;
-}
+z$Form.prototype.appendChild = mw$.formAppendChild;
 z$Form.prototype.insertBeforeNative = document.insertBefore;
-z$Form.prototype.insertBefore = function(newobj, item) {
-if(!newobj) return null;
-if(!item) return this.appendChild(newobj);
-if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
-var r = this.insertBeforeNative(newobj, item);
-if(!r) return null;
-if(newobj.nodeName === "INPUT" || newobj.nodeName === "SELECT") {
-for(var i=0; i<this.elements.length; ++i)
-if(this.elements[i] == item) {
-this.elements.splice(i, 0, newobj);
-break;
-}
-newobj.form = this;
-dom$.eb$formname(this, newobj);
-}
-return newobj;
-}
+z$Form.prototype.insertBefore = mw$.formInsertBefore;
 z$Form.prototype.removeChildNative = document.removeChild;
-z$Form.prototype.removeChild = function(item) {
-if(!item) return null;
-if(!this.removeChildNative(item))
-return null;
-if(item.nodeName === "INPUT" || item.nodeName === "SELECT") {
-for(var i=0; i<this.elements.length; ++i)
-if(this.elements[i] == item) {
-this.elements.splice(i, 1);
-break;
-}
-delete item.form;
-if(item.name$2 && this[item.name$2] == item) delete this[item.name$2];
-if(item.name$2 && this.elements[item.name$2] == item) delete this.elements[item.name$2];
-}
-return item;
-}
+z$Form.prototype.removeChild = mw$.formRemoveChild;
 
 /*********************************************************************
 Look out! Select class maintains an array of options beneath,
