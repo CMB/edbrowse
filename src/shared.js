@@ -1762,6 +1762,29 @@ s=s+ k + ':' + l + '; ';
 return s;
 }
 
+function injectSetup(which) {
+var w = my$win();
+var d = my$doc();
+var z = this;
+switch(which) {
+case 'a':
+if(!this.inj$after) {
+z = this.appendChild(d.createTextNode());
+z.inj$css = true;
+this.inj$after = true;
+} else z = this.lastChild;
+break;
+case 'b':
+if(!this.inj$before) {
+z = this.prependChild(d.createTextNode());
+z.inj$css = true;
+this.inj$before = true;
+} else z = this.firstChild;
+break;
+}
+w.soj$ = z.style;
+}
+
 function insertAdjacentHTML(flavor, h) {
 // easiest implementation is just to use the power of innerHTML
 var d = my$doc();
@@ -2621,6 +2644,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "clone1", "findObject", "correspondingObject",
 "compareDocumentPosition",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
+"injectSetup",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",

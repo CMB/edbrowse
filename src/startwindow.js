@@ -1420,27 +1420,6 @@ return q;
 
 document.insertAdjacentHTML = mw$.insertAdjacentHTML;
 
-dom$.injectSetup = function(which) {
-var z = this;
-switch(which) {
-case 'a':
-if(!this.inj$after) {
-z = this.appendChild(document.createTextNode());
-z.inj$css = true;
-this.inj$after = true;
-} else z = this.lastChild;
-break;
-case 'b':
-if(!this.inj$before) {
-z = this.prependChild(document.createTextNode());
-z.inj$css = true;
-this.inj$before = true;
-} else z = this.firstChild;
-break;
-}
-my$win().soj$ = z.style;
-}
-
 /*********************************************************************
 Add prototype methods to the standard nodes, nodes that have children,
 and the normal set of methods to go with those children.
@@ -1536,7 +1515,7 @@ c.prototype.insertAdjacentHTML = mw$.insertAdjacentHTML;
 // outerHTML is dynamic; should innerHTML be?
 Object.defineProperty(c.prototype, "outerHTML", { get: function() { return mw$.htmlString(this);},
 set: function(h) { mw$.outer$1(this,h); }});
-c.prototype.injectSetup = dom$.injectSetup;
+c.prototype.injectSetup = mw$.injectSetup;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw$.classList(this);}});
