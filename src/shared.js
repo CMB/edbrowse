@@ -1514,6 +1514,47 @@ p = p.replace(/^\d+,/, "");
 return c;
 }
 
+// symbolic constants for compareDocumentPosition
+Object.defineProperty(this,"DOCUMENT_POSITION_DISCONNECTED",{writable:false,configurable:false,value:1});
+Object.defineProperty(this,"DOCUMENT_POSITION_PRECEDING",{writable:false,configurable:false,value:2});
+Object.defineProperty(this,"DOCUMENT_POSITION_FOLLOWING",{writable:false,configurable:false,value:4});
+Object.defineProperty(this,"DOCUMENT_POSITION_CONTAINS",{writable:false,configurable:false,value:8});
+Object.defineProperty(this,"DOCUMENT_POSITION_CONTAINED_BY",{writable:false,configurable:false,value:16});
+
+/*********************************************************************
+compareDocumentPosition:
+The documentation I found was entirely unclear as to the meaning
+of preceding and following.
+Does A precede B if it appears first in a depth first search of the tree,
+or if it appears first wherein they have the same parent,
+or if they are siblings?
+I have no clue, so I'm going for the latter, partly because it's easy.
+That means the relationships are disjoint.
+A can't contain B and precede B simultaneously.
+So I don't know why they say these are bits in a bitmask.
+Also not clear if "contains" can descend into a subframe. I don't check for this.
+*********************************************************************/
+
+compareDocumentPosition = function(w) {
+if(this === w) return DOCUMENT_POSITION_DISCONNECTED;
+if(this.parentNode === w.parentNode) {
+if(this.nextSibling === w) return DOCUMENT_POSITION_FOLLOWING;
+if(this.previousSibling === w) return DOCUMENT_POSITION_PRECEDING;
+return DOCUMENT_POSITION_DISCONNECTED;
+}
+var t = this;
+while(t.parentNode) {
+t = t.parentNode;
+if(t === w) return DOCUMENT_POSITION_CONTAINED_BY;
+}
+var t = w;
+while(t.parentNode) {
+t = t.parentNode;
+if(t === this) return DOCUMENT_POSITION_CONTAINS;
+}
+return DOCUMENT_POSITION_DISCONNECTED;
+}
+
 function cssGather(pageload, newwin) {
 var w = my$win();
 if(!pageload && newwin && newwin.eb$visible) w = newwin;
@@ -2578,6 +2619,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "setAttribute", "markAttribute", "setAttributeNS",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
+"compareDocumentPosition",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",

@@ -307,11 +307,12 @@ hrefset$p = []; hrefset$a = [];
 $pjobs = [];
 
 // symbolic constants for compareDocumentPosition
-DOCUMENT_POSITION_DISCONNECTED = 1;
-DOCUMENT_POSITION_PRECEDING = 2;
-DOCUMENT_POSITION_FOLLOWING = 4;
-DOCUMENT_POSITION_CONTAINS = 8;
-DOCUMENT_POSITION_CONTAINED_BY = 16;
+DOCUMENT_POSITION_DISCONNECTED = mw$.DOCUMENT_POSITION_DISCONNECTED;
+DOCUMENT_POSITION_PRECEDING = mw$.DOCUMENT_POSITION_PRECEDING;
+DOCUMENT_POSITION_FOLLOWING = mw$.DOCUMENT_POSITION_FOLLOWING;
+DOCUMENT_POSITION_CONTAINS = mw$.DOCUMENT_POSITION_CONTAINS;
+DOCUMENT_POSITION_CONTAINED_BY = mw$.DOCUMENT_POSITION_CONTAINED_BY;
+document.compareDocumentPosition = mw$.compareDocumentPosition;
 
 /*********************************************************************
 The URL class is head-spinning in its complexity and its side effects.
@@ -1362,39 +1363,6 @@ copies of them in the current context.
 
 document.importNode = function(src, deep) { return src.cloneNode(deep); }
 
-/*********************************************************************
-compareDocumentPosition:
-The documentation I found was entirely unclear as to the meaning
-of preceding and following.
-Does A precede B if it appears first in a depth first search of the tree,
-or if it appears first wherein they have the same parent,
-or if they are siblings?
-I have no clue, so I'm going for the latter, partly because it's easy.
-That means the relationships are disjoint.
-A can't contain B and precede B simultaneously.
-So I don't know why they say these are bits in a bitmask.
-*********************************************************************/
-
-document.compareDocumentPosition = function(w) {
-if(this === w) return DOCUMENT_POSITION_DISCONNECTED;
-if(this.parentNode === w.parentNode) {
-if(this.nextSibling === w) return DOCUMENT_POSITION_FOLLOWING;
-if(this.previousSibling === w) return DOCUMENT_POSITION_PRECEDING;
-return DOCUMENT_POSITION_DISCONNECTED;
-}
-var t = this;
-while(t.parentNode) {
-t = t.parentNode;
-if(t === w) return DOCUMENT_POSITION_CONTAINED_BY;
-}
-var t = w;
-while(t.parentNode) {
-t = t.parentNode;
-if(t === this) return DOCUMENT_POSITION_CONTAINS;
-}
-return DOCUMENT_POSITION_DISCONNECTED;
-}
-
 Event = function(etype){
     // event state is kept read-only by forcing
     // a new object for each event.  This may not
@@ -1549,7 +1517,7 @@ c.prototype.getClientRects = function(){ return []; }
 // clone
 c.prototype.cloneNode = document.cloneNode;
 c.prototype.importNode = document.importNode;
-c.prototype.compareDocumentPosition = dom$.compareDocumentPosition;
+c.prototype.compareDocumentPosition = mw$.compareDocumentPosition;
 // visual
 c.prototype.focus = eb$voidfunction;
 c.prototype.blur = eb$voidfunction;
