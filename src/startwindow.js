@@ -1528,7 +1528,7 @@ c.prototype.eb$unlisten = eb$unlisten;
 c.prototype.addEventListener = addEventListener;
 c.prototype.removeEventListener = removeEventListener;
 if(mw$.attachOn) {
-c.prototype.attachEvent = dom$.attachEvent;
+c.prototype.attachEvent = attachEvent;
 c.prototype.detachEvent = detachEvent;
 }
 c.prototype.dispatchEvent = document.dispatchEvent;
