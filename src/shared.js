@@ -179,18 +179,20 @@ my$win().eval(exp$$);
 }
 
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
+// The return is an array, and you might put weird things on Array.prototype,
+// and then expect to use them, so let's return your Array.
 
 function getElementsByTagName(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByTagName(type " + typeof s + ")");
-return [];
+return new (my$win().Array);
 }
 s = s.toLowerCase();
 return eb$gebtn(this, s);
 }
 
 function eb$gebtn(top, s) {
-var a = [];
+var a = new (my$win().Array);
 if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
@@ -208,14 +210,14 @@ return a;
 function getElementsByName(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByName(type " + typeof s + ")");
-return [];
+return new (my$win().Array);
 }
 s = s.toLowerCase();
 return eb$gebn(this, s);
 }
 
 function eb$gebn(top, s) {
-var a = [];
+var a = new (my$win().Array);
 if(s === '*' || (top.name && top.name.toLowerCase() === s))
 a.push(top);
 if(top.childNodes) {
@@ -256,16 +258,16 @@ return a;
 function getElementsByClassName(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByTagName(type " + typeof s + ")");
-return [];
+return new (my$win().Array);
 }
 s = s.toLowerCase() . replace (/^\s+/, '') . replace (/\s+$/, '');
-if(s === "") return [];
+if(s === "") return new (my$win().Array);
 var sa = s.split(/\s+/);
 return eb$gebcn(this, sa);
 }
 
 function eb$gebcn(top, sa) {
-var a = [];
+var a = new (my$win().Array);
 if(top.cl$present) {
 var i;
 for(i=0; i<sa.length; ++i) {
@@ -1049,6 +1051,129 @@ name === "options" && o.dom$class == "Select";
 }
 
 /*********************************************************************
+Set and clear attributes. This is done in 3 different ways,
+the third using attributes as a NamedNodeMap.
+This may be overkill - I don't know.
+*********************************************************************/
+
+function getAttribute(name) {
+var w = my$win();
+name = name.toLowerCase();
+if(implicitMember(this, name)) return null;
+// has to be a real attribute
+if(!this.attributes$2) return null;
+if(!this.attributes[name]) return null;
+var v = this.attributes[name].value;
+if(v.dom$class == "URL" || v instanceof w.URL) return v.toString();
+var t = typeof v;
+if(t == "undefined") return null;
+// possibly any object should run through toString(), as we did with URL, idk
+return v; }
+function hasAttribute(name) { return this.getAttribute(name) !== null; }
+
+function getAttributeNames(name) {
+var w = my$win();
+var a = new w.Array;
+if(!this.attributes$2) return a;
+for(var l = 0; l < this.attributes$2.length; ++l)
+a.push(this.attributes$2[l].name);
+return a;
+}
+
+function getAttributeNS(space, name) {
+if(space && !name.match(/:/)) name = space + ":" + name;
+return this.getAttribute(name);
+}
+function hasAttributeNS(space, name) { return this.getAttributeNS(space, name) !== null;}
+
+function setAttribute(name, v) {
+var w = my$win();
+name = name.toLowerCase();
+// special code for style
+if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
+this.style.cssText = v;
+return;
+}
+if(implicitMember(this, name)) return;
+var oldv = null;
+// referencing attributes should create it on demand, but if it doesn't...
+if(!this.attributes) this.attributes$2 = new w.NamedNodeMap;
+if(!this.attributes[name]) {
+var a = new w.Attr();
+a.owner = this;
+a.name = name;
+a.specified = true;
+// don't have to set value because there is a getter that grabs value
+// from the html node, see Attr class.
+this.attributes.push(a);
+// easy hash access
+this.attributes[name] = a;
+} else {
+oldv = this.attributes[name].value;
+}
+if(v !== "from@@html") {
+if(name.substr(0,5) == "data-") {
+// referencing dataset should create it on demand, but if it doesn't...
+if(!this.dataset) this.dataset$2 = {};
+this.dataset[dataCamel(name)] = v;
+} else this[name] = v;
+}
+mutFixup(this, true, name, oldv);
+}
+function markAttribute(name) { this.setAttribute(name, "from@@html"); }
+function setAttributeNS(space, name, v) {
+if(space && !name.match(/:/)) name = space + ":" + name;
+this.setAttribute(name, v);
+}
+
+function removeAttribute(name) {
+if(!this.attributes$2) return;
+    name = name.toLowerCase();
+// special code for style
+if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
+// wow I have no clue what this means but it happens, https://www.maersk.com
+return;
+}
+var oldv = null;
+if(name.substr(0,5) == "data-") {
+var n = dataCamel(name);
+if(this.dataset$2 && this.dataset$2[n]) { oldv = this.dataset$2[n]; delete this.dataset$2[n]; }
+} else {
+    if (this[name]) { oldv = this[name]; delete this[name]; }
+}
+// acid test 59 says there's some weirdness regarding button.type
+if(name === "type" && this.nodeName == "BUTTON") this[name] = "submit";
+// acid test 48 removes class before we can check its visibility.
+// class is undefined and last$class is undefined, so getComputedStyle is never called.
+if(name === "class" && !this.last$class) this.last$class = "@@";
+if(name === "id" && !this.last$id) this.last$id = "@@";
+var a = this.attributes[name]; // hash access
+if(!a) return;
+// Have to roll our own splice.
+var i, found = false;
+for(i=0; i<this.attributes.length-1; ++i) {
+if(!found && this.attributes[i] == a) found = true;
+if(found) this.attributes[i] = this.attributes[i+1];
+}
+this.attributes.length = i;
+delete this.attributes[i];
+delete this.attributes[name];
+mutFixup(this, true, name, oldv);
+}
+function removeAttributeNS(space, name) {
+if(space && !name.match(/:/)) name = space + ":" + name;
+this.removeAttribute(name);
+}
+
+// this returns null if no such attribute, is that right,
+// or should we return a new Attr node with no value?
+function getAttributeNode(name) {
+if(!this.attributes$2) return null;
+    name = name.toLowerCase();
+return this.attributes[name] ? this.attributes[name] : null;
+}
+
+/*********************************************************************
 cloneNode creates a copy of the node and its children recursively.
 The argument 'deep' refers to whether or not the clone will recurs.
 clone1 is a helper function that is not tied to any particular prototype.
@@ -1136,7 +1261,7 @@ But the thing is, we don't have to do that, because appendChild
 does it for us, as side effects, for these various classes.
 *********************************************************************/
 
-node2[item] = [];
+node2[item] = new w.Array;
 
 // special code here for an array of radio buttons within a form.
 if(node1.dom$class == "Form" && node1[item].length &&
@@ -2380,6 +2505,10 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling",
 "implicitMember",
+"getAttribute", "getAttributeNames", "getAttributeNS",
+"hasAttribute", "hasAttributeNS",
+"setAttribute", "markAttribute", "setAttributeNS",
+"removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",

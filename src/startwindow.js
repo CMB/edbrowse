@@ -1334,131 +1334,17 @@ NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerC
 NamedNodeMap.prototype.setNamedItem = function(name, v) { this.owner.setAttribute(name, v);}
 NamedNodeMap.prototype.removeNamedItem = function(name) { this.owner.removeAttribute(name);}
 
-/*********************************************************************
-Set and clear attributes. This is done in 3 different ways,
-the third using attributes as a NamedNodeMap.
-This may be overkill - I don't know.
-*********************************************************************/
-
-document.getAttribute = function(name) {
-name = name.toLowerCase();
-if(mw$.implicitMember(this, name)) return null;
-// has to be a real attribute
-if(!this.attributes$2) return null;
-if(!this.attributes[name]) return null;
-var v = this.attributes[name].value;
-if(v.dom$class == "URL" || v instanceof URL) return v.toString();
-var t = typeof v;
-if(t == "undefined") return null;
-// possibly any object should run through toString(), as we did with URL, idk
-return v; }
-document.hasAttribute = function(name) { return this.getAttribute(name) !== null; }
-
-document.getAttributeNames = function(name) {
-var a = [];
-if(!this.attributes$2) return a;
-for(var l = 0; l < this.attributes$2.length; ++l)
-a.push(this.attributes$2[l].name);
-return a;
-}
-
-document.getAttributeNS = function(space, name) {
-if(space && !name.match(/:/)) name = space + ":" + name;
-return this.getAttribute(name);
-}
-document.hasAttributeNS = function(space, name) { return this.getAttributeNS(space, name) !== null;}
-
-document.setAttribute = function(name, v) {
-name = name.toLowerCase();
-// special code for style
-if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
-this.style.cssText = v;
-return;
-}
-if(mw$.implicitMember(this, name)) return;
-var oldv = null;
-// referencing attributes should create it on demand, but if it doesn't...
-if(!this.attributes) this.attributes = new NamedNodeMap;
-if(!this.attributes[name]) {
-var a = new Attr();
-a.owner = this;
-a.name = name;
-a.specified = true;
-// don't have to set value because there is a getter that grabs value
-// from the html node, see Attr class.
-this.attributes.push(a);
-// easy hash access
-this.attributes[name] = a;
-} else {
-oldv = this.attributes[name].value;
-}
-if(v !== "from@@html") {
-if(name.substr(0,5) == "data-") {
-// referencing dataset should create it on demand, but if it doesn't...
-if(!this.dataset) this.dataset = {};
-this.dataset[mw$.dataCamel(name)] = v;
-} else this[name] = v;
-}
-mutFixup(this, true, name, oldv);
-}
-document.markAttribute = function(name) { this.setAttribute(name, "from@@html"); }
-document.setAttributeNS = function(space, name, v) {
-if(space && !name.match(/:/)) name = space + ":" + name;
-this.setAttribute(name, v);
-}
-
-document.removeAttribute = function(name) {
-if(!this.attributes$2) return;
-    name = name.toLowerCase();
-// special code for style
-if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
-// wow I have no clue what this means but it happens, https://www.maersk.com
-return;
-}
-var oldv = null;
-if(name.substr(0,5) == "data-") {
-var n = mw$.dataCamel(name);
-if(this.dataset$2 && this.dataset$2[n]) { oldv = this.dataset$2[n]; delete this.dataset$2[n]; }
-} else {
-    if (this[name]) { oldv = this[name]; delete this[name]; }
-}
-// acid test 59 says there's some weirdness regarding button.type
-if(name === "type" && this.nodeName == "BUTTON") this[name] = "submit";
-// acid test 48 removes class before we can check its visibility.
-// class is undefined and last$class is undefined, so getComputedStyle is never called.
-if(name === "class" && !this.last$class) this.last$class = "@@";
-if(name === "id" && !this.last$id) this.last$id = "@@";
-var a = this.attributes[name]; // hash access
-if(!a) return;
-// Have to roll our own splice.
-var i, found = false;
-for(i=0; i<this.attributes.length-1; ++i) {
-if(!found && this.attributes[i] == a) found = true;
-if(found) this.attributes[i] = this.attributes[i+1];
-}
-this.attributes.length = i;
-delete this.attributes[i];
-delete this.attributes[name];
-mutFixup(this, true, name, oldv);
-}
-document.removeAttributeNS = function(space, name) {
-if(space && !name.match(/:/)) name = space + ":" + name;
-this.removeAttribute(name);
-}
-
-// this returns null if no such attribute, is that right,
-// or should we return a new Attr node with no value?
-document.getAttributeNode = function(name) {
-if(!this.attributes$2) return null;
-    name = name.toLowerCase();
-return this.attributes[name] ? this.attributes[name] : null;
-/*
-a = new Attr;
-a.owner = this;
-a.name = name;
-return a;
-*/
-}
+document.getAttribute = mw$.getAttribute;
+document.hasAttribute = mw$.hasAttribute;
+document.getAttributeNames = mw$.getAttributeNames;
+document.getAttributeNS = mw$.getAttributeNS;
+document.hasAttributeNS = mw$.hasAttributeNS;
+document.setAttribute = mw$.setAttribute;
+document.markAttribute = mw$.markAttribute;
+document.setAttributeNS = mw$.setAttributeNS;
+document.removeAttribute = mw$.removeAttribute;
+document.removeAttributeNS = mw$.removeAttributeNS;
+document.getAttributeNode = mw$.getAttributeNode;
 
 document.cloneNode = function(deep) {
 cloneRoot1 = this;
