@@ -4295,8 +4295,15 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if (!strncmp(line, "rr ", 3) && isdigit(line[3])) {
+	if (!strncmp(line, "rr=", 3) && isdigit(line[3])) {
 		rr_interval = atoi(line + 3);
+		if(rr_interval < 5) // even 5 is prettty unreasonable
+			rr_interval = 5;
+		return true;
+	}
+
+	if(stringEqual(line, "rr=")) {
+		printf("%d\n", rr_interval);
 		return true;
 	}
 
