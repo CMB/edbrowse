@@ -24,6 +24,7 @@ char *debugFileName;
 bool demin = false;
 bool gotimers = true;
 bool uvw;
+int timerspeed = 1;
 char *downDir, *home;
 
 /*********************************************************************

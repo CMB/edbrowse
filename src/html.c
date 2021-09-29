@@ -3146,6 +3146,7 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 {
 	struct jsTimer *jt;
 	int seqno;
+	int n2;
 
 	if (jsrc[0] == 0)
 		return;		/* nothing to run */
@@ -3184,13 +3185,17 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 		if(!n)
 			n = 10;
 		if (n < timerSpread)
-			n += timerStep;
-		cf->jtmin = n;
+			cf->jtmin = n += timerStep;
 	}
-	jt->sec = n / 1000;
-	jt->ms = n % 1000;
 	if ((jt->isInterval = isInterval))
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
+	n2 = n;
+// promise jobs not throttled by timerspeed
+	if(timerspeed > 1 && !jt->pending &&
+		0x40000000 / timerspeed >= n)
+		n2 *= timerspeed;
+	jt->sec = n2 / 1000;
+	jt->ms = n2 % 1000;
 	currentTime();
 	jt->sec += now_sec;
 	jt->ms += now_ms;
@@ -3208,6 +3213,7 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 void scriptSetsTimeout(Tag *t)
 {
 	struct jsTimer *jt = allocZeroMem(sizeof(struct jsTimer));
+// asychronous scripts or xhr not throttled by timerspeed
 	jt->sec = 0;
 	jt->ms = asyncTimer;
 	jt->isInterval = true;
@@ -3323,6 +3329,7 @@ void runTimer(void)
 	if(jt->pending) { // pending jobs
 		my_ExecutePendingJobs();
 		my_ExecutePendingMessages();
+// promise jobs not throttled by timerspeed
 		int n = jt->jump_sec * 1000 + jt->jump_ms;
 		jt->sec = now_sec + n / 1000;
 		jt->ms = now_ms + n % 1000;
@@ -3440,8 +3447,10 @@ skip_execution:
 		if(!n)
 			n = 10;
 		if (n < timerSpread)
-			n += timerStep;
-		cf->jtmin = n;
+			cf->jtmin = n += timerStep;
+		if(timerspeed > 1 && !jt->pending && !jt->t &&
+		0x40000000 / timerspeed >= n)
+			n *= timerspeed;
 		jt->sec = now_sec + n / 1000;
 		jt->ms = now_ms + n % 1000;
 		if (jt->ms >= 1000)

@@ -333,8 +333,18 @@ static bool jdb_passthrough(const char *s)
 		return true;
 	if (stringInList(oklist, s) >= 0)
 		return true;
+// I could pass e through, but e is often a variable.
+// Bad enough I pass e3 through; if that is a variable you want to see,
+// put a space after it.
 	if (s[0] == 'e' && isdigit(s[1])) {
 		for (i = 2; s[i]; ++i)
+			if (!isdigit(s[i]))
+				break;
+		if (!s[i])
+			return true;
+	}
+	if (!strncmp(s, "speed=", 6) && isdigit(s[6])) {
+		for (i = 6; s[i]; ++i)
 			if (!isdigit(s[i]))
 				break;
 		if (!s[i])
@@ -5180,6 +5190,19 @@ et_go:
 // FixFiles has to be first, as FixOptions runs rerender
 		charFixFiles(oldsep);
 		charFixOptions(oldsep);
+		return true;
+	}
+
+	if(!strncmp(line, "speed=", 6)) {
+		char *t;
+		if(!(c = line[6])) {
+			printf("%d\n", timerspeed);
+			return true;
+		}
+		n = strtol(line + 6, &t, 10);
+		if(n < 0 || *t)
+			return 2; // wrong syntax
+		timerspeed = n ? n : 1;
 		return true;
 	}
 
