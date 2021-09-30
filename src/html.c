@@ -3489,7 +3489,18 @@ void showTimers(void)
 		printf("%d cx%d %s ", t->tsn, t->f->gsn, t->backlink);
 		n = (t->sec - now_sec) * 1000;
 		n += t->ms - now_ms;
-		printf("in %dms\n", n);
+		if(n >= 1000 || n < -1000)
+			printf("in %ds", n / 1000);
+		else
+			printf("in %dms", n);
+		if(t->isInterval) {
+			n = t->jump_sec * 1000 + t->jump_ms;
+			if(n >= 1000)
+				printf(" freq %ds", n / 1000);
+			else
+				printf(" freq %dms", n);
+		}
+		puts("");
 	}
 
 	if(!printed)
