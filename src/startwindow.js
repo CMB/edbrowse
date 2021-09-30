@@ -2212,31 +2212,9 @@ w.$jt$sn = 0;
 // Watch out, tools/uncomment will muck with this regexp if we're not careful!
 // I escape some spaces with \ so they don't get crunched away.
 // First name the anonymous functions; then put in the trace points.
-s.text = s.text.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, dom$.jtfn1);
-s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, dom$.jtfn0);
+s.text = s.text.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, mw$.jtfn1);
+s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw$.jtfn0);
 return;
-}
-
-// trace functions; these only work on deminimized js.
-dom$.jtfn0 = function (all, a, b) {
-// if code is not deminimized, this will inject
-// trace on every blank line, which is not good.
-if(b == "\n" && a.match(/\n/)) return a+b;
-// I don't want to match on function(){var either.
-if(b != "\n" && !a.match(/\n/)) return a+b;
-var w = my$win();
-var c = w.$jt$c;
-var sn = w.$jt$sn;
-w.$jt$sn = ++sn;
-return a + "trace" + "@(" + c + sn + ")" + b;
-}
-
-dom$.jtfn1 = function (all, a, b) {
-var w = my$win();
-var c = w.$jt$c;
-var sn = w.$jt$sn;
-w.$jt$sn = ++sn;
-return a + " " + c + "__" + sn + b;
 }
 
 // pages seem to want document.style to exist

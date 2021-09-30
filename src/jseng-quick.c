@@ -2913,20 +2913,22 @@ usually from a Promise call. It can be in any context.
 We have no control over that.
 Thus it could be a promise call from any edbrowse frame in any session.
 That's not enough control for us, for many reasons.
-1. I employ two very important global variables, which is bad programming,
+1. I employ two very important global variables, which is bad programming ik,
 but this is a part time volunteer gig and sometimes I'm lazy.
 Somehow, cw and cf have to be set before the job runs,
+the current window and the current frame,
 or our side effects, like innerHTML, won't work properly.
 I have to call frameFromContext before the job runs, somewhere
 inside JS_ExecutePendingJob().
-Alternatively, I could call frameFromContext from all of my native methods,
+Alternatively, I could call frameFromContext from *all* of my native methods,
 that is, you go from js into the edbrowse world, and I make sure cf and cw
-are correct, but that's kind of a pain in the ass.
+are set correctly, but that's kind of a pain in the ass.
 On the other hand, trying to get inside of the quickjs function,
 which is suppose to be opaque to me, has its own risks. Well let's continue.
 2. If an edbrowse session quits, I should clean up and throw away
 any pending jobs associated with that context.
-I do this for timers, but timers are my own creation so that's easy.
+In fact, having those jobs run could be quite risky.
+I clean up the timers, but timers are my own creation so that's easy.
 Again, I have to dip into the internal list of pending jobs if I am to do this.
 3. In a perfect world, I would skip over jobs in contexts
 that have been pushed onto the edbrowse stack.
@@ -2940,7 +2942,7 @@ Plural, because I run all the pending jobs, not just the next one.
 Ok, but I have to bring in some other machinery to support it.
 I copied some primitives for managing linked lists, from list.h,
 and they are remarkably similar to the ones I invented for edbrowse.
-Their list_empty is my listEmpty, etc.
+Their list_empty is my listEmpty, exactly the same code, etc.
 Great minds think alike.
 But the real problem is the JSRuntime. The API leaves it opaque,
 struct JSRuntime, with no mention of the members.
@@ -2952,12 +2954,13 @@ As of this writing, quickjs is not packaged or distributed.
 You have to build it from source, just like edbrowse.
 It is then not unreasonable for me to dip into that source if I need to,
 and apparently I need to,
-and to assume that source is in a directory parallel to edbrowse.
+and I assume that source is in a directory parallel to edbrowse.
 I sanitize the struct along the way, so I don't have to have all the typedefs.
 Example: SnorkHork *foo may as well be void *foo for all I care.
-Long as I keep job_list the same.
+Long as I keep job_list in position.
 And I don't need anything beyond job_list.
 A sed script takes care of this.
+See make-helper.sed
 This is all a lot more involved than it should be.
 Ok, here is some stuffe from quickjs/list.h.
 *********************************************************************/

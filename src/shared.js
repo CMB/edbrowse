@@ -1858,6 +1858,31 @@ top.removeChild(top.childNodes[i]);
 top.appendChild(my$doc().createTextNode(s));
 }
 
+// jtfn0 injects trace(blah) into the code.
+// It should only be applied to deminimized code.
+// jtfn1 puts a name on the anonymous function, for debugging.
+
+jtfn0 = function (all, a, b) {
+// if code is not deminimized, this will inject
+// trace on every blank line, which is not good.
+if(b == "\n" && a.match(/\n/)) return a+b;
+// I don't want to match on function(){var either.
+if(b != "\n" && !a.match(/\n/)) return a+b;
+var w = my$win();
+var c = w.$jt$c;
+var sn = w.$jt$sn;
+w.$jt$sn = ++sn;
+return a + "trace" + "@(" + c + sn + ")" + b;
+}
+
+jtfn1 = function (all, a, b) {
+var w = my$win();
+var c = w.$jt$c;
+var sn = w.$jt$sn;
+w.$jt$sn = ++sn;
+return a + " " + c + "__" + sn + b;
+}
+
 // placeholder for URL class, I'm not comfortable sharing our hand-built
 // URL class yet.
 // But this has to be here for the Blob code.
@@ -2648,6 +2673,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
+"jtfn0", "jtfn1",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
