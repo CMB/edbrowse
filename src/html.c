@@ -3241,6 +3241,8 @@ static struct jsTimer *soonest(void)
 	foreach(t, timerList) {
 		if(!t->pending) {
 // regular timer, not the pending jobs timer
+			if(!gotimers)
+				continue;
 // Browsing a new web page in the current session pushes the old one, like ^z
 // in Linux. The prior page suspends, and the timers suspend.
 // ^ is like fg, bringing it back to life.
