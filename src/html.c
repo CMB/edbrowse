@@ -3464,6 +3464,36 @@ done:
 	cw = save_cw, cf = save_cf;
 }
 
+void showTimers(void)
+{
+	const struct jsTimer *t;
+	int n;
+	bool printed = false;
+
+	currentTime();
+	foreach(t, timerList) {
+		if(t->pending)
+			continue;
+		if(t->f->owner != cw)
+			continue;
+		printed = true;
+		if(t->isInterval)
+			printf("interval ");
+		else if(t->t)
+			printf("%s ",
+			   (t->t->action == TAGACT_SCRIPT ? "script" : "xhr"));
+		else
+			printf("timer ");
+		printf("%d cx%d %s ", t->tsn, t->f->gsn, t->backlink);
+		n = (t->sec - now_sec) * 1000;
+		n += t->ms - now_ms;
+		printf("in %dms\n", n);
+	}
+
+	if(!printed)
+		i_puts(MSG_Empty);
+}
+
 void domOpensWindow(const char *href, const char *name)
 {
 	char *copy, *r;

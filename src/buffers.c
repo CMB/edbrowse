@@ -322,7 +322,7 @@ static bool jdb_passthrough(const char *s)
 		"dbcn", "dbcn+", "dbcn-",
 		"dbev", "dbev+", "dbev-",
 		"dbcss", "dbcss+", "dbcss-", "db",
-		"timers", "timers+", "timers-",
+		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
 		"bflist", "bglist", "help", 0
 	};
@@ -5160,6 +5160,11 @@ et_go:
 		uvw = (line[5] == '+');
 		if (helpMessagesOn)
 			i_puts(uvw + MSG_DebugTraceOff);
+		return true;
+	}
+
+	if (stringEqual(line, "tmlist")) {
+		showTimers();
 		return true;
 	}
 

@@ -26,6 +26,8 @@ required fields, <input type=submit formattributes>, <datalist>
 
 Move blob code into shared space.
 
+speed= and tmlist commands, for debugging timers.
+
 3.8.0
 Experiment with Spider Monkey js, make edbrowsesm
 I have no idea how to do cross compartment access, as in frames,

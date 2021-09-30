@@ -125,6 +125,7 @@ void scriptSetsTimeout( Tag *t);
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(const Frame *f);
 void runTimer(void);
+void showTimers(void);
 void domOpensWindow(const char *href, const char *name);
 struct htmlTag *line2tr(int ln);
 bool showHeaders(int ln);
@@ -163,7 +164,7 @@ void eb_curl_global_init(void);
 void eb_curl_global_cleanup(void);
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g);
 time_t parseHeaderDate(const char *date);
-bool parseRefresh(char *ref, int *delay_p) ;
+bool parseRefresh(char *ref, int *delay_p);
 bool shortRefreshDelay(const char *r, int d);
 bool httpConnect(struct i_get *g);
 void *httpConnectBack1(void *ptr);
@@ -232,9 +233,9 @@ bool helpUtility(void);
 // which are still threadsafe the way we use them, e.g. only calling
 // them from the foreground thread, or ? which is not safe.
 // I'd like to do this markup for the other files as time permits.
-void *allocMem(size_t n) ;
-void *allocZeroMem(size_t n) ;
-void *reallocMem(void *p, size_t n) ;
+void *allocMem(size_t n);
+void *allocZeroMem(size_t n);
+void *reallocMem(void *p, size_t n);
 char *allocString(size_t n) ;
 char *allocZeroString(size_t n) ;
 char *reallocString(void *p, size_t n) ;
