@@ -174,11 +174,6 @@ height: 768, width: 1024,
 availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
 colorDepth: 24};
 
-// Build a lot of the DOM in dom$,
-// so all those support functions aren't cluttering up window.
-
-dom$ = {}
-
 console = {
 log: function(obj) { mw$.logtime(3, "log", obj); },
 info: function(obj) { mw$.logtime(3, "info", obj); },
@@ -2447,10 +2442,10 @@ var l = a.length;
 for(var i=0; i<l; ++i) a[i] = Math.floor(Math.random()*0x100000000);
 }
 
-rastep = 0;
+ra$step = 0;
 requestAnimationFrame = function() {
 // This absolutely doesn't do anything. What is edbrowse suppose to do with animation?
-return ++dom$.rastep;
+return ++ra$step;
 }
 
 cancelAnimationFrame = eb$voidfunction;
