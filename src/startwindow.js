@@ -2138,85 +2138,6 @@ XMLHttpRequest.prototype.response = "";
 XMLHttpRequest.prototype.status = 0;
 XMLHttpRequest.prototype.statusText = "";
 
-// Deminimize javascript for debugging purposes.
-// Then the line numbers in the error messages actually mean something.
-// This is only called when debugging is on. Users won't invoke this machinery.
-// Argument is the script object.
-// escodegen.generate and esprima.parse are found in demin.js.
-dom$.eb$demin = function(s) {
-if( s.dom$class != "Script") return;
-if(s.demin) return; // already expanded
-s.demin = true;
-s.expanded = false;
-if(! s.text) return;
-
-// Don't deminimize if short, or if average line length is less than 120.
-if(s.text.length < 1000) return;
-var i, linecount = 1;
-for(i=0; i<s.text.length; ++i)
-if(s.text.substr(i,1) === '\n') ++linecount;
-if(s.text.length / linecount <= 120) return;
-
-/*********************************************************************
-You're not gonna believe this.
-paypal.com, and perhaps other websites, use an obfuscator, that hangs forever
-if you're javascript engine doesn't do exactly what it's suppose to.
-As I write this, edbrowse + quickjs works, however, it fails if you deminimize
-the code for debugging. And it fails even more if you add trace points.
-They deliberately set it up to fail if the js code is deminimized.
-They don't want you to understand it.
-There is a deceptive function called removeCookie, that has nothing to do
-with cookies. Another function tests removeCookie.toString(),
-and expects it to be  a simple compact return statement.
-If it spreads across multiple lines (as happens with deminimization),
-or if it includes tracing software, then it all blows up.
-https://www.paypal.com/auth/createchallenge/381145a4bcdc015f/recaptchav3.js
-I can put it back the way it was, or just not deminimize that particular script.
-There are pros and cons either way.
-For now I'm taking the simpler approach, and leaving the script alone.
-Watch for the compact removeCookie function, that is my flag.
-There may be other obfuscators out there, and other cleanup
-procedures that we have to endure, and maintain, as the obfuscators evolve.
-*********************************************************************/
-
-if(s.text.indexOf("removeCookie':function(){return'dev'") > 0) {
-alert("deminimization skipped due to removeCookie test");
-return;
-}
-/* If you wanna fix this one after the fact:
-var trouble = /'removeCookie': *function *\(\)\ *{\n *return *'dev';\n *}/;
-if(trouble.test(s.text))
-s.text = s.text.replace(trouble, "'removeCookie':function(){return'dev';}");
-*/
-
-// Ok, run it through the deminimizer.
-if(window.escodegen) {
-s.original = s.text;
-s.text = escodegen.generate(esprima.parse(s.text));
-s.expanded = true;
-} else {
-alert("deminimization not available");
-}
-}
-
-// Trace with possible breakpoints.
-dom$.eb$watch = function(s) {
-if( s.dom$class != "Script") return;
-if(! s.text) return;
-if(s.text.indexOf("trace"+"@(") >= 0) // already traced
-return;
-var w = my$win();
-if(w.$jt$c == 'z') w.$jt$c = 'a';
-else w.$jt$c = String.fromCharCode(w.$jt$c.charCodeAt(0) + 1);
-w.$jt$sn = 0;
-// Watch out, tools/uncomment will muck with this regexp if we're not careful!
-// I escape some spaces with \ so they don't get crunched away.
-// First name the anonymous functions; then put in the trace points.
-s.text = s.text.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, mw$.jtfn1);
-s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, mw$.jtfn0);
-return;
-}
-
 // pages seem to want document.style to exist
 document.style = new CSSStyleDeclaration;
 document.style.element = document;
@@ -2231,8 +2152,8 @@ document.all.tags = function(s) {
 return mw$.eb$gebtn(document.body, s.toLowerCase());
 }
 
-eb$demin = dom$.eb$demin;
-eb$watch = dom$.eb$watch;
+eb$demin = mw$.deminimize;
+eb$watch = mw$.addTrace;
 $uv = [];
 $uv$sn = 0;
 $jt$c = 'z';
@@ -2533,10 +2454,6 @@ return ++dom$.rastep;
 }
 
 cancelAnimationFrame = eb$voidfunction;
-
-// link in the deminimization code.
-if(mw$.escodegen)
-esprima = mw$.esprima, escodegen = mw$.escodegen;
 
 // link in the blob code
 Blob = mw$.Blob
