@@ -121,6 +121,19 @@ alert(m);
 w.$ss = slist;
 }
 
+function showframes() {
+var i, s, m;
+var w = my$win(), d = my$doc();
+var slist = d.getElementsByTagName("iframe");
+for(i=0; i<slist.length; ++i) {
+s = slist[i];
+m = i + ": cx" + (s.eb$expf ? s.contentWindow.eb$ctx : "?") + " " + s.src;
+// anything else worth printing here?
+alert(m);
+}
+w.$ff = slist;
+}
+
 function searchscripts(t) {
 var w = my$win();
 if(!w.$ss) showscripts();
@@ -2729,7 +2742,7 @@ return MessageChannelPolyfill;
 var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "Error", "String",
 "alert","alert3","alert4","dumptree","uptrace",
-"showscripts", "searchscripts", "snapshot", "aloop",
+"showscripts", "showframes", "searchscripts", "snapshot", "aloop",
 "eb$newLocation","eb$logElement",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
