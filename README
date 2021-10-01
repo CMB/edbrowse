@@ -51,13 +51,13 @@ As such, it was only natural to use perl regular expressions for
 the search/substitute functions in the editor.
 Once you've experienced the power of perl regexp, you'll never
 go back to ed.  So I use the perl-compatible regular expression
-library, /lib/libpcre.so.0, available on most Linux systems.
+library, /lib/libpcre2-8
 If you don't have this file, check your available packages.
 the pcre and pcre-devel packages might be there, just not installed.
-You need version 8.10 or higher.
+As of this writing, you need pcre2-8, which is generally available.
 
-Note that my files include <pcre.h>.
-Some distributions put it in /usr/include/pcre/pcre.h,
+Note that buffers.c includes <pcre2.h>.
+Some distributions put it in /usr/include/pcre2/pcre2.h,
 so you'll have to adjust the source, the -I path, or make a link.
 
 libcurl:

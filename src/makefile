@@ -11,7 +11,7 @@ CFLAGS += $(PLATFORM_CFLAGS)
 PERL !=		which perl
 TIDY_LIBS !=	pkg-config --libs tidy
 CURL_LIBS !=	pkg-config --libs libcurl
-PCRE_LIBS !=	pkg-config --libs libpcre
+PCRE_LIBS !=	pkg-config --libs libpcre2-8
 EDBR_ODBC_OBJS != ./make-helper.sh --odbc-objs "${BUILD_EDBR_ODBC}"
 EDBR_ODBC_LIBS != ./make-helper.sh --odbc-libs "${BUILD_EDBR_ODBC}"
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization

@@ -6,7 +6,6 @@
 #include "eb.h"
 
 #include <pthread.h>
-#include <pcre.h>
 #include <signal.h>
 
 /* Define the globals that are declared in eb.h. */
@@ -576,10 +575,6 @@ int main(int argc, char **argv)
 
 	ttySaveSettings();
 	initializeReadline();
-
-/* Let's everybody use my malloc and free routines */
-	pcre_malloc = allocMem;
-	pcre_free = nzFree;
 
 	loadReplacements();
 
