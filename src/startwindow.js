@@ -167,49 +167,9 @@ timeStamp: function(label) { if(label === undefined) label = "x"; return label.t
 Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
 
-Object.defineProperty(document, "documentElement", {
-get: function() { var e = this.lastChild;
-if(!e) { alert3("missing html node"); return null; }
-if(e.nodeName != "HTML") alert3("html node name " + e.nodeName);
-return e; }});
-Object.defineProperty(document, "head", {
-get: function() { var e = this.documentElement;
-if(!e) return null;
-// In case somebody adds extra nodes under <html>, I search for head and body.
-// But it should always be head, body.
-for(var i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "HEAD") return e.childNodes[i];
-alert3("missing head node"); return null;},
-set: function(h) { var e = this.documentElement;
-if(!e) return;
-var i;
-for(i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "HEAD") break;
-if(i < e.childNodes.length) e.removeChild(e.childNodes[i]); else i=0;
-if(h) {
-if(h.nodeName != "HEAD") { alert3("head replaced with node " + h.nodeName); h.nodeName = "HEAD"; }
-if(i == e.childNodes.length) e.appendChild(h);
-else e.insertBefore(h, e.childNodes[i]);
-}
-}});
-Object.defineProperty(document, "body", {
-get: function() { var e = this.documentElement;
-if(!e) return null;
-for(var i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "BODY") return e.childNodes[i];
-alert3("missing body node"); return null;},
-set: function(b) { var e = this.documentElement;
-if(!e) return;
-var i;
-for(i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "BODY") break;
-if(i < e.childNodes.length) e.removeChild(e.childNodes[i]);
-if(b) {
-if(b.nodeName != "BODY") { alert3("body replaced with node " + b.nodeName); b.nodeName = "BODY"; }
-if(i == e.childNodes.length) e.appendChild(b);
-else e.insertBefore(b, e.childNodes[i]);
-}
-}});
+Object.defineProperty(document, "documentElement", {get: mw$.getElement});
+Object.defineProperty(document, "head", {get: mw$.getHead,set:mw$.setHead});
+Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
 
 navigator = {};
 navigator.appName = "edbrowse";

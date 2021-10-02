@@ -214,6 +214,58 @@ exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
 my$win().eval(exp$$);
 }
 
+// document.head, document.body; shortcuts to head and body.
+function getElement() {
+  var e = this.lastChild;
+if(!e) { alert3("missing html node"); return null; }
+if(e.nodeName != "HTML") alert3("html node name " + e.nodeName);
+return e
+}
+
+function getHead() {
+ var e = this.documentElement;
+if(!e) return null;
+// In case somebody adds extra nodes under <html>, I search for head and body.
+// But it should always be head, body.
+for(var i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "HEAD") return e.childNodes[i];
+alert3("missing head node"); return null;
+}
+
+function setHead(h) {
+ var i, e = this.documentElement;
+if(!e) return;
+for(i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "HEAD") break;
+if(i < e.childNodes.length) e.removeChild(e.childNodes[i]); else i=0;
+if(h) {
+if(h.nodeName != "HEAD") { alert3("head replaced with node " + h.nodeName); h.nodeName = "HEAD"; }
+if(i == e.childNodes.length) e.appendChild(h);
+else e.insertBefore(h, e.childNodes[i]);
+}
+}
+
+function getBody() {
+ var e = this.documentElement;
+if(!e) return null;
+for(var i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "BODY") return e.childNodes[i];
+alert3("missing body node"); return null;
+}
+
+function setBody(b) {
+ var i, e = this.documentElement;
+if(!e) return;
+for(i=0; i<e.childNodes.length; ++i)
+if(e.childNodes[i].nodeName == "BODY") break;
+if(i < e.childNodes.length) e.removeChild(e.childNodes[i]);
+if(b) {
+if(b.nodeName != "BODY") { alert3("body replaced with node " + b.nodeName); b.nodeName = "BODY"; }
+if(i == e.childNodes.length) e.appendChild(b);
+else e.insertBefore(b, e.childNodes[i]);
+}
+}
+
 // implementation of getElementsByTagName, getElementsByName, and getElementsByClassName.
 // The return is an array, and you might put weird things on Array.prototype,
 // and then expect to use them, so let's return your Array.
@@ -2823,6 +2875,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "showscripts", "showframes", "searchscripts", "snapshot", "aloop",
 "eb$base$snapshot", "set_location_hash",
 "eb$newLocation","eb$logElement",
+"getElement", "getHead", "setHead", "getBody", "setBody",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
 "dispatchEvent","addEventListener","removeEventListener","attachOn",
