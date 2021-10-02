@@ -94,6 +94,7 @@ alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 showscripts = mw$.showscripts, searchscripts = mw$.searchscripts, showframes = mw$.showframes;
 snapshot = mw$.snapshot, aloop = mw$.aloop;
+eb$base$snapshot = mw$.eb$base$snapshot, set_location_hash = mw$.set_location_hash;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
 document.dispatchEvent = mw$.dispatchEvent;
@@ -126,9 +127,6 @@ step$go = "";
 // step$l = 0, step$go = "c275";
 // to start tracing at c275
 
-// This is our bailout function, it references a variable that does not exist.
-function eb$stopexec() { return javascript$interrupt; }
-
 document.open = function() { return this }
 
 /* Some visual attributes of the window.
@@ -147,23 +145,6 @@ toolbar = true;
 resizable = true;
 directories = false;
 name = "unspecifiedFrame";
-
-function eb$base$snapshot() {
-document.URL = eb$base;
-var u = new URL(eb$base);
-// changing things behind the scenes, so as not to trigger redirection
-location$2.href$val = document.location$2.href$val = u.href$val;
-location$2.protocol$val = document.location$2.protocol$val = u.protocol$val;
-location$2.hostname$val = document.location$2.hostname$val = u.hostname$val;
-location$2.host$val = document.location$2.host$val = u.host$val;
-location$2.port$val = document.location$2.port$val = u.port$val;
-location$2.pathname$val = document.location$2.pathname$val = u.pathname$val;
-location$2.search$val = document.location$2.search$val = u.search$val;
-location$2.hash$val = document.location$2.hash$val = u.hash$val;
-}
-
-function set_location_hash(h) { h = '#'+h; location$2.hash$val = h;
-location$2.href$val = location$2.href$val.replace(/#.*/, "") + h; }
 
 document.bgcolor = "white";
 document.readyState = "loading";
@@ -316,6 +297,17 @@ Almost all of these can be handled in JS,
 except for setting window.location or document.location to a new url,
 which replaces the web page you are looking at.
 This side effect does not take place in the constructor, which establishes the initial url.
+Here's one reason, perhaps not the only reason, we can't share the URL class.
+Why it has to stay here in startwindow.js.
+This may apply to every other DOM class as well.
+There are websites that replace URL.prototype.toString with their own function.
+They want to change the way URLs stringify, or whatever. I can't
+prevent sites from doing that, things might not work properly without it!
+So, if site A does that in the shared window, and site B invokes
+a.href.toString, directly or indirectly, B is calling a function from
+the unrelated website A.
+This could really screw things up, or worse, site A could use it to hack into
+site B, hoping site B is your banking site or something important.
 *********************************************************************/
 
 z$URL = URL = function() {

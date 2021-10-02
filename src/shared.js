@@ -179,6 +179,27 @@ wlf(jslocal, "jslocal");
 alert(".   ub   ci+   /<head/r from   w base   qt");
 }
 
+// called internally when we are running a snapshot.
+function eb$base$snapshot() {
+var w = my$win(), d = my$doc();
+d.URL = w.eb$base;
+var u = new w.URL(w.eb$base);
+// changing things behind the scenes, so as not to trigger redirection
+var loc1 = w.location$2;
+var loc2 = d.location$2;
+loc1.href$val = loc2.href$val = u.href$val;
+loc1.protocol$val = loc2.protocol$val = u.protocol$val;
+loc1.hostname$val = loc2.hostname$val = u.hostname$val;
+loc1.host$val = loc2.host$val = u.host$val;
+loc1.port$val = loc2.port$val = u.port$val;
+loc1.pathname$val = loc2.pathname$val = u.pathname$val;
+loc1.search$val = loc2.search$val = u.search$val;
+loc1.hash$val = loc2.hash$val = u.hash$val;
+}
+
+function set_location_hash(h) { h = '#'+h; var loc = my$win().location$2; loc.hash$val = h;
+loc.href$val = loc.href$val.replace(/#.*/, "") + h; }
+
 // run an expression in a loop.
 function aloop(s$$, t$$, exp$$) {
 if(Array.isArray(s$$)) {
@@ -2800,6 +2821,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "Error", "String", "parseInt",
 "alert","alert3","alert4","dumptree","uptrace",
 "showscripts", "showframes", "searchscripts", "snapshot", "aloop",
+"eb$base$snapshot", "set_location_hash",
 "eb$newLocation","eb$logElement",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
