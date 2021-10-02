@@ -1800,6 +1800,63 @@ break;
 w.soj$ = z.style;
 }
 
+/*********************************************************************
+This function doesn't do all it should, and I'm not even sure what it should do.
+If class changes from x to y, it throws out the old css derived attributes
+and rebuilds the style using computeStyleInline().
+Rules with .x don't apply any more; rules with .y now apply.
+If prior javascript had specifically set style.foo = "bar",
+if will persist if foo was not derived from css;
+but it will go away and be recomputed if foo came from css.
+Maybe that's the right thing to do, maybe not, I don't know.
+In theory, changing class could effect the style of any node anywhere in the tree.
+In fact, setting any attribute in one node could change the style of any node
+anywhere in the tree.
+I don't recompute the styles for every node in the entire tree
+every time you set an attribute in a node;
+it would be tremendously slow!
+I only watch for changes to class or id,
+and when that happens I recompute styles for that node and the subtree below.
+That is my compromise.
+Finally, any hover effects from .y are not considered, just as they are not
+considered in getComputedStyle().
+And any hover effects from .x are lost.
+Injected text, as in .x:before { content:hello } remains.
+I don't know if that's right either.
+*********************************************************************/
+
+function eb$visible(t) {
+// see the DIS_ values in eb.h
+var c, rc = 0;
+var so; // style object
+if(!t) return 0;
+if(t.hidden || t["aria-hidden"]) return 1;
+// If class has changed, recompute style.
+// If id has changed, recompute style, but I don't think that ever happens.
+if(t.class != t.last$class || t.id != t.last$id) {
+var w = my$win();
+if(t.last$class) alert3("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
+else alert4("restyle " + t.nodeName + "." + t.last$class + "." + t.class+"#"+t.last$id+"#"+t.id);
+if(w.rr$start) {
+cssGather(false, w);
+delete w.rr$start;
+}
+computeStyleInline(t);
+}
+if(!(so = t.style$2)) return 0;
+if(so.display == "none" || so.visibility == "hidden") {
+rc = 1;
+// It is hidden, does it come to light on hover?
+if(so.hov$vis) rc = 2;
+return rc;
+}
+if((c = so.color) && c != "inherit") {
+rc = (c == "transparent" ? 4 : 3);
+if(rc == 4 && so.hov$col) rc = 5;
+}
+return rc;
+}
+
 function insertAdjacentHTML(flavor, h) {
 // easiest implementation is just to use the power of innerHTML
 var d = my$doc();
@@ -2740,7 +2797,7 @@ return MessageChannelPolyfill;
 
 // lock down, for security.
 var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
-"Error", "String",
+"Error", "String", "parseInt",
 "alert","alert3","alert4","dumptree","uptrace",
 "showscripts", "showframes", "searchscripts", "snapshot", "aloop",
 "eb$newLocation","eb$logElement",
@@ -2765,7 +2822,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "clone1", "findObject", "correspondingObject",
 "compareDocumentPosition",
 "cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
-"injectSetup",
+"injectSetup", "eb$visible",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
@@ -2775,7 +2832,7 @@ for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 // some native class prototypes
-var flist = [Date, Promise, Array, Uint8Array, Error, String];
+var flist = [Date, Promise, Array, Uint8Array, Error, String, URL];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 
