@@ -152,7 +152,15 @@ document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
 document.contentType = "text/html";
-function readyStateComplete() { document.readyState = "complete"; activeElement = document.body; }
+function readyStateComplete() { document.readyState = "complete"; activeElement = document.body;
+if(document.onreadystatechange$$fn) {
+var e = new Event;
+e.initEvent("readystatechange", true, true);
+e.target = e.currentTarget = document;
+e.eventPhase = 2;
+document.onreadystatechange$$fn(e);
+}
+}
 
 screen = {
 height: 768, width: 1024,

@@ -1034,7 +1034,6 @@ char *htmlParse(char *buf, int remote)
 		runOnload();
 		runScriptsPending(false);
 		run_function_bool_win(cf, "readyStateComplete");
-		run_event_doc(cf, "document", "onreadystatechange");
 		run_event_win(cf, "window", "onfocus");
 		run_event_doc(cf, "document", "onfocus");
 

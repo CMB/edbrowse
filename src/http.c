@@ -3070,7 +3070,6 @@ cdt doesn't have or need an object; it's a place holder.
 		runOnload();
 		runScriptsPending(false);
 		run_function_bool_win(cf, "readyStateComplete");
-		run_event_doc(cf, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
@@ -3192,7 +3191,6 @@ bool reexpandFrame(void)
 		runOnload();
 		runScriptsPending(false);
 		run_function_bool_win(cf, "readyStateComplete");
-		run_event_doc(cf, "document", "onreadystatechange");
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
