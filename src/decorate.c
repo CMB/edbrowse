@@ -1614,7 +1614,7 @@ void tag_gc(void)
 			save_cw = cw;
 			cw = w;
 			cf = &(cw->f0);
-			jSyncup(true);
+			jSyncup(true, 0);
 			cw = save_cw;
 			cf = &(cw->f0);
 

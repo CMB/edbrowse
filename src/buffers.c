@@ -470,7 +470,7 @@ top:
 			time_t now;
 			time(&now);
 			if (now >= cw->nextrender) {
-				jSyncup(true);
+				jSyncup(true, 0);
 				rerender(0);
 			}
 		}
@@ -4597,7 +4597,7 @@ pwd:
 		else
 			selfFrame();
 		cw->jdb_frame = cf;
-		jSyncup(false);
+		jSyncup(false, 0);
 		return true;
 	}
 
@@ -5963,7 +5963,7 @@ expctr:
 			setError(MSG_NoBrowse);
 			return false;
 		}
-		jSyncup(false);
+		jSyncup(false, 0);
 		cw->dot = startRange;
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
@@ -5974,7 +5974,7 @@ replaceframe:
 				nzFree(newlocation);
 				newlocation = 0;
 			} else {
-				jSyncup(false);
+				jSyncup(false, 0);
 				if (!reexpandFrame())
 					showError();
 				if (newlocation)
@@ -6659,7 +6659,7 @@ replaceframe:
 			if (!jsdead)
 				set_property_string_win(cf, "status", h);
 			if (jsgo) {
-				jSyncup(false);
+				jSyncup(false, tag);
 				rc = bubble_event_t(tag, "onclick");
 				jSideEffects();
 				if (newlocation)
@@ -6668,7 +6668,7 @@ replaceframe:
 					return true;
 			}
 			if (jsh) {
-				jSyncup(false);
+				jSyncup(false, tag);
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
 				cf = tag->f0;
@@ -6790,7 +6790,7 @@ replaceframe:
 
 				if (c == '*') {
 					Frame *save_cf = cf;
-					jSyncup(false);
+					jSyncup(false, tagList[tagno]);
 					c = infPush(tagno, &allocatedLine);
 					jSideEffects();
 					cf = save_cf;

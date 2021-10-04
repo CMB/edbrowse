@@ -261,7 +261,7 @@ Most of the time I'm setting the strings to what they were before;
 that's the way it goes.
 *********************************************************************/
 
-void jSyncup(bool fromtimer)
+void jSyncup(bool fromtimer, const Tag *active)
 {
 	Tag *t;
 	int itype, j, cx;
@@ -277,6 +277,9 @@ void jSyncup(bool fromtimer)
 	debugPrint(4, "jSyncup starts");
 	if (!fromtimer)
 		cw->nextrender = 0;
+
+	if(active)
+		set_property_object_win(cf, "activeElement", active);
 
 	for (t = cw->inputlist; t; t = t->same) {
 		itype = t->itype;
@@ -1438,7 +1441,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype >= INP_TEXT) {
-		jSyncup(false);
+		jSyncup(false, t);
 		cf = t->f0;
 		if (itype >= INP_RADIO) {
 // The change has already been made;
@@ -2830,7 +2833,7 @@ void rerender(int rr_command)
 
 	if (rr_command > 0) {
 // You might have changed some input fields on the screen, then typed rr
-		jSyncup(true);
+		jSyncup(true, 0);
 	}
 // screen snap, to compare with the new screen.
 	if (!unfoldBufferW(cw, false, &snap, &j)) {
@@ -3355,7 +3358,7 @@ out of the buffer, which has to be the foreground window.
 We need to fix this someday, though it is a very rare corner case.
 *********************************************************************/
 	if (foregroundWindow)
-		jSyncup(true);
+		jSyncup(true, 0);
 	jt->running = true;
 	if ((t = jt->t)) {
 // asynchronous script or xhr
