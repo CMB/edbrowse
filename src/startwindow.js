@@ -1150,7 +1150,7 @@ z$tRow.prototype.deleteCell = mw$.deleteCell;
 
 z$Table.prototype.createCaption = function() {
 if(this.caption) return this.caption;
-var c = this.ownerDocument.createElement("caption");
+var c = my$doc().createElement("caption");
 this.appendChild(c);
 return c;
 }
@@ -1160,7 +1160,7 @@ if(this.caption) this.removeChild(this.caption);
 
 z$Table.prototype.createTHead = function() {
 if(this.tHead) return this.tHead;
-var c = this.ownerDocument.createElement("thead");
+var c = my$doc().createElement("thead");
 this.prependChild(c);
 return c;
 }
@@ -1170,7 +1170,7 @@ if(this.tHead) this.removeChild(this.tHead);
 
 z$Table.prototype.createTFoot = function() {
 if(this.tFoot) return this.tFoot;
-var c = this.ownerDocument.createElement("tfoot");
+var c = my$doc().createElement("tfoot");
 this.insertBefore(c, this.caption);
 return c;
 }
@@ -1379,41 +1379,42 @@ Again, leading ; to avert a parsing ambiguity.
 
 ; (function() {
 var c = window.HTMLElement;
+var p = c.prototype;
 // These subordinate objects are on-demand.
-Object.defineProperty( c.prototype, "dataset", { get: function(){ return this.dataset$2 ? this.dataset$2 : this.dataset$2 = {}; }});
-Object.defineProperty( c.prototype, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = my$doc(); return this.attributes$2;}});
-Object.defineProperty( c.prototype, "style", { get: function(){ if(!this.style$2) this.style$2 = new CSSStyleDeclaration, this.style$2.element = this; return this.style$2;}});
+Object.defineProperty( p, "dataset", { get: function(){ return this.dataset$2 ? this.dataset$2 : this.dataset$2 = {}; }});
+Object.defineProperty( p, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = my$doc(); return this.attributes$2;}});
+Object.defineProperty( p, "style", { get: function(){ if(!this.style$2) this.style$2 = new CSSStyleDeclaration, this.style$2.element = this; return this.style$2;}});
 // get elements below
-c.prototype.getElementsByTagName = document.getElementsByTagName;
-c.prototype.getElementsByName = document.getElementsByName;
-c.prototype.getElementsByClassName = document.getElementsByClassName;
-c.prototype.contains = document.nodeContains;
-c.prototype.querySelectorAll = querySelectorAll;
-c.prototype.querySelector = querySelector;
-c.prototype.matches = querySelector0;
+p.getElementsByTagName = document.getElementsByTagName;
+p.getElementsByName = document.getElementsByName;
+p.getElementsByClassName = document.getElementsByClassName;
+p.contains = document.nodeContains;
+p.querySelectorAll = querySelectorAll;
+p.querySelector = querySelector;
+p.matches = querySelector0;
 // children
-c.prototype.hasChildNodes = document.hasChildNodes;
-c.prototype.appendChild = document.appendChild;
-c.prototype.prependChild = document.prependChild;
-c.prototype.insertBefore = document.insertBefore;
-c.prototype.replaceChild = document.replaceChild;
+p.hasChildNodes = document.hasChildNodes;
+p.appendChild = document.appendChild;
+p.prependChild = document.prependChild;
+p.insertBefore = document.insertBefore;
+p.replaceChild = document.replaceChild;
 // These are native, so it's ok to bounce off of document.
-c.prototype.eb$apch1 = document.eb$apch1;
-c.prototype.eb$apch2 = document.eb$apch2;
-c.prototype.eb$insbf = document.eb$insbf;
-c.prototype.removeChild = document.removeChild;
-c.prototype.remove = function() { if(this.parentNode) this.parentNode.removeChild(this);}
-Object.defineProperty(c.prototype, "firstChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[0] : null; } });
-Object.defineProperty(c.prototype, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
-Object.defineProperty(c.prototype, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
-Object.defineProperty(c.prototype, "lastElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=u.length-1; i>=0; --i) if(u[i].nodeType == 1) return u[i]; return null; }});
-Object.defineProperty(c.prototype, "nextSibling", { get: function() { return mw$.eb$getSibling(this,"next"); } });
-Object.defineProperty(c.prototype, "nextElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"next"); } });
-Object.defineProperty(c.prototype, "previousSibling", { get: function() { return mw$.eb$getSibling(this,"previous"); } });
-Object.defineProperty(c.prototype, "previousElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"previous"); } });
+p.eb$apch1 = document.eb$apch1;
+p.eb$apch2 = document.eb$apch2;
+p.eb$insbf = document.eb$insbf;
+p.removeChild = document.removeChild;
+p.remove = function() { if(this.parentNode) this.parentNode.removeChild(this);}
+Object.defineProperty(p, "firstChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[0] : null; } });
+Object.defineProperty(p, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
+Object.defineProperty(p, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
+Object.defineProperty(p, "lastElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=u.length-1; i>=0; --i) if(u[i].nodeType == 1) return u[i]; return null; }});
+Object.defineProperty(p, "nextSibling", { get: function() { return mw$.eb$getSibling(this,"next"); } });
+Object.defineProperty(p, "nextElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"next"); } });
+Object.defineProperty(p, "previousSibling", { get: function() { return mw$.eb$getSibling(this,"previous"); } });
+Object.defineProperty(p, "previousElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"previous"); } });
 // children is subtly different from childnodes; this code taken from
 // https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
-Object.defineProperty(c.prototype, 'children', {
+Object.defineProperty(p, 'children', {
 get: function() {
 var i = 0, node, nodes = this.childNodes, children = [];
 if(!nodes) return children;
@@ -1424,70 +1425,70 @@ if (node.nodeType === 1)  children.push(node);
 return children;
 }});
 // attributes
-c.prototype.hasAttribute = document.hasAttribute;
-c.prototype.hasAttributeNS = document.hasAttributeNS;
-c.prototype.markAttribute = document.markAttribute;
-c.prototype.getAttribute = document.getAttribute;
-c.prototype.getAttributeNS = document.getAttributeNS;
-c.prototype.getAttributeNames = document.getAttributeNames;
-c.prototype.setAttribute = document.setAttribute;
-c.prototype.setAttributeNS = document.setAttributeNS;
-c.prototype.removeAttribute = document.removeAttribute;
-c.prototype.removeAttributeNS = document.removeAttributeNS;
+p.hasAttribute = document.hasAttribute;
+p.hasAttributeNS = document.hasAttributeNS;
+p.markAttribute = document.markAttribute;
+p.getAttribute = document.getAttribute;
+p.getAttributeNS = document.getAttributeNS;
+p.getAttributeNames = document.getAttributeNames;
+p.setAttribute = document.setAttribute;
+p.setAttributeNS = document.setAttributeNS;
+p.removeAttribute = document.removeAttribute;
+p.removeAttributeNS = document.removeAttributeNS;
 /* which one is it?
-Object.defineProperty(c.prototype, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
+Object.defineProperty(p, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
 */
-Object.defineProperty(c.prototype, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
-Object.defineProperty(c.prototype, "parentElement", { get: function() { return this.parentNode && this.parentNode.nodeType == 1 ? this.parentNode : null; }});
-c.prototype.getAttributeNode = document.getAttributeNode;
-c.prototype.getClientRects = function(){ return []; }
+Object.defineProperty(p, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
+Object.defineProperty(p, "parentElement", { get: function() { return this.parentNode && this.parentNode.nodeType == 1 ? this.parentNode : null; }});
+p.getAttributeNode = document.getAttributeNode;
+p.getClientRects = function(){ return []; }
 // clone
-c.prototype.cloneNode = document.cloneNode;
-c.prototype.importNode = document.importNode;
-c.prototype.compareDocumentPosition = mw$.compareDocumentPosition;
+p.cloneNode = document.cloneNode;
+p.importNode = document.importNode;
+p.compareDocumentPosition = mw$.compareDocumentPosition;
 // visual
-c.prototype.focus = eb$voidfunction;
-c.prototype.blur = eb$voidfunction;
-c.prototype.getBoundingClientRect = document.getBoundingClientRect;
+p.focus = eb$voidfunction;
+p.blur = eb$voidfunction;
+p.getBoundingClientRect = document.getBoundingClientRect;
 // events
-c.prototype.eb$listen = eb$listen;
-c.prototype.eb$unlisten = eb$unlisten;
-c.prototype.addEventListener = addEventListener;
-c.prototype.removeEventListener = removeEventListener;
+p.eb$listen = eb$listen;
+p.eb$unlisten = eb$unlisten;
+p.addEventListener = addEventListener;
+p.removeEventListener = removeEventListener;
 if(mw$.attachOn) {
-c.prototype.attachEvent = attachEvent;
-c.prototype.detachEvent = detachEvent;
+p.attachEvent = attachEvent;
+p.detachEvent = detachEvent;
 }
-c.prototype.dispatchEvent = document.dispatchEvent;
-c.prototype.insertAdjacentHTML = mw$.insertAdjacentHTML;
+p.dispatchEvent = document.dispatchEvent;
+p.insertAdjacentHTML = mw$.insertAdjacentHTML;
 // outerHTML is dynamic; should innerHTML be?
-Object.defineProperty(c.prototype, "outerHTML", { get: function() { return mw$.htmlString(this);},
+Object.defineProperty(p, "outerHTML", { get: function() { return mw$.htmlString(this);},
 set: function(h) { mw$.outer$1(this,h); }});
-c.prototype.injectSetup = mw$.injectSetup;
+p.injectSetup = mw$.injectSetup;
 // constants
-c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
+p.ELEMENT_NODE = 1, p.TEXT_NODE = 3, p.COMMENT_NODE = 8, p.DOCUMENT_NODE = 9, p.DOCUMENT_TYPE_NODE = 10, p.DOCUMENT_FRAGMENT_NODE = 11;
 // default tabIndex is 0 but running js can override this.
-c.prototype.tabIndex = 0;
+p.tabIndex = 0;
 // class and text methods
-Object.defineProperty(c.prototype, "classList", { get : function() { return mw$.classList(this);}});
-c.prototype.cl$present = true;
-Object.defineProperty(c.prototype, "textContent", {
+Object.defineProperty(p, "classList", { get : function() { return mw$.classList(this);}});
+p.cl$present = true;
+Object.defineProperty(p, "textContent", {
 get: function() { return mw$.textUnder(this, 0); },
 set: function(s) { return mw$.newTextUnder(this, s, 0); }});
-Object.defineProperty(c.prototype, "contentText", {
+Object.defineProperty(p, "contentText", {
 get: function() { return mw$.textUnder(this, 1); },
 set: function(s) { return mw$.newTextUnder(this, s, 1); }});
-Object.defineProperty(c.prototype, "nodeValue", {
+Object.defineProperty(p, "nodeValue", {
 get: function() { return this.nodeType == 3 ? this.data : null;},
 set: function(h) { if(this.nodeType == 3) this.data = h; }});
-c.prototype.clientHeight = 16;
-c.prototype.clientWidth = 120;
-c.prototype.scrollHeight = 16;
-c.prototype.scrollWidth = 120;
-c.prototype.scrollTop = 0;
-c.prototype.scrollLeft = 0;
-c.prototype.offsetHeight = 16;
-c.prototype.offsetWidth = 120;
+p.clientHeight = 16;
+p.clientWidth = 120;
+p.scrollHeight = 16;
+p.scrollWidth = 120;
+p.scrollTop = 0;
+p.scrollLeft = 0;
+p.offsetHeight = 16;
+p.offsetWidth = 120;
 })();
 
 // This is needed by mozilla, not by duktape, not sure how duktape
