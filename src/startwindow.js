@@ -1466,6 +1466,9 @@ set: function(h) { mw$.outer$1(this,h); }});
 c.prototype.injectSetup = mw$.injectSetup;
 // constants
 c.prototype.ELEMENT_NODE = 1, c.prototype.TEXT_NODE = 3, c.prototype.COMMENT_NODE = 8, c.prototype.DOCUMENT_NODE = 9, c.prototype.DOCUMENT_TYPE_NODE = 10, c.prototype.DOCUMENT_FRAGMENT_NODE = 11;
+// default tabIndex is 0 but running js can override this.
+c.prototype.tabIndex = 0;
+// class and text methods
 Object.defineProperty(c.prototype, "classList", { get : function() { return mw$.classList(this);}});
 c.prototype.cl$present = true;
 Object.defineProperty(c.prototype, "textContent", {
