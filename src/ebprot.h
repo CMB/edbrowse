@@ -17,7 +17,7 @@ void displayLine(int n);
 void initializeReadline(void);
 pst inputLine(void);
 bool cxCompare(int cx) ;
-bool cxActive(int cx) ;
+bool cxActive(int cx, bool error);
 bool cxQuit(int cx, int action) ;
 void cxSwitch(int cx, bool interactive) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) ;

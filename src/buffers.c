@@ -956,14 +956,16 @@ bool cxCompare(int cx)
 	return false;
 }
 
-/* is a context active? */
-bool cxActive(int cx)
+// is a context active?
+// If error is true then record an error if not active.
+bool cxActive(int cx, bool error)
 {
 	if (cx <= 0 || cx >= MAXSESSION)
 		i_printfExit(MSG_SessionOutRange, cx);
 	if (sessionList[cx].lw)
 		return true;
-	setError(MSG_SessionInactive, cx);
+	if(error)
+		setError(MSG_SessionInactive, cx);
 	return false;
 }
 
@@ -2618,7 +2620,7 @@ static bool readContext(int cx)
 
 	if (!cxCompare(cx))
 		return false;
-	if (!cxActive(cx))
+	if (!cxActive(cx, true))
 		return false;
 
 	fileSize = 0;
@@ -2687,7 +2689,7 @@ static bool writeContext(int cx)
 		fardol = 0;
 	if (!cxCompare(cx))
 		return false;
-	if (cxActive(cx) && !cxQuit(cx, 2))
+	if (cxActive(cx, false) && !cxQuit(cx, 2))
 		return false;
 
 	cxInit(cx);
@@ -4193,7 +4195,7 @@ static char *lessFile(const char *line)
 	if (n >= 0) {
 		char *p;
 		int plen, dol;
-		if (!cxCompare(n) || !cxActive(n))
+		if (!cxCompare(n) || !cxActive(n, true))
 			return 0;
 		dol = sessionList[n].lw->dol;
 		if (!dol) {
@@ -4687,7 +4689,7 @@ et_go:
 			return false;
 		}
 		if(d) {
-			if(!cxCompare(d) || (cxActive(d) && !cxQuit(d, 0)))
+			if(!cxCompare(d) || (cxActive(d, false) && !cxQuit(d, 0)))
 				return false;
 		}
 		return itext(d);
@@ -6233,7 +6235,7 @@ replaceframe:
 		if (cx) {
 			if (!cxCompare(cx))
 				return false;
-			if (!cxActive(cx))
+			if (!cxActive(cx, true))
 				return false;
 		} else {
 			cx = context;
@@ -6268,7 +6270,7 @@ replaceframe:
 		if (cx) {
 			if (!cxCompare(cx))
 				return false;
-			if (!cxActive(cx))
+			if (!cxActive(cx, true))
 				return false;
 			s = sessionList[cx].lw->f0.fileName;
 			if (s)
@@ -6445,7 +6447,7 @@ replaceframe:
 				return false;
 		}
 /* we likely just created it; now quit it */
-		if (cxActive(cx) && !cxQuit(cx, 2))
+		if (cxActive(cx, false) && !cxQuit(cx, 2))
 			return false;
 /* If changes were made to this buffer, they are undoable after the move */
 		undoCompare();
@@ -7214,7 +7216,7 @@ int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 	int svcx = context;
 	bool rc;
 	if (cx) {
-		if(cxActive(cx))
+		if(cxActive(cx, false))
 			cxQuit(cx, 3);
 	} else {
 		for (cx = 1; cx < MAXSESSION; ++cx)

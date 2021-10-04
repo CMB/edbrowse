@@ -953,7 +953,7 @@ sendMail(int account, const char **recipients, const char *body,
 /* verify attachments are readable */
 	for (j = 0; (s = attachments[j]); ++j) {
 		if (!ismc && (cx = stringIsNum(s)) >= 0) {
-			if (!cxCompare(cx) || !cxActive(cx))
+			if (!cxCompare(cx) || !cxActive(cx, true))
 				return false;
 			if (!sessionList[cx].lw->dol) {
 				setError(MSG_AttSessionEmpty, cx);
