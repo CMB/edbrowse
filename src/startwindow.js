@@ -62,8 +62,6 @@ if(mw$.share) { // point to native methods in the master window
 my$win = mw$.my$win, my$doc = mw$.my$doc;
 natok = mw$.natok, db$flags = mw$.db$flags;
 eb$voidfunction = mw$.eb$voidfunction, eb$nullfunction = mw$.eb$nullfunction, eb$truefunction = mw$.eb$truefunction, eb$falsefunction = mw$.eb$falsefunction;
-scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = focus = blur = eb$voidfunction;
-document.close = document.focus = document.blur = eb$voidfunction;
 close = mw$.win$close;
 eb$resolveURL = mw$.eb$resolveURL;
 eb$visible = mw$.eb$visible;
@@ -71,6 +69,10 @@ atob = mw$.atob, btoa = mw$.btoa;
 prompt = mw$.prompt, confirm = mw$.confirm;
 eb$newLocation = mw$.eb$newLocation, eb$logElement = mw$.eb$logElement;
 }
+scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = eb$voidfunction;
+document.close = eb$voidfunction;
+blur = document.blur = function(){activeElement=null}
+focus = document.focus = function(){activeElement=document.body}
 
 self = window;
 Object.defineProperty(window, "parent", {get: eb$parent});
@@ -150,6 +152,7 @@ document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
 document.contentType = "text/html";
+function readyStateComplete() { document.readyState = "complete"; activeElement = document.body; }
 
 screen = {
 height: 768, width: 1024,
@@ -170,6 +173,7 @@ get: eb$getcook, set: eb$setcook});
 Object.defineProperty(document, "documentElement", {get: mw$.getElement});
 Object.defineProperty(document, "head", {get: mw$.getHead,set:mw$.setHead});
 Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
+activeElement = null;
 
 navigator = {};
 navigator.appName = "edbrowse";
@@ -1447,8 +1451,8 @@ p.cloneNode = document.cloneNode;
 p.importNode = document.importNode;
 p.compareDocumentPosition = mw$.compareDocumentPosition;
 // visual
-p.focus = eb$voidfunction;
-p.blur = eb$voidfunction;
+p.focus = function(){activeElement=this}
+p.blur = blur;
 p.getBoundingClientRect = document.getBoundingClientRect;
 // events
 p.eb$listen = eb$listen;

@@ -565,11 +565,6 @@ if(body.type != "textarea" || b.type != "button") fail(105);
 if(state.type != "select-one" || colors.type != "select-multiple") fail(106);
 if(who.defaultValue != "eklhad") fail(107);
 if(body.value.substring(10,19) != "brilliant") fail(108);
-// focus and blur are ignored
-dog.focus();
-cat.blur();
-focus();
-blur();
 }
 
 // for(var i in document.idMaster) alert(i);

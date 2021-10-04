@@ -1033,8 +1033,7 @@ char *htmlParse(char *buf, int remote)
 		runScriptsPending(true);
 		runOnload();
 		runScriptsPending(false);
-		set_property_string_doc(cf, "readyState", "complete");
-
+		run_function_bool_win(cf, "readyStateComplete");
 		run_event_doc(cf, "document", "onreadystatechange");
 		run_event_win(cf, "window", "onfocus");
 		run_event_doc(cf, "document", "onfocus");
