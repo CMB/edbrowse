@@ -892,10 +892,6 @@ I will disconnect here, and also check for inxhr in runOnload().
 		if (!ln)
 			ln = 1;
 		debugPrint(3, "exec %s at %d", js_file, ln);
-/* if script is in the html it usually begins on the next line, so increment,
- * and hope the error messages line up. */
-		if (ln > 1)
-			++ln;
 		jsRunData(t, js_file, ln);
 		debugPrint(3, "exec complete");
 
