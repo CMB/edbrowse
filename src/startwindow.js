@@ -71,8 +71,8 @@ eb$newLocation = mw$.eb$newLocation, eb$logElement = mw$.eb$logElement;
 }
 scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = eb$voidfunction;
 document.close = eb$voidfunction;
-blur = document.blur = function(){activeElement=null}
-focus = document.focus = function(){activeElement=document.body}
+blur = document.blur = function(){document.activeElement=null}
+focus = document.focus = function(){document.activeElement=document.body}
 
 self = window;
 Object.defineProperty(window, "parent", {get: eb$parent});
@@ -152,7 +152,7 @@ document.bgcolor = "white";
 document.readyState = "loading";
 document.nodeType = 9;
 document.contentType = "text/html";
-function readyStateComplete() { document.readyState = "complete"; activeElement = document.body;
+function readyStateComplete() { document.readyState = "complete"; document.activeElement = document.body;
 if(document.onreadystatechange$$fn) {
 var e = new Event;
 e.initEvent("readystatechange", true, true);
@@ -181,7 +181,7 @@ get: eb$getcook, set: eb$setcook});
 Object.defineProperty(document, "documentElement", {get: mw$.getElement});
 Object.defineProperty(document, "head", {get: mw$.getHead,set:mw$.setHead});
 Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
-activeElement = null;
+document.activeElement = null;
 
 navigator = {};
 navigator.appName = "edbrowse";
@@ -1459,7 +1459,7 @@ p.cloneNode = document.cloneNode;
 p.importNode = document.importNode;
 p.compareDocumentPosition = mw$.compareDocumentPosition;
 // visual
-p.focus = function(){activeElement=this}
+p.focus = function(){document.activeElement=this}
 p.blur = blur;
 p.getBoundingClientRect = document.getBoundingClientRect;
 // events

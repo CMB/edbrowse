@@ -279,7 +279,7 @@ void jSyncup(bool fromtimer, const Tag *active)
 		cw->nextrender = 0;
 
 	if(active)
-		set_property_object_win(cf, "activeElement", active);
+		set_property_object_doc(cf, "activeElement", active);
 
 	for (t = cw->inputlist; t; t = t->same) {
 		itype = t->itype;

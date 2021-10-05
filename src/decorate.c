@@ -811,6 +811,11 @@ static void prerenderNode(Tag *t, bool opentag)
 				nzFree(t->textval);
 				t->textval = cloneString(t->value);
 			}
+			a = attribVal(t, "label");
+			if(a && *a) {
+				nzFree(t->textval);
+				t->textval = cloneString(a);
+			}
 			break;
 		}
 		if (!currentSel) {

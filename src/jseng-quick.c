@@ -560,11 +560,11 @@ void set_property_bool_win(const Frame *f, const char *name, bool v)
 }
 
 static void set_property_object(JSContext *cx, JSValueConst parent, const char *name, JSValueConst child);
-void set_property_object_win(const Frame *f, const char *name, const Tag *t2)
+void set_property_object_doc(const Frame *f, const char *name, const Tag *t2)
 {
 	if (!allowJS || !t2->jslink)
 		return;
-	set_property_object(f->cx, *((JSValue*)f->winobj), name, *((JSValue*)t2->jv));
+	set_property_object(f->cx, *((JSValue*)f->docobj), name, *((JSValue*)t2->jv));
 }
 
 static void set_property_number(JSContext *cx, JSValueConst parent, const char *name, int n)

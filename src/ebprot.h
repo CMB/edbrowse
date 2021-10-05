@@ -425,7 +425,7 @@ void set_property_string_t(const Tag *t, const char *name, const char * v);
 void set_dataset_string_t(const Tag *t, const char *name, const char * v);
 void set_property_bool_win(const Frame *f, const char *name, bool v);
 void set_property_string_win(const Frame *f, const char *name, const char *v);
-void set_property_object_win(const Frame *f, const char *name, const Tag *t2);
+void set_property_object_doc(const Frame *f, const char *name, const Tag *t2);
 void set_property_string_doc(const Frame *f, const char *name, const char *v);
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno);
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno);
