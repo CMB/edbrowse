@@ -4599,6 +4599,7 @@ pwd:
 		else
 			selfFrame();
 		cw->jdb_frame = cf;
+		debugPrint(1, "cx%d %s", cf->gsn, cf->fileName ? cf->fileName : "?");
 		jSyncup(false, 0);
 		return true;
 	}
