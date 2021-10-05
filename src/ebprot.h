@@ -188,7 +188,7 @@ bool mustVerifyHost(const char *url);
 const char *findProxyForURL(const char *url);
 const char *findAgentForURL(const char *url);
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
-bool runEbFunction(const char *line);
+int runEbFunction(const char *line);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
 void readConfigFile(void);
