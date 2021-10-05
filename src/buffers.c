@@ -47,7 +47,7 @@ static const char spaceplus_cmd[] = "befrw";
 /* Commands that should have no text after them. */
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
-static const char global_cmd[] = "!dDijJlmnprstwX=";
+static const char global_cmd[] = "<!dDijJlmnprstwX=";
 
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
@@ -3412,6 +3412,7 @@ static bool doGlobal(const char *line)
 	while (gcnt && change) {
 		change = false;	/* kinda like bubble sort */
 		for (i = 1; i <= cw->dol; ++i) {
+			int i2 = i;
 			t = cw->map + i;
 			if (!t->gflag)
 				continue;
@@ -3424,13 +3425,12 @@ static bool doGlobal(const char *line)
 				yesdot = cw->dot;
 /* try this line again, in case we deleted or moved it somewhere else */
 				--i;
-			} else {
-/* error in subcommand might turn global flag off */
-				if (!globSub) {
-					nodot = i, yesdot = 0;
-					goto done;
-				}	/* serious error */
-			}	/* subcommand succeeds or fails */
+			}
+// error in subcommand might turn global flag off
+			if (!globSub) {
+				nodot = i2, yesdot = 0;
+				goto done;
+			}
 		}		/* loop over lines */
 	}			/* loop making changes */
 
@@ -3450,6 +3450,8 @@ done:
 	}
 	if (!errorMsg[0] && intFlag)
 		setError(MSG_Interrupted);
+	if(cw->dot > cw->dol)
+		cw->dot = cw->dol;
 	return (errorMsg[0] == 0);
 }				/* doGlobal */
 
@@ -6486,7 +6488,10 @@ replaceframe:
 
 	if (cmd == '<') {	/* run a function */
 		cw->dot = endRange;
-		return runEbFunction(line);
+		j =  runEbFunction(line);
+		if(j < 0)
+			globSub = false, j = 0;
+		return j;
 	}
 
 	/* go to a file in a directory listing */
@@ -7194,7 +7199,7 @@ afterdelete:
 bool edbrowseCommand(const char *line, bool script)
 {
 	bool rc;
-	globSub = intFlag = false;
+	intFlag = false;
 	inscript = script;
 	fileSize = -1;
 	skipWhite(&line);

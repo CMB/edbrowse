@@ -897,7 +897,7 @@ static const char *balance(const char *ip, int direction)
 #define MAXNEST 20		// nested blocks
 /* Run an edbrowse function, as defined in the config file. */
 /* This function must be reentrant. */
-bool runEbFunction(const char *line)
+int runEbFunction(const char *line)
 {
 	char *linecopy = cloneString(line);
 	char *fncopy = 0;
@@ -1042,7 +1042,7 @@ ahead:
 		}
 
 		if (!ok && nofail)
-			goto fail;
+			goto soft_fail;
 
 /* compute length of line, then build the line */
 		l = endl - ip;
@@ -1077,18 +1077,24 @@ nextline:
 	}
 
 	if (!ok && nofail)
-		goto fail;
+		goto soft_fail;
 
 	nzFree(linecopy);
 	nzFree(fncopy);
 	nzFree(allargs);
-	return true;
+	return 1;
 
 fail:
 	nzFree(linecopy);
 	nzFree(fncopy);
 	nzFree(allargs);
-	return false;
+	return -1;
+
+soft_fail:
+	nzFree(linecopy);
+	nzFree(fncopy);
+	nzFree(allargs);
+	return 0;
 }
 
 struct DBTABLE *findTableDescriptor(const char *sn)
