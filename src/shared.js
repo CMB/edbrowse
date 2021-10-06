@@ -2003,6 +2003,59 @@ top.removeChild(top.childNodes[i]);
 top.appendChild(my$doc().createTextNode(s));
 }
 
+function clickfn() {
+var w = my$win();
+var nn = this.nodeName, t = this.type;
+// as though the user had clicked on this
+if(nn == "button" || (nn == "INPUT" &&
+(t == "button" || t == "reset" || t == "submit" || t == "checkbox" || t == "radio"))) {
+var e = new w.Event;
+e.initEvent("click", true, true);
+if(!this.dispatchEvent(e)) return;
+// do what the tag says to do
+if(this.form) {
+if(t == "submit") {
+e.initEvent("submit", true, true);
+if(this.dispatchEvent(e))
+this.form.submit();
+}
+if(t == "reset") {
+e.initEvent("reset", true, true);
+if(this.dispatchEvent(e))
+this.form.reset();
+}
+}
+if(t != "checkbox" && t != "radio") return;
+this.checked$2 = (this.checked$2 ? false : true);
+// if it's radio and checked we need to uncheck the others.
+if(this.form && this.checked$2 && t == "radio" &&
+(nn = this.name) && (e = this.form[nn]) && Array.isArray(e)) {
+for(var i=0; i<e.length; ++i)
+if(e[i] != this) e[i].checked$2 = false;
+} else // try it another way
+if(this.checked$2 && t == "radio" && this.parentNode && (e = this.parentNode.childNodes) && (nn = this.name)) {
+for(var i=0; i<e.length; ++i)
+if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked$2 = false;
+}
+}
+}
+
+function checkset(n) {
+if(typeof n !== "boolean") n = false;
+this.checked$2 = n;
+var nn = this.nodeName, t = this.type, e;
+// if it's radio and checked we need to uncheck the others.
+if(this.form && this.checked$2 && t == "radio" &&
+(nn = this.name) && (e = this.form[nn]) && Array.isArray(e)) {
+for(var i=0; i<e.length; ++i)
+if(e[i] != this) e[i].checked$2 = false;
+} else // try it another way
+if(this.checked$2 && t == "radio" && this.parentNode && (e = this.parentNode.childNodes) && (nn = this.name)) {
+for(var i=0; i<e.length; ++i)
+if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this) e[i].checked$2 = false;
+}
+}
+
 // jtfn0 injects trace(blah) into the code.
 // It should only be applied to deminimized code.
 // jtfn1 puts a name on the anonymous function, for debugging.
@@ -2901,6 +2954,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
+"clickfn", "checkset",
 "jtfn0", "jtfn1", "deminimize", "addTrace",
 ];
 for(var i=0; i<flist.length; ++i)
