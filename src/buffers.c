@@ -5734,6 +5734,7 @@ bool runCommand(const char *line)
 	selfFrame();
 	nzFree(allocatedLine);
 	allocatedLine = 0;
+	redirect_count = 0;
 	js_redirects = false;
 	cmd = icmd = 'p';
 	uriEncoded = false;
@@ -6822,6 +6823,7 @@ replaceframe:
 	}
 
 rebrowse:
+//  printf("count %d cmd %c first %c line %s\n", redirect_count, cmd, first, line);
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
 //  printf("ifetch %d %s\n", uriEncoded, line);
 
