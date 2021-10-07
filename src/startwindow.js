@@ -834,6 +834,11 @@ z$Audio.prototype = new HTMLElement;
 z$Audio.prototype.dom$class = "Audio";
 z$Audio.prototype.play = eb$voidfunction;
 
+// I don't implement any of the performance features;
+// but the object has to exist for some sites to work.
+Performance = function(){}
+Object.defineProperty(window, "performance", {get: function(){return new Performance}});
+
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
 builds the url object; there are a lot of side effects here.
