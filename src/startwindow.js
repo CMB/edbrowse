@@ -862,8 +862,8 @@ don't take it out!
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["z$Anchor", "HTMLAnchorElement", "z$Image", "z$Script", "z$Link", "z$Area", "z$Form", "z$Frame", "z$Audio", "z$Base"];
-var ulist = ["href", "href", "src", "src", "href", "href", "action", "src", "src", "href"];
+var cnlist = ["z$Anchor", "HTMLAnchorElement", "z$Area", "z$Form", "z$Frame"];
+var ulist = ["href", "href", "href", "action", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
@@ -896,6 +896,38 @@ for(var j=0; j<piecelist.length; ++j) {
 var piece = piecelist[j];
 eval('Object.defineProperty(' + cn + '.prototype, "' + piece + '", {get: function() { return this.href$2 ? this.href$2.' + piece + ' : null},set: function(x) { if(this.href$2) this.href$2.' + piece + ' = x; }});');
 }
+}
+})();
+
+/*********************************************************************
+Ok - a.href is a url object, but script.src is a string.
+You won't find that anywhere in the documentation, w3 schools etc, nope, I just
+respond to the javascript in the wild, and that's what it seems to expect.
+I only know for sure a.href is URL, and script.src is string,
+everything else is a guess.
+*********************************************************************/
+
+; (function() {
+var cnlist = ["z$Image", "z$Script", "z$Base", "z$Link", "z$Audio"];
+var ulist = ["src", "src", "href", "href", "src"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i]; // class name
+var u = ulist[i]; // url name
+eval('Object.defineProperty(' + cn + '.prototype, "' + u + '", { \
+get: function() { return this.href$2 ? this.href$2 : ""}, \
+set: function(h) { if(h instanceof URL || h.dom$class == "URL") h = h.toString(); \
+if(h === null || h === undefined) h = ""; \
+var w = my$win(); \
+if(typeof h != "string") { alert3("hrefset " + typeof h); \
+w.hrefset$p.push("' + cn + '"); \
+w.hrefset$a.push(h); \
+return; } \
+if(!h) return; \
+var last_href = (this.href$2 ? this.href$2 : null); \
+/* resolve h against the base */ \
+h = eb$resolveURL(w.eb$base,h); \
+this.href$2 = h; \
+ }});');
 }
 })();
 
