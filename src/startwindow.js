@@ -1069,7 +1069,6 @@ AudioContext.prototype.dom$class = "AudioContext";
 Document = function(){};
 Document.prototype = new HTMLElement;
 Document.prototype.dom$class = "Document";
-Document.prototype.getElementById = document.getElementById;
 
 CSSStyleSheet = function() { this.cssRules = []};
 CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";
@@ -1980,6 +1979,19 @@ doc.documentElement = below;
 return doc;
 }
 };
+
+// Extra things, beyond Node, that should be in Document.prototype
+Document.prototype.getElementById = document.getElementById;
+Document.prototype.nodeContains = document.nodeContains;
+Document.prototype.createNodeIterator = document.createNodeIterator;
+Document.prototype.createTreeWalker = document.createTreeWalker;
+Document.prototype.createElement = document.createElement;
+Document.prototype.createElementNS = document.createElementNS;
+Document.prototype.createTextNode = document.createTextNode;
+Document.prototype.createComment = document.createComment;
+Document.prototype.createDocumentFragment = document.createDocumentFragment;
+Document.prototype.createEvent = document.createEvent;
+Document.prototype.implementation = document.implementation;
 
 // @author Originally implemented by Yehuda Katz
 // And since then, from envjs, by Thatcher et al
