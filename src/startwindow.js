@@ -1399,7 +1399,7 @@ Again, leading ; to avert a parsing ambiguity.
 *********************************************************************/
 
 ; (function() {
-var c = window.HTMLElement;
+var c = window.Node;
 var p = c.prototype;
 // These subordinate objects are on-demand.
 Object.defineProperty( p, "dataset", { get: function(){ return this.dataset$2 ? this.dataset$2 : this.dataset$2 = {}; }});
