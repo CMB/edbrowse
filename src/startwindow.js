@@ -1259,6 +1259,7 @@ document.appendChild = mw$.appendChild;
 document.prependChild = mw$.prependChild;
 document.replaceChild = mw$.replaceChild;
 document.insertBefore = mw$.insertBefore;
+document.insertAdjacentElement = mw$.insertAdjacentElement;
 document.hasChildNodes = mw$.hasChildNodes;
 
 // The Attr class and getAttributeNode().
@@ -1415,6 +1416,7 @@ p.hasChildNodes = document.hasChildNodes;
 p.appendChild = document.appendChild;
 p.prependChild = document.prependChild;
 p.insertBefore = document.insertBefore;
+p.insertAdjacentElement = document.insertAdjacentElement;
 p.replaceChild = document.replaceChild;
 // These are native, so it's ok to bounce off of document.
 p.eb$apch1 = document.eb$apch1;

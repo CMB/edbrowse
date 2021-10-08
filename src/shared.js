@@ -1034,6 +1034,17 @@ return null;
 }
 }
 
+function insertAdjacentElement(pos, e) {
+var p = this.parentNode;
+if(!p || typeof pos != "string") return null;
+pos = pos.toLowerCase();
+switch(pos) {
+case "beforebegin": return p.prependChild(e);
+case "afterend": return p.appendChild(e);
+case "beforeend": return this.appendChild(e);
+case "afterbegin": return this.prependChild(e);
+return null; }}
+
 /*********************************************************************
 Yes, Form is weird.
 If you add an input to a form, it adds under childNodes in the usual way,
@@ -2940,7 +2951,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "insertCell", "deleteCell",
 "appendFragment", "insertFragment",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
-"eb$getSibling", "eb$getElementSibling",
+"eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
 "implicitMember",
 "getAttribute", "getAttributeNames", "getAttributeNS",
