@@ -1069,6 +1069,34 @@ if(c.nodeType > 0) this.prependChild(c);
 }
 }
 
+function after() {
+var d = my$doc();
+var p = this.parentNode;
+if(!p) return;
+var i, l = arguments.length;
+var n = this.nextSibling;
+for(i=0; i<l; ++i) {
+var c = arguments[i];
+if(typeof c == "string") c = d.createTextNode(c);
+// should now be a valid node
+if(c.nodeType > 0)
+n ? p.insertBefore(c,n) : p.appendChild(c);
+}
+}
+
+function before() {
+var d = my$doc();
+var p = this.parentNode;
+if(!p) return;
+var i, l = arguments.length;
+for(i=0; i<l; ++i) {
+var c = arguments[i];
+if(typeof c == "string") c = d.createTextNode(c);
+// should now be a valid node
+if(c.nodeType > 0) p.insertBefore(c, this);
+}
+}
+
 /*********************************************************************
 Yes, Form is weird.
 If you add an input to a form, it adds under childNodes in the usual way,
@@ -2976,7 +3004,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendFragment", "insertFragment",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
-"append", "prepend",
+"append", "prepend", "before", "after",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
 "implicitMember",
 "getAttribute", "getAttributeNames", "getAttributeNS",
