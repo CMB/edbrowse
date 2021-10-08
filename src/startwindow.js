@@ -1070,6 +1070,10 @@ Document = function(){};
 Document.prototype = new HTMLElement;
 Document.prototype.dom$class = "Document";
 
+DocumentFragment = function(){};
+DocumentFragment.prototype = new HTMLElement;
+DocumentFragment.prototype.dom$class = "DocumentFragment";
+
 CSSStyleSheet = function() { this.cssRules = []};
 CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";
 CSSStyleSheet.prototype.insertRule = function(r, idx) {
@@ -1888,6 +1892,7 @@ case "tfoot": c = new z$tFoot; break;
 case "canvas": c = new z$Canvas; break;
 case "audio": case "video": c = new z$Audio; break;
 case "document": c = new Document; break;
+case "fragment": c = new DocumentFragment; break;
 case "htmliframeelement": case "iframe": case "frame": c = new z$Frame; break;
 case "select": c = new z$Select; break;
 case "option":
