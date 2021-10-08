@@ -219,7 +219,9 @@ locateOptions(const Tag *sel, const char *input,
 		if (disp_p) {
 			if (*disp)
 				stringAndChar(&disp, &disp_l, selsep);
-			stringAndString(&disp, &disp_l, t->textval);
+// special exception for <input> with datalist - revert back to value.
+			stringAndString(&disp, &disp_l,
+			(sel->action == TAGACT_DATAL ? t->value : t->textval));
 		}
 
 		if (setcheck) {
