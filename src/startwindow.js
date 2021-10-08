@@ -1345,6 +1345,24 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 
 document.createEvent = function(unused) { return new Event; }
 
+MouseEvent = function(etype){
+    this.bubbles = true;
+    this.cancelable = true;
+    this.cancelled = false;
+    this.currentTarget = null;
+    this.target = null;
+    this.eventPhase = 0;
+    this.timeStamp = new Date().getTime();
+this.defaultPrevented = false;
+if(typeof etype == "string") this.type = etype;
+};
+MouseEvent.prototype = new Event;
+MouseEvent.prototype.altKey = false;
+MouseEvent.prototype.ctrlKey = false;
+MouseEvent.prototype.shiftKey = false;
+MouseEvent.prototype.metaKey = false;
+MouseEvent.prototype.initMouseEvent = function() { this.initEvent.apply(this, arguments)}
+
 MediaQueryList = function() {
 this.nodeName = "MediaQueryList";
 this.matches = false;
