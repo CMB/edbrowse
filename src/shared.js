@@ -1035,15 +1035,39 @@ return null;
 }
 
 function insertAdjacentElement(pos, e) {
-var p = this.parentNode;
+var n, p = this.parentNode;
 if(!p || typeof pos != "string") return null;
 pos = pos.toLowerCase();
 switch(pos) {
-case "beforebegin": return p.prependChild(e);
-case "afterend": return p.appendChild(e);
+case "beforebegin": return p.insertBefore(e, this);
+case "afterend": n = this.nextSibling; return n ? p.insertBefore(e, n) : p.appendChild(e);
 case "beforeend": return this.appendChild(e);
 case "afterbegin": return this.prependChild(e);
-return null; }}
+return null;
+}
+}
+
+function append() {
+var d = my$doc();
+var i, l = arguments.length;
+for(i=0; i<l; ++i) {
+var c = arguments[i];
+if(typeof c == "string") c = d.createTextNode(c);
+// should now be a valid node
+if(c.nodeType > 0) this.appendChild(c);
+}
+}
+
+function prepend() {
+var d = my$doc();
+var i, l = arguments.length;
+for(i=l-1; i>=0; --i) {
+var c = arguments[i];
+if(typeof c == "string") c = d.createTextNode(c);
+// should now be a valid node
+if(c.nodeType > 0) this.prependChild(c);
+}
+}
 
 /*********************************************************************
 Yes, Form is weird.
@@ -2952,6 +2976,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendFragment", "insertFragment",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
+"append", "prepend",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
 "implicitMember",
 "getAttribute", "getAttributeNames", "getAttributeNS",
