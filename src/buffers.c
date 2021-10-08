@@ -3227,6 +3227,7 @@ const char **split)
 
 		char *re;	/* regular expression */
 		bool ci = caseInsensitive;
+		bool unmatch = false;
 		signed char incr;	/* forward or back */
 /* Don't look through an empty buffer. */
 		if (cw->dol == 0) {
@@ -3239,9 +3240,10 @@ const char **split)
 			++line;
 			if (*line == 'i')
 				ci = true, ++line;
+			if (*line == '!')
+				unmatch = true, ++line;
 		}
 
-		/* second delimiter */
 		regexpCompile(re, ci);
 		if (!re_cc)
 			return false;
@@ -3278,7 +3280,7 @@ const char **split)
 				setError(MSG_RexpError2, ln);
 				return (globSub = false);
 			}
-			if (re_count >= 0)
+			if ((re_count >= 0) ^ unmatch)
 				break;
 			if (ln == cw->dot) {
 				pcre2_match_data_free(match_data);

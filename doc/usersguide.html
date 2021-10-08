@@ -542,6 +542,8 @@ s/x/y/ : replace x with y on the current line
 <br>/x : same as /x/
 <br>/x/i : look for the line containing x or X
 <br>?x? : look backwards for x
+<br>/x/! : find the next line that doesn't contain x
+<br>?x?i! : find the previous line that doesn't contain x or X
 <br>ci : searches and substitutions are case insensitive (toggle)
 <br>sg : substitution strings are global across sessions (toggle)
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
@@ -1009,7 +1011,7 @@ This program is less tolerant of whitespace than /bin/ed.
 <LI><P>
 When searching for a regular expression, both ed and edbrowse will wrap around the buffer, back to the beginning.
 Thus /./ on the last line prints the first line.
-This behavior can be turned on and off via the sw command.
+This behavior can be turned on and off via the sw (search with wrap) command.
 Some people prefer to stop searching at the end of the buffer, without going back to the beginning.
 
 <LI><P>
@@ -1026,6 +1028,13 @@ You might need to use s.2 if the sentence begins with Mr. Flintstone.
 
 <LI><P>
 Type s by itself for s//%.
+
+<LI><P>
+/xyz/! searches for the next line that does not contain xyz.
+ed does not do this, but sed does, and it's quite handy.
+Note that xyz is in the remembered regexp buffer, so simply typing / will find the next line with xyz.
+Type //! for the next line that doesn't have xyz.
+Note that there is no need for g/xyz/! since that is the same as v/xyz/.
 
 <LI><P>
 The sg command makes searches and substitutions global across editing sessions.

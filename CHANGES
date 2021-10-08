@@ -5,6 +5,8 @@ Make several changes so that edbrowse is more like ed,
 allowing more commands under g/re/,
 and 'a,'bw !shellcommand, etc.
 
+/xyz/! search for line that doesn't contain xyz, like sed.
+
 Allow for to, cc, bcc, or attach in a mail descriptor.
 
 User can change the format of the imap envelope, which fields to print and in what order.
