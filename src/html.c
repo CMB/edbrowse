@@ -4540,13 +4540,22 @@ static struct htmlTag *line2table(int ln)
 	return t;
 }
 
+static bool td_something;
+static void td_text(const Tag *u)
+{
+	if(u->action == TAGACT_TEXT && u->textval)
+		printf("%s", u->textval), td_something = true;
+	for(u = u->firstchild; u; u = u->sibling)
+		td_text(u);
+}
+
 // This routine is rather unforgiving.
 // Has to look like <table><thead><tr><th>text</th>...
 // Any intervening tags will throw it off.
 // Clearly this routine has to be expanded to cover more html layouts.
 bool showHeaders(int ln)
 {
-	const Tag *t = line2table(ln), *u;
+	const Tag *t = line2table(ln);
 	int colno;
 	if(!t)
 		return false;
@@ -4567,11 +4576,11 @@ bool showHeaders(int ln)
 	while(t) {
 		if(t->action == TAGACT_TD) {
 			printf("%d ", colno++);
-			u = t->firstchild;
-			if(u && u->action == TAGACT_TEXT)
-				printf("%s\n", (u->textval ? u->textval : "?"));
-			else
-				printf("?\n");
+			td_something = false;
+			td_text(t);
+			if(!td_something)
+				printf("?");
+			printf("\n");
 			}
 		t = t->sibling;
 	}
