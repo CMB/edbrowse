@@ -1416,25 +1416,25 @@ Object.defineProperty( p, "dataset", { get: function(){ return this.dataset$2 ? 
 Object.defineProperty( p, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = my$doc(); return this.attributes$2;}});
 Object.defineProperty( p, "style", { get: function(){ if(!this.style$2) this.style$2 = new CSSStyleDeclaration, this.style$2.element = this; return this.style$2;}});
 // get elements below
-p.getElementsByTagName = document.getElementsByTagName;
-p.getElementsByName = document.getElementsByName;
-p.getElementsByClassName = document.getElementsByClassName;
-p.contains = document.nodeContains;
+p.getElementsByTagName = mw$.getElementsByTagName;
+p.getElementsByName = mw$.getElementsByName;
+p.getElementsByClassName = mw$.getElementsByClassName;
+p.contains = mw$.nodeContains;
 p.querySelectorAll = querySelectorAll;
 p.querySelector = querySelector;
 p.matches = querySelector0;
 // children
-p.hasChildNodes = document.hasChildNodes;
-p.appendChild = document.appendChild;
-p.prependChild = document.prependChild;
-p.insertBefore = document.insertBefore;
-p.insertAdjacentElement = document.insertAdjacentElement;
-p.append = document.append;
-p.prepend = document.prepend;
-p.before = document.before;
-p.after = document.after;
-p.replaceWith = document.replaceWith;
-p.replaceChild = document.replaceChild;
+p.hasChildNodes = mw$.hasChildNodes;
+p.appendChild = mw$.appendChild;
+p.prependChild = mw$.prependChild;
+p.insertBefore = mw$.insertBefore;
+p.insertAdjacentElement = mw$.insertAdjacentElement;
+p.append = mw$.append;
+p.prepend = mw$.prepend;
+p.before = mw$.before;
+p.after = mw$.after;
+p.replaceWith = mw$.replaceWith;
+p.replaceChild = mw$.replaceChild;
 // These are native, so it's ok to bounce off of document.
 p.eb$apch1 = document.eb$apch1;
 p.eb$apch2 = document.eb$apch2;
@@ -1462,22 +1462,22 @@ if (node.nodeType === 1)  children.push(node);
 return children;
 }});
 // attributes
-p.hasAttribute = document.hasAttribute;
-p.hasAttributeNS = document.hasAttributeNS;
-p.markAttribute = document.markAttribute;
-p.getAttribute = document.getAttribute;
-p.getAttributeNS = document.getAttributeNS;
-p.getAttributeNames = document.getAttributeNames;
-p.setAttribute = document.setAttribute;
-p.setAttributeNS = document.setAttributeNS;
-p.removeAttribute = document.removeAttribute;
-p.removeAttributeNS = document.removeAttributeNS;
+p.hasAttribute = mw$.hasAttribute;
+p.hasAttributeNS = mw$.hasAttributeNS;
+p.markAttribute = mw$.markAttribute;
+p.getAttribute = mw$.getAttribute;
+p.getAttributeNS = mw$.getAttributeNS;
+p.getAttributeNames = mw$.getAttributeNames;
+p.setAttribute = mw$.setAttribute;
+p.setAttributeNS = mw$.setAttributeNS;
+p.removeAttribute = mw$.removeAttribute;
+p.removeAttributeNS = mw$.removeAttributeNS;
 /* which one is it?
 Object.defineProperty(p, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
 */
 Object.defineProperty(p, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
 Object.defineProperty(p, "parentElement", { get: function() { return this.parentNode && this.parentNode.nodeType == 1 ? this.parentNode : null; }});
-p.getAttributeNode = document.getAttributeNode;
+p.getAttributeNode = mw$.getAttributeNode;
 p.getClientRects = function(){ return []; }
 // clone
 p.cloneNode = document.cloneNode;
@@ -1496,7 +1496,7 @@ if(mw$.attachOn) {
 p.attachEvent = attachEvent;
 p.detachEvent = detachEvent;
 }
-p.dispatchEvent = document.dispatchEvent;
+p.dispatchEvent = mw$.dispatchEvent;
 p.insertAdjacentHTML = mw$.insertAdjacentHTML;
 // outerHTML is dynamic; should innerHTML be?
 Object.defineProperty(p, "outerHTML", { get: function() { return mw$.htmlString(this);},
@@ -1534,9 +1534,9 @@ p.offsetWidth = 120;
 // of class Document, not the window document, it still has to work.
 Document.prototype.eb$apch1 = document.eb$apch1;
 
-z$Form.prototype.appendChildNative = document.appendChild;
+z$Form.prototype.appendChildNative = mw$.appendChild;
 z$Form.prototype.appendChild = mw$.formAppendChild;
-z$Form.prototype.insertBeforeNative = document.insertBefore;
+z$Form.prototype.insertBeforeNative = mw$.insertBefore;
 z$Form.prototype.insertBefore = mw$.formInsertBefore;
 z$Form.prototype.removeChildNative = document.removeChild;
 z$Form.prototype.removeChild = mw$.formRemoveChild;
@@ -1612,7 +1612,7 @@ this.removeChild(this.options[idx]);
 }
 
 // rows under a table body
-z$tBody.prototype.appendChildNative = document.appendChild;
+z$tBody.prototype.appendChildNative = mw$.appendChild;
 z$tBody.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
@@ -1621,7 +1621,7 @@ if(newobj.dom$class == "tRow") // shouldn't be anything other than TR
 this.rows.push(newobj), rowReindex(this);
 return newobj;
 }
-z$tBody.prototype.insertBeforeNative = document.insertBefore;
+z$tBody.prototype.insertBeforeNative = mw$.insertBefore;
 z$tBody.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
@@ -1653,21 +1653,21 @@ return item;
 }
 
 // head and foot are just like body
-z$tHead.prototype.appendChildNative = document.appendChild;
+z$tHead.prototype.appendChildNative = mw$.appendChild;
 z$tHead.prototype.appendChild = z$tBody.prototype.appendChild;
-z$tHead.prototype.insertBeforeNative = document.insertBefore;
+z$tHead.prototype.insertBeforeNative = mw$.insertBefore;
 z$tHead.prototype.insertBefore = z$tBody.prototype.insertBefore;
 z$tHead.prototype.removeChildNative = document.removeChild;
 z$tHead.prototype.removeChild = z$tBody.prototype.removeChild;
-z$tFoot.prototype.appendChildNative = document.appendChild;
+z$tFoot.prototype.appendChildNative = mw$.appendChild;
 z$tFoot.prototype.appendChild = z$tBody.prototype.appendChild;
-z$tFoot.prototype.insertBeforeNative = document.insertBefore;
+z$tFoot.prototype.insertBeforeNative = mw$.insertBefore;
 z$tFoot.prototype.insertBefore = z$tBody.prototype.insertBefore;
 z$tFoot.prototype.removeChildNative = document.removeChild;
 z$tFoot.prototype.removeChild = z$tBody.prototype.removeChild;
 
 // rows or bodies under a table
-z$Table.prototype.appendChildNative = document.appendChild;
+z$Table.prototype.appendChildNative = mw$.appendChild;
 z$Table.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
@@ -1688,7 +1688,7 @@ if(newobj.rows.length) rowReindex(this);
 }
 return newobj;
 }
-z$Table.prototype.insertBeforeNative = document.insertBefore;
+z$Table.prototype.insertBeforeNative = mw$.insertBefore;
 z$Table.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
@@ -1739,7 +1739,7 @@ if(item.rows.length) rowReindex(this);
 return item;
 }
 
-z$tRow.prototype.appendChildNative = document.appendChild;
+z$tRow.prototype.appendChildNative = mw$.appendChild;
 z$tRow.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
@@ -1748,7 +1748,7 @@ if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
 return newobj;
 }
-z$tRow.prototype.insertBeforeNative = document.insertBefore;
+z$tRow.prototype.insertBeforeNative = mw$.insertBefore;
 z$tRow.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
@@ -1996,10 +1996,10 @@ return doc;
 };
 
 // Extra things, beyond Node, that should be in Document.prototype
-Document.prototype.getElementById = document.getElementById;
-Document.prototype.nodeContains = document.nodeContains;
-Document.prototype.createNodeIterator = document.createNodeIterator;
-Document.prototype.createTreeWalker = document.createTreeWalker;
+Document.prototype.getElementById = mw$.getElementById;
+Document.prototype.nodeContains = mw$.nodeContains;
+Document.prototype.createNodeIterator = mw$.createNodeIterator;
+Document.prototype.createTreeWalker = mw$.createTreeWalker;
 Document.prototype.createElement = document.createElement;
 Document.prototype.createElementNS = document.createElementNS;
 Document.prototype.createTextNode = document.createTextNode;
@@ -2222,11 +2222,11 @@ localStorage = {}
 localStorage.attributes = new NamedNodeMap;
 localStorage.attributes.owner = localStorage;
 // tell me we don't have to do NS versions of all these.
-localStorage.getAttribute = document.getAttribute;
+localStorage.getAttribute = mw$.getAttribute;
 localStorage.getItem = localStorage.getAttribute;
-localStorage.setAttribute = document.setAttribute;
+localStorage.setAttribute = mw$.setAttribute;
 localStorage.setItem = localStorage.setAttribute;
-localStorage.removeAttribute = document.removeAttribute;
+localStorage.removeAttribute = mw$.removeAttribute;
 localStorage.removeItem = localStorage.removeAttribute;
 localStorage.clear = function() {
 var l;
@@ -2237,11 +2237,11 @@ localStorage.removeItem(localStorage.attributes[l-1].name);
 sessionStorage = {}
 sessionStorage.attributes = new NamedNodeMap;
 sessionStorage.attributes.owner = sessionStorage;
-sessionStorage.getAttribute = document.getAttribute;
+sessionStorage.getAttribute = mw$.getAttribute;
 sessionStorage.getItem = sessionStorage.getAttribute;
-sessionStorage.setAttribute = document.setAttribute;
+sessionStorage.setAttribute = mw$.setAttribute;
 sessionStorage.setItem = sessionStorage.setAttribute;
-sessionStorage.removeAttribute = document.removeAttribute;
+sessionStorage.removeAttribute = mw$.removeAttribute;
 sessionStorage.removeItem = sessionStorage.removeAttribute;
 sessionStorage.clear = function() {
 var l;
