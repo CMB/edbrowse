@@ -839,6 +839,10 @@ z$Audio.prototype.play = eb$voidfunction;
 Performance = function(){}
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 
+// I don't implement any of the custom elements registry methods;
+// but the object has to exist for some sites to work.
+Object.defineProperty(window, "customElements", {get:function(){ return {}}});
+
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
 builds the url object; there are a lot of side effects here.
