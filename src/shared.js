@@ -1097,6 +1097,22 @@ if(c.nodeType > 0) p.insertBefore(c, this);
 }
 }
 
+function replaceWith() {
+var d = my$doc();
+var p = this.parentNode;
+if(!p) return;
+var i, l = arguments.length;
+var n = this.nextSibling;
+for(i=0; i<l; ++i) {
+var c = arguments[i];
+if(typeof c == "string") c = d.createTextNode(c);
+// should now be a valid node
+if(c.nodeType > 0)
+n ? p.insertBefore(c,n) : p.appendChild(c);
+}
+p.removeChild(this);
+}
+
 /*********************************************************************
 Yes, Form is weird.
 If you add an input to a form, it adds under childNodes in the usual way,
@@ -3004,7 +3020,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendFragment", "insertFragment",
 "appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
-"append", "prepend", "before", "after",
+"append", "prepend", "before", "after", "replaceWith",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
 "implicitMember",
 "getAttribute", "getAttributeNames", "getAttributeNS",
