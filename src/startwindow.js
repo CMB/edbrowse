@@ -181,6 +181,9 @@ get: eb$getcook, set: eb$setcook});
 Object.defineProperty(document, "documentElement", {get: mw$.getElement});
 Object.defineProperty(document, "head", {get: mw$.getHead,set:mw$.setHead});
 Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
+// document should always have children, but...
+document.hasChildNodes = mw$.hasChildNodes;
+// This is set to body after browse.
 document.activeElement = null;
 
 navigator = {};
@@ -1261,18 +1264,6 @@ x: 0, y: 0,
 width: 0, height: 0
 }
 }
-
-document.appendChild = mw$.appendChild;
-document.prependChild = mw$.prependChild;
-document.replaceChild = mw$.replaceChild;
-document.insertBefore = mw$.insertBefore;
-document.insertAdjacentElement = mw$.insertAdjacentElement;
-document.append = mw$.append;
-document.prepend = mw$.prepend;
-document.before = mw$.before;
-document.after = mw$.after;
-document.replaceWith = mw$.replaceWith;
-document.hasChildNodes = mw$.hasChildNodes;
 
 // The Attr class and getAttributeNode().
 Attr = function(){ this.specified = false; this.owner = null; this.name = ""};
