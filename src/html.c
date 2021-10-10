@@ -3621,6 +3621,60 @@ static int tableType(const Tag *t)
 	return 0;
 }
 
+static char *td_text;
+static int td_text_l;
+static void td_textUnder(const Tag *u)
+{
+	if(u->action == TAGACT_TEXT && u->textval)
+		stringAndString(&td_text,&td_text_l, u->textval);
+	for(u = u->firstchild; u; u = u->sibling)
+		td_textUnder(u);
+}
+
+// return a column heading by number.
+static void findHeading(const Tag *t, int colno)
+{
+	int j = 0;
+	const Tag *u;
+	td_text = initString(&td_text_l);
+	if(!t->parent ||
+	((t = t->parent)->action != TAGACT_TABLE &&
+	t->action != TAGACT_THEAD &&
+	t->action != TAGACT_TBODY))
+		return;
+	if(t->action != TAGACT_TABLE) {
+// it is tbody or thead
+		t = t->parent;
+		if(!t || t->action != TAGACT_TABLE)
+			return;
+	}
+	t = t->firstchild;
+	for(u = t; u; u = u->sibling)
+		if(u->action == TAGACT_THEAD) {
+			t = u;
+			break;
+		}
+	if(t && t->action == TAGACT_THEAD)
+		t = t->firstchild;
+	if(!t || t->action != TAGACT_TR || !t->firstchild)
+		return;
+	t = t->firstchild;
+	if(t->action != TAGACT_TD ||
+	!stringEqual(t->info->name, "th"))
+		return;
+	while(t) {
+		if(t->action == TAGACT_TD) {
+			if(++j == colno) {
+// this is the header we want, descend to the text field
+				td_textUnder(t);
+				return;
+			}
+		}
+		t = t->sibling;
+	}
+	return;
+}
+
 static void tagInStream(int tagno)
 {
 	char buf[32];
@@ -4211,7 +4265,8 @@ nop:
 		if (!retainTag)
 			break;
 		if(!(ltag = t->parent)
-		|| ltag->action != TAGACT_TR || !ltag->ur) {
+		|| ltag->action != TAGACT_TR || !ltag->ur ||
+		t->info->name[1] == 'h') {
 // Traditional table format, pipe separated,
 // on one line if it fits, or wraps in unpredictable ways if it doesn't.
 			if (tdfirst)
@@ -4240,9 +4295,11 @@ nop:
 				v = v->sibling;
 			}
 			if(v) { // should always happen
-				if((a = findHeading(ltag, j)))
-					stringAndString(&ns, &ns_l, a);
-				else
+				findHeading(ltag, j);
+				if(td_text_l) {
+					stringAndString(&ns, &ns_l, td_text);
+				nzFree(td_text);
+				} else
 					stringAndNum(&ns, &ns_l, j);
 				stringAndString(&ns, &ns_l, ": ");
 			}
@@ -4540,15 +4597,6 @@ static struct htmlTag *line2table(int ln)
 	return t;
 }
 
-static bool td_something;
-static void td_text(const Tag *u)
-{
-	if(u->action == TAGACT_TEXT && u->textval)
-		printf("%s", u->textval), td_something = true;
-	for(u = u->firstchild; u; u = u->sibling)
-		td_text(u);
-}
-
 // This routine is rather unforgiving.
 // Has to look like <table><thead><tr><th>text</th>...
 // Any intervening tags will throw it off.
@@ -4576,10 +4624,14 @@ bool showHeaders(int ln)
 	while(t) {
 		if(t->action == TAGACT_TD) {
 			printf("%d ", colno++);
-			td_something = false;
-			td_text(t);
-			if(!td_something)
+			td_text = initString(&td_text_l);
+			td_textUnder(t);
+			if(!td_text_l) {
 				printf("?");
+			} else {
+				printf("%s", td_text);
+				nzFree(td_text);
+			}
 			printf("\n");
 			}
 		t = t->sibling;
@@ -4591,47 +4643,3 @@ fail:
 	return false;
 }
 
-// return a column heading by number, the same logic as above.
-const char *findHeading(const Tag *t, int colno)
-{
-	int j = 0;
-	const Tag *u;
-	if(!t->parent ||
-	((t = t->parent)->action != TAGACT_TABLE &&
-	t->action != TAGACT_THEAD &&
-	t->action != TAGACT_TBODY))
-		return 0;
-	if(t->action != TAGACT_TABLE) {
-// it is tbody or thead
-		t = t->parent;
-		if(!t || t->action != TAGACT_TABLE)
-			return 0;
-	}
-	t = t->firstchild;
-	for(u = t; u; u = u->sibling)
-		if(u->action == TAGACT_THEAD) {
-			t = u;
-			break;
-		}
-	if(t && t->action == TAGACT_THEAD)
-		t = t->firstchild;
-	if(!t || t->action != TAGACT_TR || !t->firstchild)
-		return 0;
-	t = t->firstchild;
-	if(t->action != TAGACT_TD ||
-	!stringEqual(t->info->name, "th"))
-		return 0;
-	while(t) {
-		if(t->action == TAGACT_TD) {
-			if(++j == colno) {
-// this is the header we want, descend to the text field
-				u = t->firstchild;
-				if(u && u->action == TAGACT_TEXT)
-					return u->textval ? u->textval : "?";
-				return 0;
-			}
-		}
-		t = t->sibling;
-	}
-	return 0;
-}
