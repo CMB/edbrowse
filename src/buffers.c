@@ -1240,11 +1240,15 @@ static bool inputLinesIntoBuffer(void)
 static char *makeAbsPath(const char *f)
 {
 	static char path[ABSPATH + 200];
-	if (strlen(cw->baseDirName) + strlen(f) > ABSPATH - 2) {
+	const char *b = cw->baseDirName ? cw->baseDirName : emptyString;
+	if (strlen(b) + strlen(f) > ABSPATH - 2) {
 		setError(MSG_PathNameLong, ABSPATH);
 		return 0;
 	}
-	sprintf(path, "%s/%s", cw->baseDirName, f);
+	if(cw->baseDirName)
+		sprintf(path, "%s/%s", b, f);
+	else
+		strcpy(path, f);
 	return path;
 }
 
@@ -6530,6 +6534,42 @@ replaceframe:
 		line = dirline;
 		first = *line;
 	}
+
+// A similar version if you're just in text mode,
+// and the line is the filename.
+	if (cmd == 'g' && (!first || stringEqual(line, "-")) &&
+	startRange == endRange && startRange &&
+	!(cw->dirMode | cw->binMode | cw->browseMode | cw->binMode | cw->sqlMode)) {
+		char *dirline;
+		const struct MIMETYPE *gmt = 0;	/* the go mime type */
+		p = (char *)fetchLine(endRange, -1);
+		j = pstLength((pst) p);
+		--j;
+		for(i = 0; i < j; ++i)
+			if(!p[i])
+				goto past_g_file;
+		p[j] = 0;	/* temporary */
+		dirline = makeAbsPath(p);
+		p[j] = '\n';
+		if(!dirline || access(dirline, 4))
+			goto past_g_file;
+		emode = (first == '-');
+		cw->dot = endRange;
+		cmd = 'e';
+		stripDotDot(dirline);
+		if (!emode)
+			gmt = findMimeByFile(dirline);
+		if (pluginsOn && gmt) {
+			if (gmt->outtype)
+				cmd = 'b';
+			else
+				return playBuffer("pb", dirline);
+		}
+/* I don't think we need to make a copy here. */
+		line = dirline;
+		first = *line;
+	}
+past_g_file:
 
 	if (cmd == 'e') {
 		if (cx) {

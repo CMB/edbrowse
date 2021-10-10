@@ -2207,6 +2207,14 @@ and you save it to a text file,
 you can go to that link,
 even though the file is not html and you've never issued a browse command.
 
+<P>
+g also goes to a local file, if the line of text is exactly the name of that file.
+This is like <a href=#dir>directory mode</a>, where you edit a directory and go to files in that directory, but there are important differences.
+It is still a text file.
+Deleting the line does not delete the file, substituting in the line does not rename the file, and the path is not adjusted relative to the current filename.
+If your text file contains filenames that you want to go to, you have to be in the directory that contains those files, (unless they are absolute pathnames).
+This aspect of g can be convenient at times, but please don't confuse it with directory mode.
+
 <H3> <A NAME=ilink> Internal Links </A> </H3>
 
 <P>
