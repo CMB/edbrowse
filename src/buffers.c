@@ -1992,8 +1992,10 @@ static bool readFile(const char *filename, bool newwin,
 		cw->saveURL = cloneString(filename);
 	}
 
-	if (memEqualCI(filename, "file://", 7)) {
-		filename += 7;
+	if(memEqualCI(filename, "file:", 5)) {
+		filename += 5;
+		if(filename[0] == '/' && filename[1] == '/')
+			filename += 2;
 		if (!*filename) {
 			setError(MSG_MissingFileName);
 			return false;
@@ -2420,6 +2422,8 @@ static bool writeFile(const char *name, int mode)
 
 	if (memEqualCI(name, "file://", 7))
 		name += 7;
+	else if (memEqualCI(name, "file:", 5))
+		name += 5;
 
 	if (!*name) {
 		setError(MSG_MissingFileName);
@@ -2619,6 +2623,7 @@ static bool readContext(int cx, int readLine1, int readLine2)
 	Window *lw;
 	int i, fardol, nlines;
 	struct lineMap *t;
+	bool at_the_end;
 
 	if (!cxCompare(cx))
 		return false;
@@ -2670,10 +2675,11 @@ if(readLine1 < 0)
 		fileSize += len;
 	}			/* loop over lines in the "other" context */
 
+	at_the_end = cw->dol == endRange;
 	addToMap(nlines, endRange);
 	if (lw->nlMode && readLine2 == lw->dol) {
 		--fileSize;
-		if (cw->dol == endRange)
+		if (at_the_end)
 			cw->nlMode = true;
 	}
 	if (binaryDetect & !cw->binMode && lw->binMode) {

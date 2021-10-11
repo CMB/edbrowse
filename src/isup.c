@@ -28,7 +28,7 @@ struct PROTOCOL {
 	bool need_slash_after_host;
 } protocols[] = {
 	{
-	"file", 0, true, true, false}, {
+	"file", 0, true, false, false}, {
 	"http", 80, false, true, true}, {
 	"https", 443, false, true, true}, {
 	"pop3", 110, false, true, true}, {
