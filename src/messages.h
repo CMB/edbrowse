@@ -768,4 +768,5 @@ enum {
 	MSG_FileC,
 	MSG_ReqField,
 	MSG_Limit,
+	MSG_TextRec,
 };

@@ -668,7 +668,7 @@ option contains %c
 filename contains %c
 required field %s is empty
 limit
-0
+session %d cannot receive text
 0
 0
 0

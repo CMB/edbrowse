@@ -1233,7 +1233,7 @@ static bool inputLinesIntoBuffer(void)
 	newpiece = np;
 	addToMap(linecount, endRange);
 	return true;
-}				/* inputLinesIntoBuffer */
+}
 
 /* create the full pathname for a file that you are viewing in directory mode. */
 /* This is static, with a limit on path length. */
@@ -1357,7 +1357,7 @@ void delText(int start, int end)
 			cw->r_map = 0;
 		}
 	}
-}				/* delText */
+}
 
 /* Delete files from a directory as you delete lines.
  * Set dw to move them to your recycle bin.
@@ -2681,68 +2681,83 @@ static bool readContext(int cx)
 	return true;
 }				/* readContext */
 
-static bool writeContext(int cx)
+static bool writeContext(int cx, int writeLine)
 {
-	Window *lw;
+	Window *lw, *save_cw;
 	int i, len;
-	struct lineMap *newmap, *t;
+	struct lineMap *t;
 	pst p;
 	int fardol = endRange - startRange + 1;
+	bool at_the_end, lost_nl;
 
-	if (!startRange)
-		fardol = 0;
-	if (!cxCompare(cx))
-		return false;
-	if (cxActive(cx, false) && !cxQuit(cx, 2))
-		return false;
-
-	cxInit(cx);
+	if(writeLine < 0) {
+		if (!cxCompare(cx))
+			return false;
+		if (cxActive(cx, false) && !cxQuit(cx, 2))
+			return false;
+		cxInit(cx);
+	}
 	lw = sessionList[cx].lw;
+	at_the_end = (writeLine < 0 || writeLine == lw->dol);
+	lost_nl = (cw->nlMode && endRange == cw->dol);
 	fileSize = 0;
-	if (startRange) {
-		newmap = t = allocZeroMem((fardol + 2) * LMSIZE);
-		for (i = startRange, ++t; i <= endRange; ++i, ++t) {
-			p = fetchLine(i, (cw->dirMode ? -1 : 1));
-			len = pstLength(p);
-			if (cw->dirMode) {
-				char *q;
-				char *suf = dirSuffix(i);
-				if (cw->r_map) {
-					char *extra = (char *)cw->r_map[i].text;
-					int elen = strlen(extra);
-					q = allocMem(len + 4 + elen);
-					memcpy(q, p, len);
-					--len;
-					strcpy(q + len, suf);
-					if (elen) {
-						strcat(q, " ");
-						strcat(q, extra);
-					}
-					strcat(q, "\n");
-				} else {
-					q = allocMem(len + 3);
-					memcpy(q, p, len);
-					--len;
-					strcat(suf, "\n");
-					strcpy(q + len, suf);
-				}
-				len = strlen(q);
-				p = (pst) q;
-			}
-			t->text = p;
-			fileSize += len;
-		}
-		lw->map = newmap;
-		lw->binMode = cw->binMode;
-		if (cw->nlMode && endRange == cw->dol) {
-			lw->nlMode = true;
-			--fileSize;
-		}
+
+	if (!startRange) {
+// just blowing away the buffer with emptiness.
+		lw->dot = lw->dol = 0;
+		return true;
 	}
 
-	lw->dot = lw->dol = fardol;
+	newpiece = t = allocZeroMem(fardol * LMSIZE);
+	for (i = startRange; i <= endRange; ++i, ++t) {
+		p = fetchLine(i, (cw->dirMode ? -1 : 1));
+		len = pstLength(p);
+		if (cw->dirMode) {
+			char *q;
+			char *suf = dirSuffix(i);
+			if (cw->r_map) {
+				char *extra = (char *)cw->r_map[i].text;
+				int elen = strlen(extra);
+				q = allocMem(len + 4 + elen);
+				memcpy(q, p, len);
+				--len;
+				strcpy(q + len, suf);
+				if (elen) {
+					strcat(q, " ");
+					strcat(q, extra);
+				}
+				strcat(q, "\n");
+			} else {
+				q = allocMem(len + 3);
+				memcpy(q, p, len);
+				--len;
+				strcat(suf, "\n");
+				strcpy(q + len, suf);
+			}
+			len = strlen(q);
+			p = (pst) q;
+		}
+		t->text = p;
+		fileSize += len;
+	}
+
+	fileSize -= lost_nl;
+
+	save_cw = cw, cw = lw;
+// pretend like browsing, so addToMap doesn't mess with the undo machinery
+	cw->browseMode = true;
+	addToMap(fardol, (writeLine >= 0 ? writeLine : 0));
+	if(writeLine < 0)
+		cw->binMode = save_cw->binMode;
+	else
+		cw->changeMode = true;
+	if(at_the_end)
+		cw->nlMode = lost_nl;
+	cw->browseMode = false;
+	cw = save_cw;
+
 	return true;
-}				/* writeContext */
+}
 
 static void debrowseSuffix(char *s)
 {
@@ -2755,7 +2770,7 @@ static void debrowseSuffix(char *s)
 		}
 		++s;
 	}
-}				/* debrowseSuffix */
+}
 
 // macro substitutions within the command line.
 // '_ filename, '. current line, '- last line, '+ next line,
@@ -2856,7 +2871,7 @@ static char *get_interactive_shell(const char *sh)
 		i_printfExit(MSG_NoMem);
 	return ishell;
 #endif
-}				/* get_interactive_shell */
+}
 
 static char *ascmd = emptyString; // allocated shell command
 static char *bangbang(const char *line)
@@ -3150,7 +3165,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 
 	debugPrint(7, "%s regexp %s", (isleft ? "search" : "replace"), re);
 	return true;
-}				/* regexpCheck */
+}
 
 /* regexp variables */
 static int re_count;
@@ -3338,7 +3353,7 @@ const char **split)
 	*lineno = ln;
 	*split = line;
 	return true;
-}				/* getRangePart */
+}
 
 /* Apply a regular expression to each line, and then execute
  * a command for each matching, or nonmatching, line.
@@ -3459,7 +3474,7 @@ done:
 	if(cw->dot > cw->dol)
 		cw->dot = cw->dol;
 	return (errorMsg[0] == 0);
-}				/* doGlobal */
+}
 
 static void fieldNumProblem(int desc, char *c, int n, int nt, int nrt)
 {
@@ -5723,7 +5738,8 @@ If you want to use null in a search or substitute, use \0.
 bool runCommand(const char *line)
 {
 	int i, j, n;
-	int writeMode = O_TRUNC;
+	int writeMode = O_TRUNC; // could change to append
+	int writeLine = -1; // write text into a session
 	Window *w = NULL;
 	const Tag *tag = 0, *jumptag = 0;
 	bool nogo = true, rc = true;
@@ -6055,6 +6071,49 @@ replaceframe:
 	first = *line;
 	if (cmd == 'w' && first == '+')
 		writeMode = O_APPEND, first = *++line;
+	else if(cmd == 'w' && isdigit(first)) {
+		int sno, lno; // session number line number
+		const Window *w2; // far window
+		sno = strtol(line, &p, 10);
+// check syntax first, then validate session number
+		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
+		(p[1] == '$' && p[2] == 0) ||
+		(p[1] == '.' && p[2] == 0) ||
+		(isdigit(p[1]) && (lno = stringIsNum(p+1)) >= 0))) {
+			if(!cw->dol) {
+				setError(MSG_EmptyBuffer);
+				return false;
+			}
+			if(!cxCompare(sno) || !cxActive(sno, true))
+				return globSub = false;
+			w2 = sessionList[sno].lw;
+			if(w2->dirMode | w2->binMode | w2->browseMode | w2->sqlMode) {
+				setError(MSG_TextRec, sno);
+				return globSub = false;
+			}
+// session is ok, how bout the line number?
+			if(p[1] == '\'') {
+				if (!(lno = w2->labels[p[2] - 'a'])) {
+					setError(MSG_NoLabel, p[2]);
+					return globSub = false;
+				}
+			}
+			if(p[1] == '$')
+				lno = w2->dol;
+			if(p[1] == '.')
+				lno = w2->dot;
+			if(lno > w2->dol) {
+				setError(MSG_LineHigh);
+				return globSub = false;
+			}
+// writeLine will remember that this happened, and succeeded.
+			writeLine = lno;
+// Clobber @, so it just looks like writing to a session,
+// and we'll set cx and go down that path,
+// then writeLine will send us down another path at the last minute.
+			*p = 0;
+		}
+	}
 
 	if (cw->dirMode && !strchr(dir_cmd, cmd)) {
 		setError(MSG_DirCommand, icmd);
@@ -6323,7 +6382,7 @@ replaceframe:
 				setError(MSG_BufferAppend);
 				return false;
 			}
-			return writeContext(cx);
+			return writeContext(cx, writeLine);
 		}
 		selfFrame();
 

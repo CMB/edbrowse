@@ -5,6 +5,8 @@ Make several changes so that edbrowse is more like ed,
 allowing more commands under g/re/,
 and 'a,'bw !shellcommand, etc.
 
+'a,'bw7@21  to inject text from one buffer into another.
+
 /xyz/! search for line that doesn't contain xyz, like sed.
 
 Go to a file by its filename, in text mode.  Just as you can go to an inline url.

@@ -573,6 +573,8 @@ f : print the name of the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
 <br>w/ : write to the lass component of the filename
+<br>8,20w7 : write lines 8 through 20 to session 7, overwriting whatever was there before
+<br>'a,'bw7@'c : write this block of text into buffer 7, at the line with label c
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
@@ -1226,6 +1228,38 @@ The following moves the data from one file to another.
 &lt; r3
 &gt; 3279
 &lt; q3  # quit session 3 remotely, while still in session 1
+&lt; w  # write foo, with the new paragraph included
+&gt; 62121
+</font></PRE>
+
+<P>
+Here is a faster and easier way to do the same thing, without using an extra transfer buffer.
+It uses the special notation 'a,'bw1@'c, which injects the prescribed text from a to b, into session 1, at line label c, rather than overwriting the file.
+The at sign makes all the difference.
+Say the word at to yourself: put the text *at* this line in the preexisting buffer.
+A label or a line number or $ or . must follow @, and there can be no whitespace.
+Complex expressions like /xyz/-3 are not allowed here.
+A single space can change the meaning.
+'a,'bw 1@'c writes the block of text to a file named 1@'c, which is not what you want.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
+&lt; e2
+&gt; new session
+&lt; e bar
+&gt; 28719
+&lt; /start/
+&gt; This is the start of the cool paragraph that you want to move.
+&lt; ka
+&lt; /end/
+&gt; This is the end of the cool paragraph that you want to move.
+&lt; kb
+&lt; 'a,'bw1@'c
+&gt; 3279
+&lt; 'a,'bd
+&lt; w  # write bar, without the cool paragraph
+&gt; 25440
+&lt; e1
+&gt; foo  # back to session 1
 &lt; w  # write foo, with the new paragraph included
 &gt; 62121
 </font></PRE>
