@@ -6924,9 +6924,9 @@ past_g_file:
 	}
 
 rebrowse:
-//  printf("count %d cmd %c first %c line %s\n", redirect_count, cmd, first, line);
+	debugPrint(4, "rebrowse %c %s first %c count %d", cmd, line, first, redirect_count);
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
-//  printf("ifetch %d %s\n", uriEncoded, line);
+		debugPrint(4, "ifetch %d %s", uriEncoded, line);
 
 // If we got here from typing g in directory mode, and directory had /
 // at the end, and if the file starts with #, then the sameURL test passes,
@@ -7129,12 +7129,6 @@ redirect:
 /* Jump to the #section if specified in the url */
 		if(!redirect_count) {
 			if(!(p = findHash(line)))
-				return true;
-/* Sometimes there's a # in the midst of a long url,
- * probably with post data.  It really screws things up.
- * Here is a kludge to avoid this problem.
- * Some day I need to figure this out. */
-			if (strpbrk(line, "?\1"))
 				return true;
 			newhash = cloneString(p + 1);
 		} else {

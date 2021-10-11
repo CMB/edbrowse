@@ -697,14 +697,11 @@ slash:
 	*end_p = myslash + 1;
 }				/* getDirURL */
 
-/* #tag is only meaningfull after the last slash */
+// I assume this is a properly formatted URL, thus # indicates hash
 char *findHash(const char *s)
 {
-	const char *t = strrchr(s, '/');
-	if (t)
-		s = t;
-	return (char *)strchr(s, '#');
-}				/* findHash */
+	return strchr(s, '#');
+}
 
 /* extract the file piece of a pathname or url */
 /* This is for debugPrint or w/, so could be chopped for convenience */
@@ -750,7 +747,7 @@ char *getFileURL(const char *url, bool chophash)
 		hostbuf[e - s] = 0;
 	}
 	return hostbuf;
-}				/* getFileURL */
+}
 
 bool getPortLocURL(const char *url, const char **portloc, int *port)
 {
@@ -760,7 +757,7 @@ bool getPortLocURL(const char *url, const char **portloc, int *port)
 	if (!rc || fs)
 		return false;
 	return true;
-}				/* getPortLocURL */
+}
 
 int getPortURL(const char *url)
 {
@@ -770,7 +767,7 @@ int getPortURL(const char *url)
 	if (!rc || fs)
 		return 0;
 	return port;
-}				/* getPortURL */
+}
 
 bool isProxyURL(const char *url)
 {
@@ -1014,7 +1011,7 @@ bool sameURL(const char *s, const char *t)
 	if (l != q - t)
 		return false;
 	return !memcmp(s, t, l);
-}				/* sameURL */
+}
 
 /* Find some helpful text to print in place of an image.
  * Not sure why we would need more than 1000 chars for this,
@@ -1076,7 +1073,7 @@ retry:
 		}
 	}			/* more than ten characters */
 	return buf;
-}				/* altText */
+}
 
 /* get post data ready for a url. */
 char *encodePostData(const char *s, const char *keep_chars)
