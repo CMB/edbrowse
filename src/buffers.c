@@ -1083,11 +1083,12 @@ static struct lineMap *newpiece;
 /* Adjust the map of line numbers -- we have inserted text.
  * Also shift the downstream labels.
  * Pass the string containing the new line numbers, and the dest line number. */
+static int *nextLabel(int *label);
 static void addToMap(int nlines, int destl)
 {
 	struct lineMap *newmap;
-	int i, ln;
 	int svdol = cw->dol;
+	int *label = NULL;
 
 	if (nlines == 0)
 		i_printfExit(MSG_EmptyPiece);
@@ -1101,12 +1102,10 @@ static void addToMap(int nlines, int destl)
 	if (!(cw->browseMode | cw->dirMode))
 		undoPush();
 
-/* adjust labels */
-	for (i = 0; i < MARKLETTERS; ++i) {
-		ln = cw->labels[i];
-		if (ln <= destl)
-			continue;
-		cw->labels[i] += nlines;
+/* move the labels */
+	while ((label = nextLabel(label))) {
+		if (*label > destl)
+			*label += nlines;
 	}
 	cw->dot = destl + nlines;
 	cw->dol += nlines;
@@ -1334,7 +1333,6 @@ void delText(int start, int end)
 
 /* move the labels */
 	while ((label = nextLabel(label))) {
-		ln = *label;
 		if (ln < start)
 			continue;
 		if (ln <= end) {
@@ -6463,10 +6461,9 @@ replaceframe:
 				return false;
 			}
 			cw->histLabel = label->prev;
-			if (label->label)	/* could be 0 because of line deletion */
-				cw->dot = label->label;
+			if (label->label)	/* this could be 0 because of line deletion */
+				cw->dot = label->label, --cx;
 			free(label);
-			--cx;
 		}
 		printDot();
 		return true;
