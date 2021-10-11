@@ -7023,7 +7023,9 @@ we have to make sure it has a protocol. Every url needs a protocol.
 		selfFrame();
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything. */
-		if (!serverData && (isURL(line) || isSQL(line))) {
+// it's possible to get here in directory mode, with serverData == NULL
+//  file:///var/log
+		if (!serverData && (isURL(line) || isSQL(line)) && !w->dirMode) {
 			fileSize = -1;
 			freeWindow(w);
 			if (noStack && cw->prev) {
