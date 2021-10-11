@@ -2614,10 +2614,10 @@ endline:
 	return true;
 }
 
-static bool readContext(int cx)
+static bool readContext(int cx, int readLine1, int readLine2)
 {
 	Window *lw;
-	int i, fardol;
+	int i, fardol, nlines;
 	struct lineMap *t;
 
 	if (!cxCompare(cx))
@@ -2632,8 +2632,13 @@ static bool readContext(int cx)
 		return true;
 	if (cw->dol == endRange)
 		cw->nlMode = false;
-	newpiece = t = allocZeroMem(fardol * LMSIZE);
-	for (i = 1; i <= fardol; ++i, ++t) {
+
+if(readLine1 < 0)
+		readLine1 = 1, readLine2 = fardol;
+	nlines = readLine2 + 1 - readLine1;
+
+	newpiece = t = allocZeroMem(nlines * LMSIZE);
+	for (i = readLine1; i <= readLine2; ++i, ++t) {
 		pst p = fetchLineContext(i, (lw->dirMode ? -1 : 1), cx);
 		int len = pstLength(p);
 		if (lw->dirMode) {
@@ -2665,8 +2670,8 @@ static bool readContext(int cx)
 		fileSize += len;
 	}			/* loop over lines in the "other" context */
 
-	addToMap(fardol, endRange);
-	if (lw->nlMode) {
+	addToMap(nlines, endRange);
+	if (lw->nlMode && readLine2 == lw->dol) {
 		--fileSize;
 		if (cw->dol == endRange)
 			cw->nlMode = true;
@@ -2677,7 +2682,7 @@ static bool readContext(int cx)
 			i_puts(MSG_BinaryData);
 	}
 	return true;
-}				/* readContext */
+}
 
 static bool writeContext(int cx, int writeLine)
 {
@@ -5738,6 +5743,7 @@ bool runCommand(const char *line)
 	int i, j, n;
 	int writeMode = O_TRUNC; // could change to append
 	int writeLine = -1; // write text into a session
+	int readLine1 = -1, readLine2 = -1;
 	Window *w = NULL;
 	const Tag *tag = 0, *jumptag = 0;
 	bool nogo = true, rc = true;
@@ -6112,6 +6118,80 @@ replaceframe:
 			*p = 0;
 		}
 	}
+
+// may as well check r range while we're at it.
+	if(cmd == 'r' && isdigit(first)) {
+		int sno, lno1, lno2; // session number line numbers
+		const Window *w2; // far window
+		char *q = strchr(line, ',');
+		if(q)
+			*q = 0; // I'll put it back
+		sno = strtol(line, &p, 10);
+// check syntax first, then validate session number
+		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
+		(p[1] == '$' && p[2] == 0) ||
+		(p[1] == '.' && p[2] == 0) ||
+		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0))) {
+			lno2 = -1;
+			if(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
+			(q[1] == '$' && q[2] == 0) ||
+			(q[1] == '.' && q[2] == 0) ||
+			(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0))) {
+// syntax is good
+				if(!cxCompare(sno) || !cxActive(sno, true))
+					return globSub = false;
+				w2 = sessionList[sno].lw;
+				if(!w2->dol) {
+					setError(MSG_EmptyBuffer);
+					return globSub = false;
+				}
+// session is ok, how bout the line numbers?
+				if(p[1] == '\'' &&
+				 !(lno1 = w2->labels[p[2] - 'a'])) {
+					setError(MSG_NoLabel, p[2]);
+					return globSub = false;
+				}
+				if(p[1] == '$')
+					lno1 = w2->dol;
+				if(p[1] == '.')
+					lno1 = w2->dot;
+				if(q) {
+					if(q[1] == '\'' &&
+					 !(lno2 = w2->labels[q[2] - 'a'])) {
+						setError(MSG_NoLabel, q[2]);
+						return globSub = false;
+					}
+					if(q[1] == '$')
+						lno2 = w2->dol;
+					if(q[1] == '.')
+						lno2 = w2->dot;
+				}
+				if(lno2 < 0)
+					lno2 = lno1;
+				if(lno1 == 0 || lno2 == 0) {
+					setError(MSG_AtLine0);
+					return globSub = false;
+				}
+				if(lno1 > w2->dol || lno2 > w2->dol) {
+					setError(MSG_LineHigh);
+					return globSub = false;
+				}
+				if(lno1 > lno2) {
+					setError(MSG_BadRange);
+					return globSub = false;
+				}
+// readLine will remember that this happened, and succeeded.
+				readLine1 = lno1, readLine2 = lno2;
+// Clobber @, so it just looks like reading from a session,
+// and we'll set cx and go down that path,
+// then readLine will send us down another path at the last minute.
+				*p = 0;
+			}
+		}
+		if(q)
+			*q = ',';
+	}
+
 
 	if (cw->dirMode && !strchr(dir_cmd, cmd)) {
 		setError(MSG_DirCommand, icmd);
@@ -7235,7 +7315,7 @@ afterdelete:
 
 	if (cmd == 'r') {
 		if (cx)
-			return readContext(cx);
+			return readContext(cx, readLine1, readLine2);
 
 		if(first == '!') { // read from a command, like ed
 			char *outdata;

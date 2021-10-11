@@ -6,6 +6,7 @@ allowing more commands under g/re/,
 and 'a,'bw !shellcommand, etc.
 
 'a,'bw7@21  to inject text from one buffer into another.
+r7@'a,'b to  pull text from one buffer into another.
 
 /xyz/! search for line that doesn't contain xyz, like sed.
 

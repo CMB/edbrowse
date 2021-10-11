@@ -570,6 +570,9 @@ f : print the name of the current file
 <br>eret : return to the session you were previously in
 <br>e foo : edit the file named foo
 <br>r foo : read the contents of foo into the current buffer
+<br>r7 : read the contents of session 7 into the current buffer
+<br>r7@3,8 : read session 7 lines 3 through 8 into the current buffer
+<br>r7@'a,'b : read the designated block into the current buffer
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
 <br>w/ : write to the lass component of the filename
@@ -1262,6 +1265,42 @@ A single space can change the meaning.
 &gt; foo  # back to session 1
 &lt; w  # write foo, with the new paragraph included
 &gt; 62121
+</font></PRE>
+
+<P>
+Here is another way, that reads instead of writes.
+It uses the special notation r2@'a,'b, which reads the prescribed text from a to b, into session 1, at the current location.
+The at sign makes all the difference.
+Say the word at to yourself: read the text starting *at* this line in the other buffer.
+A label or a line number or $ or . must follow @, and there can be no whitespace.
+Complex expressions like /xyz/-3 are not allowed here.
+If a second line number is not given, the single line is read.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
+&lt; e2
+&gt; new session
+&lt; e bar
+&gt; 28719
+&lt; /start/
+&gt; This is the start of the cool paragraph that you want to move.
+&lt; ka
+&lt; /end/
+&gt; This is the end of the cool paragraph that you want to move.
+&lt; kb
+&lt; e1
+&gt; foo  # back to session 1
+&lt; r2@'a,'b
+&gt; 3279
+&lt; 'c+   # just to verify we read it
+&gt; This is the start of the cool paragraph that you want to move.
+&lt; w  # write foo, with the new paragraph included
+&gt; 62121
+#  now we have to switch back to session 2 if we want to delete it from bar
+&lt; e2
+&gt; bar
+&lt; 'a,'bd
+&lt; w  # write bar, without the cool paragraph
+&gt; 25440
 </font></PRE>
 
 <P>
