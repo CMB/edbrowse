@@ -6102,11 +6102,10 @@ replaceframe:
 				return globSub = false;
 			}
 // session is ok, how bout the line number?
-			if(p[1] == '\'') {
-				if (!(lno = w2->labels[p[2] - 'a'])) {
-					setError(MSG_NoLabel, p[2]);
-					return globSub = false;
-				}
+			if(p[1] == '\'' &&
+			!(lno = w2->labels[p[2] - 'a'])) {
+				setError(MSG_NoLabel, p[2]);
+				return globSub = false;
 			}
 			if(p[1] == '$')
 				lno = w2->dol;

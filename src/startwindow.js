@@ -1337,13 +1337,12 @@ Event.prototype.preventDefault = function(){ this.defaultPrevented = true; }
 
 Event.prototype.stopPropagation = function(){ if(this.cancelable)this.cancelled = true; }
 
-// deprecated!
+// deprecated - I guess - but a lot of people still use it.
 Event.prototype.initEvent = function(t, bubbles, cancel) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel; this.defaultPrevented = false; }
 
 Event.prototype.initUIEvent = function(t, bubbles, cancel, unused, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; this.defaultPrevented = false; }
-
 Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
 
@@ -1366,6 +1365,23 @@ MouseEvent.prototype.ctrlKey = false;
 MouseEvent.prototype.shiftKey = false;
 MouseEvent.prototype.metaKey = false;
 MouseEvent.prototype.initMouseEvent = function() { this.initEvent.apply(this, arguments)}
+
+CustomEvent = function(etype, o){
+    this.bubbles = true;
+    this.cancelable = true;
+    this.cancelled = false;
+    this.currentTarget = null;
+    this.target = null;
+    this.eventPhase = 0;
+    this.timeStamp = new Date().getTime();
+this.defaultPrevented = false;
+if(typeof etype == "string") this.type = etype;
+// This is nowhere documented.
+// I'm basing it on some js I saw in the wild.
+if(typeof o == "object")
+this.name = o.name, this.detail = o.detail;
+};
+CustomEvent.prototype = new Event;
 
 MediaQueryList = function() {
 this.nodeName = "MediaQueryList";
