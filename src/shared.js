@@ -2241,6 +2241,21 @@ s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *
 return;
 }
 
+// copy of the Event class, because Blob needs it.
+Event = function(etype){
+    // event state is kept read-only by forcing
+    // a new object for each event.  This may not
+    // be appropriate in the long run and we'll
+    // have to decide if we simply dont adhere to
+    // the read-only restriction of the specification
+    this.bubbles =     this.cancelable = true;
+    this.cancelled = this.defaultPrevented = false;
+    this.currentTarget =     this.target = null;
+    this.eventPhase = 0;
+    this.timeStamp = new Date().getTime();
+if(typeof etype == "string") this.type = etype;
+};
+
 // placeholder for URL class, I'm not comfortable sharing our hand-built
 // URL class yet.
 // But this has to be here for the Blob code.
@@ -3002,7 +3017,7 @@ return MessageChannelPolyfill;
 
 // lock down, for security.
 var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
-"Error", "String", "parseInt",
+"Error", "String", "parseInt", "Event",
 "alert","alert3","alert4","dumptree","uptrace",
 "showscripts", "showframes", "searchscripts", "snapshot", "aloop",
 "eb$base$snapshot", "set_location_hash",

@@ -100,6 +100,9 @@ eb$base$snapshot = mw$.eb$base$snapshot, set_location_hash = mw$.set_location_ha
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
 document.dispatchEvent = mw$.dispatchEvent;
+// make sure to wrap global dispatchEvent, so this becomes this window,
+// and not the shared window.
+dispatchEvent = function(e) { return mw$.dispatchEvent.call(window, e);}
 addEventListener = document.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
 removeEventListener = document.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
 if(mw$.attachOn) {
@@ -1321,14 +1324,11 @@ Event = function(etype){
     // be appropriate in the long run and we'll
     // have to decide if we simply dont adhere to
     // the read-only restriction of the specification
-    this.bubbles = true;
-    this.cancelable = true;
-    this.cancelled = false;
-    this.currentTarget = null;
-    this.target = null;
+    this.bubbles =     this.cancelable = true;
+    this.cancelled = this.defaultPrevented = false;
+    this.currentTarget =     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
-this.defaultPrevented = false;
 if(typeof etype == "string") this.type = etype;
 };
 Event.prototype.dom$class = "Event";
@@ -1349,14 +1349,11 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 document.createEvent = function(unused) { return new Event; }
 
 MouseEvent = function(etype){
-    this.bubbles = true;
-    this.cancelable = true;
-    this.cancelled = false;
-    this.currentTarget = null;
-    this.target = null;
+    this.bubbles =     this.cancelable = true;
+    this.cancelled = this.defaultPrevented = false;
+    this.currentTarget =     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
-this.defaultPrevented = false;
 if(typeof etype == "string") this.type = etype;
 };
 MouseEvent.prototype = new Event;
@@ -1367,14 +1364,12 @@ MouseEvent.prototype.metaKey = false;
 MouseEvent.prototype.initMouseEvent = function() { this.initEvent.apply(this, arguments)}
 
 CustomEvent = function(etype, o){
-    this.bubbles = true;
-    this.cancelable = true;
-    this.cancelled = false;
-    this.currentTarget = null;
-    this.target = null;
+alert3("customEvent " + etype + " " + typeof o);
+    this.bubbles =     this.cancelable = true;
+    this.cancelled = this.defaultPrevented = false;
+    this.currentTarget =     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
-this.defaultPrevented = false;
 if(typeof etype == "string") this.type = etype;
 // This is nowhere documented.
 // I'm basing it on some js I saw in the wild.
