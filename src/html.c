@@ -3429,7 +3429,9 @@ skip_execution:
 	if (!jt->isInterval || jt->deleted) {
 		debugPrint(3, "timer %d complete in context %d under %s",
 		jt->tsn, (jt->f ? jt->f->gsn : -1), jt->backlink);
-		if(jt->backlink)
+// at debug 3 or higher, keep these around, in case you have to
+// track down an error.
+		if(debugLevel < 3 && jt->backlink)
 			delete_property_win(jt->f, jt->backlink);
 		t = jt->t;
 		delFromList(jt);

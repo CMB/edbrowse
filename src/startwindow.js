@@ -1430,6 +1430,7 @@ p.contains = mw$.nodeContains;
 p.querySelectorAll = querySelectorAll;
 p.querySelector = querySelector;
 p.matches = querySelector0;
+p.closest = function(s) { var u = this; while(u.nodeType == 1) { if(u.matches(s)) return u; u = u.parentNode; } return null; }
 // children
 p.hasChildNodes = mw$.hasChildNodes;
 p.appendChild = mw$.appendChild;
