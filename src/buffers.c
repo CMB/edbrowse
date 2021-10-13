@@ -7006,7 +7006,7 @@ past_g_file:
 	}
 
 rebrowse:
-	debugPrint(4, "rebrowse %c %s first %c count %d", cmd, line, first, redirect_count);
+	debugPrint(4, "edbrowse command %c %s first %c count %d", cmd, line, first, redirect_count);
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
 		debugPrint(4, "ifetch %d %s", uriEncoded, line);
 

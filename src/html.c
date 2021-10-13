@@ -877,7 +877,8 @@ I will disconnect here, and also check for inxhr in runOnload().
 // For instance, some JSON pairs in script tags on amazon.com
 		a = get_property_string_t(t, "type");
 		if (a && *a && (!memEqualCI(a, "javascript", 10))
-		    && (!memEqualCI(a, "text/javascript", 15))) {
+		    && (!memEqualCI(a, "text/javascript", 15))
+		    && (!memEqualCI(a, "application/javascript", 22))) {
 			debugPrint(3, "script tag %d type %s not executed", t->seqno, a);
 			cnzFree(a);
 			goto afterscript;
