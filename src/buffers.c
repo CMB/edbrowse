@@ -1333,7 +1333,7 @@ void delText(int start, int end)
 
 /* move the labels */
 	while ((label = nextLabel(label))) {
-		if (ln < start)
+		if ((ln = *label) < start)
 			continue;
 		if (ln <= end) {
 			*label = 0;
