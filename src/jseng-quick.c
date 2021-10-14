@@ -2658,10 +2658,14 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	stringAndString(&s, &s_l, "\r\n\r\n");
 	stringAndNum(&s, &s_l, g.code);
 	stringAndString(&s, &s_l, "\r\n\r\n");
+	stringAndString(&s, &s_l, g.cfn ? g.cfn : incoming_url);
+	stringAndString(&s, &s_l, "\r\n\r\n");
 	stringAndString(&s, &s_l, outgoing_xhrheaders);
 	stringAndString(&s, &s_l, outgoing_xhrbody);
 	nzFree(outgoing_xhrheaders);
 	nzFree(outgoing_xhrbody);
+	nzFree(g.cfn);
+	nzFree(g.referrer);
 
 	debugPrint(5, "xhr out");
 	u = JS_NewAtomString(cx, s);

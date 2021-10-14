@@ -2075,8 +2075,9 @@ XMLHttpRequest.prototype.parseResponse = function(){
 var responsebody_array = this.$entire.split("\r\n\r\n");
 var success = parseInt(responsebody_array[0]);
 var code = parseInt(responsebody_array[1]);
-var http_headers = responsebody_array[2];
-responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = "";
+var url2 = responsebody_array[2];
+var http_headers = responsebody_array[3];
+responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = responsebody_array[3] = "";
 this.responseText = responsebody_array.join("\r\n\r\n").trim();
 // some want responseText, some just want response
 this.response = this.responseText;
@@ -2090,6 +2091,7 @@ this.responseHeaders[value2] = value3.trim();
 }
 
 this.readyState = 4;
+this.responseURL = url2.replace(/#.*/,"");
 if(success) {
 this.status = code;
 // need a real statusText for the codes

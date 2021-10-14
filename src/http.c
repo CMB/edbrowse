@@ -1532,6 +1532,8 @@ void *httpConnectBack3(void *ptr)
 		stringAndString(&a, &l, "\r\n\r\n");
 		stringAndNum(&a, &l, g.code);
 		stringAndString(&a, &l, "\r\n\r\n");
+		stringAndString(&a, &l, g.cfn ? g.cfn : t->href);
+		stringAndString(&a, &l, "\r\n\r\n");
 		stringAndString(&a, &l, outgoing_headers);
 		stringAndString(&a, &l, outgoing_body);
 		while (l && isspace(a[l - 1]))
