@@ -90,6 +90,8 @@ ok = $ok = Object.keys;
 window.nodeName = "WINDOW"; // in case you want to start at the top.
 document.nodeName = "DOCUMENT"; // in case you want to start at document.
 document.tagName = "document";
+document.nodeType = 9;
+document.ownerDocument = document;
 
 if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
@@ -153,7 +155,6 @@ name = "unspecifiedFrame";
 
 document.bgcolor = "white";
 document.readyState = "loading";
-document.nodeType = 9;
 document.contentType = "text/html";
 function readyStateComplete() { document.readyState = "complete"; document.activeElement = document.body;
 if(document.onreadystatechange$$fn) {

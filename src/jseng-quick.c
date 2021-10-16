@@ -1331,7 +1331,7 @@ static void processError(JSContext * cx)
 	else
 		debugPrint(3, "%s: %s", jsSourceFile, msg);
 	if(stack) {
-		debugPrint(4, "%s", stack);
+		debugPrint(3, "%s", stack);
 		JS_FreeCString(cx, stack);
 	}
 	JS_FreeCString(cx, msg);

@@ -1961,7 +1961,7 @@ static void loadReplacements(void)
 	struct JSR *j;
 	char *s;
 	int n = 0;
-	char line[400];
+	char line[1024];
 	if (!f)
 		return;
 	while (fgets(line, sizeof(line), f)) {
