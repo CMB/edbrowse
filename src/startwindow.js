@@ -1529,6 +1529,7 @@ p.scrollTop = 0;
 p.scrollLeft = 0;
 p.offsetHeight = 16;
 p.offsetWidth = 120;
+p.dir = "auto";
 })();
 
 // This is needed by mozilla, not by duktape, not sure how duktape
@@ -2393,9 +2394,10 @@ mutList = [];
 
 crypto = {};
 crypto.getRandomValues = function(a) {
-if(!Array.isArray(a)) return;
+if(typeof a != "object") return NULL;
 var l = a.length;
 for(var i=0; i<l; ++i) a[i] = Math.floor(Math.random()*0x100000000);
+return a;
 }
 
 ra$step = 0;
