@@ -555,6 +555,12 @@ Do we support appendchild?   etc.
 Node = function(){};
 Node.prototype.dom$class = "Node";
 
+// a node list is and isn't an array; I don't really understand it.
+// I'll just have it inherit from array, until someone tells me I'm wrong.
+NodeList = function(){}
+NodeList.prototype = new Array;
+NodeList.prototype.dom$class = "NodeList";
+
 HTMLElement = function(){};
 HTMLElement.prototype = new Node;
 HTMLElement.prototype.dom$class = "HTMLElement";
