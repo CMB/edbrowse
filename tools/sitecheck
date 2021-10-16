@@ -1,0 +1,25 @@
+#  check a website for size and edbrowse js errors.
+#  website is the only argument.
+#  You probably don't need the http://
+
+if [ $# != 1 ]
+then echo "usage sitecheck website"
+exit 1
+fi
+
+edbrowse <<!
+db3
+db>l3
+b $1
+db>
+jdb
+showscripts()
+zz=0
+aloop(\$ss, "zz+=\$ss[i].text.length");
+zz
+bye
+q
+!
+
+echo 'looking for problem phrases'
+egrep 'TypeError|ReferenceError|failure on|end uptrace|not a function' l3
