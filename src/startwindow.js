@@ -2426,4 +2426,5 @@ URL.createObjectURL = mw$.URL.createObjectURL
 URL.revokeObjectURL = mw$.URL.revokeObjectURL
 MessagePortPolyfill = mw$.MessagePortPolyfill;
 MessageChannel = MessageChannelPolyfill = mw$.MessageChannelPolyfill;
+URLSearchParams = mw$.URLSearchParams
 
