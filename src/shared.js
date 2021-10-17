@@ -3022,11 +3022,6 @@ return MessageChannelPolyfill;
  * @licence MIT
  */
 
-/**
-Modified by Karl Dahlke, to add lockdowns after each prototype.foo = function(),
-as this one prototype object is shared globally.
- */
-
 (function(self) {
     'use strict';
 
@@ -3083,7 +3078,6 @@ as this one prototype object is shared globally.
     prototype.append = function(name, value) {
         appendTo(this [__URLSearchParams__], name, value);
     };
-Object.defineProperty(prototype, "append", {writable:false,configurable:false});
 
     /**
      * Deletes the given search parameter, and its associated value,
@@ -3094,7 +3088,6 @@ Object.defineProperty(prototype, "append", {writable:false,configurable:false});
     prototype['delete'] = function(name) {
         delete this [__URLSearchParams__] [name];
     };
-Object.defineProperty(prototype, "delete", {writable:false,configurable:false});
 
     /**
      * Returns the first value associated to the given search parameter.
@@ -3106,7 +3099,6 @@ Object.defineProperty(prototype, "delete", {writable:false,configurable:false});
         var dict = this [__URLSearchParams__];
         return this.has(name) ? dict[name][0] : null;
     };
-Object.defineProperty(prototype, "get", {writable:false,configurable:false});
 
     /**
      * Returns all the values association with a given search parameter.
@@ -3118,7 +3110,6 @@ Object.defineProperty(prototype, "get", {writable:false,configurable:false});
         var dict = this [__URLSearchParams__];
         return this.has(name) ? dict [name].slice(0) : [];
     };
-Object.defineProperty(prototype, "getAll", {writable:false,configurable:false});
 
     /**
      * Returns a Boolean indicating if such a search parameter exists.
@@ -3129,7 +3120,6 @@ Object.defineProperty(prototype, "getAll", {writable:false,configurable:false});
     prototype.has = function(name) {
         return hasOwnProperty(this [__URLSearchParams__], name);
     };
-Object.defineProperty(prototype, "has", {writable:false,configurable:false});
 
     /**
      * Sets the value associated to a given search parameter to
@@ -3142,7 +3132,6 @@ Object.defineProperty(prototype, "has", {writable:false,configurable:false});
     prototype.set = function set(name, value) {
         this [__URLSearchParams__][name] = ['' + value];
     };
-Object.defineProperty(prototype, "set", {writable:false,configurable:false});
 
     /**
      * Returns a string containg a query string suitable for use in a URL.
@@ -3159,7 +3148,6 @@ Object.defineProperty(prototype, "set", {writable:false,configurable:false});
         }
         return query.join('&');
     };
-Object.defineProperty(prototype, "toString", {writable:false,configurable:false});
 
     // There is a bug in Safari 10.1 and `Proxy`ing it is not enough.
     var forSureUsePolyfill = !decodesPlusesCorrectly;
@@ -3386,6 +3374,8 @@ Object.defineProperty(prototype, "toString", {writable:false,configurable:false}
 
 // lock down, for security.
 
+for(var k in URLSearchParams.prototype)
+Object.defineProperty(URLSearchParams.prototype, k,{writable:false,configurable:false});
 Object.defineProperty(Object.prototype, "toString",{enumerable:false,writable:false,configurable:false});
 
 var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
@@ -3427,8 +3417,8 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
-// some native class prototypes
-var flist = [Date, Promise, Array, Uint8Array, Error, String, URL];
+// some class prototypes
+var flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 
