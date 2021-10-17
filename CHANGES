@@ -33,6 +33,8 @@ required fields, <input type=submit formattributes>, <datalist>
 
 Move blob code and a lot of our DOM functions into shared space.
 
+URLSearchParams, third party.
+
 speed= and tmlist commands, for debugging timers.
 
 upgrade from pcre1 to pcre2

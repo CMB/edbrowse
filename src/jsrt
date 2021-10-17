@@ -309,6 +309,7 @@ zonload="alert('expanding the frame dude')">
 you shouldn't see this stuff
 </iframe>
 <A onclick="alert('first node ' + frames[0].contentDocument.body.firstChild.nodeName)">first node</a>
+<a href='javascript:frames[0].contentWindow.postMessage("sweet+potato+pie","http://www.edbrowse.org");alert("message+sent")'>post2frame</a>
 
 <form method=POST name=questionnaire
 class=betty-boop
