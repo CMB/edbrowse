@@ -4480,6 +4480,8 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if(stringEqual(line, "pwd"))
+		line = "cd";
 	if (line[0] == 'c' && line[1] == 'd') {
 		c = line[2];
 		if (!c || isspaceByte(c)) {
