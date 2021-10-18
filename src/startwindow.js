@@ -853,6 +853,9 @@ z$Audio.prototype.play = eb$voidfunction;
 // I don't implement any of the performance features;
 // but the object has to exist for some sites to work.
 Performance = function(){}
+Performance.prototype = {
+getEntriesByType:function(x){ return []; }
+}
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 
 // I don't implement any of the custom elements registry methods;
