@@ -1461,6 +1461,7 @@ Object.defineProperty(p, "firstChild", { get: function() { return (this.childNod
 Object.defineProperty(p, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
 Object.defineProperty(p, "lastChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[this.childNodes.length-1] : null; } });
 Object.defineProperty(p, "lastElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=u.length-1; i>=0; --i) if(u[i].nodeType == 1) return u[i]; return null; }});
+Object.defineProperty(p, "childElementCount", { get: function() { var z=0, u = this.childNodes; if(!u) return z; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) ++z; return z; }});
 Object.defineProperty(p, "nextSibling", { get: function() { return mw$.eb$getSibling(this,"next"); } });
 Object.defineProperty(p, "nextElementSibling", { get: function() { return mw$.eb$getElementSibling(this,"next"); } });
 Object.defineProperty(p, "previousSibling", { get: function() { return mw$.eb$getSibling(this,"previous"); } });

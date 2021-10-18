@@ -914,8 +914,10 @@ This is called by the various appendChild routines.
 Since we are appending many nodes, I'm not sure what to return.
 *********************************************************************/
 
-function appendFragment(p, frag) { var c; while(c = frag.firstChild) p.appendChild(c); return null; }
-function insertFragment(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return null; }
+// The return is completely undocumented. I have determined it is not null.
+// I assume it is the appended fragment.
+function appendFragment(p,  frag) { var c; while(c = frag.firstChild) p.appendChild(c); return frag; }
+function insertFragment(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return frag; }
 
 /*********************************************************************
 Here comes a bunch of stuff regarding the childNodes array,
