@@ -2517,8 +2517,12 @@ static bool qsaMatchGroup(Tag *t, struct desc *d)
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
 			continue;
-// Only the plain descriptors for getComputedStyle().
-		if (sel->before | sel->after | sel->hover)
+// has to match the pseudoelement
+		if (sel->hover)
+			continue;
+		if (sel->after | sel->before && matchtype == 0)
+			continue;
+		if((matchtype == 1 && !sel->before) || (matchtype == 2 && !sel->after))
 			continue;
 		if (qsaMatchChain(t, sel->chain)) {
 // debug getComputedStyle, which can also be a directed debug
@@ -2829,10 +2833,6 @@ loops through all the css descriptors, matches them against node,
 and then applies the rules to s. s is accessed internally through window.soj$,
 via the gcs (get computed style) primitives, so that css.c can remain
 engine portable.
-Because matchtype is 0, the before and after selectors don't match,
-and they shouldn't, because before after attributes
-wouldn't apply to node.style but rather node.textnode.style.
-matchhover is false so hover selectors won't match either, nor should they.
 2. The cssText setter on a style object.
 There are no selectors here, just rules, as supplied by the calling function.
 window.soj$ is the style object for internal use.
@@ -2874,9 +2874,11 @@ so we don't want to apply before or after to text nodes.
 Or options, or html (screwing up the head body structure),
 or iframe (which should only have document below);
 in fact it's easier to list the tags that allow it.
+If t is 0 we are in getComputedStyle and then we want to see
+the before after rules - straight up.
 *********************************************************************/
 
-	if (matchtype) {
+	if (matchtype && t) {
 		bool forbidden = true;
 		static const char *const ok2inject[] = {
 			"A", "ADDRESS", "Q", "BLOCKQUOTE", "BODY", "BUTTON",
@@ -2940,7 +2942,7 @@ in fact it's easier to list the tags that allow it.
 			continue;
 		}
 // special code for before after content
-		if (matchtype && stringEqual(r->atname, "content")) {
+		if (matchtype && t && stringEqual(r->atname, "content")) {
 			if (stringEqual(r->atval, "none"))
 				continue;
 			if (sl)
@@ -3025,7 +3027,8 @@ void cssApply(int frameNumber, Tag *t, int pe)
 		goto done;
 
 // it's a getComputedStyle match
-	gcsmatch = true;
+	gcsmatch = true, matchtype = pe;
+// defer to the js
 	nzFree(t->jclass);
 	t->jclass = get_property_string_t(t, "class");
 	nzFree(t->id);
@@ -3038,7 +3041,7 @@ void cssApply(int frameNumber, Tag *t, int pe)
 
 done:
 	cf = save_cf;
-	gcsmatch = false;
+	gcsmatch = false, matchtype = 0;
 }
 
 void cssText(const char *rulestring)
