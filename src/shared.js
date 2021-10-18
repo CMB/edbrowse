@@ -3419,7 +3419,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
 "clickfn", "checkset",
-"jtfn0", "jtfn1", "deminimize", "addTrace",
+"jtfn0", "jtfn1", "jtfn2", "deminimize", "addTrace",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});

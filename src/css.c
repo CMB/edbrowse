@@ -1404,6 +1404,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	static const char *const okcolon[] = {
 		"first-child", "last-child", "only-child", "checked",
 		"first-of-type", "last-of-type", "only-of-type",
+		"first", "last",
 		"empty", "disabled", "enabled", "read-only", "read-write",
 		"scope", "root",
 		0
@@ -2297,6 +2298,11 @@ nth_bad:
 				goto next_mod;
 			return false;
 		}
+
+// : first is on the first page, : last is on the last page.
+// edbrowse doesn't lead to a printout, so I think it's safer to say no here.
+		if (stringEqual(p, ":first") || stringEqual(p, ":last"))
+			return false;
 
 		if (stringEqual(p, ":root") || stringEqual(p, ":scope")) {
 /*********************************************************************
