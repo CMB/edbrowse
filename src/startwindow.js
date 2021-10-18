@@ -114,7 +114,7 @@ detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev
 eb$listen = document.eb$listen = mw$.eb$listen;
 eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
-rowReindex = mw$.rowReindex, getComputedStyle = mw$.getComputedStyle;
+rowReindex = mw$.rowReindex, getComputedStyle = mw$.getComputedStyle.bind(window);
 mutFixup = mw$.mutFixup;
 }
 

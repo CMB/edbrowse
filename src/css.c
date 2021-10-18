@@ -3010,7 +3010,7 @@ the css rules. If there's ever a document.head.getComputedStyle or some such,
 where "this" is not the window object, then we have to make some changes.
 *********************************************************************/
 
-void cssApply(int frameNumber, Tag *t)
+void cssApply(int frameNumber, Tag *t, int pe)
 {
 	Frame *save_cf = cf;
 	struct cssmaster *cm;

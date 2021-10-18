@@ -379,13 +379,13 @@ void cssFree(Frame *f);
 Tag **querySelectorAll(const char *selstring, Tag *top);
 Tag *querySelector(const char *selstring, Tag *top);
 bool querySelector0(const char *selstring, Tag *top);
-void cssApply(int frameNumber, Tag *t);
+void cssApply(int frameNumber, Tag *t, int pe);
 void cssText(const char *rulestring);
 
 /* sourcefile=jseng-* */
 void disconnectTagObject(Tag *t);
 void reconnectTagObject(Tag *t);
-bool has_property_t(const Tag *t, const char *name) ;
+bool has_property_t(const Tag *t, const char *name);
 bool has_property_win(const Frame *f, const char *name) ;
 void set_property_object_t(const Tag *t, const char *name, const Tag *t2);
 bool run_function_bool_t(const Tag *t, const char *name);
@@ -395,8 +395,8 @@ void my_ExecutePendingJobs(void);
 void my_ExecutePendingMessages(void);
 void delPendings(const Frame *f);
 void js_main(void);
-void createJSContext(Frame *f) ;
-void freeJSContext(Frame *f) ;
+void createJSContext(Frame *f);
+void freeJSContext(Frame *f);
 void run_ontimer(const Frame *f, const char *backlink);
 int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2);
 int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2);

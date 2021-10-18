@@ -2909,13 +2909,14 @@ static JSValue nat_qs0(JSContext * cx, JSValueConst this, int argc, JSValueConst
 static JSValue nat_cssApply(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	jsInterruptCheck(cx);
-	int32_t n;
+	int32_t n, pe;
 	JSValue node = argv[1];
 	Tag *t;
 	JS_ToInt32(cx, &n, argv[0]);
+	JS_ToInt32(cx, &pe, argv[2]);
 	t = tagFromObject(node);
 	if(t)
-		cssApply(n, t);
+		cssApply(n, t, pe);
 	else
 		debugPrint(3, "eb$cssApply is passed an object that does not correspond to an html tag");
 	return JS_UNDEFINED;
@@ -3234,7 +3235,7 @@ JS_NewCFunction(mwc, nat_log_element, "log_element", 2), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "cssDocLoad",
 JS_NewCFunction(mwc, nat_css_start, "css_start", 3), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "cssApply",
-JS_NewCFunction(mwc, nat_cssApply, "cssApply", 2), 0);
+JS_NewCFunction(mwc, nat_cssApply, "cssApply", 3), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "jobsPending",
 JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 #endif

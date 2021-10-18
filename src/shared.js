@@ -1764,9 +1764,14 @@ w.css$ver++;
 cssDocLoad(w.eb$ctx, css_all, pageload);
 }
 
-	// disregarding pseudoelements for now
+// e is the node and pe is the pseudoelement
 function getComputedStyle(e,pe) {
 var s, w = my$win();
+
+if(!pe) pe = 0;
+else if(pe == ":before") pe = 1;
+else if(pe == ":after") pe = 2;
+else { alert3("getComputedStyle pseudoelement " + pe + " is invalid"); pe = 0; }
 
 /*********************************************************************
 Some sites call getComputedStyle on the same node over and over again.
@@ -1808,7 +1813,7 @@ Remember that "this" is the window object.
 cssGather(false, this);
 
 this.soj$ = s;
-cssApply(this.eb$ctx, e);
+cssApply(this.eb$ctx, e, pe);
 delete this.soj$;
 
 /*********************************************************************
@@ -1897,7 +1902,7 @@ created = true;
 
 // apply all the css rules
 w.soj$ = s;
-cssApply(w.eb$ctx, e);
+cssApply(w.eb$ctx, e, 0);
 delete w.soj$;
 // style has been recomputed
 if(created) {
