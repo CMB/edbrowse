@@ -2140,6 +2140,7 @@ if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this)
 // jtfn0 injects trace(blah) into the code.
 // It should only be applied to deminimized code.
 // jtfn1 puts a name on the anonymous function, for debugging.
+// jtfn2 injects code after catch(e) {, for detection by dberr
 
 jtfn0 = function (all, a, b) {
 // if code is not deminimized, this will inject
@@ -2160,6 +2161,10 @@ var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
 return a + " " + c + "__" + sn + b;
+}
+
+jtfn2 = function (all, a) {
+return '} catch(' + a + ') { if(db$flags(3)) alert(' + a + '.toString()),alert(' + a + '.stack),step$l=2;';
 }
 
 // Deminimize javascript for debugging purposes.
@@ -2240,6 +2245,8 @@ alert3("adding trace under " + w.$jt$c);
 // First name the anonymous functions; then put in the trace points.
 s.text = s.text.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, jtfn1);
 s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, jtfn0);
+s.text = s.text.replace(/}\ *catch\ *\((\w+)\)\ *{/g, jtfn2);
+s.text = s.text.replace(/}\ *catch\ *\(\)\ *{/g, '} catch() { if(db$flags(3)) alert("catch with no argument"),step$l=2;');
 return;
 }
 

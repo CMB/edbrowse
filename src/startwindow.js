@@ -2355,25 +2355,6 @@ return "<div>XMLSerializer not yet implemented</div>"; }
 css$ver = 0;
 document.xmlVersion = 0;
 
-// if debugThrow is set, see all errors, even caught errors.
-// This is only meaningful in duktape.
-if(window.Duktape) {
-Duktape.errCreate = function (e) {
-if(db$flags(3)) {
-var n = e.lineNumber;
-var msg = "";
-if(typeof n === "number")
-msg += "line " + n + ": ";
-msg += e.toString();
-alert3(msg);
-}
-    return e;
-}
-}
-// But is there some way we can get a handle on Errors thrown in general?
-ErrorSave = Error;
-function ErrorWrap(msg) { alert3("error " + msg + " thrown"); return new ErrorSave(msg);}
-
 MutationObserver = function(f) {
 var w = my$win();
 w.mutList.push(this);
