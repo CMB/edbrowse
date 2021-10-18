@@ -913,9 +913,25 @@ afterscript:
 				"eb$dbih",
 				strstr(cf->dw, "<body>")+6);
 			} else {
+// Any newly generated scripts have to run next. Move them up in the linked list.
+				Tag *t1, *t2, *u;
+				for(u = t; u; u = u->same)
+					if(!u->slash) t1 = u;
+// t1 is now last real script in the list.
 				stringAndString(&cf->dw, &cf->dw_l, "</body>");
 				runGeneratedHtml(t, cf->dw);
 				run_function_onearg_win(cf, "eb$uplift", t);
+				for(u = t1; u; u = u->same)
+					if(!u->slash) t2 = u;
+				if(t1 != t && t2 != t1) {
+					Tag *t3 = t->same;
+					t->same = t1->same;
+					t2->same = t3;
+					t1->same = 0;
+					for(u = t->same; u != t3; u = u->same)
+						if(u->jslink)
+	prepareScript(u);
+				}
 			}
 			nzFree(cf->dw);
 			cf->dw = 0;
