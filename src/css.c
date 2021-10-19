@@ -133,17 +133,36 @@ static char *cut20(char *s)
 	return buf;
 }
 
-// Remove the comments from a css string.
-// Watch out - url(http://stuf) or url(data base64 jklk33//ss88djdjj)
+/*********************************************************************
+Remove the comments from a css string.
+Watch out - url(http://stuf) or url(data base64 jklk33//ss88djdjj)
+Also, url(...) with just crap inside. I found this ugly line in the wild.
+q1{snork:url(%23clip0)'%3E%3Cpath d='M25.318 9.942L16.9 3.8c-1.706-1.228-3.64-1.899-5.686-1.787H11.1c-4.89.335-8.985 4.356-9.099 9.27C1.888 16.645 6.21 21 11.67 21h.113c1.82 0 3.64-.67 5.118-1.787l8.417-6.255c.91-.893.91-2.234 0-3.016v0z' fill='%23fff' stroke='%23757575'/%3E%3Cpath d='M13 7v9m-3-9v9-9z' stroke='%23B8B8B8'/%3E%3Cpath d='M25.318 9.942L16.9 3.8c-1.706-1.228-3.64-1.899-5.686-1.787H11.1c-4.89.335-8.985 4.356-9.099 9.27C1.888 16.645 6.21 21 11.67 21h.113c1.82 0 3.64-.67 5.118-1.787l8.417-6.255c.91-.893.91-2.234 0-3.016v0z' fill='%23fff' stroke='%23757575'/%3E%3Cpath d='M13 7v9m-3-9v9-9z' stroke='%23B8B8B8'/%3E%3Cpath d='M25.318 32.942L16.9 26.8c-1.706-1.228-3.64-1.899-5.686-1.787H11.1c-4.89.335-8.985 4.356-9.099 9.27C1.888 39.645 6.21 44 11.67 44h.113c1.82 0 3.64-.67 5.118-1.787l8.417-6.255c.91-.893.91-2.234 0-3.016v0z' fill='%23F8F3F7' stroke='%23fff' stroke-opacity='.75' stroke-width='3'/%3E%3Cpath d='M25.318 32.942L16.9 26.8c-1.706-1.228-3.64-1.899-5.686-1.787H11.1c-4.89.335-8.985 4.356-9.099 9.27C1.888 39.645 6.21 44 11.67 44h.113c1.82 0 3.64-.67 5.118-1.787l8.417-6.255c.91-.893.91-2.234 0-3.016v0zM13 30v9m-3-9v9-9z' stroke='%23757575'/%3E%3Cpath d='M30.682 9.942L39.1 3.8c1.706-1.228 3.64-1.899 5.686-1.787h.114c4.89.335 8.985 4.356 9.099 9.27C54.112 16.645 49.79 21 44.33 21h-.113c-1.82 0-3.64-.67-5.118-1.787l-8.417-6.255c-.91-.893-.91-2.234 0-3.016v0z' fill='%23fff' stroke='%23757575'/%3E%3Cpath d='M43 7v9m3-9v9-9z' stroke='%23B8B8B8'/%3E%3Cpath d='M30.682 32.942L39.1 26.8c1.706-1.228 3.64-1.899 5.686-1.787h.114c4.89.335 8.985 4.356 9.099 9.27C54.112 39.645 49.79 44 44.33 44h-.113c-1.82 0-3.64-.67-5.118-1.787l-8.417-6.255c-.91-.893-.91-2.234 0-3.016v0z' fill='%23F8F3F7' stroke='%23fff' stroke-opacity='.75' stroke-width='3'/%3E%3Cpath d='M30.682 32.942L39.1 26.8c1.706-1.228 3.64-1.899 5.686-1.787h.114c4.89.335 8.985 4.356 9.099 9.27C54.112 39.645 49.79 44 44.33 44h-.113c-1.82 0-3.64-.67-5.118-1.787l-8.417-6.255c-.91-.893-.91-2.234 0-3.016v0zM43 30v9m3-9v9-9z' stroke='%23757575'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0'%3E%3Cpath fill='%23fff' d='M0 0h56v46H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");-moz-transition:transform .2s ease-in-out;transition:transform .2s ease-in-out;-webkit-appearance:none;-moz-appearance:none;appearance:none}
+We don't use the url for anything, so just slice it out.
+*********************************************************************/
+
 static void uncomment(char *s)
 {
 	char *w = s;
 	int n;
-	char c, urlmode = 0;
+	char c, urlmode = 0, delimmode = 0;
 	while ((c = *s)) {
-		if (urlmode) { // copy up to paren
-			if (c == ')' || c == '\n') urlmode = 0;
+		if (delimmode) { // copy the line
+			if (c == '\n') delimmode = 0;
 			goto copy;
+		}
+		if (urlmode) { // skip ahead to paren or brace
+			if(c == '\n' || c == '}' ||
+			(c == ')' && (s[-1] == '"' || s[1] == ';' || isspace(s[1])))) {
+				urlmode = 0;
+				if(s - w >= 12)
+					strcpy(w, "url(omitted)"), w += 12;
+				else
+					strcpy(w, "url()"), w += 5;
+				if(c != ')') goto copy;
+			}
+			++s;
+			continue;
 		}
 		if (c == '"' || c == '\'') {
 			n = closeString(s + 1, c);
@@ -158,10 +177,9 @@ static void uncomment(char *s)
 			w += n;
 			continue;
 		}
-		if (c == 'u' && !strncmp(s, "url(", 4))
-			urlmode = 1;
+		if (c == 'u' && !strncmp(s, "url(", 4)) {urlmode = 1; continue; }
 		if (c == '@' && !strncmp(s, "@ebdelim", 8))
-			urlmode = 1;
+			delimmode = 1;
 		if (c != '/')
 			goto copy;
 		if (s[1] == '/') {
