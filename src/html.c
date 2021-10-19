@@ -3822,6 +3822,13 @@ nocolorend:
 		if(allowJS && t->jslink) {
 			t->disval =
 			    run_function_onearg_win(f, "eb$visible", t);
+// If things appear upon hover, they do this sometimes if your mouse
+// is anywhere in that section, so maybe we should see them.
+// Also if color is transparent then it surely changes to a color
+// if the mouse is somewhere or on some circumstance,
+// so just bring this to light as well.
+			if(t->disval != DIS_INVISIBLE)
+				t->disval = DIS_COLOR;
 		} else {
 // allow html to hide sections, even if js is not running.
 			t->disval = 0;
