@@ -278,12 +278,12 @@ alert3("getElementsByTagName(type " + typeof s + ")");
 return new (my$win().Array);
 }
 s = s.toLowerCase();
-return eb$gebtn(this, s);
+return eb$gebtn(this, s, true);
 }
 
-function eb$gebtn(top, s) {
+function eb$gebtn(top, s, first) {
 var a = new (my$win().Array);
-if(s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s))
+if(!first && (s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s)))
 a.push(top);
 if(top.childNodes) {
 // don't descend into another frame.
@@ -291,7 +291,7 @@ if(top.childNodes) {
 if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebtn(c, s));
+a = a.concat(eb$gebtn(c, s, false));
 }
 }
 return a;
@@ -302,18 +302,18 @@ if(!s) { // missing or null argument
 alert3("getElementsByName(type " + typeof s + ")");
 return new (my$win().Array);
 }
-return eb$gebn(this, s);
+return eb$gebn(this, s, true);
 }
 
-function eb$gebn(top, s) {
+function eb$gebn(top, s, first) {
 var a = new (my$win().Array);
-if(s === '*' || top.name === s)
+if(!first && (s === '*' || top.name === s))
 a.push(top);
 if(top.childNodes) {
 if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebn(c, s));
+a = a.concat(eb$gebn(c, s, false));
 }
 }
 return a;
@@ -324,20 +324,20 @@ if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
 }
-var a = eb$gebi(this, s);
+var a = eb$gebi(this, s, true);
 return a.length ? a[0] : null;
 }
 
 // this could stop when it finds the first match, it just doesn't
-function eb$gebi(top, s) {
+function eb$gebi(top, s, first) {
 var a = [];
-if(s === '*' || top.id === s)
+if(!first && (s === '*' || top.id === s))
 a.push(top);
 if(top.childNodes) {
 if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebi(c, s));
+a = a.concat(eb$gebi(c, s, false));
 }
 }
 return a;
@@ -351,12 +351,12 @@ return new (my$win().Array);
 s = s . replace (/^\s+/, '') . replace (/\s+$/, '');
 if(s === "") return new (my$win().Array);
 var sa = s.split(/\s+/);
-return eb$gebcn(this, sa);
+return eb$gebcn(this, sa, true);
 }
 
-function eb$gebcn(top, sa) {
+function eb$gebcn(top, sa, first) {
 var a = new (my$win().Array);
-if(top.cl$present) {
+if(!first && top.cl$present) {
 var ok = true;
 for(var i=0; i<sa.length; ++i) {
 var w = sa[i];
@@ -369,7 +369,7 @@ if(top.childNodes) {
 if(top.dom$class != "Frame")
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebcn(c, sa));
+a = a.concat(eb$gebcn(c, sa, false));
 }
 }
 return a;
