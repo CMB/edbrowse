@@ -302,13 +302,12 @@ if(!s) { // missing or null argument
 alert3("getElementsByName(type " + typeof s + ")");
 return new (my$win().Array);
 }
-s = s.toLowerCase();
 return eb$gebn(this, s);
 }
 
 function eb$gebn(top, s) {
 var a = new (my$win().Array);
-if(s === '*' || (top.name && top.name.toLowerCase() === s))
+if(s === '*' || top.name === s)
 a.push(top);
 if(top.childNodes) {
 if(top.dom$class != "Frame")
@@ -325,7 +324,6 @@ if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
 }
-s = s.toLowerCase();
 var a = eb$gebi(this, s);
 return a.length ? a[0] : null;
 }
@@ -333,7 +331,7 @@ return a.length ? a[0] : null;
 // this could stop when it finds the first match, it just doesn't
 function eb$gebi(top, s) {
 var a = [];
-if(s === '*' || (top.id && top.id.toLowerCase() === s))
+if(s === '*' || top.id === s)
 a.push(top);
 if(top.childNodes) {
 if(top.dom$class != "Frame")
@@ -350,7 +348,7 @@ if(!s) { // missing or null argument
 alert3("getElementsByTagName(type " + typeof s + ")");
 return new (my$win().Array);
 }
-s = s.toLowerCase() . replace (/^\s+/, '') . replace (/\s+$/, '');
+s = s . replace (/^\s+/, '') . replace (/\s+$/, '');
 if(s === "") return new (my$win().Array);
 var sa = s.split(/\s+/);
 return eb$gebcn(this, sa);
@@ -359,13 +357,13 @@ return eb$gebcn(this, sa);
 function eb$gebcn(top, sa) {
 var a = new (my$win().Array);
 if(top.cl$present) {
-var i;
-for(i=0; i<sa.length; ++i) {
+var ok = true;
+for(var i=0; i<sa.length; ++i) {
 var w = sa[i];
-if(w === '*') { a.push(top); break; }
-if(!top.classList.contains(w)) break;
+if(w === '*') { ok = true; break; }
+if(!top.classList.contains(w)) { ok = false; break; }
 }
-if(i == sa.length) a.push(top);
+if(ok) a.push(top);
 }
 if(top.childNodes) {
 if(top.dom$class != "Frame")

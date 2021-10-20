@@ -1303,6 +1303,10 @@ Needless to say that's not good!
 		domLink(t, "Listitem", 0, 0, 0, 4);
 		break;
 
+	case TAGACT_CANVAS:
+		domLink(t, "Canvas", 0, 0, 0, 4);
+		break;
+
 	case TAGACT_TABLE:
 		domLink(t, "Table", 0, "tables", 0, 4);
 		break;
@@ -1751,6 +1755,7 @@ const struct tagInfo availableTags[] = {
 	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
 	{"span", "an html span", TAGACT_SPAN, 0, 1},
 	{"svg", "an svg image", TAGACT_SVG, 0, 1},
+	{"canvas", "a canvas", TAGACT_CANVAS, 0, 1},
 	{"frameset", "a frame set", TAGACT_JS, 0, 0},
 	{"", NULL, 0, 0, 0}
 };
