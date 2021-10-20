@@ -2950,6 +2950,12 @@ int frameExpandLine(int ln, Tag *t)
 		t->href = a;
 	}
 	s = t->href;
+	// we check for about:blank in the hahtml, but frames can be
+// created by js.
+	if(stringEqual(s, "about:blank")) {
+		nzFree(t->href);
+		s = t->href = 0;
+	}
 
 // javascript in the src, what is this for?
 	if (s && !strncmp(s, "javascript:", 11)) {

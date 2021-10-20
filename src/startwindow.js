@@ -641,6 +641,11 @@ z$Form.prototype.submit = eb$formSubmit;
 z$Form.prototype.reset = eb$formReset;
 Object.defineProperty(z$Form.prototype, "length", { get: function() { return this.elements.length;}});
 
+// As usual, I don't know the difference between my Form and HTMLFormElement
+HTMLFormElement = function(){};
+HTMLFormElement.prototype = new z$Form;
+HTMLFormElement.prototype.dom$class = "HTMLFormElement";
+
 Validity = function(){};
 Validity.prototype.dom$class = "Validity";
 /*********************************************************************
