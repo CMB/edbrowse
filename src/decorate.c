@@ -1373,7 +1373,7 @@ Needless to say that's not good!
 			nzFree(t->href);
 			t->href = 0;
 		}
-		domLink(t, "Frame", "src", "frames", 0, 2);
+		domLink(t, "HTMLFrameElement", "src", "frames", 0, 2);
 		break;
 
 	case TAGACT_IMAGE:

@@ -755,14 +755,16 @@ z$Datalist.prototype.multiple = true;
 Image = HTMLImageElement = function(){};
 HTMLImageElement.prototype = new HTMLElement;
 HTMLImageElement.prototype.dom$class = "HTMLImageElement";
-z$Frame = function(){};
-z$Frame.prototype = new HTMLElement;
-z$Frame.prototype.dom$class = "Frame";
-Object.defineProperty(z$Frame.prototype, "contentDocument", { get: eb$getter_cd});
-Object.defineProperty(z$Frame.prototype, "contentWindow", { get: eb$getter_cw});
 
-// This is a placeholder for now. I don't know what HTMLIFrameElement is.
-HTMLIFrameElement = z$Frame;
+HTMLFrameElement = function(){};
+HTMLFrameElement.prototype = new HTMLElement;
+HTMLFrameElement.prototype.dom$class = "Frame";
+Object.defineProperty(HTMLFrameElement.prototype, "contentDocument", { get: eb$getter_cd});
+Object.defineProperty(HTMLFrameElement.prototype, "contentWindow", { get: eb$getter_cw});
+// These may be different but for now I'm calling them the same.
+HTMLIFrameElement = function(){};
+HTMLIFrameElement.prototype = new HTMLFrameElement;
+
 HTMLAnchorElement = function(){};
 HTMLAnchorElement.prototype = new HTMLElement;
 HTMLAnchorElement.prototype.dom$class = "HTMLAnchorElement";
@@ -878,7 +880,7 @@ don't take it out!
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["HTMLAnchorElement", "HTMLAreaElement", "z$Frame"];
+var cnlist = ["HTMLAnchorElement", "HTMLAreaElement", "HTMLFrameElement"];
 var ulist = ["href", "href", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
@@ -1909,7 +1911,8 @@ case "canvas": c = new z$Canvas; break;
 case "audio": case "video": c = new z$Audio; break;
 case "document": c = new Document; break;
 case "fragment": c = new DocumentFragment; break;
-case "htmliframeelement": case "iframe": case "frame": c = new z$Frame; break;
+case "frame": c = new HTMLFrameElement; break;
+case "iframe": c = new HTMLIFrameElement; break;
 case "select": c = new z$Select; break;
 case "option":
 c = new Option;
