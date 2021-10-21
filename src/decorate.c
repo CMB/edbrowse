@@ -1294,13 +1294,17 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_OL:
+		domLink(t, "HTMLOListElement", 0, 0, 0, 4);
+		break;
 	case TAGACT_UL:
+		domLink(t, "HTMLUListElement", 0, 0, 0, 4);
+		break;
 	case TAGACT_DL:
-		domLink(t, "Lister", 0, 0, 0, 4);
+		domLink(t, "HTMLDListElement", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_LI:
-		domLink(t, "Listitem", 0, 0, 0, 4);
+		domLink(t, "HTMLLIElement", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_CANVAS:
@@ -1382,6 +1386,10 @@ Needless to say that's not good!
 
 	case TAGACT_P:
 		domLink(t, "P", 0, "paragraphs", 0, 4);
+		break;
+
+	case TAGACT_H:
+		domLink(t, "HTMLHeadingElement", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_HEADER:
