@@ -1239,7 +1239,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_SCRIPT:
-		domLink(t, "Script", "src", "scripts", 0, 4);
+		domLink(t, "HTMLScriptElement", "src", "scripts", 0, 4);
 		a = attribVal(t, "type");
 		if (a)
 			set_property_string_t(t, "type", a);
@@ -1260,7 +1260,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_FORM:
-		domLink(t, "Form", "action", "forms", 0, 4);
+		domLink(t, "HTMLFormElement", "action", "forms", 0, 4);
 		break;
 
 	case TAGACT_INPUT:
@@ -1280,7 +1280,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_A:
-		domLink(t, "Anchor", "href", "links", 0, 4);
+		domLink(t, "HTMLAnchorElement", "href", "links", 0, 4);
 		break;
 
 	case TAGACT_HEAD:
@@ -1364,7 +1364,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_AREA:
-		domLink(t, "Area", "href", "links", 0, 4);
+		domLink(t, "HTMLAreaElement", "href", "links", 0, 4);
 		break;
 
 	case TAGACT_FRAME:
@@ -1377,7 +1377,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_IMAGE:
-		domLink(t, "Image", "src", "images", 0, 4);
+		domLink(t, "HTMLImageElement", "src", "images", 0, 4);
 		break;
 
 	case TAGACT_P:
@@ -1399,7 +1399,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_LINK:
-		domLink(t, "Link", "href", 0, 0, 4);
+		domLink(t, "HTMLLinkElement", "href", 0, 0, 4);
 		link_css(t);
 		break;
 

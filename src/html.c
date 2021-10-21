@@ -2813,7 +2813,8 @@ static bool activeBelow(Tag *t)
 	bool rc;
 	int action = t->action;
 	if (action == TAGACT_INPUT || action == TAGACT_SELECT ||
-	    action == TAGACT_A || (action == TAGACT_SPAN && t->onclick))
+	    action == TAGACT_A || action == TAGACT_AREA ||
+	((action == TAGACT_SPAN || action == TAGACT_DIV) && t->onclick))
 		return true;
 	t = t->firstchild;
 	while (t) {

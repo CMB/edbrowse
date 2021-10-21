@@ -737,7 +737,7 @@ static void print_pst(pst p)
 		else
 			printf("%c", *p);
 	} while (*p++ != '\n');
-}				/* print_pst */
+}
 
 static void freeLine(struct lineMap *t)
 {
@@ -749,7 +749,7 @@ static void freeLine(struct lineMap *t)
 		print_pst(t->text);
 	}
 	nzFree(t->text);
-}				/* freeLine */
+}
 
 static void freeWindowLines(struct lineMap *map)
 {
@@ -765,7 +765,7 @@ static void freeWindowLines(struct lineMap *map)
 	}
 
 	debugPrint(6, "freeWindowLines = %d", cnt);
-}				/* freeWindowLines */
+}
 
 /*********************************************************************
 Garbage collection for text lines.
@@ -3759,7 +3759,7 @@ findField(const char *line, int ftype, int n,
 		if (tagp)
 			*tagp = t;
 		if (t->action == TAGACT_A || t->action == TAGACT_FRAME ||
-		    t->action == TAGACT_MUSIC) {
+		    t->action == TAGACT_MUSIC || t->action == TAGACT_AREA) {
 			if (href)
 				*href = cloneString(t->href);
 			if (href) {
@@ -5677,7 +5677,7 @@ static char *showLinks(void)
 
 	removeHiddenNumbers((pst) a, 0);
 	return a;
-}				/* showLinks */
+}
 
 static bool lineHasTag(const char *p, int tagno)
 {

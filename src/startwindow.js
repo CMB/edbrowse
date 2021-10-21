@@ -602,14 +602,11 @@ Object.defineProperty(z$Title.prototype, "text", {
 get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
 // setter should change the title of the document, not yet implemented
 });
-z$Link = function(){};
-z$Link.prototype = new HTMLElement;
-z$Link.prototype.dom$class = "Link";
 HTMLLinkElement = function(){};
-HTMLLinkElement.prototype = new z$Link;
+HTMLLinkElement.prototype = new HTMLElement;
 HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
 // It's a list but why would it ever be more than one?
-Object.defineProperty(z$Link.prototype, "relList", {
+Object.defineProperty(HTMLLinkElement.prototype, "relList", {
 get: function() { var a = this.rel ? [this.rel] : [];
 // edbrowse only supports stylesheet
 a.supports = function(s) { return s === "stylesheet"; }
@@ -634,17 +631,13 @@ z$Body.prototype.eb$dbih = function(s){this.innerHTML = s}
 z$Base = function(){};
 z$Base.prototype = new HTMLElement;
 z$Base.prototype.dom$class = "Base";
-z$Form = function(){ this.elements = [];};
-z$Form.prototype = new HTMLElement;
-z$Form.prototype.dom$class = "Form";
-z$Form.prototype.submit = eb$formSubmit;
-z$Form.prototype.reset = eb$formReset;
-Object.defineProperty(z$Form.prototype, "length", { get: function() { return this.elements.length;}});
 
-// As usual, I don't know the difference between my Form and HTMLFormElement
-HTMLFormElement = function(){};
-HTMLFormElement.prototype = new z$Form;
+HTMLFormElement = function(){this.elements = []}
+HTMLFormElement.prototype = new HTMLElement;
 HTMLFormElement.prototype.dom$class = "HTMLFormElement";
+HTMLFormElement.prototype.submit = eb$formSubmit;
+HTMLFormElement.prototype.reset = eb$formReset;
+Object.defineProperty(HTMLFormElement.prototype, "length", { get: function() { return this.elements.length;}});
 
 Validity = function(){};
 Validity.prototype.dom$class = "Validity";
@@ -759,11 +752,8 @@ z$Datalist = function() {}
 z$Datalist.prototype = new HTMLElement;
 z$Datalist.prototype.dom$class = "Datalist";
 z$Datalist.prototype.multiple = true;
-z$Image = Image = function(){};
-z$Image.prototype = new HTMLElement;
-z$Image.prototype.dom$class = "Image";
-HTMLImageElement = function(){};
-HTMLImageElement.prototype = new Image;
+Image = HTMLImageElement = function(){};
+HTMLImageElement.prototype = new HTMLElement;
 HTMLImageElement.prototype.dom$class = "HTMLImageElement";
 z$Frame = function(){};
 z$Frame.prototype = new HTMLElement;
@@ -773,11 +763,8 @@ Object.defineProperty(z$Frame.prototype, "contentWindow", { get: eb$getter_cw});
 
 // This is a placeholder for now. I don't know what HTMLIFrameElement is.
 HTMLIFrameElement = z$Frame;
-z$Anchor = function(){};
-z$Anchor.prototype = new HTMLElement;
-z$Anchor.prototype.dom$class = "Anchor";
 HTMLAnchorElement = function(){};
-HTMLAnchorElement.prototype = new z$Anchor;
+HTMLAnchorElement.prototype = new HTMLElement;
 HTMLAnchorElement.prototype.dom$class = "HTMLAnchorElement";
 z$Lister = function(){};
 z$Lister.prototype = new HTMLElement;
@@ -823,11 +810,8 @@ Object.defineProperty(z$Label.prototype, "htmlFor", { get: function() { return t
 HtmlObj = function(){};
 HtmlObj.prototype = new HTMLElement;
 HtmlObj.prototype.dom$class = "HtmlObj";
-z$Area = function(){};
-z$Area.prototype = new HTMLElement;
-z$Area.prototype.dom$class = "Area";
 HTMLAreaElement = function(){};
-HTMLAreaElement.prototype = new z$Area;
+HTMLAreaElement.prototype = new HTMLElement;
 HTMLAreaElement.prototype.dom$class = "HTMLAreaElement";
 z$Span = function(){};
 z$Span.prototype = new HTMLElement;
@@ -842,12 +826,11 @@ z$Header.prototype.dom$class = "Header";
 z$Footer = function(){};
 z$Footer.prototype = new HTMLElement;
 z$Footer.prototype.dom$class = "Footer";
-z$Script = function(){};
-z$Script.prototype = new HTMLElement;
-z$Script.prototype.dom$class = "Script";
-z$Script.prototype.type = "";
-z$Script.prototype.text = "";
-HTMLScriptElement = z$Script; // alias for Script, I guess
+HTMLScriptElement = function(){};
+HTMLScriptElement.prototype = new HTMLElement;
+HTMLScriptElement.prototype.dom$class = "HTMLScriptElement";
+HTMLScriptElement.prototype.type = "";
+HTMLScriptElement.prototype.text = "";
 Timer = function(){this.nodeName = "TIMER"};
 Timer.prototype.dom$class = "Timer";
 z$Audio = function(){};
@@ -895,8 +878,8 @@ don't take it out!
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["z$Anchor", "HTMLAnchorElement", "z$Area", "z$Form", "z$Frame"];
-var ulist = ["href", "href", "href", "action", "src"];
+var cnlist = ["HTMLAnchorElement", "HTMLAreaElement", "z$Frame"];
+var ulist = ["href", "href", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
@@ -941,8 +924,8 @@ everything else is a guess.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["z$Image", "z$Script", "z$Base", "z$Link", "z$Audio"];
-var ulist = ["src", "src", "href", "href", "src"];
+var cnlist = ["HTMLFormElement", "HTMLImageElement", "HTMLScriptElement", "z$Base", "HTMLLinkElement", "z$Audio"];
+var ulist = ["action", "src", "src", "href", "href", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
@@ -1557,12 +1540,12 @@ p.dir = "auto";
 // of class Document, not the window document, it still has to work.
 Document.prototype.eb$apch1 = document.eb$apch1;
 
-z$Form.prototype.appendChildNative = mw$.appendChild;
-z$Form.prototype.appendChild = mw$.formAppendChild;
-z$Form.prototype.insertBeforeNative = mw$.insertBefore;
-z$Form.prototype.insertBefore = mw$.formInsertBefore;
-z$Form.prototype.removeChildNative = document.removeChild;
-z$Form.prototype.removeChild = mw$.formRemoveChild;
+HTMLFormElement.prototype.appendChildNative = mw$.appendChild;
+HTMLFormElement.prototype.appendChild = mw$.formAppendChild;
+HTMLFormElement.prototype.insertBeforeNative = mw$.insertBefore;
+HTMLFormElement.prototype.insertBefore = mw$.formInsertBefore;
+HTMLFormElement.prototype.removeChildNative = document.removeChild;
+HTMLFormElement.prototype.removeChild = mw$.formRemoveChild;
 
 /*********************************************************************
 Look out! Select class maintains an array of options beneath,
@@ -1901,15 +1884,15 @@ return null;
 switch(t) {
 case "body": c = new z$Body; break;
 case "object": c = new HtmlObj; break;
-case "a": c = new z$Anchor; break;
-case "htmlanchorelement": c = new HTMLAnchorElement; break;
+case "a": c = new HTMLAnchorElement; break;
+case "area": c = new HTMLAreaElement; break;
 case "image": t = "img";
-case "img": c = new z$Image; break;
-case "link": c = new z$Link; break;
+case "img": c = new HTMLImageElement; break;
+case "link": c = new HTMLLinkElement; break;
 case "meta": c = new z$Meta; break;
 case "cssstyledeclaration": case "style":
 c = new CSSStyleDeclaration; c.element = null; break;
-case "script": c = new z$Script; break;
+case "script": c = new HTMLScriptElement; break;
 case "div": c = new z$Div; break;
 case "label": c = new z$Label; break;
 case "p": c = new z$P; break;
@@ -1934,7 +1917,7 @@ c.childNodes = [];
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
-case "form": c = new z$Form; break;
+case "form": c = new HTMLFormElement; break;
 case "input": case "element": case "textarea":
 c = new z$Element;
 if(t == "textarea") c.type = t;
