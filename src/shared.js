@@ -1282,7 +1282,7 @@ name === "tBodies" && o.dom$class == "HTMLTableElement" ||
 name === "className" ||
 // no clue what getAttribute("style") is suppose to do
 name === "style" ||
-name === "htmlFor" && o.dom$class == "Label" ||
+name === "htmlFor" && o.dom$class == "HTMLLabelElement" ||
 name === "options" && o.dom$class == "Select";
 }
 

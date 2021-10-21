@@ -1227,7 +1227,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_META:
-		domLink(t, "Meta", 0, "metas", 0, 4);
+		domLink(t, "HTMLMetaElement", 0, "metas", 0, 4);
 		break;
 
 	case TAGACT_STYLE:
@@ -1345,7 +1345,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_LABEL:
-		domLink(t, "Label", 0, "labels", 0, 4);
+		domLink(t, "HTMLLabelElement", 0, "labels", 0, 4);
 		break;
 
 	case TAGACT_OBJECT:
