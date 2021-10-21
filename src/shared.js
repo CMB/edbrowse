@@ -2178,7 +2178,7 @@ return '} catch(' + a + ') { if(db$flags(3)) alert(' + a + '.toString()),alert('
 // Argument is the script object.
 // escodegen.generate and esprima.parse are found in demin.js.
 function deminimize(s) {
-if( s.dom$class != "Script") return;
+if( s.dom$class != "HTMLScriptElement") return;
 if(s.demin) return; // already expanded
 s.demin = true;
 s.expanded = false;
@@ -2236,7 +2236,7 @@ alert("deminimization not available");
 
 // Trace with possible breakpoints.
 function addTrace(s) {
-if( s.dom$class != "Script") return;
+if( s.dom$class != "HTMLScriptElement") return;
 if(! s.text) return;
 if(s.text.indexOf("trace"+"@(") >= 0) // already traced
 return;
