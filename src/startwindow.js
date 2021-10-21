@@ -589,9 +589,9 @@ DocumentType.prototype = new HTMLElement;
 DocumentType.prototype.dom$class = "DocumentType";
 CharacterData = function(){};
 CharacterData.prototype.dom$class = "CharacterData";
-z$Head = function(){};
-z$Head.prototype = new HTMLElement;
-z$Head.prototype.dom$class = "Head";
+HTMLHeadElement = function(){};
+HTMLHeadElement.prototype = new HTMLElement;
+HTMLHeadElement.prototype.dom$class = "HTMLHeadElement";
 z$Meta = function(){};
 z$Meta.prototype = new HTMLElement;
 z$Meta.prototype.dom$class = "Meta";
@@ -613,20 +613,20 @@ a.supports = function(s) { return s === "stylesheet"; }
 return a;
 }});
 
-z$Body = function(){};
-z$Body.prototype = new HTMLElement;
-z$Body.prototype.dom$class = "Body";
-z$Body.prototype.doScroll = eb$voidfunction;
-z$Body.prototype.clientHeight = 768;
-z$Body.prototype.clientWidth = 1024;
-z$Body.prototype.offsetHeight = 768;
-z$Body.prototype.offsetWidth = 1024;
-z$Body.prototype. scrollHeight = 768;
-z$Body.prototype.scrollWidth = 1024;
-z$Body.prototype.scrollTop = 0;
-z$Body.prototype.scrollLeft = 0;
+HTMLBodyElement = function(){};
+HTMLBodyElement.prototype = new HTMLElement;
+HTMLBodyElement.prototype.dom$class = "HTMLBodyElement";
+HTMLBodyElement.prototype.doScroll = eb$voidfunction;
+HTMLBodyElement.prototype.clientHeight = 768;
+HTMLBodyElement.prototype.clientWidth = 1024;
+HTMLBodyElement.prototype.offsetHeight = 768;
+HTMLBodyElement.prototype.offsetWidth = 1024;
+HTMLBodyElement.prototype. scrollHeight = 768;
+HTMLBodyElement.prototype.scrollWidth = 1024;
+HTMLBodyElement.prototype.scrollTop = 0;
+HTMLBodyElement.prototype.scrollLeft = 0;
 // document.body.innerHTML =
-z$Body.prototype.eb$dbih = function(s){this.innerHTML = s}
+HTMLBodyElement.prototype.eb$dbih = function(s){this.innerHTML = s}
 
 z$Base = function(){};
 z$Base.prototype = new HTMLElement;
@@ -784,15 +784,15 @@ z$tFoot.prototype.dom$class = "tFoot";
 z$tCap = function(){};
 z$tCap.prototype = new HTMLElement;
 z$tCap.prototype.dom$class = "tCap";
-z$Table = function(){ this.rows = []; this.tBodies = []};
-z$Table.prototype = new HTMLElement;
-z$Table.prototype.dom$class = "Table";
-z$tRow = function(){ this.cells = []};
-z$tRow.prototype = new HTMLElement;
-z$tRow.prototype.dom$class = "tRow";
-z$Cell = function(){};
-z$Cell.prototype = new HTMLElement;
-z$Cell.prototype.dom$class = "Cell";
+HTMLTableElement = function(){ this.rows = []; this.tBodies = []};
+HTMLTableElement.prototype = new HTMLElement;
+HTMLTableElement.prototype.dom$class = "HTMLTableElement";
+HTMLTableRowElement = function(){ this.cells = []};
+HTMLTableRowElement.prototype = new HTMLElement;
+HTMLTableRowElement.prototype.dom$class = "HTMLTableRowElement";
+HTMLTableCellElement = function(){};
+HTMLTableCellElement.prototype = new HTMLElement;
+HTMLTableCellElement.prototype.dom$class = "HTMLTableCellElement";
 z$Div = function(){};
 z$Div.prototype = new HTMLElement;
 z$Div.prototype.dom$class = "Div";
@@ -1149,46 +1149,46 @@ get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(thi
 
 document.defaultView = window;
 
-z$Table.prototype.insertRow = mw$.insertRow;
+HTMLTableElement.prototype.insertRow = mw$.insertRow;
 z$tBody.prototype.insertRow = mw$.insertRow;
 z$tHead.prototype.insertRow = mw$.insertRow;
 z$tFoot.prototype.insertRow = mw$.insertRow;
 
-z$Table.prototype.deleteRow = mw$.deleteRow;
+HTMLTableElement.prototype.deleteRow = mw$.deleteRow;
 z$tBody.prototype.deleteRow = mw$.deleteRow;
 z$tHead.prototype.deleteRow = mw$.deleteRow;
 z$tFoot.prototype.deleteRow = mw$.deleteRow;
 
-z$tRow.prototype.insertCell = mw$.insertCell;
-z$tRow.prototype.deleteCell = mw$.deleteCell;
+HTMLTableRowElement.prototype.insertCell = mw$.insertCell;
+HTMLTableRowElement.prototype.deleteCell = mw$.deleteCell;
 
-z$Table.prototype.createCaption = function() {
+HTMLTableElement.prototype.createCaption = function() {
 if(this.caption) return this.caption;
 var c = my$doc().createElement("caption");
 this.appendChild(c);
 return c;
 }
-z$Table.prototype.deleteCaption = function() {
+HTMLTableElement.prototype.deleteCaption = function() {
 if(this.caption) this.removeChild(this.caption);
 }
 
-z$Table.prototype.createTHead = function() {
+HTMLTableElement.prototype.createTHead = function() {
 if(this.tHead) return this.tHead;
 var c = my$doc().createElement("thead");
 this.prependChild(c);
 return c;
 }
-z$Table.prototype.deleteTHead = function() {
+HTMLTableElement.prototype.deleteTHead = function() {
 if(this.tHead) this.removeChild(this.tHead);
 }
 
-z$Table.prototype.createTFoot = function() {
+HTMLTableElement.prototype.createTFoot = function() {
 if(this.tFoot) return this.tFoot;
 var c = my$doc().createElement("tfoot");
 this.insertBefore(c, this.caption);
 return c;
 }
-z$Table.prototype.deleteTFoot = function() {
+HTMLTableElement.prototype.deleteTFoot = function() {
 if(this.tFoot) this.removeChild(this.tFoot);
 }
 
@@ -1623,7 +1623,7 @@ z$tBody.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
-if(newobj.dom$class == "tRow") // shouldn't be anything other than TR
+if(newobj.dom$class == "HTMLTableRowElement") // shouldn't be anything other than TR
 this.rows.push(newobj), rowReindex(this);
 return newobj;
 }
@@ -1634,7 +1634,7 @@ if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
-if(newobj.dom$class == "tRow")
+if(newobj.dom$class == "HTMLTableRowElement")
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 0, newobj);
@@ -1648,7 +1648,7 @@ z$tBody.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
-if(item.dom$class == "tRow")
+if(item.dom$class == "HTMLTableRowElement")
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 1);
@@ -1673,12 +1673,12 @@ z$tFoot.prototype.removeChildNative = document.removeChild;
 z$tFoot.prototype.removeChild = z$tBody.prototype.removeChild;
 
 // rows or bodies under a table
-z$Table.prototype.appendChildNative = mw$.appendChild;
-z$Table.prototype.appendChild = function(newobj) {
+HTMLTableElement.prototype.appendChildNative = mw$.appendChild;
+HTMLTableElement.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
-if(newobj.dom$class == "tRow") rowReindex(this);
+if(newobj.dom$class == "HTMLTableRowElement") rowReindex(this);
 if(newobj.dom$class == "tBody") {
 this.tBodies.push(newobj);
 if(newobj.rows.length) rowReindex(this);
@@ -1694,14 +1694,14 @@ if(newobj.rows.length) rowReindex(this);
 }
 return newobj;
 }
-z$Table.prototype.insertBeforeNative = mw$.insertBefore;
-z$Table.prototype.insertBefore = function(newobj, item) {
+HTMLTableElement.prototype.insertBeforeNative = mw$.insertBefore;
+HTMLTableElement.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
-if(newobj.dom$class == "tRow") rowReindex(this);
+if(newobj.dom$class == "HTMLTableRowElement") rowReindex(this);
 if(newobj.dom$class == "tBody")
 for(var i=0; i<this.tBodies.length; ++i)
 if(this.tBodies[i] == item) {
@@ -1720,12 +1720,12 @@ if(newobj.rows.length) rowReindex(this);
 }
 return newobj;
 }
-z$Table.prototype.removeChildNative = document.removeChild;
-z$Table.prototype.removeChild = function(item) {
+HTMLTableElement.prototype.removeChildNative = document.removeChild;
+HTMLTableElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
-if(item.dom$class == "tRow") rowReindex(this);
+if(item.dom$class == "HTMLTableRowElement") rowReindex(this);
 if(item.dom$class == "tBody")
 for(var i=0; i<this.tBodies.length; ++i)
 if(this.tBodies[i] == item) {
@@ -1745,8 +1745,8 @@ if(item.rows.length) rowReindex(this);
 return item;
 }
 
-z$tRow.prototype.appendChildNative = mw$.appendChild;
-z$tRow.prototype.appendChild = function(newobj) {
+HTMLTableRowElement.prototype.appendChildNative = mw$.appendChild;
+HTMLTableRowElement.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
@@ -1754,8 +1754,8 @@ if(newobj.nodeName === "TD") // shouldn't be anything other than TD
 this.cells.push(newobj);
 return newobj;
 }
-z$tRow.prototype.insertBeforeNative = mw$.insertBefore;
-z$tRow.prototype.insertBefore = function(newobj, item) {
+HTMLTableRowElement.prototype.insertBeforeNative = mw$.insertBefore;
+HTMLTableRowElement.prototype.insertBefore = function(newobj, item) {
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
@@ -1769,8 +1769,8 @@ break;
 }
 return newobj;
 }
-z$tRow.prototype.removeChildNative = document.removeChild;
-z$tRow.prototype.removeChild = function(item) {
+HTMLTableRowElement.prototype.removeChildNative = document.removeChild;
+HTMLTableRowElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
@@ -1882,7 +1882,7 @@ return null;
 }
 
 switch(t) {
-case "body": c = new z$Body; break;
+case "body": c = new HTMLBodyElement; break;
 case "object": c = new HtmlObj; break;
 case "a": c = new HTMLAnchorElement; break;
 case "area": c = new HTMLAreaElement; break;
@@ -1898,10 +1898,10 @@ case "label": c = new z$Label; break;
 case "p": c = new z$P; break;
 case "header": c = new z$Header; break;
 case "footer": c = new z$Footer; break;
-case "table": c = new z$Table; break;
+case "table": c = new HTMLTableElement; break;
 case "tbody": c = new z$tBody; break;
-case "tr": c = new z$tRow; break;
-case "td": c = new z$Cell; break;
+case "tr": c = new HTMLTableRowElement; break;
+case "td": c = new HTMLTableCellElement; break;
 case "caption": c = new z$tCap; break;
 case "thead": c = new z$tHead; break;
 case "tfoot": c = new z$tFoot; break;

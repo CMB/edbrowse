@@ -1284,12 +1284,12 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_HEAD:
-		domLink(t, "Head", 0, "heads", 0, 4);
+		domLink(t, "HTMLHeadElement", 0, "heads", 0, 4);
 		cf->headtag = t;
 		break;
 
 	case TAGACT_BODY:
-		domLink(t, "Body", 0, "bodies", 0, 4);
+		domLink(t, "HTMLBodyElement", 0, "bodies", 0, 4);
 		cf->bodytag = t;
 		break;
 
@@ -1308,7 +1308,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_TABLE:
-		domLink(t, "Table", 0, "tables", 0, 4);
+		domLink(t, "HTMLTableElement", 0, "tables", 0, 4);
 		break;
 
 	case TAGACT_TBODY:
@@ -1332,12 +1332,12 @@ Needless to say that's not good!
 
 	case TAGACT_TR:
 		if ((above = t->controller) && above->jslink)
-			domLink(t, "tRow", 0, "rows", above, 0);
+			domLink(t, "HTMLTableRowElement", 0, "rows", above, 0);
 		break;
 
 	case TAGACT_TD:
 		if ((above = t->controller) && above->jslink)
-			domLink(t, "Cell", 0, "cells", above, 0);
+			domLink(t, "HTMLTableCellElement", 0, "cells", above, 0);
 		break;
 
 	case TAGACT_DIV:
