@@ -774,15 +774,20 @@ z$Lister.prototype.dom$class = "Lister";
 z$Listitem = function(){};
 z$Listitem.prototype = new HTMLElement;
 z$Listitem.prototype.dom$class = "Listitem";
+
+HTMLTableSectionElement = function(){}
+HTMLTableSectionElement.prototype = new HTMLElement;
+HTMLTableSectionElement.prototype.dom$class = "HTMLTableSectionElement";
 z$tBody = function(){ this.rows = []};
-z$tBody.prototype = new HTMLElement;
+z$tBody.prototype = new HTMLTableSectionElement;
 z$tBody.prototype.dom$class = "tBody";
 z$tHead = function(){ this.rows = []};
-z$tHead.prototype = new HTMLElement;
+z$tHead.prototype = new HTMLTableSectionElement;
 z$tHead.prototype.dom$class = "tHead";
 z$tFoot = function(){ this.rows = []};
-z$tFoot.prototype = new HTMLElement;
+z$tFoot.prototype = new HTMLTableSectionElement;
 z$tFoot.prototype.dom$class = "tFoot";
+
 z$tCap = function(){};
 z$tCap.prototype = new HTMLElement;
 z$tCap.prototype.dom$class = "tCap";
@@ -1152,17 +1157,52 @@ get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(thi
 document.defaultView = window;
 
 HTMLTableElement.prototype.insertRow = mw$.insertRow;
-z$tBody.prototype.insertRow = mw$.insertRow;
-z$tHead.prototype.insertRow = mw$.insertRow;
-z$tFoot.prototype.insertRow = mw$.insertRow;
-
+HTMLTableSectionElement.prototype.insertRow = mw$.insertRow;
 HTMLTableElement.prototype.deleteRow = mw$.deleteRow;
-z$tBody.prototype.deleteRow = mw$.deleteRow;
-z$tHead.prototype.deleteRow = mw$.deleteRow;
-z$tFoot.prototype.deleteRow = mw$.deleteRow;
-
+HTMLTableSectionElement.prototype.deleteRow = mw$.deleteRow;
 HTMLTableRowElement.prototype.insertCell = mw$.insertCell;
 HTMLTableRowElement.prototype.deleteCell = mw$.deleteCell;
+
+// rows under a table section
+HTMLTableSectionElement.prototype.appendChildNative = mw$.appendChild;
+HTMLTableSectionElement.prototype.appendChild = function(newobj) {
+if(!newobj) return null;
+if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
+this.appendChildNative(newobj);
+if(newobj.dom$class == "HTMLTableRowElement") // shouldn't be anything other than TR
+this.rows.push(newobj), rowReindex(this);
+return newobj;
+}
+HTMLTableSectionElement.prototype.insertBeforeNative = mw$.insertBefore;
+HTMLTableSectionElement.prototype.insertBefore = function(newobj, item) {
+if(!newobj) return null;
+if(!item) return this.appendChild(newobj);
+if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
+var r = this.insertBeforeNative(newobj, item);
+if(!r) return null;
+if(newobj.dom$class == "HTMLTableRowElement")
+for(var i=0; i<this.rows.length; ++i)
+if(this.rows[i] == item) {
+this.rows.splice(i, 0, newobj);
+rowReindex(this);
+break;
+}
+return newobj;
+}
+HTMLTableSectionElement.prototype.removeChildNative = document.removeChild;
+HTMLTableSectionElement.prototype.removeChild = function(item) {
+if(!item) return null;
+if(!this.removeChildNative(item))
+return null;
+if(item.dom$class == "HTMLTableRowElement")
+for(var i=0; i<this.rows.length; ++i)
+if(this.rows[i] == item) {
+this.rows.splice(i, 1);
+rowReindex(this);
+break;
+}
+return item;
+}
 
 HTMLTableElement.prototype.createCaption = function() {
 if(this.caption) return this.caption;
@@ -1618,61 +1658,6 @@ var n = this.options.length;
 if(typeof idx == "number" && idx >= 0 && idx < n)
 this.removeChild(this.options[idx]);
 }
-
-// rows under a table body
-z$tBody.prototype.appendChildNative = mw$.appendChild;
-z$tBody.prototype.appendChild = function(newobj) {
-if(!newobj) return null;
-if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
-this.appendChildNative(newobj);
-if(newobj.dom$class == "HTMLTableRowElement") // shouldn't be anything other than TR
-this.rows.push(newobj), rowReindex(this);
-return newobj;
-}
-z$tBody.prototype.insertBeforeNative = mw$.insertBefore;
-z$tBody.prototype.insertBefore = function(newobj, item) {
-if(!newobj) return null;
-if(!item) return this.appendChild(newobj);
-if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
-var r = this.insertBeforeNative(newobj, item);
-if(!r) return null;
-if(newobj.dom$class == "HTMLTableRowElement")
-for(var i=0; i<this.rows.length; ++i)
-if(this.rows[i] == item) {
-this.rows.splice(i, 0, newobj);
-rowReindex(this);
-break;
-}
-return newobj;
-}
-z$tBody.prototype.removeChildNative = document.removeChild;
-z$tBody.prototype.removeChild = function(item) {
-if(!item) return null;
-if(!this.removeChildNative(item))
-return null;
-if(item.dom$class == "HTMLTableRowElement")
-for(var i=0; i<this.rows.length; ++i)
-if(this.rows[i] == item) {
-this.rows.splice(i, 1);
-rowReindex(this);
-break;
-}
-return item;
-}
-
-// head and foot are just like body
-z$tHead.prototype.appendChildNative = mw$.appendChild;
-z$tHead.prototype.appendChild = z$tBody.prototype.appendChild;
-z$tHead.prototype.insertBeforeNative = mw$.insertBefore;
-z$tHead.prototype.insertBefore = z$tBody.prototype.insertBefore;
-z$tHead.prototype.removeChildNative = document.removeChild;
-z$tHead.prototype.removeChild = z$tBody.prototype.removeChild;
-z$tFoot.prototype.appendChildNative = mw$.appendChild;
-z$tFoot.prototype.appendChild = z$tBody.prototype.appendChild;
-z$tFoot.prototype.insertBeforeNative = mw$.insertBefore;
-z$tFoot.prototype.insertBefore = z$tBody.prototype.insertBefore;
-z$tFoot.prototype.removeChildNative = document.removeChild;
-z$tFoot.prototype.removeChild = z$tBody.prototype.removeChild;
 
 // rows or bodies under a table
 HTMLTableElement.prototype.appendChildNative = mw$.appendChild;
