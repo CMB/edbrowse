@@ -1735,7 +1735,7 @@ var a, i, t;
 a = d.querySelectorAll("link,style");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.dom$class == "Link") {
+if(t.dom$class == "HTMLLinkElement") {
 if(t.css$data && (
 t.type && t.type.toLowerCase() == "text/css" ||
 t.rel && t.rel.toLowerCase() == "stylesheet")) {
