@@ -12,6 +12,8 @@ r7@'a,'b to  pull text from one buffer into another.
 
 Go to a file by its filename, in text mode.  Just as you can go to an inline url.
 
+Use the proper HTML*Element classes in js.
+
 Allow for to, cc, bcc, or attach in a mail descriptor.
 
 User can change the format of the imap envelope, which fields to print and in what order.

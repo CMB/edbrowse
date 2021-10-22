@@ -1283,7 +1283,7 @@ name === "className" ||
 // no clue what getAttribute("style") is suppose to do
 name === "style" ||
 name === "htmlFor" && o.dom$class == "HTMLLabelElement" ||
-name === "options" && o.dom$class == "Select";
+name === "options" && o.dom$class == "HTMLSelectElement";
 }
 
 /*********************************************************************

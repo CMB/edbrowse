@@ -562,9 +562,20 @@ NodeList = function(){}
 NodeList.prototype = new Array;
 NodeList.prototype.dom$class = "NodeList";
 
-HTMLElement = function(){};
+// Is Element a synonym for HTMLElement? nasa.gov acts like it is.
+Element = HTMLElement = function(){};
 HTMLElement.prototype = new Node;
 HTMLElement.prototype.dom$class = "HTMLElement";
+Object.defineProperty(HTMLElement.prototype, "name", {
+get: function() { return this.name$2; },
+set: function(n) { var f; if(f = this.form) {
+if(this.name$2 && f[this.name$2] == this) delete f[this.name$2];
+if(this.name$2 && f.elements[this.name$2] == this) delete f.elements[this.name$2];
+if(!f[n]) f[n] = this;
+if(!f.elements[n]) f.elements[n] = this;
+}
+this.name$2 = n;
+}});
 
 z$HTML = function(){};
 z$HTML.prototype = new HTMLElement;
@@ -668,42 +679,6 @@ Object.defineProperty(Validity.prototype, "valid", {
 get: function() { // only need to check items with getters
 return !(this.valueMissing)}});
 
-z$Element = Element = function() { this.validity = new Validity, this.validity.owner = this};
-z$Element.prototype = new HTMLElement;
-z$Element.prototype.dom$class = "Element";
-z$Element.prototype.selectionStart = 0;
-z$Element.prototype.selectionEnd = -1;
-z$Element.prototype.selectionDirection = "none";
-// I really don't know what this function does, something visual I think.
-z$Element.prototype.setSelectionRange = function(s, e, dir) {
-if(typeof s == "number") this.selectionStart = s;
-if(typeof e == "number") this.selectionEnd = e;
-if(typeof dir == "string") this.selectionDirection = dir;
-}
-z$Element.prototype.click = mw$.clickfn;
-
-// We only need this in the rare case of setting click and clearing
-// the other radio buttons. acid test 43
-Object.defineProperty(z$Element.prototype, "checked", {
-get: function() { return this.checked$2 ? true : false; },
-set: mw$.checkset});
-
-Object.defineProperty(z$Element.prototype, "name", {
-get: function() { return this.name$2; },
-set: function(n) { var f; if(f = this.form) {
-if(this.name$2 && f[this.name$2] == this) delete f[this.name$2];
-if(this.name$2 && f.elements[this.name$2] == this) delete f.elements[this.name$2];
-if(!f[n]) f[n] = this;
-if(!f.elements[n]) f.elements[n] = this;
-}
-this.name$2 = n;
-}});
-
-// only meaningful for textarea
-Object.defineProperty(z$Element.prototype, "innerText", {
-get: function() { return this.type == "textarea" ? this.value : null },
-set: function(t) { if(this.type == "textarea") this.value = t; }});
-
 /*********************************************************************
 This is a special routine for textarea.innerHTML = "some html text";
 I assume, with very little data to go on, that the html is rendered
@@ -739,19 +714,47 @@ return;
 alert3("textarea.innerHTML is too complicated for me to render");
 }
 
-z$Select = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
-z$Select.prototype = new HTMLElement;
-z$Select.prototype.dom$class = "Select";
-Object.defineProperty(z$Select.prototype, "value", {
+HTMLSelectElement = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
+HTMLSelectElement.prototype = new HTMLElement;
+HTMLSelectElement.prototype.dom$class = "HTMLSelectElement";
+Object.defineProperty(HTMLSelectElement.prototype, "value", {
 get: function() {
 var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
+
+HTMLInputElement = function(){this.validity = new Validity, this.validity.owner = this};
+HTMLInputElement.prototype = new HTMLElement;
+HTMLInputElement.prototype.dom$class = "HTMLInputElement";
+HTMLInputElement.prototype.selectionStart = 0;
+HTMLInputElement.prototype.selectionEnd = -1;
+HTMLInputElement.prototype.selectionDirection = "none";
+// I really don't know what this function does, something visual I think.
+HTMLInputElement.prototype.setSelectionRange = function(s, e, dir) {
+if(typeof s == "number") this.selectionStart = s;
+if(typeof e == "number") this.selectionEnd = e;
+if(typeof dir == "string") this.selectionDirection = dir;
+}
+HTMLInputElement.prototype.click = mw$.clickfn;
+// We only need this in the rare case of setting click and clearing
+// the other radio buttons. acid test 43
+Object.defineProperty(HTMLInputElement.prototype, "checked", {
+get: function() { return this.checked$2 ? true : false; },
+set: mw$.checkset});
+
+HTMLTextAreaElement = function(){};
+HTMLTextAreaElement.prototype = new HTMLElement;
+HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
+Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
+get: function() { return this.value},
+set: function(t) { this.value = t }});
+
 z$Datalist = function() {}
 z$Datalist.prototype = new HTMLElement;
 z$Datalist.prototype.dom$class = "Datalist";
 z$Datalist.prototype.multiple = true;
+
 Image = HTMLImageElement = function(){};
 HTMLImageElement.prototype = new HTMLElement;
 HTMLImageElement.prototype.dom$class = "HTMLImageElement";
@@ -1610,7 +1613,7 @@ as appendChild does. So I kinda have to reproduce what they do
 here, with just js, and no action in C.
 *********************************************************************/
 
-z$Select.prototype.appendChild = function(newobj) {
+HTMLSelectElement.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 // should only be options!
 if(!(newobj.dom$class == "Option")) return newobj;
@@ -1622,7 +1625,7 @@ this.childNodes.push(newobj); newobj.parentNode = this;
 mutFixup(this, false, newobj, null);
 return newobj;
 }
-z$Select.prototype.insertBefore = function(newobj, item) {
+HTMLSelectElement.prototype.insertBefore = function(newobj, item) {
 var i;
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
@@ -1642,7 +1645,7 @@ return null;
 mutFixup(this, false, newobj, null);
 return newobj;
 }
-z$Select.prototype.removeChild = function(item) {
+HTMLSelectElement.prototype.removeChild = function(item) {
 var i;
 if(!item) return null;
 for(i=0; i<this.childNodes.length; ++i)
@@ -1656,13 +1659,13 @@ mutFixup(this, false, i, item);
 return item;
 }
 
-z$Select.prototype.add = function(o, idx) {
+HTMLSelectElement.prototype.add = function(o, idx) {
 var n = this.options.length;
 if(typeof idx != "number" || idx < 0 || idx > n) idx = n;
 if(idx == n) this.appendChild(o);
 else this.insertBefore(o, this.options[idx]);
 }
-z$Select.prototype.remove = function(idx) {
+HTMLSelectElement.prototype.remove = function(idx) {
 var n = this.options.length;
 if(typeof idx == "number" && idx >= 0 && idx < n)
 this.removeChild(this.options[idx]);
@@ -1912,7 +1915,7 @@ case "document": c = new Document; break;
 case "fragment": c = new DocumentFragment; break;
 case "frame": c = new HTMLFrameElement; break;
 case "iframe": c = new HTMLIFrameElement; break;
-case "select": c = new z$Select; break;
+case "select": c = new HTMLSelectElement; break;
 case "option":
 c = new Option;
 c.childNodes = [];
@@ -1920,18 +1923,17 @@ c.childNodes = [];
 // the dropdown lists after every js run.
 return c;
 case "form": c = new HTMLFormElement; break;
-case "input": case "element": case "textarea":
-c = new z$Element;
-if(t == "textarea") c.type = t;
-break;
-case "button": c = new z$Element; c.type = "submit"; break;
+case "input": c = new HTMLInputElement; break;
+case "textarea": c = new HTMLTextAreaElement; c.type = t; break;
+case "element": c = new HTMLElement; break;
+case "button": c = new HTMLInputElement; c.type = "submit"; break;
 default:
 /* alert("createElement default " + s); */
 c = new HTMLElement;
 }
 
 c.childNodes = [];
-if(c.dom$class == "Select") c.options = c.childNodes;
+if(c.dom$class == "HTMLSelectElement") c.options = c.childNodes;
 c.parentNode = null;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");

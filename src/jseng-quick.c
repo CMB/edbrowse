@@ -500,7 +500,8 @@ static void set_property_string(JSContext *cx, JSValueConst parent, const char *
 		JSValue dc = JS_GetPropertyStr(cx, parent, "dom$class");
 		const char *dcs = JS_ToCString(cx, dc);
 		grab(dc);
-		if(stringEqual(dcs, "Element"))
+		if(stringEqual(dcs, "HTMLInputElement") ||
+		stringEqual(dcs, "HTMLTextAreaElement"))
 			getter = getter_value,
 			setter = setter_value,
 			    altname = "val$ue";
@@ -3782,7 +3783,7 @@ That's how it was for a long time, but I think we only do this on form.
 // Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array(cx, io, "childNodes");
 // childNodes and options are the same for Select and datalist
-			if (stringEqual(classname, "Select") ||
+			if (stringEqual(classname, "HTMLSelectElement") ||
 			stringEqual(classname, "Datalist"))
 				set_property_object(cx, io, "options", ca);
 			JS_Release(cx, ca);
@@ -3833,7 +3834,7 @@ Don't do any of this if the tag is itself <style>. */
 // At present, io is an array.
 // Borrow ca, so we can free things.
 		length = get_arraylength(cx, io);
-		ca = instantiate_array_element(cx, io, length, "z$Element");
+		ca = instantiate_array_element(cx, io, length, "HTMLInputElement");
 		JS_Release(cx, io);
 		if(JS_IsUndefined(ca))
 			return;

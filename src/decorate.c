@@ -1020,7 +1020,8 @@ static void formControlJS(Tag *t)
 	int itype = t->itype;
 	int isradio = (itype == INP_RADIO);
 	bool isselect = (itype == INP_SELECT);
-	const char *whichclass = (isselect ? "Select" : "Element");
+	bool ista = (itype == INP_TA);
+	const char *whichclass = (isselect ? "HTMLSelectElement" : (ista ? "HTMLTextAreaElement" : "HTMLInputElement"));
 	const Tag *form = t->controller;
 
 	if (form && form->jslink)
@@ -1422,7 +1423,7 @@ Needless to say that's not good!
 	default:
 // Don't know what this tag is, or it's not semantically important,
 // so just call it an html element.
-		domLink(t, "Element", 0, 0, 0, 4);
+		domLink(t, "HTMLElement", 0, 0, 0, 4);
 		break;
 	}			/* switch */
 
