@@ -1301,7 +1301,7 @@ return c;
 }
 
 // The Option class, these are choices in a dropdown list.
-Option = function() {
+Option = HTMLOptionElement = function() {
 this.nodeName = this.tagName = "OPTION";
 this.nodeType = 1;
 this.text = this.value = "";

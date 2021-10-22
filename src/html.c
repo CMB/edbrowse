@@ -1318,6 +1318,8 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		return false;
 	}
 
+	if(allowJS && t->jslink)
+		t->rdonly = get_property_bool_t(t, "readonly");
 	if (t->rdonly) {
 		setError(MSG_Readonly);
 		return false;
@@ -1791,6 +1793,8 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 		itype = t->itype;
 		if (itype <= INP_SUBMIT && t != submit)
 			continue;
+		if (inputDisabled(t))
+			continue;
 		name = t->name;
 		if (!name)
 			name = t->id;
@@ -2133,10 +2137,12 @@ bool infPush(int tagno, char **post_string)
 	if(t) { // submit button pressed
 		const char *va; // value from attribute
 		char *vj; // value from javascript
+// spec says formAction and formMethod are camelcase, when coming from js.
+// Are they lowercase when coming from html? or case insensitive?
 		va = attribVal(t, "formmethod");
 		vj = 0;
 		if(t->jslink && allowJS)
-			vj = get_property_string_t(t, "formmethod");
+			vj = get_property_string_t(t, "formMethod");
 		if(vj && *vj)
 			va = vj;
 		if(va && *va) {
@@ -2149,7 +2155,7 @@ bool infPush(int tagno, char **post_string)
 		nzFree(vj);
 		va = attribVal(t, "formaction");
 		if(t->jslink && allowJS)
-			action2 = vj = get_property_string_t(t, "formaction");
+			action2 = vj = get_property_string_t(t, "formAction");
 		if(vj && *vj)
 			va = vj;
 		if(va && *va)
