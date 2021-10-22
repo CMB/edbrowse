@@ -10,8 +10,6 @@ which is a tad faster.
 
 #include "eb.h"
 
-#define cssDebugFile "/tmp/css"
-
 #define CSS_ERROR_NONE 0
 #define CSS_ERROR_NOSEL 1
 #define CSS_ERROR_MANYNOT 2

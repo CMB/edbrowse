@@ -5179,7 +5179,7 @@ et_go:
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(debugCSS + MSG_DebugCSSOff);
 		if (debugCSS)
-			unlink("/tmp/css");
+			unlink(cssDebugFile);
 		return true;
 	}
 
@@ -5188,7 +5188,7 @@ et_go:
 		if (helpMessagesOn)
 			i_puts(debugCSS + MSG_DebugCSSOff);
 		if (debugCSS)
-			unlink("/tmp/css");
+			unlink(cssDebugFile);
 		return true;
 	}
 
@@ -6089,8 +6089,7 @@ replaceframe:
 		sno = strtol(line, &p, 10);
 // check syntax first, then validate session number
 		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
-		(p[1] == '$' && p[2] == 0) ||
-		(p[1] == '.' && p[2] == 0) ||
+		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
 		(isdigit(p[1]) && (lno = stringIsNum(p+1)) >= 0))) {
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
@@ -6113,8 +6112,16 @@ replaceframe:
 				lno = w2->dol;
 			if(p[1] == '.')
 				lno = w2->dot;
+			if(p[1] == '+')
+				lno = w2->dot + 1;
+			if(p[1] == '-')
+				lno = w2->dot - 1;
 			if(lno > w2->dol) {
 				setError(MSG_LineHigh);
+				return globSub = false;
+			}
+			if(lno == 0) {
+				setError(MSG_AtLine0);
 				return globSub = false;
 			}
 // writeLine will remember that this happened, and succeeded.
@@ -6136,13 +6143,11 @@ replaceframe:
 		sno = strtol(line, &p, 10);
 // check syntax first, then validate session number
 		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
-		(p[1] == '$' && p[2] == 0) ||
-		(p[1] == '.' && p[2] == 0) ||
+		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
 		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0))) {
 			lno2 = -1;
 			if(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
-			(q[1] == '$' && q[2] == 0) ||
-			(q[1] == '.' && q[2] == 0) ||
+			(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
 			(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0))) {
 // syntax is good
 				if(!cxCompare(sno) || !cxActive(sno, true))
@@ -6162,6 +6167,10 @@ replaceframe:
 					lno1 = w2->dol;
 				if(p[1] == '.')
 					lno1 = w2->dot;
+				if(p[1] == '+')
+					lno1 = w2->dot + 1;
+				if(p[1] == '-')
+					lno1 = w2->dot - 1;
 				if(q) {
 					if(q[1] == '\'' &&
 					 !(lno2 = w2->labels[q[2] - 'a'])) {
@@ -6172,6 +6181,10 @@ replaceframe:
 						lno2 = w2->dol;
 					if(q[1] == '.')
 						lno2 = w2->dot;
+					if(q[1] == '+')
+						lno2 = w2->dot + 1;
+					if(q[1] == '-')
+						lno2 = w2->dot - 1;
 				}
 				if(lno2 < 0)
 					lno2 = lno1;

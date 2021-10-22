@@ -573,6 +573,7 @@ f : print the name of the current file
 <br>r foo : read the contents of foo into the current buffer
 <br>r7 : read the contents of session 7 into the current buffer
 <br>r7@3,8 : read session 7 lines 3 through 8 into the current buffer
+<br>r7@-,+ : read 3 lines around . into the current buffer
 <br>r7@'a,'b : read the designated block into the current buffer
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
@@ -1241,7 +1242,7 @@ Here is a faster and easier way to do the same thing, without using an extra tra
 It uses the special notation 'a,'bw1@'c, which injects the prescribed text from a to b, into session 1, at line label c, rather than overwriting the file.
 The at sign makes all the difference.
 Say the word at to yourself: put the text *at* this line in the preexisting buffer.
-A label or a line number or $ or . must follow @, and there can be no whitespace.
+A label or a line number or $ or . or + or - must follow @, and there can be no whitespace.
 Complex expressions like /xyz/-3 are not allowed here.
 A single space can change the meaning.
 'a,'bw 1@'c writes the block of text to a file named 1@'c, which is not what you want.
