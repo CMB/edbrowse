@@ -1417,7 +1417,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_BASE:
-		domLink(t, "Base", "href", 0, 0, 4);
+		domLink(t, "HTMLBaseElement", "href", 0, 0, 4);
 		break;
 
 	default:

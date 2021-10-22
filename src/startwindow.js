@@ -639,9 +639,9 @@ HTMLBodyElement.prototype.scrollLeft = 0;
 // document.body.innerHTML =
 HTMLBodyElement.prototype.eb$dbih = function(s){this.innerHTML = s}
 
-z$Base = function(){};
-z$Base.prototype = new HTMLElement;
-z$Base.prototype.dom$class = "Base";
+HTMLBaseElement = function(){};
+HTMLBaseElement.prototype = new HTMLElement;
+HTMLBaseElement.prototype.dom$class = "HTMLBaseElement";
 
 HTMLFormElement = function(){this.elements = []}
 HTMLFormElement.prototype = new HTMLElement;
@@ -943,7 +943,7 @@ everything else is a guess.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["HTMLFormElement", "HTMLImageElement", "HTMLScriptElement", "z$Base", "HTMLLinkElement", "z$Audio"];
+var cnlist = ["HTMLFormElement", "HTMLImageElement", "HTMLScriptElement", "HTMLBaseElement", "HTMLLinkElement", "z$Audio"];
 var ulist = ["action", "src", "src", "href", "href", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
