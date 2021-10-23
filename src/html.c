@@ -943,7 +943,9 @@ afterscript:
 
 // after each pass, see if there is a link onload to run.
 	for (t = cw->linklist; t; t = t->same) {
-		if(t->lic == 1 && t->jslink && !t->dead) {
+		if(t->lic == 1 && t->jslink && !t->dead &&
+		save_cf == t->f0) {
+			cf = save_cf;
 			run_event_t(t, "link", "onload");
 			t->lic = 0;
 			change = true;
