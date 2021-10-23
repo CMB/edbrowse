@@ -89,8 +89,8 @@ t = t.parentNode;
 
 /*********************************************************************
 Show the scripts, where they come from, type, length, whether deminimized.
-This uses getElementsByTagname() so you see all the scripts,
-not just those that were in the original html.
+This uses document.scripts and getElementsByTagname() so you see
+all the scripts, hopefully, not just those that were in the original html.
 The list is left in $ss for convenient access.
 my$win() is used to get the window of the running context, where you are,
 as there are no scripts in the shared window, where this is compiled.
@@ -99,7 +99,17 @@ as there are no scripts in the shared window, where this is compiled.
 function showscripts() {
 var i, s, m;
 var w = my$win(), d = my$doc();
-var slist = d.getElementsByTagName("script");
+var slist = [];
+for(i=0; i<d.scripts.length; ++i) {
+s = d.scripts[i];
+s.from$html = true;
+slist.push(s);
+}
+var getlist = d.getElementsByTagName("script");
+for(i=0; i<getlist.length; ++i) {
+s = getlist[i];
+if(!s.from$html) slist.push(s);
+}
 for(i=0; i<slist.length; ++i) {
 s = slist[i];
 m = i + ": ";
