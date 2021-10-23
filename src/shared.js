@@ -2080,8 +2080,13 @@ p.removeChild(t);
 
 // There are subtle differences between contentText and textContent, which I don't grok.
 function textUnder(top, flavor) {
-var t = top.getElementsByTagName("#text");
 var answer = "", part;
+if(top.nodeName == "#text") { // getElements won't find this one
+answer = top.data.trim();
+} else if(top.nodeName == "SCRIPT") {
+answer = top.text;
+}
+var t = top.getElementsByTagName("#text");
 for(var i=0; i<t.length; ++i) {
 var u = t[i];
 if(u.parentNode && u.parentNode.nodeName == "OPTION") continue;
