@@ -876,9 +876,10 @@ I will disconnect here, and also check for inxhr in runOnload().
 // Also reject a script if a type is specified and it is not JS.
 // For instance, some JSON pairs in script tags on amazon.com
 		a = get_property_string_t(t, "type");
-		if (a && *a && (!memEqualCI(a, "javascript", 10))
-		    && (!memEqualCI(a, "text/javascript", 15))
-		    && (!memEqualCI(a, "application/javascript", 22))) {
+// allow for type 5e5857709a179301c738ca91-text/javascript, which really happens.
+// Also application/javascript.
+		if (a && *a && !stringEqualCI(a, "javascript") &&
+		((ln = strlen(a)) < 11 || !stringEqualCI(a + ln - 11, "/javascript"))) {
 			debugPrint(3, "script tag %d type %s not executed", t->seqno, a);
 			cnzFree(a);
 			goto afterscript;

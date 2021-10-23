@@ -158,7 +158,8 @@ var ss = "inline";
 if(s.src && s.src.length) ss = s.src.toString();
 if(ss.match(/^data:/)) continue;
 // assumes the search piece of the url is spurious and unreliable
-ss = ss.replace(/\?.*/, "");
+var search = ss.indexOf('?');
+if(search > 0) ss = ss.substr(0,search);
 ++idx;
 wlf(s.text, "f" + idx + ".js");
 jslocal += "f" + idx + ".js:" + ss + "\n";
@@ -2198,6 +2199,10 @@ return '} catch(' + a + ') { if(db$flags(3)) alert(' + a + '.toString()),alert('
 // escodegen.generate and esprima.parse are found in demin.js.
 function deminimize(s) {
 if( s.dom$class != "HTMLScriptElement") return;
+// it might not be javascript.
+// This should agree with the criteria in html.c
+if(s.language && !s.language.match(/^javascript\b/i)) return;
+if(s.type && !s.type.match(/(\bjavascript|\/javascript)$/i)) return;
 if(s.demin) return; // already expanded
 s.demin = true;
 s.expanded = false;
