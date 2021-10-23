@@ -1346,7 +1346,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_DIV:
-		domLink(t, "Div", 0, "divs", 0, 4);
+		domLink(t, "HTMLDivElement", 0, "divs", 0, 4);
 		break;
 
 	case TAGACT_LABEL:
@@ -1365,7 +1365,7 @@ Needless to say that's not good!
 	case TAGACT_SUB:
 	case TAGACT_SUP:
 	case TAGACT_OVB:
-		domLink(t, "Span", 0, "spans", 0, 4);
+		domLink(t, "HTMLSpanElement", 0, "spans", 0, 4);
 		break;
 
 	case TAGACT_AREA:

@@ -809,16 +809,18 @@ HTMLTableRowElement.prototype.dom$class = "HTMLTableRowElement";
 HTMLTableCellElement = function(){};
 HTMLTableCellElement.prototype = new HTMLElement;
 HTMLTableCellElement.prototype.dom$class = "HTMLTableCellElement";
-z$Div = function(){};
-z$Div.prototype = new HTMLElement;
-z$Div.prototype.dom$class = "Div";
-z$Div.prototype.doScroll = eb$voidfunction;
-z$Div.prototype.click = function() {
+HTMLDivElement = function(){};
+HTMLDivElement.prototype = new HTMLElement;
+HTMLDivElement.prototype.dom$class = "HTMLDivElement";
+HTMLDivElement.prototype.doScroll = eb$voidfunction;
+HTMLDivElement.prototype.align = "left";
+HTMLDivElement.prototype.click = function() {
 // as though the user had clicked on this
 var e = new Event;
 e.initEvent("click", true, true);
 this.dispatchEvent(e);
 }
+
 HTMLLabelElement = function(){};
 HTMLLabelElement.prototype = new HTMLElement;
 HTMLLabelElement.prototype.dom$class = "HTMLLabelElement";
@@ -829,10 +831,14 @@ HtmlObj.prototype.dom$class = "HtmlObj";
 HTMLAreaElement = function(){};
 HTMLAreaElement.prototype = new HTMLElement;
 HTMLAreaElement.prototype.dom$class = "HTMLAreaElement";
-z$Span = function(){};
-z$Span.prototype = new HTMLElement;
-z$Span.prototype.dom$class = "Span";
-z$Span.prototype.doScroll = eb$voidfunction;
+
+HTMLSpanElement = function(){};
+HTMLSpanElement.prototype = new HTMLElement;
+HTMLSpanElement.prototype.dom$class = "HTMLSpanElement";
+HTMLSpanElement.prototype.doScroll = eb$voidfunction;
+// should this click be on HTMLElement?
+HTMLSpanElement.prototype.click = HTMLDivElement.prototype.click;
+
 z$P = function(){};
 z$P.prototype = new HTMLElement;
 z$P.prototype.dom$class = "P";
@@ -1892,7 +1898,8 @@ case "meta": c = new HTMLMetaElement; break;
 case "cssstyledeclaration": case "style":
 c = new CSSStyleDeclaration; c.element = null; break;
 case "script": c = new HTMLScriptElement; break;
-case "div": c = new z$Div; break;
+case "div": c = new HTMLDivElement; break;
+case "span": c = new HTMLSpanElement; break;
 case "label": c = new HTMLLabelElement; break;
 case "p": c = new z$P; break;
 case "ol": c = new HTMLOListElement; break;
