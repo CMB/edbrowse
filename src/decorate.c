@@ -1386,7 +1386,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_P:
-		domLink(t, "P", 0, "paragraphs", 0, 4);
+		domLink(t, "HTMLParagraphElement", 0, "paragraphs", 0, 4);
 		break;
 
 	case TAGACT_H:

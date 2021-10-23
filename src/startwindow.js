@@ -839,9 +839,10 @@ HTMLSpanElement.prototype.doScroll = eb$voidfunction;
 // should this click be on HTMLElement?
 HTMLSpanElement.prototype.click = HTMLDivElement.prototype.click;
 
-z$P = function(){};
-z$P.prototype = new HTMLElement;
-z$P.prototype.dom$class = "P";
+HTMLParagraphElement = function(){};
+HTMLParagraphElement.prototype = new HTMLElement;
+HTMLParagraphElement.prototype.dom$class = "HTMLParagraphElement";
+
 HTMLHeadingElement = function(){};
 HTMLHeadingElement.prototype = new HTMLElement;
 HTMLHeadingElement.prototype.dom$class = "HTMLHeadingElement";
@@ -871,9 +872,8 @@ getEntriesByType:function(x){ return []; }
 }
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 
-// I don't implement any of the custom elements registry methods;
-// but the object has to exist for some sites to work.
-Object.defineProperty(window, "customElements", {get:function(){ return {}}});
+cel$registry = {}; // custom elements registry
+Object.defineProperty(window, "customElements", {get:function(){ return {define:mw$.cel_define}}});
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
@@ -1877,6 +1877,21 @@ alert3("bad createElement( type" + typeof s + ')');
 return null;
 }
 var t = s.toLowerCase();
+
+// check for custom elements first
+var x = cel$registry[t];
+if(x) { // here we go
+c = new x.construct;
+if(c instanceof HTMLElement) {
+c.childNodes = [];
+c.parentNode = null;
+c.nodeName = c.tagName = t.toUpperCase();
+c.nodeType = 1;
+}
+eb$logElement(c, t);
+return c;
+}
+
 if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
 alert3("bad createElement(" + t + ')');
 // acid3 says we should throw an exception here.
@@ -1901,7 +1916,7 @@ case "script": c = new HTMLScriptElement; break;
 case "div": c = new HTMLDivElement; break;
 case "span": c = new HTMLSpanElement; break;
 case "label": c = new HTMLLabelElement; break;
-case "p": c = new z$P; break;
+case "p": c = new HTMLParagraphElement; break;
 case "ol": c = new HTMLOListElement; break;
 case "ul": c = new HTMLUListElement; break;
 case "dl": c = new HTMLDListElement; break;

@@ -2142,6 +2142,24 @@ if(e[i].nodeName == "INPUT" && e[i].type == t && e[i].name == nn &&e[i] != this)
 }
 }
 
+// define a custom element
+function cel_define(name, c, options) {
+var w = my$win();
+var cr = w.cel$registry;
+var ext = "";
+if(typeof options == "object" && options.extends) ext = options.extends;
+if(ext)
+alert3("defining custom element " + name + " extends " + ext);
+else
+alert3("defining custom element " + name);
+if(typeof name != "string" || !name.match(/.-./)) throw new Error("SyntaxError");
+if(cr[name]) throw new Error("NotSupportedError");
+if(typeof c != "function") throw new Error("DOMException");
+var o = {construct:c};
+// what other stuff should we remember in o?
+cr[name] = o;
+}
+
 // jtfn0 injects trace(blah) into the code.
 // It should only be applied to deminimized code.
 // jtfn1 puts a name on the anonymous function, for debugging.
@@ -3423,7 +3441,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
-"clickfn", "checkset",
+"clickfn", "checkset", "cel_define",
 "jtfn0", "jtfn1", "jtfn2", "deminimize", "addTrace",
 ];
 for(var i=0; i<flist.length; ++i)
