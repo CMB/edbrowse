@@ -6130,12 +6130,15 @@ replaceframe:
 // and we'll set cx and go down that path,
 // then writeLine will send us down another path at the last minute.
 			*p = 0;
+		} else if(*p == '@') {
+			setError(MSG_AtSyntax);
+			return globSub = false;
 		}
 	}
 
 // may as well check r range while we're at it.
 	if(cmd == 'r' && isdigit(first)) {
-		int sno, lno1, lno2; // session number line numbers
+		int sno, lno1, lno2 = -1; // session number line numbers
 		const Window *w2; // far window
 		char *q = strchr(line, ',');
 		if(q)
@@ -6144,69 +6147,70 @@ replaceframe:
 // check syntax first, then validate session number
 		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
 		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
-		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0))) {
-			lno2 = -1;
-			if(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
-			(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
-			(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0))) {
+		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
+		(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
+		(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
+		(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
 // syntax is good
-				if(!cxCompare(sno) || !cxActive(sno, true))
-					return globSub = false;
-				w2 = sessionList[sno].lw;
-				if(!w2->dol) {
-					setError(MSG_EmptyBuffer);
-					return globSub = false;
-				}
+			if(!cxCompare(sno) || !cxActive(sno, true))
+				return globSub = false;
+			w2 = sessionList[sno].lw;
+			if(!w2->dol) {
+				setError(MSG_EmptyBuffer);
+				return globSub = false;
+			}
 // session is ok, how bout the line numbers?
-				if(p[1] == '\'' &&
-				 !(lno1 = w2->labels[p[2] - 'a'])) {
-					setError(MSG_NoLabel, p[2]);
+			if(p[1] == '\'' &&
+			 !(lno1 = w2->labels[p[2] - 'a'])) {
+				setError(MSG_NoLabel, p[2]);
+				return globSub = false;
+			}
+			if(p[1] == '$')
+				lno1 = w2->dol;
+			if(p[1] == '.')
+				lno1 = w2->dot;
+			if(p[1] == '+')
+				lno1 = w2->dot + 1;
+			if(p[1] == '-')
+				lno1 = w2->dot - 1;
+			if(q) {
+				if(q[1] == '\'' &&
+				 !(lno2 = w2->labels[q[2] - 'a'])) {
+					setError(MSG_NoLabel, q[2]);
 					return globSub = false;
 				}
-				if(p[1] == '$')
-					lno1 = w2->dol;
-				if(p[1] == '.')
-					lno1 = w2->dot;
-				if(p[1] == '+')
-					lno1 = w2->dot + 1;
-				if(p[1] == '-')
-					lno1 = w2->dot - 1;
-				if(q) {
-					if(q[1] == '\'' &&
-					 !(lno2 = w2->labels[q[2] - 'a'])) {
-						setError(MSG_NoLabel, q[2]);
-						return globSub = false;
-					}
-					if(q[1] == '$')
-						lno2 = w2->dol;
-					if(q[1] == '.')
-						lno2 = w2->dot;
-					if(q[1] == '+')
-						lno2 = w2->dot + 1;
-					if(q[1] == '-')
-						lno2 = w2->dot - 1;
-				}
-				if(lno2 < 0)
-					lno2 = lno1;
-				if(lno1 == 0 || lno2 == 0) {
-					setError(MSG_AtLine0);
-					return globSub = false;
-				}
-				if(lno1 > w2->dol || lno2 > w2->dol) {
-					setError(MSG_LineHigh);
-					return globSub = false;
-				}
-				if(lno1 > lno2) {
-					setError(MSG_BadRange);
-					return globSub = false;
-				}
+				if(q[1] == '$')
+					lno2 = w2->dol;
+				if(q[1] == '.')
+					lno2 = w2->dot;
+				if(q[1] == '+')
+					lno2 = w2->dot + 1;
+				if(q[1] == '-')
+					lno2 = w2->dot - 1;
+			}
+			if(lno2 < 0)
+				lno2 = lno1;
+			if(lno1 == 0 || lno2 == 0) {
+				setError(MSG_AtLine0);
+				return globSub = false;
+			}
+			if(lno1 > w2->dol || lno2 > w2->dol) {
+				setError(MSG_LineHigh);
+				return globSub = false;
+			}
+			if(lno1 > lno2) {
+				setError(MSG_BadRange);
+				return globSub = false;
+			}
 // readLine will remember that this happened, and succeeded.
-				readLine1 = lno1, readLine2 = lno2;
+			readLine1 = lno1, readLine2 = lno2;
 // Clobber @, so it just looks like reading from a session,
 // and we'll set cx and go down that path,
 // then readLine will send us down another path at the last minute.
-				*p = 0;
-			}
+			*p = 0;
+		} else if(*p == '@') {
+			setError(MSG_AtSyntax);
+			return globSub = false;
 		}
 		if(q)
 			*q = ',';
@@ -6565,7 +6569,8 @@ replaceframe:
 				cw->dot = label->label, --cx;
 			free(label);
 		}
-		printDot();
+		if(debugLevel >= 1)
+			printDot();
 		return true;
 
 	}
@@ -6591,7 +6596,8 @@ replaceframe:
 			restoreSubstitutionStrings(cw);
 			--cx;
 		}
-		printDot();
+		if(debugLevel >= 1)
+			printDot();
 		return true;
 	}
 

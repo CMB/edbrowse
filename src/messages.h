@@ -769,4 +769,5 @@ enum {
 	MSG_ReqField,
 	MSG_Limit,
 	MSG_TextRec,
+	MSG_AtSyntax,
 };
