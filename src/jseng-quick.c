@@ -2236,7 +2236,7 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 	if (cc_error)
 		debugPrint(3, "compile error on timer %s", fpn);
 // Create a timer object.
-	to = instantiate(cx, g, fpn, "Timer");
+	to = instantiate(cx, g, fpn, "z$Timer");
 	if (JS_IsException(to)) {
 		processError(cx);
 		JS_FreeValue(cx, fo);

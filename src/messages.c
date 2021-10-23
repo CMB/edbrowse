@@ -121,6 +121,7 @@ void selectLanguage(void)
 	if (!strncmp(eb_language, "ru", 2)) {
 		eb_lang = 6;
 		messageArray = msg_ru;
+		ebrc_string = ebrc_ru;
 		type8859 = 5;
 		return;
 	}
