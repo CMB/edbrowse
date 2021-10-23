@@ -1300,10 +1300,11 @@ if(implicitMember(this, name)) return null;
 if(!this.attributes$2) return null;
 if(!this.attributes[name]) return null;
 var v = this.attributes[name].value;
-if(v.dom$class == "URL" || v instanceof w.URL) return v.toString();
 var t = typeof v;
-if(t == "undefined") return null;
-// possibly any object should run through toString(), as we did with URL, idk
+if(t == "undefined" || v == null) return null;
+// I stringify URL objects, should we do that to other objects?
+if(t == 'object' && (v.dom$class == "URL" || v instanceof w.URL)) return v.toString();
+// number, boolean, object; it goes back as it was put in.
 return v; }
 function hasAttribute(name) { return this.getAttribute(name) !== null; }
 
@@ -1311,7 +1312,7 @@ function getAttributeNames(name) {
 var w = my$win();
 var a = new w.Array;
 if(!this.attributes$2) return a;
-for(var l = 0; l < this.attributes$2.length; ++l)
+for(var l = 0; l < this.attributes$2.lx$yth; ++l)
 a.push(this.attributes$2[l].name);
 return a;
 }
@@ -1387,11 +1388,11 @@ var a = this.attributes[name]; // hash access
 if(!a) return;
 // Have to roll our own splice.
 var i, found = false;
-for(i=0; i<this.attributes.length-1; ++i) {
+for(i=0; i<this.attributes.lx$yth-1; ++i) {
 if(!found && this.attributes[i] == a) found = true;
 if(found) this.attributes[i] = this.attributes[i+1];
 }
-this.attributes.length = i;
+this.attributes.lx$yth = i;
 delete this.attributes[i];
 delete this.attributes[name];
 mutFixup(this, true, name, oldv);
@@ -1500,8 +1501,8 @@ does it for us, as side effects, for these various classes.
 node2[item] = new w.Array;
 
 // special code here for an array of radio buttons within a form.
-if(node1.dom$class == "Form" && node1[item].length &&
-node1[item][0].dom$class == "Element" && node1[item][0].name == item) {
+if(node1.dom$class == "HTMLFormElement" && node1[item].length &&
+node1[item][0].dom$class == "HTMLInputElement" && node1[item][0].name == item) {
 var a1 = node1[item];
 var a2 = node2[item];
 if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
@@ -1620,7 +1621,7 @@ node2.style$2[l] = node1.style$2[l];
 
 if (node1.attributes$2) { // has attributes
 if(debug) alert3("copy attributes");
-for(var l=0; l<node1.attributes.length; ++l) {
+for(var l=0; l<node1.attributes.lx$yth; ++l) {
 if(debug) alert3("copy attribute " + node1.attributes[l].name);
 node2.setAttribute(node1.attributes[l].name, node1.attributes[l].value);
 }
