@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 /* sourcefile=buffers.c */
+void undoSpecialClear(void);
 void removeHiddenNumbers(pst p, uchar terminate);
 pst fetchLine(int n, int show);
 void displayLine(int n);

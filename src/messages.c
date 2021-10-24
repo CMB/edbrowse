@@ -459,6 +459,8 @@ bool helpUtility(void)
 	if (!cxQuit(context, 0))
 		return false;
 
+	undoSpecialClear();
+
 // maybe we already have a buffer with the help guide in it
 	for (cx = 1; cx < MAXSESSION; ++cx) {
 		Window *w = sessionList[cx].lw;

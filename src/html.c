@@ -2949,6 +2949,10 @@ and new internal numbers each time, and that use to trip this algorithm.
 		   front1z, front2z, back1z, back2z);
 	z = reportZ();
 
+// Update from javascript means the lines move, and our undo is unreliable.
+// Refine this later, cause often undo1line is unaffected.
+	undoSpecialClear();
+
 // Even if the change has been reported above,
 // I march on here because it puts dot back where it belongs.
 	say_fn = (z ? silent : i_printf);

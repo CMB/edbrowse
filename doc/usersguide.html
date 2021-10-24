@@ -1625,6 +1625,13 @@ Symbolic links and special files are always deleted;
 there isn't much point in moving a link to the trash bin.
 
 <P>
+There is one context wherein the u command is available to you.
+If you have renamed a single file by substitution, not under g//,
+the u command puts it back.
+It resurrects the old text, and renames the file as it was.
+Some filenames are long, and a substitute command doesn't always do what you expect, so the undo command is convenient.
+
+<P>
 If sessions 1 and 5 both contain directories, you can move the current file from the first directory to the second by .m5.
 This does not move lines around like the editor; it moves the file from one session to another.
 The kernel rename function is used whenever possible, to preserve the underlying directory tree, ownership, permissions, or special attributes.
@@ -1637,6 +1644,7 @@ You can move a range of files by 'a,'bm5, or files matching a regular expression
 Use .t5 to copy the file to the directory in session 5.
 Small files are copied by edbrowse; large files or special files or directory trees are copied by /bin/cp.
 As with move, this will not overwrite an existing file.
+These move copy operations cannot be undone.
 
 <P>
 "What's the point of all this?" you may ask.
@@ -3387,6 +3395,7 @@ use the <A HREF=#move>M command</A>.
 
 <H3> <A NAME=onc> Onchange and Undo </A> </H3>
 
+<P>
 When you set or change the value of an input field,
 the form can optionally call a javascript routine.
 It doesn't usually, but it can.
@@ -3398,16 +3407,15 @@ using the onchange feature.
 This is all well and good,
 but edbrowse has something
 your graphical browser does not, the undo command.
-And in this context, it doesn't really work.
-Change fruits to vegetables, and the second menu presents carrots and peas and the like.
-Now type u for undo,
-and the first field reverts back to fruits,
-but the second menu still contains vegetables.
-This is because the undo feature was originally written for the text editor.
-It simply puts the text back the way it was, and has no capacity to "undo" the side effects of javascript code.
-To this end, the undo command is disabled in browse mode.
-You're just fiddling with small input fields - the undo command is probably not necessary.
-If, however, you are formulating a text response in a textarea, that is done in another buffer,
+Because there are side effects under javascript, the undo command generally does not work.
+There is one exception however -
+if you change an input field by a substitute command, on one line only, and not under g//,
+you can undo it with the u command.
+This effectively puts the old text back, and runs the onchange code, as though you had typed it in yourself.
+Sometimes the input field is long, and a substitute doesn't do what you expect it to do, so the undo command is convenient.
+
+<P>
+If you are formulating a text response in a textarea, that is done in another buffer,
 and you have the full power of the editor, including the undo command.
 
 <H3> <A NAME=jex> Javascript Debugger </A> </H3>

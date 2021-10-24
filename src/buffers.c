@@ -54,6 +54,9 @@ static int destLine;		/* as in 57,89m226 */
 static int last_z = 1;
 static char cmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
+static char *undoSpecial;
+static int undo1line, undoField;
+void undoSpecialClear(void) { nzFree(undoSpecial), undoSpecial = 0; }
 static bool noStack;		/* don't stack up edit sessions */
 static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
@@ -3673,8 +3676,9 @@ replaceText(const char *line, int len, const char *rhs,
 
 	replaceString = r;
 	replaceStringLength = rlen;
+	undoSpecialClear();
 	return true;
-}				/* replaceText */
+}
 
 static void
 findField(const char *line, int ftype, int n,
@@ -3848,17 +3852,23 @@ findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
 	       int *tagno)
 {
 	findField(line, ftype, n, total, realtotal, tagno, 0, 0);
-}				/* findInputField */
+}
 
-/* Substitute text on the lines in startRange through endRange.
- * We could be changing the text in an input field.
- * If so, we'll call infReplace().
- * Also, we might be indirectory mode, whence we must rename the file.
- * This is a complicated function!
- * The return can be true or false, with the usual meaning,
- * but also a return of -1, which is failure,
- * and an indication that we need to abort any g// in progress.
- * It's a serious problem. */
+/*********************************************************************
+Substitute text on the lines in startRange through endRange.
+We could be changing the text in an input field.
+If so, we'll call infReplace().
+Or we might be indirectory mode, whence we must rename the file.
+It clears the undoSpecial line if the substitute seems to be working,
+and sets up for the next special one-line undo command if in
+directory or browse mode, and the substitute happens, acting on just one line,
+and not in global mode.
+This is a complicated function!
+The return can be true or false, with the usual meaning,
+but also a return of -1, which is failure,
+and an indication that we need to abort any g// in progress.
+-1 is a serious problem.
+*********************************************************************/
 
 static int substituteText(const char *line)
 {
@@ -3987,6 +3997,7 @@ static int substituteText(const char *line)
 				continue;
 			}
 			replaceString = breakLineResult;
+			undoSpecialClear();
 /* But the regular substitute doesn't have the \n on the end.
  * We need to make this one conform. */
 			replaceStringLength = newlen - 1;
@@ -4082,8 +4093,14 @@ static int substituteText(const char *line)
 					setError(MSG_NoRename, dest);
 					goto abort;
 				}
-			}	/* source and dest are different */
-		}
+// if substituting one line, remember it for undo
+				if(startRange == endRange && !globSub) {
+					p[len - 1] = 0;
+					undoSpecial = cloneString(p), undo1line = ln, undoField = 0;
+					p[len - 1] = '\n';
+				}
+			}	// source and dest are different
+		} // dirMode
 
 		if (cw->browseMode) {
 			if (nullcount) {
@@ -4095,6 +4112,10 @@ static int substituteText(const char *line)
 				goto abort;
 			}
 			*replaceStringEnd = 0;
+// if substituting one line, remember it for undo
+			if(startRange == endRange && !globSub &&
+			tagList[tagno]->itype != INP_RADIO)
+				undoSpecial = getFieldFromBuffer(tagno), undo1line = ln, undoField = whichField;
 /* We're managing our own printing, so leave notify = 0 */
 			if (!infReplace(tagno, replaceString, false))
 				goto abort;
@@ -4140,7 +4161,7 @@ static int substituteText(const char *line)
 		nzFree(replaceString);
 /* we may have just freed the result of a breakline command */
 		breakLineResult = 0;
-	}			/* loop over lines in the range */
+	}			// loop over lines in the range
 
 	if (re_cc) {
 		pcre2_match_data_free(match_data);
@@ -4173,7 +4194,7 @@ abort:
 /* we may have just freed the result of a breakline command */
 	breakLineResult = 0;
 	return -1;
-}				/* substituteText */
+}
 
 /*********************************************************************
 Implement various two letter commands.
@@ -4640,7 +4661,6 @@ pwd:
 		Frame *f, *fnext;
 		struct histLabel *label, *lnext;
 		ub = (line[0] == 'u');
-		rc = true;
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
@@ -4648,6 +4668,7 @@ pwd:
 		}
 		undoCompare();
 		cw->undoable = false;
+		undoSpecialClear();
 		cw->browseMode = cf->browseMode = false;
 		cf->render2 = false;
 		if (cf->render1b)
@@ -4703,7 +4724,7 @@ et_go:
 		cw->mailInfo = 0;
 		if (ub)
 			fileSize = apparentSize(context, false);
-		return rc;
+		return true;
 	}
 
 	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
@@ -5427,7 +5448,7 @@ static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 	free(p);
 	*back_p = backward;
 	*for_p = forward;
-}				/* unbalanced */
+}
 
 /* Find the line that balances the unbalanced punctuation. */
 static bool balanceLine(const char *line)
@@ -5509,7 +5530,7 @@ static bool balanceLine(const char *line)
 
 	setError(MSG_Unbalanced, selected);
 	return false;
-}				/* balanceLine */
+}
 
 /* Unfold the buffer into one long, allocated string. */
 bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
@@ -6002,6 +6023,7 @@ expctr:
 			return false;
 		}
 		jSyncup(false, 0);
+		undoSpecialClear();
 		cw->dot = startRange;
 		if (!frameExpand((line[0] == 'e'), startRange, endRange))
 			showError();
@@ -6055,6 +6077,7 @@ replaceframe:
 			return false;
 		}
 
+		undoSpecialClear();
 		prompt_and_read(MSG_Password, buffer, MAXUSERPASS,
 				MSG_PasswordLong, true);
 
@@ -6216,6 +6239,41 @@ replaceframe:
 			*q = ',';
 	}
 
+	if(cmd == 'u' && cw->dirMode && undoSpecial) {
+		char *oldline = undoSpecial;
+		int len;
+		char src[ABSPATH], *dest, *t;
+		struct lineMap *mptr;
+		cw->dot = undo1line;
+		p = (char *)fetchLine(cw->dot, -1);
+		len = pstLength((pst) p);
+		p[len - 1] = 0;	/* temporary */
+		t = makeAbsPath(p);
+		p[len - 1] = '\n';
+		if (!t)
+			return false;
+		strcpy(src, t);
+		dest = makeAbsPath(oldline);
+		if (!dest)
+			return false;
+		if (fileTypeByName(dest, true)) {
+			setError(MSG_DestFileExists);
+			return false;
+		}
+		if (rename(src, dest)) {
+			setError(MSG_NoRename, dest);
+			return false;
+		}
+		p[len - 1] = 0;
+		undoSpecial = cloneString(p);
+		p[len - 1] = '\n';
+		mptr = cw->map + cw->dot;
+		len = strlen(oldline);
+		oldline[len] = '\n';
+		mptr->text = (pst)oldline;
+		printDot();
+		return true;
+	}
 
 	if (cw->dirMode && !strchr(dir_cmd, cmd)) {
 		setError(MSG_DirCommand, icmd);
@@ -6225,6 +6283,34 @@ replaceframe:
 	if (cw->sqlMode && !strchr(sql_cmd, cmd)) {
 		setError(MSG_DBCommand, icmd);
 		return (globSub = false);
+	}
+
+	if(cmd == 'u' && cw->browseMode && undoSpecial) {
+		char *oldline = undoSpecial;
+		const char *t;
+		int total, realtotal;
+		char search[20];
+		char searchend[4];
+		cw->dot = undo1line;
+		p = (char *)fetchLine(cw->dot, -1);
+		findInputField(p, 1, undoField, &total,        &realtotal, &tagno);
+		if (!tagno) {
+			fieldNumProblem(0, "i", undoField, total, realtotal);
+			return false;
+		}
+		sprintf(search, "%c%d<", InternalCodeChar, tagno);
+		sprintf(searchend, "%c0>", InternalCodeChar);
+		if(!(s = strstr(p, search)))
+			return false;
+		s = strchr(s, '<') + 1;
+		if(!(t = strstr(s, searchend)))
+			return false;
+		undoSpecial = getFieldFromBuffer(tagno);
+		j = infReplace(tagno, oldline, false);
+		nzFree(oldline);
+		if(j)
+			printDot();
+		return j;
 	}
 
 	if (cw->browseMode && !strchr(browse_cmd, cmd)) {
@@ -6582,6 +6668,7 @@ replaceframe:
 		}
 		if (!cx)
 			cx = 1;
+		undoSpecialClear();
 		while (cx) {
 			Window *prev = cw->prev;
 			if (!prev) {
@@ -6624,6 +6711,7 @@ replaceframe:
 /* If changes were made to this buffer, they are undoable after the move */
 		undoCompare();
 		cw->undoable = false;
+		undoSpecialClear();
 		i_printf(MSG_MovedSession, cx);
 /* Magic with pointers, hang on to your hat. */
 		sessionList[cx].fw = sessionList[cx].lw = cw;
@@ -6643,6 +6731,7 @@ replaceframe:
 			return false;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
 		w = createWindow();
 		w->sno = context;
 		w->prev = cw;
@@ -6738,6 +6827,7 @@ past_g_file:
 // switchsession:
 			if (!cxCompare(cx))
 				return false;
+			undoSpecialClear();
 			cxSwitch(cx, true);
 			return true;
 		}
@@ -6973,6 +7063,7 @@ past_g_file:
 				}
 
 				cw->undoable = false;
+				undoSpecialClear();
 
 				if (c == '<') {
 					Tag *t = tagList[tagno];
@@ -7061,6 +7152,7 @@ rebrowse:
 			return false;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
 		startRange = endRange = 0;
 		changeFileName = 0;	/* should already be zero */
 		thisfile = cf->fileName;
@@ -7261,6 +7353,7 @@ redirect:
 	}
 
 	if (cmd == 'g' || cmd == 'v') {
+		undoSpecialClear();
 		return doGlobal(line);
 	}
 
@@ -7268,6 +7361,7 @@ redirect:
 		j = moveFiles();
 		undoCompare();
 		cw->undoable = false;
+		undoSpecialClear();
 		return j;
 	}
 
@@ -7315,6 +7409,7 @@ redirect:
 			j = delFiles();
 			undoCompare();
 			cw->undoable = false;
+			undoSpecialClear();
 			goto afterdelete;
 		}
 		if (cw->sqlMode) {
@@ -7323,8 +7418,10 @@ redirect:
 			cw->undoable = false;
 			goto afterdelete;
 		}
-		if (cw->browseMode)
+		if (cw->browseMode) {
 			delTags(startRange, endRange);
+			undoSpecialClear();
+		}
 		delText(startRange, endRange);
 		j = 1;
 afterdelete:
