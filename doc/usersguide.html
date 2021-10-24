@@ -1243,7 +1243,7 @@ It uses the special notation 'a,'bw1@'c, which injects the prescribed text from 
 The at sign makes all the difference.
 Say the word at to yourself: put the text *at* this line in the preexisting buffer.
 A label or a line number or $ or . or + or - must follow @, and there can be no whitespace.
-Complex expressions like /xyz/-3 are not allowed here.
+Complex expressions like @/xyz/-3 are not allowed here.
 A single space can change the meaning.
 'a,'bw 1@'c writes the block of text to a file named 1@'c, which is not what you want.
 
@@ -1274,8 +1274,9 @@ Here is another way, that reads instead of writes.
 It uses the special notation r2@'a,'b, which reads the prescribed text from a to b, into session 1, at the current location.
 The at sign makes all the difference.
 Say the word at to yourself: read the text starting *at* this line in the other buffer.
-A label or a line number or $ or . or + or - must follow @, and there can be no whitespace.
-Complex expressions like /xyz/-3 are not allowed here.
+A label or a line number or $ or . or + or - or ; must follow @, and there can be no whitespace.
+There is no need to implement r3@, reading the entire file, as that is the same as r3.
+Complex expressions like @/xyz/-3 are not allowed here.
 If a second line number is not given, the single line is read.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be

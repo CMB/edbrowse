@@ -6170,6 +6170,7 @@ replaceframe:
 // check syntax first, then validate session number
 		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
 		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
+		(p[1] == ';' && p[2] == 0 && !q) ||
 		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
 		(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
 		(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
@@ -6192,6 +6193,8 @@ replaceframe:
 				lno1 = w2->dol;
 			if(p[1] == '.')
 				lno1 = w2->dot;
+			if(p[1] == ';')
+				lno1 = w2->dot, lno2 = w2->dol;
 			if(p[1] == '+')
 				lno1 = w2->dot + 1;
 			if(p[1] == '-')
