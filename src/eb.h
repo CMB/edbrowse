@@ -82,7 +82,8 @@ typedef uchar bool;
 typedef void *jsobjtype;
 
 extern const char *jsSourceFile; // sourcefile providing the javascript
-extern int jsLineno; // line number
+extern int jsLineno; // js line number
+extern int undo1line; // special undo line number
 extern int imapfetch; // fetch this many envelopes in imap
 extern char frameContent[];
 	extern const char startWindowJS[];

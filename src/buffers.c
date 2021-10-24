@@ -55,8 +55,9 @@ static int last_z = 1;
 static char cmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
 static char *undoSpecial;
-static int undo1line, undoField;
-void undoSpecialClear(void) { nzFree(undoSpecial), undoSpecial = 0; }
+int undo1line;
+static int undoField;
+void undoSpecialClear(void) { nzFree(undoSpecial), undoSpecial = 0, undo1line = 0; }
 static bool noStack;		/* don't stack up edit sessions */
 static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
@@ -4113,8 +4114,7 @@ static int substituteText(const char *line)
 			}
 			*replaceStringEnd = 0;
 // if substituting one line, remember it for undo
-			if(startRange == endRange && !globSub &&
-			tagList[tagno]->itype != INP_RADIO)
+			if(startRange == endRange && !globSub)
 				undoSpecial = getFieldFromBuffer(tagno), undo1line = ln, undoField = whichField;
 /* We're managing our own printing, so leave notify = 0 */
 			if (!infReplace(tagno, replaceString, false))
@@ -6306,10 +6306,10 @@ replaceframe:
 		if(!(t = strstr(s, searchend)))
 			return false;
 		undoSpecial = getFieldFromBuffer(tagno);
-		j = infReplace(tagno, oldline, false);
+		j = infReplace(tagno, oldline, true);
 		nzFree(oldline);
-		if(j)
-			printDot();
+		if(!j)
+			undoSpecialClear();
 		return j;
 	}
 

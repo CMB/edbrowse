@@ -10,6 +10,8 @@ r7@'a,'b to  pull text from one buffer into another.
 
 /xyz/! search for line that doesn't contain xyz, like sed.
 
+Undo command in browse or directory mode if substituting on a single line.
+
 Go to a file by its filename, in text mode.  Just as you can go to an inline url.
 
 Use the proper HTML*Element classes in js.

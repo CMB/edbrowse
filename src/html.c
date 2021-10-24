@@ -2950,8 +2950,16 @@ and new internal numbers each time, and that use to trip this algorithm.
 	z = reportZ();
 
 // Update from javascript means the lines move, and our undo is unreliable.
-// Refine this later, cause often undo1line is unaffected.
-	undoSpecialClear();
+// Here is a complicated if, cause often the current line is unaffected.
+	if(undo1line <= sameFront || // before any changes
+	(sameBack1 == sameBack2 && (
+	undo1line > sameBack1 || (
+	front1z == front2z && back1z == back2z && (
+	(back1z > 0 && undo1line >= back1z && undo1line < sameBack1) ||
+	(front1z > 0 && undo1line <= front1z && undo1line > sameFront + 1))))))
+		;
+	else
+		undoSpecialClear();
 
 // Even if the change has been reported above,
 // I march on here because it puts dot back where it belongs.
