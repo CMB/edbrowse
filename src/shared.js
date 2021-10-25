@@ -2309,10 +2309,135 @@ Event = function(etype){
 if(typeof etype == "string") this.type = etype;
 };
 
-// placeholder for URL class, I'm not comfortable sharing our hand-built
-// URL class yet.
-// But this has to be here for the Blob code.
+// placeholder for URL class, we can't share the actual class here,
+// but this has to be here for the Blob code.
+// See startwindow for an explanation of why this class can't be shared.
 URL = {};
+
+/*********************************************************************
+Some URL methods we can define here however, and reuse elsewhere,
+like the table methods etc.
+The first is the rebuild method, to build the url string
+when any of its components is updated.
+All components are strings, except for port,
+and all should be defined, even if they are empty.
+*********************************************************************/
+
+function url_rebuild() {
+var h = "";
+if(this.protocol$val.length) {
+// protocol includes the colon
+h = this.protocol$val;
+var plc = h.toLowerCase();
+if(plc != "mailto:" && plc != "telnet:" && plc != "javascript:")
+h += "//";
+}
+if(this.host$val.length) {
+h += this.host$val;
+} else if(this.hostname$val.length) {
+h += this.hostname$val;
+if(this.port$val != 0)
+h += ":" + this.port$val;
+}
+if(this.pathname$val.length) {
+// pathname should always begin with /, should we check for that?
+if(!this.pathname$val.match(/^\//))
+h += "/";
+h += this.pathname$val;
+}
+if(this.search$val.length) {
+// search should always begin with ?, should we check for that?
+h += this.search$val;
+}
+if(this.hash$val.length) {
+// hash should always begin with #, should we check for that?
+h += this.hash$val;
+}
+this.href$val = h;
+}
+
+function url_hrefset(v) {
+var w = my$win(), d = my$doc(), inconstruct = true;
+// if passed a url, turn it back into a string
+if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
+if(v === null || v === undefined) v = "";
+if(typeof v != "string") return;
+if(typeof this.href$val == "string") {
+// Ok, we already had a url, and here's another one.
+// I think we're suppose to resolve it against what was already there,
+// so that /foo against www.xyz.com becomes www.xyz.com/foo
+if(v) v = eb$resolveURL(this.href$val, v);
+inconstruct = false;
+}
+if(inconstruct) {
+Object.defineProperty(this, "href$val", {enumerable:false, writable:true, value:v});
+Object.defineProperty(this, "protocol$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "hostname$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "host$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "port$val", {enumerable:false, writable:true, value:0});
+Object.defineProperty(this, "pathname$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "search$val", {enumerable:false, writable:true, value:""});
+Object.defineProperty(this, "hash$val", {enumerable:false, writable:true, value:""});
+} else {
+this.href$val = v;
+this.port$val = 0;
+this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
+}
+if(v.match(/^[a-zA-Z]*:/)) {
+this.protocol$val = v.replace(/:.*/, "");
+this.protocol$val += ":";
+v = v.replace(/^[a-zA-z]*:\/*/, "");
+}
+if(v.match(/[/#?]/)) {
+/* contains / ? or # */
+this.host$val = v.replace(/[/#?].*/, "");
+v = v.replace(/^[^/#?]*/, "");
+} else {
+/* no / ? or #, the whole thing is the host, www.foo.bar */
+this.host$val = v;
+v = "";
+}
+if(this.host$val.match(/:/)) {
+this.hostname$val = this.host$val.replace(/:.*/, "");
+this.port$val = this.host$val.replace(/^.*:/, "");
+/* port has to be an integer */
+this.port$val = parseInt(this.port$val);
+} else {
+this.hostname$val = this.host$val;
+// should we be filling in a default port here?
+this.port$val = setDefaultPort(this.protocol$val);
+}
+// perhaps set protocol to http if it looks like a url?
+// as in edbrowse foo.bar.com
+// Ends in standard tld, or looks like an ip4 address, or starts with www.
+if(this.protocol$val == "" &&
+(this.hostname$val.match(/\.(com|org|net|info|biz|gov|edu|us|uk|ca|au)$/) ||
+this.hostname$val.match(/^\d+\.\d+\.\d+\.\d+$/) ||
+this.hostname$val.match(/^www\..*\.[a-zA-Z]{2,}$/))) {
+this.protocol$val = "http:";
+if(this.port$val == 0)
+this.port$val = 80;
+}
+if(v.match(/[#?]/)) {
+this.pathname$val = v.replace(/[#?].*/, "");
+v = v.replace(/^[^#?]*/, "");
+} else {
+this.pathname$val = v;
+v = "";
+}
+if(this.pathname$val == "")
+this.pathname$val = "/";
+if(v.match(/#/)) {
+this.search$val = v.replace(/#.*/, "");
+this.hash$val = v.replace(/^[^#]*/, "");
+} else {
+this.search$val = v;
+}
+if(!inconstruct && (this == w.location || this == d.location)) {
+// replace the web page
+eb$newLocation('r' + this.href$val + '\n');
+}
+};
 
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
@@ -3464,6 +3589,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "MessagePortPolyfill", "MessageChannelPolyfill",
 "clickfn", "checkset", "cel_define",
 "jtfn0", "jtfn1", "jtfn2", "deminimize", "addTrace",
+"url_rebuild", "url_hrefset",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});

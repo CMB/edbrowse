@@ -275,9 +275,9 @@ The URL class is head-spinning in its complexity and its side effects.
 Almost all of these can be handled in JS,
 except for setting window.location or document.location to a new url,
 which replaces the web page you are looking at.
-This side effect does not take place in the constructor, which establishes the initial url.
-Here's one reason, perhaps not the only reason, we can't share the URL class.
-Why it has to stay here in startwindow.js.
+You'll see me call the native method eb$newLocation to do that.
+Now, here's one reason, perhaps not the only reason, we can't share the
+URL class. Why it has to stay here in startwindow.js.
 This may apply to every other DOM class as well.
 There are websites that replace URL.prototype.toString with their own function.
 They want to change the way URLs stringify, or whatever. I can't
@@ -287,6 +287,17 @@ a.href.toString, directly or indirectly, B is calling a function from
 the unrelated website A.
 This could really screw things up, or worse, site A could use it to hack into
 site B, hoping site B is your banking site or something important.
+So I can't define URL over there and say URL = mw$.url over here.
+Ok, but what if I say URL = function(){}; URL.prototype = new mw$.URL;
+That puts all those methods and getters and setters,
+and there are a lot of them, the next 250 lines of code, in the prototype chain.
+Course I have to lock them down in the shared window, as described above.
+They all have to be readonly.
+Well, If this window wants to create its own URL.prototype.toString function,
+it can't, because the toString that is next in the prototype chain is readonly.
+I don't know if this is javascript standard, or quick js.
+It sort of makes sense if you think about it, but it means
+I don't have any practical way to share this class. So here we go.
 *********************************************************************/
 
 z$URL = URL = function() {
@@ -294,90 +305,39 @@ var h = "";
 if(arguments.length > 0) h= arguments[0];
 this.href = h;
 }
-URL.prototype.dom$class = "URL";
+Object.defineProperty(URL.prototype, "dom$class", {value:"URL"})
+Object.defineProperty(URL.prototype, "rebuild", {value:mw$.url_rebuild})
 
-/* rebuild the href string from its components.
- * Call this when a component changes.
- * All components are strings, except for port,
- * and all should be defined, even if they are empty. */
-URL.prototype.rebuild = function() {
-var h = "";
-if(this.protocol$val.length) {
-// protocol includes the colon
-h = this.protocol$val;
-var plc = h.toLowerCase();
-if(plc != "mailto:" && plc != "telnet:" && plc != "javascript:")
-h += "//";
-}
-if(this.host$val.length) {
-h += this.host$val;
-} else if(this.hostname$val.length) {
-h += this.hostname$val;
-if(this.port$val != 0)
-h += ":" + this.port$val;
-}
-if(this.pathname$val.length) {
-// pathname should always begin with /, should we check for that?
-if(!this.pathname$val.match(/^\//))
-h += "/";
-h += this.pathname$val;
-}
-if(this.search$val.length) {
-// search should always begin with ?, should we check for that?
-h += this.search$val;
-}
-if(this.hash$val.length) {
-// hash should always begin with #, should we check for that?
-h += this.hash$val;
-}
-this.href$val = h;
-};
-Object.defineProperty(URL.prototype, "rebuild", {enumerable:false});
-
-// No idea why we can't just assign the property directly.
-// URL.prototype.protocol = { ... };
 Object.defineProperty(URL.prototype, "protocol", {
   get: function() {return this.protocol$val; },
   set: function(v) { this.protocol$val = v; this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "pathname", {
   get: function() {return this.pathname$val; },
   set: function(v) { this.pathname$val = v; this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "search", {
   get: function() {return this.search$val; },
   set: function(v) { this.search$val = v; this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "hash", {
   get: function() {return this.hash$val; },
   set: function(v) { this.hash$val = v; this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "port", {
   get: function() {return this.port$val; },
   set: function(v) { this.port$val = v;
 if(this.hostname$val.length)
 this.host$val = this.hostname$val + ":" + v;
 this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "hostname", {
   get: function() {return this.hostname$val; },
   set: function(v) { this.hostname$val = v;
 if(this.port$val)
 this.host$val = v + ":" +  this.port$val;
 this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "host", {
   get: function() {return this.host$val; },
   set: function(v) { this.host$val = v;
@@ -391,156 +351,53 @@ this.hostname$val = v;
 this.port$val = 0;
 }
 this.rebuild(); },
-enumerable:true
-});
-
+enumerable:true});
 Object.defineProperty(URL.prototype, "href", {
   get: function() {return this.href$val; },
-  set: function(v) {
-var inconstruct = true;
-if(v.dom$class == "URL") v = v.toString();
-if(v === null || v === undefined) v = "";
-if(typeof v != "string") return;
-if(typeof this.href$val == "string") {
-// Ok, we already had a url, and here's another one.
-// I think we're suppose to resolve it against what was already there,
-// so that /foo against www.xyz.com becomes www.xyz.com/foo
-if(v) v = eb$resolveURL(this.href$val, v);
-inconstruct = false;
-}
-if(inconstruct) {
-Object.defineProperty(this, "href$val", {enumerable:false, writable:true, value:v});
-Object.defineProperty(this, "protocol$val", {enumerable:false, writable:true, value:""});
-Object.defineProperty(this, "hostname$val", {enumerable:false, writable:true, value:""});
-Object.defineProperty(this, "host$val", {enumerable:false, writable:true, value:""});
-Object.defineProperty(this, "port$val", {enumerable:false, writable:true, value:0});
-Object.defineProperty(this, "pathname$val", {enumerable:false, writable:true, value:""});
-Object.defineProperty(this, "search$val", {enumerable:false, writable:true, value:""});
-Object.defineProperty(this, "hash$val", {enumerable:false, writable:true, value:""});
-} else {
-this.href$val = v;
-this.port$val = 0;
-this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
-}
-if(v.match(/^[a-zA-Z]*:/)) {
-this.protocol$val = v.replace(/:.*/, "");
-this.protocol$val += ":";
-v = v.replace(/^[a-zA-z]*:\/*/, "");
-}
-if(v.match(/[/#?]/)) {
-/* contains / ? or # */
-this.host$val = v.replace(/[/#?].*/, "");
-v = v.replace(/^[^/#?]*/, "");
-} else {
-/* no / ? or #, the whole thing is the host, www.foo.bar */
-this.host$val = v;
-v = "";
-}
-if(this.host$val.match(/:/)) {
-this.hostname$val = this.host$val.replace(/:.*/, "");
-this.port$val = this.host$val.replace(/^.*:/, "");
-/* port has to be an integer */
-this.port$val = parseInt(this.port$val);
-} else {
-this.hostname$val = this.host$val;
-// should we be filling in a default port here?
-this.port$val = mw$.setDefaultPort(this.protocol$val);
-}
-// perhaps set protocol to http if it looks like a url?
-// as in edbrowse foo.bar.com
-// Ends in standard tld, or looks like an ip4 address, or starts with www.
-if(this.protocol$val == "" &&
-(this.hostname$val.match(/\.(com|org|net|info|biz|gov|edu|us|uk|ca|au)$/) ||
-this.hostname$val.match(/^\d+\.\d+\.\d+\.\d+$/) ||
-this.hostname$val.match(/^www\..*\.[a-zA-Z]{2,}$/))) {
-this.protocol$val = "http:";
-if(this.port$val == 0)
-this.port$val = 80;
-}
-if(v.match(/[#?]/)) {
-this.pathname$val = v.replace(/[#?].*/, "");
-v = v.replace(/^[^#?]*/, "");
-} else {
-this.pathname$val = v;
-v = "";
-}
-if(this.pathname$val == "")
-this.pathname$val = "/";
-if(v.match(/#/)) {
-this.search$val = v.replace(/#.*/, "");
-this.hash$val = v.replace(/^[^#]*/, "");
-} else {
-this.search$val = v;
-}
-if(!inconstruct && (this == my$win().location || this == my$doc().location)) {
-// replace the web page
-eb$newLocation('r' + this.href$val + '\n');
-}
-},
-enumerable:true
-});
+  set: mw$.url_hrefset,
+enumerable:true});
 
 URL.prototype.toString = function() {  return this.href$val; }
 Object.defineProperty(URL.prototype, "toString", {enumerable:false});
-
 Object.defineProperty(URL.prototype, "length", { get: function() { return this.toString().length; }});
-
 URL.prototype.concat = function(s) {  return this.toString().concat(s); }
 Object.defineProperty(URL.prototype, "concat", {enumerable:false});
-
 URL.prototype.startsWith = function(s) {  return this.toString().startsWith(s); }
 Object.defineProperty(URL.prototype, "startsWith", {enumerable:false});
-
 URL.prototype.endsWith = function(s) {  return this.toString().endsWith(s); }
 Object.defineProperty(URL.prototype, "endsWith", {enumerable:false});
-
 URL.prototype.includes = function(s) {  return this.toString().includes(s); }
 Object.defineProperty(URL.prototype, "includes", {enumerable:false});
-
 /*
-Can't turn URL.search into String.search, because search is already a property
-of URL, that is, the search portion of the URL.
-URL.prototype.search = function(s) {
-return this.toString().search(s);
-}
+Can't turn URL.search into String.search, because search is already a
+property of URL, that is, the search portion of the URL.
+URL.prototype.search = function(s) { return this.toString().search(s); }
 */
 
 URL.prototype.indexOf = function(s) {  return this.toString().indexOf(s); }
 Object.defineProperty(URL.prototype, "indexOf", {enumerable:false});
-
 URL.prototype.lastIndexOf = function(s) {  return this.toString().lastIndexOf(s); }
 Object.defineProperty(URL.prototype, "lastIndexOf", {enumerable:false});
-
 URL.prototype.substring = function(from, to) {  return this.toString().substring(from, to); }
 Object.defineProperty(URL.prototype, "substring", {enumerable:false});
-
 URL.prototype.substr = function(from, to) {return this.toString().substr(from, to);}
 Object.defineProperty(URL.prototype, "substr", {enumerable:false});
-
 URL.prototype.toLowerCase = function() {  return this.toString().toLowerCase(); }
 Object.defineProperty(URL.prototype, "toLowerCase", {enumerable:false});
-
 URL.prototype.toUpperCase = function() {  return this.toString().toUpperCase(); }
 Object.defineProperty(URL.prototype, "toUpperCase", {enumerable:false});
-
 URL.prototype.match = function(s) {  return this.toString().match(s); }
 Object.defineProperty(URL.prototype, "match", {enumerable:false});
-
 URL.prototype.replace = function(s, t) {  return this.toString().replace(s, t); }
 Object.defineProperty(URL.prototype, "replace", {enumerable:false});
-
 URL.prototype.split = function(s) { return this.toString().split(s); }
 Object.defineProperty(URL.prototype, "split", {enumerable:false});
-
 URL.prototype.slice = function(from, to) { return this.toString().slice(from, to); }
 Object.defineProperty(URL.prototype, "slice", {enumerable:false});
-
 URL.prototype.charAt = function(n) { return this.toString().charAt(n); }
 Object.defineProperty(URL.prototype, "charAt", {enumerable:false});
-
 URL.prototype.charCodeAt = function(n) { return this.toString().charCodeAt(n); }
 Object.defineProperty(URL.prototype, "charCodeAt", {enumerable:false});
-
 URL.prototype.trim = function() { return this.toString().trim(); }
 Object.defineProperty(URL.prototype, "trim", {enumerable:false});
 
