@@ -4336,7 +4336,8 @@ static int twoLetter(const char *line, const char **runThis)
 
 	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
 	    && !line[3]) {
-		debugLevel = line[2] - '0';
+		if(!inInitFunction)
+			debugLevel = line[2] - '0';
 		return true;
 	}
 

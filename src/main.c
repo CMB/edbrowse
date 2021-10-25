@@ -41,7 +41,7 @@ volatile bool intFlag;
 time_t intStart;
 bool ismc, isimap, passMail;
 // next two variables work around curl bug 7284
-bool inInput, listNA;
+bool inInput, inInitFunction, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
@@ -475,7 +475,7 @@ int main(int argc, char **argv)
 {
 	int cx, account;
 	bool rc, doConfig = true, autobrowse = false;
-	bool dofetch = false, domail = false;
+	bool dofetch = false, domail = false, setDebugOpt = false;
 	static char agent0[64] = "edbrowse/";
 
 #ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
@@ -601,11 +601,13 @@ int main(int argc, char **argv)
 		}
 
 		if (stringEqual(s, "d")) {
+			setDebugOpt = true;
 			debugLevel = 4;
 			continue;
 		}
 
 		if (*s == 'd' && isdigitByte(s[1]) && !s[2]) {
+			setDebugOpt = true;
 			debugLevel = s[1] - '0';
 			continue;
 		}
@@ -747,8 +749,11 @@ int main(int argc, char **argv)
 		if (cx == MAXSESSION)
 			i_printfExit(MSG_ManyOpen, MAXSESSION - 1);
 		cxSwitch(cx, false);
-		if (cx == 1)
+		if (cx == 1) {
+			inInitFunction = setDebugOpt;
 			runEbFunction("init");
+			inInitFunction = false;
+		}
 
 // function on the command line
 		if (file[0] == '<') {
@@ -836,7 +841,9 @@ int main(int argc, char **argv)
 	if (!cx) {		/* no files */
 		++cx;
 		cxSwitch(cx, false);
+		inInitFunction = setDebugOpt;
 		runEbFunction("init");
+		inInitFunction = false;
 		i_puts(MSG_Ready);
 	}
 	if (cx > 1)
