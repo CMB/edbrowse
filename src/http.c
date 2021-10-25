@@ -2568,7 +2568,7 @@ prettify_network_text(const char *text, size_t size, FILE * destination)
 		if (text[i] != '\r')
 			fputc(text[i], destination);
 	}
-}				/* prettify_network_text */
+}
 
 /* Print incoming and outgoing headers.
  * Incoming headers are prefixed with curl<, and outgoing headers are
@@ -2612,7 +2612,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		g->last_curlin = false;
 
 	return 0;
-}				/* ebcurl_debug_handler */
+}
 
 // At this point, down_state = 1
 // Only runs from the foreground thread, does not have to be threadsafe.
@@ -2680,7 +2680,7 @@ top:
 	}
 
 	g->down_state = (down_bg ? 5 : 2);
-}				/* setup_download */
+}
 
 /* show background jobs and return the number of jobs pending */
 /* if iponly is true then just show in progress */
@@ -2772,7 +2772,7 @@ CURLcode setCurlURL(CURL * h, const char *url)
 	if (sslCerts)
 		curl_easy_setopt(h, CURLOPT_CAINFO, sslCerts);
 	return curl_easy_setopt(h, CURLOPT_URL, url);
-}				/* setCurlURL */
+}
 
 /*********************************************************************
 I'm putting the frame expand stuff here cause there really isn't a good place
@@ -2911,7 +2911,6 @@ int frameExpandLine(int ln, Tag *t)
 	const char *s, *jssrc = 0;
 	char *a;
 	Frame *save_cf, *last_f;
-	uchar save_local;
 	bool fromget = !ln;
 	Tag *cdt;	// contentDocument tag
 
@@ -3040,8 +3039,6 @@ So check for serverData null here. Once again we pop the frame.
  * Also, we have verified content-type = text/html, so that's pretty good. */
 
 	cf->hbase = cloneString(cf->fileName);
-	save_local = browseLocal;
-	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
 		createJSContext(cf);
@@ -3104,7 +3101,6 @@ cdt doesn't have or need an object; it's a place holder.
 
 // success, frame is expanded
 	cf = save_cf;
-	browseLocal = save_local;
 	return 0;
 }
 
@@ -3122,7 +3118,6 @@ bool reexpandFrame(void)
 	int j, start;
 	Tag *frametag;
 	Tag *cdt;	// contentDocument tag
-	uchar save_local;
 	Frame *save_cf = cf;
 	bool rc;
 
@@ -3172,8 +3167,6 @@ bool reexpandFrame(void)
 	fileSize = -1;
 
 	cf->hbase = cloneString(cf->fileName);
-	save_local = browseLocal;
-	browseLocal = !isURL(cf->fileName);
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
 		createJSContext(cf);
@@ -3211,8 +3204,6 @@ bool reexpandFrame(void)
 
 	if (cf->jslink)
 		reconnectTagObject(cdt);
-
-	browseLocal = save_local;
-		cf = save_cf;
+	cf = save_cf;
 	return true;
 }

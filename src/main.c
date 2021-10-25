@@ -844,7 +844,8 @@ int main(int argc, char **argv)
 		inInitFunction = setDebugOpt;
 		runEbFunction("init");
 		inInitFunction = false;
-		i_puts(MSG_Ready);
+		if(debugLevel >= 1)
+			i_puts(MSG_Ready);
 	}
 	if (cx > 1)
 		cxSwitch(1, false);
