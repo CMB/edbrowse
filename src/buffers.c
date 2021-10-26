@@ -484,10 +484,69 @@ top:
 #ifdef DOSLIKE
 		rc = select_stdin(&tv);
 #else
+
+/*********************************************************************
+This will take some explaining.
+There is a surprising interaction between readline() and javascript timers.
+It is not a problem in cooked mode, i.e., with readline turned off.
+Watch what happens in cooked mode.
+select() waits for input, and also has a timeout for the next timer.
+select() returns which ever happens first.
+The input is the line that the tty device driver gathers,
+after you typed it in and hit return.
+Until you hit return, the device driver is managing everything,
+echo, backspace, etc.
+edbrowse is free to respond to a timer, if it is ready to run before you have
+finished typing your line.
+Think of the tty, and your input, as a separate thread.
+All good, but turn readline on and see what happens.
+When readline is running, and gathering input, it puts the tty in raw mode.
+It responds to each character, and can complete words or lines based on earlier
+input, and other such magic.
+But readline is not in control when we are waiting in select,
+and we are waiting in select whenever there is a timer pending,
+and thanks to promise polling aand interframe messages and such,
+there is always a timer pending, thus we are always in select.
+The tty is in cooked mode, and readline is not doing its job.
+Finally, with none of the readline features working, and in frustration,
+you hit return, just to enter something.
+That completes the line and the tty passes it to edbrowse.
+select sees input, and responds.
+Since we are in readline mode, it calls readline().
+readline puts the tty in raw mode, but no matter, the keystrokes are already
+queued up; they come pouring in as though you typed them in just now.
+readline re-echos the keystrokes, which were already echoed in cooked mode,
+so you see your input line twice.
+Plus, you don't get to use the readline interactive features,
+which is why you turned on readline mode in the first place.
+Ok, here is how I work around it.
+	if(inputReadLine) ttyRaw();
+	select();
+	if(inputReadLine) ttyCooked();
+So what does that do?
+The first character you type passes to edbrowse, since the tty is raw.
+This triggers select, and we are headed down the input path.
+We call readline, and it is in control.
+It puts the tty back into raw mode,
+and responds in the usual way as you enter your line of input.
+While you are doing this, timers do not run, promise jobs do not run,
+all of edbrowse stops.
+I don't think this is a terrible thing, and some might say it's a good thing.
+Once you complete your line,
+readline passes it back to edbrowse, which acts upon it in the usual way.
+At this point, timers and pending jobs resume.
+Back around to top, tty back into raw mode, wait for the next timer
+or the first keystroke, and repeat.
+There - 50 lines of comments to explain 2 lines of code.
+*********************************************************************/
+
 		memset(&channels, 0, sizeof(channels));
 		FD_SET(0, &channels);
+		if(inputReadLine) ttyRaw(1, 0, false);
 		rc = select(1, &channels, 0, 0, &tv);
+		if(inputReadLine) ttyRestoreSettings();
 #endif
+
 		if (rc < 0)
 			goto interrupt;
 		if (rc == 0) {	/* timeout */
