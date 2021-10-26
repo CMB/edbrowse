@@ -290,12 +290,12 @@ site B, hoping site B is your banking site or something important.
 So I can't define URL over there and say URL = mw$.url over here.
 Ok, but what if I say URL = function(){}; URL.prototype = new mw$.URL;
 That puts all those methods and getters and setters,
-and there are a lot of them, the next 250 lines of code, in the prototype chain.
+and there are a lot of them, in the prototype chain.
 Course I have to lock them down in the shared window, as described above.
 They all have to be readonly.
 Well, If this window wants to create its own URL.prototype.toString function,
 it can't, because the toString that is next in the prototype chain is readonly.
-I don't know if this is javascript standard, or quick js.
+I don't know if this is javascript standard or quick js.
 It sort of makes sense if you think about it, but it means
 I don't have any practical way to share this class. So here we go.
 *********************************************************************/
@@ -359,6 +359,8 @@ enumerable:true});
 
 URL.prototype.toString = function() {  return this.href$val; }
 Object.defineProperty(URL.prototype, "toString", {enumerable:false});
+// use toString in the following - in case they replace toString with their own function.
+// Don't just grab href$val, tempting as that is.
 Object.defineProperty(URL.prototype, "length", { get: function() { return this.toString().length; }});
 URL.prototype.concat = function(s) {  return this.toString().concat(s); }
 Object.defineProperty(URL.prototype, "concat", {enumerable:false});
@@ -721,11 +723,41 @@ z$Audio.prototype = new HTMLElement;
 z$Audio.prototype.dom$class = "Audio";
 z$Audio.prototype.play = eb$voidfunction;
 
-// I don't implement any of the performance features;
-// but the object has to exist for some sites to work.
+// the performance registry
+pf$registry = {mark:{},measure:{},measure0:{},resourceTiming:{}};
+Object.defineProperty(pf$registry, "measure0", {enumerable:false});
 Performance = function(){}
 Performance.prototype = {
-getEntriesByType:function(x){ return []; }
+// timeOrigin is the start time of this window, I guess
+timeOrigin: Date.now(),
+now:function(){ return Date.now()},
+mark: function(name) { pf$registry.mark[name] = Date.now()},
+clearMarks: function(e) { var m = pf$registry.mark; if(e) delete m[e]; else for(var i in m) delete m[i];},
+measure:function(name,s,e) { var m = pf$registry.mark,  n = m[s] && m[e] ? m[e]-m[s] : 0; pf$registry.measure[name] = n; pf$registry.measure0[name] = m[s] ? m[s] : 0;},
+clearMeasures: function(e) { var m = pf$registry.measure, m0 = pf$registry.measure0; if(e) delete m[e],delete m0[e]; else for(var i in m) delete m[i],delete m0[i];},
+clearResourceTimings: function(e) { var m = pf$registry.resourceTiming; if(e) delete m[e]; else for(var i in m) delete m[i];},
+getEntriesByType:function(type){var top = pf$registry[type];
+var list = []; if(!top) return list;
+for(var i in top) list.push({name:i, entryType:type, timeStamp:(type==="measure"?pf$registry.measure0[i]:top[i]), duration:(type==="measure"?top[i]:0)})
+mw$.sortTime(list);
+return list;
+},
+getEntriesByName:function(name,type){
+var list = [];
+if(type) {
+var top = pf$registry[type];
+if(top && top[name])
+list.push({name:name, entryType:type, timeStamp:(type==="measure"?pf$registry.measure0[name]:top[name]), duration:(type==="measure"?top[name]:0)})
+} else {
+for(type in pf$registry) {
+var m = pf$registry[type];
+if(m[name])
+list.push({name:name, entryType:type, timeStamp:(type==="measure"?pf$registry.measure0[name]:m[name]), duration:(type==="measure"?m[name]:0)})
+}
+mw$.sortTime(list);
+}
+return list;
+}
 }
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 

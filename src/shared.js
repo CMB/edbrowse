@@ -2439,6 +2439,22 @@ eb$newLocation('r' + this.href$val + '\n');
 }
 };
 
+// sort some objects based on timestamp.
+// There should only be a few, thus a bubble sort.
+// If there are many, this will hang for a long time.
+// Might have to write a native method to use qsort.
+function sortTime(list) {
+var l = list.length;
+if(!l) return;
+if(l > 20) alert3("sortTime with " + l + " objects");
+var i, swap, change = true;
+while(change) { change = false;
+for(i=0; i<l-1; ++i)
+if(list[i].timeStamp > list[i+1].timeStamp)
+swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
+}
+}
+
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
 /* Blob.js
@@ -3589,7 +3605,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "MessagePortPolyfill", "MessageChannelPolyfill",
 "clickfn", "checkset", "cel_define",
 "jtfn0", "jtfn1", "jtfn2", "deminimize", "addTrace",
-"url_rebuild", "url_hrefset",
+"url_rebuild", "url_hrefset", "sortTime",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
