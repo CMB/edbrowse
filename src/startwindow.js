@@ -733,7 +733,7 @@ timeOrigin: Date.now(),
 now:function(){ return Date.now()},
 mark: function(name) { pf$registry.mark[name] = Date.now()},
 clearMarks: function(e) { var m = pf$registry.mark; if(e) delete m[e]; else for(var i in m) delete m[i];},
-measure:function(name,s,e) { var m = pf$registry.mark,  n = m[s] && m[e] ? m[e]-m[s] : 0; pf$registry.measure[name] = n; pf$registry.measure0[name] = m[s] ? m[s] : 0;},
+measure:function(name,s,e) { var m = pf$registry.mark,  n = m[s] && m[e] ? m[e]-m[s] : 0; pf$registry.measure[name] = n; pf$registry.measure0[name] = this.now();},
 clearMeasures: function(e) { var m = pf$registry.measure, m0 = pf$registry.measure0; if(e) delete m[e],delete m0[e]; else for(var i in m) delete m[i],delete m0[i];},
 clearResourceTimings: function(e) { var m = pf$registry.resourceTiming; if(e) delete m[e]; else for(var i in m) delete m[i];},
 getEntriesByType:function(type){var top = pf$registry[type];
@@ -757,7 +757,16 @@ list.push({name:name, entryType:type, timeStamp:(type==="measure"?pf$registry.me
 mw$.sortTime(list);
 }
 return list;
+},
+getEntries:function(){
+var list = [], r = pf$registry;
+for(var type in r) {
+var m = r[type];
+for(var i in m) list.push({name:i, entryType:type, timeStamp:(type==="measure"?r.measure0[i]:m[i]), duration:(type==="measure"?m[i]:0)})
 }
+mw$.sortTime(list);
+return list;
+},
 }
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 
