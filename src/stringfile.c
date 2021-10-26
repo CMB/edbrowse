@@ -1204,7 +1204,7 @@ p:
 	}
 
 	return buf;
-}				/* lsattr */
+}
 
 #ifdef DOSLIKE
 void ttySaveSettings(void)
@@ -1221,13 +1221,13 @@ void ttySaveSettings(void)
 		if (tcgetattr(0, &savettybuf))
 			i_printfExit(MSG_IoctlError);
 	}
-}				/* ttySaveSettings */
+}
 
-static void ttyRestoreSettings(void)
+void ttyRestoreSettings(void)
 {
 	if (isInteractive)
 		tcsetattr(0, TCSANOW, &savettybuf);
-}				/* ttyRestoreSettings */
+}
 
 /* put the tty in raw mode.
  * Review your Unix manual on termio.
@@ -1236,7 +1236,7 @@ static void ttyRestoreSettings(void)
  * min>0 time=0:  block until min chars are received.
  * min=0 time>0:  return 1 char, or 0 if the timer expires.
  * min=0 time=0:  nonblocking, return whatever chars have been received. */
-static void ttyRaw(int charcount, int timeout, bool isecho)
+void ttyRaw(int charcount, int timeout, bool isecho)
 {
 	struct termios buf = savettybuf;	/* structure copy */
 	buf.c_cc[VMIN] = charcount;
@@ -1245,7 +1245,7 @@ static void ttyRaw(int charcount, int timeout, bool isecho)
 	if (isecho)
 		buf.c_lflag |= ECHO;
 	tcsetattr(0, TCSANOW, &buf);
-}				/* ttyRaw */
+}
 #endif // #ifdef DOSLIKE y/n
 
 void ttySetEcho(bool enable_echo)
@@ -1278,7 +1278,7 @@ int getche(void)
 	read(0, &c, 1);
 	ttyRestoreSettings();
 	return c;
-}				/* getche */
+}
 
 int getch(void)
 {
@@ -1288,7 +1288,7 @@ int getch(void)
 	read(0, &c, 1);
 	ttyRestoreSettings();
 	return c;
-}				/* getche */
+}
 
 #endif // #ifndef DOSLIKE
 
@@ -1304,7 +1304,7 @@ char getLetter(const char *s)
 	}
 	printf("%c", c);
 	return c;
-}				/* getLetter */
+}
 
 /* Parameters: message, default file name, must this file be new,
  * and can we except an input of white space,
@@ -1353,7 +1353,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 		}
 		return p;
 	}
-}				/* getFileName */
+}
 
 /* Protect a filename from expansion by the shell */
 static const char shellmeta[] = "\\\n\t |&;<>(){}#'\"~$*?";

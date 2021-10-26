@@ -305,6 +305,8 @@ char *conciseTime(time_t t); //?
 bool lsattrChars(const char *buf, char *dest);
 char *lsattr(const char *path, const char *flags); //?
 void ttySaveSettings(void) ; //@
+void ttyRestoreSettings(void);
+void ttyRaw(int charcount, int timeout, bool isecho);
 void ttySetEcho(bool enable_echo);
 #ifndef _INC_CONIO
 int getche(void) ; //@

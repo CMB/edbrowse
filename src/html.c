@@ -3297,9 +3297,13 @@ static struct jsTimer *soonest(void)
 
 bool timerWait(int *delay_sec, int *delay_ms)
 {
-	struct jsTimer *jt = soonest();
+	struct jsTimer *jt;
 	time_t now;
 	int remaining;
+
+// if js is not active then we don't need any timers; even if they are there.
+	if(!allowJS)
+		return false;
 
 	if (cw->mustrender) {
 		time(&now);
@@ -3308,7 +3312,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 			remaining = cw->nextrender - now;
 	}
 
-	if (!jt) {
+	if (!(jt = soonest())) {
 		if (!cw->mustrender)
 			return false;
 		*delay_sec = remaining;
