@@ -2397,6 +2397,18 @@ v = v.replace(/^[^/#?]*/, "");
 this.host$val = v;
 v = "";
 }
+// Watch out, ipv6 has : in the middle.
+if(this.host$val.substr(0,1) == '[') { // I'll assume this is ipv6
+if(this.host$val.match(/]:/)) {
+this.hostname$val = this.host$val.replace(/]:.*/, "]");
+this.port$val = this.host$val.replace(/^.*]:/, "");
+/* port has to be an integer */
+this.port$val = parseInt(this.port$val);
+} else {
+this.hostname$val = this.host$val;
+this.port$val = setDefaultPort(this.protocol$val);
+}
+} else {
 if(this.host$val.match(/:/)) {
 this.hostname$val = this.host$val.replace(/:.*/, "");
 this.port$val = this.host$val.replace(/^.*:/, "");
@@ -2404,8 +2416,8 @@ this.port$val = this.host$val.replace(/^.*:/, "");
 this.port$val = parseInt(this.port$val);
 } else {
 this.hostname$val = this.host$val;
-// should we be filling in a default port here?
 this.port$val = setDefaultPort(this.protocol$val);
+}
 }
 // perhaps set protocol to http if it looks like a url?
 // as in edbrowse foo.bar.com
@@ -2413,6 +2425,7 @@ this.port$val = setDefaultPort(this.protocol$val);
 if(this.protocol$val == "" &&
 (this.hostname$val.match(/\.(com|org|net|info|biz|gov|edu|us|uk|ca|au)$/) ||
 this.hostname$val.match(/^\d+\.\d+\.\d+\.\d+$/) ||
+this.hostname$val.match(/^\[[\da-fA-F:]+]$/) ||
 this.hostname$val.match(/^www\..*\.[a-zA-Z]{2,}$/))) {
 this.protocol$val = "http:";
 if(this.port$val == 0)

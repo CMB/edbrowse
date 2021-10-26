@@ -140,7 +140,7 @@ void unpercentString(char *s)
  * The order is important.
  * Google has commas in encoded URLs, and wikipedia has parentheses,
  * so those are (sort of) ok. */
-static const char percentable[] = "+,()!'\"\\<>*[]$";
+static const char percentable[] = "+,()!'\"\\<>%*$";
 static const char hexdigits[] = "0123456789abcdef";
 #define ESCAPED_CHAR_LENGTH 3
 
@@ -250,6 +250,15 @@ static bool httpDefault(const char *url)
 			++s;
 		if (s == end)
 			end = colon;
+	}
+// check for the ipv6 format
+	if(end - url >= 7 && url[0] == '[' && end[-1]== ']') {
+		n = 0;
+		for (s = url + 1; s < end - 1; ++s) {
+			if(*s == ':') ++n;
+			else if(!isxdigit(*s)) return false;
+		}
+		return (n >= 5); // at least 5 colons
 	}
 // only domain characters allowed
 	for (s = url; s < end; ++s)
@@ -364,11 +373,6 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 		if (prlen)
 			*prlen = p - url;
 		a = protocolByName(url, p - url);
-#if 0
-// not sure why I had this code
-		if (a < 0 && q == p + 1)
-			return false;
-#endif
 		if (a >= 0 && !protocols[a].need_slashes)
 			++p;
 		else
@@ -419,12 +423,30 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 		p = q + 1;
 	}
 
-/* again, look for the end of the domain */
-	q = p + strcspn(p, ":?#/\1");
-// only domain characters allowed
-	for (pp = p; pp < q; ++pp)
-		if (!isalnumByte(*pp) && *pp != '.' && *pp != '-')
+// again, look for the end of the domain, this time watching for :port,
+// which does indeed end the domain. But wait! ipv6 has : in the middle
+// of the domain. I need some special code here for that possibility.
+	if(p[0] == '[' && (q = strchr(p, ']'))) {
+// only ipv6 characters allowed
+		for (pp = p + 1; pp < q; ++pp)
+			if (!isxdigit(*pp) && *pp != ':')
+				return false;
+// looks good
+		++q;
+// yeah it's possible to have .browse on the end, a real corner case.
+		if(!strncmp(q, ".browse", 7))
+			q += 7;
+// now has to be a domain ending character
+		if(*q && !strchr(":?#/\1", *q))
 			return false;
+	} else {
+		q = p + strcspn(p, ":?#/\1");
+// only domain characters allowed
+		for (pp = p; pp < q; ++pp)
+			if (!isalnumByte(*pp) && *pp != '.' && *pp != '-')
+				return false;
+	}
+
 	if (host)
 		*host = p;
 	if (holen) {
@@ -434,6 +456,7 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 		if(*holen > 7 && stringEqual(q - 7, ".browse"))
 			*holen -= 7;
 	}
+
 	if (*q == ':') {	/* port specified */
 		int n;
 		const char *cc, *pp = q + strcspn(q, "/?#\1");
