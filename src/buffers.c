@@ -5380,7 +5380,7 @@ et_go:
 	}
 
 	if (stringEqual(line, "showall+") || stringEqual(line, "showall-")) {
-		showHover = (line[5] == '+');
+		showHover = (line[7] == '+');
 		if (helpMessagesOn)
 			i_puts(showHover + MSG_HoverOff);
 		if (cw->browseMode && isJSAlive)
