@@ -3858,33 +3858,33 @@ nocolorend:
 		} else {
 // allow html to hide sections, even if js is not running.
 			t->disval = 0;
-			if(attribVal(t, "hidden") ||
-			attribVal(t, "aria-hidden"))
-				t->disval = 1;
+			if(((a = attribVal(t, "hidden")) && !stringEqual(a, "false")) ||
+			((a = attribVal(t, "aria-hidden")) && !stringEqual(a, "false")))
+				t->disval = DIS_INVISIBLE;
 		}
-		if (t->disval == 1)
-			v_now = 1;
-		if (t->disval == 2)
-			v_now = 3;
-		if (t->action == TAGACT_TEXT && v_now == 2) {
+		if (t->disval == DIS_INVISIBLE)
+			v_now = DIS_INVISIBLE;
+		if (t->disval == DIS_HOVER)
+			v_now = DIS_COLOR;
+		if (t->action == TAGACT_TEXT && v_now == DIS_HOVER) {
 			Tag *y = t;
 			while (y && y->f0 == f) {
 				uchar dv = y->disval;
 				if (dv == DIS_TRANSPARENT)
-					v_now = 1;
+					v_now = DIS_INVISIBLE;
 				if (dv == DIS_HOVERCOLOR)
-					v_now = 3;
+					v_now = DIS_COLOR;
 				if (dv >= DIS_COLOR)
 					break;
 				y = y->parent;
 			}
 		}
 // gather some stats
-		if (v_now == 1)
+		if (v_now == DIS_INVISIBLE)
 			++invcount;
-		if (v_now == 3)
+		if (v_now == DIS_COLOR)
 			++hovcount;
-		if (v_now == 1) {
+		if (v_now == DIS_INVISIBLE) {
 			if (!showHover) {
 				inv2 = t;
 				return;
@@ -3899,7 +3899,7 @@ nocolorend:
 					stringAndString(&ns, &ns_l, "\r`{\r");
 			}
 		}
-		if (!showHover && v_now == 3 && !activeBelow(t)) {
+		if (!showHover && v_now == DIS_COLOR && !activeBelow(t)) {
 			inv2 = t;
 			return;
 		}

@@ -1565,8 +1565,8 @@ static void pushAttributes(const Tag *t)
 
 // There are some, like multiple or readonly, that should be set to true,
 // not the empty string.
-		if (!*u && stringInList(dotrue, a[i]) >= 0) {
-			set_property_bool_t(t, x, true);
+		if (stringInList(dotrue, a[i]) >= 0) {
+			set_property_bool_t(t, x, !stringEqual(u, "false"));
 		} else {
 // standard attribute here
 			                        if (stringInListCI(excdom, x) < 0)
