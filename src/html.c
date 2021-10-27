@@ -4439,6 +4439,12 @@ unparen:
 		liCheck(t);
 		stringAndString(&ns, &ns_l,
 				(action == TAGACT_FRAME ? "\rFrame " : "\r"));
+// js often creates frames dynamically, so check for src
+		if(allowJS && t->jslink) {
+			nzFree(t->href);
+			t->href = get_property_string_t(t,
+			(t->action == TAGACT_AREA ? "href" : "src"));
+		}
 		a = 0;
 		if (action == TAGACT_AREA)
 			a = attribVal(t, "alt");
