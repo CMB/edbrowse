@@ -189,6 +189,7 @@ Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
 document.hasChildNodes = mw$.hasChildNodes;
 // This is set to body after browse.
 document.activeElement = null;
+document.documentMode = 5;
 
 navigator = {};
 navigator.appName = "edbrowse";

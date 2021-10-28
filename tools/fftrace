@@ -1,0 +1,14 @@
+#  Change our traced js file into something palatable by a standard browser.
+#  With the -t option, convert each trace into an alert.
+#  Without it, the traces just go away.
+# Get rid of the stuff after catch(e).
+#  Don't leave bp@(stuff) hanging around, that will pass through and blow up.
+#  Process input to output; no arguments.
+
+if [ $# = 1 -a "$1" = "-t" ]; then
+sed -e 's/trace@(\([a-zA-Z][0-9]*\))/alert("\1");/g' \
+-e 's/\(}catch([a-zA-Z_0-9]*){\)if(db.*step\$l=2;/\1/'
+else
+sed -e 's/trace@(\([a-zA-Z][0-9]*\))//g' \
+-e 's/\(}catch([a-zA-Z_0-9]*){\)if(db.*step\$l=2;/\1/'
+fi

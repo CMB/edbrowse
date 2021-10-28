@@ -2204,7 +2204,7 @@ return a + " " + c + "__" + sn + b;
 }
 
 jtfn2 = function (all, a) {
-return '} catch(' + a + ') { if(db$flags(3)) alert(' + a + '.toString()),alert(' + a + '.stack),step$l=2;';
+return '}catch(' + a + '){if(db$flags(3)) alert(' + a + '.toString()),alert(' + a + '.stack),step$l=2;';
 }
 
 // Deminimize javascript for debugging purposes.
