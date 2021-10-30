@@ -155,7 +155,7 @@ directories = false;
 name = "unspecifiedFrame";
 
 document.bgcolor = "white";
-document.readyState = "loading";
+document.readyState = "interactive";
 document.contentType = "text/html";
 function readyStateComplete() { document.readyState = "complete"; document.activeElement = document.body;
 if(document.onreadystatechange$$fn) {

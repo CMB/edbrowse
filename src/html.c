@@ -483,7 +483,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 
 /* helper function to prepare an html script.
  * steps: 1 parsed as html, 2 decorated with a coresponding javascript object
- * 3 downloading in background (not yet implemented),
+ * 3 downloading in background,
  * 4 data fetched and in the js world and possibly deminimized,
  * 5 script has run, 6 script could not run. */
 
