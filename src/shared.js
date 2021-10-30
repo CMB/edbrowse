@@ -227,6 +227,31 @@ exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
 my$win().eval(exp$$);
 }
 
+function showarg(x) {
+var l, w = my$win();
+// null comes out as an object
+if(x === null) return "null";
+switch(typeof x) {
+case "undefined": return "undefined";
+case "number": case "boolean": return x.toString();
+case "function": return x.name;
+case "string":
+l = x.length;
+return l > 60 ? "longstring" : x;
+case "object":
+if(Array.isArray(x)) return "array[" + x.length + "]";
+if(x instanceof w.URL || x.dom$class === "URL") return "URL(" + x.toString() + ")";
+if(x.nodeName) {
+var s = "<" + x.nodeName + ">";
+if(x.id) s += " id=" + x.id;
+if(x.class) s += " class=" + x.class;
+return s;
+}
+return "object";
+default: return "?";
+}
+}
+
 // document.head, document.body; shortcuts to head and body.
 function getElement() {
   var e = this.lastChild;
@@ -3586,7 +3611,7 @@ Object.defineProperty(Object.prototype, "toString",{enumerable:false,writable:fa
 var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "Error", "String", "parseInt", "Event",
 "alert","alert3","alert4","dumptree","uptrace",
-"showscripts", "showframes", "searchscripts", "snapshot", "aloop",
+"showscripts", "showframes", "searchscripts", "snapshot", "aloop", "showarg",
 "eb$base$snapshot", "set_location_hash",
 "eb$newLocation","eb$logElement",
 "getElement", "getHead", "setHead", "getBody", "setBody",
