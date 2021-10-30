@@ -98,7 +98,7 @@ bool tagHandler(int seqno, const char *name);
 void jSyncup(bool fromtimer, const Tag *active);
 void jSideEffects(void);
 void jClearSync(void);
-void htmlMetaHelper(Tag *t);
+void htmlMetaHelper(const Tag *t);
 void prepareScript(Tag *t);
 bool isRooted(const Tag *t);
 void runScriptsPending(bool startbrowse);

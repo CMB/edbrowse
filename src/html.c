@@ -396,7 +396,7 @@ static void gotoLocation(char *url, int delay, bool rf)
 }
 
 /* helper function for meta tag */
-void htmlMetaHelper(Tag *t)
+void htmlMetaHelper(const Tag *t)
 {
 	char *name;
 	const char *content, *heq;

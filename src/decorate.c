@@ -889,14 +889,18 @@ static void prerenderNode(Tag *t, bool opentag)
 
 	case TAGACT_META:
 		if (opentag) {
-/* This function doesn't do anything inside the js process.
- * It only works when scanning the original web page.
- * Thus I assume meta tags that set cookies, or keywords, or description,
- * or a refresh directive, are there from the get-go.
- * If js was going to generate a cookie it would just set document.cookie,
- * it wouldn't build a meta tag to set the cookie and then
- * appendChild it to head, right? */
-			htmlMetaHelper(t);
+/*********************************************************************
+htmlMetaHelper is not called for document.createElement("meta")
+I don't know if that matters.
+Another problem which is extant in the result of a google search:
+there is a meta tag with a refresh inside a noscript block.
+The refresh shouldn't run at all, but it does,
+and the next page has the same tags, and so on forever.
+So don't do this if inside <noscript>, and js is active.
+Are there other situations where we need to supress meta processing?
+*********************************************************************/
+			if(!(findOpenTag(t, TAGACT_NOSCRIPT) && isJSAlive))
+				htmlMetaHelper(t);
 		}
 		break;
 
