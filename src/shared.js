@@ -241,7 +241,7 @@ return l > 60 ? "longstring" : x;
 case "object":
 if(Array.isArray(x)) return "array[" + x.length + "]";
 if(x instanceof w.URL || x.dom$class === "URL") return "URL(" + x.toString() + ")";
-if(x.nodeName) {
+if(x.nodeType == 1 && x.childNodes && x.nodeName) { // html element
 var s = "<" + x.nodeName + ">";
 if(x.id) s += " id=" + x.id;
 if(x.class) s += " class=" + x.class;
@@ -253,7 +253,9 @@ default: return "?";
 }
 
 function showarglist(a) {
-if(!Array.isArray(a)) return "not an array";
+if(typeof a != "object" ||
+typeof a.length != "number")
+return "not an array";
 var s = "";
 for(var i = 0; i < a.length; ++i) {
 if(i) s += ", ";
@@ -2235,7 +2237,9 @@ var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
-return a + " " + c + "__" + sn + b;
+var fn = c + "__" + sn; // function name
+return a + " " + fn + b +
+"if(step$l>=1)alert('" + fn + "(' + showarglist(arguments) + ')');\n";
 }
 
 jtfn2 = function (all, a) {
