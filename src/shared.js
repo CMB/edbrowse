@@ -252,6 +252,16 @@ default: return "?";
 }
 }
 
+function showarglist(a) {
+if(!Array.isArray(a)) return "not an array";
+var s = "";
+for(var i = 0; i < a.length; ++i) {
+if(i) s += ", ";
+s += showarg(a[i]);
+}
+return s;
+}
+
 // document.head, document.body; shortcuts to head and body.
 function getElement() {
   var e = this.lastChild;
@@ -3611,7 +3621,8 @@ Object.defineProperty(Object.prototype, "toString",{enumerable:false,writable:fa
 var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "Error", "String", "parseInt", "Event",
 "alert","alert3","alert4","dumptree","uptrace",
-"showscripts", "showframes", "searchscripts", "snapshot", "aloop", "showarg",
+"showscripts", "showframes", "searchscripts", "snapshot", "aloop",
+"showarg", "showarglist",
 "eb$base$snapshot", "set_location_hash",
 "eb$newLocation","eb$logElement",
 "getElement", "getHead", "setHead", "getBody", "setBody",

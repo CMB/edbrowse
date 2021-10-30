@@ -97,7 +97,8 @@ if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 showscripts = mw$.showscripts, searchscripts = mw$.searchscripts, showframes = mw$.showframes;
-snapshot = mw$.snapshot, aloop = mw$.aloop, showarg = mw$.showarg;
+snapshot = mw$.snapshot, aloop = mw$.aloop;
+showarg = mw$.showarg, showarglist = mw$.showarglist;
 eb$base$snapshot = mw$.eb$base$snapshot, set_location_hash = mw$.set_location_hash;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
