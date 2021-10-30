@@ -117,6 +117,7 @@ eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
 NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
 rowReindex = mw$.rowReindex, getComputedStyle = mw$.getComputedStyle.bind(window);
 mutFixup = mw$.mutFixup;
+makeSheets = mw$.makeSheets;
 }
 
 // produce a stack for debugging purposes
@@ -1009,6 +1010,9 @@ Document.prototype.dom$class = "Document";
 DocumentFragment = function(){};
 DocumentFragment.prototype = new HTMLElement;
 DocumentFragment.prototype.dom$class = "DocumentFragment";
+
+CSSRule = function(){this.cssText=""}
+CSSRule.prototype.toString = function(){return this.cssText}
 
 CSSStyleSheet = function() { this.cssRules = []};
 CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";

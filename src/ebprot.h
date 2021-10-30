@@ -405,6 +405,7 @@ int run_function_onearg_t(const Tag *t, const char *name, const Tag *t2);
 int run_function_onearg_win(const Frame *f, const char *name, const Tag *t2);
 int run_function_onearg_doc(const Frame *f, const char *name, const Tag *t2);
 void run_function_onestring_t(const Tag *t, const char *name, const char *s);
+void run_function_onestring_win(const Frame *f, const char *name, const char *s);
 void jsRunData(const Tag *t, const char *filename, int lineno);
 bool run_event_t(const Tag *t, const char *pname, const char *evname);
 bool run_event_win(const Frame *f, const char *pname, const char *evname);

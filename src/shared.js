@@ -1812,6 +1812,50 @@ w.css$ver++;
 cssDocLoad(w.eb$ctx, css_all, pageload);
 }
 
+function makeSheets(all) {
+var w = my$win();
+var d = my$doc();
+var ss = d.styleSheets;
+ss.length = 0; // should already be 0
+var a = all.split('\n');
+// last rule ends in newline of course, but then split leaves
+// an extra line after that.
+if(a.length) a.pop();
+var nss = null; // new style sheet
+var stack = [];
+for(var i = 0; i < a.length; ++i) {
+var line = a[i];
+if(line.substr(0,8) != "@ebdelim") {
+if(nss) {
+var r = new w.CSSRule;
+r.cssText = line;
+nss.cssRules.push(r);
+}
+continue;
+}
+var which = line.substr(8,1);
+switch(which) {
+case '0':
+stack.length = 0; // should already be 0
+nss = new w.CSSStyleSheet;
+stack.push(nss);
+ss.push(nss);
+nss.src = line.substr(9).replace(/ *{}/,"");
+break;
+case '1':
+nss = new w.CSSStyleSheet;
+stack.push(nss);
+ss.push(nss);
+nss.src = line.substr(9).replace(/ *{}/,"");
+break;
+case '2':
+stack.pop();
+nss = stack.length ? stack[stack.length-1] : null;
+break;
+}
+}
+}
+
 // e is the node and pe is the pseudoelement
 function getComputedStyle(e,pe) {
 var s, w = my$win();
@@ -3652,7 +3696,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
 "compareDocumentPosition",
-"cssGather", "getComputedStyle", "computeStyleInline", "cssTextGet",
+"cssGather", "makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "injectSetup", "eb$visible",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",

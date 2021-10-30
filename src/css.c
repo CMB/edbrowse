@@ -772,6 +772,29 @@ bool matchMedia(char *t)
 	return media(&d0, t);
 }
 
+// all the css without comments, and line oriented.
+static char *loadstring;
+static int loadstring_l;
+static void loadPack(const char *lhs, const char *rhs)
+{
+	int l;
+
+	if(!loadstring)
+		return;
+
+	l = loadstring_l;
+	stringAndString(&loadstring, &loadstring_l, lhs);
+	stringAndString(&loadstring, &loadstring_l, " {");
+	stringAndString(&loadstring, &loadstring_l, rhs);
+// change newline to space
+	for(; l < loadstring_l; ++l)
+		if(loadstring[l] == '\n' || loadstring[l] == '\r')
+			loadstring[l] = ' ';
+
+// and now our newline, demarking this rule
+	stringAndString(&loadstring, &loadstring_l, "}\n");
+}
+
 // The input string is assumed allocated, it could be reallocated.
 static struct desc *cssPieces(char *s)
 {
@@ -932,6 +955,7 @@ top2:
 			lhs = s;	// next descriptor
 			trim(d->lhs);
 			trim(d->rhs);
+			loadPack(d->lhs, d->rhs);
 
 // some special @ code here
 			t = d->lhs;
@@ -1654,7 +1678,14 @@ void cssDocLoad(int frameNumber, char *start, bool pageload)
 		cssPiecesFree(cm->descriptors);
 		recompile = true;
 	}
+	if(pageload)
+		loadstring = initString(&loadstring_l);
 	cm->descriptors = cssPieces(start);
+	if(pageload) {
+		run_function_onestring_win(cf, "makeSheets", loadstring);
+		nzFree(loadstring);
+		loadstring = 0;
+	}
 	if (recompile)
 		debugPrint(3, "css complete");
 	if (!cm->descriptors)

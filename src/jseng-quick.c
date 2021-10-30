@@ -925,6 +925,13 @@ void run_function_onestring_t(const Tag *t, const char *name, const char *s)
 	run_function_onestring(t->f0->cx, *((JSValue*)t->jv), name, s);
 }
 
+void run_function_onestring_win(const Frame *f, const char *name, const char *s)
+{
+	if (!allowJS || !f->jslink)
+		return;
+	run_function_onestring(f->cx, *((JSValue*)f->winobj), name, s);
+}
+
 static char *run_script(JSContext *cx, const char *s)
 {
 	char *result = 0;
