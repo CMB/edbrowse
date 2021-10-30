@@ -3698,8 +3698,7 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	extra &= 6;
 
 // HTMLElement and its derivations
-	if((!strncmp(classname, "HTML", 4) && strlen(classname) >= 11) ||
-	stringEqual(classname, "CSSStyleDeclaration"))
+	if(!strncmp(classname, "HTML", 4) && strlen(classname) >= 11)
 		strcpy(classtweak, classname);
 	else
 		sprintf(classtweak, "z$%s", classname);

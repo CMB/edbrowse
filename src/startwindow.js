@@ -1069,7 +1069,12 @@ p = mw$.camelCase(p);
 var pri = p + "$pri";
 return this[pri] ? "important" : "";
 };
-Object.defineProperty(CSSStyleDeclaration.prototype, "css$data", {
+
+HTMLStyleElement = function(){};
+HTMLStyleElement.prototype = new HTMLElement;
+HTMLStyleElement.prototype.dom$class = "HTMLStyleElement";
+// Kind of a hack to make this like the link element
+Object.defineProperty(HTMLStyleElement.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
 
 document.defaultView = window;
@@ -1811,8 +1816,9 @@ case "image": t = "img";
 case "img": c = new HTMLImageElement; break;
 case "link": c = new HTMLLinkElement; break;
 case "meta": c = new HTMLMetaElement; break;
-case "cssstyledeclaration": case "style":
+case "cssstyledeclaration":
 c = new CSSStyleDeclaration; c.element = null; break;
+case "style": c = new HTMLStyleElement; break;
 case "script": c = new HTMLScriptElement; break;
 case "div": c = new HTMLDivElement; break;
 case "span": c = new HTMLSpanElement; break;

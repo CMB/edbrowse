@@ -622,7 +622,7 @@ uo.hash = "#end";
 new_path = new_path.replace(/middle/, "end");
 if(uo != new_path) fail(138);
 
-if(document.readyState != "loading") fail(140);
+if(document.readyState != "interactive") fail(140);
 document.addEventListener("readystatechange", function(){alert(document.readyState)});
 if(!document.title.match(/regression/)) fail(141);
 if(document.head.id != "boom") fail(142);

@@ -1232,7 +1232,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_STYLE:
-		domLink(t, "CSSStyleDeclaration", 0, "styles", 0, 4);
+		domLink(t, "HTMLStyleElement", 0, "styles", 0, 4);
 		a = attribVal(t, "type");
 		if (!a)
 			a = emptyString;

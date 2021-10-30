@@ -1491,9 +1491,10 @@ else if(node1.nodeName == "#comment")
 node2 = d.createComment();
 else if(node1.nodeName == "#document-fragment")
 node2 = d.createDocumentFragment();
-else if(node1.dom$class == "CSSStyleDeclaration")
-node2 = d.createElement("style");
-else
+else if(node1.dom$class == "CSSStyleDeclaration") {
+if(debug) alert3("skipping style object");
+return;
+} else
 node2 = d.createElement(node1.nodeName);
 if(node1 == w.cloneRoot1) w.cloneRoot2 = node2;
 
@@ -1793,7 +1794,7 @@ css_all += "@ebdelim0" + t.href + "{}\n";
 css_all += t.css$data;
 }
 }
-if(t.dom$class == "CSSStyleDeclaration") {
+if(t.dom$class == "HTMLStyleElement") {
 if(t.css$data) {
 w.cssSource.push({data: t.css$data, src:w.eb$base});
 css_all += "@ebdelim0" + w.eb$base + "{}\n";
@@ -1923,7 +1924,7 @@ e.last$class = e.class, e.last$id = e.id;
 
 // don't put a style under a style.
 // There are probably other nodes I should skip too.
-if(e.dom$class == "CSSStyleDeclaration") return;
+if(e.dom$class == "CSSStyleDeclaration" || e.dom$class == "HTMLStyleElement") return;
 if(e.nodeType != 1 && e.nodeType != 3) return;
 
 if(s = e.style$2) {
