@@ -243,8 +243,10 @@ if(Array.isArray(x)) return "array[" + x.length + "]";
 if(x instanceof w.URL || x.dom$class === "URL") return "URL(" + x.toString() + ")";
 if(x.nodeType == 1 && x.childNodes && x.nodeName) { // html element
 var s = "<" + x.nodeName + ">";
-if(x.id) s += " id=" + x.id;
-if(x.class) s += " class=" + x.class;
+var y = x.getAttribute("id");
+if(y) s += " id=" + y;
+y = x.getAttribute("class");
+if(y) s += " class=" + y;
 return s;
 }
 return "object";
