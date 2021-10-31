@@ -143,6 +143,8 @@ document.open = function() { return this }
  * Better to have something than nothing at all. */
 height = 768;
 width = 1024;
+pageXOffset = scrollX = 0;
+pageYOffset = scrollY = 0;
 devicePixelRatio = 1.0;
 // document.status is removed because it creates a conflict with
 // the status property of the XMLHttpRequest implementation
@@ -187,6 +189,8 @@ get: eb$getcook, set: eb$setcook});
 Object.defineProperty(document, "documentElement", {get: mw$.getElement});
 Object.defineProperty(document, "head", {get: mw$.getHead,set:mw$.setHead});
 Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
+// scrollingElement makes no sense in edbrowse, I think body is our best bet
+Object.defineProperty(document, "scrollingElement", {get: mw$.getBody});
 // document should always have children, but...
 document.hasChildNodes = mw$.hasChildNodes;
 // This is set to body after browse.
