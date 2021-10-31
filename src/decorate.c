@@ -1313,7 +1313,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_CANVAS:
-		domLink(t, "Canvas", 0, 0, 0, 4);
+		domLink(t, "HTMLCanvasElement", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_TABLE:

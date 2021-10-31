@@ -898,10 +898,10 @@ else p.appendChild(s.firstChild);
 
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
-z$Canvas = function() {};
-z$Canvas.prototype = new HTMLElement;
-z$Canvas.prototype.dom$class = "Canvas";
-z$Canvas.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
+HTMLCanvasElement = function() {};
+HTMLCanvasElement.prototype = new HTMLElement;
+HTMLCanvasElement.prototype.dom$class = "HTMLCanvasElement";
+HTMLCanvasElement.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
 arc: eb$nullfunction,
 arcTo: eb$nullfunction,
 beginPath: eb$nullfunction,
@@ -950,7 +950,7 @@ strokeRect: eb$nullfunction,
 strokeText: eb$nullfunction,
 transform: eb$nullfunction,
 translate: eb$nullfunction }};
-z$Canvas.prototype.toDataURL = function() {
+HTMLCanvasElement.prototype.toDataURL = function() {
 if(this.height === 0 || this.width === 0) return "data:,";
 // this is just a stub
 return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
@@ -1850,7 +1850,7 @@ case "td": c = new HTMLTableCellElement; break;
 case "caption": c = new z$tCap; break;
 case "thead": c = new z$tHead; break;
 case "tfoot": c = new z$tFoot; break;
-case "canvas": c = new z$Canvas; break;
+case "canvas": c = new HTMLCanvasElement; break;
 case "audio": case "video": c = new z$Audio; break;
 case "document": c = new Document; break;
 case "fragment": c = new DocumentFragment; break;
