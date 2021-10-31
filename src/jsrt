@@ -906,6 +906,7 @@ if(document.body.style.fly) fail(176);
 var dataset_test = document.getElementById("tag_with_data_attribute");
 if(dataset_test.dataset.dogFood !== "abc") fail(177);
 
+if(document.styleSheets[0].cssRules[0].cssText.substr(0,4) != "body") fail(180);
 </script>
 
 </body>

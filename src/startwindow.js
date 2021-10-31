@@ -1018,7 +1018,11 @@ DocumentFragment.prototype.dom$class = "DocumentFragment";
 CSSRule = function(){this.cssText=""}
 CSSRule.prototype.toString = function(){return this.cssText}
 
-CSSStyleSheet = function() { this.cssRules = []};
+CSSRuleList = function(){}
+// This isn't really right, but it's easy
+CSSRuleList.prototype = new Array;
+
+CSSStyleSheet = function() { this.cssRules = new CSSRuleList};
 CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";
 CSSStyleSheet.prototype.insertRule = function(r, idx) {
 var list = this.cssRules;
