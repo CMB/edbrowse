@@ -228,7 +228,7 @@ my$win().eval(exp$$);
 }
 
 function showarg(x) {
-var l, w = my$win();
+var l, w = my$win ? my$win() : window;
 // null comes out as an object
 if(x === null) return "null";
 switch(typeof x) {
@@ -2265,6 +2265,7 @@ cr[name] = o;
 // It should only be applied to deminimized code.
 // jtfn1 puts a name on the anonymous function, for debugging.
 // jtfn2 injects code after catch(e) {, for detection by dberr
+// jtfn3 injects trace at the end of a return statement, in a tricky way.
 
 jtfn0 = function (all, a, b) {
 // if code is not deminimized, this will inject
@@ -2291,6 +2292,16 @@ return a + " " + fn + b +
 
 jtfn2 = function (all, a) {
 return '}catch(' + a + '){if(db$flags(3)) alert(' + a + '.toString()),alert(' + a + '.stack),step$l=2;';
+}
+
+jtfn3 = function (all, a, b) {
+var w = my$win();
+var c = w.$jt$c;
+var sn = w.$jt$sn;
+w.$jt$sn = ++sn;
+// a is just whitespace, to preserve indenting
+// b is the expression to return
+return a + "{let x$rv=(" + b + ");trace" + "@(" + c + sn + ");return x$rv;}\n";
 }
 
 // Deminimize javascript for debugging purposes.
@@ -2377,6 +2388,7 @@ s.text = s.text.replace(/(\bfunction *)(\([\w ,]*\)\ *{\n)/g, jtfn1);
 s.text = s.text.replace(/(\bdo \{|\bwhile \([^{}\n]*\)\ *{|\bfor \([^{}\n]*\)\ *{|\bif \([^{}\n]*\)\ *{|\bcatch \(\w*\)\ *{|\belse \{|\btry \{|\bfunction *\w*\([\w ,]*\)\ *{|[^\n)]\n *)(var |\n)/g, jtfn0);
 s.text = s.text.replace(/}\ *catch\ *\((\w+)\)\ *{/g, jtfn2);
 s.text = s.text.replace(/}\ *catch\ *\(\)\ *{/g, '} catch() { if(db$flags(3)) alert("catch with no argument"),step$l=2;');
+s.text = s.text.replace(/(\n\ *)return\ +([^ ;\n][^;\n]*);\ *\n/g, jtfn3);
 return;
 }
 
@@ -3704,7 +3716,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "URL", "File", "FileReader", "Blob",
 "MessagePortPolyfill", "MessageChannelPolyfill",
 "clickfn", "checkset", "cel_define",
-"jtfn0", "jtfn1", "jtfn2", "deminimize", "addTrace",
+"jtfn0", "jtfn1", "jtfn2", "jtfn3", "deminimize", "addTrace",
 "url_rebuild", "url_hrefset", "sortTime",
 ];
 for(var i=0; i<flist.length; ++i)
