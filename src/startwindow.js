@@ -2268,23 +2268,28 @@ set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); del
 
 function eb$qs$start() { mw$.cssGather(true); }
 
-// This is a stub.
 DOMParser = function() {
-return {parseFromString: function(t,y) {
-var d = my$doc();
+return {
+parseFromString: function(t,y) {
+var d = document;
 if(y == "text/html" || y == "text/xml") {
-var v = d.createElement("div");
-v.innerHTML = t;
+var v = d.implementation.createHTMLDocument("");
+if(t) {
+if(typeof t == "string")
+v.body.innerHTML = t;
+else
+alert3("DOMParser expects a string but gets " + typeof t);
+}
 return v;
 }
 if(y == "text/plain") {
 return d.createTextNode(t);
 }
-alert3("trying to use the DOM parser\n" + y + " <<< ");
+alert3("trying to use the DOMParser\n" + y + " <<< ");
 alert4(t);
 alert3(">>>");
 return d.createTextNode("DOMParser not yet implemented");
-}}};
+}}}
 
 XMLSerializer = function(){}
 XMLSerializer.prototype.serializeToString = function(root) {
