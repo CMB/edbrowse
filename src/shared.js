@@ -2142,8 +2142,17 @@ function htmlString(t) {
 if(t.nodeType == 3) return t.data;
 if(t.nodeType != 1) return "";
 var s = "<" + (t.nodeName ? t.nodeName : "x");
+/* defer to the setAttribute system
 if(t.class) s += ' class="' + t.class + '"';
 if(t.id) s += ' id="' + t.id + '"';
+*/
+if(t.attributes$2) {
+for(var l = 0; l < t.attributes$2.lx$yth; ++l) {
+var a = t.attributes$2[l];
+// we need to html escape certain characters, which I do a few of.
+s += ' ' + a.name + "='" + a.value.toString().replace(/['<>&]/g,function(a){return "&#"+a.charCodeAt(0)+";"}) + "'";
+}
+}
 s += '>';
 if(t.childNodes)
 for(var i=0; i<t.childNodes.length; ++i)

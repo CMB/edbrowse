@@ -158,8 +158,9 @@ directories = false;
 name = "unspecifiedFrame";
 
 document.bgcolor = "white";
-document.readyState = "interactive";
 document.contentType = "text/html";
+document.visibilityState = "visible";
+document.readyState = "interactive";
 function readyStateComplete() { document.readyState = "complete"; document.activeElement = document.body;
 if(document.onreadystatechange$$fn) {
 var e = new Event;
@@ -966,6 +967,7 @@ me.name = "message";
 me.type = "message";
 me.origin = this.location.protocol + "//" + this.location.hostname;
 me.data = message;
+me.source = my$win();
 this.onmessage$$queue.push(me);
 alert3("posting message of length " + message.length + " to context " + this.eb$ctx);
 }
