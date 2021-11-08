@@ -6203,10 +6203,6 @@ replaceframe:
 				setError(MSG_LineHigh);
 				return globSub = false;
 			}
-			if(lno == 0) {
-				setError(MSG_AtLine0);
-				return globSub = false;
-			}
 // writeLine will remember that this happened, and succeeded.
 			writeLine = lno;
 // Clobber @, so it just looks like writing to a session,
@@ -6752,6 +6748,7 @@ replaceframe:
 	}
 
 	if (cmd == 'M') {	/* move this to another session */
+		int scx = cx; // remember
 		if (first && !cx) {
 			setError(MSG_MAfter);
 			return false;
@@ -6775,14 +6772,16 @@ replaceframe:
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
-		i_printf(MSG_MovedSession, cx);
+		if(!scx || debugLevel >= 1)
+			i_printf(MSG_MovedSession, cx);
 /* Magic with pointers, hang on to your hat. */
 		sessionList[cx].fw = sessionList[cx].lw = cw;
 		cs->lw = cw->prev;
 		cw->prev = 0;
 		cw = cs->lw;
 		selfFrame();
-		printDot();
+		if(debugLevel >= 1)
+			printDot();
 		return true;
 	}
 
