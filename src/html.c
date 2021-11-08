@@ -4501,7 +4501,7 @@ unparen:
 						u = altText(aa);
 					nzFree(aa);
 				}
-				if (u && !invisible) {
+				if (u && *u && !invisible) {
 					stringAndChar(&ns, &ns_l, '[');
 					stringAndString(&ns, &ns_l, u);
 					stringAndChar(&ns, &ns_l, ']');

@@ -713,6 +713,12 @@ static void prerenderNode(Tag *t, bool opentag)
 		break;
 
 	case TAGACT_TITLE:
+		if((t->controller = findOpenTag(t, TAGACT_SVG))) {
+// this is title for svg, not for the document.
+// Just turn things into span.
+			t->action = t->controller->action = TAGACT_SPAN;
+			break;
+		}
 		currentTitle = (opentag ? t : 0);
 		break;
 
