@@ -4075,9 +4075,9 @@ nocolor:
 // check for span onclick and make it look like a link.
 // Same for div, maybe for others too.
 	case TAGACT_SPAN: case TAGACT_DIV:
+		a = 0, u = opentag ? arialabel(t) : 0;
 // If nothing in the span then the title becomes important.
-		a = 0, u = 0;
-		if (!t->firstchild && opentag) {
+		if (!t->firstchild && opentag && !u) {
 			a = attribVal(t, "title");
 			if (allowJS && t->jslink)
 				u = get_property_string_t(t, "title");
@@ -4091,20 +4091,28 @@ nocolor:
 			t->onclick = true;
 		if (!t->onclick) {
 // regular span
+			if((u || a) && action == TAGACT_DIV)
+				stringAndChar(&ns, &ns_l, '\n');
 			if (u)
 				stringAndString(&ns, &ns_l, u), nzFree(u);
 			else if (a)
 				stringAndString(&ns, &ns_l, a);
+			if((u || a) && t->firstchild)
+				stringAndChar(&ns, &ns_l, ' ');
 			goto nop;
 		}
 // this span has click, so turn into {text}
 		if (opentag) {
+			if((u || a) && action == TAGACT_DIV)
+				stringAndChar(&ns, &ns_l, '\n');
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			ns_hnum();
 			if (u)
 				stringAndString(&ns, &ns_l, u), nzFree(u);
 			else if (a)
 				stringAndString(&ns, &ns_l, a);
+			if((u || a) && t->firstchild)
+				stringAndChar(&ns, &ns_l, ' ');
 		} else {
 			sprintf(hnum, "%c0}", InternalCodeChar);
 			ns_hnum();

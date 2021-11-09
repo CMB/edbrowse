@@ -1713,6 +1713,7 @@ const struct tagInfo availableTags[] = {
 	{"header", "a header", TAGACT_HEADER, 2, 5},
 	{"footer", "a footer", TAGACT_FOOTER, 2, 5},
 	{"div", "a divided section", TAGACT_DIV, 5, 1},
+	{"nav", "a navigation section", TAGACT_DIV, 5, 1},
 	{"map", "a map of images", TAGACT_NOP, 5, 0},
 	{"figure", "a figure", TAGACT_NOP, 10, 0},
 	{"figcaption", "a figure caption", TAGACT_NOP, 10, 0},
