@@ -3720,6 +3720,20 @@ static void findHeading(const Tag *t, int colno)
 	return;
 }
 
+// return allocated string, as may come from js
+static char *arialabel(const Tag *t)
+{
+	const char *a;
+	if(allowJS && t->jslink) {
+		char *u = get_property_string_t(t, "aria-label");
+		if(u && *u)
+			return u;
+		nzFree(u);  // empty string?
+	}
+	a = attribVal(t, "aria-label");
+	return (a && *a) ? cloneString(a) : 0;
+}
+
 static void tagInStream(int tagno)
 {
 	char buf[32];
@@ -4028,8 +4042,15 @@ nocolor:
 		if (t->href) {
 			if (opentag) {
 				sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
-				if (t->jslink
-				    && (a =
+				if((a = arialabel(t))) {
+// for <a>,  aria-label replaces anything that was below; this takes precedence
+					ns_hnum();
+					stringAndString(&ns, &ns_l, a);
+					cnzFree(a);
+					sprintf(hnum, "%c0}", InternalCodeChar);
+					deltag = t;
+// <a title=x>   x appears on hover
+				} else if (t->jslink     && (a =
 					get_property_string_t(t, "title"))) {
 					++hovcount;
 					if (showHover) {
@@ -4038,14 +4059,14 @@ nocolor:
 					}
 					cnzFree(a);
 				}
-			} else
+			} else // open or closed
 				sprintf(hnum, "%c0}", InternalCodeChar);
-		} else {
+		} else { // href or no href
 			if (opentag)
 				sprintf(hnum, "%c%d*", InternalCodeChar, tagno);
 			else
 				hnum[0] = 0;
-		}
+		} // href or no href
 		ns_hnum();
 		if (endcolor)
 			swapArrow();
