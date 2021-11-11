@@ -771,7 +771,9 @@ static void urlSanitize(struct i_get *g, const char *post)
 
 	if (g->uriEncoded && !looksPercented(url, post)) {
 		debugPrint(2, "Warning, url %s doesn't look encoded", url);
-		g->uriEncoded = false;
+// I'm gonna trust the flag, it generally comes from running html,
+// and it's generally right, and I'm generally wrong.
+//		g->uriEncoded = false;
 	}
 
 	if (!g->uriEncoded) {
