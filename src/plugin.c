@@ -192,6 +192,9 @@ const struct MIMETYPE *findMimeByURL(const char *url, uchar * sxfirst)
 			l = t - s;
 			if (l && l <= url_length) {
 				for (j = 0; j + l <= url_length; ++j) {
+// don't go past get or post data
+					if(strchr("?\1#", url[j]))
+						break;
 					if (memEqualCI(s, url + j, l)) {
 						*sxfirst = 0;
 						return m;
