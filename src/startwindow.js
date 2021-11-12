@@ -2098,6 +2098,26 @@ XMLHttpRequest.prototype.response = "";
 XMLHttpRequest.prototype.status = 0;
 XMLHttpRequest.prototype.statusText = "";
 
+function Response(){this.xhr = null, this.bodyUsed = false}
+Object.defineProperty(Response.prototype, "body", {get:function(){this.bodyUsed=true;return this.xhr.responseText;}})
+Object.defineProperty(Response.prototype, "headers", {get:function(){return this.xhr.responseHeaders;}})
+Object.defineProperty(Response.prototype, "ok", {get:function(){return this.xhr.status >= 200 && this.xhr.status <= 299;}})
+Object.defineProperty(Response.prototype, "redirect", {get:function(){return this.xhr.responseURL != this.xhr.url;}})
+Object.defineProperty(Response.prototype, "status", {get:function(){return this.xhr.status;}})
+Object.defineProperty(Response.prototype, "statusText", {get:function(){return this.xhr.statusText;}})
+// this one isn't right; just a stub for now
+Object.defineProperty(Response.prototype, "type", {get:function(){alert3("Response.type always basic");return "basic";}})
+// should this beUrl or response URL?
+Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr.url;}})
+// json is the only method so far; I guess we write them as we need them.
+Response.prototype.json = function(){return JSON.parse(this.body)}
+
+function fetch(url) {
+var xhr = new XMLHttpRequest; xhr.url = url; xhr.method = "GET"; xhr.send("", 0);
+var r = new Response; r.xhr = xhr;
+return {then: function(f) { return f(r); }}
+}
+
 // pages seem to want document.style to exist
 document.style = new CSSStyleDeclaration;
 document.style.element = document;
