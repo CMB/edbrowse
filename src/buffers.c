@@ -1677,7 +1677,7 @@ moved:
 		if(icmd == 'm')
 			delText(ln, ln);
 // add it to the other directory
-*t++ = '\n';
+		*t++ = '\n';
 		cw = cw2;
 		dol = cw->dol;
 		addTextToBuffer((pst)file, t-file, dol, false);
@@ -3061,6 +3061,15 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				++line;
 				ondeck = true;
 			}
+// and similarly for /^* and /^[
+			if (c == '^' && (c = line[1]) &&
+			(strchr("*?+", c) || (c == '[' && !line[2]))) {
+				*e++ = '^';
+				*e++ = '\\';
+				*e++ = c;
+				line += 2;
+				ondeck = true;
+			}
 		} else if (c == '%' && (line[1] == delim || line[1] == 0)) {
 			if (!cw->rhs_yes) {
 				setError(MSG_NoReplaceString);
@@ -3071,7 +3080,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			return true;
 		}
 	}
-	/* ebmuck tricks */
+
 	while ((c = *line)) {
 		if (e >= re + MAXRE - 3) {
 			setError(MSG_RexpLong);
