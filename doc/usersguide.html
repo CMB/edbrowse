@@ -885,6 +885,16 @@ The work "ok" is printed when the shell command is finished -
 thus you can tell when a no-output command is done.
 Use db0 to suppress this ok acknowledgement.
 
+<P>
+Warning - some versions of system() spawn /bin/sh, regardless of your $SHELL environment variable.
+We have no control over this.
+Your shell command, or your plugin commands, might not work properly if you are using bash features, and edbrowse launches sh.
+ed has the same issue.
+You can test this with !echo $RANDOM, which is a bash feature.
+If you get nothing, edbrowse is running sh. Prove it by:
+<P>
+!/bin/bash -c 'echo $RANDOM'
+
 <LI><P>
 Type `cd dirname' to change directories.
 The new directory is always printed.

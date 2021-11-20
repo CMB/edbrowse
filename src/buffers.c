@@ -6644,7 +6644,12 @@ replaceframe:
 
 		if(first == '!') { // write to a command, like ed
 			int l = 0;
-			FILE *p = popen(bangbang(line + 1), "w");
+			FILE *p;
+			char *newline = apostropheMacros(bangbang(line + 1));
+			if(!newline)
+				return false;
+			p = popen(newline, "w");
+			free(newline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
@@ -7514,7 +7519,12 @@ afterdelete:
 		if(first == '!') { // read from a command, like ed
 			char *outdata;
 			int outlen;
-			FILE *p = popen(bangbang(line + 1), "r");
+			FILE *p;
+			char *newline = apostropheMacros(bangbang(line + 1));
+			if(!newline)
+				return false;
+			p = popen(newline, "r");
+			free(newline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;

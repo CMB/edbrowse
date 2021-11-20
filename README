@@ -42,6 +42,9 @@ OK, I'm going to assume you've read the documentation.
 No need to repeat all that here.
 You're here because you want to compile and/or package the program,
 or modify the source in some way.  Great!
+There are more substantial, step by step instructions for building edbrowse from source,
+on various platforms, in the edbrowse wiki.
+If you run into trouble you may want to consult those; this is an overview.
 
 Requirements:
 
