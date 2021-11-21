@@ -3240,6 +3240,14 @@ JS_NewCFunction(mwc, nat_resolveURL, "resolveURL", 2), JS_PROP_ENUMERABLE);
 JS_NewCFunction(mwc, nat_new_location, "new_location", 1), JS_PROP_ENUMERABLE);
     JS_DefinePropertyValueStr(mwc, mwo, "eb$logElement",
 JS_NewCFunction(mwc, nat_log_element, "log_element", 2), JS_PROP_ENUMERABLE);
+    JS_DefinePropertyValueStr(mwc, mwo, "setTimeout",
+JS_NewCFunction(mwc, nat_setTimeout, "setTimeout", 2), 0);
+    JS_DefinePropertyValueStr(mwc, mwo, "clearTimeout",
+JS_NewCFunction(mwc, nat_clearTimeout, "clearTimeout", 1), 0);
+    JS_DefinePropertyValueStr(mwc, mwo, "setInterval",
+JS_NewCFunction(mwc, nat_setInterval, "setInterval", 2), 0);
+    JS_DefinePropertyValueStr(mwc, mwo, "clearInterval",
+JS_NewCFunction(mwc, nat_clearTimeout, "clearInterval", 1), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "cssDocLoad",
 JS_NewCFunction(mwc, nat_css_start, "css_start", 3), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "cssApply",
