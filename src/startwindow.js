@@ -960,7 +960,7 @@ return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADE
 }
 
 onmessage$$queue = [];
-function  postMessage(message,target_origin) {
+function  postMessage(message,target_origin, transfer) {
 if (this.location.protocol + "//" + this.location.hostname == target_origin || target_origin == "*") {
 var me = new Event;
 me.name = "message";
@@ -968,6 +968,7 @@ me.type = "message";
 me.origin = this.location.protocol + "//" + this.location.hostname;
 me.data = message;
 me.source = my$win();
+me.ports = transfer;
 this.onmessage$$queue.push(me);
 alert3("posting message of length " + message.length + " to context " + this.eb$ctx);
 }
