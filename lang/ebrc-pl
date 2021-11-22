@@ -131,9 +131,6 @@ b http://www.google.com
 #  więc musisz podszyć się np. pod IE7.
 }
 
-# wyszukiwanie w Google nie wymaga JavaScriptu
-nojs = google.com
-
 #  wyszukiwanie w słowniku Merriam-Webster, ~1 to parametr 1, wyszukiwane słowo.
 #  <mw elephant
 function+mw {

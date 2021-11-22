@@ -128,11 +128,8 @@ b http://www.google.com
 /</ i1*
 /h3/p
 #  Search results by h3 heading only works if google recognizes your browser,
-#  so you need to spoof to IE7.
+#  so you might need to spoof to IE7.
 }
-
-# google search does not require javascript
-nojs = google.com
 
 #  Merriam-Webster dictionary lookup, ~1 is parameter 1, the word to look up.
 #  <mw elephant

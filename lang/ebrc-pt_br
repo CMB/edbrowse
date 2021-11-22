@@ -130,9 +130,6 @@ b http://www.google.com
 /h3/p
 }
 
-# a busca do Google não requer javascript
-nojs = google.com
-
 # procura no dicionário Merriam-Webster, ~1 é o parámetro 1, a palavra a procurar.
 # <mw elephant
 function+mw {

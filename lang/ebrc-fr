@@ -122,8 +122,6 @@ b http://www.google.com
 /h3/p
 }
 
-nojs = google.com
-
 # recherche dans le dictionnaire Merriam-Webster, -1 est le 1er paramètre,
 # le mot cherché
 # <mv éléphant

@@ -131,9 +131,6 @@ b http://www.google.com
 /h3/p
 }
 
-# Die Google-Suche benötigt kein JavaScript.
-nojs = google.com
-
 # Merriam-Webster Wörterbuchsuche, ~1 ist der erste Parameter, also das
 # nachzuschlagende Wort.
 # <mw Elephant

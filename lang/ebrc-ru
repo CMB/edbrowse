@@ -131,9 +131,6 @@ b http://www.google.com
 #  итак надо подделить IE7.
 }
 
-# поиск Google не требует JavaScript
-nojs = google.com
-
 #  Поиск по словаре Merriam-Webster, ~1 - это параметр 1 - слово, которое нужно найти.
 #  <mw elephant
 function+mw {
