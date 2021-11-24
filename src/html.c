@@ -4129,8 +4129,14 @@ nocolor:
 		break;
 
 	case TAGACT_SVG:
-		if (!invisible && opentag)
-			stringAndString(&ns, &ns_l, "graphics");
+		if (!invisible && opentag) {
+// I use to print "graphics" here, but that conveys virtually no information.
+// Maybe at some point I'll find something useful to insert
+// to say yes there's some visual thing here.
+// Meantime, I better at least put in a space, because some graphic
+// might separate two words.
+			stringAndChar(&ns, &ns_l, ' ');
+		}
 		break;
 
 	case TAGACT_OL:
