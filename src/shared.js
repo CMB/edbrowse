@@ -3263,22 +3263,22 @@ swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
 })()
 
 /*********************************************************************
-MessagePortPolyfill and MessageChannelPolyfill
+MessagePort and MessageChannel
 https://github.com/rocwind/message-port-polyfill
 MIT license.
 *********************************************************************/
 
-MessagePortPolyfill = /** @class */ (function () {
-function MessagePortPolyfill() {
+MessagePort = /** @class */ (function () {
+function MessagePort() {
 var w = my$win();
 this.onmessage = null;
 this.onmessageerror = null;
 this.otherPort = null;
 this.onmessageListeners = [];
 this.eb$ctx = w.eb$ctx;
-w.pf$registry.push(this);
+w.mp$registry.push(this);
 }
-MessagePortPolyfill.prototype.dispatchEvent = function (event) {
+MessagePort.prototype.dispatchEvent = function (event) {
 if (this.onmessage) {
 this.onmessage(event);
 }
@@ -3286,13 +3286,13 @@ this.onmessageListeners.forEach(function (listener) { return listener(event);
 });
 return true;
 };
-MessagePortPolyfill.prototype.postMessage = function (message) {
+MessagePort.prototype.postMessage = function (message) {
 if (!this.otherPort) {
 return;
 }
 this.otherPort.dispatchEvent({ data: message });
 };
-MessagePortPolyfill.prototype.addEventListener = function (type, listener) {
+MessagePort.prototype.addEventListener = function (type, listener) {
 if (type !== 'message') {
 return;
 }
@@ -3302,7 +3302,7 @@ return;
 }
 this.onmessageListeners.push(listener);
 };
-MessagePortPolyfill.prototype.removeEventListener = function (type, listener) {
+MessagePort.prototype.removeEventListener = function (type, listener) {
 if (type !== 'message') {
 return;
 }
@@ -3312,22 +3312,22 @@ return;
 }
 this.onmessageListeners.splice(index, 1);
 };
-MessagePortPolyfill.prototype.start = function () {
+MessagePort.prototype.start = function () {
 // do nothing at this moment
 };
-MessagePortPolyfill.prototype.close = function () {
+MessagePort.prototype.close = function () {
 // do nothing at this moment
 };
-return MessagePortPolyfill;
+return MessagePort;
 }());
-MessageChannelPolyfill = /** @class */ (function () {
-function MessageChannelPolyfill() {
-this.port1 = new MessagePortPolyfill();
-this.port2 = new MessagePortPolyfill();
+MessageChannel = /** @class */ (function () {
+function MessageChannel() {
+this.port1 = new MessagePort();
+this.port2 = new MessagePort();
 this.port1.otherPort = this.port2;
 this.port2.otherPort = this.port1;
 }
-return MessageChannelPolyfill;
+return MessageChannel;
 }());
 
 /**!

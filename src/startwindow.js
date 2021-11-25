@@ -2381,8 +2381,8 @@ File = mw$.File
 FileReader = mw$.FileReader
 URL.createObjectURL = mw$.URL.createObjectURL
 URL.revokeObjectURL = mw$.URL.revokeObjectURL
-MessagePortPolyfill = mw$.MessagePortPolyfill;
-MessageChannel = MessageChannelPolyfill = mw$.MessageChannelPolyfill;
-pf$registry = [];
+MessagePort = mw$.MessagePort;
+MessageChannel = mw$.MessageChannel;
+mp$registry = []; // MessagePort registry
 URLSearchParams = mw$.URLSearchParams
 

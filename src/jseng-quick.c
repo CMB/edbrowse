@@ -3159,7 +3159,7 @@ in the target window, especially building new DOM elements within the tree,
 by DOM calls or innerHTML etc.
 *********************************************************************/
 
-void my_ExecutePendingPolyfills(void)
+void my_ExecutePendingMessagePorts(void)
 {
 	int i;
 	JSContext *cx;
