@@ -396,6 +396,7 @@ bool run_function_bool_win(const Frame *f, const char *name);
 void forceFrameExpand(Tag *t);
 void my_ExecutePendingJobs(void);
 void my_ExecutePendingMessages(void);
+void my_ExecutePendingPolyfills(void);
 void delPendings(const Frame *f);
 void js_main(void);
 void createJSContext(Frame *f);

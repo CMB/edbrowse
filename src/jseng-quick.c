@@ -3149,6 +3149,34 @@ void my_ExecutePendingMessages(void)
 	}
 }
 
+/*********************************************************************
+Polyfill.port.postMessage() puts a message on a queue, and the target window
+processes it later. Well this is later.
+Run through the foreground windows, and the polyfill registry,
+to process any messages.
+It's vital we set cw and cf, as we did above, so everything runs
+in the target window, especially building new DOM elements within the tree,
+by DOM calls or innerHTML etc.
+*********************************************************************/
+
+void my_ExecutePendingPolyfills(void)
+{
+	int i;
+	JSContext *cx;
+// This mucks with cw and cf, the calling routine must preserve them.
+	for (i = 1; i < MAXSESSION; ++i) {
+		if(!(cw = sessionList[i].lw) ||
+		!cw->browseMode)
+			continue;
+		for (cf = &(cw->f0); cf; cf = cf->next) {
+// javascript has to be set up for this particular frame
+			if(!cf->jslink)
+				continue;
+			cx = cf->cx;
+		}
+	}
+}
+
 // this is temporary, we will be polling on a timer
 // to execute these pending jobs.
 static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)

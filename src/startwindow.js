@@ -968,7 +968,12 @@ me.type = "message";
 me.origin = this.location.protocol + "//" + this.location.hostname;
 me.data = message;
 me.source = my$win();
+if(transfer) {
 me.ports = transfer;
+// If these objects had a context, they are now owned by this context.
+for(var i = 0; i < transfer.length; ++i)
+if(transfer[i].eb$ctx) transfer[i].eb$ctx = eb$ctx;
+}
 this.onmessage$$queue.push(me);
 alert3("posting message of length " + message.length + " to context " + this.eb$ctx);
 }
@@ -2378,5 +2383,6 @@ URL.createObjectURL = mw$.URL.createObjectURL
 URL.revokeObjectURL = mw$.URL.revokeObjectURL
 MessagePortPolyfill = mw$.MessagePortPolyfill;
 MessageChannel = MessageChannelPolyfill = mw$.MessageChannelPolyfill;
+pf$registry = [];
 URLSearchParams = mw$.URLSearchParams
 

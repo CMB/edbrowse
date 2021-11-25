@@ -3270,10 +3270,13 @@ MIT license.
 
 MessagePortPolyfill = /** @class */ (function () {
 function MessagePortPolyfill() {
+var w = my$win();
 this.onmessage = null;
 this.onmessageerror = null;
 this.otherPort = null;
 this.onmessageListeners = [];
+this.eb$ctx = w.eb$ctx;
+w.pf$registry.push(this);
 }
 MessagePortPolyfill.prototype.dispatchEvent = function (event) {
 if (this.onmessage) {
