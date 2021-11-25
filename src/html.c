@@ -4089,7 +4089,7 @@ nocolor:
 // This rerender function is getting more and more js intensive!
 		if (!t->onclick && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
-		if (!t->onclick) {
+		if (!(t->onclick & allowJS)) {
 // regular span
 			if((u || a) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
