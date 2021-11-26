@@ -3161,18 +3161,49 @@ by DOM calls or innerHTML etc.
 
 void my_ExecutePendingMessagePorts(void)
 {
-	int i;
-	JSContext *cx;
+	int i, j, length, owner;
+	JSContext *cx0, *cx;
+	Frame *f0, *f1;
+	JSValue g, ra;
 // This mucks with cw and cf, the calling routine must preserve them.
 	for (i = 1; i < MAXSESSION; ++i) {
 		if(!(cw = sessionList[i].lw) ||
 		!cw->browseMode)
 			continue;
-		for (cf = &(cw->f0); cf; cf = cf->next) {
+		for (f0 = &(cw->f0); f0; f0 = f0->next) {
 // javascript has to be set up for this particular frame
-			if(!cf->jslink)
+			if(!f0->jslink)
 				continue;
-			cx = cf->cx;
+			cx0 = f0->cx;
+// grab the message channel registry for this frame
+			g = *(JSValue*)f0->winobj;
+			ra = JS_GetPropertyStr(cx0, g, "mp$registry");
+			grab(ra);
+			if(!JS_IsArray(cx0, ra)) {
+// no registry, don't do anything.
+// This should never happen.
+				JS_Release(cx0, ra);
+				debugPrint(3, "context %d has no mp$registry", f0->gsn);
+				continue;
+			}
+// step through the ports in the registry
+			length = get_arraylength(cx0, ra);
+			for (j = 0; j < length; ++j) {
+				JSValue port = get_array_element_object(cx0, ra, j);
+				owner = get_property_number(cx0, port, "eb$ctx");
+// find the frame that owns this port
+				for (f1 = &(cw->f0); f1; f1 = f1->next)
+					if(f1->gsn == owner) break;
+				if(f1) { // ok
+					cf = f1; // set current frame
+					cx = cf->cx;
+					run_function_bool(cx, port, "onmessage$$running");
+				} else {
+					debugPrint(3, "no frame for MessagePort.context %d", owner);
+				}
+				JS_Release(cx0, port);
+			}
+			JS_Release(cx0, ra);
 		}
 	}
 }

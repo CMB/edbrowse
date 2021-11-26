@@ -975,24 +975,13 @@ for(var i = 0; i < transfer.length; ++i)
 if(transfer[i].eb$ctx) transfer[i].eb$ctx = eb$ctx;
 }
 this.onmessage$$queue.push(me);
-alert3("posting message of length " + message.length + " to context " + this.eb$ctx);
-}
-}
-function onmessage$$running() {
-if(window.onmessage$$array && onmessage$$array.length) { // handlers are ready
-while(onmessage$$queue.length) {
-// better run messages fifo
-var me = onmessage$$queue[0];
-onmessage$$queue.splice(0, 1);
-alert3("context " + eb$ctx + " processes message of length " + me.data.length + " ↑" +
-(me.data.length >= 200 ? "long" : me.data) + "↑");
-// yeah you really need window.onmessage$$fn, for subtle reasons
-window.onmessage$$fn(me);
-alert3("process message complete");
-}
+alert3("posting message of length " + message.length + " to window context " + this.eb$ctx + " ↑" +
+(message.length >= 200 ? "long" : message)
++ "↑");
 }
 }
 Object.defineProperty(window, "onmessage$$queue", {writable:false,configurable:false});
+onmessage$$running = mw$.onmessage$$running;
 Object.defineProperty(window, "onmessage$$running", {writable:false,configurable:false});
 Object.defineProperty(window, "postMessage", {writable:false,configurable:false});
 

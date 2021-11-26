@@ -3262,6 +3262,26 @@ swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
   }
 })()
 
+function onmessage$$running() {
+if(this.onmessage || (this.onmessage$$array && this.onmessage$$array.length)) { // handlers are ready
+while(this.onmessage$$queue.length) {
+// better run messages fifo
+var me = this.onmessage$$queue[0];
+this.onmessage$$queue.splice(0, 1);
+// if you then add another handler, it won't run on this message.
+// I assume you add all the handlers you wish in one go,
+// then they process each message in the queue, and each message going forward.
+alert3(this.nodeName + " context " + this.eb$ctx + " processes message of length " + me.data.length + " ↑" +
+(me.data.length >= 200 ? "long" : me.data) + "↑");
+if(this.onmessage)
+this.onmessage(me);
+else
+this.onmessage$$fn(me);
+alert3("process message complete");
+}
+}
+}
+
 /*********************************************************************
 MessagePort and MessageChannel
 https://github.com/rocwind/message-port-polyfill
@@ -3274,48 +3294,34 @@ var w = my$win();
 this.onmessage = null;
 this.onmessageerror = null;
 this.otherPort = null;
-this.onmessageListeners = [];
+this.onmessage$$queue = [];
 this.eb$ctx = w.eb$ctx;
 w.mp$registry.push(this);
 }
-MessagePort.prototype.dispatchEvent = function (event) {
-if (this.onmessage) {
-this.onmessage(event);
-}
-this.onmessageListeners.forEach(function (listener) { return listener(event);
-});
+var p = MessagePort.prototype;
+p.nodeName = "PORT";
+p.onmessage$$running = onmessage$$running;
+p.dispatchEvent = function (me) {
+me.name = "message";
+me.type = "message";
+// me.data is already set
+this.onmessage$$queue.push(me);
+alert3("posting message of length " + me.data.length + " to port context " + this.eb$ctx + " ↑" +
+(me.data.length >= 200 ? "long" : me.data)
++ "↑");
 return true;
 };
-MessagePort.prototype.postMessage = function (message) {
-if (!this.otherPort) {
-return;
-}
-this.otherPort.dispatchEvent({ data: message });
+p.postMessage = function (message) {
+if (this.otherPort) this.otherPort.dispatchEvent({ data: message });
 };
-MessagePort.prototype.addEventListener = function (type, listener) {
-if (type !== 'message') {
-return;
-}
-if (typeof listener !== 'function' ||
-this.onmessageListeners.indexOf(listener) !== -1) {
-return;
-}
-this.onmessageListeners.push(listener);
-};
-MessagePort.prototype.removeEventListener = function (type, listener) {
-if (type !== 'message') {
-return;
-}
-var index = this.onmessageListeners.indexOf(listener);
-if (index === -1) {
-return;
-}
-this.onmessageListeners.splice(index, 1);
-};
-MessagePort.prototype.start = function () {
+p.eb$listen = eb$listen;
+p.eb$unlisten = eb$unlisten;
+p.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
+p.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
+p.start = function () {
 // do nothing at this moment
 };
-MessagePort.prototype.close = function () {
+p.close = function () {
 // do nothing at this moment
 };
 return MessagePort;
@@ -3731,6 +3737,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "clickfn", "checkset", "cel_define",
 "jtfn0", "jtfn1", "jtfn2", "jtfn3", "deminimize", "addTrace",
 "url_rebuild", "url_hrefset", "sortTime",
+"onmessage$$running",
 ];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
