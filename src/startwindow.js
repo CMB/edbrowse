@@ -2375,3 +2375,10 @@ MessageChannel = mw$.MessageChannel;
 mp$registry = []; // MessagePort registry
 URLSearchParams = mw$.URLSearchParams
 
+trustedTypes = function(){};
+trustedTypes.createPolicy = function(pn,po){
+var x = {policyName: pn};
+for (var i in po) { x[i] = po[i]}
+return x;
+}
+
