@@ -3286,6 +3286,7 @@ alert3("process message complete");
 MessagePort and MessageChannel
 https://github.com/rocwind/message-port-polyfill
 MIT license.
+These are considerably modified for our purposes.
 *********************************************************************/
 
 MessagePort = /** @class */ (function () {

@@ -3162,7 +3162,7 @@ by DOM calls or innerHTML etc.
 void my_ExecutePendingMessagePorts(void)
 {
 	int i, j, length, owner;
-	JSContext *cx0, *cx;
+	JSContext *cx0;
 	Frame *f0, *f1;
 	JSValue g, ra;
 // This mucks with cw and cf, the calling routine must preserve them.
@@ -3195,9 +3195,10 @@ void my_ExecutePendingMessagePorts(void)
 				for (f1 = &(cw->f0); f1; f1 = f1->next)
 					if(f1->gsn == owner) break;
 				if(f1) { // ok
-					cf = f1; // set current frame
-					cx = cf->cx;
-					run_function_bool(cx, port, "onmessage$$running");
+					if(f1->jslink && f1->cx) {
+						cf = f1; // set current frame
+						run_function_bool(cf->cx, port, "onmessage$$running");
+					}
 				} else {
 					debugPrint(3, "no frame for MessagePort.context %d", owner);
 				}
