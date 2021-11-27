@@ -3263,6 +3263,7 @@ swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
 })()
 
 function onmessage$$running() {
+if(this.eb$pause) return;
 if(this.onmessage || (this.onmessage$$array && this.onmessage$$array.length)) { // handlers are ready
 while(this.onmessage$$queue.length) {
 // better run messages fifo
@@ -3297,14 +3298,14 @@ this.onmessageerror = null;
 this.otherPort = null;
 this.onmessage$$queue = [];
 this.eb$ctx = w.eb$ctx;
+this.eb$pause = true;
 w.mp$registry.push(this);
 }
 var p = MessagePort.prototype;
 p.nodeName = "PORT";
 p.onmessage$$running = onmessage$$running;
 p.dispatchEvent = function (me) {
-me.name = "message";
-me.type = "message";
+me.name = me.type = "message";
 // me.data is already set
 this.onmessage$$queue.push(me);
 alert3("posting message of length " + me.data.length + " to port context " + this.eb$ctx + " ↑" +
@@ -3320,10 +3321,12 @@ p.eb$unlisten = eb$unlisten;
 p.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
 p.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
 p.start = function () {
-// do nothing at this moment
+this.eb$pause = false;
+alert3("MessagePort start for context " + this.eb$ctx);
 };
 p.close = function () {
-// do nothing at this moment
+this.eb$pause = true;
+alert3("MessagePort start for context " + this.eb$ctx);
 };
 return MessagePort;
 }());

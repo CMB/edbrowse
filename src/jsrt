@@ -910,6 +910,7 @@ if(dataset_test.dataset.dogFood !== "abc") fail(177);
 if(document.styleSheets[0].cssRules[0].cssText.substr(0,4) != "body") fail(180);
 
 mcp = new MessageChannel();
+mcp.port2.start();
 
 </script>
 
