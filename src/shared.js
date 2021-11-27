@@ -3263,7 +3263,7 @@ swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
 })()
 
 function onmessage$$running() {
-if(this.eb$pause) return;
+if(this.eb$pause && !this.onmessage) return;
 if(this.onmessage || (this.onmessage$$array && this.onmessage$$array.length)) { // handlers are ready
 while(this.onmessage$$queue.length) {
 // better run messages fifo
