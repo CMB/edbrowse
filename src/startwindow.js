@@ -1052,12 +1052,115 @@ CSSStyleDeclaration.prototype = new HTMLElement;
 CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
 // sheet on demand
 Object.defineProperty(CSSStyleDeclaration.prototype, "sheet", { get: function(){ if(!this.sheet$2) this.sheet$2 = new CSSStyleSheet; return this.sheet$2; }});
+
 // these are default properties of a style object
-CSSStyleDeclaration.prototype.animationDelay =
-CSSStyleDeclaration.prototype.animationDuration =
-CSSStyleDeclaration.prototype.transitionDelay =
-CSSStyleDeclaration.prototype.transitionDuration ="";
 CSSStyleDeclaration.prototype.textTransform = "none", // acid test 46
+CSSStyleDeclaration.prototype.borderImageSource = "none";
+;(function(){
+var list =[
+"accentColor","alignContent","alignItems","alignSelf","all",
+"animation","animationDelay","animationDuration","animationFillMode","animationIterationCount","animationName","animationPlayState","animationTimingFunction",
+"appearance","aspectRatio",
+"backfaceVisibility","background","backgroundAttachment","backgroundBlendMode","backgroundClip","backgroundColor","backgroundImage",
+"backgroundOrigin","backgroundPosition","backgroundPositionX","backgroundPositionY","backgroundRepeat","backgroundSize",
+"blockSize","borderBlock","borderBlockColor","borderBlockEnd","borderBlockEndColor","borderBlockEndStyle","borderBlockEndWidth",
+"borderBlockStart","borderBlockStartColor","borderBlockStartStyle","borderBlockStartWidth","borderBlockStyle","borderBlockWidth",
+"borderBottomLeftRadius","borderBottomRightRadius","borderCollapse",
+"borderEndEndRadius","borderEndStartRadius","borderInline","borderInlineColor","borderInlineEnd","borderInlineEndColor","borderInlineEndStyle","borderInlineEndWidth","borderInlineStart","borderInlineStartColor","borderInlineStartStyle","borderInlineStartWidth","borderInlineStyle","borderInlineWidth",
+"borderRadius","borderSpacing","borderStartEndRadius","borderStartStartRadius","borderTopLeftRadius","borderTopRightRadius",
+"bottom","boxDecorationBreak","boxShadow","boxSizing",
+"breakAfter","breakBefore","breakInside",
+"captionSide","caretColor","clear","clip","clipPath","clipRule",
+"color","colorAdjust","colorInterpolation","colorInterpolationFilters",
+"columnCount","columnFill","columnGap","columnRule","columnRuleColor","columnRuleStyle","columnRuleWidth","columns","columnSpan","columnWidth",
+"contain","content","counterIncrement","counterReset","counterSet",
+"cssFloat","cursor","cx","cy",
+"direction","display","dominantBaseline",
+"emptyCells","fill","fillOpacity","fillRule","filter",
+"flex","flexBasis","flexDirection","flexFlow","flexGrow","flexShrink","flexWrap",
+"float","floodColor","floodOpacity",
+"font","fontFamily","fontFeatureSettings","fontKerning","fontLanguageOverride","fontSize","fontSizeAdjust","fontStretch","fontStyle","fontSynthesis","fontVariant","fontVariantAlternates","fontVariantCaps","fontVariantEastAsian","fontVariantLigatures","fontVariantNumeric","fontVariantPosition","fontWeight",
+"gap","grid","gridArea","gridAutoColumns","gridAutoFlow","gridAutoRows","gridColumn","gridColumnEnd","gridColumnGap","gridColumnStart",
+"gridGap","gridRow","gridRowEnd","gridRowGap","gridRowStart","gridTemplate","gridTemplateAreas","gridTemplateColumns","gridTemplateRows",
+"hyphens","imageOrientation","imageRendering","imeMode","inlineSize",
+"inset","insetBlock","insetBlockEnd","insetBlockStart","insetInline","insetInlineEnd","insetInlineStart","isolation",
+"justifyContent","justifyItems","justifySelf",
+"left","letterSpacing","lightingColor","lineBreak","lineHeight","listStyle","listStyleImage","listStylePosition","listStyleType",
+"margin","marginBlock","marginBlockEnd","marginBlockStart","marginBottom","marginInline","marginInlineEnd","marginInlineStart","marginLeft","marginRight","marginTop",
+"marker","markerEnd","markerMid","markerStart",
+"mask","maskClip","maskComposite","maskImage","maskMode","maskOrigin","maskPosition","maskPositionX","maskPositionY","maskRepeat","maskSize","maskType",
+"maxBlockSize","maxHeight","maxInlineSize","maxWidth",
+"minBlockSize","minHeight","minInlineSize","minWidth","mixBlendMode",
+"MozAnimation","MozAnimationDelay","MozAnimationDirection","MozAnimationDuration","MozAnimationFillMode","MozAnimationIterationCount","MozAnimationName","MozAnimationPlayState","MozAnimationTimingFunction",
+"MozAppearance",
+"MozBackfaceVisibility","MozBorderEnd","MozBorderEndColor","MozBorderEndStyle","MozBorderEndWidth","MozBorderStart","MozBorderStartColor","MozBorderStartStyle","MozBorderStartWidth",
+"MozBoxAlign","MozBoxDirection","MozBoxFlex","MozBoxOrdinalGroup","MozBoxOrient","MozBoxPack","MozBoxSizing",
+"MozFloatEdge","MozFontFeatureSettings","MozFontLanguageOverride","MozForceBrokenImageIcon",
+"MozHyphens","MozImageRegion","MozMarginEnd","MozMarginStart","MozOrient",
+"MozPaddingEnd","MozPaddingStart","MozPerspective","MozPerspectiveOrigin",
+"MozTabSize","MozTextSizeAdjust","MozTransform","MozTransformOrigin","MozTransformStyle","MozTransition","MozTransitionDelay","MozTransitionDuration","MozTransitionProperty","MozTransitionTimingFunction",
+"MozUserFocus","MozUserInput","MozUserModify","MozUserSelect","MozWindowDragging",
+"objectFit","objectPosition",
+"offset","offsetAnchor","offsetDistance","offsetPath","offsetRotate",
+"opacity","order","outline","outlineColor","outlineOffset","outlineStyle","outlineWidth",
+"overflow","overflowAnchor","overflowBlock","overflowInline","overflowWrap","overflowX","overflowY",
+"overscrollBehavior","overscrollBehaviorBlock","overscrollBehaviorInline","overscrollBehaviorX","overscrollBehaviorY",
+"padding","paddingBlock","paddingBlockEnd","paddingBlockStart","paddingBottom","paddingInline","paddingInlineEnd","paddingInlineStart","paddingLeft","paddingRight","paddingTop",
+"pageBreakAfter","pageBreakBefore","pageBreakInside","paintOrder","perspective","perspectiveOrigin",
+"placeContent","placeItems","placeSelf","pointerEvents","position",
+"quotes",
+"r","resize","right","rotate","rowGap","rubyAlign","rubyPosition","rx","ry",
+"scale","scrollbarColor","scrollbarWidth","scrollBehavior","scrollMargin","scrollMarginBlock","scrollMarginBlockEnd","scrollMarginBlockStart","scrollMarginBottom","scrollMarginInline","scrollMarginInlineEnd","scrollMarginInlineStart","scrollMarginLeft","scrollMarginRight","scrollMarginTop",
+"scrollPadding","scrollPaddingBlock","scrollPaddingBlockEnd","scrollPaddingBlockStart","scrollPaddingBottom","scrollPaddingInline","scrollPaddingInlineEnd","scrollPaddingInlineStart","scrollPaddingLeft","scrollPaddingRight","scrollPaddingTop",
+"scrollSnapAlign","scrollSnapType",
+"shapeImageThreshold","shapeMargin","shapeOutside","shapeRendering",
+"stopColor","stopOpacity",
+"stroke","strokeDasharray","strokeDashoffset","strokeLinecap","strokeLinejoin","strokeMiterlimit","strokeOpacity","strokeWidth",
+"tableLayout","tabSize","textAlign","textAlignLast","textAnchor","textCombineUpright",
+"textDecoration","textDecorationColor","textDecorationLine","textDecorationSkipInk","textDecorationStyle","textDecorationThickness",
+"textEmphasis","textEmphasisColor","textEmphasisPosition","textEmphasisStyle","textIndent","textJustify",
+"textOrientation","textOverflow","textRendering","textShadow","textUnderlineOffset","textUnderlinePosition",
+"top","touchAction","transform","transformBox","transformOrigin","transformStyle",
+"transition","transitionDelay","transitionDuration","transitionProperty","transitionTimingFunction","translate",
+"unicodeBidi","userSelect","vectorEffect","verticalAlign","visibility",
+"webkitAlignContent","WebkitAlignContent","webkitAlignItems","WebkitAlignItems","webkitAlignSelf","WebkitAlignSelf",
+"webkitAnimation","WebkitAnimation","webkitAnimationDelay","WebkitAnimationDelay","webkitAnimationDirection","WebkitAnimationDirection","webkitAnimationDuration","WebkitAnimationDuration","webkitAnimationFillMode","WebkitAnimationFillMode","webkitAnimationIterationCount","WebkitAnimationIterationCount",
+"webkitAnimationName","WebkitAnimationName","webkitAnimationPlayState","WebkitAnimationPlayState","webkitAnimationTimingFunction","WebkitAnimationTimingFunction",
+"webkitAppearance","WebkitAppearance",
+"webkitBackfaceVisibility","WebkitBackfaceVisibility","webkitBackgroundClip","WebkitBackgroundClip","webkitBackgroundOrigin","WebkitBackgroundOrigin","webkitBackgroundSize","WebkitBackgroundSize",
+"webkitBorderBottomLeftRadius","WebkitBorderBottomLeftRadius","webkitBorderBottomRightRadius","WebkitBorderBottomRightRadius","webkitBorderRadius","WebkitBorderRadius","webkitBorderTopLeftRadius","WebkitBorderTopLeftRadius","webkitBorderTopRightRadius","WebkitBorderTopRightRadius",
+"webkitBoxAlign","WebkitBoxAlign","webkitBoxDirection","WebkitBoxDirection","webkitBoxFlex","WebkitBoxFlex","webkitBoxOrdinalGroup","WebkitBoxOrdinalGroup","webkitBoxOrient","WebkitBoxOrient",
+"webkitBoxPack","WebkitBoxPack","webkitBoxShadow","WebkitBoxShadow","webkitBoxSizing","WebkitBoxSizing",
+"webkitFilter","WebkitFilter","webkitFlex","WebkitFlex","webkitFlexBasis","WebkitFlexBasis","webkitFlexDirection","WebkitFlexDirection","webkitFlexFlow","WebkitFlexFlow","webkitFlexGrow","WebkitFlexGrow",
+"webkitFlexShrink","WebkitFlexShrink","webkitFlexWrap","WebkitFlexWrap",
+"webkitJustifyContent","WebkitJustifyContent","webkitLineClamp","WebkitLineClamp",
+"webkitMask","WebkitMask","webkitMaskClip","WebkitMaskClip","webkitMaskComposite","WebkitMaskComposite","webkitMaskImage","WebkitMaskImage","webkitMaskOrigin","WebkitMaskOrigin",
+"webkitMaskPosition","WebkitMaskPosition","webkitMaskPositionX","WebkitMaskPositionX","webkitMaskPositionY","WebkitMaskPositionY","webkitMaskRepeat","WebkitMaskRepeat","webkitMaskSize","WebkitMaskSize",
+"webkitOrder","WebkitOrder","webkitPerspective","WebkitPerspective","webkitPerspectiveOrigin","WebkitPerspectiveOrigin",
+"webkitTextFillColor","WebkitTextFillColor","webkitTextSizeAdjust","WebkitTextSizeAdjust","webkitTextStroke","WebkitTextStroke","webkitTextStrokeColor","WebkitTextStrokeColor","webkitTextStrokeWidth","WebkitTextStrokeWidth",
+"webkitTransform","WebkitTransform","webkitTransformOrigin","WebkitTransformOrigin","webkitTransformStyle","WebkitTransformStyle",
+"webkitTransition","WebkitTransition","webkitTransitionDelay","WebkitTransitionDelay","webkitTransitionDuration","WebkitTransitionDuration","webkitTransitionProperty","WebkitTransitionProperty","webkitTransitionTimingFunction","WebkitTransitionTimingFunction",
+"webkitUserSelect","WebkitUserSelect",
+"whiteSpace","willChange","wordBreak","wordSpacing","wordWrap","writingMode",
+"x",
+"y",
+"zIndex",];
+for(var i = 0; i < list.length; ++i)
+CSSStyleDeclaration.prototype[list[i]] = "";
+})();
+CSSStyleDeclaration.prototype.borderImageOutset = "0";
+CSSStyleDeclaration.prototype.borderImageWidth = "1";
+CSSStyleDeclaration.prototype.borderImageSlice = "100%";
+CSSStyleDeclaration.prototype.border = CSSStyleDeclaration.prototype.borderBottom = CSSStyleDeclaration.prototype.borderLeft = CSSStyleDeclaration.prototype.borderRight = CSSStyleDeclaration.prototype.borderTop = "1px solid rgb(193, 193, 193)";
+CSSStyleDeclaration.prototype.borderBottomWidth = CSSStyleDeclaration.prototype.borderLeftWidth = CSSStyleDeclaration.prototype.borderRightWidth = CSSStyleDeclaration.prototype.borderTopWidth = CSSStyleDeclaration.prototype.borderWidth = "1px";
+CSSStyleDeclaration.prototype.width = "250px";
+CSSStyleDeclaration.prototype.height = "40px";
+CSSStyleDeclaration.prototype.borderImage = CSSStyleDeclaration.prototype.MozBorderImage = CSSStyleDeclaration.prototype.webkitBorderImage = CSSStyleDeclaration.prototype.WebkitBorderImage = "none 100% / 1 / 0 stretch";
+CSSStyleDeclaration.prototype.borderBottomColor = CSSStyleDeclaration.prototype.borderColor = CSSStyleDeclaration.prototype.borderLeftColor = CSSStyleDeclaration.prototype.borderRightColor = CSSStyleDeclaration.prototype.borderTopColor = "rgb(193, 193, 193)";
+CSSStyleDeclaration.prototype.borderBottomStyle = CSSStyleDeclaration.prototype.borderLeftStyle = CSSStyleDeclaration.prototype.borderRightStyle = CSSStyleDeclaration.prototype.borderStyle = CSSStyleDeclaration.prototype.borderTopStyle = "solid";
+CSSStyleDeclaration.prototype.borderImageRepeat = "stretch";
+CSSStyleDeclaration.prototype.parentRule = null;
+
 CSSStyleDeclaration.prototype.toString = function() { return "style object" };
 CSSStyleDeclaration.prototype.getPropertyValue = function(p) {
 p = mw$.camelCase(p);
