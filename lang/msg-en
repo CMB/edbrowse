@@ -670,7 +670,7 @@ required field %s is empty
 limit
 session %d cannot receive text
 invalid @ syntax
-0
+.ebrc: emoji library %s is not a regular file
 0
 0
 0

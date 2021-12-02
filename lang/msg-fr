@@ -670,7 +670,7 @@ le champ requis %s est vide
 limit
 la session %d ne peut recevoir du texte
 erreur de @ syntax
-0
+.ebrc : le carnet d'emojis %s n'est pas un fichier régulier
 0
 0
 0

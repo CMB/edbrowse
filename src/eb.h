@@ -352,7 +352,8 @@ extern bool doColors;
 extern int context;		// which session (buffer) are we in?
 extern pst linePending;
 extern char *changeFileName;
-extern char *addressFile;	/* your address book */
+extern char *addressFile;	// your address book
+extern char *emojiFile;	// your library of emojis
 extern int redirect_count;
 extern char *serverData;
 extern int serverDataLen;
