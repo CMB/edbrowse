@@ -991,7 +991,7 @@ if(c.nodeType == 11) return appendFragment(this, c);
 isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$apch2(c);
-mutFixup(this, false, c, null);
+if(r) mutFixup(this, false, c, null);
 return r;
 }
 
@@ -1010,7 +1010,13 @@ isabove(c, this);
 if(c.nodeType == 11) return insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$insbf(c, t);
-mutFixup(this, false, r, null);
+if(r) mutFixup(this, false, r, null);
+return r;
+}
+
+function removeChild(c) {
+if(!c) return null;
+var r = this.eb$rmch2(c);
 return r;
 }
 
@@ -3722,7 +3728,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "mutFixup", "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
 "appendFragment", "insertFragment",
-"appendChild", "prependChild", "insertBefore", "replaceChild", "hasChildNodes",
+"appendChild", "prependChild", "insertBefore", "removeChild", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",

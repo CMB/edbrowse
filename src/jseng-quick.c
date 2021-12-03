@@ -2514,7 +2514,7 @@ done:
 	return (rc ? JS_DupValue(cx, argv[0]) : JS_NULL);
 }
 
-static JSValue nat_removeChild(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
+static JSValue nat_rmch2(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	jsInterruptCheck(cx);
 	int i, length, mark;
@@ -3478,8 +3478,8 @@ JS_NewCFunction(cx, nat_apch1, "apch1", 1), 0);
 JS_NewCFunction(cx, nat_apch2, "apch2", 1), 0);
     JS_DefinePropertyValueStr(cx, d, "eb$insbf",
 JS_NewCFunction(cx, nat_insbf, "insbf", 2), 0);
-    JS_DefinePropertyValueStr(cx, d, "removeChild",
-JS_NewCFunction(cx, nat_removeChild, "removeChild", 1), 0);
+    JS_DefinePropertyValueStr(cx, d, "eb$rmch2",
+JS_NewCFunction(cx, nat_rmch2, "removeChild", 1), 0);
 
 // document.eb$ctx is the context number
 	JS_DefinePropertyValueStr(cx, d, "eb$ctx", JS_NewInt32(cx, f->gsn), 0);

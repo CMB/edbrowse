@@ -1226,7 +1226,7 @@ break;
 }
 return newobj;
 }
-HTMLTableSectionElement.prototype.removeChildNative = document.removeChild;
+HTMLTableSectionElement.prototype.removeChildNative = mw$.removeChild;
 HTMLTableSectionElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
@@ -1522,8 +1522,9 @@ p.replaceChild = mw$.replaceChild;
 // These are native, so it's ok to bounce off of document.
 p.eb$apch1 = document.eb$apch1;
 p.eb$apch2 = document.eb$apch2;
+p.eb$rmch2 = document.eb$rmch2;
 p.eb$insbf = document.eb$insbf;
-p.removeChild = document.removeChild;
+p.removeChild = mw$.removeChild;
 p.remove = function() { if(this.parentNode) this.parentNode.removeChild(this);}
 Object.defineProperty(p, "firstChild", { get: function() { return (this.childNodes && this.childNodes.length) ? this.childNodes[0] : null; } });
 Object.defineProperty(p, "firstElementChild", { get: function() { var u = this.childNodes; if(!u) return null; for(var i=0; i<u.length; ++i) if(u[i].nodeType == 1) return u[i]; return null; }});
@@ -1624,7 +1625,7 @@ HTMLFormElement.prototype.appendChildNative = mw$.appendChild;
 HTMLFormElement.prototype.appendChild = mw$.formAppendChild;
 HTMLFormElement.prototype.insertBeforeNative = mw$.insertBefore;
 HTMLFormElement.prototype.insertBefore = mw$.formInsertBefore;
-HTMLFormElement.prototype.removeChildNative = document.removeChild;
+HTMLFormElement.prototype.removeChildNative = mw$.removeChild;
 HTMLFormElement.prototype.removeChild = mw$.formRemoveChild;
 
 /*********************************************************************
@@ -1745,7 +1746,7 @@ if(newobj.rows.length) rowReindex(this);
 }
 return newobj;
 }
-HTMLTableElement.prototype.removeChildNative = document.removeChild;
+HTMLTableElement.prototype.removeChildNative = mw$.removeChild;
 HTMLTableElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
@@ -1794,7 +1795,7 @@ break;
 }
 return newobj;
 }
-HTMLTableRowElement.prototype.removeChildNative = document.removeChild;
+HTMLTableRowElement.prototype.removeChildNative = mw$.removeChild;
 HTMLTableRowElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
