@@ -39,7 +39,7 @@ void prepareForBrowse(char *h, int h_len)
 		h[j++] = h[i];
 	}
 	h[j] = 0;
-}				/* prepareForBrowse */
+}
 
 /* An input field cannot contain newline, null, or the InternalCodeChar */
 // Revised June 2018, maybe newline is ok. We need it for textarea.
@@ -52,7 +52,7 @@ void prepareForField(char *h)
 			*h = InternalCodeCharAlternate;
 		++h;
 	}
-}				/* prepareForField */
+}
 
 /*********************************************************************
 The primary goal of this routine is to turn
@@ -1354,7 +1354,7 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 
 	*outbuf_p = outbuf;
 	*outbuflen_p = j;
-}				/* utf2iso */
+}
 
 /*********************************************************************
 Convert the current line in buffer, which is either iso8859-1 or utf8,
@@ -1454,7 +1454,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 
 	*outbuf_p = (char *)outbuf;
 	*outbuflen_p = j;
-}				/* utfHigh */
+}
 
 /* convert a 32 bit unicode character into utf8 */
 char *uni2utf8(unsigned int unichar)
@@ -1493,7 +1493,7 @@ char *uni2utf8(unsigned int unichar)
 
 	outbuf[n] = 0;
 	return (char *)outbuf;
-}				/* uni2utf8 */
+}
 
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	    int bom)
@@ -2089,3 +2089,183 @@ char *closeColor(const char *s)
 fail:
 	return 0;
 }
+
+/*********************************************************************
+Read in emojis from a library.
+These are hierarchical - a group, then the emojis in that group.
+heart.green  heart.blue  etc.  Like Carl Linnaeus.
+No more than 100 emojis per group.
+This seems arbitrary - but if you just wanna review the emojis in a group,
+cause you don't remember them, you don't want a menu with hundreds of choices.
+Maybe 100 could be larger, but for practical considerations,
+there should be a limit.
+*********************************************************************/
+
+#define EJGROUPSIZE 100
+
+static struct EJGROUP {
+	struct EJGROUP *next;
+	int n;
+	const char *name;
+	const char *desc[EJGROUPSIZE];
+	long code[EJGROUPSIZE];
+} *ejgroup0;
+// the emojis file pulled into memory
+static char *ejbase;
+
+void clearEmojis(void)
+{
+	struct EJGROUP *g, *g1;
+	nzFree(ejbase);
+	ejbase = 0;
+	g = ejgroup0;
+	while(g) {
+		g1 = g->next;
+		free(g);
+		g = g1;
+	}
+ejgroup0 = 0;
+}
+
+void loadEmojis(void)
+{
+	int i, j, len, lineno;
+	char c;
+	uchar state;
+	struct EJGROUP *g = 0;
+	char *s, *t, *u;
+
+	if(!emojiFile) // should never happen
+		return;
+	if(ejgroup0) // should never happen
+		clearEmojis();
+	if(!fileIntoMemory(emojiFile, &ejbase, &len)) {
+		showError();
+		setError(-1);
+		return;
+	}
+
+// look for bad characters, and compress whitespace
+	state = 2, lineno = 1;
+	for(i = j = 0; i < len; ++i) {
+		c = ejbase[i];
+		if(state == 3 && c != '\n') continue;
+		if(c == '\t' || c == '\r' || c == '\f')
+			c = ' ';
+		if(c == ' ') {
+			if(!state) ejbase[j++] = c, state = 1;
+			continue;
+		}
+		if(c == '\n') {
+			if(state == 1) --j;
+			ejbase[j++] = c;
+			state = 2, ++lineno;
+			continue;
+		}
+		if(c == '#' && state == 2) {
+			state = 3; continue;
+		}
+// all the whitespace has been dealt with
+		if((signed char)c <= ' ') {
+			i_printf(MSG_EmojiNonascii, lineno);
+			goto fail;
+		}
+		if(!isalnum(c) && c != '{' && c != '}') {
+			i_printf(MSG_EmojiBadChar, c, lineno);
+			goto fail;
+		}
+		ejbase[j++] = c;
+		state = 0;
+	}
+	ejbase[j] = 0; // null terminate
+
+	s = ejbase, lineno = 0;
+	while(++lineno, *s) {
+		bool limitprint;
+		long uc;
+		t = strchr(s, '\n');
+		if(t) *t++ = 0; else t = s + strlen(s);
+		if(!*s) { // empty line
+			s = t; continue;
+		}
+		if(!g) {
+// need to start a new group
+			for(u = s; isalnum(*u); ++u)  ;
+			if(u == s || !stringEqual(u, " {")) {
+				i_printf(MSG_EmojiSyntax, lineno);
+				s = t; continue;
+			}
+			g = allocMem(sizeof(struct EJGROUP));
+			g->name = s, *u = 0;
+			g->n = 0;
+			g->next = 0;
+			if(!ejgroup0) {
+				ejgroup0 = g;
+			} else {
+				struct EJGROUP *g1 = ejgroup0;
+				while(g1->next) g1 = g1->next;
+				g1->next = g;
+			}
+			limitprint = false;
+			s = t; continue;
+		}
+// now in a group
+		if(stringEqual(s, "}")) {
+			g = 0, s = t; continue;
+		}
+		uc = strtol(s, &u, 16);
+		if(uc <= 0) {
+			i_printf(MSG_EmojiUnicode, lineno);
+			s = t; continue;
+		}
+		if(!*u) { // no description
+			s = t; continue;
+		}
+		if(*u != ' ' || strchr(u, '{') || strchr(u, '}')) {
+			i_printf(MSG_EmojiSyntax, lineno);
+			s = t; continue;
+		}
+		if(g->n == EJGROUPSIZE) {
+			if(!limitprint)
+				i_printf(MSG_EmojiOverGroup, g->name, EJGROUPSIZE);
+			limitprint = true;
+		} else {
+			g->desc[g->n] = u+1;
+			g->code[g->n] = uc;
+			++g->n;
+		}
+		s = t;
+	}
+
+	return;
+
+fail:
+	free(ejbase);
+	ejbase = 0;
+}
+
+static const struct EJGROUP *eGroupSearch(const char *s, int len)
+{
+	const struct EJGROUP *g, *g1 = 0;
+	for(g = ejgroup0; g; g = g->next) {
+		if(memcmp(g->name, s, len))
+			continue;
+		if(!g->name[len]) // exact match
+			return g;
+		if(g1) // ambiguous
+			goto fail;
+		g1 = g;
+	}
+	if(g1)
+		return g1;
+fail:
+	i_printf(MSG_NoMatch);
+	printf(": ");
+	while(len--)
+		printf("%c", *s++);
+	nl();
+	for(g = ejgroup0; g; g = g->next)
+		  printf("%s%c", g->name, (g->next ? ' ' : '\n'));
+	return 0;
+}
+

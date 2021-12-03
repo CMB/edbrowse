@@ -771,4 +771,9 @@ enum {
 	MSG_TextRec,
 	MSG_AtSyntax,
 	MSG_EBRC_EmojiNotFile,
+	MSG_EmojiNonascii,
+	MSG_EmojiBadChar,
+	MSG_EmojiOverGroup,
+	MSG_EmojiUnicode,
+	MSG_EmojiSyntax,
 };

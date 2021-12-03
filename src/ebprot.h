@@ -90,6 +90,8 @@ void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 uchar fromHex(char d, char e);
 char *closeColor(const char *s);
+void clearEmojis(void);
+void loadEmojis(void);
 
 /* sourcefile=html.c */
 void dwStart(void);

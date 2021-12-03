@@ -13,7 +13,7 @@
 
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.8.1";
+const char *version = "3.8.1+";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
@@ -1147,7 +1147,7 @@ void unreadConfigFile(void)
 	memset(userAgents + 1, 0, sizeof(userAgents) - sizeof(userAgents[0]));
 
 	addressFile = NULL;
-	emojiFile = NULL;
+	emojiFile = NULL; clearEmojis();
 	cookieFile = NULL;
 	sslCerts = NULL;
 	downDir = NULL;
@@ -1720,12 +1720,9 @@ putc:
 
 		case 40:	// adbook
 			ftype = fileTypeByName(v, false);
-// Note: without the braces, just if else, this won't compile on my pi.    ???
-			if (!ftype || ftype != 'f') {
+			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_AbNotFile, v);
-			} else {
-				addressFile = v;
-			}
+			addressFile = v;
 			continue;
 
 		case 41:	// envelope
@@ -1734,11 +1731,10 @@ putc:
 
 		case 42:	// emojis
 			ftype = fileTypeByName(v, false);
-			if (!ftype || ftype != 'f') {
+			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_EmojiNotFile, v);
-			} else {
-				emojiFile = v;
-			}
+			emojiFile = v;
+			loadEmojis();
 			continue;
 
 		default:

@@ -691,7 +691,7 @@ addchar:
 			goto addchar;
 		c = fromHex(d, e);
 		if (c == '\n')
-			c = 0;
+			c = 7;
 		i += 2;
 		goto addchar;
 	}			/* loop over input chars */

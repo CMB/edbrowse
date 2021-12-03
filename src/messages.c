@@ -267,7 +267,7 @@ void showError(void)
 		eb_puts(errorMsg);
 	else
 		i_puts(MSG_NoErrors);
-}				/* showError */
+}
 
 void showErrorConditional(char cmd)
 {
@@ -275,13 +275,13 @@ void showErrorConditional(char cmd)
 		showError();
 	else
 		eb_puts("?");
-}				/* showErrorConditional */
+}
 
 void showErrorAbort(void)
 {
 	showError();
 	ebClose(99);
-}				/* showErrorAbort */
+}
 
 /* error exit check function */
 void eeCheck(void)

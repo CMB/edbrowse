@@ -671,11 +671,11 @@ limit
 session %d cannot receive text
 invalid @ syntax
 .ebrc: emoji library %s is not a regular file
-0
-0
-0
-0
-0
+emoji file contains nonascii characters at line %d\n
+emoji file contains invalid character %c at line %d\n
+too many emojis in group %s, limit %d\n
+emoji file contains an invalid unicode at line %d\n
+emoji file, syntax error at line %d\n
 0
 0
 0
