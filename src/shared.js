@@ -967,6 +967,32 @@ Since we are appending many nodes, I'm not sure what to return.
 function appendFragment(p,  frag) { var c; while(c = frag.firstChild) p.appendChild(c); return frag; }
 function insertFragment(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return frag; }
 
+// if t is linkd into the tree, return the containing window
+function isRooted(t) {
+while(t) {
+if(t.nodeName == "HTML") return t.eb$win;
+t = t.parentNode;
+}
+return undefined;
+}
+
+function liveFrameAdd(c) {
+var w, f;
+if(c.dom$class == "Frame" && (w = isRooted(c)) && (f = w.frames)) {
+f.push(c);
+// hash access through the name
+if(c.name) f[c.name] = c;
+}
+}
+
+function liveFrameDel(c) {
+var w, f, i;
+if(c.dom$class == "Frame" && (w = isRooted(c)) && (f = w.frames) && ((i = f.indexOf(c)) >= 0)) {
+f.splice(i, 1);
+if(c.name) delete f[c.name];
+}
+}
+
 /*********************************************************************
 Here comes a bunch of stuff regarding the childNodes array,
 holding the children under a given html node.
@@ -983,6 +1009,8 @@ and passses the remove side effect back to edbrowse.
 The same reasoning holds for insertBefore.
 These functions also check for a hierarchy error using isabove(),
 which throws an exception.
+If the node being appended is linked into the tree, and is a frame,
+I append it to the frames array, so that frames is a live array.
 *********************************************************************/
 
 function appendChild(c) {
@@ -991,7 +1019,7 @@ if(c.nodeType == 11) return appendFragment(this, c);
 isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$apch2(c);
-if(r) mutFixup(this, false, c, null);
+if(r) liveFrameAdd(r), mutFixup(this, false, c, null);
 return r;
 }
 
@@ -1010,12 +1038,13 @@ isabove(c, this);
 if(c.nodeType == 11) return insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$insbf(c, t);
-if(r) mutFixup(this, false, r, null);
+if(r) liveFrameAdd(r), mutFixup(this, false, r, null);
 return r;
 }
 
 function removeChild(c) {
 if(!c) return null;
+liveFrameDel(c);
 var r = this.eb$rmch2(c);
 return r;
 }
@@ -3728,6 +3757,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "mutFixup", "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
 "appendFragment", "insertFragment",
+"isRooted", "liveFrameAdd", "liveFrameDel",
 "appendChild", "prependChild", "insertBefore", "removeChild", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",

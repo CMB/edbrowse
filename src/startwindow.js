@@ -447,6 +447,7 @@ this.name$2 = n;
 z$HTML = function(){};
 z$HTML.prototype = new HTMLElement;
 z$HTML.prototype.dom$class = "HTML";
+Object.defineProperty(z$HTML.prototype, "eb$win", {get: function(){return this.parentNode ? this.parentNode.defaultView : undefined}});
 // Some screen attributes that are suppose to be there.
 z$HTML.prototype.doScroll = eb$voidfunction;
 z$HTML.prototype.clientHeight = 768;
