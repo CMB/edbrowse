@@ -92,6 +92,7 @@ uchar fromHex(char d, char e);
 char *closeColor(const char *s);
 void clearEmojis(void);
 void loadEmojis(void);
+char *selectEmoji(const char *p, int len);
 
 /* sourcefile=html.c */
 void dwStart(void);

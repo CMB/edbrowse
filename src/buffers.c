@@ -603,7 +603,7 @@ There - 50 lines of comments to explain 2 lines of code.
 		s = last_rl;
 	} else {
 		while (fgets(line, sizeof(line), stdin)) {
-/* A bug in my keyboard causes nulls to be entered from time to time. */
+// A bug in my keyboard causes nulls to be entered from time to time.
 			c = 0;
 			i = 0;
 			while ((unsigned)i < sizeof(line) - 1 && (c = line[i]) != '\n') {
@@ -644,32 +644,34 @@ interrupt:
 	intFlag = false;
 
 	i = j = 0;
-	if (last_rl) {
-		len = strlen(s);
-	} else {
-		len = sizeof(line) - 1;
-	}
+	len = strlen(s);
+// no matter what, the last char, at len-1, should be \n
 
 	if (debugFile)
 		fprintf(debugFile, "* ");
 	while (i < len && (c = s[i]) != '\n') {
 		if (debugFile)
 			fputc(c, debugFile);
+
 		if (c != '~') {
 addchar:
 			s[j++] = c;
 			++i;
 			continue;
 		}
+
+// various encodings indicated by ~
 		d = s[i + 1];
+// ~~ becomes a literal ~
 		if (d == '~') {
 			++i;
 			goto addchar;
 		}
+
 		e = 0;
 		if (d)
 			e = s[i + 2];
-		if (d == 'u' && isxdigit(e)) {
+		if (d == 'u' && isxdigit(e)) { // unicode
 			unsigned int unicode;
 			char *t;
 			int l;
@@ -687,14 +689,56 @@ addchar:
 			}
 			continue;
 		}
+
+		if (d == 'j' && isalnum(e)) { // emoji
+			char *response;
+			int k = i + 1, l;
+			while(isalnum(s[k])) ++k;
+			if(s[k] == '.' && isalnum(s[k+1])) {
+				k += 2;
+				while(isalnum(s[k])) ++k;
+			}
+			response = selectEmoji(s + i + 2, k - i - 2);
+			if(!response) {
+				i_puts(MSG_Stop);
+// @@ is our symbol for giving up on the emoji, you can fix it later
+				i = k, s[j++] = '@', s[j++] = '@';
+				continue;
+			}
+			debugPrint(3, "%s", response);
+			l = strlen(response);
+			if(j + l <= k) {
+				memcpy(s + j, response, l);
+				i = k, j += l;
+				nzFree(response);
+				continue;
+			}
+// This is the case that gives me a headache!
+// The emoji string doesn't fit in the line; we have to expand the line.
+			if(last_rl) {
+// already allocated, cool, just realloc
+				last_rl = s = reallocMem(s, len + 1 + l);
+			} else {
+				last_rl = s = allocMem(len + l + 1);
+				strcpy(s, line);
+			}
+			strmove(s + i + l, s + i);
+			memcpy(s + j, response, l);
+			i = k + l, j += l;
+			nzFree(response);
+			continue;
+		}
+
 		if (!isxdigit(d) || !isxdigit(e))
 			goto addchar;
+
 		c = fromHex(d, e);
 		if (c == '\n')
 			c = 7;
 		i += 2;
 		goto addchar;
-	}			/* loop over input chars */
+	}			// loop over input chars
+
 	s[j] = 0;
 	if (debugFile)
 		fputc('\n', debugFile);

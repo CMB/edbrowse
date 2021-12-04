@@ -2244,7 +2244,7 @@ fail:
 	ejbase = 0;
 }
 
-static const struct EJGROUP *eGroupSearch(const char *s, int len)
+static const struct EJGROUP *ejGroupSearch(const char *s, int len)
 {
 	const struct EJGROUP *g, *g1 = 0;
 	for(g = ejgroup0; g; g = g->next) {
@@ -2259,7 +2259,7 @@ static const struct EJGROUP *eGroupSearch(const char *s, int len)
 	if(g1)
 		return g1;
 fail:
-	i_printf(MSG_NoMatch);
+	i_printf(g1 ? MSG_Many : MSG_NoMatch);
 	printf(": ");
 	while(len--)
 		printf("%c", *s++);
@@ -2267,5 +2267,209 @@ fail:
 	for(g = ejgroup0; g; g = g->next)
 		  printf("%s%c", g->name, (g->next ? ' ' : '\n'));
 	return 0;
+}
+
+// Gather an input line to select an emoji. Rather like the routine
+// in buffers.c, but I can't call that, or I'm infinitely recursive.
+static char *ejline; // alocated
+static int ejcommas; // selecting multiple emojis
+static void ejGetLine(void)
+{
+	char c, line[MAXTTYLINE];
+	int i, j, len, state;
+
+	ejline = 0;
+top:
+	intFlag = false;
+
+	inInput = true;
+	while (fgets(line, sizeof(line), stdin)) {
+// A bug in my keyboard causes nulls to be entered from time to time.
+		c = 0;
+		i = 0;
+		while ((unsigned)i < sizeof(line) - 1 && (c = line[i]) != '\n') {
+			if (c == 0)
+				line[i] = ' ';
+			++i;
+		}
+		if (ejline) {
+			len = strlen(ejline);
+// with nulls transliterated, strlen() returns the right answer
+			i = strlen(line);
+			ejline = reallocMem(ejline, len + i + 1);
+			strcpy(ejline + len, line);
+		} else
+			ejline = cloneString(line);
+		if (c == '\n')
+			goto tty_complete;
+	}
+	if (intFlag)
+		goto top;
+	i_puts(MSG_EndFile);
+		ebClose(1);
+
+tty_complete:
+	inInput = false;
+	state = 2, ejcommas = 0;
+	for(i = j = 0; (c = ejline[i]); ++i) {
+		if(isspace(c)) c = ' ';
+		if(c == ' ') {
+			if(!state) ejline[j++] = c, state = 1;
+			continue;
+		}
+		if(c == ',') {
+			if(state == 1) --j;
+			ejline[j++] = c;
+			state = 2, ++ejcommas;
+			continue;
+		}
+// all the whitespace has been dealt with
+		if((signed char)c <= ' ')
+			continue;
+		ejline[j++] = c;
+		state = 0;
+	}
+	if(state == 1) --j;
+ejline[j] = 0; // null terminate
+
+// take out empty fields
+	state = 2;
+	for(i = j = 0; (c = ejline[i]); ++i) {
+		if(c == ',') {
+			if(state == 2) { --ejcommas; continue; }
+			state = 2;
+		} else state = 1;
+		ejline[j++] = c;
+	}
+	if(j && line[j - 1] == ',') --j, --ejcommas;
+	ejline[j] = 0;
+}
+
+static bool ejmatches[EJGROUPSIZE];
+static int ejcount;
+
+/*********************************************************************
+Does the string you typed match one and only one emoji in the group?
+If it is from input, then you can't include spaces, so I skate
+past spaces in the matching algorithm.
+If you are selecting from a menu, then you can and should include spaces.
+Note the frommenu parameter below.
+I use to search for any substring in the string, as we do with an
+html dropdown menu, but in this case I think we want the initial substring.
+anim.b gives bear, bat, boar, etc.
+So I match what you typed against the beginning of the emoji text.
+*********************************************************************/
+
+static int ejSelect(const struct EJGROUP *g, const char *s, int len, bool frommenu)
+{
+	int partial = -1;
+	int n, i, j;
+	const char *t;
+
+// select an option by number
+	if(frommenu &&
+	(n = strtol(s, (char**)&t, 10)) >= 0 &&
+	t - s == len) {
+		if(!n || n > g->n || !ejmatches[n - 1]) {
+			i_printf(MSG_XOutOfRange, n), nl();
+			return -2;
+		}
+		return n - 1;
+	}
+
+	if(!frommenu)
+		memset(ejmatches, false, EJGROUPSIZE);
+	ejcount = 0;
+
+// search by string or substring
+	for(n = 0; n < g->n; ++n) {
+		if(frommenu && !ejmatches[n])
+			continue;
+		t = g->desc[n]; // shorthand
+		if(*t != *s)
+			continue;
+		for(i = j = 0; i < len; ++i, ++j) {
+// from the inputline we don't have spaces
+			if(t[j] == ' ' && !frommenu) {
+			--i;
+				continue;
+			}
+			if(s[i] != t[j])
+				break;
+		}
+		if(i < len) // no match
+			continue;
+		if(t == g->desc[n] && !t[j]) // exact match
+			return n;
+		if(!ejcount++) partial = n;
+		ejmatches[n] = true;
+	}
+
+	return (ejcount == 1 ? partial : -1);
+}
+
+char *selectEmoji(const char *p, int len)
+{
+	int dot; // index where dot is found
+	const struct EJGROUP *g;
+	int n;
+	char *s, *t, *ejresponse;
+
+	for(dot = 0; dot < len; ++dot)
+		if(p[dot] == '.') break;
+	if(dot == len)
+		dot = 0;
+	if(dot == len - 1)
+		dot = 0, --len;
+
+	g = ejGroupSearch(p, (dot ? dot : len));
+	if(!g || g->n == 0) // no group selected or no options
+		return 0;
+
+	if(dot) { // foo.bar
+		n = ejSelect(g, p + dot + 1, len - dot - 1, false);
+		if(n >= 0) {
+			ejresponse = allocMem(7);
+			strcpy(ejresponse, uni2utf8(g->code[n]));
+			return ejresponse;
+		}
+	}
+
+// present the menu.
+// If there were no matches on the string you provided, then present all options.
+	if(!dot || ejcount == 0)
+		memset(ejmatches, true, EJGROUPSIZE);
+	for(n = 0; n < g->n; ++n) {
+		if(ejmatches[n])
+			printf("%d: %s\n", n + 1, g->desc[n]);
+	}
+
+top:
+	ejGetLine();
+	if(!ejline[0] || stringEqual(ejline, "qt")) { // abort
+		free(ejline);
+		return 0;
+	}
+// picking one or more emojis
+	ejresponse = allocMem(6 * ejcommas + 6 + 1);
+	ejresponse[0] = 0;
+	s = ejline;
+	while(*s) {
+		t = strchr(s, ',');
+		if(t) *t++ = 0; else t = s + strlen(s);
+		n = ejSelect(g, s, strlen(s), true);
+		if(n < 0) {
+			if(n == -1)
+				i_printf(MSG_OptMatchNone + (ejcount > 0), s), nl();
+			free(ejline);
+			free(ejresponse);
+			goto top;
+		}
+		strcat(ejresponse, uni2utf8(g->code[n]));
+		s = t;
+	}
+// all good
+	free(ejline);
+	return ejresponse;
 }
 
