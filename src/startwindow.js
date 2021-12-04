@@ -130,11 +130,19 @@ s = s.replace(/^.*\n/, "");
 return s;
 }
 
+if(top == window) {
 step$l = 0;
 step$go = "";
 // First line of js in the base file of your snapshot might be
 // step$l = 0, step$go = "c275";
 // to start tracing at c275
+} else {
+// step$l should control the entire session, all frames.
+// This is a trick to have a global variable across all frames.
+Object.defineProperty(window, "step$l", {get:function(){return top.step$l}, set:function(x){top.step$l=x}});
+Object.defineProperty(window, "step$go", {get:function(){return top.step$go}, set:function(x){top.step$go=x}});
+// I don't use this trick on step$exp, because an expression should really live within its frame
+}
 
 document.open = function() { return this }
 
