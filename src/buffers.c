@@ -724,7 +724,7 @@ addchar:
 			}
 			strmove(s + i + l, s + i);
 			memcpy(s + j, response, l);
-			i = k + l, j += l;
+			i = k + l, j += l, len += l;
 			nzFree(response);
 			continue;
 		}

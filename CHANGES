@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.8.2
+Support for emojis.
+
 3.8.1
 Make several changes so that edbrowse is more like ed,
 allowing more commands under g/re/,

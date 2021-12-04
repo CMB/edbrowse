@@ -61,6 +61,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#cx> Context Switch </A>
 <LI><A HREF=#usage> Usage </A>
 <LI><A HREF=#bin> Binary Characters </A>
+<LI><A HREF=#emoji> Emojis </A>
 <LI><A HREF=#bfile> Binary Files </A>
 <LI><A HREF=#dir> Directory Scan, File Manager </A>
 <LI><A HREF=#case> Upper/Lower Case </A>
@@ -1442,6 +1443,8 @@ for international text,
 there are easier ways to enter accented letters into your document,
 assuming those letters are in your native language and your keyboard has been configured appropriately.
 In other words, there are typically keyboard shortcuts for your accented letters, so no need to mess with utf8.
+
+<P>
 Use ~u to enter a high unicode outside of your native language and beyond your keyboard shortcuts.
 The unicode is in hex.
 Thus ~u3b3; is the Greek letter gamma.
@@ -1483,6 +1486,100 @@ You might see this when importing a dos or Windows text file.
 Every line ends in ~0d.
 Issue one of the three commands shown above to undos the file.
 However, edbrowse usually converts these dos files automatically for you, unless you have disabled this feature with the iu command.
+
+<H3> <A NAME=emoji> Emojis </A> </H3>
+
+<P>
+An emoji is a small image that is rrepresented by a high unicode.
+For example, unicode 1f34f displays a picture of a green apple. 🍏
+For the purposes of this document, I will refer to any high unicode as an emoji.
+Thus an emoji could be a letter in the Cyrrilic alphabet,
+a traditional chinese symbol,
+a math operator, or a picture of a green apple.
+They are all the same to edbrowse.
+
+<P>
+When describing a forest, or a basket of fruit, you can enter the green apple emoji as ~u1f34f.
+That works fine, if you happen to know the unicode for the apple emoji.
+If not, you have to find and consult a library of emojis, look up the green apple, remember the unicode, and type it in, digit for digit.
+fortunately, edbrowse includes a more streamlined approach.
+
+<P>
+It starts with a library of emojis, in a simple text-based format.
+A file of common emojis is available from the edbrowse wiki, under Emojis.txt.
+Start with this file if you wish, then edit it to make it your own.
+This file is then referenced from the edbrowse config file .ebrc,
+like your address book, cookie jar, and ssl certificates.
+
+<P>
+emojis = /home/mylogin/.ebsys/Emojis.txt
+
+<P>
+For illustration, here is part of that file.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>#  fruit, and fruit-like plants, like melons
+fruit {
+    1f347 grapes
+    1f34c banana
+    1f34e red apple
+    1f34f green apple
+    1f351 peach
+}
+</font></PRE>
+
+<P>
+At any point during edbrowse input, ~jfruite.greenapple is translated into the green apple emoji.
+There is no space between green and apple, because a space would terminate the description of the emoji.
+Omit any spaces as you enter the emoji description.
+
+<P>
+Why do we use ~j to indicate an emoji, rather than ~e?
+Because e is a hex digit, and we already have code to watch for ~ followed by hex digits.
+So we had to do something else, and j seems like a reasonable letter to indicate an emoji.
+
+<P>
+As is typical of edbrowse, unambiguous shorthand is allowed.
+In this example, ~jfr.gre will work just as well.
+There is only one group of emojis that starts with fr, that is, fruit,
+and one emoji in that group that starts with gre, that is, green apple.
+If the group string does not produce a unique match, edbrowse prints out all the emoji groups in your library, and then prints the word stop.
+The emoji string is replaced with @@, and input continues.
+If you are entering text, you will have to go back later and replace @@ with the emoji you want, or something else.
+You may have typed a very long line, hundreds of characters, or inserted a long line by cut&amp;paste, and I don't want to throw it all away just because the emoji didn't match.
+
+<P>
+The approach is different if a group is selected, but the emoji string doesn't produce a unique match.
+Edbrowse presents a menu of emojis that start with the string you entered, or all the emojis in the group if there is no match.
+Thus ~jfruit.xx, or ~jfruit by itself, produces a menu of emojis in the fruit group.
+
+<PRE><font size=3 face=Arial,Helvetica,sans-serif>
+1: grapes
+2: banana
+3: red apple
+4: green apple
+5: peach
+</font></PRE>
+
+<P>
+Select an entry by number, or by a unique substring.
+Thus 4, or green, will select the green apple.
+gr will not work, since both grapes and green apple start with gr.
+In this context, spaces can and should be entered.
+greenapple will not match anything, but green app will work.
+Select by number to avoid any confusion.
+Enter an empty line to make no selection.
+This again produces the word stop, and the emoji string is reduced to @@.
+
+<P>
+You can select many emojis from the menu.
+If you are writing an article about fruit, type ~jfruit, and select, from the menu, 5,3,4 -
+and your text will contain pictures of a peach, a red apple, and a green apple, in that order. 🍑🍎🍏
+
+<P>
+This comes up more often in a supportive email or post, where you might want to present several hearts.
+Type ~jheart, and select the blue heart, green heart, orange heart, purple heart … as many as you like,
+and perhaps items from the party group.
+Happy birthday 💛🧡💙💚 🎂
 
 <H3> <A NAME=bfile> Binary Files </A> </H3>
 
@@ -3768,6 +3865,13 @@ You can send Fred's name, as the intended recipient, buy using a greater than si
 
 <P>
 fred : fred.flintstone@bedrock.us&gt;Fred W. Flintstone : 226 cobblestone way : 5553827
+
+<P>
+emojis = /home/mylogin/.ebsys/Emojis.txt
+<P>
+Specify a library of emojis for edbrowse.
+This was described in the Emojis section.
+
 <H3> <A NAME=agent> User Agent </A> </H3>
 
 Every time you fetch a web page from the Internet,
