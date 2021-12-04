@@ -155,7 +155,13 @@ scrollbars = true;
 toolbar = true;
 resizable = true;
 directories = false;
+if(window == top) {
 name = "unspecifiedFrame";
+} else {
+Object.defineProperty(window, "name", {get:function(){return frameElement.name}});
+// there is no setter here, should there be? Can we set name to something?
+// Should it propagate back up to the frame element name?
+}
 
 document.bgcolor = "white";
 document.contentType = "text/html";

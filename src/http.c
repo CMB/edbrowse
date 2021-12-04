@@ -2951,7 +2951,9 @@ int frameExpandLine(int ln, Tag *t)
 		t->href = a;
 	}
 	s = t->href;
-	// we check for about:blank in the hahtml, but frames can be
+	if(s && !*s)
+		s = 0;
+	// we check for about:blank in the html, but frames can be
 // created by js.
 	if(stringEqual(s, "about:blank")) {
 		nzFree(t->href);
