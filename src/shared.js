@@ -887,7 +887,16 @@ Support functions mrKids and mrList are below.
 
 function mutFixup(b, isattr, y, z) {
 var w = my$win();
+var w2; // might not be the same window as w
 var list = w.mutList;
+// frames is a live array of windows.
+// Test: a change to the tree, and the base node is rooted,
+// and the thing added or removed is a frame or an array or it has children.
+if(!isattr && (w2 = isRooted(b))) {
+var j = typeof y == "object" ? y : z;
+if(Array.isArray(j) || j.dom$class == "Frame" || (j.childNodes&&j.childNodes.length))
+frames$rebuild(w2);
+}
 // most of the time there are no observers, so loop over that first
 // whence this function does nothing and doesn't slow things down too much.
 for(var j = 0; j < list.length; ++j) {
@@ -976,21 +985,26 @@ t = t.parentNode;
 return undefined;
 }
 
-function liveFrameAdd(c) {
-var w, f;
-if(c.dom$class == "Frame" && (w = isRooted(c)) && (f = w.frames)) {
-f.push(c);
-// hash access through the name
-if(c.name) f[c.name] = c;
+function frames$rebuild(w) {
+var i, f, l, f2, l2;
+// unlink the name references
+for(i=0; i<(l=w.frames$2.length); ++i) {
+f = w.frames$2[i];
+if(f.name) delete w.frames[f.name];
 }
+f2 = w.document.getElementsByTagName("iframe");
+l2 = f2.length;
+alert3("rebuild frames in context " + w.eb$ctx + " lengths " + l + " and " + l2);
+if(l2 < l) for(i=l2; i<l; ++i) delete w.frames[i];
+if(l2 > l) for(i=l; i<l2; ++i)
+w.eval('Object.defineProperty(frames,"'+i+'",{get:function(){return frames$2['+i+'].contentWindow},configurable:true})')
+// and relink the names
+for(i=0; i<l2; ++i) {
+f = f2[i];
+if(f.name)
+w.eval('Object.defineProperty(frames,"'+f.name+'",{get:function(){return frames$2['+i+'].contentWindow},configurable:true})')
 }
-
-function liveFrameDel(c) {
-var w, f, i;
-if(c.dom$class == "Frame" && (w = isRooted(c)) && (f = w.frames) && ((i = f.indexOf(c)) >= 0)) {
-f.splice(i, 1);
-if(c.name) delete f[c.name];
-}
+w.frames$2 = f2;
 }
 
 /*********************************************************************
@@ -1009,8 +1023,6 @@ and passses the remove side effect back to edbrowse.
 The same reasoning holds for insertBefore.
 These functions also check for a hierarchy error using isabove(),
 which throws an exception.
-If the node being appended is linked into the tree, and is a frame,
-I append it to the frames array, so that frames is a live array.
 *********************************************************************/
 
 function appendChild(c) {
@@ -1019,7 +1031,7 @@ if(c.nodeType == 11) return appendFragment(this, c);
 isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$apch2(c);
-if(r) liveFrameAdd(r), mutFixup(this, false, c, null);
+if(r) mutFixup(this, false, c, null);
 return r;
 }
 
@@ -1038,13 +1050,12 @@ isabove(c, this);
 if(c.nodeType == 11) return insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$insbf(c, t);
-if(r) liveFrameAdd(r), mutFixup(this, false, r, null);
+if(r) mutFixup(this, false, r, null);
 return r;
 }
 
 function removeChild(c) {
 if(!c) return null;
-liveFrameDel(c);
 var r = this.eb$rmch2(c);
 return r;
 }
@@ -3757,7 +3768,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "mutFixup", "mrList","mrKids", "rowReindex", "insertRow", "deleteRow",
 "insertCell", "deleteCell",
 "appendFragment", "insertFragment",
-"isRooted", "liveFrameAdd", "liveFrameDel",
+"isRooted", "frames$rebuild",
 "appendChild", "prependChild", "insertBefore", "removeChild", "replaceChild", "hasChildNodes",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",

@@ -72,7 +72,7 @@ submitting form
  multiple
  recommended
 ]
-no options contain the string %s\n
+no options contain %s\n
 sending mail to %s\n
 Your information has been sent; watch for a reply via return mail.
 junk
@@ -237,8 +237,8 @@ cannot run an insert command from an edbrowse function
 several lines from %d to %d have been updated\n
 command %c not yet implemented
 %d is out of range
-no options contain the string %s
-multiple options contain the string %s
+no options contain %s
+multiple options contain %s
 this is a button; use i* to push the button
 this is a submit button; use i* to push the button
 this is a reset button; use i* to push the button
@@ -676,8 +676,8 @@ emoji file contains invalid character %c at line %d\n
 too many emojis in group %s, limit %d\n
 emoji file contains an invalid unicode at line %d\n
 emoji file, syntax error at line %d\n
-0
-0
+no options start with %s
+multiple options start with %s
 0
 0
 0

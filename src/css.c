@@ -3082,7 +3082,7 @@ the before after rules - straight up.
 
 /*********************************************************************
 This is the native function for getComputedStyle().
-If you call frames[i].contentWindow.getComputedStyle(), it is very important
+If you call frames[i].getComputedStyle(), it is important
 that we apply the css for that frame, not the frame we are currently in.
 For that reason, the first argument is "this", which I assume is a global
 window object. I march down the frames and find it, and that is the root for

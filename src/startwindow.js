@@ -278,7 +278,10 @@ document.images = [];
 // styleSheets is a placeholder for now; I don't know what to do with it.
 document.styleSheets = [];
 
-frames = [];
+frames$2 = [];
+frames = {};
+Object.defineProperty(frames, "length", {get:function(){return frames$2.length}});
+
 // to debug a.href = object or other weird things.
 hrefset$p = []; hrefset$a = [];
 // pending jobs, mostly to debug promise functions.
@@ -2406,7 +2409,7 @@ onhashchange = eb$truefunction;
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: mw$.cssTextGet,
 set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
-function eb$qs$start() { mw$.cssGather(true); }
+function eb$qs$start() { mw$.cssGather(true); mw$.frames$rebuild(window); }
 
 DOMParser = function() {
 return {

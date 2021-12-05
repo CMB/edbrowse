@@ -309,8 +309,8 @@ name=butterfly
 zonload="alert('expanding the frame dude')">
 you shouldn't see this stuff
 </iframe>
-<A onclick="alert('first node ' + frames[0].contentDocument.body.firstChild.nodeName)">first node</a>
-<a href='javascript:frames.butterfly.contentWindow.postMessage("sweet+potato+pie","http://www.edbrowse.org",[mcp.port2]);alert("message+sent")'>post2frame</a>
+<A onclick="alert('first node ' + frames[0].document.body.firstChild.nodeName)">first node</a>
+<a href='javascript:frames.butterfly.postMessage("sweet+potato+pie","http://www.edbrowse.org",[mcp.port2]);alert("message+sent")'>post2frame</a>
 <a href='javascript:mcp.port1.postMessage("hazel+and+almond+nut+spread");alert("message+sent")'>channel2frame</a>
 
 <form method=POST name=questionnaire

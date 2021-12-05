@@ -603,7 +603,7 @@ chamando fopen() em modo inválido %s
 decodePostData(0,0)
 buscar não circulando
 buscar circulando
-0
+nenhum cabeçalho de coluna
 não é possível replicar em modo diretório
 não é possível replicar em modo banco de dados
 não posso replicar para um arquivo vazio
@@ -670,14 +670,14 @@ campo obrigatório %s está vazio
 limit
 sessão %d não pode receber texto
 @ sintaxe na linha
-.ebrc: o catálogo de emojis %s não é um arquivo regular
-0
-0
-0
-0
-0
-0
-0
+.ebrc: biblioteca de emojis %s não é um arquivo regular
+arquivo de emojis contém caracteres não-ascii na linha %d\n
+arquivo de emoji contém o caractere inválido %c na linha %d\n
+emojis demais no grupo %s; limite é %d\n
+arquivo de emoji contém um símbolo unicode inválido na linha %d\n
+arquivo de emoji: erro de sintaxe na linha %d\n
+nenhuma opção começa com %s
+diversas opções começam com %s
 0
 0
 0

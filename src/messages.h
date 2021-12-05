@@ -776,4 +776,6 @@ enum {
 	MSG_EmojiOverGroup,
 	MSG_EmojiUnicode,
 	MSG_EmojiSyntax,
+	MSG_OptStartNone,
+	MSG_OptStartMany,
 };

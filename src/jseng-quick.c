@@ -2348,7 +2348,7 @@ static Frame *win2frame(JSValueConst this)
 {
 	Frame *f;
 	for (f = &(cw->f0); f; f = f->next) {
-		if (JS_VALUE_GET_OBJ(*((JSValue*)f->winobj)) == JS_VALUE_GET_OBJ(this))
+		if (f->jslink && JS_VALUE_GET_OBJ(*((JSValue*)f->winobj)) == JS_VALUE_GET_OBJ(this))
 			break;
 	}
 	return f;
@@ -2762,7 +2762,7 @@ static void startCookie(void)
 	}
 }
 
-// This doesn't work properly it you get or set frames[0].contentDocument.cookie
+// This doesn't work properly it you get or set frames[0].document.cookie
 // Fix this some day!
 static JSValue nat_getcook(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {

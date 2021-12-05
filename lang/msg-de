@@ -670,14 +670,14 @@ benötigtes Eingabefeld %s ist leer
 begrenze
 Sitzung %d kann Text nicht empfangen
 fehlerhafte @ syntax
-.ebrc: emoji Datei %s ist keine reguläre Datei
-0
-0
-0
-0
-0
-0
-0
+.ebrc: Emoji-Bibliothek %s ist keine reguläre Datei.
+Emoji-Datei enthält nicht-ASCII Zeichen in Zeile %d\n
+Emoji-Datei enthält ein ungültiges Zeichen %c in Zeile %d\n
+zu viele Emojis in Gruppe %s, begrenze auf %d\n
+Emoji-Datei enthält eine ungültige Unicode-Sequenz in Zeile %d\n
+Emoji-Datei, Syntaxfehler in Zeile %d\n
+Keine Option beginnt mit %s
+mehrere Optionen beginnen mit %s
 0
 0
 0

@@ -2460,7 +2460,7 @@ top:
 		n = ejSelect(g, s, strlen(s), true);
 		if(n < 0) {
 			if(n == -1)
-				i_printf(MSG_OptMatchNone + (ejcount > 0), s), nl();
+				i_printf(MSG_OptStartNone + (ejcount > 0), s), nl();
 			free(ejline);
 			free(ejresponse);
 			goto top;
