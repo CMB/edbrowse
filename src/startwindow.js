@@ -2137,6 +2137,17 @@ data = encodeURI(data);
 }
 */
 }
+// check the sanity of data
+if(data === null || data === undefined) data = "";
+var td = typeof data;
+if(td == "object" && td instanceof Uint8Array) {
+var s=""; for(var i=0; i<data.length; ++i) s += String.fromCharCode(data[i]);
+td = typeof (data = s);
+}
+// what do we do about Uint16Array and Uint32Array?
+if(td != "string") {
+alert3("payload data has improper type " + td);
+}
 this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data);
 if(this.$entire != "async") this.parseResponse();
 };
