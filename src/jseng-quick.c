@@ -2608,9 +2608,8 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	if (!cw->browseMode)
 		async = false;
 
-	if(JS_IsString(argv[1]) && JS_IsString(argv[3]) &&
-	incoming_payload && *incoming_payload &&
-		incoming_method && stringEqualCI(incoming_method, "post")) {
+	if(incoming_payload && *incoming_payload &&
+	incoming_method && stringEqualCI(incoming_method, "post")) {
 		if (asprintf(&a, "%s\1%s",
 			     incoming_url, incoming_payload) < 0)
 			i_printfExit(MSG_MemAllocError, 50);
