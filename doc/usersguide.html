@@ -1512,7 +1512,7 @@ This file is then referenced from the edbrowse config file .ebrc,
 like your address book, cookie jar, and ssl certificates.
 
 <P>
-emojis = /home/mylogin/.ebsys/Emojis.txt
+emoji = /home/mylogin/.ebsys/Emojis.txt
 
 <P>
 For illustration, here is part of that file.
@@ -1526,6 +1526,14 @@ fruit {
     1f351 peach
 }
 </font></PRE>
+
+<P>
+The group definition must be a single word of ascii letters and numbers, followed by a left brace.
+At present, the group name cannot contain accented letters.
+Each emoji is a unicode followed by a series of words, without punctuation.
+Accented letters are permitted here.
+Thus you can write an emoji file in your own language.
+The right brace closes the group.
 
 <P>
 At any point during edbrowse input, ~jfruit.greenapple is translated into the green apple emoji.

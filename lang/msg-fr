@@ -603,7 +603,7 @@ Mode d'appel %s de fopen() invalide
 decodePostData(0,0)
 recherche non circulaire
 recherche circulaire
-0
+pas d'en-têtes de colonnes
 impossible de répondre en mode répertoire
 impossible de répondre en mode base de données
 impossible de répondre à un fichier vide
@@ -670,14 +670,14 @@ le champ requis %s est vide
 limit
 la session %d ne peut recevoir du texte
 erreur de @ syntax
-.ebrc : le carnet d'emojis %s n'est pas un fichier régulier
-0
-0
-0
-0
-0
-0
-0
+.ebrc: la librairie emoji %s n'est pas un fichier normal
+le fichier d'emoji contient le caractère invalide 0x%x à la ligne %d\n
+le fichier d'emoji contient le caractère invalide %c à la ligne %d\n
+trop d'emojis dans le groupe %s, la limite est de %d\n
+le fichier d'emoji contient un unicode invalide à la ligne %d\n
+fichier d'emoji, erreur de syntaxe à la ligne %d\n
+aucune option ne commence par %s
+les options multiples commencent avec %s
 0
 0
 0

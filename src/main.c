@@ -1184,7 +1184,7 @@ static const char *const keywords[] = {
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
-	"adbook", "envelope", "emojis", 0
+	"adbook", "envelope", "emojis", "emoji", 0
 };
 
 /* Read the config file and populate the corresponding data structures. */
@@ -1729,7 +1729,7 @@ putc:
 			setEnvelopeFormat(v);
 			continue;
 
-		case 42:	// emojis
+		case 42: case 43:	// emojis
 			ftype = fileTypeByName(v, false);
 			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_EmojiNotFile, v);

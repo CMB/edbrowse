@@ -603,7 +603,7 @@ fehlplatzierter / in %s
 decodePostData(0,0)
 Suche nicht am Anfang fortsetzen
 Suche am Anfang fortsetzen
-0
+Kein Tabellenkopf
 Antworten im Verzeichnismodus unmöglich
 Antworten im Datenbankmodus unmöglich
 Antworten auf leere Datei unmöglich
@@ -671,7 +671,7 @@ begrenze
 Sitzung %d kann Text nicht empfangen
 fehlerhafte @ syntax
 .ebrc: Emoji-Bibliothek %s ist keine reguläre Datei.
-Emoji-Datei enthält nicht-ASCII Zeichen in Zeile %d\n
+Emoji-Datei enthält ein ungültiges Zeichen 0x%x in Zeile %d\n
 Emoji-Datei enthält ein ungültiges Zeichen %c in Zeile %d\n
 zu viele Emojis in Gruppe %s, begrenze auf %d\n
 Emoji-Datei enthält eine ungültige Unicode-Sequenz in Zeile %d\n

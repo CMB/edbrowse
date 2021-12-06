@@ -2166,11 +2166,19 @@ void loadEmojis(void)
 			state = 3; continue;
 		}
 // all the whitespace has been dealt with
+// I use to disallow nonascii, but other languages might
+// employ accented letters, as utf8.
+#if 0
 		if((signed char)c <= ' ') {
 			i_printf(MSG_EmojiNonascii, lineno);
 			goto fail;
 		}
-		if(!isalnum(c) && c != '{' && c != '}') {
+#endif
+		if((uchar) c < ' ') {
+			i_printf(MSG_EmojiBadControl, c, lineno);
+			goto fail;
+		}
+		if((signed char)c > ' ' && !isalnum(c) && c != '{' && c != '}') {
 			i_printf(MSG_EmojiBadChar, c, lineno);
 			goto fail;
 		}

@@ -671,7 +671,7 @@ limit
 sessão %d não pode receber texto
 @ sintaxe na linha
 .ebrc: biblioteca de emojis %s não é um arquivo regular
-arquivo de emojis contém caracteres não-ascii na linha %d\n
+arquivo de emoji contém o caractere inválido 0x%x na linha %d\n
 arquivo de emoji contém o caractere inválido %c na linha %d\n
 emojis demais no grupo %s; limite é %d\n
 arquivo de emoji contém um símbolo unicode inválido na linha %d\n
