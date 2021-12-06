@@ -891,10 +891,10 @@ var w2; // might not be the same window as w
 var list = w.mutList;
 // frames is a live array of windows.
 // Test: a change to the tree, and the base node is rooted,
-// and the thing added or removed is a frame or an array or it has children.
+// and the thing added or removed is a frame or an array or it has frames below.
 if(!isattr && (w2 = isRooted(b))) {
 var j = typeof y == "object" ? y : z;
-if(Array.isArray(j) || j.dom$class == "Frame" || (j.childNodes&&j.childNodes.length))
+if(Array.isArray(j) || j.dom$class == "Frame" || (j.childNodes&&j.getElementsByTagName("iframe").length))
 frames$rebuild(w2);
 }
 // most of the time there are no observers, so loop over that first
