@@ -68,7 +68,7 @@ Puffer %d aktualisiert
 keine Optionen
 Formularfeld zurückgesetzt
 Formularfeld(er) versandt
-.ebrc: Zeile %d, outtype sollte auf t oder h gesetzt sein
+%s: Zeile %d, outtype sollte auf t oder h gesetzt sein
  viele
  empfohlen
 ]
@@ -310,7 +310,7 @@ Aufbau...
 stop
 hole %d auf einmal\n
 keine Anhänge
-.ebrc: Schlüsselwort = Wert innerhalb einer Edbrowse-Funktion in Zeile %d
+%s: Schlüsselwort = Wert innerhalb einer Edbrowse-Funktion in Zeile %d
 keine Spalte
 ftp-Sitzung konnte nicht initialisiert werden
 Versenden
@@ -339,7 +339,7 @@ kann Signaturdatei nicht öffnen
 kann Binärdatei %s nicht versenden, vielleicht sollte dies ein Anhang sein?
 entweder keiner oder alle Anhänge müssen als \"alternative\" gekennzeichnet werden
 zu viele Empfänger, maximal %d
-Kein Adressbuch angegeben, überprüfen Sie ihre .ebrc-Konfigurationsdatei
+Kein Adressbuch angegeben, überprüfen Sie ihre Konfigurationsdatei
 Pseudonym %s nicht im Adressbuch gefunden
 keine Empfänger angegeben
 Sitzung %d ist leer, kann nicht angehängt werden
@@ -484,67 +484,67 @@ Hilfetexte aktiviert
 FTP download:
 abgebrochen
 SCP download:
-.ebrc: Null-Zeichen in Zeile %d
-.ebrc: fehlender Funktionsname auf Zeile %d
-.ebrc: Funktionsname in Zeile %d beginnt mit einer Ziffer
-.ebrc: Funktionsname in Zeile %d zu lang, maximal 10 Zeichen
-.ebrc: fehlerhafte Syntax bei Funktionsdefinition in Zeile %d
-.ebrc: Zeile %d, \"condition > file\" erwartet
-.ebrc: Filterregel hat keinen Match-String, Zeile %d
-.ebrc: Zeile %d, match für %s wird nirgends definiert
-.ebrc: Zeile %d, Agent Nummer %d ist nicht definiert
-.ebrc: unbekanntes Schlüsselword %s in Zeile %d
-.ebrc: Zeile %d, Attribut %s kann nicht außerhalb eines Maildescriptors gesetzt werden
-.ebrc: Zeile %d, Attribut %s kann nicht außerhalb eines Plugin-Descriptors gesetzt werden
-.ebrc: Zeile %d, Attribut %s kann nicht außerhalb eines Tabellen-Descriptors gesetzt werden
-.ebrc: Zeile %d, Attribut %s kann nicht innerhalb eines Mail-Deskriptors oder eines Filter-Blocks gesetzt werden
-.ebrc: Zeile %d, Attribut %s kann nicht innerhalb eines Plugin-Deskriptors gesetzt werden
-.ebrc: Zeile %d, Attribut %s kann nicht innerhalb eines Tabellen-Deskriptors gesetzt werden
-.ebrc: Zeile %d, Attribut %s hat keinen Wert
-.ebrc: Zeile %d, zu viele Spalten, maximal %d
-.ebrc: Zeile %d, keycol sollte Zahl oder Zahl,zahl enthalten
-.ebrc: Zeile %d, keycol außerhalb des Bereichs, lediglich %d Spalten definiert
-.ebrc: Adressbuch %s ist keine reguläre Datei
+%s: Null-Zeichen in Zeile %d
+%s: fehlender Funktionsname auf Zeile %d
+%s: Funktionsname in Zeile %d beginnt mit einer Ziffer
+%s: Funktionsname in Zeile %d zu lang, maximal 10 Zeichen
+%s: fehlerhafte Syntax bei Funktionsdefinition in Zeile %d
+%s: Zeile %d, \"condition > file\" erwartet
+%s: Filterregel hat keinen Match-String, Zeile %d
+%s: Zeile %d, match für %s wird nirgends definiert
+%s: Zeile %d, Agent Nummer %d ist nicht definiert
+%s: unbekanntes Schlüsselword %s in Zeile %d
+%s: Zeile %d, Attribut %s kann nicht außerhalb eines Maildescriptors gesetzt werden
+%s: Zeile %d, Attribut %s kann nicht außerhalb eines Plugin-Descriptors gesetzt werden
+%s: Zeile %d, Attribut %s kann nicht außerhalb eines Tabellen-Descriptors gesetzt werden
+%s: Zeile %d, Attribut %s kann nicht innerhalb eines Mail-Deskriptors oder eines Filter-Blocks gesetzt werden
+%s: Zeile %d, Attribut %s kann nicht innerhalb eines Plugin-Deskriptors gesetzt werden
+%s: Zeile %d, Attribut %s kann nicht innerhalb eines Tabellen-Deskriptors gesetzt werden
+%s: Zeile %d, Attribut %s hat keinen Wert
+%s: Zeile %d, zu viele Spalten, maximal %d
+%s: Zeile %d, keycol sollte Zahl oder Zahl,zahl enthalten
+%s: Zeile %d, keycol außerhalb des Bereichs, lediglich %d Spalten definiert
+%s: Adressbuch %s ist keine reguläre Datei
 javascript Syntaxfehler
-.ebrc: %s ist kein Verzeichnis
-.ebrc: Zeile %d, zu viele User-Agents, maximal %d
-.ebrc: Cookie-Datei ist keine reguläre Datei
-.ebrc: kann Cookie-Datei %s nicht erstellen
+%s: %s ist kein Verzeichnis
+%s: Zeile %d, zu viele User-Agents, maximal %d
+%s: Cookie-Datei ist keine reguläre Datei
+%s: kann Cookie-Datei %s nicht erstellen
 ungültiges Format für eine Email-Adresse
-.ebrc: Zeile %d, Adresse %s enthält keinen Punkt
+%s: Zeile %d, Adresse %s enthält keinen Punkt
 kann auf %s nicht zugreifen, (gesichert)
-.ebrc: Datei %s für SSL-Zertifikate ist keine reguläre Datei
-.ebrc: SSL-Zertifikatsdatei %s existiert nicht oder kann nicht gelesen werden
-.ebrc: Zeile %d, Schlüsselwort %s nocht nicht implementiert
-.ebrc: setze mehrere Emailkonten als Standard
-.ebrc: Fehlender Eingangsserver in Zeile %d
-.ebrc: fehlender Ausgangsserver in Zeile %d
-.ebrc: fehlende Zugangsdaten in Zeile %d
-.ebrc: fehlendes Passwort in Zeile %d
-.ebrc: fehlendes 'from' in Zeile %d
-.ebrc: fehlendes 'reply' in Zeile %d
-.ebrc: fehlender Typ 'type' in Zeile %d
-.ebrc: fehlende 'description' in Zeile %d
-.ebrc: fehlendes 'suffix' oder 'protocol' in Zeile %d
-.ebrc: fehlendes Programm in Zeile %d
-.ebrc: fehlender Tabellenname in Zeile%d
-.ebrc: fehlendes Kürzel in Zeile %d
-.ebrc: fehlende Spalte in Zeile %d
-.ebrc: unerwartete } in Zeile %d
-.ebrc: else in Zeile %d besitzt keine if-Anweisung
-.ebrc: fehlerhafter Text in Zeile %d
-.ebrc: Zeile %d, kann hier keine Funktion, Mail-Plugin-Deskriptor oder Filterblock innerhalb von %s beginnen
-.ebrc: Anweisung in Zeile %d muss innerhalb einer Funktion auftreten
+%s: Datei %s für SSL-Zertifikate ist keine reguläre Datei
+%s: SSL-Zertifikatsdatei %s existiert nicht oder kann nicht gelesen werden
+%s: Zeile %d, Schlüsselwort %s nocht nicht implementiert
+%s: setze mehrere Emailkonten als Standard
+%s: Fehlender Eingangsserver in Zeile %d
+%s: fehlender Ausgangsserver in Zeile %d
+%s: fehlende Zugangsdaten in Zeile %d
+%s: fehlendes Passwort in Zeile %d
+%s: fehlendes 'from' in Zeile %d
+%s: fehlendes 'reply' in Zeile %d
+%s: fehlender Typ 'type' in Zeile %d
+%s: fehlende 'description' in Zeile %d
+%s: fehlendes 'suffix' oder 'protocol' in Zeile %d
+%s: fehlendes Programm in Zeile %d
+%s: fehlender Tabellenname in Zeile%d
+%s: fehlendes Kürzel in Zeile %d
+%s: fehlende Spalte in Zeile %d
+%s: unerwartete } in Zeile %d
+%s: else in Zeile %d besitzt keine if-Anweisung
+%s: fehlerhafter Text in Zeile %d
+%s: Zeile %d, kann hier keine Funktion, Mail-Plugin-Deskriptor oder Filterblock innerhalb von %s beginnen
+%s: Anweisung in Zeile %d muss innerhalb einer Funktion auftreten
 zu viele Emailkonten in .edbrc, maximal %d
-zu viele Plugin-Typen in .ebrc, maximal %d
-zu viele SQL-Tabellen in .ebrc, maximal %d
+zu viele Plugin-Typen in %s, maximal %d
+zu viele SQL-Tabellen in %s, maximal %d
 ungültiges Format für eine URL
-.ebrc: Zeile %d, Kontrollstrukturen zu tief verschachtelt
-.ebrc: Funktion %s nicht vor Dateiende abgeschlossen
-.ebrc: Email- oder Plugin-Block nicht vor dem Dateiende beendet
+%s: Zeile %d, Kontrollstrukturen zu tief verschachtelt
+%s: Funktion %s nicht vor Dateiende abgeschlossen
+%s: Email- oder Plugin-Block nicht vor dem Dateiende beendet
 persönlicher Ordner nicht mit $HOME definiert
 %s ist kein Verzeichnis
-keine Emailkonten angegeben, prüfen Sie .ebrc-Konfigurationsdatei
+keine Emailkonten angegeben, prüfen Sie Konfigurationsdatei
 ungültige Kontonummer, nutzen Sie 1-%d
 edbrowse -v (zeige Version)\nedbrowse -h (diese nachricht)\nedbrowse -c (editiere Konfigurationsdatei)\nedbrowse [-d#] -f[#] (rufe Emails ab) \nedbrowse [-d#] -[p]m (lies ungelesene Nachrichten)\nedbrowse [-d#] -[p]fm[#] (rufe Emails ab und lies ungelesene Nachrichten)\nedbrowse [-d#] -m[#] Adresse1 Adresse2 ... Datei [+Anhang]\nedbrowse [-c Konfiguration] [-e] [-b] [-d#] Datei1 Datei2 ...
 bitte mindestens einen Empfänger und den zu versenden Anhang angeben
@@ -563,7 +563,7 @@ fieldInBuffer konnte Tag %d nicht finden, newtext %s
 kann Cookie-Datei %s nicht erneut schreiben
 umgekehrt 
 Fetchmail-Client ist interaktiv und kann nicht im Hintergrund laufen
-Emailverzeichnis nicht in .ebrc-Datei angegeben
+Emailverzeichnis nicht in Konfigurationsdatei angegeben
 kann nicht in Verzeichnis %s wechseln
 Javascript blockiert
 Ungültiger Login oder Passwort
@@ -663,14 +663,14 @@ zeige erste %d von %d Nachrichten\n
 vorheriger
 kein vorheriger Email
 Das ist ein Textfeld, nutzen Sie \"ib\", um einen neuen Textpuffer anzulegen.
-.ebrc: Zeile %d, zu viele Standard-Anweisungen in Ihrem E-Mail-Deskriptor, maximal %d.
+%s: Zeile %d, zu viele Standard-Anweisungen in Ihrem E-Mail-Deskriptor, maximal %d.
 Option enthält %c
 Dateiname enthält %c
 benötigtes Eingabefeld %s ist leer
 begrenze
 Sitzung %d kann Text nicht empfangen
 fehlerhafte @ syntax
-.ebrc: Emoji-Bibliothek %s ist keine reguläre Datei.
+%s: Emoji-Bibliothek %s ist keine reguläre Datei.
 Emoji-Datei enthält ein ungültiges Zeichen 0x%x in Zeile %d\n
 Emoji-Datei enthält ein ungültiges Zeichen %c in Zeile %d\n
 zu viele Emojis in Gruppe %s, begrenze auf %d\n

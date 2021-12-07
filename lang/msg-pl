@@ -68,7 +68,7 @@ bufor %d został zaktualizowany\n
 brak opcji
 formularz został zresetowany
 wysyłanie formularza
-.ebrc: wiersz %d, 'outtype' powinno mieć wartość 't' lub 'h'
+%s: wiersz %d, 'outtype' powinno mieć wartość 't' lub 'h'
  wiele
  zalecane
 ]
@@ -310,7 +310,7 @@ w toku
 stop
 pobierz %d na raz\n
 brak załączników
-.ebrc: klucz = wartość wewnątrz funkcji edbrowse w wierszu %d
+%s: klucz = wartość wewnątrz funkcji edbrowse w wierszu %d
 brak tabeli
 ftp: inicjalizacja sesji zakończona niepowodzeniem
 Pchnij
@@ -339,7 +339,7 @@ nie można odczytać pliku '.signature'
 nie można wysłać pliku binarnego %s, być może powinien być załącznikiem?
 albo żaden albo wszystkie załączniki powinny być zadeklarowane jako \"alternative\"
 zbyt wielu odbiorców, limit %d
-Nie podano książki adresowej, sprawdź swój plik konfiguracyjny '.ebrc'
+Nie podano książki adresowej, sprawdź swój plik konfiguracyjny
 alias %s nie znaleziony w Twojej książce adresowej
 nie podano odbiorców
 sesja %d jest pusta, nie można załączyć
@@ -484,67 +484,67 @@ wiadomości pomocnicze włączone
 ściąganie ftp: 
 anulowane
 ściąganie scp: 
-.ebrc: znaki zerowe w wierszu %d
-.ebrc: brak nazwy funkcji w wierszu %d
-.ebrc: nazwa funkcji w wierszu %d zaczyna się od cyfry
-.ebrc: nazwa funkcji w wierszu %d jest zbyt długa, limit 10 znaków
-.ebrc: nieprawidłowa składnia definicji funkcji w wierszu %d
-.ebrc: wiersz %d, oczekiwano 'warunek > plik'
-.ebrc: wiersz %d, reguła filtracji nie posiada wzorca wyszukiwania
-.ebrc: wiersz %d, dopasowanie %s nie jest nigdzie ustawione
-.ebrc: wiersz %d, agent numer %d nie został zdefiniowany
-.ebrc: nierozpoznane słowo kluczowe %s w wierszu %d
-.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty
-.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem Plugin
-.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem tabeli
-.ebrc: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty lub blokiem filtra
-.ebrc: wiersz %d, atrybut %s nie może być ustawiony wewnątrz deskryptora Plugin
-.ebrc: wiersz %d, atrybut %s nie może być ustawiony wewnątrz deskryptora tabeli
-.ebrc: wiersz %d, atrybut %s nie jest ustawiony
-.ebrc: wiersz %d, zbyt wiele kolumn, limit %d
-.ebrc: wiersz %d, klucz powinien być postaci 'liczba' lub 'liczba,liczba'
-.ebrc: wiersz %d, klucz poza zasięgiem; podano tylko %d kolumn
-.ebrc: książka adresowa %s nie jest regularnym plikiem
+%s: znaki zerowe w wierszu %d
+%s: brak nazwy funkcji w wierszu %d
+%s: nazwa funkcji w wierszu %d zaczyna się od cyfry
+%s: nazwa funkcji w wierszu %d jest zbyt długa, limit 10 znaków
+%s: nieprawidłowa składnia definicji funkcji w wierszu %d
+%s: wiersz %d, oczekiwano 'warunek > plik'
+%s: wiersz %d, reguła filtracji nie posiada wzorca wyszukiwania
+%s: wiersz %d, dopasowanie %s nie jest nigdzie ustawione
+%s: wiersz %d, agent numer %d nie został zdefiniowany
+%s: nierozpoznane słowo kluczowe %s w wierszu %d
+%s: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty
+%s: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem Plugin
+%s: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem tabeli
+%s: wiersz %d, atrybut %s nie może być ustawiony poza deskryptorem poczty lub blokiem filtra
+%s: wiersz %d, atrybut %s nie może być ustawiony wewnątrz deskryptora Plugin
+%s: wiersz %d, atrybut %s nie może być ustawiony wewnątrz deskryptora tabeli
+%s: wiersz %d, atrybut %s nie jest ustawiony
+%s: wiersz %d, zbyt wiele kolumn, limit %d
+%s: wiersz %d, klucz powinien być postaci 'liczba' lub 'liczba,liczba'
+%s: wiersz %d, klucz poza zasięgiem; podano tylko %d kolumn
+%s: książka adresowa %s nie jest regularnym plikiem
 javascript błąd składniowy
-.ebrc: %s nie jest katalogiem
-.ebrc: wiersz %d, zbyt wiele agentów użytkownika, limit %d
-.ebrc: plik ciastek %s nie jest regularnym plikiem
-.ebrc: nie można utworzyć pliku ciastek %s
+%s: %s nie jest katalogiem
+%s: wiersz %d, zbyt wiele agentów użytkownika, limit %d
+%s: plik ciastek %s nie jest regularnym plikiem
+%s: nie można utworzyć pliku ciastek %s
 niepoprawny format adresu email
-.ebrc: wiersz %d, domena %s nie zawiera kropki
+%s: wiersz %d, domena %s nie zawiera kropki
 nie można odczytać %s, (bezpieczne)
-.ebrc: plik z certyfikatem SSL %s nie jest regularnym plikiem
-.ebrc: plik z certyfikatem SSL %s nie istnieje lub nie jest do odczytu
-.ebrc: wiersz %d, słowo kluczowe %s nie jest zaimplementowane
-.ebrc: wiele kont pocztowych ustawionych jako domyślne
-.ebrc: brak dyrektywy 'inserver' w wierszu %d
-.ebrc: brak dyrektywy 'outerver' w wierszu %d
-.ebrc: brak dyrektywy 'login' w wierszu %d
-.ebrc: brak dyrektywy 'password' w wierszu %d
-.ebrc: brak dyrektywy 'from' w wierszu %d
-.ebrc: brak dyrektywy 'reply' w wierszu %d
-.ebrc: brak dyrektywy 'type' w wierszu %d
-.ebrc: brak dyrektywy 'description' w wierszu %d
-.ebrc: brak przyrostka lub listy protokołów w wierszu %d
-.ebrc: brak dyrektywy 'program' w wierszu %d
-.ebrc: brak dyrektywy 'table name' w wierszu %d
-.ebrc: brak dyrektywy 'short name' w wierszu %d
-.ebrc: brak dyrektywy 'columns' w wierszu %d
-.ebrc: nieoczekiwany '}' w wierszu %d
-.ebrc: 'else' w wierszu %d nie jest częścią wyrażenia 'if'
-.ebrc: zniekształcony tekst w wierszu %d
-.ebrc: wiersz %d, nie można rozpocząć funkcji, deskryptora Plugin/poczty lub bloku filtrów wewnątrz %s
-.ebrc: wyrażenie w wierszu %d musi się znajdować wewnątrz funkcji
-zbyt wiele kont pocztowych w Twoim pliku .ebrc, limit %d
-zbyt wiele typów Plugin w Twoim pliku .ebrc, limit %d
-zbyt wiele tabel SQL w Twoim pliku .ebrc, limit %d
+%s: plik z certyfikatem SSL %s nie jest regularnym plikiem
+%s: plik z certyfikatem SSL %s nie istnieje lub nie jest do odczytu
+%s: wiersz %d, słowo kluczowe %s nie jest zaimplementowane
+%s: wiele kont pocztowych ustawionych jako domyślne
+%s: brak dyrektywy 'inserver' w wierszu %d
+%s: brak dyrektywy 'outerver' w wierszu %d
+%s: brak dyrektywy 'login' w wierszu %d
+%s: brak dyrektywy 'password' w wierszu %d
+%s: brak dyrektywy 'from' w wierszu %d
+%s: brak dyrektywy 'reply' w wierszu %d
+%s: brak dyrektywy 'type' w wierszu %d
+%s: brak dyrektywy 'description' w wierszu %d
+%s: brak przyrostka lub listy protokołów w wierszu %d
+%s: brak dyrektywy 'program' w wierszu %d
+%s: brak dyrektywy 'table name' w wierszu %d
+%s: brak dyrektywy 'short name' w wierszu %d
+%s: brak dyrektywy 'columns' w wierszu %d
+%s: nieoczekiwany '}' w wierszu %d
+%s: 'else' w wierszu %d nie jest częścią wyrażenia 'if'
+%s: zniekształcony tekst w wierszu %d
+%s: wiersz %d, nie można rozpocząć funkcji, deskryptora Plugin/poczty lub bloku filtrów wewnątrz %s
+%s: wyrażenie w wierszu %d musi się znajdować wewnątrz funkcji
+zbyt wiele kont pocztowych w Twoim pliku %s, limit %d
+zbyt wiele typów Plugin w Twoim pliku %s, limit %d
+zbyt wiele tabel SQL w Twoim pliku %s, limit %d
 niepoprawny format adresu URL
-.ebrc: wiersz %d, zbyt głębokie zagnieżdżenie struktur kontrolnych
-.ebrc: funkcja %s nie jest domknięta przed końcem pliku
-.ebrc: blok poczty lub Plugin nie jest domknięty przed końcem pliku
+%s: wiersz %d, zbyt głębokie zagnieżdżenie struktur kontrolnych
+%s: funkcja %s nie jest domknięta przed końcem pliku
+%s: blok poczty lub Plugin nie jest domknięty przed końcem pliku
 katalog domowy nie jest zdefiniowany w zmiennej $HOME
 %s nie jest katalogiem
-nie podano kont pocztowych, sprawdź swój plik konfiguracyjny .ebrc
+nie podano kont pocztowych, sprawdź swój plik konfiguracyjny
 nieprawidłowy numer konta, użyj numeru od 1 do %d
 edbrowse  -v    (pokaż wersję)\nedbrowse -h (ta wiadomość)\nedbrowse -c (edytuj plik konfiguracyjny)\nedbrowse [-d#] -f[#] (pobierz pocztę) \nedbrowse  [-d#] -[p]m    (czytaj nieprzeczytane wiadomości)\nedbrowse  [-d#] -[p]fm[#]    (pobierz pocztę i czytaj nieprzeczytane wiadomości)\nedbrowse  [-d#] -m[#] adres1 adres2 ... plik [+załączniki]\nedbrowse  [-c konfiguracyjny] [-e] [-b] [-d#] plik1 plik2 ...
 podaj co najmniej jednego odbiorcę i plik do wysłania
@@ -563,7 +563,7 @@ funkcja fieldInBuffer nie może znaleźć tagu %d newtext %s
 nie można odtworzyć Twojego pliku ciastek %s
 odwróć
 klient Fetchmail jest interaktywny i nie może być uruchomiony w tle
-katalog skrzynki odbiorczej nie został podany w Twoim pliku .ebrc
+katalog skrzynki odbiorczej nie został podany w Twoim pliku konfiguracyjny
 Nie można zmienić katalogu na %s
 JavaScript zablokowany
 login lub hasło niepoprawne
@@ -663,14 +663,14 @@ pokazuję pierwsze %d z %d wiadomości\n
 poprzedni
 brak poprzedniej wiadomości
 to jest pole tekstowe, użyj polecenia 'ib' by utworzyć nowy bufor
-.ebrc: wiersz %d, w Twoim deskryptorze poczty jest zbyt wiele domyślnych dyrektyw, limit %d
+%s: wiersz %d, w Twoim deskryptorze poczty jest zbyt wiele domyślnych dyrektyw, limit %d
 opcja zawiera %c
 nazwa pliku zawiera %c
 wymagane pole %s jest puste
 limit
 0
 nieprawidłowa @ składnia
-.ebrc: książka emojis %s nie jest regularnym plikiem
+%s: książka emojis %s nie jest regularnym plikiem
 0
 0
 0

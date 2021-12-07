@@ -68,7 +68,7 @@ il buffer %d è stato aggiornato\n
 no opzioni
 la form è stata resettata
 invio il form
-.ebrc: riga %d, outtype deve essere settato a t o h
+%s: riga %d, outtype deve essere settato a t o h
  molti
  raccomandato
 ]
@@ -310,7 +310,7 @@ in corso
 stop
 preleva %d alla volta\n
 non ci sono allegati
-.ebrc: keyword = valore in una funzione edbrowse alla riga %d
+%s: keyword = valore in una funzione edbrowse alla riga %d
 nessuna tavola chiamata
 l'inizializzazione della sessione ftp è fallita
 Push
@@ -339,7 +339,7 @@ impossibile accedere al file .signature
 non posso inviare mediante mail il file binario %s, magari deve essere un allegato?
 nessuno o tutti gli allegati devono essere dichiarati \"alternativamente\"
 troppi recipients, il limite è %d
-Nessuna rubrica specificata, per favore controlla il tuo file di configurazione .ebrc
+Nessuna rubrica specificata, per favore controlla il tuo file di configurazione
 alias %s non trovato nella tua rubrica
 recipients non specificati
 sessione %d vuota, impossibile allegare
@@ -484,67 +484,67 @@ messaggi di aiuto abilitati
 download ftp: 
 interrotto
 download tcp: 
-.ebrc: caratteri null alla riga %d
-.ebrc: nome funzione mancante alla riga %d
-.ebrc: il nome della funzione alla riga %d inizia con un numero
-.ebrc: il nome della funzione alla riga %d è troppo lungo, limite di 10 caratteri
-.ebrc: sintassi non corretta durante la definizione di una funzione alla riga %d
-.ebrc: riga %d, \"condition > file\" atteso
-.ebrc: riga %d, la filter rule non ha una stringa di riscontro
-.ebrc: riga %d, il riscontro su %s non è mai stato settato
-.ebrc: riga %d, numero di agent %d non definito
-.ebrc: keyword %s non riconosciuta alla riga %d
-.ebrc: riga %d, l'attributo %s non può essere settato fuori da un mail descriptor
-.ebrc: riga %d, l'attributo %s non può essere settato fuori da un plugin descriptor
-.ebrc: riga %d, l'attributo %s non può essere settato fuori da un table descriptor
-.ebrc: riga %d, l'attributo %s non può essere settato dentro un mail descriptor o un filter block
-.ebrc: riga %d, l'attributo %s non può essere settato dentro un plugin descriptor
-.ebrc: riga %d, l'attributo %s non può essere settato dentro un table descriptor
-.ebrc: riga %d, l'attributo %s è settato a <niente>
-.ebrc: riga %d, troppe colonne, il limite è %d
-.ebrc: riga %d, keycol deve essere un numero o numero,numero
-.ebrc: riga %d, keycol è fuori range; solo %d colonne specificate
-.ebrc: la rubrica %s non è un normale file
+%s: caratteri null alla riga %d
+%s: nome funzione mancante alla riga %d
+%s: il nome della funzione alla riga %d inizia con un numero
+%s: il nome della funzione alla riga %d è troppo lungo, limite di 10 caratteri
+%s: sintassi non corretta durante la definizione di una funzione alla riga %d
+%s: riga %d, \"condition > file\" atteso
+%s: riga %d, la filter rule non ha una stringa di riscontro
+%s: riga %d, il riscontro su %s non è mai stato settato
+%s: riga %d, numero di agent %d non definito
+%s: keyword %s non riconosciuta alla riga %d
+%s: riga %d, l'attributo %s non può essere settato fuori da un mail descriptor
+%s: riga %d, l'attributo %s non può essere settato fuori da un plugin descriptor
+%s: riga %d, l'attributo %s non può essere settato fuori da un table descriptor
+%s: riga %d, l'attributo %s non può essere settato dentro un mail descriptor o un filter block
+%s: riga %d, l'attributo %s non può essere settato dentro un plugin descriptor
+%s: riga %d, l'attributo %s non può essere settato dentro un table descriptor
+%s: riga %d, l'attributo %s è settato a <niente>
+%s: riga %d, troppe colonne, il limite è %d
+%s: riga %d, keycol deve essere un numero o numero,numero
+%s: riga %d, keycol è fuori range; solo %d colonne specificate
+%s: la rubrica %s non è un normale file
 errore di sintassi javascript
-.ebrc: %s non è una directory
-.ebrc: riga %d, troppi user agents, il limite è %d
-.ebrc: il cookie jar %s non è un normale file
-.ebrc: impossibile creare il cookie jar %s
+%s: %s non è una directory
+%s: riga %d, troppi user agents, il limite è %d
+%s: il cookie jar %s non è un normale file
+%s: impossibile creare il cookie jar %s
 formato dell'indirizzo e-mail non corretto
-.ebrc: riga %d, il dominio %s non contiene un punto
+%s: riga %d, il dominio %s non contiene un punto
 impossibile accedere ad %s, (sicuro)
-.ebrc: il file certificati SSL %s non è un normale file
-.ebrc: il file certificati SSL %s non esiste o non è leggibile.
-.ebrc: riga %d, la keyword %s non è ancora stata implementata
-.ebrc: impostazione di multipli accounts di posta come default
-.ebrc: inserver mancante alla riga %d
-.ebrc: outserver mancante alla riga %d
-.ebrc: login mancante alla riga %d
-.ebrc: password mancante alla riga %d
-.ebrc: from mancante alla riga %d
-.ebrc: reply mancante alla riga %d
-.ebrc: type mancante alla riga %d
-.ebrc: description mancante alla riga %d
-.ebrc: suffisso o lista di protocolli mancante alla riga %d
-.ebrc: program mancante alla riga %d
-.ebrc: manca il nome della tavola alla riga %d
-.ebrc: nome corto mancante alla riga %d
-.ebrc: colonne mancanti alla riga %d
-.ebrc: } non atteso alla riga %d
-.ebrc: else alla riga %d non è parte di uno statement if
-.ebrc: testo scorretto alla riga %d
-.ebrc: riga %d, non è possibile iniziare una funzione, un mail/plugin descriptor, o un filter block dentro %s
-.ebrc: lo statement alla riga %d deve comparire dentro una funzione
-troppi accounts di posta nel file di configurazione .ebrc, riga %d
-troppi plugin blocks nel tuo file di configurazione .ebrc, limite %d
-troppe tavole sql nel tuo file di configurazione .ebrc, limite %d
+%s: il file certificati SSL %s non è un normale file
+%s: il file certificati SSL %s non esiste o non è leggibile.
+%s: riga %d, la keyword %s non è ancora stata implementata
+%s: impostazione di multipli accounts di posta come default
+%s: inserver mancante alla riga %d
+%s: outserver mancante alla riga %d
+%s: login mancante alla riga %d
+%s: password mancante alla riga %d
+%s: from mancante alla riga %d
+%s: reply mancante alla riga %d
+%s: type mancante alla riga %d
+%s: description mancante alla riga %d
+%s: suffisso o lista di protocolli mancante alla riga %d
+%s: program mancante alla riga %d
+%s: manca il nome della tavola alla riga %d
+%s: nome corto mancante alla riga %d
+%s: colonne mancanti alla riga %d
+%s: } non atteso alla riga %d
+%s: else alla riga %d non è parte di uno statement if
+%s: testo scorretto alla riga %d
+%s: riga %d, non è possibile iniziare una funzione, un mail/plugin descriptor, o un filter block dentro %s
+%s: lo statement alla riga %d deve comparire dentro una funzione
+troppi accounts di posta nel file di configurazione %s, riga %d
+troppi plugin blocks nel tuo file di configurazione %s, limite %d
+troppe tavole sql nel tuo file di configurazione %s, limite %d
 formato url non corretto
-.ebrc: riga %d, le strutture di controllo sono nidificate troppo profondamente
-.ebrc: la funzione %s non è mai terminata
-.ebrc: un mail block o un plugin block non è mai terminato (EOF)
+%s: riga %d, le strutture di controllo sono nidificate troppo profondamente
+%s: la funzione %s non è mai terminata
+%s: un mail block o un plugin block non è mai terminato (EOF)
 home directory non definita da $HOME.
 %s non è una cartella
-non sono stati specificati accounts di posta, per favore controlla il tuo file di configurazione .ebrc
+non sono stati specificati accounts di posta, per favore controlla il tuo file di configurazione
 numero di account non valido, per favore usa un valore da 1 a %d
 edbrowse  -v    (mostra la versione)\nedbrowse -h (questo messaggio)\nedbrowse -c (edita il file di configurazione)\nedbrowse [-d#] -f[#] (scarica le mail) \nedbrowse  [-d#] -[p]m    (legge nuovi messaggi)\nedbrowse  [-d#] -[p]fm[#]    (scarica le mail e legge nuovi messaggi)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+allegati]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...
 per favore specifica almeno un recipient e il file da inviare
@@ -563,7 +563,7 @@ fieldInBuffer non può trovare il tag %d newtext %s
 impossibile ricostruire il tuo cookie jar %s
 reverse 
 il client fetchmail non è interattivo, e non può essere eseguito in background
-il file di configurazione .ebrc non specifica una directory mailbox
+il file di configurazione non specifica una directory mailbox
 Impossibile cambiare directory in %s
 javascript bloccato
 Password o login non validi
@@ -663,14 +663,14 @@ visualizzo gli primo %d di %d messaggi\n
 precedente
 non c'è email precedente
 questa è una textarea, usa il comando ib per creare un nuovo buffer
-.ebrc: riga %d, troppe direttive di default nel tuo mail descriptor, limite %d
+%s: riga %d, troppe direttive di default nel tuo mail descriptor, limite %d
 opzioni che contengano %c
 files che contengano %c
 il campo richiesto %s è vuoto
 limit
 la sessione %d non può ricevere testo
 @ sintassi non corretta
-.ebrc: la libreria emoji %s non è un file regolare
+%s: la libreria emoji %s non è un file regolare
 il file emoji contiene il caratter non valido 0x%x alla riga %d\n
 il file emoji contiene il caratter non valido %c alla riga %d\n
 troppe emojis nel gruppo %s, limite %d\n

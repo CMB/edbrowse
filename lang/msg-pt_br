@@ -68,7 +68,7 @@ exibidor %d foi atualizado\n
 sem opções
 formulário limpo
 submetendo formulário
-.ebrc: linha %d, outtype tem que ser definido para t ou h
+%s: linha %d, outtype tem que ser definido para t ou h
  muitos
  recomendado
 ]
@@ -310,7 +310,7 @@ ativa
 interromper
 pegar %d de uma vez\n
 sem anexos
-.ebrc: palavrachave = valor numa função do edbrowse na linha %d
+%s: palavrachave = valor numa função do edbrowse na linha %d
 tabela não existe
 falha a iniciar sessão de FTP
 botão de ação
@@ -339,7 +339,7 @@ impossível acessar o arquivo .signature
 não é possível enviar o arquivo binário %s; quem sabe ele devesse ser um anexo ?
 ou nenhum ou todos os anexos têm de ser declarados como \"alternative\"
 destinatários demais; limite é %d
-sem catálogo de endereço; confira por favor seu arquivo de configuração .ebrc
+sem catálogo de endereço; confira por favor seu arquivo de configuração
 apelido %s não achado no catálogo de endereços
 nenhum destinatário especificado
 sessão %d vazia; impossível anexar
@@ -484,67 +484,67 @@ mensagens de ajuda ligadas
 download via FTP: 
 abortada
 download via SCP: 
-.ebrc: caracteres nulos na linha %d
-.ebrc: falta nome de função na linha %d
-.ebrc: nome de função na linha %d começa com um algarismo
-.ebrc: nome de função na linha %d é longo demais; o limite é dez caracteres
-.ebrc: a sintaxe de definição de função na linha %d é imprópria
-.ebrc: linha %d, esperado \"condição > arquivo\" 
-.ebrc: linha %d, regras de filtragem não têm cadeias a coincidir
-.ebrc: linha %d, critério em %s não está definido em lugar algum
-.ebrc: linha %d, agente número %d não definido
-.ebrc: palavra-chave desconhecida %s na linha %d
-.ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor de mensagem
-.ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor plugin
-.ebrc: linha %d, o atributo %s não pode ser definido fora de um descritor de tabela
-.ebrc: linha %d, o atributo %s não pode ser definido dentro de um descritor de mensagem ou bloco de filtro
-.ebrc: linha %d, o atributo %s não pode ser definido dentro de um descritor de plugin
-.ebrc: linha %d, o atributo %s não pode ser definido dentro de um descritor de tabela
-.ebrc: linha %d, o atributo %s está definido para nada
-.ebrc: linha %d, colunas em excesso; o limite é %d
-.ebrc: linha %d, keycol tem que ser número ou número,número
-.ebrc: linha %d, keycol fora do intervalo; especificadas somente %d colunas
-.ebrc: o catálogo de endereços %s não é um arquivo regular
+%s: caracteres nulos na linha %d
+%s: falta nome de função na linha %d
+%s: nome de função na linha %d começa com um algarismo
+%s: nome de função na linha %d é longo demais; o limite é dez caracteres
+%s: a sintaxe de definição de função na linha %d é imprópria
+%s: linha %d, esperado \"condição > arquivo\" 
+%s: linha %d, regras de filtragem não têm cadeias a coincidir
+%s: linha %d, critério em %s não está definido em lugar algum
+%s: linha %d, agente número %d não definido
+%s: palavra-chave desconhecida %s na linha %d
+%s: linha %d, o atributo %s não pode ser definido fora de um descritor de mensagem
+%s: linha %d, o atributo %s não pode ser definido fora de um descritor plugin
+%s: linha %d, o atributo %s não pode ser definido fora de um descritor de tabela
+%s: linha %d, o atributo %s não pode ser definido dentro de um descritor de mensagem ou bloco de filtro
+%s: linha %d, o atributo %s não pode ser definido dentro de um descritor de plugin
+%s: linha %d, o atributo %s não pode ser definido dentro de um descritor de tabela
+%s: linha %d, o atributo %s está definido para nada
+%s: linha %d, colunas em excesso; o limite é %d
+%s: linha %d, keycol tem que ser número ou número,número
+%s: linha %d, keycol fora do intervalo; especificadas somente %d colunas
+%s: o catálogo de endereços %s não é um arquivo regular
 javascript erro de sintaxe
-.ebrc: %s não é um diretório
-.ebrc: linha %d, agentes do usuário em excesso; o limite é %d
-.ebrc: cookie jar %s não é um arquivo regular
-.ebrc: não posso criar a cookie jar %s
+%s: %s não é um diretório
+%s: linha %d, agentes do usuário em excesso; o limite é %d
+%s: cookie jar %s não é um arquivo regular
+%s: não posso criar a cookie jar %s
 formato impróprio para um endereço de e-mail
-.ebrc: linha %d, o domínio %s não possui ponto
+%s: linha %d, o domínio %s não possui ponto
 impossível acessar %s, (seguro)
-.ebrc: arquivo de certificados SSL %s não é um arquivo regular
-.ebrc: arquivo de certificados SSL %s não existe ou não é legível.
-.ebrc: linha %d, palavra-chave %s não foi implementada ainda
-.ebrc: definindo várias contas de e-mail como padrão
-.ebrc: falta o servidor de entrada na linha %d
-.ebrc: falta o servidor de saída na linha %d
-.ebrc: falta o usuário na linha %d
-.ebrc: falta a senha na linha %d
-.ebrc: falta o remetente na linha %d
-.ebrc: falta o endereço para resposta na linha %d
-.ebrc: falta o tipo na linha %d
-.ebrc: falta a descrição na linha %d
-.ebrc: falta o sufixo ou a lista de protocolos na linha %d
-.ebrc: falta o programa na linha %d
-.ebrc: falta o nome da tabela na linha %d
-.ebrc: falta o nome curto na linha %d
-.ebrc: faltam colunas na linha %d
-.ebrc: } inesperada na linha %d
-.ebrc: else na linha %d não faz parte de um comando if
-.ebrc: texto adulterado na linha %d
-.ebrc: linha %d, impossível iniciar função, descritor de mail/plugin ou bloco de filtro dentro de %s
-.ebrc: comando na linha %d deve aparecer dentro de uma função
-contas de e-mail demais no arquivo de configuração .ebrc; o limite é %d
-tipos plugin demais no arquivo de configuração .ebrc; o limite é %d
-tabelas SQL demais no arquivo de configuração .ebrc; o limite é %d
+%s: arquivo de certificados SSL %s não é um arquivo regular
+%s: arquivo de certificados SSL %s não existe ou não é legível.
+%s: linha %d, palavra-chave %s não foi implementada ainda
+%s: definindo várias contas de e-mail como padrão
+%s: falta o servidor de entrada na linha %d
+%s: falta o servidor de saída na linha %d
+%s: falta o usuário na linha %d
+%s: falta a senha na linha %d
+%s: falta o remetente na linha %d
+%s: falta o endereço para resposta na linha %d
+%s: falta o tipo na linha %d
+%s: falta a descrição na linha %d
+%s: falta o sufixo ou a lista de protocolos na linha %d
+%s: falta o programa na linha %d
+%s: falta o nome da tabela na linha %d
+%s: falta o nome curto na linha %d
+%s: faltam colunas na linha %d
+%s: } inesperada na linha %d
+%s: else na linha %d não faz parte de um comando if
+%s: texto adulterado na linha %d
+%s: linha %d, impossível iniciar função, descritor de mail/plugin ou bloco de filtro dentro de %s
+%s: comando na linha %d deve aparecer dentro de uma função
+contas de e-mail demais no arquivo de configuração %s; o limite é %d
+tipos plugin demais no arquivo de configuração %s; o limite é %d
+tabelas SQL demais no arquivo de configuração %s; o limite é %d
 formato impróprio para uma URL
-.ebrc: linha %d, as estruturas de controle estão aninhadas até um nível alto demais
-.ebrc: função %s não se fecha no fim do arquivo
-.ebrc: mail ou bloco plugin não se fecha no fim do arquivo
+%s: linha %d, as estruturas de controle estão aninhadas até um nível alto demais
+%s: função %s não se fecha no fim do arquivo
+%s: mail ou bloco plugin não se fecha no fim do arquivo
 diretório home não definido por $HOME.
 %s não é um diretório
-nenhuma conta de e-mail especificada; confira por favor o arquivo de configuração .ebrc
+nenhuma conta de e-mail especificada; confira por favor o arquivo de configuração
 número de conta inválido; por favor use 1 até %d
 edbrowse -v (mostra a versão)\nedbrowse -h (esta mensagem)\nedbrowse -c (edita arquivo de configuração)\nedbrowse [-d#] -f[#] (recebe cartas)\nedbrowse [-d#] -[p]m (lê cartas pendentes)\nedbrowse [-d#] -[p]fm[#] (recebe cartas e lê as cartas pendentes)\nedbrowse [-d#] -m[#] endereço1 endereço2 ... arquivo [+anexos]\nedbrowse [-c configuração] [-e] [-b] [-d#] arquivo1 arquivo2 ...
 por favor especifique ao menos um destinatário e o arquivo a enviar
@@ -563,7 +563,7 @@ fieldInBuffer não encontrou a etiqueta %d newtext %s
 impossível refazer a cookie jar %s
 inverter 
 o cliente de recepção de cartas é interativo e não pode rodar em segundo plano
-diretório para caixa de entrada não especificado no arquivo .ebrc
+diretório para caixa de entrada não especificado no arquivo de configuração
 não posso mudar para o diretório %s
 javascript bloqueado
 usuário ou senha inválido
@@ -663,14 +663,14 @@ mostrando as primeiro %d de %d mensagens\n
 anterior
 sem e-mail anterior
 isto é uma área de texto; use o comando ib para criar um novo exibidor
-.ebrc: linha %d; diretivas padrão demais nos descritores de correio; limite %d
+%s: linha %d; diretivas padrão demais nos descritores de correio; limite %d
 opção contém %c
 nome do arquivo contém %c
 campo obrigatório %s está vazio
 limit
 sessão %d não pode receber texto
 @ sintaxe na linha
-.ebrc: biblioteca de emojis %s não é um arquivo regular
+%s: biblioteca de emojis %s não é um arquivo regular
 arquivo de emoji contém o caractere inválido 0x%x na linha %d\n
 arquivo de emoji contém o caractere inválido %c na linha %d\n
 emojis demais no grupo %s; limite é %d\n

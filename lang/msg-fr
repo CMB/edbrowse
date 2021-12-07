@@ -68,7 +68,7 @@ le tampon %d a été mis à jour\n
 pas d'options
 formulaire réinitialisé
 formulaire en cours de soumission
-.ebrc: ligne %d, outtype devrait être t ou h
+%s: ligne %d, outtype devrait être t ou h
  beaucoup
  recommendé
 ]
@@ -310,7 +310,7 @@ active
 stop
 récupérer %d à la fois\n
 pas de pièces attachées
-.ebrc: mot-clé = valeur dans une fonction edbrowse à la ligne %d
+%s: mot-clé = valeur dans une fonction edbrowse à la ligne %d
 la table n'existe pas
 ftp : échec de la session d'initialisation
 0
@@ -339,7 +339,7 @@ impossible d'accéder au fichier .signature
 impossible d'envoyer le fichier binaire %s, serait-ce une pièce jointe ?
 aucune ou bien toutes les pièces jointes doivent être spécifiées \"alternative\"
 trop de destinataires, la limite est de %d
-Pas de carnet d'adresses défini, contrôlez votre fichier de configuration .ebrc
+Pas de carnet d'adresses défini, contrôlez votre fichier de configuration
 impossible de trouver l'alias %s dans votre carnet d'adresses
 aucun destinataire spécifié
 la session %d est vide, impossible de joindre quelque chose
@@ -485,66 +485,66 @@ téléchargement ftp:
 abandonné
 téléchargement scp: 
 Caractères nuls à la ligne %d
-.ebrc : pas de nom de fonction à la ligne %d
-.ebrc : le nom de fonction à la ligne %d commence par un chiffre
-.ebrc : nom de fonction à la ligne %d trop long : la limite est de dix caractères
-.ebrc : erreur de syntaxe dans la définition de fonction à la ligne %d
-.ebrc : ligne %d,  \"condition > fichier\" attendu
-.ebrc : ligne %d, la règle de filtrage ne correspond à aucune chaîne
-.ebrc : ligne %d, la correspondance sur %s n'est pas définie
-.ebrc : ligne %d, l'agent numéro %d n'est pas défini
-.ebrc : mot clé %s inconnu à la ligne %d
-.ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de courrier
-.ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur plugin
-.ebrc : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de table
-.ebrc : ligne %d, l'attribut %s ne peut être défini dans un descripteur de courrier ou un bloc de filtrage
-.ebrc : ligne %d, l'attribut %s ne peut être défini dans un descripteur plugin
-.ebrc : ligne %d, l'attribut %s ne peut être défini dans un descripteur de table
-.ebrc : ligne %d, l'attribut %s n'est pas défini
-.ebrc : ligne %d,trop de connes, la limite est de %d
-.ebrc : ligne %d, la colonne index ne peut être que numérique
-.ebrc : colonne index hors limites; seules %d colonnes ont été spécifiées
-.ebrc : le carnet d'adresses %s n'est pas un fichier régulier
+%s : pas de nom de fonction à la ligne %d
+%s : le nom de fonction à la ligne %d commence par un chiffre
+%s : nom de fonction à la ligne %d trop long : la limite est de dix caractères
+%s : erreur de syntaxe dans la définition de fonction à la ligne %d
+%s : ligne %d,  \"condition > fichier\" attendu
+%s : ligne %d, la règle de filtrage ne correspond à aucune chaîne
+%s : ligne %d, la correspondance sur %s n'est pas définie
+%s : ligne %d, l'agent numéro %d n'est pas défini
+%s : mot clé %s inconnu à la ligne %d
+%s : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de courrier
+%s : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur plugin
+%s : ligne %d, l'attribut %s ne peut être défini hors d'un descripteur de table
+%s : ligne %d, l'attribut %s ne peut être défini dans un descripteur de courrier ou un bloc de filtrage
+%s : ligne %d, l'attribut %s ne peut être défini dans un descripteur plugin
+%s : ligne %d, l'attribut %s ne peut être défini dans un descripteur de table
+%s : ligne %d, l'attribut %s n'est pas défini
+%s : ligne %d,trop de connes, la limite est de %d
+%s : ligne %d, la colonne index ne peut être que numérique
+%s : colonne index hors limites; seules %d colonnes ont été spécifiées
+%s : le carnet d'adresses %s n'est pas un fichier régulier
 javascript erreur de syntaxe
-.ebrc : %s n'est pas un répertoire
-.ebrc : ligne %d, trop d'agents utilisateurs, la limite est de %d
-.ebrc : le récipient de cookies n'est pas un fichier régulier
-.ebrc : impossible de créer   le récipient de cookies
+%s : %s n'est pas un répertoire
+%s : ligne %d, trop d'agents utilisateurs, la limite est de %d
+%s : le récipient de cookies n'est pas un fichier régulier
+%s : impossible de créer   le récipient de cookies
 format d'adresse mail impropre
-.ebrc : ligne %d, le domaine ne contient pas de point
+%s : ligne %d, le domaine ne contient pas de point
 impossible d'accéder à %s, (sûr)
-.ebrc : le fichier de certificats SSL n'est pas un fichier régulier
-.ebrc :  fichier de certificats SSL absent ou illisible
-.ebrc : ligne %d, le mot-clé %s n'est pas encore implémenté
-.ebrc : plus d'un compte mail est défini comme compte par défaut
-.ebrc : serveur entrant manquant
-.ebrc : serveur sortant manquant
-.ebrc : nom d'utilisateur manquant
-.ebrc : mot de passe manquant
-.ebrc : ligne from manquante à la ligne %d
-.ebrc : ligne reply manquante à la ligne %d
-.ebrc : type manquant à la ligne %d
-.ebrc : description manquante à la ligne %d
-.ebrc : suffixe ou liste de protocoles manquants à la ligne %d
-.ebrc : programme manquant à la ligne %d
-.ebrc : nom de table manquant à la ligne %d
-.ebrc : surnom manquant à la ligne %d
-.ebrc : colonnes manquantes à la ligne %d
-.ebrc : } inattendue à la ligne %d
-.ebrc : else à la ligne %d ne fait pas partie d'une instruction
-.ebrc : texte altéré à la ligne %d
-.ebrc : la ligne %d ne peut lancer une fonction, un descripteur plugin ou de type, ou un filtre dans %s
-.ebrc : l'instruction à la ligne %d doit apparaître dans une fonction
+%s : le fichier de certificats SSL n'est pas un fichier régulier
+%s :  fichier de certificats SSL absent ou illisible
+%s : ligne %d, le mot-clé %s n'est pas encore implémenté
+%s : plus d'un compte mail est défini comme compte par défaut
+%s : serveur entrant manquant
+%s : serveur sortant manquant
+%s : nom d'utilisateur manquant
+%s : mot de passe manquant
+%s : ligne from manquante à la ligne %d
+%s : ligne reply manquante à la ligne %d
+%s : type manquant à la ligne %d
+%s : description manquante à la ligne %d
+%s : suffixe ou liste de protocoles manquants à la ligne %d
+%s : programme manquant à la ligne %d
+%s : nom de table manquant à la ligne %d
+%s : surnom manquant à la ligne %d
+%s : colonnes manquantes à la ligne %d
+%s : } inattendue à la ligne %d
+%s : else à la ligne %d ne fait pas partie d'une instruction
+%s : texte altéré à la ligne %d
+%s : la ligne %d ne peut lancer une fonction, un descripteur plugin ou de type, ou un filtre dans %s
+%s : l'instruction à la ligne %d doit apparaître dans une fonction
 Trop de comptes de courrier dans votre fichier de configuration, la limite est de %d
 Trop de types plugin dans votre fichier de configuration, la limite est de %d
 Trop de tables sql dans votre fichier de configuration, la limite est de %d
 format d'url impropre
-.ebrc : ligne %d, trop de structures imbriquées
-.ebrc : la fonction %s n'est pas fermée
-.ebrc : le bloc plugin ou courrier n'est pas fermé
+%s : ligne %d, trop de structures imbriquées
+%s : la fonction %s n'est pas fermée
+%s : le bloc plugin ou courrier n'est pas fermé
 Votre répertoire personnel n'est pas défini par la variable $HOME
 %s n'est pas un répertoire
-Pas de comptes de courrier définis, vérifiez votre fichier .ebrc
+Pas de comptes de courrier définis, vérifiez votre fichier de configuration
 Numéro de compte de courrier invalide, utilisez svp de 1 à %d
 edbrowse  -v    (montre version)\nedbrowse -h (ce message)\nedbrowse -c (edit fichier config)\nedbrowse  [-d#] -[p]m#    (lecture courrier \nedbrowse  [-d#] -m# adresse1 adresse2 ... fichier [+pièces jointes]\nedbrowse  [-c configuration] [-e] [-b] [-d#] fichier1 fichier2 ...
 Définissez s'il vous plaît au moins un destinataire et le fichier à envoyer
@@ -563,7 +563,7 @@ FieldInBuffer ne peut trouver le tag %d nouveau texte %s
 Impossible de reconstruire votre récipient %s de cookies
 inversion du tri 
 Le client de courrier est interactif, et ne peut être lancé en arrière-fond
-répertoire de courrier non défini dans votre fichier .ebrc
+répertoire de courrier non défini dans votre fichier de configuration
 Ne peut aller dans le répertoire %s
 javascript bloqué
 nom utilisateur / mot de passe invalide
@@ -663,14 +663,14 @@ affichage des premier %d de %d messages\n
 antérieur
 pas de emaile antérieur
 Ceci est une zone de texte, utilisez la commande ib pour créer un nouveau tampon
-.ebrc : ligne %d, trop de directives par défaut dans la définition de compte mail, le maximum est de %d
+%s : ligne %d, trop de directives par défaut dans la définition de compte mail, le maximum est de %d
 l'option contient %c
 le nom de fichier contient %c
 le champ requis %s est vide
 limit
 la session %d ne peut recevoir du texte
 erreur de @ syntax
-.ebrc: la librairie emoji %s n'est pas un fichier normal
+%s: la librairie emoji %s n'est pas un fichier normal
 le fichier d'emoji contient le caractère invalide 0x%x à la ligne %d\n
 le fichier d'emoji contient le caractère invalide %c à la ligne %d\n
 trop d'emojis dans le groupe %s, la limite est de %d\n

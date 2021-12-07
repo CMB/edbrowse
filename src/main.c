@@ -1128,7 +1128,7 @@ struct DBTABLE *newTableDescriptor(const char *name)
 	return td;
 }
 
-static char *configMemory;
+static char *configMemory, *configEnd;
 
 // unread the config file, so we can read it again
 void unreadConfigFile(void)
@@ -1189,11 +1189,11 @@ static const char *const keywords[] = {
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
-#define cfgAbort0(m) { i_printf(m); nl(); return; }
-#define cfgAbort1(m, arg) { i_printf(m, arg); nl(); return; }
-#define cfgLine0(m) { i_printf(m, ln); nl(); return; }
-#define cfgLine1(m, arg) { i_printf(m, ln, arg); nl(); return; }
-#define cfgLine1a(m, arg) { i_printf(m, arg, ln); nl(); return; }
+#define cfgAbort0(m) { i_printf(m, configEnd); nl(); return; }
+#define cfgAbort1(m, arg) { i_printf(m, configEnd, arg); nl(); return; }
+#define cfgLine0(m) { i_printf(m, configEnd, ln); nl(); return; }
+#define cfgLine1(m, arg) { i_printf(m, configEnd, ln, arg); nl(); return; }
+#define cfgLine1a(m, arg) { i_printf(m, configEnd, arg, ln); nl(); return; }
 
 void readConfigFile(void)
 {
@@ -1226,6 +1226,9 @@ void readConfigFile(void)
 
 // remember this allocated pointer in case we want to reset everything.
 	configMemory = buf;
+
+	configEnd = strrchr(configFile, '/');
+	configEnd = (configEnd ? configEnd + 1 : configFile);
 
 /* Undos, uncomment, watch for nulls */
 /* Encode mail{ as hex 81 m, and other encodings. */
@@ -1511,7 +1514,7 @@ putc:
 		case 8: case 9: case 10: case 11: // to cc bcc attach
 			for (j=0; act->cclist[j]; ++j)  ;
 			if(j == MAXCC) {
-				cfgLine1(MSG_MailDirect, MAXCC);
+				cfgLine1(MSG_EBRC_MailDirect, MAXCC);
 			} else {
 // ^ means cc, ? means bcc
 				if(n == 9) *--v = '^';

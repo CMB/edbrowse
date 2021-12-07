@@ -763,7 +763,7 @@ enum {
 	MSG_Previous,
 	MSG_NoPrevMail,
 	MSG_Textarea0,
-	MSG_MailDirect,
+	MSG_EBRC_MailDirect,
 	MSG_OptionC,
 	MSG_FileC,
 	MSG_ReqField,

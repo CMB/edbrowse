@@ -68,7 +68,7 @@ buffer %d has been updated\n
 no options
 form has been reset
 submitting form
-.ebrc: line %d, outtype should be set to t or h
+%s: line %d, outtype should be set to t or h
  multiple
  recommended
 ]
@@ -310,7 +310,7 @@ in progress
 stop
 fetch %d at a time\n
 no attachments
-.ebrc: keyword = value inside an edbrowse function at line %d
+%s: keyword = value inside an edbrowse function at line %d
 no table
 ftp session initialization failed
 Push
@@ -339,7 +339,7 @@ cannot access .signature file
 cannot mail the binary file %s, perhaps this should be an attachment?
 either none or all of the attachments must be declared \"alternative\"
 too many recipients, limit %d
-No address book specified, please check your .ebrc config file
+No address book specified, please check your configuration file
 alias %s not found in your address book
 no recipients specified
 session %d is empty, cannot attach
@@ -484,67 +484,67 @@ help messages on
 ftp download: 
 aborted
 scp download: 
-.ebrc: null characters at line %d
-.ebrc: missing function name at line %d
-.ebrc: function name at line %d begins with a digit
-.ebrc: function name at line %d is too long, limit ten characters
-.ebrc: improper function definition syntax at line %d
-.ebrc: line %d, \"condition > file\" expected
-.ebrc: line %d, filter rule has no match string
-.ebrc: line %d, match on %s is set nowhere
-.ebrc: line %d, agent number %d is not defined
-.ebrc: unrecognized keyword %s at line %d
-.ebrc: line %d, attribute %s canot be set outside of a mail descriptor
-.ebrc: line %d, attribute %s canot be set outside of a plugin descriptor
-.ebrc: line %d, attribute %s canot be set outside of a table descriptor
-.ebrc: line %d, attribute %s canot be set inside a mail descriptor or filter block
-.ebrc: line %d, attribute %s canot be set inside a plugin descriptor
-.ebrc: line %d, attribute %s canot be set inside a table descriptor
-.ebrc: line %d, attribute %s is set to nothing
-.ebrc: line %d, too many columns, limit %d
-.ebrc: line %d, keycol should be number or number,number
-.ebrc: line %d, keycol is out of range; only %d columns specified
-.ebrc: address book %s is not a regular file
+%s: null characters at line %d
+%s: missing function name at line %d
+%s: function name at line %d begins with a digit
+%s: function name at line %d is too long, limit ten characters
+%s: improper function definition syntax at line %d
+%s: line %d, \"condition > file\" expected
+%s: line %d, filter rule has no match string
+%s: line %d, match on %s is set nowhere
+%s: line %d, agent number %d is not defined
+%s: unrecognized keyword %s at line %d
+%s: line %d, attribute %s canot be set outside of a mail descriptor
+%s: line %d, attribute %s canot be set outside of a plugin descriptor
+%s: line %d, attribute %s canot be set outside of a table descriptor
+%s: line %d, attribute %s canot be set inside a mail descriptor or filter block
+%s: line %d, attribute %s canot be set inside a plugin descriptor
+%s: line %d, attribute %s canot be set inside a table descriptor
+%s: line %d, attribute %s is set to nothing
+%s: line %d, too many columns, limit %d
+%s: line %d, keycol should be number or number,number
+%s: line %d, keycol is out of range; only %d columns specified
+%s: address book %s is not a regular file
 javascript syntax error
-.ebrc: %s is not a directory
-.ebrc: line %d, too many user agents, limit %d
-.ebrc: cookie jar %s is not a regular file
-.ebrc: cannot create cookie jar %s
+%s: %s is not a directory
+%s: line %d, too many user agents, limit %d
+%s: cookie jar %s is not a regular file
+%s: cannot create cookie jar %s
 improper format for an email address
-.ebrc: line %d, domain %s does not contain a dot
+%s: line %d, domain %s does not contain a dot
 cannot access %s, (secure)
-.ebrc: SSL certificate file %s is not a regular file
-.ebrc: SSL certificate file %s does not exist or is not readable.
-.ebrc: line %d, keyword %s is not yet implemented
-.ebrc: setting multiple mail accounts as default
-.ebrc: missing inserver at line %d
-.ebrc: missing outserver at line %d
-.ebrc: missing login at line %d
-.ebrc: missing password at line %d
-.ebrc: missing from at line %d
-.ebrc: missing reply at line %d
-.ebrc: missing type at line %d
-.ebrc: missing description at line %d
-.ebrc: missing suffix or protocol list at line %d
-.ebrc: missing program at line %d
-.ebrc: missing table name at line %d
-.ebrc: missing short name at line %d
-.ebrc: missing columns at line %d
-.ebrc: unexpected } at line %d
-.ebrc: else at line %d is not part of an if statement
-.ebrc: garbled text at line %d
-.ebrc: line %d, cannot start a function, mail/plugin descriptor, or filter block inside %s
-.ebrc: statement at line %d must appear inside a function
-too many email accounts in your .ebrc config file, limit %d
-too many plugin blocks in your .ebrc config file, limit %d
-too many sql tables in your .ebrc config file, limit %d
+%s: SSL certificate file %s is not a regular file
+%s: SSL certificate file %s does not exist or is not readable.
+%s: line %d, keyword %s is not yet implemented
+%s: setting multiple mail accounts as default
+%s: missing inserver at line %d
+%s: missing outserver at line %d
+%s: missing login at line %d
+%s: missing password at line %d
+%s: missing from at line %d
+%s: missing reply at line %d
+%s: missing type at line %d
+%s: missing description at line %d
+%s: missing suffix or protocol list at line %d
+%s: missing program at line %d
+%s: missing table name at line %d
+%s: missing short name at line %d
+%s: missing columns at line %d
+%s: unexpected } at line %d
+%s: else at line %d is not part of an if statement
+%s: garbled text at line %d
+%s: line %d, cannot start a function, mail/plugin descriptor, or filter block inside %s
+%s: statement at line %d must appear inside a function
+too many email accounts in your %s config file, limit %d
+too many plugin blocks in your %s config file, limit %d
+too many sql tables in your %s config file, limit %d
 improper format for a url
-.ebrc: line %d, control structures are nested too deeply
-.ebrc: function %s is not closed at eof
-.ebrc: mail or plugin block is not closed at EOF
+%s: line %d, control structures are nested too deeply
+%s: function %s is not closed at eof
+%s: mail or plugin block is not closed at EOF
 home directory not defined by $HOME.
 %s is not a directory
-no mail accounts specified, please check your .ebrc config file
+no mail accounts specified, please check your configuration file
 invalid account number, please use 1 through %d
 edbrowse  -v    (show version)\nedbrowse -h (this message)\nedbrowse -c (edit config file)\nedbrowse [-d#] -f[#] (fetch mail) \nedbrowse  [-d#] -[p]m    (read pending mail)\nedbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)\nedbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]\nedbrowse  [-c configfile] [-e] [-b] [-d#] file1 file2 ...\nType help from within an edbrowse session for a summary of the common edbrowse commands.
 please specify at least one recipient and the file to send
@@ -563,7 +563,7 @@ fieldInBuffer could not find tag %d newtext %s
 cannot rebuild your cookie jar %s
 reverse 
 fetchmail client is interactive, and cannot run in the background
-mailbox directory not specified in your .ebrc file
+mailbox directory not specified in your configuration file
 Cannot change directory to %s
 javascript blocked
 Invalid login or password
@@ -663,14 +663,14 @@ showing first %d of %d messages\n
 previous
 no previous email
 this is a textarea, use the ib command to create a new buffer
-.ebrc: line %d, too many default directives in your mail descriptor, limit %d
+%s: line %d, too many default directives in your mail descriptor, limit %d
 option contains %c
 filename contains %c
 required field %s is empty
 limit
 session %d cannot receive text
 invalid @ syntax
-.ebrc: emoji library %s is not a regular file
+%s: emoji library %s is not a regular file
 emoji file contains invalid character 0x%x at line %d\n
 emoji file contains invalid character %c at line %d\n
 too many emojis in group %s, limit %d\n
