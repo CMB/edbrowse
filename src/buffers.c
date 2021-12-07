@@ -5920,13 +5920,11 @@ bool runCommand(const char *line)
 		}
 	}
 
-	if (!globSub) {
-		madeChanges = false;
-
-// Allow things like comment, or quit, but not if we're
-// in the midst of a global substitute, as in g/x/ q
 		if (first == '#')
 			return true;
+
+	if (!globSub) {
+		madeChanges = false;
 
 /* Watch for successive q commands. */
 		lastq = lastqq, lastqq = 0;
