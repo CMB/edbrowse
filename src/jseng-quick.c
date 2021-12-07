@@ -2295,11 +2295,11 @@ static JSValue nat_win_close(JSContext * cx, JSValueConst this, int argc, JSValu
 static Frame *doc2frame(JSValueConst this)
 {
 	Frame *f;
-	for (f = &(cw->f0); f; f = f->next) {
-		if (JS_VALUE_GET_OBJ(*((JSValue*)f->docobj)) == JS_VALUE_GET_OBJ(this))
-			break;
-	}
-	return f;
+	for (f = &(cw->f0); f; f = f->next)
+		if (f->jslink && JS_VALUE_GET_OBJ(*((JSValue*)f->docobj)) == JS_VALUE_GET_OBJ(this))
+			return f;
+	debugPrint(3, "doc2frame can't find frame");
+	return 0;
 }
 
 static void dwrite(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv, bool newline)
@@ -2347,11 +2347,11 @@ static JSValue nat_doc_writeln(JSContext * cx, JSValueConst this, int argc, JSVa
 static Frame *win2frame(JSValueConst this)
 {
 	Frame *f;
-	for (f = &(cw->f0); f; f = f->next) {
+	for (f = &(cw->f0); f; f = f->next)
 		if (f->jslink && JS_VALUE_GET_OBJ(*((JSValue*)f->winobj)) == JS_VALUE_GET_OBJ(this))
-			break;
-	}
-	return f;
+			return f;
+	debugPrint(3, "win2frame can't find frame");
+	return 0;
 }
 
 static JSValue nat_parent(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
@@ -3305,6 +3305,8 @@ JS_NewCFunction(mwc, nat_clearTimeout, "clearInterval", 1), 0);
 JS_NewCFunction(mwc, nat_css_start, "css_start", 3), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "cssApply",
 JS_NewCFunction(mwc, nat_cssApply, "cssApply", 3), 0);
+    JS_DefinePropertyValueStr(mwc, mwo, "eb$fetchHTTP",
+JS_NewCFunction(mwc, nat_fetchHTTP, "fetchHTTP", 4), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "jobsPending",
 JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 #endif
@@ -3429,8 +3431,6 @@ JS_NewCFunction(cx, nat_clearTimeout, "clearTimeout", 1), 0);
 JS_NewCFunction(cx, nat_setInterval, "setInterval", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "clearInterval",
 JS_NewCFunction(cx, nat_clearTimeout, "clearInterval", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$fetchHTTP",
-JS_NewCFunction(cx, nat_fetchHTTP, "fetchHTTP", 4), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$parent",
 JS_NewCFunction(cx, nat_parent, "parent", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$top",

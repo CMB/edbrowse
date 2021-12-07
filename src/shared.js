@@ -2621,6 +2621,126 @@ swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
 }
 }
 
+function xml_open(method, url, async, user, password){
+if(user || password) alert3("xml user and password ignored");
+this.readyState = 1;
+this.async = (async === false)?false:true;
+this.method = method || "GET";
+alert3("xhr " + (this.async ? "async " : "") + "open " + url);
+this.url = eb$resolveURL(my$win().eb$base, url);
+this.status = 0;
+this.statusText = "";
+};
+
+function xml_srh(header, value){
+this.headers[header] = value;
+};
+
+function xml_grh(header){
+var rHeader, returnedHeaders;
+if (this.readyState < 3){
+throw new Error("INVALID_STATE_ERR");
+} else {
+returnedHeaders = [];
+for (rHeader in this.responseHeaders) {
+if (rHeader.match(new RegExp(header, "i"))) {
+returnedHeaders.push(this.responseHeaders[rHeader]);
+}
+}
+if (returnedHeaders.length) return returnedHeaders.join(", ");
+}
+return null;
+};
+
+function xml_garh(){
+var header, returnedHeaders = [];
+if (this.readyState < 3){
+throw new Error("INVALID_STATE_ERR");
+} else {
+for (header in this.responseHeaders)
+returnedHeaders.push( header + ": " + this.responseHeaders[header] );
+}
+return returnedHeaders.join("\r\n");
+};
+
+function xml_send(data, parsedoc){
+if(parsedoc) alert3("xml parsedoc ignored");
+var headerstring = "";
+for (var item in this.headers) {
+var v1=item;
+var v2=this.headers[item];
+headerstring+=v1+': '+v2+'\n';
+}
+if(headerstring) alert3("xhr headers " + headerstring.replace(/\n$/,''));
+var urlcopy = this.url;
+if(urlcopy.match(/[*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
+alert3("xhr url does not look encoded");
+// but assume it was anyways, cause it should be
+//urlcopy = encodeURI(urlcopy);
+}
+if(data) {
+alert3("xhr data " + data);
+// no idea if data is already encoded or not.
+/*
+if(data.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
+alert3("xhr data was not encoded");
+data = encodeURI(data);
+}
+*/
+}
+// check the sanity of data
+if(data === null || data === undefined) data = "";
+var td = typeof data;
+if(td == "object" && data instanceof Uint8Array) {
+var s=""; for(var i=0; i<data.length; ++i) s += String.fromCharCode(data[i]);
+td = typeof (data = s);
+}
+// what do we do about Uint16Array and Uint32Array?
+if(td != "string") {
+alert3("payload data has improper type " + td);
+}
+this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data);
+if(this.$entire != "async") this.parseResponse();
+};
+
+function xml_parse(){
+var responsebody_array = this.$entire.split("\r\n\r\n");
+var success = parseInt(responsebody_array[0]);
+var code = parseInt(responsebody_array[1]);
+var url2 = responsebody_array[2];
+var http_headers = responsebody_array[3];
+responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = responsebody_array[3] = "";
+this.responseText = responsebody_array.join("\r\n\r\n").trim();
+// some want responseText, some just want response
+this.response = this.responseText;
+var hhc = http_headers.split(/\r?\n/);
+for(var i=0; i<hhc.length; ++i) {
+var value1 = hhc[i];
+if(!value1.match(/:/)) continue;
+var value2 = value1.split(":")[0];
+var value3 = value1.split(":")[1];
+this.responseHeaders[value2] = value3.trim();
+}
+
+this.readyState = 4;
+this.responseURL = url2.replace(/#.*/,"");
+if(success) {
+this.status = code;
+// need a real statusText for the codes
+this.statusText = (code == 200 ? "OK" : "http error " + code);
+// When the major libraries are used, they overload XHR left and right.
+// Some versions use onreadystatechange.  This has been replaced by onload in,
+// for instance, newer versions of jquery.  It can cause problems to call the
+// one that is not being used at that moment, so my remedy here is to have
+// empty functions in the prototype so I can call both of them.
+this.onreadystatechange();
+this.onload();
+} else {
+this.status = 0;
+this.statusText = "network error";
+}
+};
+
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
 /* Blob.js
@@ -3756,6 +3876,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "showarg", "showarglist",
 "eb$base$snapshot", "set_location_hash",
 "eb$newLocation","eb$logElement",
+"eb$resolveURL", "eb$fetchHTTP",
 "setTimeout", "clearTimeout", "setInterval", "clearInterval",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
@@ -3780,7 +3901,8 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
 "compareDocumentPosition",
-"cssGather", "makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
+"cssGather", "cssApply", "cssDocLoad",
+"makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "injectSetup", "eb$visible",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
 "URL", "File", "FileReader", "Blob",
@@ -3788,6 +3910,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "clickfn", "checkset", "cel_define",
 "jtfn0", "jtfn1", "jtfn2", "jtfn3", "deminimize", "addTrace",
 "url_rebuild", "url_hrefset", "sortTime",
+"xml_open", "xml_srh", "xml_grh", "xml_garh", "xml_send", "xml_parse",
 "onmessage$$running",
 ];
 for(var i=0; i<flist.length; ++i)

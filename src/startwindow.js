@@ -996,6 +996,8 @@ this.onmessage$$queue.push(me);
 alert3("posting message of length " + message.length + " to window context " + this.eb$ctx + " ↑" +
 (message.length >= 200 ? "long" : message)
 + "↑");
+} else {
+alert3("postMessage mismatch " + this.location.protocol + "//" + this.location.hostname + " | " + target_origin);
 }
 }
 Object.defineProperty(window, "onmessage$$queue", {writable:false,configurable:false});
@@ -2100,125 +2102,15 @@ XMLHttpRequest.OPEN = 1;
 XMLHttpRequest.HEADERS_RECEIVED = 2;
 XMLHttpRequest.LOADING = 3;
 XMLHttpRequest.DONE = 4;
-
-XMLHttpRequest.prototype.open = function(method, url, async, user, password){
-this.readyState = 1;
-this.async = (async === false)?false:true;
-this.method = method || "GET";
-alert3("xhr " + (this.async ? "async " : "") + "open " + url);
-this.url = eb$resolveURL(my$win().eb$base, url);
-this.status = 0;
-this.statusText = "";
-};
-XMLHttpRequest.prototype.setRequestHeader = function(header, value){
-this.headers[header] = value;
-};
-XMLHttpRequest.prototype.send = function(data, parsedoc/*non-standard*/){
-var headerstring = "";
-for (var item in this.headers) {
-var v1=item;
-var v2=this.headers[item];
-headerstring+=v1+': '+v2+'\n';
-}
-if(headerstring) alert3("xhr headers " + headerstring.replace(/\n$/,''));
-var urlcopy = this.url;
-if(urlcopy.match(/[*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
-alert3("xhr url does not look encoded");
-// but assume it was anyways, cause it should be
-//urlcopy = encodeURI(urlcopy);
-}
-if(data) {
-alert3("xhr data " + data);
-// no idea if data is already encoded or not.
-/*
-if(data.match(/[!*'";\[\]$\u0000-\u0020\u007f-\uffff]/)) {
-alert3("xhr data was not encoded");
-data = encodeURI(data);
-}
-*/
-}
-// check the sanity of data
-if(data === null || data === undefined) data = "";
-var td = typeof data;
-if(td == "object" && td instanceof Uint8Array) {
-var s=""; for(var i=0; i<data.length; ++i) s += String.fromCharCode(data[i]);
-td = typeof (data = s);
-}
-// what do we do about Uint16Array and Uint32Array?
-if(td != "string") {
-alert3("payload data has improper type " + td);
-}
-this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data);
-if(this.$entire != "async") this.parseResponse();
-};
-XMLHttpRequest.prototype.parseResponse = function(){
-var responsebody_array = this.$entire.split("\r\n\r\n");
-var success = parseInt(responsebody_array[0]);
-var code = parseInt(responsebody_array[1]);
-var url2 = responsebody_array[2];
-var http_headers = responsebody_array[3];
-responsebody_array[0] = responsebody_array[1] = responsebody_array[2] = responsebody_array[3] = "";
-this.responseText = responsebody_array.join("\r\n\r\n").trim();
-// some want responseText, some just want response
-this.response = this.responseText;
-var hhc = http_headers.split(/\r?\n/);
-for(var i=0; i<hhc.length; ++i) {
-var value1 = hhc[i];
-if(!value1.match(/:/)) continue;
-var value2 = value1.split(":")[0];
-var value3 = value1.split(":")[1];
-this.responseHeaders[value2] = value3.trim();
-}
-
-this.readyState = 4;
-this.responseURL = url2.replace(/#.*/,"");
-if(success) {
-this.status = code;
-// need a real statusText for the codes
-this.statusText = (code == 200 ? "OK" : "http error " + code);
-// When the major libraries are used, they overload XHR left and right.
-// Some versions use onreadystatechange.  This has been replaced by onload in,
-// for instance, newer versions of jquery.  It can cause problems to call the
-// one that is not being used at that moment, so my remedy here is to have
-// empty functions in the prototype so I can call both of them.
-this.onreadystatechange();
-this.onload();
-} else {
-this.status = 0;
-this.statusText = "network error";
-}
-};
-XMLHttpRequest.prototype.abort = function(){ this.aborted = true; };
+// see shared.js for these methods
+XMLHttpRequest.prototype.open = mw$.xml_open;
+XMLHttpRequest.prototype.setRequestHeader = mw$.xml_srh;
+XMLHttpRequest.prototype.getResponseHeader = mw$.xml_grh;
+XMLHttpRequest.prototype.getAllResponseHeaders = mw$.xml_garh;
+XMLHttpRequest.prototype.send = mw$.xml_send;
+XMLHttpRequest.prototype.parseResponse = mw$.xml_parse;
+XMLHttpRequest.prototype.abort = function(){ this.aborted = true}
 XMLHttpRequest.prototype.onreadystatechange = XMLHttpRequest.prototype.onload = XMLHttpRequest.prototype.onerror = eb$voidfunction;
-XMLHttpRequest.prototype.getResponseHeader = function(header){
-var rHeader, returnedHeaders;
-if (this.readyState < 3){
-throw new Error("INVALID_STATE_ERR");
-} else {
-returnedHeaders = [];
-for (rHeader in this.responseHeaders) {
-if (rHeader.match(new RegExp(header, "i"))) {
-returnedHeaders.push(this.responseHeaders[rHeader]);
-}
-}
-
-if (returnedHeaders.length){
-return returnedHeaders.join(", ");
-}
-}
-return null;
-};
-XMLHttpRequest.prototype.getAllResponseHeaders = function(){
-var header, returnedHeaders = [];
-if (this.readyState < 3){
-throw new Error("INVALID_STATE_ERR");
-} else {
-for (header in this.responseHeaders) {
-returnedHeaders.push( header + ": " + this.responseHeaders[header] );
-}
-}
-return returnedHeaders.join("\r\n");
-};
 XMLHttpRequest.prototype.async = false;
 XMLHttpRequest.prototype.readyState = 0;
 XMLHttpRequest.prototype.responseText = "";
@@ -2226,6 +2118,7 @@ XMLHttpRequest.prototype.response = "";
 XMLHttpRequest.prototype.status = 0;
 XMLHttpRequest.prototype.statusText = "";
 
+// response to a fetch() request
 function Response(){this.xhr = null, this.bodyUsed = false}
 Object.defineProperty(Response.prototype, "body", {get:function(){this.bodyUsed=true;return this.xhr.responseText;}})
 Object.defineProperty(Response.prototype, "headers", {get:function(){return this.xhr.responseHeaders;}})

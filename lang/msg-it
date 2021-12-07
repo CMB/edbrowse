@@ -603,7 +603,7 @@ chiamata a fopen() con modalità non valida %s
 decodePostData(0,0)
 cerca senza wrapping
 cerca con wrapping
-0
+intestazioni delle colonne non presenti
 impossibile rispondere in modalità cartelle
 impossibile rispondere in modalità database
 impossibile rispondere a un file vuoto
@@ -670,14 +670,14 @@ il campo richiesto %s è vuoto
 limit
 la sessione %d non può ricevere testo
 @ sintassi non corretta
-.ebrc: la emojis %s non è un normale file
-0
-0
-0
-0
-0
-0
-0
+.ebrc: la libreria emoji %s non è un file regolare
+il file emoji contiene il caratter non valido 0x%x alla riga %d\n
+il file emoji contiene il caratter non valido %c alla riga %d\n
+troppe emojis nel gruppo %s, limite %d\n
+il file emoji contiene un unicode non valido alla riga %d\n
+file emoji, errore di sintassi alla riga %d\n
+nessuna opzione inizia con %s
+multiple opzioni iniziano con %s
 0
 0
 0
