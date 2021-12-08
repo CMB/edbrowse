@@ -2594,8 +2594,11 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	char *s;
 	int s_l;
 	JSValue u;
+	int32_t pd; // process the data
+	bool dopost = false;
 
 	debugPrint(5, "xhr in");
+	JS_ToInt32(cx, &pd, argv[4]);
 	async = get_property_bool(cx, this, "async");
 	if (!down_jsbg)
 		async = false;
@@ -2608,16 +2611,41 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	if (!cw->browseMode)
 		async = false;
 
-	if(incoming_payload && *incoming_payload &&
-	incoming_method && stringEqualCI(incoming_method, "post")) {
+	if (incoming_method && stringEqualCI(incoming_method, "post"))
+		dopost = true;
+// don't need method any more
+	JS_FreeCString(cx, incoming_method);
+
+	if(incoming_payload && *incoming_payload && dopost) {
 		if (asprintf(&a, "%s\1%s",
 			     incoming_url, incoming_payload) < 0)
 			i_printfExit(MSG_MemAllocError, 50);
+		if(pd == 1) {
+// turn utf8 back into individual bytes
+			char *s, *t;
+			s = t = a + strlen(incoming_url) + 1;
+			while(*s) {
+				uchar c = *s;
+				uchar d = s[1];
+				if(!c || (c&0xe0) == 0xe0 || (c&0xe0) == 0x80 ||
+				((c&0x80) && (d&0xc0) != 0x80)) {
+					debugPrint(1, "improper utf8 format in Uint8Array payload");
+					break;
+				}
+				if(c >= 0xc4) {
+					debugPrint(1, "nulls in Uint8Array payload");
+					break;
+				}
+				if(c < 0x80) { *t++ = c; ++s; continue; }
+				*t++ = ((d&0x3f) | (c<<6));
+				s += 2;
+			}
+			*t = 0;
+		}
 	} else {
 	a = cloneString(incoming_url);
 	}
 	JS_FreeCString(cx, incoming_payload);
-	JS_FreeCString(cx, incoming_method);
 	JS_FreeCString(cx, incoming_url);
 	incoming_url = a; // now it's our allocated string
 

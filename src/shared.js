@@ -2665,6 +2665,7 @@ return returnedHeaders.join("\r\n");
 
 function xml_send(data, parsedoc){
 if(parsedoc) alert3("xml parsedoc ignored");
+var w = my$win();
 var headerstring = "";
 for (var item in this.headers) {
 var v1=item;
@@ -2691,15 +2692,21 @@ data = encodeURI(data);
 // check the sanity of data
 if(data === null || data === undefined) data = "";
 var td = typeof data;
-if(td == "object" && data instanceof Uint8Array) {
-var s=""; for(var i=0; i<data.length; ++i) s += String.fromCharCode(data[i]);
+var pd = 0; // how to process the data
+if(td == "object" && data instanceof w.Uint8Array) {
+pd = 1;
+// Turn the byte array into utf8.
+// code 0 becomes code 256, so we don't have a problem with null bytes.
+var s="";
+for(var i=0; i<data.length; ++i)
+s += String.fromCharCode(data[i]?data[i]:256);
 td = typeof (data = s);
 }
 // what do we do about Uint16Array and Uint32Array?
 if(td != "string") {
 alert3("payload data has improper type " + td);
 }
-this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data);
+this.$entire =  eb$fetchHTTP.call(this, urlcopy,this.method,headerstring,data, pd);
 if(this.$entire != "async") this.parseResponse();
 };
 
