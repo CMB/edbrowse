@@ -194,7 +194,7 @@ const char *mailRedirect(const char *to, const char *from, const char *reply, co
 int runEbFunction(const char *line);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
-void readConfigFile(void);
+bool readConfigFile(void);
 const char *fetchReplace(const char *u);
 
 /* sourcefile=plugin.c */

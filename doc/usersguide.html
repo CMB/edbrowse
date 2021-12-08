@@ -3584,7 +3584,9 @@ You can switch to a new session, view, edit, save, and reapply the config file w
 The config file is in $HOME/.ebrc.
 The "eb" is shorthand for edbrowse.
 You cannot rename the config file; it is what it is.
-The location in Windows is different, but still based on $HOME.
+However, -c otherfile on the command line causes edbrowse to access a different config file.
+This option must precede any arguments.
+The config command, issued from within edbrowse, continues to access otherfile.
 
 <P>
 The config file is line oriented.
@@ -3596,7 +3598,7 @@ All other lines fall into one of 7 categories.
 <LI><P> Define an option using the keyword=value syntax.
 <LI><P> Define an edbrowse script that can be invoked from the command line
 or from another script.
-<LI><P> An edbrowse command, that becomes part of an edbrowse script.
+<LI><P> An edbrowse command, that is part of an edbrowse script.
 <LI><P> Establish an email account.
 This will be described later, under email clients.
 <LI><P> A mail filtering rule.

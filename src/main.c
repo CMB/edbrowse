@@ -1128,15 +1128,29 @@ struct DBTABLE *newTableDescriptor(const char *name)
 	return td;
 }
 
-static char *configMemory, *configEnd;
+static char *configEnd;
+static struct cfgFile {
+	struct cfgFile *next, *parent;
+	char *file, *end;
+	char *base; // base memory holding the file
+	char *lp; // line pointer
+	int ln; // line number
+} *cfgFirst;
+
 
 // unread the config file, so we can read it again
 void unreadConfigFile(void)
 {
-	if (!configMemory)
+	struct cfgFile *f = cfgFirst, *g;
+	if (!f)
 		return;
-	nzFree(configMemory);
-	configMemory = 0;
+	while(f) {
+		g = f->next;
+		free(f->base);
+		free(f);
+		f = g;
+}
+	cfgFirst = 0;
 
 	memset(accounts, 0, sizeof(accounts));
 	maxAccount = localAccount = 0;
@@ -1189,52 +1203,29 @@ static const char *const keywords[] = {
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
-#define cfgAbort0(m) { i_printf(m, configEnd); nl(); return; }
-#define cfgAbort1(m, arg) { i_printf(m, configEnd, arg); nl(); return; }
-#define cfgLine0(m) { i_printf(m, configEnd, ln); nl(); return; }
-#define cfgLine1(m, arg) { i_printf(m, configEnd, ln, arg); nl(); return; }
-#define cfgLine1a(m, arg) { i_printf(m, configEnd, arg, ln); nl(); return; }
+#define cfgAbort0(m) { i_printf(m, configEnd); nl(); return 0; }
+#define cfgAbort1(m, arg) { i_printf(m, configEnd, arg); nl(); return 0; }
+#define cfgLine0(m) { i_printf(m, configEnd, ln); nl(); return 0; }
+#define cfgLine1(m, arg) { i_printf(m, configEnd, ln, arg); nl(); return 0; }
+#define cfgLine1a(m, arg) { i_printf(m, configEnd, arg, ln); nl(); return 0; }
 
-void readConfigFile(void)
+static bool preConfigFile(char *buf, int buflen)
 {
-	char *buf, *s, *t, *v, *q;
-	int buflen, n;
-	char c, ftype;
+	char *s, *t, *v, *q;
+	int ln = 1;
 	bool cmt = false;
 	bool startline = true;
-	uchar mailblock = 0;
-	bool mimeblock = false, tabblock = false;
-	int nest, ln, j;
-	int sn = 0;		/* script number */
-	char stack[MAXNEST];
 	char last[24];
 	unsigned lidx = 0;
-	struct MACCOUNT *act;
-	struct MIMETYPE *mt;
-	struct DBTABLE *td;
-
-	unreadConfigFile();
-
-	if (!fileIntoMemory(configFile, &buf, &buflen)) {
-		i_printf(MSG_NoConfig, configFile);
-		return;
-	}
 
 /* An extra newline won't hurt. */
 	if (buflen && buf[buflen - 1] != '\n')
 		buf[buflen++] = '\n';
 
-// remember this allocated pointer in case we want to reset everything.
-	configMemory = buf;
-
-	configEnd = strrchr(configFile, '/');
-	configEnd = (configEnd ? configEnd + 1 : configFile);
-
 /* Undos, uncomment, watch for nulls */
 /* Encode mail{ as hex 81 m, and other encodings. */
-	ln = 1;
 	for (s = t = v = buf; s < buf + buflen; ++s) {
-		c = *s;
+		char c = *s;
 		if (c == '\0')
 			cfgLine0(MSG_EBRC_Nulls);
 		if (c == '\r' && s[1] == '\n')
@@ -1375,7 +1366,41 @@ void readConfigFile(void)
 putc:
 		*t++ = c;
 	}
-	*t = 0;			/* now it's a string */
+	*t = 0; // now it's a string
+	return true;
+}
+
+bool readConfigFile(void)
+{
+	char *buf, *s, *t, *v, *q;
+	int buflen, n;
+	char c, ftype;
+	uchar mailblock = 0;
+	bool mimeblock = false, tabblock = false;
+	int nest, ln, j;
+	int sn = 0;		/* script number */
+	char stack[MAXNEST];
+	struct MACCOUNT *act;
+	struct MIMETYPE *mt;
+	struct DBTABLE *td;
+	struct cfgFile *f;
+
+	unreadConfigFile();
+
+	if (!fileIntoMemory(configFile, &buf, &buflen)) {
+		i_printf(MSG_NoConfig, configFile);
+		return 0;
+	}
+
+	configEnd = strrchr(configFile, '/');
+	configEnd = (configEnd ? configEnd + 1 : configFile);
+	f = allocZeroMem(sizeof(struct cfgFile));
+	f->base = buf;
+	f->file = configFile, f->end = configEnd;
+	cfgFirst = f;
+
+	if(!preConfigFile(buf, buflen))
+		return 0;
 
 /* Go line by line */
 	ln = 1;
@@ -1945,6 +1970,7 @@ putback:
 
 	if (maxAccount && !localAccount)
 		localAccount = 1;
+	return true;
 }
 
 // local replacements for javascript and css
