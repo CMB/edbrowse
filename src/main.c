@@ -1984,13 +1984,13 @@ nokeyword:
 
 putback:
 		*t = '\n';
-	}			/* loop over lines */
+	}			// loop over lines
 
-	if((f = f->parent)) { // pop the stack
+	while((f = f->parent)) { // pop the stack
 		configEnd = f->end;
 		buf = f->base;
 		s = f->lp, ln = f->ln;
-		goto inside;
+		if(*s) goto inside;
 	}
 
 	if (nest)
