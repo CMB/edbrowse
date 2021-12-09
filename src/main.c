@@ -1198,8 +1198,8 @@ static const char *const keywords[] = {
 	"jar", "nojs", "cachedir",
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
-	"adbook", "envelope", "emojis", "emoji", 0
-};
+	"adbook", "envelope", "emojis", "emoji",
+"include", 0};
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
@@ -1372,8 +1372,8 @@ putc:
 
 bool readConfigFile(void)
 {
-	char *buf, *s, *t, *v, *q;
-	int buflen, n;
+	char *buf, *incbuf, *s, *t, *v, *q;
+	int buflen, inclen, n;
 	char c, ftype;
 	uchar mailblock = 0;
 	bool mimeblock = false, tabblock = false;
@@ -1383,7 +1383,7 @@ bool readConfigFile(void)
 	struct MACCOUNT *act;
 	struct MIMETYPE *mt;
 	struct DBTABLE *td;
-	struct cfgFile *f;
+	struct cfgFile *f, *g;
 
 	unreadConfigFile();
 
@@ -1402,12 +1402,14 @@ bool readConfigFile(void)
 	if(!preConfigFile(buf, buflen))
 		return 0;
 
-/* Go line by line */
 	ln = 1;
 	nest = 0;
 	stack[0] = ' ';
 
+top:
+/* Go line by line */
 	for (s = buf; *s; s = t + 1, ++ln) {
+inside:
 		t = strchr(s, '\n');
 		if (t == s)
 			continue;	/* empty line */
@@ -1765,6 +1767,28 @@ bool readConfigFile(void)
 			loadEmojis();
 			continue;
 
+		case 44: // include
+			if(!fileIntoMemory(v, &incbuf, &inclen)) {
+				showError();
+				setError(-1);
+				continue;
+			}
+			if(!preConfigFile(incbuf, inclen))
+				continue;
+			f->lp = t + 1;
+			f->ln = ln + 1;
+			g = allocZeroMem(sizeof(struct cfgFile));
+			g->base = incbuf;
+			configEnd = strrchr(v, '/');
+			configEnd = (configEnd ? configEnd + 1 : v);
+			g->file = v, g->end = configEnd;
+			buf = incbuf;
+			ln = 1;
+			g->parent = f;
+			g->next = cfgFirst, cfgFirst = g;
+			f = g;
+			goto top;
+
 		default:
 			cfgLine1(MSG_EBRC_KeywordNYI, s);
 		}		/* switch */
@@ -1961,6 +1985,13 @@ nokeyword:
 putback:
 		*t = '\n';
 	}			/* loop over lines */
+
+	if((f = f->parent)) { // pop the stack
+		configEnd = f->end;
+		buf = f->base;
+		s = f->lp, ln = f->ln;
+		goto inside;
+	}
 
 	if (nest)
 		cfgAbort1(MSG_EBRC_FnNotClosed, ebhosts[sn].prot + 1);

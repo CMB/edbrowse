@@ -3881,10 +3881,19 @@ You can send Fred's name, as the intended recipient, buy using a greater than si
 fred : fred.flintstone@bedrock.us&gt;Fred W. Flintstone : 226 cobblestone way : 5553827
 
 <P>
-emojis = /home/mylogin/.ebsys/Emojis.txt
+emoji = /home/mylogin/.ebsys/Emojis.txt
 <P>
 Specify a library of emojis for edbrowse.
 This was described in the Emojis section.
+
+<P>
+include = /home/mylogin/.ebsys/plugins
+<P>
+Include another file, like #include in C, or include() in m4.
+This can be used to modularize your edbrowse settings:
+mail accounts and filters in one file, plugins in another, functions in another etc.
+However, edbrowse -c only brings up the base config file, and would not provide direct access to these other files.
+So it is a matter of taste; some people use this feature and some don't.
 
 <H3> <A NAME=agent> User Agent </A> </H3>
 
