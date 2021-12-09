@@ -4446,20 +4446,8 @@ static int twoLetter(const char *line, const char **runThis)
 	if (stringEqual(line, "qt"))
 		ebClose(0);
 
-	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
-	    && !line[3]) {
-		if(!inInitFunction)
-			debugLevel = line[2] - '0';
-		return true;
-	}
-
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
-		return true;
-	}
-
-	if(stringEqual(line, "db")) {
-		printf("%d\n", debugLevel);
 		return true;
 	}
 
@@ -5525,6 +5513,26 @@ no_action:
 	return 2;		/* no change */
 }
 
+// these two-letter commands are ok to run even in a g/re/ construct.
+// There aren't very many of them.
+static int twoLetterG(const char *line, const char **runThis)
+{
+
+	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
+	    && !line[3]) {
+		if(!inInitFunction)
+			debugLevel = line[2] - '0';
+		return true;
+	}
+
+	if(stringEqual(line, "db")) {
+		printf("%d\n", debugLevel);
+		return true;
+	}
+
+	return 2;		/* no change */
+}
+
 /* Return the number of unbalanced punctuation marks.
  * This is used by the next routine. */
 static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
@@ -5940,6 +5948,10 @@ bool runCommand(const char *line)
 		if (j != 2)
 			return j;
 	}
+
+	j = twoLetterG(line, &line);
+	if (j != 2)
+		return j;
 
 	if (first == '!')
 		return shellEscape(line + 1);
