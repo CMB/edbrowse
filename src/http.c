@@ -2572,6 +2572,30 @@ prettify_network_text(const char *text, size_t size, FILE * destination)
 	}
 }
 
+static void
+prettify_network_data(const char *s, size_t size, FILE * destination)
+{
+	size_t i;
+	if(size > 4000) {
+		printf("length %d\n", size);
+		return;
+	}
+
+// if it happens to be ascii then roll with that.
+	for(i = 0; i < size; ++i)
+		if((signed char)s[i] <= 0)
+			goto nonascii;
+	prettify_network_text(s, size, destination);
+	if(size && s[size - 1] != '\n')
+	fprintf(destination, "\n");
+	return;
+
+nonascii:
+	for(i = 0; i < size; ++i)
+		fprintf(destination, "%02x", (uchar)s[i]);
+	fprintf(destination, "\n");
+}
+
 /* Print incoming and outgoing headers.
  * Incoming headers are prefixed with curl<, and outgoing headers are
  * prefixed with curl> 
@@ -2599,6 +2623,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 	if (debugLevel < 4)
 		return 0;
 
+// incoming headers seem to come in several small bursts.
 	if (info_desc == CURLINFO_HEADER_OUT) {
 		fprintf(f, "curl>\n");
 		prettify_network_text(data, size, f);
@@ -2606,6 +2631,9 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		if (!g->last_curlin)
 			fprintf(f, "curl<\n");
 		prettify_network_text(data, size, f);
+	} else if (info_desc == CURLINFO_DATA_OUT) {
+			fprintf(f, "curl+\n");
+		prettify_network_data(data, size, f);
 	}
 
 	if (info_desc == CURLINFO_HEADER_IN)
