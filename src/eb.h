@@ -444,6 +444,7 @@ struct ebWindow {
 	int dot, dol;
 /* remember dot and dol for the raw text, when in browse mode */
 	int r_dot, r_dol;
+	int f_dot; // foreward dot, in case we browse again
 	struct ebFrame f0; /* first frame */
 	struct ebFrame *jdb_frame; // if in jdb mode
 	char *referrer; // another web page that brought this one to life

@@ -4777,6 +4777,7 @@ pwd:
 		if (ub) {
 			debrowseSuffix(cf->fileName);
 			cw->nlMode = cw->rnlMode;
+			cw->f_dot = cw->dot;
 			cw->dot = cw->r_dot, cw->dol = cw->r_dol;
 			memcpy(cw->labels, cw->r_labels, sizeof(cw->labels));
 			freeWindowLines(cw->map);
@@ -4784,6 +4785,7 @@ pwd:
 			cw->r_map = 0;
 		} else {
 et_go:
+			cw->f_dot = 0;
 			for (i = 1; i <= cw->dol; ++i)
 				removeHiddenNumbers(cw->map[i].text, '\n');
 			freeWindowLines(cw->r_map);
@@ -7423,6 +7425,8 @@ browse:
 				return true;
 			}
 			redirect_count = save_count;
+			if(cw->f_dot && cw->f_dot <= cw->dol)
+				cw->dot = cw->f_dot;
 		} else if (!first) {
 			setError(MSG_BrowseAlready);
 			return false;
