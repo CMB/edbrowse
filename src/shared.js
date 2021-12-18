@@ -193,6 +193,8 @@ alert(".   ub   ci+   /<head/r from   w base   qt");
 }
 
 // called internally when we are running a snapshot.
+// I believe this is harmless if not running a snapshot,
+// but you have a jslocal file nonetheless.
 function eb$base$snapshot() {
 var w = my$win(), d = my$doc();
 d.URL = w.eb$base;

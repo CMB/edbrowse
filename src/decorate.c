@@ -1102,7 +1102,7 @@ static void link_css(Tag *t)
 	const char *a;
 	const char *a1 = attribVal(t, "type");
 	const char *a2 = attribVal(t, "rel");
-	const char *altsource;
+	const char *altsource, *realsource;
 
 	if (a1)
 		set_property_string_t(t, "type", a1);
@@ -1117,11 +1117,10 @@ static void link_css(Tag *t)
 // Fetch the css file so we can apply its attributes.
 	a = NULL;
 	altsource = fetchReplace(t->href);
-	if (!altsource)
-		altsource = t->href;
-	if (browseLocal && !isURL(altsource)) {
-		debugPrint(3, "css source %s", altsource);
-		if (!fileIntoMemory(altsource, &b, &blen)) {
+	realsource = (altsource ? altsource : t->href);
+	if ((browseLocal || altsource) && !isURL(realsource)) {
+		debugPrint(3, "css source %s", realsource);
+		if (!fileIntoMemory(realsource, &b, &blen)) {
 			if (debugLevel >= 1)
 				i_printf(MSG_GetLocalCSS);
 		} else {

@@ -2018,10 +2018,6 @@ const char *fetchReplace(const char *u)
 	int l;
 	if (!j)
 		return 0;	// high runner case
-// This feature only works if you are browsing a local website.
-// Save the home page to a file called base, add a <base> tag, and browse that.
-	if (!browseLocal)
-		return 0;
 	s = strchr(u, '?');
 	l = (s ? s - u : (int)strlen(u));
 	while (j) {

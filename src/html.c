@@ -527,18 +527,17 @@ void prepareScript(Tag *t)
 	}
 
 	if (t->href) {		/* fetch the javascript page */
-		const char *altsource = 0;
+		const char *altsource = 0, *realsource = 0;
 		bool from_data;
 		if (!javaOK(t->href))
 			goto fail;
 		from_data = isDataURI(t->href);
 		if (!from_data) {
 			altsource = fetchReplace(t->href);
-			if (!altsource)
-				altsource = t->href;
+			realsource = (altsource ? altsource : t->href);
 		}
 		debugPrint(3, "js source %s",
-			   !from_data ? altsource : "data URI");
+			   !from_data ? realsource : "data URI");
 		if (from_data) {
 			char *mediatype;
 			int data_l = 0;
@@ -551,8 +550,8 @@ void prepareScript(Tag *t)
 					   "Unable to parse data URI containing JavaScript");
 				goto fail;
 			}
-		} else if (browseLocal && !isURL(altsource)) {
-			char *h = cloneString(altsource);
+		} else if ((browseLocal || altsource) && !isURL(realsource)) {
+			char *h = cloneString(realsource);
 			unpercentString(h);
 			if (!fileIntoMemory(h, &b, &blen)) {
 				if (debugLevel >= 1)
@@ -580,7 +579,7 @@ void prepareScript(Tag *t)
 			    && !pthread_create(&t->loadthread, NULL,
 					       httpConnectBack2, (void *)t)) {
 				t->js_ln = 1;
-				js_file = altsource;
+				js_file = realsource;
 				filepart = getFileURL(js_file, true);
 				t->js_file = cloneString(filepart);
 // stop here and wait for the child process to download
@@ -590,7 +589,7 @@ void prepareScript(Tag *t)
 			memset(&g, 0, sizeof(g));
 			g.thisfile = f->fileName;
 			g.uriEncoded = true;
-			g.url = t->href;
+			g.url = realsource;
 			if (!httpConnect(&g)) {
 				if (debugLevel >= 3)
 					i_printf(MSG_GetJS2);
@@ -609,7 +608,7 @@ void prepareScript(Tag *t)
 			}
 		}
 		t->js_ln = 1;
-		js_file = (!from_data ? altsource : "data_URI");
+		js_file = (!from_data ? realsource : "data_URI");
 	} else {
 		js_text = t->textval;
 		t->textval = 0;
