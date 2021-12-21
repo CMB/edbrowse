@@ -3,7 +3,14 @@
 #  You need to do this before you build and install quickjs.
 
 p1=`pwd`
+p2=${p1/%edbrowse/quickjs}
+if [ "$p2" = "$p1" ]; then
 p2=${p1/%edbrowse\/*/quickjs}
+fi
+if [ "$p2" = "$p1" ]; then
+echo "current directory $p1 is not in the edbrowse tree"
+exit 1
+fi
 if [ ! -d "$p2" ] ; then
 echo "no such directory $p2"
 exit 1
