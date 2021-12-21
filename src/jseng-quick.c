@@ -2959,10 +2959,12 @@ static JSValue nat_cssText(JSContext * cx, JSValueConst this, int argc, JSValueC
 	return JS_UNDEFINED;
 }
 
+extern int JSRuntimeJobIndex;
+
 /*********************************************************************
 Ok, I have some splainin to do.
 The quickjs function JS_ExecutePendingJob() executes the next pending job,
-usually from a Promise call. It can be in any context.
+usually from a Promise call. It could be in any context.
 We have no control over that.
 Thus it could be a promise call from any edbrowse frame in any session.
 That's not enough control for us, for many reasons.
@@ -3001,19 +3003,16 @@ But the real problem is the JSRuntime. The API leaves it opaque,
 struct JSRuntime, with no mention of the members.
 I have to know where, in this structure, to find the list of jobs.
 And that could change version to version.
-So, gross as it is, I dip into quickjs.c and pull out the struct.
+So, gross as it is, I dip into quickjs.c and set a global variable,
+that tells me where job_list is in the structure.
+You must run ../tools/quickjobfixup before you compile and install quickjs,
+or JSRuntimeJobIndex will be undefined, and edbrowse will not link.
 That means quickjs.c has to be there.
 As of this writing, quickjs is not packaged or distributed.
 You have to build it from source, just like edbrowse.
-It is then not unreasonable for me to dip into that source if I need to,
+It is then not unreasonable for me to modify that source if I need to,
 and apparently I need to,
 and I assume that source is in a directory parallel to edbrowse.
-I sanitize the struct along the way, so I don't have to have all the typedefs.
-Example: SnorkHork *foo may as well be void *foo for all I care.
-Long as I keep job_list in position.
-And I don't need anything beyond job_list.
-A sed script takes care of this.
-See make-helper.sed
 This is all a lot more involved than it should be.
 Ok, here is some stuffe from quickjs/list.h.
 *********************************************************************/
@@ -3052,8 +3051,6 @@ typedef struct JSJobEntry {
     JSValue argv[0];
 } JSJobEntry;
 
-#include "modified_runtime.h"
-
 void my_ExecutePendingJobs(void)
 {
     JSContext *ctx;
@@ -3061,14 +3058,14 @@ void my_ExecutePendingJobs(void)
 				struct list_head *l, *l1;
     JSValue res;
     int i, safety = 0;
-	struct modifiedRuntime *mrt = (struct modifiedRuntime *) jsrt;
+	struct list_head *jl = (struct list_head *)((char*)jsrt + JSRuntimeJobIndex);
 
 // high runner case
-    if (list_empty(&mrt->job_list))
+    if (list_empty(jl))
         return;
 
 // step through the jobs
-    list_for_each_safe(l, l1, &mrt->job_list) {
+    list_for_each_safe(l, l1, jl) {
 	if(safety == 4) // I'm only going to do four of these
 	    break;
 	e = list_entry(l, JSJobEntry, link);
@@ -3115,12 +3112,12 @@ void delPendings(const Frame *f)
     JSJobEntry *e;
 				struct list_head *l, *l1;
     int i, ret, delcount = 0;
-	struct modifiedRuntime *mrt = (struct modifiedRuntime *) jsrt;
+	struct list_head *jl = (struct list_head *)((char*)jsrt + JSRuntimeJobIndex);
 
     if(!f->jslink)
 	return;
 
-    list_for_each_safe(l, l1, &mrt->job_list) {
+    list_for_each_safe(l, l1, jl) {
 	e = list_entry(l, JSJobEntry, link);
 	if (f->cx != e->ctx)
 	    continue;
@@ -3259,6 +3256,7 @@ JSValue mwo; // master window object
 	JSValue r;
 	if(js_running)
 		return;
+	debugPrint(3, "JSRuntimeJobIndex is %d", JSRuntimeJobIndex);
 	jsrt = JS_NewRuntime();
 	if (!jsrt) {
 		fprintf(stderr, "Cannot create javascript runtime environment\n");

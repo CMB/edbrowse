@@ -126,6 +126,9 @@ quickjs:
 This is the javascript engine for edbrowse.
 It is probably not packaged.
 git clone https://github.com/bellard/quickjs
+WARNING, (robot waving his arms about in the air), WARNING.
+You must run edbrowse/tools/quickjobfixup before you build and install quickjs.
+If you don't, JSRuntimeJob Index will be undefined, and edbrowse won't link.
 cd quickjs
 make
 make install  # as root
