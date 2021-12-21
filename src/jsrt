@@ -913,6 +913,24 @@ if(document.styleSheets[0].cssRules[0].cssText.substr(0,4) != "body") fail(180);
 mcp = new MessageChannel();
 mcp.port2.start();
 
+// promise test, you have to exercise this interactively.
+pmc = 0; // promise count
+function pmf(e) { // promise called function
+alert("with " + e + " count " + ++pmc);
+return 75;
+}
+function promiseTest() {
+var p = Promise.resolve(63);
+// invoke p twice, each time resolve with 63, count should be 1 and 2.
+// Last invokation capture the returned promise object.
+p.then(pmf);
+var q = p.then(pmf);
+// because pmf returns 75, that is the resolve of promise q. Let's see it.
+q.then(pmf);
+// If you run it again you'll see the same with values but the counter will step along.
+}
+
+
 </script>
 
 </body>
