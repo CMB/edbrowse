@@ -28,7 +28,7 @@ ed "$p3" <<'!'
 a
 
 // Tell edbrowse where the jobs field is within this structure.
-int JSRuntimeJobIndex = (int) &(((struct JSRuntime *)0)->job_list);
+int JSRuntimeJobIndex = (int) offsetof(struct JSRuntime, job_list);
 .
 w
 q
