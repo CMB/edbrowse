@@ -1422,7 +1422,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_MUSIC:
-		domLink(t, "Audio", "src", 0, 0, 4);
+		domLink(t, "HTMLAudioElement", "src", 0, 0, 4);
 		break;
 
 	case TAGACT_BASE:

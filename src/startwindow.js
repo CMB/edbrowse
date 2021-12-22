@@ -744,10 +744,24 @@ HTMLScriptElement.prototype.type = "";
 HTMLScriptElement.prototype.text = "";
 z$Timer = function(){this.nodeName = "TIMER"};
 z$Timer.prototype.dom$class = "Timer";
-z$Audio = function(){};
-z$Audio.prototype = new HTMLElement;
-z$Audio.prototype.dom$class = "Audio";
-z$Audio.prototype.play = eb$voidfunction;
+HTMLMediaElement = function(){}
+HTMLMediaElement.prototype = new HTMLElement;
+HTMLMediaElement.prototype.dom$class = "Media";
+HTMLMediaElement.prototype.autoplay = false;
+HTMLMediaElement.prototype.muted = false;
+HTMLMediaElement.prototype.defaultMuted = false;
+HTMLMediaElement.prototype.paused = false;
+HTMLMediaElement.prototype.audioTracks = [];
+HTMLMediaElement.prototype.videoTracks = [];
+HTMLMediaElement.prototype.textTracks = [];
+HTMLMediaElement.prototype.controls = false;
+HTMLMediaElement.prototype.controller = null;
+HTMLMediaElement.prototype.volume = 1.0;
+HTMLMediaElement.prototype.play = eb$voidfunction;
+HTMLMediaElement.prototype.pause = eb$voidfunction;
+HTMLAudioElement = function(){}
+HTMLAudioElement.prototype = new HTMLMediaElement;
+HTMLAudioElement.prototype.dom$class = "Audio";
 
 // the performance registry
 pf$registry = {mark:{},measure:{},measure0:{},resourceTiming:{}};
@@ -875,7 +889,7 @@ everything else is a guess.
 *********************************************************************/
 
 ; (function() {
-var cnlist = ["HTMLFormElement", "HTMLImageElement", "HTMLScriptElement", "HTMLBaseElement", "HTMLLinkElement", "z$Audio"];
+var cnlist = ["HTMLFormElement", "HTMLImageElement", "HTMLScriptElement", "HTMLBaseElement", "HTMLLinkElement", "HTMLMediaElement"];
 var ulist = ["action", "src", "src", "href", "href", "src"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i]; // class name
@@ -1974,7 +1988,7 @@ case "caption": c = new z$tCap; break;
 case "thead": c = new z$tHead; break;
 case "tfoot": c = new z$tFoot; break;
 case "canvas": c = new HTMLCanvasElement; break;
-case "audio": case "video": c = new z$Audio; break;
+case "audio": case "video": c = new HTMLAudioElement; break;
 case "document": c = new Document; break;
 case "fragment": c = new DocumentFragment; break;
 case "frame": c = new HTMLFrameElement; break;
