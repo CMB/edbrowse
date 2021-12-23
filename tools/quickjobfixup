@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #  add a line to quickjs.c, after struct JSRuntime,
 #  to tell edbrowse where the pending jobs are in that structure.
 #  You need to do this before you build and install quickjs.

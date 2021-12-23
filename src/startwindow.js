@@ -993,11 +993,18 @@ return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADE
 
 onmessage$$queue = [];
 function  postMessage(message,target_origin, transfer) {
-if (this.location.protocol + "//" + this.location.hostname == target_origin || target_origin == "*") {
+var locstring = this.location.protocol + "//" + this.location.hostname + ":" + this.location.port;
+if(target_origin != '*' && !target_origin.match(/:\d*$/)) {
+// paste on a default port
+var target_protocol = target_origin.replace(/:.*/, ":");
+var standard_port = mw$.setDefaultPort(target_protocol);
+target_origin += ":" + standard_port;
+}
+if (target_origin == locstring || target_origin == "*") {
 var me = new Event;
-me.name = "message";
-me.type = "message";
-me.origin = this.location.protocol + "//" + this.location.hostname;
+me.name = me.type = "message";
+var l = my$win().location;
+me.origin = l.protocol + "//" + l.hostname + ":" + l.port;
 me.data = message;
 me.source = my$win();
 if(transfer) {
@@ -1011,7 +1018,9 @@ alert3("posting message of length " + message.length + " to window context " + t
 (message.length >= 200 ? "long" : message)
 + "↑");
 } else {
-alert3("postMessage mismatch " + this.location.protocol + "//" + this.location.hostname + " | " + target_origin);
+alert3("postMessage mismatch " + locstring + " | " + target_origin + " carrying ↑" +
+(message.length >= 200 ? "long" : message)
++ "↑");
 }
 }
 Object.defineProperty(window, "onmessage$$queue", {writable:false,configurable:false});
