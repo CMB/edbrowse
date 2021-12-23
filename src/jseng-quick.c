@@ -932,6 +932,10 @@ void run_function_onestring_win(const Frame *f, const char *name, const char *s)
 	run_function_onestring(f->cx, *((JSValue*)f->winobj), name, s);
 }
 
+static 	const char *bp_string =
+	  ";(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
+static 	const char *trace_string =
+	  ";(function(arg$,l$ne){ if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
 static char *run_script(JSContext *cx, const char *s)
 {
 	char *result = 0;
@@ -947,12 +951,6 @@ static char *run_script(JSContext *cx, const char *s)
 	if (strstr(s, "bp@(") || strstr(s, "trace@(")) {
 		int l;
 		const char *u, *v1, *v2;
-		const char * bp_string, *trace_string;
-
-		bp_string =
-			  ";(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
-		trace_string =
-			  ";(function(arg$,l$ne){ if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne); return; } if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
 
 		s2 = initString(&l);
 		u = s;
@@ -3340,8 +3338,47 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 // shared functions and classes
 	jsSourceFile = "shared.js";
 	jsLineno = 1;
-	r = JS_Eval(mwc, sharedJS, strlen(sharedJS),
-	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+
+	if (strstr(sharedJS, "bp@(")) {
+		const char *s, *u, *v1, *v2;
+		bool commapresent;
+		int l;
+		char *s2 = initString(&l);
+		u = s = sharedJS;
+		while (true) {
+			v1 = strstr(u, "bp@(");
+			if (!v1)
+				break;
+			stringAndBytes(&s2, &l, u, v1 - u);
+// The macros for bp and trace start and end with ;
+// That keeps them separate from what goes on around them.
+// But it also makes it impossible to write exp,exp,bp@(huh),exp
+// watch for comma on either side, and if so, omit the ;
+			while(l && s2[l-1] == ' ')
+				s2[--l] = 0;
+			commapresent = (l && s2[l-1] == ',');
+			stringAndString(&s2, &l,  bp_string + commapresent);
+// paste in the argument to bp@(x)
+			v1 = strchr(v1, '(') + 1;
+			v2 = strchr(v1, ')');
+			stringAndBytes(&s2, &l, v1, v2 - v1);
+			stringAndString(&s2, &l, "\");");
+			u = ++v2;
+			while(*u == ' ') ++u;
+			if(*u == ',' || *u == ';') {
+// commapresent on the other side, don't need trailing ;
+				s2[--l] = 0;
+			}
+		}
+		stringAndString(&s2, &l, u);
+		r = JS_Eval(mwc, s2, l,
+		jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+		nzFree(s2);
+	} else {
+		r = JS_Eval(mwc, sharedJS, strlen(sharedJS),
+		jsSourceFile, JS_EVAL_TYPE_GLOBAL);
+	}
+
 // If you want to see the errors, you have to run 3dbrowse -db3
 // cause this stuff starts from main().
 	if(JS_IsException(r))
