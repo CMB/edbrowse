@@ -2401,20 +2401,17 @@ https://www.paypal.com/auth/createchallenge/381145a4bcdc015f/recaptchav3.js
 I can put it back the way it was, or just not deminimize that particular script.
 There are pros and cons either way.
 For now I'm taking the simpler approach, and leaving the script alone.
-Watch for the compact removeCookie function, that is my flag.
-There may be other obfuscators out there, and other cleanup
-procedures that we have to endure, and maintain, as the obfuscators evolve.
+I use to watch for the compact removeCookie function,
+but they changed that, no doubt change the code from time to time,
+so nobody can figure it out.
+That leaves me to check the filename, which isn't great either cause
+some other website could use the same code under a different filename.
 *********************************************************************/
 
-if(s.text.indexOf("removeCookie':function(){return'dev'") > 0) {
-alert("deminimization skipped due to removeCookie test");
+if(s.src.indexOf("/recaptcha") > 0) {
+alert("deminimization skipped due to /recaptcha in filename");
 return;
 }
-/* If you wanna fix this one after the fact:
-var trouble = /'removeCookie': *function *\(\)\ *{\n *return *'dev';\n *}/;
-if(trouble.test(s.text))
-s.text = s.text.replace(trouble, "'removeCookie':function(){return'dev';}");
-*/
 
 // Ok, run it through the deminimizer.
 if(self.escodegen) {
@@ -2431,6 +2428,7 @@ alert("deminimization not available");
 function addTrace(s) {
 if( s.dom$class != "HTMLScriptElement") return;
 if(! s.text) return;
+if(s.src.indexOf("/recaptcha") > 0) return;
 if(s.text.indexOf("trace"+"@(") >= 0) // already traced
 return;
 var w = my$win();
@@ -3447,8 +3445,12 @@ this.onmessage$$queue.splice(0, 1);
 // if you then add another handler, it won't run on this message.
 // I assume you add all the handlers you wish in one go,
 // then they process each message in the queue, and each message going forward.
-alert3(this.nodeName + " context " + this.eb$ctx + " processes message of length " + me.data.length + " ↑" +
-(me.data.length >= 200 ? "long" : me.data) + "↑");
+var datashow = me.data;
+var datalength = 0;
+if(typeof me.data == "string") datalength = me.data.length;
+if(datalength >= 200) datashow = "long";
+alert3(this.nodeName + " context " + this.eb$ctx + " processes message of length " + datalength + " ↑" +
+datashow + "↑");
 if(this.onmessage)
 this.onmessage(me);
 else
@@ -3483,9 +3485,12 @@ p.dispatchEvent = function (me) {
 me.name = me.type = "message";
 // me.data is already set
 this.onmessage$$queue.push(me);
-alert3("posting message of length " + me.data.length + " to port context " + this.eb$ctx + " ↑" +
-(me.data.length >= 200 ? "long" : me.data)
-+ "↑");
+var datashow = me.data;
+var datalength = 0;
+if(typeof me.data == "string") datalength = me.data.length;
+if(datalength >= 200) datashow = "long";
+alert3("posting message of length " + datalength + " to port context " + this.eb$ctx + " ↑" +
+datashow + "↑");
 return true;
 };
 p.postMessage = function (message) {
