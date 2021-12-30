@@ -1399,11 +1399,11 @@ static int *nextLabel(int *label)
 	if (label == NULL)
 		return cw->labels;
 
-	if (label >= cw->labels && label - cw->labels < MARKLETTERS)
+	if (label >= cw->labels && label < cw->labels + MARKLETTERS - 1)
 		return label + 1;
 
 	/* first history label */
-	if (label - cw->labels == MARKLETTERS)
+	if (label == cw->labels + MARKLETTERS - 1)
 		return (int *)cw->histLabel;
 
 	/* previous history label. */
