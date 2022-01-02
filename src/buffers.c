@@ -748,7 +748,7 @@ addchar:
 		if (jdb_passthrough(s))
 			goto eb_line;
 		cf = cw->jdb_frame;
-		if (stringEqual(s, ".") || stringEqual(s, "bye")) {
+		if (stringEqual(s, "bye")) {
 			cw->jdb_frame = NULL;
 			puts("bye");
 			jSideEffects();
