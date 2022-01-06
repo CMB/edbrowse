@@ -1798,8 +1798,6 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 		if (inputDisabled(t))
 			continue;
 		name = t->name;
-		if (!name)
-			name = t->id;
 		if (!name || !*name)
 			continue;
 
