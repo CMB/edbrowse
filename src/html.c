@@ -1800,8 +1800,8 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 		name = t->name;
 		if (!name)
 			name = t->id;
-		if (!name)
-			name = emptyString;
+		if (!name || !*name)
+			continue;
 
 		if (t == submit) {	/* the submit button you pushed */
 			int namelen;
