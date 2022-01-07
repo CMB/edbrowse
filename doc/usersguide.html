@@ -689,6 +689,8 @@ g : go to the link on the current line
 <br>selsep=| : change the separator between items in a select list
 <br>selsep= : print the separator
 <br>i&lt;5 : read buffer 5 into the text input field, one line of text
+<br>i&lt;5@3 : read line 3 from buffer 5 into the text input field
+<br>i&lt;5@'c : read line label c from buffer 5 into the text input field
 <br>i&lt;foo : read file foo into the text input field, one line of text
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
@@ -2758,6 +2760,8 @@ Users rarely run in debug mode, so this is not an issue.
 <P>
 You can use i&lt;7 to pull the contents of session 7 into the current input field.
 Session 7 must have one line of text only.
+Use i&lt;7@39 to read in line 39, or i&lt;7@'c to read in the line at label c.
++ - . and $ are also allowed.
 Similarly, i&lt;filename reads the contents of the file into the current input field.
 Only the first line of text is read.
 The filename is expanded in the usual way.

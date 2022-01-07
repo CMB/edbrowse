@@ -399,7 +399,7 @@ static void gotoLocation(char *url, int delay, bool rf)
 void htmlMetaHelper(const Tag *t)
 {
 	char *name;
-	const char *content, *heq;
+	const char *content, *heq, *charset;
 	char **ptr;
 	char *copy = 0;
 
@@ -408,6 +408,11 @@ void htmlMetaHelper(const Tag *t)
  * I think the frame is correct anyways, because we are parsing html,
  * but just to be safe ... */
 	cf = t->f0;
+
+// if multiple charsets, the first one wins
+	charset = attribVal(t, "charset");
+	if(charset && *charset && !cf->charset)
+		cf->charset = charset;
 
 	name = t->name;
 	content = attribVal(t, "content");
@@ -1831,6 +1836,13 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 			if (itype == INP_CHECKBOX && value == 0)
 				value = "on";
 			goto success;
+		}
+
+// special case for charset
+		if(itype == INP_HIDDEN && stringEqualCI(name, "_charset_")) {
+			if((value = cf->charset))
+				goto success;
+			continue;
 		}
 
 		if (itype < INP_FILE) {

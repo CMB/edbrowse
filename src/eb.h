@@ -398,9 +398,10 @@ struct ebFrame {
 	struct ebWindow *owner;
 	struct htmlTag *frametag;
 	int gsn; // global sequence number
-	char *fileName;		/* name of file or url */
+	char *fileName;		// name of file or url
 	char *firstURL;		// before http redirection
 	char *hbase; /* base for href references */
+	const char *charset;		// charset for this page
 	bool render1; // rendered via protocol or urlmatch
 	bool render2; // rendered via suffix
 	bool render1b;

@@ -361,7 +361,7 @@ int stringIsNum(const char *s)
 	if (*s)
 		return -1;
 	return n;
-}				/* stringIsNum */
+}
 
 bool stringIsDate(const char *s)
 {
@@ -391,7 +391,7 @@ bool stringIsDate(const char *s)
 	if (*s)
 		return false;
 	return true;
-}				/* stringIsDate */
+}
 
 bool stringIsFloat(const char *s, double *dp)
 {
@@ -400,7 +400,7 @@ bool stringIsFloat(const char *s, double *dp)
 	if (*t)
 		return false;	/* extra stuff at the end */
 	return true;
-}				/* stringIsFloat */
+}
 
 bool memEqualCI(const char *s, const char *t, int len)
 {
@@ -420,7 +420,7 @@ bool memEqualCI(const char *s, const char *t, int len)
 		++s, ++t;
 	}
 	return true;
-}				/* memEqualCI */
+}
 
 bool stringEqual(const char *s, const char *t)
 {
@@ -432,7 +432,7 @@ bool stringEqual(const char *s, const char *t)
 	if (strcmp(s, t))
 		return false;
 	return true;
-}				/* stringEqual */
+}
 
 bool stringEqualCI(const char *s, const char *t)
 {
@@ -457,7 +457,7 @@ bool stringEqualCI(const char *s, const char *t)
 	if (*t)
 		return false;
 	return true;
-}				/* stringEqualCI */
+}
 
 // a text line in the buffer isn't a string; you can't use strstr.
 // It ends in \n

@@ -4350,14 +4350,16 @@ static char *lessFile(const char *line)
 {
 	bool fromfile = false;
 	int j, n;
+	int lno = 1; // line number
+	const Window *w2; // far window
 	char *line2;
 	skipWhite(&line);
 	if (!*line) {
 		setError(MSG_NoFileSpecified);
 		return 0;
 	}
-	n = stringIsNum(line);
-	if (n >= 0) {
+	if(isdigitByte(line[0]) && (n = strtol(line, (char**)&line, 10)) >= 0 &&
+	(*line == 0 || *line == '@')) {
 		char *p;
 		int plen, dol;
 		if (!cxCompare(n) || !cxActive(n, true))
@@ -4367,11 +4369,41 @@ static char *lessFile(const char *line)
 			setError(MSG_BufferXEmpty, n);
 			return 0;
 		}
-		if (dol > 1) {
+		if (dol > 1 && !*line) {
 			setError(MSG_BufferXLines, n);
 			return 0;
 		}
-		p = (char *)fetchLineContext(1, 1, n);
+		p = (char*)line; // shorthand
+		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
+		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
+		(isdigit(p[1]) && (lno = stringIsNum(p+1)) >= 0))) {
+			w2 = sessionList[n].lw;
+			if(p[1] == '\'' &&
+			!(lno = w2->labels[p[2] - 'a'])) {
+				setError(MSG_NoLabel, p[2]);
+				return 0;
+			}
+			if(p[1] == '$')
+				lno = w2->dol;
+			if(p[1] == '.')
+				lno = w2->dot;
+			if(p[1] == '+')
+				lno = w2->dot + 1;
+			if(p[1] == '-')
+				lno = w2->dot - 1;
+			if(lno > w2->dol) {
+				setError(MSG_LineHigh);
+				return 0;
+			}
+			if(lno == 0) {
+				setError(MSG_AtLine0);
+				return 0;
+			}
+		} else if(*p == '@') {
+			setError(MSG_AtSyntax);
+			return 0;
+		}
+		p = (char *)fetchLineContext(lno, 1, n);
 		plen = pstLength((pst) p);
 		line2 = allocMem(plen + 1);
 		memcpy(line2, p, plen);
@@ -4774,6 +4806,7 @@ pwd:
 		cf->render2 = false;
 		if (cf->render1b)
 			cf->render1 = cf->render1b = false;
+		cf->charset = 0;
 		if (ub) {
 			debrowseSuffix(cf->fileName);
 			cw->nlMode = cw->rnlMode;
