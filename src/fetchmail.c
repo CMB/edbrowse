@@ -2926,7 +2926,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 				strcat(buf, "<br>");
 			lines = true;
 			if (nimages) {
-				sprintf(atbuf, "%d images\n", nimages);
+				sprintf(atbuf, "%d images", nimages);
 				if (nimages == 1)
 					strcpy(atbuf, "1 image");
 				strcat(buf, atbuf);
@@ -2941,13 +2941,12 @@ static char *headerShow(struct MHINFO *w, bool top)
 				}
 			}
 			if (nattach > nimages + 1) {
-				sprintf(atbuf, "%d attachments\n",
+				sprintf(atbuf, "%d attachments",
 					nattach - nimages);
 				strcat(buf, atbuf);
 			}
 			strcat(buf, "\n");
 		}
-		/* attachments */
 		if (w->to[0] && !ismc) {
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
