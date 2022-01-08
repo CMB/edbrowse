@@ -1761,13 +1761,13 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 
 	if (form->bymail)
 		fsep = '\n';
-	if (form->mime) {
+
+// if method is not post, these other encodings are not honored
+	if(!dopost)
+		goto skip_encode;
+
+	if (form->mime)
 		fsep = '-';
-		boundary = makeBoundary();
-		stringAndString(&pfs, &pfs_l, "`mfd~");
-		stringAndString(&pfs, &pfs_l, boundary);
-		stringAndString(&pfs, &pfs_l, eol);
-	}
 	if(form->plain)
 		fsep = 0;
 
@@ -1791,6 +1791,15 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 		}
 		nzFree(eo2);
 	}
+
+	if (fsep == '-') {
+		boundary = makeBoundary();
+		stringAndString(&pfs, &pfs_l, "`mfd~");
+		stringAndString(&pfs, &pfs_l, boundary);
+		stringAndString(&pfs, &pfs_l, eol);
+	}
+
+skip_encode:
 
 	for (t = cw->inputlist; t; t = t->same) {
 		if (t->controller != form)
