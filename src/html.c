@@ -1659,8 +1659,6 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 
 	if (!val)
 		val = emptyString;
-	if (!*name && !*val)
-		return true;
 
 	if(fsep)
 		postDelimiter(fsep);

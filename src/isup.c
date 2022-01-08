@@ -1117,6 +1117,12 @@ char *encodePostData(const char *s, const char *keep_chars)
 			goto putc;
 		if (strchr(keep_chars, c))
 			goto putc;
+		if(c == ' ') {
+// %20 works just fine, but + seems to be the standard.
+// With this in place, + can never be in keep_cahrs.
+			c = '+';
+			goto putc;
+		}
 		sprintf(buf, "%%%02X", (uchar) c);
 		stringAndString(&post, &l, buf);
 		continue;
@@ -1124,7 +1130,7 @@ putc:
 		stringAndChar(&post, &l, c);
 	}
 	return post;
-}				/* encodePostData */
+}
 
 static char dohex(char c, const char **sp)
 {
