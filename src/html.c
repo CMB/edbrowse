@@ -1773,9 +1773,9 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 
 // <input enctype=blah> can override
 	if(submit) {
-		eo1 = attribVal(submit, "enctype"), eo2 = 0;
+		eo1 = attribVal(submit, "formenctype"), eo2 = 0;
 		if(submit->jslink && allowJS)
-			eo2 = get_property_string_t(submit, "enctype");
+			eo2 = get_property_string_t(submit, "formenctype");
 		if(eo2 && *eo2)
 			eo1 = eo2;
 		if(eo1 && *eo1) {
