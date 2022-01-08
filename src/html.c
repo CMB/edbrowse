@@ -1755,8 +1755,8 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 	char fsep = '&';	/* field separator */
 	bool rc;
 	bool bval;
-	const char *eo1 = 0; // enctype override from attribute
-	char *eo2 = 0; // enctype override from js
+	const char *eo1; // enctype override from attribute
+	char *eo2; // enctype override from js
 
 /* js could rebuild an option list then submit the form. */
 	rebuildSelectors();
@@ -1775,7 +1775,7 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 
 // <input enctype=blah> can override
 	if(submit) {
-		eo1 = attribVal(submit, "enctype");
+		eo1 = attribVal(submit, "enctype"), eo2 = 0;
 		if(submit->jslink && allowJS)
 			eo2 = get_property_string_t(submit, "enctype");
 		if(eo2 && *eo2)
@@ -1840,8 +1840,16 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 
 // special case for charset
 		if(itype == INP_HIDDEN && stringEqualCI(name, "_charset_")) {
-			if((value = cf->charset))
-				goto success;
+			value = (cf->charset ? cf->charset : "UTF-8");
+			eo1 = attribVal(form, "accept-charset"), eo2 = 0;
+			if(form->jslink && allowJS)
+				eo2 = get_property_string_t(form, "accept-charset");
+			if(eo2 && *eo2)
+				eo1 = eo2;
+			if(eo1 && *eo1)
+				value = eo1;
+			postNameVal(name, value, fsep, false);
+			nzFree(eo2);
 			continue;
 		}
 
