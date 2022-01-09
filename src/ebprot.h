@@ -87,6 +87,7 @@ char *base64Encode(const char *inbuf, int inlen, bool lines);
 uchar base64Bits(char c);
 int base64Decode(char *start, char **end);
 void iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p);
+char *makeDosNewlines(char *p);
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l);
 uchar fromHex(char d, char e);
 char *closeColor(const char *s);

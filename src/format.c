@@ -1134,7 +1134,7 @@ binchar:
 	}
 
 	return (bincount * 8 - 16 >= charcount);
-}				/* looksBinary */
+}
 
 void looks_8859_utf8(const uchar * buf, int buflen, bool * iso_p, bool * utf8_p)
 {
@@ -1175,7 +1175,7 @@ isogo:
 // If 2/3 of the nonascii chars look like iso, I'll call it iso.
 	if (isocount * 9 >= bothcount)
 		*iso_p = true;
-}				/* looks_8859_utf8 */
+}
 
 /*********************************************************************
 Convert a string from iso 8859 to utf8, or vice versa.
@@ -1278,7 +1278,7 @@ void iso2utf(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 
 	*outbuf_p = outbuf;
 	*outbuflen_p = j;
-}				/* iso2utf */
+}
 
 void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	     int *outbuflen_p)
@@ -1606,7 +1606,7 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 
 	*outbuf_p = obuf;
 	*outbuflen_p = obuf_l - 2;
-}				/* utfLow */
+}
 
 // Convert from whatever it is to utf8, for javascript and css.
 // Result parameter is the new string, or null if no conversion.
@@ -1699,7 +1699,7 @@ char *base64Encode(const char *inbuf, int inlen, bool lines)
 		*out++ = '\n';
 	*out = 0;
 	return outstr;
-}				/* base64Encode */
+}
 
 uchar base64Bits(char c)
 {
@@ -1714,7 +1714,7 @@ uchar base64Bits(char c)
 	if (c == '/')
 		return 63;
 	return 64;		/* error */
-}				/* base64Bits */
+}
 
 /*********************************************************************
 Decode some data in base64.
@@ -1775,7 +1775,7 @@ int base64Decode(char *start, char **end)
 	}
 	*end = r;
 	return ret;
-}				/* base64Decode */
+}
 
 void
 iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
@@ -1798,7 +1798,30 @@ iuReformat(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p)
 		utf2iso((uchar *) inbuf, inbuflen, (uchar **) outbuf_p,
 			outbuflen_p);
 	}
-}				/* iuReformat */
+}
+
+// Lines have to be doslike when sending multipart/form-data.
+// Question: is this also true when sending text attachments by email?
+// Free the input string and return the output string allocated.
+char *makeDosNewlines(char *p)
+{
+	int linecount = 0;
+	char *s, *t, *p2;
+	for(s = p; *s; ++s)
+		if(*s == '\n' && s > p && s[-1] != '\r')
+			++linecount;
+	if(!linecount)
+		return p;
+	t = p2 = allocMem(strlen(p) + linecount + 1);
+	for(s = p; *s; ++s) {
+		if(*s == '\n' && s > p && s[-1] != '\r')
+			*t++ = '\r';
+		*t++ = *s;
+	}
+*t = 0;
+	nzFree(p);
+	return p2;
+}
 
 bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
 {
