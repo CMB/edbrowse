@@ -1966,6 +1966,7 @@ skip_encode:
 			if (!dynamicvalue || !*dynamicvalue) {
 				if(t->required)
 					goto required;
+				postNameVal(name, emptyString, fsep, 0);
 				continue;
 			}
 			if (!dopost  || fsep != '-') {
