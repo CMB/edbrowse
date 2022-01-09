@@ -4863,30 +4863,6 @@ et_go:
 		return true;
 	}
 
-	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
-		int d = 0;
-		char *s;
-		if(isdigit(line[2])) {
-			d = strtol(line + 2, &s, 10);
-			if(*s)
-				return 2;
-		}
-		cmd = 'e';
-		if (!cw->browseMode) {
-			setError(MSG_NoBrowse);
-			return false;
-		}
-		if (!cw->dot) {	// should never happen
-			setError(MSG_EmptyBuffer);
-			return false;
-		}
-		if(d) {
-			if(!cxCompare(d) || (cxActive(d, false) && !cxQuit(d, 0)))
-				return false;
-		}
-		return itext(d);
-	}
-
 	if (stringEqual(line, "f/") || stringEqual(line, "w/")) {
 		char *t;
 		cmd = line[0];
@@ -5563,6 +5539,30 @@ static int twoLetterG(const char *line, const char **runThis)
 	if(stringEqual(line, "db")) {
 		printf("%d\n", debugLevel);
 		return true;
+	}
+
+	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
+		int d = 0;
+		char *s;
+		if(isdigit(line[2])) {
+			d = strtol(line + 2, &s, 10);
+			if(*s)
+				return 2;
+		}
+		cmd = 'e';
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (!cw->dot) {	// should never happen
+			setError(MSG_EmptyBuffer);
+			return false;
+		}
+		if(d) {
+			if(!cxCompare(d) || (cxActive(d, false) && !cxQuit(d, 0)))
+				return false;
+		}
+		return itext(d);
 	}
 
 	return 2;		/* no change */
