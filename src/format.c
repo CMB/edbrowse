@@ -1661,7 +1661,7 @@ char *base64Encode(const char *inbuf, int inlen, bool lines)
 	int outlen = ((inlen / 3) + 1) * 4;
 	++outlen;		/* zero on the end */
 	if (lines)
-		outlen += (inlen / 54) + 1;
+		outlen += ((inlen / 54) + 1) * 2;
 	outstr = out = allocMem(outlen);
 	colno = 0;
 	while (inlen >= 3) {
@@ -1677,7 +1677,7 @@ char *base64Encode(const char *inbuf, int inlen, bool lines)
 		colno += 4;
 		if (colno < 72)
 			continue;
-		*out++ = '\n';
+		*out++ = '\r', *out++ = '\n';
 		colno = 0;
 	}
 	if (inlen == 1) {
@@ -1696,7 +1696,7 @@ char *base64Encode(const char *inbuf, int inlen, bool lines)
 	}
 /* finish the last line */
 	if (lines && colno)
-		*out++ = '\n';
+		*out++ = '\r', *out++ = '\n';
 	*out = 0;
 	return outstr;
 }
