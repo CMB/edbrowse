@@ -500,18 +500,8 @@ empty:
 	}
 
 	if (!webform) {
-/* Switch to unix newlines - we'll switch back to dos later. */
-		v = buf + buflen;
-		for (s = t = buf; s < v; ++s) {
-			c = *s;
-			if (c == '\r' && s < v - 1 && s[1] == '\n')
-				continue;
-			*t++ = c;
-		}
-		buflen = t - buf;
-
-/* Do we need to use quoted-printable? */
-/* Perhaps this hshould read (nacount > 0) */
+// Do we need to use quoted-printable?
+// Perhaps this hshould read (nacount > 0)
 		if (nacount * 20 > buflen || nullcount || longline) {
 			char *newbuf;
 			int l, colno = 0, space = 0;
@@ -525,7 +515,7 @@ empty:
 				    c == '=' ||
 				    c == '\xff' ||
 				    ((c == ' ' || c == '\t') &&
-				     s < v - 1 && s[1] == '\n')) {
+				     s < v - 1 && (s[1] == '\n' || s[1] == '\r'))) {
 					char expand[4];
 					sprintf(expand, "=%02X", (uchar) c);
 					stringAndString(&newbuf, &l, expand);
@@ -534,7 +524,7 @@ empty:
 					stringAndChar(&newbuf, &l, c);
 					++colno;
 				}
-				if (c == '\n') {
+				if (c == '\n' || c == '\r') {
 					colno = space = 0;
 					continue;
 				}
@@ -545,7 +535,7 @@ empty:
 				if (s == v - 1)
 					continue;
 /* If newline's coming up anyways, don't force another one. */
-				if (s[1] == '\n')
+				if (s[1] == '\n' || s[1] == '\r')
 					continue;
 				i = l;
 				if (!space || space == i) {
