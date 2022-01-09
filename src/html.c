@@ -1714,8 +1714,10 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 			}
 			if (!encodeAttachment(val, 0, true, &ct, &ce, &enc))
 				return false;
-			val = enc = makeDosNewlines(enc);
+			if(!(isfile&2))
+				enc = makeDosNewlines(enc);
 /* remember to free enc in this case */
+			val = enc;
 		} else {
 			const char *s;
 			ct = "text/plain";
