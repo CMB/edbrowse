@@ -2224,6 +2224,13 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 			if (ar - al >= MHLINE)
 				ar = al + MHLINE - 1;
 			strncpy(w->cfn, al, ar - al);
+// for security reasons, don't allow an absolute path, or even relative path
+// away from the current directory or the download directory.
+// tr / _    this seems to be what other clients do.
+			char *e;
+			for(e = w->cfn; *e; ++e)
+				if(*e == '/')
+					*e = '_';
 			break;
 		}
 	}
