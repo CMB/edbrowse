@@ -683,18 +683,19 @@ static void prerenderNode(Tag *t, bool opentag)
 
 		if (currentTA) {
 			currentTA->value = cloneString(t->textval);
-/* Sometimes tidy lops off the last newline character; it depends on
- * the tag following. And even if it didn't end in nl in the original html,
- * <textarea>foobar</textarea>, it probably should,
- * as it goes into a new buffer. */
-			j = strlen(currentTA->value);
-			if (j && currentTA->value[j - 1] != '\n') {
-				currentTA->value =
-				    reallocMem(currentTA->value, j + 2);
-				currentTA->value[j] = '\n';
-				currentTA->value[j + 1] = 0;
-			}
-// Don't need leading whitespace.
+/*********************************************************************
+Warning - tidy lops off any whitespace between the text message and </textarea>
+We simply don't see it and have no way to know.
+I'm gonna leave it be, as though it runs together.
+<textarea>prepared message</textarea>
+Often times it is blank, <textarea></textarea>, and probably should
+remain so. jquery and other libraries crank out these blank textareas,
+so you'll see them around.
+Although we're right most of the time, sometimes we'll be wrong,
+as when <textarea> is on the next line,
+and there should be \n at the end of the message.
+Oh well - best we can do.
+*********************************************************************/
 			leftClipString(currentTA->value);
 			currentTA->rvalue = cloneString(currentTA->value);
 			t->deleted = true;
