@@ -1369,7 +1369,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 		if(!t->multiple) {
 			if (!envFile(newtext, &newtext))
 				return false;
-			if (newtext[0] && access(newtext, 4)) {
+			if (newtext[0] && (access(newtext, 4) || fileTypeByName(newtext, false) != 'f')) {
 				setError(MSG_FileAccess, newtext);
 				return false;
 			}
@@ -1390,7 +1390,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 					nzFree(z), nzFree(u);
 					return false;
 				}
-				if (z2[0] && access(z2, 4)) {
+				if (z2[0] && (access(z2, 4) || fileTypeByName(z2, false) != 'f')) {
 					setError(MSG_FileAccess, z2);
 					nzFree(z), nzFree(u);
 					return false;
@@ -1729,11 +1729,10 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 					break;
 				}
 		}
-		stringAndString(&pfs, &pfs_l, "\r\nContent-Type: ");
-		stringAndString(&pfs, &pfs_l, ct);
-		stringAndString(&pfs, &pfs_l,
-				"\r\nContent-Transfer-Encoding: ");
-		stringAndString(&pfs, &pfs_l, ce);
+		if(!stringEqual(ct, "text/plain")) {
+			stringAndString(&pfs, &pfs_l, "\r\nContent-Type: ");
+			stringAndString(&pfs, &pfs_l, ct);
+		}
 		stringAndString(&pfs, &pfs_l, "\r\n\r\n");
 		stringAndString(&pfs, &pfs_l, val);
 		stringAndString(&pfs, &pfs_l, eol);
