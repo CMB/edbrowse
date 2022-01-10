@@ -1656,6 +1656,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 {
 	char *enc;
 	const char *ct, *ce;	/* content type, content encoding */
+	const char *cut;
 
 	if (!val)
 		val = emptyString;
@@ -1709,7 +1710,9 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 		if (isfile) {
 			if (isfile & 2) {
 				stringAndString(&pfs, &pfs_l, "; filename=\"");
-				stringAndString(&pfs, &pfs_l, val);
+// only show the filename
+				cut = strrchr(val, '/');
+				stringAndString(&pfs, &pfs_l, (cut ? cut + 1 : val));
 				stringAndChar(&pfs, &pfs_l, '"');
 			}
 			if (!encodeAttachment(val, 0, true, &ct, &ce, &enc))
