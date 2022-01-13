@@ -487,7 +487,7 @@ empty:
  * nulls, which is a quirk of my slapped together software. */
 
 	if ((!webform && buflen > 20 && nacount * 5 > buflen) ||
-	    (webform && nullcount)) {
+	    nullcount) {
 		if (ismail) {
 			setError(MSG_MailBinary, file);
 			goto freefail;

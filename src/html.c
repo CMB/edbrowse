@@ -1736,11 +1736,8 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 			stringAndString(&pfs, &pfs_l, "\r\nContent-Type: ");
 			stringAndString(&pfs, &pfs_l, ct);
 		}
-// don't need to specify 7-bit or 8-bit
-		if(!stringEqual(ce + 1, "bit")) {
-			stringAndString(&pfs, &pfs_l, "\r\nContent-Transfer-Encoding: ");
-			stringAndString(&pfs, &pfs_l, ce);
-		}
+		stringAndString(&pfs, &pfs_l, "\r\nContent-Transfer-Encoding: ");
+		stringAndString(&pfs, &pfs_l, ce);
 		stringAndString(&pfs, &pfs_l, "\r\n\r\n");
 		stringAndString(&pfs, &pfs_l, val);
 		stringAndString(&pfs, &pfs_l, eol);
