@@ -3500,11 +3500,11 @@ static bool doGlobal(const char *line)
 
 	if (!regexpCheck(line, true, true, &re, &line))
 		return false;
-	if (*line != delim) {
+	if (*line && *line != delim) {
 		setError(MSG_NoDelimit);
 		return false;
 	}
-	++line;
+	if(*line) ++line;
 	if (*line == 'i')
 		++line, ci = true;
 	skipWhite(&line);
