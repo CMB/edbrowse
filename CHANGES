@@ -5,7 +5,7 @@ Support for emojis.
 
 frames as a live array of window objects.
 
-include directive in the config file.
+"include" directive in the config file.
 
 3.8.1
 Make several changes so that edbrowse is more like ed,

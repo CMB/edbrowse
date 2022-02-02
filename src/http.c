@@ -947,12 +947,17 @@ mimestream:
 			    curl_slist_append(custom_headers, multipart_header);
 			if (custom_headers == NULL)
 				i_printfExit(MSG_NoMem);
-			/* curl_slist_append made a copy of multipart_header. */
+			// curl_slist_append made a copy of multipart_header.
 			nzFree(multipart_header);
 			memcpy(thisbound, post, s - post);
 			thisbound[s - post] = 0;
 			post = s + 2;
 			unpackUploadedFile(post, thisbound, &postb, &postb_l);
+		} else if(strchr(post, '\n')) {
+			custom_headers =
+			    curl_slist_append(custom_headers, "Content-Type: text/plain");
+			if (custom_headers == NULL)
+				i_printfExit(MSG_NoMem);
 		}
 		curlret = curl_easy_setopt(h, CURLOPT_POSTFIELDS,
 					   (postb_l ? postb : post));
@@ -2074,7 +2079,7 @@ ftp_transfer_fail:
 	i_get_free(g, !transfer_success);
 
 	return transfer_success;
-}				/* ftpConnect */
+}
 
 /* Like httpConnect, but for gopher */
 static bool gopherConnect(struct i_get *g)
@@ -2214,7 +2219,7 @@ gopher_transfer_fail:
 	}
 
 	return true;
-}				/* gopherConnect */
+}
 
 /* If the user has asked for locale-specific responses, then build an
  * appropriate Accept-Language: header. */
@@ -2237,7 +2242,7 @@ void setHTTPLanguage(const char *lang)
 	for (s = httpLanguage; *s; ++s)
 		if (*s == '_')
 			*s = '-';
-}				/* setHTTPLanguage */
+}
 
 /* Set the FD_CLOEXEC flag on a socket newly-created by libcurl.
  * Let's not leak libcurl's sockets to child processes created by the
@@ -2341,7 +2346,7 @@ libcurl_init_fail:
 	if (h)
 		curl_easy_cleanup(h);
 	return 0;
-}				/* http_curl_init */
+}
 
 /*
  * There's no easy way to get at the server's response message from libcurl.
@@ -2435,7 +2440,7 @@ static const char *message_for_response_code(int code)
 			message = responses[primary][subcode];
 	}
 	return message;
-}				/* message_for_response_code */
+}
 
 /*
  * Function: prompt_and_read
@@ -2481,7 +2486,7 @@ prompt_and_read(int prompt, char *buffer, int buffer_length, int error_message,
 			reading = false;
 	}
 	return n;
-}				/* prompt_and_read */
+}
 
 /*
  * Function: read_credentials
@@ -2525,7 +2530,7 @@ static bool read_credentials(char *buffer)
 	}
 
 	return got_creds;
-}				/* read_credentials */
+}
 
 /* Callback used by libcurl.
  * Gather all the http headers into one long string. */
@@ -2559,7 +2564,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 	}
 
 	return bytes_in_line;
-}				/* curl_header_callback */
+}
 
 /* Print text, discarding the unnecessary carriage return character. */
 static void
