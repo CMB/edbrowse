@@ -3078,7 +3078,6 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	int paren = 0;		/* nesting level of parentheses */
 	char delim = *line;
 	*rexp = re;
-	start = line;
 	if(delim) {
 		if (!strchr(valid_delim, delim)) {
 			setError(MSG_BadDelimit);
@@ -3086,8 +3085,9 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		}
 		++line;
 	} else delim = '/';
-
+	start = line;
 	c = *line;
+
 	if (ebmuck) {
 		if (isleft) {
 			if (c == delim || c == 0) {
