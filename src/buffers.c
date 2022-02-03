@@ -3049,7 +3049,7 @@ static bool shellEscape(const char *line)
 
 /* Valid delimiters for search/substitute.
  * note that \ is conspicuously absent, not a valid delimiter.
- * I alsso avoid nestable delimiters such as parentheses.
+ * I also avoid nestable delimiters such as parentheses.
  * And no alphanumerics please -- too confusing.
  * ed allows it, but I don't. */
 static const char valid_delim[] = "_=!;:`\"',/?@-";
@@ -3076,15 +3076,16 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	bool cc = false;	/* are we in a [...] character class */
 	int mod;		/* length of modifier */
 	int paren = 0;		/* nesting level of parentheses */
-/* We wouldn't be here if the line was empty. */
-	char delim = *line++;
-
+	char delim = *line;
 	*rexp = re;
-	if (!strchr(valid_delim, delim)) {
-		setError(MSG_BadDelimit);
-		return false;
-	}
 	start = line;
+	if(delim) {
+		if (!strchr(valid_delim, delim)) {
+			setError(MSG_BadDelimit);
+			return false;
+		}
+		++line;
+	} else delim = '/';
 
 	c = *line;
 	if (ebmuck) {
@@ -4025,10 +4026,6 @@ static int substituteText(const char *line)
 		if (!regexpCheck(line, true, true, &re, &line))
 			return -1;
 		strcpy(lhs, re);
-		if (!*line) {
-			setError(MSG_NoDelimit);
-			return -1;
-		}
 		if (!regexpCheck(line, false, true, &re, &line))
 			return -1;
 		strcpy(rhs, re);
