@@ -1469,14 +1469,20 @@ static JSContext *mwc; // master window context
 // base64 encode
 static JSValue nat_btoa(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	char *t;
-	const char *s = emptyString;
+	char *t; // result
+	char *s = emptyString;
+	size_t len = 0;
 	JSValue v;
-	if(argc >= 1)
-		s = JS_ToCString(cx, argv[0]);
-	t = base64Encode(s, strlen(s), false);
-	if(argc >= 1)
-		JS_FreeCString(cx, s);
+	if(argc >= 1) {
+		const char *s0 = JS_ToCStringLen(cx, &len, argv[0]);
+		s = allocMem(len + 1);
+		memcpy(s, s0, len);
+		s[len] = 0;
+		JS_FreeCString(cx, s0);
+		utf2iso1(s, &len);
+	}
+	t = base64Encode(s, len, false);
+	nzFree(s);
 	v = JS_NewAtomString(cx, t);
 	nzFree(t);
 	return v;

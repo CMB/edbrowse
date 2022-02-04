@@ -1357,13 +1357,15 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 }
 
 // like the above, but always iso8859-1, and the change is made inline
-void utf2iso1(char *s, int *lenp)
+void utf2iso1(char *s0, size_t *lenp)
 {
-	char *t = s;
-	while(*s) {
+	char *s = s0;
+	char *t = s0;
+// null pointer means we don't specify a length
+	while((!lenp && *s) || (lenp && (unsigned)(s - s0) < *lenp)) {
 		uchar c = *s;
 		uchar d = s[1];
-		if(!c || (c&0xe0) == 0xe0 || (c&0xe0) == 0x80 ||
+		if((c&0xe0) == 0xe0 || (c&0xe0) == 0x80 ||
 		((c&0x80) && (d&0xc0) != 0x80)) {
 			debugPrint(1, "improper utf8 format in payload");
 			break;
@@ -1377,6 +1379,7 @@ void utf2iso1(char *s, int *lenp)
 		s += 2;
 	}
 	*t = 0;
+	if(lenp) *lenp = t - s0;
 }
 
 /*********************************************************************
