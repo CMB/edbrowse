@@ -2620,25 +2620,7 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 			i_printfExit(MSG_MemAllocError, 50);
 		if(pd == 1) {
 // turn utf8 back into individual bytes
-			char *s, *t;
-			s = t = a + strlen(incoming_url) + 1;
-			while(*s) {
-				uchar c = *s;
-				uchar d = s[1];
-				if(!c || (c&0xe0) == 0xe0 || (c&0xe0) == 0x80 ||
-				((c&0x80) && (d&0xc0) != 0x80)) {
-					debugPrint(1, "improper utf8 format in Uint8Array payload");
-					break;
-				}
-				if(c >= 0xc4) {
-					debugPrint(1, "nulls in Uint8Array payload");
-					break;
-				}
-				if(c < 0x80) { *t++ = c; ++s; continue; }
-				*t++ = ((d&0x3f) | (c<<6));
-				s += 2;
-			}
-			*t = 0;
+			utf2iso1(a + strlen(incoming_url) + 1, 0);
 		}
 	} else {
 	a = cloneString(incoming_url);

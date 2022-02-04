@@ -1356,6 +1356,29 @@ void utf2iso(const uchar * inbuf, int inbuflen, uchar ** outbuf_p,
 	*outbuflen_p = j;
 }
 
+// like the above, but always iso8859-1, and the change is made inline
+void utf2iso1(char *s, int *lenp)
+{
+	char *t = s;
+	while(*s) {
+		uchar c = *s;
+		uchar d = s[1];
+		if(!c || (c&0xe0) == 0xe0 || (c&0xe0) == 0x80 ||
+		((c&0x80) && (d&0xc0) != 0x80)) {
+			debugPrint(1, "improper utf8 format in payload");
+			break;
+		}
+		if(c >= 0xc4) {
+			debugPrint(1, "null or high character in Uint8Array payload");
+			break;
+		}
+		if(c < 0x80) { *t++ = c; ++s; continue; }
+		*t++ = ((d&0x3f) | (c<<6));
+		s += 2;
+	}
+	*t = 0;
+}
+
 /*********************************************************************
 Convert the current line in buffer, which is either iso8859-1 or utf8,
 into utf16 or utf32, big or little endian.

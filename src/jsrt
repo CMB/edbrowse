@@ -521,7 +521,7 @@ onclick="alert('rock and ½ roll')">
 <script type=text/javascript language=JavaScript>
 // I'll push the button for you
 document.forms[0].b.onclick();
-if(document.forms[0].result.value != 90) fail(85);
+if(document.forms[0].result.value != 89) fail(85);
 if(document.forms[0].who.value != "eklhad") fail(86);
 if(document.forms[0].elements[1].value != "secret") fail(87);
 
