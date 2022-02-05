@@ -1491,8 +1491,9 @@ static JSValue nat_btoa(JSContext * cx, JSValueConst this, int argc, JSValueCons
 // base64 decode
 static JSValue nat_atob(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	char *t1, *t2;
+	char *t1, *t2, *u;
 	const char *s = emptyString;
+	int len;
 	JSValue v;
 	if(argc >= 1)
 		s = JS_ToCString(cx, argv[0]);
@@ -1500,10 +1501,14 @@ static JSValue nat_atob(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	if(argc >= 1)
 		JS_FreeCString(cx, s);
 	t2 = t1 + strlen(t1);
+	if(t2 == t1) goto empty;
 	base64Decode(t1, &t2);
 // ignore errors for now.
-	*t2 = 0;
-	v = JS_NewAtomString(cx, t1);
+	u = iso12utf(t1, t2, &len);
+	nzFree(t1);
+	t1 = u;
+empty:
+	v = JS_NewStringLen(cx, t1, len);
 	nzFree(t1);
 	return v;
 }

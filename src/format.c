@@ -1382,6 +1382,25 @@ void utf2iso1(char *s0, size_t *lenp)
 	if(lenp) *lenp = t - s0;
 }
 
+// reverse the above. This time the new string is allocated, as it might be longer
+char *iso12utf(const char *t1, const char *t2, int *lenp)
+{
+	int l;
+	char *s = initString(&l);
+	while(t1 < t2) {
+		uchar c = (uchar)*t1;
+		if(!(c&0x80)) { // ascii
+			stringAndChar(&s, &l, c);
+		} else {
+			stringAndChar(&s, &l, (0xc2 | ((c>>6)&1)));
+			stringAndChar(&s, &l, (0x80|(c&0x3f)));
+		}
+		++t1;
+	}
+	*lenp = l;
+	return s;
+}
+
 /*********************************************************************
 Convert the current line in buffer, which is either iso8859-1 or utf8,
 into utf16 or utf32, big or little endian.

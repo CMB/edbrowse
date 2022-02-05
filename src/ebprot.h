@@ -80,6 +80,7 @@ void looks_8859_utf8(const uchar *buf, int buflen, bool * iso_p, bool * utf8_p);
 void iso2utf(const uchar *inbuf, int inbuflen, uchar **outbuf_p, int *outbuflen_p);
 void utf2iso(const uchar *inbuf, int inbuflen, uchar **outbuf_p, int *outbuflen_p);
 void utf2iso1(char *s, size_t *lenp);
+char *iso12utf(const char *t1, const char *t2, int *lenp);
 void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, bool inutf8, bool out32, bool outbig);
 char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);

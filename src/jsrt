@@ -911,7 +911,10 @@ if(dataset_test.dataset.dogFood !== "abc") fail(177);
 if(document.styleSheets[0].cssRules[0].cssText.substr(0,4) != "body") fail(180);
 
 // btoa test with null and nonascii
-if(btoa("a\0b" + String.fromCharCode(160)) != "YQBioA==") fail(181);
+var valraw = "a\0b¢";
+var val64 = "YQBiog==";
+if(btoa(valraw) != val64) fail(181);
+if(atob(val64) != valraw) fail(182);
 
 mcp = new MessageChannel();
 mcp.port2.start();
