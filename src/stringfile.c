@@ -42,7 +42,7 @@ void *allocMem(size_t n)
 	if (!(s = malloc(n)))
 		i_printfExit(MSG_MemAllocError, n);
 	return s;
-}				/* allocMem */
+}
 
 void *allocZeroMem(size_t n)
 {
@@ -52,7 +52,7 @@ void *allocZeroMem(size_t n)
 	if (!(s = calloc(n, 1)))
 		i_printfExit(MSG_MemCallocError, n);
 	return s;
-}				/* allocZeroMem */
+}
 
 void *reallocMem(void *p, size_t n)
 {
@@ -71,35 +71,35 @@ void *reallocMem(void *p, size_t n)
 	if (!(s = realloc(p, n)))
 		i_printfExit(MSG_ErrorRealloc, n);
 	return s;
-}				/* reallocMem */
+}
 
 /* When you know the allocated thing is a string. */
 char *allocString(size_t n)
 {
 	return (char *)allocMem(n);
-}				/* allocString */
+}
 
 char *allocZeroString(size_t n)
 {
 	return (char *)allocZeroMem(n);
-}				/* allocZeroString */
+}
 
 char *reallocString(void *p, size_t n)
 {
 	return (char *)reallocMem(p, n);
-}				/* reallocString */
+}
 
 void nzFree(void *s)
 {
 	if (s && s != emptyString)
 		free(s);
-}				/* nzFree */
+}
 
 /* some compilers care whether it's void * or const void * */
 void cnzFree(const void *v)
 {
 	nzFree((void *)v);
-}				/* cnzFree */
+}
 
 char *appendString(char *s, const char *p)
 {
@@ -108,7 +108,7 @@ char *appendString(char *s, const char *p)
 	s = reallocString(s, slen + plen + 1);
 	strcpy(s + slen, p);
 	return s;
-}				/* appendstring */
+}
 
 char *prependString(char *s, const char *p)
 {
@@ -119,7 +119,7 @@ char *prependString(char *s, const char *p)
 	strcpy(t + plen, s);
 	nzFree(s);
 	return t;
-}				/* prependstring */
+}
 
 void skipWhite(const char **s)
 {
@@ -127,7 +127,7 @@ void skipWhite(const char **s)
 	while (isspaceByte(*t))
 		++t;
 	*s = t;
-}				/* skipWhite */
+}
 
 void trimWhite(char *s)
 {
@@ -138,7 +138,7 @@ void trimWhite(char *s)
 	while (l && isspaceByte(s[l - 1]))
 		--l;
 	s[l] = 0;
-}				/* trimWhite */
+}
 
 void stripWhite(char *s)
 {
@@ -147,7 +147,7 @@ void stripWhite(char *s)
 	if (t > s)
 		strmove(s, t);
 	trimWhite(s);
-}				/* stripWhite */
+}
 
 /* compress white space */
 void spaceCrunch(char *s, bool onespace, bool unprint)
@@ -1653,7 +1653,19 @@ bool envFile(const char *line, const char **expanded)
 	return true;
 #endif // #ifdef DOSLIKE y/n
 
-}				/* envFile */
+}
+
+// Like the above, but string is allocated, and errors are printed
+// This is only used to expand pathnames in .ebrc
+char *envFileAlloc(const char *line)
+{
+	const char *line2;
+	if(envFile(line, &line2))
+		return cloneString(line2);
+	showError();
+	setError(-1);
+	return 0;
+}
 
 /* Call the above routine if filename contains a  slash,
  * or prepend the download directory if it does not.
@@ -1674,7 +1686,7 @@ bool envFileDown(const char *line, const char **expanded)
 	sprintf(line2, "%s/%s", downDir, line);
 	*expanded = line2;
 	return true;
-}				/* envFileDown */
+}
 
 FILE *efopen(const char *name, const char *mode)
 {
@@ -1698,7 +1710,7 @@ FILE *efopen(const char *name, const char *mode)
 	else
 		i_printfExit(MSG_InvalidFopen, mode);
 	return 0;
-}				/* efopen */
+}
 
 int eopen(const char *name, int mode, int perms)
 {
@@ -1711,7 +1723,7 @@ int eopen(const char *name, int mode, int perms)
 	else
 		i_printfExit(MSG_OpenFail, name);
 	return -1;
-}				/* eopen */
+}
 
 void appendFile(const char *fname, const char *message, ...)
 {
@@ -1723,7 +1735,7 @@ void appendFile(const char *fname, const char *message, ...)
 	va_end(p);
 	fprintf(f, "\n");
 	fclose(f);
-}				/* appendFile */
+}
 
 /* like the above, but no formatting */
 void appendFileNF(const char *filename, const char *msg)
@@ -1731,7 +1743,7 @@ void appendFileNF(const char *filename, const char *msg)
 	FILE *f = efopen(filename, "a");
 	fprintf(f, "%s\n", msg);
 	fclose(f);
-}				/* appendFileNF */
+}
 
 /* Wrapper around system(). */
 int eb_system(const char *cmd, bool print_on_success)
@@ -1745,4 +1757,4 @@ int eb_system(const char *cmd, bool print_on_success)
 		nl();
 	}
 	return system_ret;
-}				/* eb_system */
+}

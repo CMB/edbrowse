@@ -3893,7 +3893,12 @@ Specify a library of emojis for edbrowse.
 This was described in the Emojis section.
 
 <P>
-include = /home/mylogin/.ebsys/plugins
+You can use environment variables or the ~ notation in this, and other pathnames, in .ebrc.
+<br>
+emoji = ~/.ebsys/Emojis.txt
+
+<P>
+include = ~/.ebsys/plugins
 <P>
 Include another file, like #include in C, or include() in m4.
 This can be used to modularize your edbrowse settings:

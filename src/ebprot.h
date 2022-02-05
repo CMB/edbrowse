@@ -322,10 +322,11 @@ char getLetter(const char *s) ;
 char *getFileName(int msg, const char *defname, bool isnew, bool ws);
 int shellProtectLength(const char *s);
 void shellProtect(char *t, const char *s);
-const char *nextScanFile(const char *base); //?
-bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p, int othersort, bool reverse) ; //?
-bool envFile(const char *line, const char **expanded); //?
-bool envFileDown(const char *line, const char **expanded) ; //?
+const char *nextScanFile(const char *base); //@
+bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p, int othersort, bool reverse) ; //@
+bool envFile(const char *line, const char **expanded); //@
+char *envFileAlloc(const char *line); //@
+bool envFileDown(const char *line, const char **expanded) ; //@
 FILE *efopen(const char *name, const char *mode) ;
 int eopen(const char *name, int mode, int perms) ;
 void appendFile(const char *fname, const char *message, ...) ;

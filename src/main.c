@@ -1147,6 +1147,7 @@ void unreadConfigFile(void)
 	while(f) {
 		g = f->next;
 		free(f->base);
+		if(g) free(f->file);
 		free(f);
 		f = g;
 }
@@ -1160,18 +1161,16 @@ void unreadConfigFile(void)
 	numTables = 0;
 	memset(userAgents + 1, 0, sizeof(userAgents) - sizeof(userAgents[0]));
 
-	addressFile = NULL;
-	emojiFile = NULL; clearEmojis();
-	cookieFile = NULL;
-	sslCerts = NULL;
-	downDir = NULL;
-	mailDir = NULL;
+	nzFree(addressFile), addressFile = 0;
+	nzFree(emojiFile), emojiFile = 0, clearEmojis();
+	nzFree(cookieFile), cookieFile = 0;
+	nzFree(sslCerts), sslCerts = 0;
+	nzFree(downDir), downDir = 0;
+	nzFree(mailDir), mailDir = 0;
 	nzFree(cacheDir);
 	cacheDir = NULL;
-	nzFree(mailUnread);
-	mailUnread = NULL;
-	nzFree(mailReply);
-	mailReply = NULL;
+	nzFree(mailUnread), mailUnread = 0;
+	nzFree(mailReply), mailReply = 0;
 
 	webTimeout = mailTimeout = 0;
 	displayLength = 500;
@@ -1618,15 +1617,24 @@ inside:
 			continue;
 
 		case 24:	/* downdir */
-			downDir = v;
+			nzFree(downDir), downDir = 0; // in case called more than once
+			v = envFileAlloc(v);
+			if(!v) continue;
 			if (fileTypeByName(v, false) != 'd')
+// yeah, v is not freed in this pathway, oh well.
 				cfgAbort1(MSG_EBRC_NotDir, v);
+			downDir = v;
 			continue;
 
 		case 25:	/* maildir */
-			mailDir = v;
+			nzFree(mailDir), mailDir = 0;
+			nzFree(mailUnread), mailUnread = 0;
+			nzFree(mailReply), mailReply = 0;
+			v = envFileAlloc(v);
+			if(!v) continue;
 			if (fileTypeByName(v, false) != 'd')
 				cfgAbort1(MSG_EBRC_NotDir, v);
+			mailDir = v;
 			mailUnread = allocMem(strlen(v) + 20);
 			sprintf(mailUnread, "%s/unread", v);
 /* We need the unread directory, else we can't fetch mail. */
@@ -1649,7 +1657,9 @@ inside:
 			continue;
 
 		case 27:	/* jar */
-			cookieFile = v;
+			nzFree(cookieFile), cookieFile = 0;
+			v = envFileAlloc(v);
+			if(!v) continue;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_JarNotFile, v);
@@ -1658,6 +1668,7 @@ inside:
 			if (j < 0)
 				cfgAbort1(MSG_EBRC_JarNoWrite, v);
 			close(j);
+			cookieFile = v;
 			continue;
 
 		case 28:	/* nojs */
@@ -1683,7 +1694,9 @@ inside:
 			continue;
 
 		case 32:	/* certfile */
-			sslCerts = v;
+			nzFree(sslCerts), sslCerts = 0;
+			v = envFileAlloc(v);
+			if(!v) continue;
 			ftype = fileTypeByName(v, false);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_SSLNoFile, v);
@@ -1691,6 +1704,7 @@ inside:
 			if (j < 0)
 				cfgAbort1(MSG_EBRC_SSLNoRead, v);
 			close(j);
+			sslCerts = v;
 			continue;
 
 		case 33:	/* datasource */
@@ -1749,6 +1763,9 @@ inside:
 			continue;
 
 		case 40:	// adbook
+			nzFree(addressFile), addressFile = 0;
+			v = envFileAlloc(v);
+			if(!v) continue;
 			ftype = fileTypeByName(v, false);
 			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_AbNotFile, v);
@@ -1760,6 +1777,9 @@ inside:
 			continue;
 
 		case 42: case 43:	// emojis
+			nzFree(emojiFile), emojiFile = 0;
+			v = envFileAlloc(v);
+			if(!v) continue;
 			ftype = fileTypeByName(v, false);
 			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_EmojiNotFile, v);
@@ -1768,13 +1788,18 @@ inside:
 			continue;
 
 		case 44: // include
+			v = envFileAlloc(v);
+			if(!v) continue;
 			if(!fileIntoMemory(v, &incbuf, &inclen)) {
 				showError();
 				setError(-1);
+				nzFree(v);
 				continue;
 			}
-			if(!preConfigFile(incbuf, inclen))
+			if(!preConfigFile(incbuf, inclen)) {
+				nzFree(v), nzFree(incbuf);
 				continue;
+			}
 			f->lp = t + 1;
 			f->ln = ln + 1;
 			g = allocZeroMem(sizeof(struct cfgFile));
