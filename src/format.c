@@ -1371,7 +1371,7 @@ void utf2iso1(char *s0, size_t *lenp)
 			break;
 		}
 		if(c >= 0xc4) {
-			debugPrint(1, "null or high character in Uint8Array payload");
+			debugPrint(1, "null or high character in payload");
 			break;
 		}
 		if(c < 0x80) { *t++ = c; ++s; continue; }

@@ -2587,10 +2587,11 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 {
 	jsInterruptCheck(cx);
 	struct i_get g;
+	size_t len = 0;
 	const char *incoming_url = JS_ToCString(cx, argv[0]);
 	const char *incoming_method = JS_ToCString(cx, argv[1]);
 	const char *incoming_headers = JS_ToCString(cx, argv[2]);
-	const char *incoming_payload = JS_ToCString(cx, argv[3]);
+	const char *incoming_payload = JS_ToCStringLen(cx, &len, argv[3]);
 	char *outgoing_xhrheaders = NULL;
 	char *outgoing_xhrbody = NULL;
 	char *a;
