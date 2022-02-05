@@ -1493,7 +1493,7 @@ static JSValue nat_atob(JSContext * cx, JSValueConst this, int argc, JSValueCons
 {
 	char *t1, *t2, *u;
 	const char *s = emptyString;
-	int len;
+	int len = 0;
 	JSValue v;
 	if(argc >= 1)
 		s = JS_ToCString(cx, argv[0]);
