@@ -954,10 +954,14 @@ mimestream:
 			post = s + 2;
 			unpackUploadedFile(post, thisbound, &postb, &postb_l);
 		} else if(strchr(post, '\n')) {
-			custom_headers =
-			    curl_slist_append(custom_headers, "Content-Type: text/plain");
-			if (custom_headers == NULL)
-				i_printfExit(MSG_NoMem);
+// newlines indicate plain text, not url encoded.
+// But if some other content-type is specified, don't override.
+			if(!g->custom_h || !strcasestr(g->custom_h, "content-type:")) {
+				custom_headers =
+				    curl_slist_append(custom_headers, "Content-Type: text/plain");
+				if (custom_headers == NULL)
+					i_printfExit(MSG_NoMem);
+			}
 		}
 		curlret = curl_easy_setopt(h, CURLOPT_POSTFIELDS,
 					   (postb_l ? postb : post));
