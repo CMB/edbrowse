@@ -527,12 +527,15 @@ Search and Substitute
 s/x/y/ : replace x with y on the current line
 <br>s/x/y : replace x with y and print the result
 <br>s//y/ : use the last substitution string, in this case x
-<br>s/x/%/ : use the last replacement string
+<br>s/x/%/ : use the last replacement string, in this case y
 <br>s/x : replace x with nothing and print the result
 <br>s : repeat the previous substitute command
 <br>s/x/y/2 : replace the second instance of x with y on the current line
 <br>s2 : apply the previous substitution to the second instance on the line
 <br>4,7s/x/y/g : replace all instances of x with y on lines 4 through 7
+<br>s/dog/cat/gfip : replace dog or DOG with cat throughout this line,
+forget dog and cat as search and replacement strings,
+and print the result
 <br>s/a\(.\)c/a$1$1c/ : duplicate the letter between a and c
 <br>s, : replace comma space with newline, break line in two
 <br>s. : replace period space with newline, break line in two
@@ -544,6 +547,7 @@ s/x/y/ : replace x with y on the current line
 <br>/x/ : look for the line containing x
 <br>/x : same as /x/
 <br>/x/i : look for the line containing x or X
+<br>/x/f : look for x, but forget x as a search string
 <br>?x? : look backwards for x
 <br>/x/! : find the next line that doesn't contain x
 <br>?x?i! : find the previous line that doesn't contain x or X
@@ -555,6 +559,7 @@ s/x/y/ : replace x with y on the current line
 <br>g/x : same as above
 <br>v/x/ p : print every line that does not have an x
 <br>v/x/i l : list every line that does not have x or X
+<br>g/x/f p : print every line that has x, but forget x as a search string
 <br>g/x/ -r foo : read the file foo before every line that has an x
 <br>g/x/ -,.w !command : run the prior and current line through a command, for each line that contains x
 <br>lc : convert line to lower case
@@ -987,9 +992,6 @@ Type qt to quit absolute.
 Capital J joins lines together with spaces between them.
 
 <LI><P>
-x (encryption) is not implemented.
-
-<LI><P>
 P (prompt) is not implemented.
 
 <LI><P>
@@ -1057,6 +1059,14 @@ ed does not do this, but sed does, and it's quite handy.
 Note that xyz is in the remembered regexp buffer, so simply typing / will find the next line with xyz.
 Type //! for the next line that doesn't have xyz.
 Note that there is no need for g/xyz/! since that is the same as v/xyz/.
+
+<LI><P>
+As mentioned earlier, the i suffix on a search or substitute means case insensitive.
+This is perl compatible.
+The f suffix means forget; these strings are not stored for the purposes of search and replace.
+If you are searching through the buffer for the word foo, and you have typed /foo/ once, you can keep typing / to find the next instance of foo.
+By entering /bar/f, you search for bar but bar is forgotten, so that the next / searches for foo once again.
+In summary, the possible suffixes for a substitute command are i f g number p, in any order, although g and a number cannot both appear, e.g. s/x/y/g3.
 
 <LI><P>
 The sg command makes searches and substitutions global across editing sessions.

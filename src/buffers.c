@@ -798,6 +798,7 @@ eb_line:
 static struct {
 	char lhs[MAXRE], rhs[MAXRE];
 	bool lhs_yes, rhs_yes;
+	char temp_lhs[MAXRE], temp_rhs[MAXRE];
 } globalSubs;
 
 static void saveSubstitutionStrings(void)
@@ -3096,6 +3097,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 					return false;
 				}
 				strcpy(re, cw->lhs);
+				strcpy(globalSubs.temp_lhs, cw->lhs);
 				*split = line;
 				return true;
 			}
@@ -3121,6 +3123,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				return false;
 			}
 			strcpy(re, cw->rhs);
+			strcpy(globalSubs.temp_rhs, cw->rhs);
 			*split = line + 1;
 			return true;
 		}
@@ -3280,13 +3283,10 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			return false;
 		}
 
-		if (isleft) {
-			cw->lhs_yes = true;
-			strcpy(cw->lhs, re);
-		} else {
-			cw->rhs_yes = true;
-			strcpy(cw->rhs, re);
-		}
+		if (isleft)
+			strcpy(globalSubs.temp_lhs, re);
+		else
+			strcpy(globalSubs.temp_rhs, re);
 	}
 
 	debugPrint(7, "%s regexp %s", (isleft ? "search" : "replace"), re);
@@ -3373,6 +3373,7 @@ const char **split)
 		char *re;	/* regular expression */
 		bool ci = caseInsensitive;
 		bool unmatch = false;
+		bool forget = false;
 		signed char incr;	/* forward or back */
 /* Don't look through an empty buffer. */
 		if (cw->dol == 0) {
@@ -3383,10 +3384,20 @@ const char **split)
 			return false;
 		if (*line == first) {
 			++line;
-			if (*line == 'i')
-				ci = true, ++line;
+			while(*line == 'i' || *line == 'f') {
+				if (*line == 'i')
+					ci = true;
+				else
+					forget = true;
+				++line;
+			}
 			if (*line == '!')
 				unmatch = true, ++line;
+		}
+
+		if(!forget) {
+			cw->lhs_yes = true;
+			strcpy(cw->lhs, globalSubs.temp_lhs);
 		}
 
 		regexpCompile(re, ci);
@@ -3488,6 +3499,7 @@ static bool doGlobal(const char *line)
 {
 	int gcnt = 0;		/* global count */
 	bool ci = caseInsensitive;
+	bool forget = false;
 	bool change;
 	char delim = *line;
 	struct lineMap *t;
@@ -3506,9 +3518,19 @@ static bool doGlobal(const char *line)
 		return false;
 	}
 	if(*line) ++line;
-	if (*line == 'i')
-		++line, ci = true;
+	while(*line == 'i' || *line == 'f') {
+		if (*line == 'i')
+			ci = true;
+		else
+			forget = true;
+		++line;
+	}
 	skipWhite(&line);
+
+	if(!forget) {
+		cw->lhs_yes = true;
+		strcpy(cw->lhs, globalSubs.temp_lhs);
+	}
 
 /* clean up any previous global flags.
  * Also get ready for javascript, as in g/<->/ i=+
@@ -3990,6 +4012,7 @@ static int substituteText(const char *line)
 	bool bl_mode = false;	/* running the bl command */
 	bool g_mode = false;	/* s/x/y/g */
 	bool ci = caseInsensitive;
+	bool forget = false;
 	bool save_nlMode;
 	char c, *s, *t;
 	int nth = 0;		/* s/x/y/7 */
@@ -4044,6 +4067,11 @@ static int substituteText(const char *line)
 					++line;
 					continue;
 				}
+				if (c == 'f') {
+					forget = true;
+					++line;
+					continue;
+				}
 				if (c == 'p') {
 					subPrint = 2;
 					++line;
@@ -4065,8 +4093,16 @@ static int substituteText(const char *line)
 				return -1;
 			}
 		}		/* closing delimiter */
+
 		if (nth == 0 && !g_mode)
 			nth = 1;
+
+		if(!forget) {
+			cw->lhs_yes = true;
+			strcpy(cw->lhs, globalSubs.temp_lhs);
+			cw->rhs_yes = true;
+			strcpy(cw->rhs, globalSubs.temp_rhs);
+		}
 
 		regexpCompile(lhs, ci);
 		if (!re_cc)

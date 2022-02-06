@@ -9,6 +9,8 @@ frames as a live array of window objects.
 
 "include" directive in the config file.
 
+f suffix to forget the entered search and replacement strings.
+
 3.8.1
 Make several changes so that edbrowse is more like ed,
 allowing more commands under g/re/,
