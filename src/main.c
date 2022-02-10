@@ -23,6 +23,7 @@ int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
 char *userAgents[MAXAGENT + 1];
 char *currentAgent;
+int agentIndex;
 char selsep = ',';
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool blockJS;
@@ -916,18 +917,28 @@ int runEbFunction(const char *line)
 	char *t, *new;
 	int l, nest;
 	unsigned j;
-	const char *ip;		/* think instruction pointer */
-	const char *endl;	/* end of line to be processed */
-	bool nofail, ok;
+	const char *ip;		// think instruction pointer
+	const char *endl;	// end of line to be processed
+	bool nofail, ok, restore = false;
 	uchar code;
+	int rc = -1;
 	char stack[MAXNEST];
 	int loopcnt[MAXNEST];
+
+// local copies of settings, to restore after function runs.
+	struct {
+		bool rl, endm, lna, H, ci, sg, su8, sw, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse;
+		uchar dw, ls_sort;
+		char lsformat[12], showProgress;
+		char *currentAgent;
+		int agentIndex, debugLevel, timerspeed;
+	} save;
 
 /* Separate function name and arguments */
 	spaceCrunch(linecopy, true, false);
 	if (linecopy[0] == 0) {
 		setError(MSG_NoFunction);
-		goto fail;
+		goto done;
 	}
 	memset(args, 0, sizeof(args));
 	memset(argl, 0, sizeof(argl));
@@ -937,7 +948,7 @@ int runEbFunction(const char *line)
 	for (s = linecopy; *s; ++s)
 		if (!isalnumByte(*s)) {
 			setError(MSG_BadFunctionName);
-			goto fail;
+			goto done;
 		}
 	for (j = 0; j < ebhosts_avail; ++j)
 		if (ebhosts[j].type == 'f' &&
@@ -945,7 +956,7 @@ int runEbFunction(const char *line)
 			break;
 	if (j == ebhosts_avail) {
 		setError(MSG_NoSuchFunction, linecopy);
-		goto fail;
+		goto done;
 	}
 // This or a downstream function could invoke config.
 // Don't know why anybody would do that!
@@ -955,6 +966,38 @@ int runEbFunction(const char *line)
 	nofail = (ebhosts[j].prot[0] == '+');
 	nest = 0;
 	ok = true;
+
+	if(!stringEqual(linecopy, "init") && strncmp(linecopy, "set", 3)) {
+		restore = true;
+		save.currentAgent = currentAgent, save.agentIndex = agentIndex;
+		save.debugLevel = debugLevel;
+		save.timerspeed = timerspeed;
+		save.dw = dirWrite;
+		save.ls_sort = ls_sort;
+		save.bg = down_bg;
+		save.jsbg = down_jsbg;
+		save.iu = iuConvert;
+		save.bd = binaryDetect;
+		save.rl = inputReadLine;
+		save.can = curlAuthNegotiate;
+		save.lna = listNA;
+		save.fbc = fetchBlobColumns;
+		save.ls_reverse = ls_reverse;
+		save.sw = searchWrap;
+		save.hr = allowRedirection;
+		save.sr = sendReferrer;
+		save.js = allowJS;
+		save.ftpa = ftpActive;
+		save.H = helpMessagesOn;
+		save.pg = pluginsOn;
+		save.hf = showHiddenFiles;
+		save.showall = showHover;
+		save.endm = endMarks;
+		save.sg = searchStringsAll;
+		save.ci = caseInsensitive;
+		save.su8 = re_utf8;
+		save.vs = verifyCertificates;
+	}
 
 /* collect arguments, ~0 first */
 	if (t) {
@@ -969,7 +1012,7 @@ int runEbFunction(const char *line)
 	for (s = t; s; s = t) {
 		if (++j >= 10) {
 //                      setError(MSG_ManyArgs);
-//                      goto fail;
+//                      goto done;
 			break;
 		}
 		args[j] = ++s;
@@ -982,7 +1025,7 @@ int runEbFunction(const char *line)
 	while ((code = *ip)) {
 		if (intFlag) {
 			setError(MSG_Interrupted);
-			goto fail;
+			goto done;
 		}
 		endl = strchr(ip, '\n');
 
@@ -1064,7 +1107,7 @@ ahead:
 				if (!args[j]) {
 					setError(MSG_NoArgument, j);
 					nzFree(new);
-					goto fail;
+					goto done;
 				}
 				strcpy(t, args[j]);
 				t += argl[j];
@@ -1087,22 +1130,46 @@ nextline:
 	if (!ok && nofail)
 		goto soft_fail;
 
-	nzFree(linecopy);
-	nzFree(fncopy);
-	nzFree(allargs);
-	return 1;
+	rc = 1;
 
-fail:
+done:
 	nzFree(linecopy);
 	nzFree(fncopy);
 	nzFree(allargs);
-	return -1;
+	if(restore) {
+		currentAgent = save.currentAgent, agentIndex = save.agentIndex;
+		debugLevel = save.debugLevel;
+		timerspeed = save.timerspeed;
+		dirWrite = save.dw;
+		ls_sort = save.ls_sort;
+		down_bg = save.bg;
+		down_jsbg = save.jsbg;
+		iuConvert = save.iu;
+		binaryDetect = save.bd;
+		inputReadLine = save.rl;
+		curlAuthNegotiate = save.can;
+		listNA = save.lna;
+		ls_reverse = save.ls_reverse;
+		searchWrap = save.sw;
+		allowRedirection = save.hr;
+		sendReferrer = save.sr;
+		allowJS = save.js;
+		ftpActive = save.ftpa;
+		helpMessagesOn = save.H;
+		pluginsOn = save.pg;
+		showHiddenFiles = save.hf;
+		showHover = save.showall;
+		endMarks = save.endm;
+		searchStringsAll = save.sg;
+		caseInsensitive = save.ci;
+		re_utf8 = save.su8;
+		verifyCertificates = save.vs;
+	}
+	return rc;
 
 soft_fail:
-	nzFree(linecopy);
-	nzFree(fncopy);
-	nzFree(allargs);
-	return 0;
+	rc = 0;
+	goto done;
 }
 
 struct DBTABLE *findTableDescriptor(const char *sn)

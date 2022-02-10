@@ -30,8 +30,8 @@ static bool pcre_utf8_error_stop = false;
 
 /* Static variables for this file. */
 
-static uchar dirWrite;		/* directories read write */
-static bool endMarks;		/* ^ $ on listed lines */
+uchar dirWrite;		/* directories read write */
+bool endMarks;		/* ^ $ on listed lines */
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
 /* Commands that can be done in browse mode. */
@@ -1874,8 +1874,8 @@ struct DSR {
 };
 static struct DSR *dsr_list;
 extern struct stat this_stat;
-static char ls_sort;		// sort method for directory listing
-static bool ls_reverse;		// reverse sort
+uchar ls_sort;		// sort method for directory listing
+bool ls_reverse;		// reverse sort
 static char lsformat[12];	/* size date etc on a directory listing */
 
 /* compare routine for quicksort directory scan */
@@ -3298,7 +3298,7 @@ static int re_count;
 static PCRE2_SIZE *re_vector;
 static pcre2_match_data *match_data;
 static pcre2_code *re_cc;	/* compiled */
-static bool re_utf8 = true;
+bool re_utf8 = true;
 
 static void regexpCompile(const char *re, bool ci)
 {
@@ -4559,18 +4559,14 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_NoAgent, n);
 			return false;
 		}
-		currentAgent = t;
+		agentIndex = n, currentAgent = t;
 		if (helpMessagesOn || debugLevel >= 1)
 			eb_puts(currentAgent);
 		return true;
 	}
 
 	if(stringEqual(line, "ua")) {
-		for (n = 0; n < MAXAGENT; ++n)
-			if(currentAgent == userAgents[n]) {
-				printf("%d: %s\n", n, currentAgent);
-				break;
-			}
+		printf("%d: %s\n", agentIndex, currentAgent);
 		return true;
 	}
 

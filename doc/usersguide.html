@@ -115,7 +115,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#keyval> Keyword = Value </A>
 <LI><A HREF=#agent> User Agent </A>
 <LI><A HREF=#script> Edbrowse Functions </A>
-<LI><A HREF=#init> The Init Script </A>
+<LI><A HREF=#init> The Init Function </A>
 <LI><A HREF=#ma> Mail Accounts </A>
 <LI><A HREF=#mt> Plugin Descriptors </A>
 <LI><A HREF=#sampcfg> A Sample Config File </A>
@@ -3960,6 +3960,7 @@ Other sites are also particular about the type of browser, and none of them are 
 
 <H3> <A NAME=script> Edbrowse Functions </A> </H3>
 
+<P>
 You can bundle a set of edbrowse commands together under one name,
 similar to a macro.
 If the following appears in your .ebrc file,
@@ -3967,18 +3968,22 @@ you can type &lt;ud to undos a file.
 <P>
 function:ud {
 <br>
-&nbsp;&nbsp;,s/\r$//
+&nbsp;&nbsp;,s/\r$//f
 <br>
 }
 
 <P>
-The new &lt; command is suppose to remind you of redirection,
+The &lt; command is suppose to remind you of redirection,
 i.e. read input commands from this macro.
 And macros can invoke other macros
 by using a &lt; command in the body.
 Almost any edbrowse command is fair game.
 A macro can fetch web pages from the Internet,
 fill out forms, submit requests, and send mail.
+
+<P>
+It is usually a good idea to use the forget flag, suffix f, within functions,
+so that they do not disturb the search and substitute that you have established in your interactive session.
 
 <P>
 Unlike many things in the Unix world, macro names are case-insensitive.
@@ -3992,14 +3997,14 @@ Function names are alphanumeric, and can even start with a digit.  function:123 
 
 <P>
 Normally, edbrowse marches along, whether a command succeeds or not.
-However, you can tell a macro to stop if it encounters an error
+However, you can tell a function to stop if it encounters an error
 by using this syntax.
 <P>
 function+hw {
 <br>
-&nbsp;&nbsp;/hello/p
+&nbsp;&nbsp;/hello/f p
 <br>
-&nbsp;&nbsp;/world/p
+&nbsp;&nbsp;/world/f p
 <br>
 }
 
@@ -4014,14 +4019,21 @@ Other than some indenting, the format is fixed and unforgiving.
 You cannot, for instance, put the opening brace on its own line, as K&amp;R would suggest.
 
 <P>
-These functions, or macros, can accept parameters.
+If a function changes settings, such as case insensitive, search with wrap, debug level, user agent, etc,
+those settings are restored when the function exits;
+unless the function is the init function, or the function name begins with the word set.
+Clearly the init function is intended to establish settings for the interactive session,
+thus changes should not be local to that function.
+
+<P>
+These functions can accept parameters.
 Let's make the previous function a bit more general.
 <P>
 function+hw {
 <br>
-&nbsp;&nbsp;/~1/p
+&nbsp;&nbsp;/~1/f p
 <br>
-&nbsp;&nbsp;/~2/p
+&nbsp;&nbsp;/~2/f p
 <br>
 }
 
@@ -4038,16 +4050,11 @@ function+gg {
 <br>
 &nbsp;&nbsp;b http://www.google.com
 <br>
-&nbsp;&nbsp;/&lt;&gt;/ i=~0
+&nbsp;&nbsp;/&lt;&gt;/f i=~0
 <br>
-&nbsp;&nbsp;/&lt;/ i1*
+&nbsp;&nbsp;/&lt;/f i1*
 <br>
 &nbsp;&nbsp;/h3/p
-<br>
-#  Search results by h3 heading only works if google recognizes your browser,
-<br>
-#  so you need to spoof user agent to IE7. Use agentsite to do this.
-<br>
 }
 
 <P>
@@ -4100,9 +4107,9 @@ It then deletes the blank lines at the top.
 You can use loop(100){ ... } to repeat a set of commands 100 times.
 This feature is not used very often.
 
-<H3> <A NAME=init> The Init Script </A> </H3>
+<H3> <A NAME=init> The Init Function </A> </H3>
 
-The script named "init" is run at edbrowse startup.
+The function named "init" is run at edbrowse startup.
 Use this to establish your default settings - even read in your bookmark file,
 so your favorites are close at hand.
 Here is an example.
@@ -4127,7 +4134,7 @@ db1
 
 <P>
 This is just a sample.
-Put anything you like in your init script,
+Put anything you like in your init function,
 or leave it out altogether if you are happy with edbrowse out of the box.
 
 <P>

@@ -184,6 +184,7 @@ extern char emptyString[];	/* use this whenever you would use "" */
  * Tell them you're Explorer, and walk right in.
  * Anyways, this array holds up to 10 user agent strings. */
 extern char *userAgents[], *currentAgent;
+extern int agentIndex;
 extern char *newlocation;
 extern int newloc_d; /* delay */
 extern bool newloc_r; /* location replaces this page */
@@ -302,6 +303,7 @@ extern bool isimap;		/* Is the program running as an imap client? */
 // next two variables work around curl bug 7284
 extern bool down_bg;		// download in background
 extern bool down_jsbg;		// download javascript in background
+extern bool re_utf8, endMarks;
 extern char showProgress; // feedback as a file is downloaded
 extern char selsep; // selection separator
 extern char eb_language[];		/* edbrowse language, determined by $LANG */
@@ -336,7 +338,8 @@ extern char *downDir;		/* the download directory */
 extern char *ebTempDir;		/* edbrowse temp, such as /tmp/.edbrowse */
 extern char *ebUserDir;		/* $ebTempDir/nnn user ID appended */
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
-extern bool fetchBlobColumns;
+extern bool fetchBlobColumns, ls_reverse;
+extern uchar ls_sort, dirWrite;
 extern bool caseInsensitive, searchStringsAll, searchWrap;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
