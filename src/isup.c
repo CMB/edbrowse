@@ -532,7 +532,7 @@ no:
 
 yes:
 	return true;
-}				/* isSQL */
+}
 
 // non-FTP URLs are always browsable.  FTP URLs are browsable if they end with
 //a slash. gopher urls are a bit more complicated, not yet implemented.
@@ -543,12 +543,12 @@ bool isBrowseableURL(const char *url)
 		    || (url[strlen(url) - 1] == '/');
 	else
 		return false;
-}				/* isBrowseableURL */
+}
 
 bool isDataURI(const char *u)
 {
 	return u && memEqualCI(u, "data:", 5);
-}				/* isDataURI */
+}
 
 /* Helper functions to return pieces of the URL.
  * Makes a copy, so you can have your 0 on the end.
@@ -1103,25 +1103,41 @@ char *encodePostData(const char *s, const char *keep_chars)
 	char *post, c;
 	int l;
 	char buf[4];
+	bool is_http = false;
 
 	if (!s)
 		return 0;
 	if (s == emptyString)
 		return emptyString;
 	if (!keep_chars)
-		keep_chars = "-._~()";
+		keep_chars = "-._~()", is_http = true;
 	post = initString(&l);
 	while ((c = *s++)) {
 		if (isalnumByte(c))
 			goto putc;
 		if (strchr(keep_chars, c))
 			goto putc;
-		if(c == ' ') {
-// %20 works just fine, but + seems to be the standard.
-// With this in place, + can never be in keep_cahrs.
+
+/*********************************************************************
+Ok, space to + is a real pain in the ass!
+Who was smoking what when he came up with that one?
+I can turn space into %20 and that always works everywhere, so why not do that?
+Well, when encoding input fields, *all* the other browsers turn space to plus.
+If we want to hold debug output side by side, or even compare it via computer,
+which we sometimes do, it helps if the output is byte for byte the same.
+So I, rather reluctantly, turn space to + for post data.
+However, this routine is called by gopher to build a url.
+Not input fields but the pathname of a url, and in that context,
+space has to become %20.
+I can tell it's gopher because keep_chars is not null.
+So that's 20 lines of comments just to explain
+the second half of this if statement.
+*********************************************************************/
+		if(c == ' ' && is_http) {
 			c = '+';
 			goto putc;
 		}
+
 		sprintf(buf, "%%%02X", (uchar) c);
 		stringAndString(&post, &l, buf);
 		continue;
@@ -1666,23 +1682,6 @@ void cookiesFromJar(void)
 	foreach(c, cookies)
 	    cookieForLibcurl(c);
 
-#if 0
-// We use to write the file out again with the old cookies deleted,
-// I don't think we need to do this.
-	if (expired) {
-/* Pour the cookies back into the jar */
-		f = fopen(cookieFile, "w");
-		if (!f)
-			i_printfExit(MSG_NoRebCookie, cookieFile);
-		foreach(c, cookies) {
-			char *cookLine = netscapeCookieLine(c);
-			fputs(cookLine, f);
-			nzFree(cookLine);
-		}
-		fclose(f);
-	}
-#endif
-
 // Free the resources allocated by this routine.
 	foreach(c, cookies)
 	    freeCookie(c);
@@ -1710,7 +1709,7 @@ static bool isPathPrefix(const char *d, const char *s)
 	if (dl > sl)
 		return false;
 	return !memcmp(d, s, dl);
-}				/* isPathPrefix */
+}
 
 /*********************************************************************
 Given a URL, find the cookies that belong to that URL.
@@ -2093,7 +2092,7 @@ static bool readControl(void)
 
 	cache_data = data;	/* remember to free this later */
 	return true;
-}				/* readControl */
+}
 
 /* create an ascii equivalent for a record, this is allocated */
 static char *record2string(const struct CENTRY *e)
@@ -2156,7 +2155,7 @@ static int generateFileNumber(void)
 		if (i == numentries)
 			return n;
 	}
-}				/* generateFileNumber */
+}
 
 /* get exclusive access to the cache */
 static bool setLock(void)
@@ -2208,12 +2207,12 @@ top:
 	}
 
 	return false;
-}				/* setLock */
+}
 
 static void clearLock(void)
 {
 	unlink(cacheLock);
-}				/* clearLock */
+}
 
 /* Remove any cached files and initialize the database */
 static void clearCacheInternal(void)

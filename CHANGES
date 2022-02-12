@@ -3,6 +3,8 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.2
 Support for emojis.
 
+Changes to edbrowse settings are restored when a function returns.
+
 Environment variables in .ebrc pathnames.
 
 frames as a live array of window objects.
