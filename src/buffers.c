@@ -797,7 +797,7 @@ eb_line:
 
 static struct {
 	char lhs[MAXRE], rhs[MAXRE];
-	bool lhs_yes, rhs_yes;
+	bool lhs_yes, lhs_bang, lhs_ci, rhs_yes;
 	char temp_lhs[MAXRE], temp_rhs[MAXRE];
 } globalSubs;
 
@@ -808,6 +808,8 @@ static void saveSubstitutionStrings(void)
 	if (!cw)
 		return;
 	globalSubs.lhs_yes = cw->lhs_yes;
+	globalSubs.lhs_bang = cw->lhs_bang;
+	globalSubs.lhs_ci = cw->lhs_ci;
 	strcpy(globalSubs.lhs, cw->lhs);
 	globalSubs.rhs_yes = cw->rhs_yes;
 	strcpy(globalSubs.rhs, cw->rhs);
@@ -820,6 +822,8 @@ static void restoreSubstitutionStrings(Window *nw)
 	if (!nw)
 		return;
 	nw->lhs_yes = globalSubs.lhs_yes;
+	nw->lhs_bang = globalSubs.lhs_bang;
+	nw->lhs_ci = globalSubs.lhs_ci;
 	strcpy(nw->lhs, globalSubs.lhs);
 	nw->rhs_yes = globalSubs.rhs_yes;
 	strcpy(nw->rhs, globalSubs.rhs);
@@ -3098,6 +3102,8 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 				}
 				strcpy(re, cw->lhs);
 				strcpy(globalSubs.temp_lhs, cw->lhs);
+				globalSubs.lhs_bang = cw->lhs_bang;
+				globalSubs.lhs_ci = cw->lhs_ci;
 				*split = line;
 				return true;
 			}
@@ -3380,23 +3386,27 @@ const char **split)
 			setError(MSG_EmptyBuffer);
 			return false;
 		}
+		if(!line[1] && cw->lhs_yes)
+			unmatch = cw->lhs_bang, ci = (cw->lhs_ci | caseInsensitive);
 		if (!regexpCheck(line, true, true, &re, &line))
 			return false;
 		if (*line == first) {
 			++line;
-			while(*line == 'i' || *line == 'f') {
+			while(*line == 'i' || *line == 'f' || *line == '!') {
 				if (*line == 'i')
 					ci = true;
-				else
+				if (*line == 'f')
 					forget = true;
+				if (*line == '!')
+					unmatch = true;
 				++line;
 			}
-			if (*line == '!')
-				unmatch = true, ++line;
 		}
 
 		if(!forget) {
 			cw->lhs_yes = true;
+			cw->lhs_bang = unmatch;
+			cw->lhs_ci = ci;
 			strcpy(cw->lhs, globalSubs.temp_lhs);
 		}
 
@@ -3529,6 +3539,8 @@ static bool doGlobal(const char *line)
 
 	if(!forget) {
 		cw->lhs_yes = true;
+		cw->lhs_bang = false;
+		cw->lhs_ci = false;
 		strcpy(cw->lhs, globalSubs.temp_lhs);
 	}
 
@@ -4099,6 +4111,8 @@ static int substituteText(const char *line)
 
 		if(!forget) {
 			cw->lhs_yes = true;
+			cw->lhs_bang = false;
+			cw->lhs_ci = false;
 			strcpy(cw->lhs, globalSubs.temp_lhs);
 			cw->rhs_yes = true;
 			strcpy(cw->rhs, globalSubs.temp_rhs);

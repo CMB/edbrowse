@@ -1056,8 +1056,9 @@ Type s by itself for s//%.
 <LI><P>
 /xyz/! searches for the next line that does not contain xyz.
 ed does not do this, but sed does, and it's quite handy.
-Note that xyz is in the remembered regexp buffer, so simply typing / will find the next line with xyz.
-Type //! for the next line that doesn't have xyz.
+Note that xyz is in the remembered regexp buffer, and so is !.
+type / for the next line that doesn't have xyz.
+type ? for the previous line that doesn't have xyz.
 Note that there is no need for g/xyz/! since that is the same as v/xyz/.
 
 <LI><P>

@@ -478,6 +478,8 @@ int ehsn;
 	bool sank:1; /* jSyncup has been run */
 	bool lhs_yes:1;
 	bool rhs_yes:1;
+	bool lhs_bang:1;
+	bool lhs_ci:1;
 	bool binMode:1;		/* binary file */
 	bool nlMode:1;		/* newline at the end */
 	bool rnlMode:1;
