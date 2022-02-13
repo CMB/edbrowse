@@ -7205,6 +7205,9 @@ past_g_file:
 			line = newline;
 // cx was set, like a context, like w2, but it shouldn't be
 			cx = 0;
+		} else if(isdigitByte(first) && line[1] == 'p' && !line[2]) {
+			sprintf(newline, "//%%/%cp", first);
+			line = newline;
 		} else if (strchr(",.;:!?)-\"", first) &&
 			   (!line[1] || (isdigitByte(line[1]) && !line[2]))) {
 			char esc[2];
