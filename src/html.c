@@ -2603,7 +2603,7 @@ static void frontBackDiff(const char *b1, const char *b2)
 				++front1z, ++front2z;
 			++s1, ++s2;
 		}
-		if (!*s1) {
+		if (!*s1 && !*s2) {
 			front1z = front2z = 0;
 			goto done;
 		}
