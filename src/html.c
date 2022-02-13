@@ -1289,7 +1289,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		memcpy(new + strlen(new), t, plen - (t - p));
 		free(cw->map[ln].text);
 		cw->map[ln].text = (pst) new;
-		if (notify)
+		if (notify && debugLevel> 0)
 			displayLine(ln);
 		return;
 	}
