@@ -1761,7 +1761,7 @@ const struct tagInfo availableTags[] = {
 	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
 	{"noembed", "no embed section", TAGACT_NOP, 0, 2},
 	{"em", "emphasized text", TAGACT_JS, 0, 0},
-	{"label", "a label", TAGACT_LABEL, 0, 0},
+	{"label", "a label", TAGACT_LABEL, 0, 2},
 	{"strike", "emphasized text", TAGACT_JS, 0, 0},
 	{"s", "emphasized text", TAGACT_JS, 0, 0},
 	{"strong", "emphasized text", TAGACT_JS, 0, 0},
