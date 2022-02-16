@@ -5562,6 +5562,23 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "enew")) {
+		Window *w;
+		if (!cxQuit(context, 0))
+			return false;
+		undoCompare();
+		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
+		w = createWindow();
+		w->sno = context;
+		w->prev = cw;
+		cw = w;
+		selfFrame();
+		cs->lw = w;
+		debugPrint(1, "0");
+		return true;
+	}
+
 no_action:
 	*runThis = line;
 	return 2;		/* no change */
