@@ -3013,7 +3013,6 @@ static bool shellEscape(const char *line)
  * even if the shell command failed.
  * Edbrowse succeeds if it is *able* to run the system command. */
 	eb_system(newline, !globSub);
-	free(newline);
 	return true;
 }
 
