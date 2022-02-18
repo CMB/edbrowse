@@ -6767,7 +6767,6 @@ replaceframe:
 			char *newline = bangbang(line + 1);
 			eb_variables();
 			p = popen(newline, "w");
-			free(newline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
@@ -7646,7 +7645,6 @@ afterdelete:
 			char *newline = bangbang(line + 1);
 			eb_variables();
 			p = popen(newline, "r");
-			free(newline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
