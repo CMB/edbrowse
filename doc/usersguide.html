@@ -1836,31 +1836,29 @@ So you can't rename the files, yet you still want to run your program on one or 
 You can run any program on any file without retyping that filename via the shell escape.
 Use kx to assign the label x to the file you are interested in.
 This is standard ed syntax.
-Then run !program 'x
-to invoke your program on that file.
-This sounds involved, but it is merely macro substitution, implemented in a few lines of code.
-If 'x is present in a shell escape, and is not next to any letters or digits,
-edbrowse replaces it with the text on the line labeled x.
-If your filename contains spaces, run !program "'x"
+Then run !program $EB_LNx
+to invoke your program on the contents of the line marked by x.
+This sounds involved, but it is merely variable substitution by the shell.
+If your filename contains spaces, run !program "$EB_LNx"
 to make sure the entire file name is one argument to the running program.
 
 <P>
-The token '. is replaced with the text on the current line,
-and the token '_ is replaced with the current filename.
+EB_DOT holds the text on the current line,
+EB_PLUS holds the text on the next line,
+EB_MINUS holds the text on the previous line,
+and EB_FILE holds the current filename.
 If you try to write a file, and remember that you left it readonly,
-you can make it writable via !chmod +w '_,
+you can make it writable via !chmod +w "$EB_FILE",
 then write the text to the file.
 
 <P>
 You can expand multiple tokens in one shell command.
-Use kx and ky to mark two files that you want to compare, then run !diff 'x 'y.
+Use kx and ky to mark two files that you want to compare, then run !diff "$EB_LNx" "$EB_LNy".
 
 <P>
 This feature is not limited to directory scans.
 You may be editing a simple file,
 but you can still paste the contents of a line into your shell command.
-Off hand I don't know why you'd want to do this,
-but you can.
 
 <P>
 When in directory mode, the ls command displays various attributes of the file on the current line.

@@ -2893,17 +2893,12 @@ static void debrowseSuffix(char *s)
 	}
 }
 
-// macro substitutions within the command line.
-// '_ filename, '. current line, '- last line, '+ next line,
-// 'x line labeled x. Replace only if there are no letters around it.
-// isn't will not become isn + the line labeled t.
-static char *apostropheMacros(const char *line)
+// Set environment variables for filename, content of the current line,
+// etc, before running a shell command.
+static void eb_variables()
 {
-	char *newline, *s;
-	const char *t;
 	pst p;
-	char key;
-	int linesize = 0, pass, n, rc, i;
+	int n, rc, i;
 	char var[12];
 	static const char *hasnull = "line contains nulls";
 
@@ -2950,82 +2945,6 @@ static char *apostropheMacros(const char *line)
 		setenv(var, rc ? hasnull : (char*)p, 1);
 		free(p);
 	}
-
-	for (pass = 1; pass <= 2; ++pass) {
-		for (t = line; *t; ++t) {
-			if (*t != '\'')
-				goto addchar;
-			if (t > line && isalnumByte(t[-1]))
-				goto addchar;
-			key = t[1];
-			if (key && isalnumByte(t[2]))
-				goto addchar;
-
-			if (key == '_') {
-				++t;
-				if (!cf->fileName)
-					continue;
-				if (pass == 1) {
-					linesize += strlen(cf->fileName);
-				} else {
-					strcpy(s, cf->fileName);
-					s += strlen(s);
-				}
-				continue;
-			}
-
-			if (key == '.' || key == '-' || key == '+') {
-				n = cw->dot;
-				if (key == '-')
-					--n;
-				if (key == '+')
-					++n;
-				if (n > cw->dol || n <= 0) {
-					setError(MSG_OutOfRange, key);
-					return NULL;
-				}
-frombuf:
-				++t;
-				if (pass == 1) {
-					p = fetchLine(n, -1);
-					linesize += pstLength(p) - 1;
-				} else {
-					p = fetchLine(n, 1);
-					if (perl2c((char *)p)) {
-						free(p);
-						setError(MSG_ShellNull);
-						return NULL;
-					}
-					strcpy(s, (char *)p);
-					s += strlen(s);
-					free(p);
-				}
-				continue;
-			}
-
-			if (islowerByte(key)) {
-				n = cw->labels[key - 'a'];
-				if (!n) {
-					setError(MSG_NoLabel, key);
-					return NULL;
-				}
-				goto frombuf;
-			}
-
-addchar:
-			if (pass == 1)
-				++linesize;
-			else
-				*s++ = *t;
-		}		/* loop over chars */
-
-		if (pass == 1)
-			s = newline = allocMem(linesize + 1);
-		else
-			*s = 0;
-	}			/* two passes */
-
-	return newline;
 }
 
 static char *get_interactive_shell(const char *sh)
@@ -3080,15 +2999,15 @@ static bool shellEscape(const char *line)
 			setError(MSG_SessionBackground);
 			return false;
 		}
+		eb_variables();
 		interactive_shell_cmd = get_interactive_shell(sh);
 		eb_system(interactive_shell_cmd, !globSub);
 		nzFree(interactive_shell_cmd);
 		return true;
 	}
 
-	newline = apostropheMacros(bangbang(line));
-	if (!newline)
-		return false;
+	newline = bangbang(line);
+	eb_variables();
 
 /* Run the command.  Note that this routine returns success
  * even if the shell command failed.
@@ -6846,9 +6765,8 @@ replaceframe:
 		if(first == '!') { // write to a command, like ed
 			int l = 0;
 			FILE *p;
-			char *newline = apostropheMacros(bangbang(line + 1));
-			if(!newline)
-				return false;
+			char *newline = bangbang(line + 1);
+			eb_variables();
 			p = popen(newline, "w");
 			free(newline);
 			if (!p) {
@@ -7726,9 +7644,8 @@ afterdelete:
 			char *outdata;
 			int outlen;
 			FILE *p;
-			char *newline = apostropheMacros(bangbang(line + 1));
-			if(!newline)
-				return false;
+			char *newline = bangbang(line + 1);
+			eb_variables();
 			p = popen(newline, "r");
 			free(newline);
 			if (!p) {

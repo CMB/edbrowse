@@ -11,6 +11,9 @@ frames as a live array of window objects.
 
 "include" directive in the config file.
 
+Replace the apostrophe macros with shell environment variables.
+EB_DOT instead of '. etc.
+
 f suffix to forget the entered search and replacement strings.
 
 3.8.1
