@@ -2901,8 +2901,15 @@ static void eb_variables()
 	int n, rc, i;
 	char var[12];
 	static const char *hasnull = "line contains nulls";
+	char *s = cloneString(cf->fileName);
 
-	setenv("EB_FILE", cf->fileName ? cf->fileName : emptyString, 1);
+	if(!s) s = emptyString;
+	strcpy(var, "EB_FILE");
+	setenv(var, s, 1);
+	if(cw->browseMode) debrowseSuffix(s);
+	strcpy(var, "EB_BASE");
+	setenv(var, s, 1);
+	nzFree(s);
 
 	strcpy(var, "EB_DOT");
 	unsetenv(var);
