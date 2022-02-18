@@ -621,6 +621,7 @@ if(typeof s == "number") this.selectionStart = s;
 if(typeof e == "number") this.selectionEnd = e;
 if(typeof dir == "string") this.selectionDirection = dir;
 }
+HTMLInputElement.prototype.select = eb$voidfunction;
 HTMLInputElement.prototype.click = mw$.clickfn;
 // We only need this in the rare case of setting click and clearing
 // the other radio buttons. acid test 43
