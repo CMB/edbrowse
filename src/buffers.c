@@ -2903,7 +2903,53 @@ static char *apostropheMacros(const char *line)
 	const char *t;
 	pst p;
 	char key;
-	int linesize = 0, pass, n;
+	int linesize = 0, pass, n, rc, i;
+	char var[12];
+	static const char *hasnull = "line contains nulls";
+
+	setenv("EB_FILE", cf->fileName ? cf->fileName : emptyString, 1);
+
+	strcpy(var, "EB_DOT");
+	setenv(var, emptyString, 1);
+	if((n = cw->dot)) {
+		p = fetchLine(n, 1);
+		rc = perl2c((char *)p);
+		setenv(var, rc ? hasnull : (char*)p, 1);
+		free(p);
+	}
+
+	strcpy(var, "EB_PLUS");
+	setenv(var, emptyString, 1);
+	n = cw->dot + 1;
+	if(n <= cw->dol) {
+		p = fetchLine(n, 1);
+		rc = perl2c((char *)p);
+		setenv(var, rc ? hasnull : (char*)p, 1);
+		free(p);
+	}
+
+	strcpy(var, "EB_MINUS");
+	setenv(var, emptyString, 1);
+	n = cw->dot - 1;
+	if(n > 0) {
+		p = fetchLine(n, 1);
+		rc = perl2c((char *)p);
+		setenv(var, rc ? hasnull : (char*)p, 1);
+		free(p);
+	}
+
+	for(i=0; i<26; ++i) {
+		sprintf(var, "EB_LN%c", 'a' + i);
+		setenv(var, emptyString, 1);
+		n = cw->labels[i];
+// n should always be in range.... but
+		if(!n || n > cw->dol)
+			continue;
+		p = fetchLine(n, 1);
+		rc = perl2c((char *)p);
+		setenv(var, rc ? hasnull : (char*)p, 1);
+		free(p);
+	}
 
 	for (pass = 1; pass <= 2; ++pass) {
 		for (t = line; *t; ++t) {
