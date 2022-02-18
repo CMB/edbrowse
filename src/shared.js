@@ -189,7 +189,7 @@ jslocal += "f" + idx + ".css:" + ss + "\n";
 }
 }
 wlf(jslocal, "jslocal");
-alert(".   ub   ci+   /<head/r from   w base   qt");
+alert("bye   ub   ci+   /<head/r from   w base   q");
 }
 
 // called internally when we are running a snapshot.

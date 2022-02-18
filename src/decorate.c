@@ -1494,7 +1494,7 @@ static void pushAttributes(const Tag *t)
 // There are some exceptions, some attributes that we handle individually.
 // these are handled in domLink()
 		static const char *const excdom[] = {
-			"name", "id", "class",
+			"name", "id", "class", "classname",
 			"checked", "value", "type",
 			"href", "src", "action",
 			0
@@ -1518,7 +1518,7 @@ static void pushAttributes(const Tag *t)
 			"getattribute", "getattributens",
 			"setattribute", "setattributens",
 			"removeattribute", "removeattributens",
-			"classname", "parentelement",
+			"parentelement",
 			"getattributenode", "getclientrects",
 			"clonenode", "importnode",
 			"comparedocumentposition", "getboundingclientrect",
@@ -1582,7 +1582,12 @@ static void pushAttributes(const Tag *t)
 			                        if (stringInListCI(excdom, x) < 0)
 				set_property_string_t(t, x, u);
 		}
-		run_function_onestring_t(t, "markAttribute", x);
+// special case, classname sets the class.
+// Are there others like this?
+		if(stringEqual(x, "classname"))
+			run_function_onestring_t(t, "markAttribute", "class");
+		else
+			run_function_onestring_t(t, "markAttribute", x);
 		nzFree(x);
 	}
 }
@@ -2090,6 +2095,13 @@ checkattributes:
 			t->id = cloneString(v);
 		}
 		if ((j = stringInListCI(t->attributes, "class")) >= 0) {
+			v = t->atvals[j];
+			if (v && !*v)
+				v = 0;
+			t->jclass = cloneString(v);
+		}
+// classname is an alias for class
+		if ((j = stringInListCI(t->attributes, "classname")) >= 0) {
 			v = t->atvals[j];
 			if (v && !*v)
 				v = 0;
