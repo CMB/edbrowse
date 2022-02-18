@@ -1234,6 +1234,7 @@ HTMLStyleElement.prototype.dom$class = "HTMLStyleElement";
 // Kind of a hack to make this like the link element
 Object.defineProperty(HTMLStyleElement.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
+Object.defineProperty(HTMLStyleElement.prototype, "sheet", { get: function(){ if(!this.sheet$2) this.sheet$2 = new CSSStyleSheet; return this.sheet$2; }});
 
 document.defaultView = window;
 
