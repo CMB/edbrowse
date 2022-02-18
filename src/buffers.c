@@ -2910,7 +2910,7 @@ static char *apostropheMacros(const char *line)
 	setenv("EB_FILE", cf->fileName ? cf->fileName : emptyString, 1);
 
 	strcpy(var, "EB_DOT");
-	setenv(var, emptyString, 1);
+	unsetenv(var);
 	if((n = cw->dot)) {
 		p = fetchLine(n, 1);
 		rc = perl2c((char *)p);
@@ -2919,7 +2919,7 @@ static char *apostropheMacros(const char *line)
 	}
 
 	strcpy(var, "EB_PLUS");
-	setenv(var, emptyString, 1);
+	unsetenv(var);
 	n = cw->dot + 1;
 	if(n <= cw->dol) {
 		p = fetchLine(n, 1);
@@ -2929,7 +2929,7 @@ static char *apostropheMacros(const char *line)
 	}
 
 	strcpy(var, "EB_MINUS");
-	setenv(var, emptyString, 1);
+	unsetenv(var);
 	n = cw->dot - 1;
 	if(n > 0) {
 		p = fetchLine(n, 1);
@@ -2940,7 +2940,7 @@ static char *apostropheMacros(const char *line)
 
 	for(i=0; i<26; ++i) {
 		sprintf(var, "EB_LN%c", 'a' + i);
-		setenv(var, emptyString, 1);
+	unsetenv(var);
 		n = cw->labels[i];
 // n should always be in range.... but
 		if(!n || n > cw->dol)
@@ -6632,12 +6632,18 @@ replaceframe:
 		line = configFile;
 
 /* env variable and wild card expansion */
-	if (strchr("brewf", cmd) && first && !isURL(line) && !isSQL(line)) {
-		if (cmd != 'r' || !cw->sqlMode) {
-			if (!envFile(line, &line))
-				return false;
-			first = *line;
-		}
+	if (strchr("brewf", cmd) && // command looks right
+	first && // reading or writing or editing something
+	!isURL(line) && // not a url
+	!isSQL(line) && // not an sql table
+// don't expand if in sql mode, we must be reading a table
+	(cmd != 'r' || !cw->sqlMode)  &&
+// don't expand variables if r ! or W ! will run through the shell;
+// let the shell do it via popen().
+	(first != '!' || strchr("bef", cmd))) {
+		if (!envFile(line, &line))
+			return false;
+		first = *line;
 	}
 
 	if (cmd == 'z') {
