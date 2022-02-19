@@ -814,6 +814,14 @@ timing:{},
 }
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 
+// this is a stub, I hope I don't have to implement this stuff.
+PerformanceObserver = {
+supportedEntryTypes: {
+// no types are supported
+includes: eb$falsefunction
+}
+};
+
 cel$registry = {}; // custom elements registry
 Object.defineProperty(window, "customElements", {get:function(){ return {define:mw$.cel_define}}});
 
