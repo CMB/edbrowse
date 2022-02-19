@@ -154,7 +154,7 @@ static void anchorSwap(char *buf)
 
 /* utf8 test */
 		if ((c & 0xc0) == 0xc0 && (d & 0xc0) == 0x80) {
-			unsigned int uni = 0;
+			unsigned int uni = 0, ubytes = 0;
 			if ((c & 0x3c) == 0) {
 /* fits in 8 bits */
 				uni = ((uchar) c << 6) | (d & 0x3f);
@@ -168,14 +168,19 @@ static void anchorSwap(char *buf)
 				}
 			}
 /* copy the utf8 sequence as is */
+			uni = 0;
 			*w++ = c;
 			++s;
 			c = (char) ((uchar)c << 1);
 			while ((c & 0x80) && ((d = *s) & 0xc0) == 0x80) {
-				*w++ = d;
-				++s;
+				*w++ = d, ++s, ++ubytes;
+				uni = (uni << 6) | (d & 0x3f);
+				c = (char) ((uchar)c << 1);
 			}
 			--s;
+				c = (char) ((uchar)c >> (1+ubytes));
+				uni |= ((unsigned int)c << (ubytes*6));
+// We can do things with high unicodes here, if we wish.
 			continue;
 		}
 
