@@ -327,7 +327,8 @@ I don't have any practical way to share this class. So here we go.
 
 z$URL = URL = function() {
 var h = "";
-if(arguments.length > 0) h= arguments[0];
+if(arguments.length == 1) h= arguments[0];
+if(arguments.length == 2) h= eb$resolveURL(arguments[1], arguments[0]);
 this.href = h;
 }
 Object.defineProperty(URL.prototype, "dom$class", {value:"URL"})

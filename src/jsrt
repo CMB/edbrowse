@@ -916,6 +916,11 @@ var val64 = "YQBiog==";
 if(btoa(valraw) != val64) fail(181);
 if(atob(val64) != valraw) fail(182);
 
+//url with two args
+var u2 = new URL('../cats', 'http://www.example.com/dogs');
+if(u2.hostname != "www.example.com") fail(183);
+if(u2.pathname != "/cats") fail(184);
+
 mcp = new MessageChannel();
 mcp.port2.start();
 
