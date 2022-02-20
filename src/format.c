@@ -136,8 +136,8 @@ static void anchorSwap(char *buf)
 	for (s = w = buf; (c = *s); ++s) {
 		d = s[1];
 		if (c == InternalCodeChar && isdigitByte(d)) {
-			strtol(s + 1, &ss, 10);
-			if (*ss == '<')
+			int tagno = strtol(s + 1, &ss, 10);
+			if (*ss == '<' && !stringEqual(tagList[tagno]->info->name, "button"))
 				inputmode = true;
 			if (*ss == '>')
 				inputmode = false;

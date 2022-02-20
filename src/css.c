@@ -2043,15 +2043,13 @@ static bool inputLike(Tag *t, int flavor)
 		"button", "submit", "reset", "hidden", 0
 	};
 	action = t->action;
-	rc = (action == TAGACT_INPUT || action == TAGACT_BUTTON ||
-	      action == TAGACT_SELECT);
+	rc = (action == TAGACT_INPUT || action == TAGACT_SELECT);
 	if (!rc)
 		return false;
 	if (flavor == 1) {	// clickable
 		v = get_property_string_t(t, "type");
-		rc = (action == TAGACT_BUTTON || (action == TAGACT_INPUT && v
-						  && stringInList(clicktypes,
-								  v) >= 0));
+		rc = (action == TAGACT_INPUT && v &&
+						  stringInList(clicktypes, v) >= 0);
 		nzFree(v);
 		return rc;
 	}
@@ -2951,15 +2949,22 @@ to the text node you just added in the first call, and so on,
 so we don't want to apply before or after to text nodes.
 Or options, or html (screwing up the head body structure),
 or iframe (which should only have document below);
-in fact it's easier to list the tags that allow it.
+in fact it's easier to list the tags that allow it, in the array ok2inject.
+input is problematic. With showall on, the injected text can get
+entrained in the actual text, and sent to the server on submit,
+which is not what the server expects.
+The contents of a button is not sent to the server,
+so in theory that might be ok, but <extra clik for more details> might be confusing.
+And if it was input type=button we'd leave it off, so to be consistent,
+ button is not on our ok list.
 If t is 0 we are in getComputedStyle and then we want to see
-the before after rules - straight up.
+the before after rules straight up.
 *********************************************************************/
 
 	if (matchtype && t) {
 		bool forbidden = true;
 		static const char *const ok2inject[] = {
-			"A", "ADDRESS", "Q", "BLOCKQUOTE", "BODY", "BUTTON",
+			"A", "ADDRESS", "Q", "BLOCKQUOTE", "BODY", 
 			"CAPTION", "CITE",
 			"DIV", "FOOTER", "H1", "H2", "H3", "H4", "H5", "H6",
 			"HEADER", "LABEL", "LI", "MENU",
