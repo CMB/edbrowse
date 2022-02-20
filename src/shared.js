@@ -2626,7 +2626,7 @@ if(user || password) alert3("xml user and password ignored");
 this.readyState = 1;
 this.async = (async === false)?false:true;
 this.method = method || "GET";
-alert3("xhr " + (this.async ? "async " : "") + "open " + url);
+alert3("xhr " + (this.async ? "async " : "") + "open " + this.method + " " + url);
 this.url = eb$resolveURL(my$win().eb$base, url);
 this.status = 0;
 this.statusText = "";

@@ -2171,8 +2171,16 @@ Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr
 // So I just return the object.
 Response.prototype.json = function(){return JSON.parse(this.body)}
 
-function fetch(url) {
-var xhr = new XMLHttpRequest; xhr.url = url; xhr.method = "GET"; xhr.send("", 0);
+function fetch(url, o) {
+var dopost = false;
+if(o && o.method && o.method.toLowerCase() == "post") dopost = true;
+var body = "";
+if(o && typeof o.body == "string") body = o.body;
+var xhr = new XMLHttpRequest;
+xhr.open(dopost?"POST":"GET",url);
+if(o && typeof o.headers == "object") xhr.headers = o.headers;
+if(o && o.credentials) alert3("fetch credentials " + o.credentials + " not supported.");
+xhr.send(body, 0);
 var r = new Response; r.xhr = xhr;
 return Promise.resolve(r);
 }
