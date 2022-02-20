@@ -610,6 +610,8 @@ void prepareScript(Tag *t)
 				nzFree(g.buffer);
 				if (debugLevel >= 3)
 					i_printf(MSG_GetJS, g.url, g.code);
+				t->step = 6;
+				return;
 			}
 		}
 		t->js_ln = 1;
@@ -834,7 +836,7 @@ passes:
 		if (t->step == 3) {
 // waiting for background process to load
 			pthread_join(t->loadthread, NULL);
-			if (!t->loadsuccess) {
+			if (!t->loadsuccess || t->hcode != 200) {
 				if (debugLevel >= 3)
 					i_printf(MSG_GetJS, t->href, t->hcode);
 				t->step = 6;
@@ -3447,7 +3449,7 @@ We need to fix this someday, though it is a very rare corner case.
 				rc = 0;
 			}
 			if (!rc) {	// it's done
-				if (!t->loadsuccess) {
+				if (!t->loadsuccess || t->hcode != 200) {
 					if (debugLevel >= 3)
 						i_printf(MSG_GetJS,
 							 t->href,
