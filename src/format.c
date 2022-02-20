@@ -118,6 +118,7 @@ static void anchorSwap(char *buf)
 	bool strong;		// strong whitespace, newline or paragraph
 	int n, cnt;
 	char tag[20];
+	const char *pua; // for private use area
 
 // this is transliteration, like /bin/tr
 // I use to convert a6 and c2 to hyphen space, not sure why
@@ -133,6 +134,9 @@ static void anchorSwap(char *buf)
  * Don't do any of these transliterations in an input field. */
 
 	inputmode = false;
+	pua = getenv("EB_PUA");
+	if(pua && !*pua) pua = 0;
+
 	for (s = w = buf; (c = *s); ++s) {
 		d = s[1];
 		if (c == InternalCodeChar && isdigitByte(d)) {
@@ -181,6 +185,16 @@ static void anchorSwap(char *buf)
 				c = (char) ((uchar)c >> (1+ubytes));
 				uni |= ((unsigned int)c << (ubytes*6));
 // We can do things with high unicodes here, if we wish.
+
+// Suppresse private unicodes, which shouldn't appear on public websites,
+// and if they do, there isn't a consistent way to read them.
+// set EB_PUA=on if you want to retain them.
+			if(((uni >= 0xe000 && uni < 0xf8ff) ||
+			(uni >= 0xf0000 && uni < 0xffffd) ||
+			(uni >= 0x100000 && uni < 0x10fffd)) &&
+			!pua)
+				w -= ubytes+1;
+
 			continue;
 		}
 
