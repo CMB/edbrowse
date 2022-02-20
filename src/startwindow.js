@@ -2177,7 +2177,8 @@ if(o && o.method && o.method.toLowerCase() == "post") dopost = true;
 var body = "";
 if(o && typeof o.body == "string") body = o.body;
 var xhr = new XMLHttpRequest;
-xhr.open(dopost?"POST":"GET",url);
+// don't run this async, it needs to complete and then we set Response.ok and other response variables.
+xhr.open(dopost?"POST":"GET",url, false);
 if(o && typeof o.headers == "object") xhr.headers = o.headers;
 if(o && o.credentials) alert3("fetch credentials " + o.credentials + " not supported.");
 xhr.send(body, 0);

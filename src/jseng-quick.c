@@ -3087,7 +3087,7 @@ delete_and_go:
 		set_array_element_object(ctx, v, jj, e->argv[2]);
 		JS_FreeValue(ctx, v);
 		JS_FreeValue(ctx, g);
-		debugPrint(3, "exec pending for context %d job %d", cf->gsn, jj);
+		debugPrint(3, "exec promise for context %d job %d", cf->gsn, jj);
 	}
 
 	res = e->job_func(ctx, e->argc, (JSValueConst *)e->argv);
