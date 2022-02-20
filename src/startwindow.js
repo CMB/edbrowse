@@ -346,6 +346,10 @@ Object.defineProperty(URL.prototype, "search", {
   get: function() {return this.search$val; },
   set: function(v) { this.search$val = v; this.rebuild(); },
 enumerable:true});
+Object.defineProperty(URL.prototype, "searchParams", {
+  get: function() {return new URLSearchParams(this.search$val); },
+// is there a setter?
+enumerable:true});
 Object.defineProperty(URL.prototype, "hash", {
   get: function() {return this.hash$val; },
   set: function(v) { this.hash$val = v; this.rebuild(); },
