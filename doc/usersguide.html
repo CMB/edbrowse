@@ -487,6 +487,7 @@ q : quit the current session
 <br>! program "$EB_LNx" : run program on the contents of the line marked by kx
 <br>! program "$EB_FILE" : run program on the file name
 <br>! program "$EB_BASE" : use the file name without the .browse suffix
+<br>!program $EB_DIR : access the directory that holds the file.
 <br>! : spawn an interactive shell
 <br>cd newdirectory : change directory
 <br>pwd : print working directory
@@ -4071,6 +4072,7 @@ Finally, an edbrowse function can branch,
 based upon the success or failure of the previous command.
 Use if(*) for success, and if(?) for failure.
 The ? is suppose to remind you of the question mark that you get when an edbrowse command fails.
+You can follow up with an else block, by } else {, if you wish.
 The following looks for a line containing foo, and if it finds one,
 it advances to the next line, and if that line contains bar, it deletes it.
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>function+silly {

@@ -5,6 +5,7 @@
 
 #include "eb.h"
 
+#include <libgen.h>
 #ifndef DOSLIKE
 #include <sys/select.h>
 #endif
@@ -2909,6 +2910,19 @@ static void eb_variables()
 	if(cw->browseMode) debrowseSuffix(s);
 	strcpy(var, "EB_BASE");
 	setenv(var, s, 1);
+
+	strcpy(var, "EB_DIR");
+	if (isURL(s)) {
+		char *t = cloneString(s);
+		char *u = dirname(s);
+		if (isURL(u))
+			setenv(var, u, 1);
+		else
+			setenv(var, t, 1);
+		nzFree(t);
+	} else {
+		setenv(var, dirname(s), 1);
+	}
 	nzFree(s);
 
 	strcpy(var, "EB_DOT");
