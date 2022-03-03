@@ -2902,9 +2902,15 @@ static void eb_variables()
 	int n, rc, i;
 	char var[12];
 	static const char *hasnull = "line contains nulls";
-	char *s = cloneString(cf->fileName);
+	char *s0 = cloneString(cf->fileName);
+	char *s = s0;
 
 	if(!s) s = emptyString;
+	if(!strncmp(s, "file://", 7))
+		s += 7;
+	else if(!strncmp(s, "file:", 5))
+		s += 5;
+
 	strcpy(var, "EB_FILE");
 	setenv(var, s, 1);
 	if(cw->browseMode) debrowseSuffix(s);
@@ -2923,7 +2929,7 @@ static void eb_variables()
 	} else {
 		setenv(var, dirname(s), 1);
 	}
-	nzFree(s);
+	nzFree(s0);
 
 	strcpy(var, "EB_DOT");
 	unsetenv(var);
