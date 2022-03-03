@@ -6768,13 +6768,15 @@ replaceframe:
 			cf->fileName = cloneString(line);
 		}
 		s = cf->fileName;
-		if (s)
-			printf("%s", s);
-		else
-			i_printf(MSG_NoFile);
-		if (cw->binMode)
-			i_printf(MSG_BinaryBrackets);
-		nl();
+		if(!first || debugLevel >= 1) {
+			if (s)
+				printf("%s", s);
+			else
+				i_printf(MSG_NoFile);
+			if (cw->binMode)
+				i_printf(MSG_BinaryBrackets);
+			nl();
+		}
 		return true;
 	}
 
