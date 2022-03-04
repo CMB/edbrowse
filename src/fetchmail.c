@@ -11,7 +11,7 @@
 #include "vsprtf.h"
 #endif
 
-#define MHLINE 400		/* length of a mail header line */
+#define MHLINE 512		// length of a mail header line
 /* headers and other information about an email */
 struct MHINFO {
 	struct MHINFO *next, *prev;
@@ -2396,7 +2396,6 @@ static struct MHINFO *headerGlean(char *start, char *end)
 	char *vl, *vr;		/* value left and value right */
 	struct MHINFO *w;
 	int j, k, n;
-	char linetype = 0;
 
 /* defaults */
 	w = allocZeroMem(sizeof(struct MHINFO));
@@ -2408,87 +2407,52 @@ static struct MHINFO *headerGlean(char *start, char *end)
 	w->cclist = initString(&w->cclen);
 	w->start = start, w->end = end;
 
+// join lines together
+	for(s = t = start; s < end; ++s) {
+		if(*s == '\n') {
+			if(s == end - 1 || s[1] == '\n')
+				break;
+			if(s[1] == ' ' || s[1] == '\t')
+				continue; // join lines together
+			}
+		*t++ = *s;
+	}
+
+// I don't know what to do with the gap.
+	while(t < s)
+		*t++ = '\n';
+
+// step through the header lines
 	for (s = start; s < end; s = t + 1) {
 		char quote;
-		char first = *s;
 		t = strchr(s, '\n');
 		if (!t)
 			t = end - 1;	/* should never happen */
 		if (t == s)
-			break;	/* empty line */
+			break;	// empty line, end of headers
 
-		if (first == ' ' || first == '\t') {
-			if (linetype == 'c')
-				ctExtras(w, s, t);
-			if (linetype == 't')
-				stringAndBytes(&w->tolist, &w->tolen, s, t - s);
-			if (linetype == 'y')
-				stringAndBytes(&w->cclist, &w->cclen, s, t - s);
-			if (linetype == 's') {
-				int l1, l2;
-				++s;
-				l1 = strlen(w->subject);
-				l2 = t - s;
-				if(l1 + l2 > MHLINE)
-					l2 = MHLINE - l1;
-				strncpy(w->subject + l1, s, l2);
-				if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
-					vl = w->subject;
-					mhReformat(vl);
-					vr = vl + strlen(vl);
-					isoDecode(vl, &vr);
-					*vr = 0;
-				}
-			}
-			if (linetype == 'f') {
-				int l1, l2;
-				++s;
-				l1 = strlen(w->from);
-				l2 = t - s;
-				if(l1 + l2 > MHLINE)
-					l2 = MHLINE - l1;
-				strncpy(w->from + l1, s, l2);
-				if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
-					vl = w->from;
-					vr = vl + strlen(vl);
-					isoDecode(vl, &vr);
-					mhReformat(w->from);
-				}
-			}
-			continue;
-		}
-
-/* find the lead word */
+// find the lead word
 		for (q = s; isalnumByte(*q) || *q == '_' || *q == '-'; ++q) ;
 		if (q == s)
-			continue;	/* should never happen */
+			continue;	// should never happen
 		if (*q++ != ':')
-			continue;	/* should never happen */
+			continue;	// should never happen
 		for (vl = q; *vl == ' ' || *vl == '\t'; ++vl) ;
-		if (vl == t && t < end - 1 && (t[1] == ' ' || t[1] == '\t')) {
-// foobar: and that's all, maybe on the next line?
-			t = strchr(t + 1, '\n');
-			if (!t)
-				t = end - 1;	/* should never happen */
-			for (++vl; *vl == ' ' || *vl == '\t'; ++vl) ;
-		}
 		for (vr = t; vr > vl && (vr[-1] == ' ' || vr[-1] == '\t');
 		     --vr) ;
 		if (vr == vl)
-			continue;	/* empty */
+			continue;	// empty
 
-/* too long? */
+// is it too long?
+// Should print out an error or something.
 		if (vr - vl > MHLINE - 1)
 			vr = vl + MHLINE - 1;
 
 /* This is sort of a switch statement on the word */
 		if (memEqualCI(s, "subject:", q - s)) {
-			linetype = 's';
-			if (w->subject[0]) {
-				linetype = 0;
+			if (w->subject[0])
 				continue;
-			}
-/* get rid of forward/reply prefixes */
+// get rid of forward/reply prefixes
 			for (q = vl; q < vr; ++q) {
 				static const char *const prefix[] = {
 					"re", "sv", "fwd", 0
@@ -2514,55 +2478,46 @@ static struct MHINFO *headerGlean(char *start, char *end)
 				--q;	/* try again */
 			}
 			strncpy(w->subject, vl, vr - vl);
-			if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
-				vl = w->subject;
-				mhReformat(vl);
-				vr = vl + strlen(vl);
-				isoDecode(vl, &vr);
-				*vr = 0;
-			}
+			vl = w->subject;
+			mhReformat(vl);
+			vr = vl + strlen(vl);
+			isoDecode(vl, &vr);
+			*vr = 0;
 			continue;
 		}
 
 		if (memEqualCI(s, "reply-to:", q - s)) {
-			linetype = 'r';
 			if (!w->reply[0])
 				strncpy(w->reply, vl, vr - vl);
 			continue;
 		}
 
 		if (memEqualCI(s, "message-id:", q - s)) {
-			linetype = 'm';
 			if (!w->mid[0])
 				strncpy(w->mid, vl, vr - vl);
 			continue;
 		}
 
 		if (memEqualCI(s, "references:", q - s)) {
-			linetype = 'e';
 			if (!w->ref[0])
 				strncpy(w->ref, vl, vr - vl);
 			continue;
 		}
 
 		if (memEqualCI(s, "from:", q - s)) {
-			linetype = 'f';
 			if (w->from[0])
 				continue;
-			if (t == end - 1 || (t[1] != ' ' && t[1] != '\t')) {
-				isoDecode(vl, &vr);
-				strncpy(w->from, vl, vr - vl);
-				mhReformat(w->from);
-			}
+			isoDecode(vl, &vr);
+			strncpy(w->from, vl, vr - vl);
+			mhReformat(w->from);
 			continue;
 		}
 
 		if (memEqualCI(s, "date:", q - s)
 		    || memEqualCI(s, "sent:", q - s)) {
-			linetype = 'd';
 			if (w->date[0])
 				continue;
-/* don't need the weekday, seconds, or timezone */
+// don't need the weekday, seconds, or timezone
 			if (vr - vl > 5 &&
 			    isalphaByte(vl[0]) && isalphaByte(vl[1])
 			    && isalphaByte(vl[2]) && vl[3] == ','
@@ -2576,14 +2531,13 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		}
 
 		if (memEqualCI(s, "to:", q - s)) {
-			linetype = 't';
 			if (w->tolen)
 				stringAndChar(&w->tolist, &w->tolen, ',');
 			stringAndBytes(&w->tolist, &w->tolen, q, vr - q);
 			if (w->to[0])
 				continue;
 			strncpy(w->to, vl, vr - vl);
-/* Only retain the first recipient */
+// Only retain the first recipient
 			quote = 0;
 			for (q = w->to; *q; ++q) {
 				if (*q == ',' && !quote) {
@@ -2613,7 +2567,6 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		}
 
 		if (memEqualCI(s, "cc:", q - s)) {
-			linetype = 'y';
 			if (w->cclen)
 				stringAndChar(&w->cclist, &w->cclen, ',');
 			stringAndBytes(&w->cclist, &w->cclen, q, vr - q);
@@ -2622,7 +2575,6 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		}
 
 		if (memEqualCI(s, "content-type:", q - s)) {
-			linetype = 'c';
 			if (memEqualCI(vl, "application/pgp-signature", 25))
 				w->pgp = true;
 			if (memEqualCI(vl, "text", 4))
@@ -2643,7 +2595,6 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		}
 
 		if (memEqualCI(s, "content-transfer-encoding:", q - s)) {
-			linetype = 'e';
 			if (memEqualCI(vl, "quoted-printable", 16))
 				w->ce = CE_QP;
 			if (memEqualCI(vl, "7bit", 4))
@@ -2655,8 +2606,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			continue;
 		}
 
-		linetype = 0;
-	}			/* loop over lines */
+	}			// loop over lines
 
 /* make sure there's room for a final nl */
 	stringAndChar(&w->tolist, &w->tolen, ' ');
