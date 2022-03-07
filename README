@@ -125,18 +125,18 @@ you may have to run ldconfig to access this new library.
 quickjs:
 This is the javascript engine for edbrowse.
 It is probably not packaged.
+Even if it is, you have to build from source to mesh with edbrowse.
 git clone https://github.com/bellard/quickjs
 WARNING, (robot waving his arms about in the air), WARNING.
-You must run edbrowse/tools/quickjobfixup before you build and install quickjs.
+You must run edbrowse/tools/quickjobfixup before you build quickjs.
 If you don't, JSRuntimeJob Index will be undefined, and edbrowse won't link.
 cd quickjs
 make
-make install  # as root
-This builds and installs a static library- libquickjs.a.
-There is no shared library out of the box.
-If you want to distribute a separate package for quickjs, you may wish to
-edit the makefile and build a shared library instead.
-By default, edbrowse links to the static library, and thus the
+You can make install if you want this to be the official version on your system,
+but if you already have quick installed then don't install this one.
+It is just for edbrowse.
+This builds a static library- libquickjs.a.
+By default, edbrowse links to this library, and thus the
 quickjs code is part of edbrowse, and a quickjs package is not necessary.
 
 unixODBC:

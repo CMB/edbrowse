@@ -27,7 +27,7 @@ CXXFLAGS += $(DEBUGFLAGS)
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
 # LDFLAGS for quickjs.  For FreeBSD, remove -latomic.
-QUICKJS_LDFLAGS = -L/usr/local/lib/quickjs -lquickjs -ldl -latomic
+QUICKJS_LDFLAGS = ../../quickjs/libquickjs.a -ldl -latomic
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
