@@ -9,14 +9,18 @@
 int context; // edbrowse context, not js
 struct ebWindow *cw;
 struct ebSession sessionList[TOP];
+volatile bool intFlag;
+bool inInput;
 bool cxCompare(int cx) { return false; }
-bool cxActive(int cx) { return false; }
+bool cxActive(int cx, bool error) { return false; }
 bool cxQuit(int cx, int action) { return true; }
 void cxSwitch(int cx, bool interactive) {}
 bool browseCurrentBuffer(void) { return false; }
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname){ return 0; }
+void undoSpecialClear(void){}
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxAccount;		/* how many email accounts specified */
+char *emojiFile;
 void preFormatCheck(int tagno, bool * pretag, bool * slash) {}
 bool isDataURI(const char *u){ return false; }
 void unpercentString(char *s) {}
