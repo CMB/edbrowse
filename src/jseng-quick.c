@@ -14,7 +14,7 @@ along with the GPL, general public license, for edbrowse.
 #include "vsprtf.h"
 #endif // DOSLIKE
 
-#include <quickjs/quickjs-libc.h>
+#include "../../quickjs/quickjs-libc.h"
 
 #define SHARECLASS 1
 
