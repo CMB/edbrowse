@@ -3,7 +3,13 @@
 #  add a line to quickjs.c, after struct JSRuntime,
 #  to tell edbrowse where the pending jobs are in that structure.
 #  You need to do this before you build and install quickjs.
+#  The optional argument is the path to quickjs; otherwise I assume quickjs
+#  is adjacent to your edbrowse working tree.
 
+if [ $# = 1 ]
+then
+p2="$1"
+else
 p1=`pwd`
 p2=${p1/%edbrowse/quickjs}
 if [ "$p2" = "$p1" ]; then
@@ -12,6 +18,7 @@ fi
 if [ "$p2" = "$p1" ]; then
 echo "current directory $p1 is not in the edbrowse tree"
 exit 1
+fi
 fi
 if [ ! -d "$p2" ] ; then
 echo "no such directory $p2"
