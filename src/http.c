@@ -1526,9 +1526,8 @@ void *httpConnectBack3(void *ptr)
 	rc = httpConnect(&g);
 	outgoing_body = g.buffer;
 	t->loadsuccess = rc;
-	if (!rc)
 		t->hcode = g.code;
-	else {
+	if(rc) {
 		char *a;
 		int l;
 // don't know why t->value would be anything
