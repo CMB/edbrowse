@@ -3,24 +3,24 @@ CC ?=		cc
 CXX ?=		c++
 PREFIX ?=	/usr/local
 bindir = $(PREFIX)/bin
-CFLAGS +=	-I/usr/local/include -Wall -Wno-unused -Wextra -D_FILE_OFFSET_BITS=64
-CXXFLAGS +=	-I/usr/local/include -Wall -Wno-unused -Wextra -D_FILE_OFFSET_BITS=64
+CFLAGS +=	-I/usr/local/include -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
+CXXFLAGS +=	-I/usr/local/include -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 BUILD_EDBR_ODBC ?= off
-PLATFORM_CFLAGS != ./make-helper.sh --platform-cflags
+PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
 CFLAGS += $(PLATFORM_CFLAGS)
-PERL !=		which perl
-TIDY_LIBS !=	pkg-config --libs tidy
-CURL_LIBS !=	pkg-config --libs libcurl
-PCRE_LIBS !=	pkg-config --libs libpcre2-8
-EDBR_ODBC_OBJS != ./make-helper.sh --odbc-objs "${BUILD_EDBR_ODBC}"
-EDBR_ODBC_LIBS != ./make-helper.sh --odbc-libs "${BUILD_EDBR_ODBC}"
+PERL = $(shell		which perl)
+TIDY_LIBS = $(shell	pkg-config --libs tidy)
+CURL_LIBS = $(shell	pkg-config --libs libcurl)
+PCRE_LIBS = $(shell	pkg-config --libs libpcre2-8)
+EDBR_ODBC_OBJS = $(shell ./make-helper.sh --odbc-objs "${BUILD_EDBR_ODBC}")
+EDBR_ODBC_LIBS = $(shell ./make-helper.sh --odbc-libs "${BUILD_EDBR_ODBC}")
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
-EDBR_JS_ASSETS != ./make-helper.sh --js-assets "${EBDEMIN}"
+EDBR_JS_ASSETS = $(shell ./make-helper.sh --js-assets "${EBDEMIN}")
 
 # If EBDEBUG is set to a non-empty string, build with debug flags and
 # don't strip executables.
-DEBUGFLAGS != ./make-helper.sh --debugflags "${EBDEBUG}"
-STRIP != ./make-helper.sh --strip "${EBDEBUG}"
+DEBUGFLAGS = $(shell ./make-helper.sh --debugflags "${EBDEBUG}")
+STRIP = $(shell ./make-helper.sh --strip "${EBDEBUG}")
 CFLAGS += $(DEBUGFLAGS)
 CXXFLAGS += $(DEBUGFLAGS)
 

@@ -26,7 +26,7 @@ case "$1" in
 	;;
     --debugflags)
 	if [ -n "$2" ] ; then
-	    printf -- '-g -ggdb\n'
+	    printf -- '-g -ggdb -Wextra\n'
 	fi
 	;;
     --strip)
