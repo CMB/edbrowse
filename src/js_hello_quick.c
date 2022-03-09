@@ -1,4 +1,4 @@
-#include "../../quickjs/quickjs-libc.h"
+#include "quickjs-libc.h"
 
 #include "eb.h"
 

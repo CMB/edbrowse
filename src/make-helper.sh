@@ -15,9 +15,9 @@ case "$1" in
     --js-libs)
 #  certain operating systems require -latomic
 	if [ "$(uname)" = Linux ] ; then
-	    printf -- '../../quickjs/libquickjs.a -ldl -latomic\n'
+	    printf -- "$QUICKJS_DIR/libquickjs.a -ldl -latomic\n"
 	else
-	    printf -- '../../quickjs/libquickjs.a -ldl\n'
+	    printf -- "$QUICKJS_DIR/libquickjs.a -ldl\n"
 	fi
 	;;
     --odbc-objs)

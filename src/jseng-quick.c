@@ -14,7 +14,10 @@ along with the GPL, general public license, for edbrowse.
 #include "vsprtf.h"
 #endif // DOSLIKE
 
-#include "../../quickjs/quickjs-libc.h"
+// the makefile should set -I properly, based on  your environment variable
+// QUICKJS_DIR, or using a reasonable default.
+// So this basic include should work.
+#include "quickjs-libc.h"
 
 #define SHARECLASS 1
 

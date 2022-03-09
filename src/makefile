@@ -3,8 +3,11 @@ CC ?=		cc
 CXX ?=		c++
 PREFIX ?=	/usr/local
 bindir = $(PREFIX)/bin
-CFLAGS +=	-I/usr/local/include -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
-CXXFLAGS +=	-I/usr/local/include -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
+QUICKJS_DIR ?= ../../quickjs
+#  I would simply export QUICKJS_DIR, but that doesn't work
+#  through $(shell in some versions of gnu make.
+CFLAGS +=	-I/usr/local/include -I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
+CXXFLAGS +=	-I/usr/local/include -I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 BUILD_EDBR_ODBC ?= off
 PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
 CFLAGS += $(PLATFORM_CFLAGS)
@@ -27,7 +30,7 @@ CXXFLAGS += $(DEBUGFLAGS)
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
 # LDFLAGS for quickjs loading.
-QUICKJS_LDFLAGS = $(shell ./make-helper.sh --js-libs)
+QUICKJS_LDFLAGS = $(shell QUICKJS_DIR='$(QUICKJS_DIR)' ./make-helper.sh --js-libs)
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
@@ -79,21 +82,6 @@ clean:
 	rm -f *.o edbrowse edbrowseqk edbrowsesm edbrowseduk \
 	startwindow.c ebrc.c msg-strings.c
 
-edbrowseduk: $(EBOBJS) jseng-duk.o
-	$(CC) $(EBOBJS) jseng-duk.o -lduktape $(LDFLAGS) -o $@
-
-#  The mozilla version, highly experimental
-#  need packages libmozjs-52-0 and libmozjs-52-dev, or higher.
-#  Set SMV to your spider monkey version.
-SMV ?= 52
-#  I added -Wno-psabi to supress warning   changed in GCC 7.1
-#  https://stackoverflow.com/questions/48149323/what-does-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7-1-m
-CXXFLAGS += -Wno-psabi -I/usr/include/mozjs-$(SMV)
-#  For now a separate target, not built by all.
-edbrowsesm: $(EBOBJS) jseng-moz.o
-	$(CC) $(EBOBJS) jseng-moz.o $(LDFLAGS) -lmozjs-$(SMV) -lstdc++ -o $@
-
-
 #  some hello world targets, for testing and debugging
 
 js_hello_duk: js_hello_duk.c
@@ -103,12 +91,8 @@ js_hello_duk: js_hello_duk.c
 js_hello_v8 : js_hello_v8.cpp
 	g++ -I/usr/include/v8 js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
-HELLOEXTRA = stringfile.o messages.o msg-strings.o startwindow.o ebrc.o format.o http.o isup.o fetchmail.o sendmail.o plugin.o buffers.o dbstubs.o html.o decorate.o html-tidy.o css.o
-js_hello_moz : js_hello_moz.o $(HELLOEXTRA) jseng-moz.o
-	$(CC) js_hello_moz.o $(HELLOEXTRA) jseng-moz.o $(LDFLAGS) -lmozjs-$(SMV) -lstdc++ -o $@
-
 js_hello_quick : js_hello_quick.c
 	gcc $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
 
-hello: js_hello_duk js_hello_v8 js_hello_moz js_hello_quick
+hello: js_hello_quick
 
