@@ -12,6 +12,14 @@ case "$1" in
 	    printf -- 'shared.js startwindow.js endwindow.js\n'
 	fi
 	;;
+    --js-libs)
+#  certain operating systems require -latomic
+	if [ "$(uname)" = Linux ] ; then
+	    printf -- '../../quickjs/libquickjs.a -ldl -latomic\n'
+	else
+	    printf -- '../../quickjs/libquickjs.a -ldl\n'
+	fi
+	;;
     --odbc-objs)
 	if [ "$2" = on ] ; then
 	    printf -- 'dbodbc.o dbops.o\n'

@@ -26,8 +26,8 @@ CXXFLAGS += $(DEBUGFLAGS)
 
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
-# LDFLAGS for quickjs.  For FreeBSD, remove -latomic.
-QUICKJS_LDFLAGS = ../../quickjs/libquickjs.a -ldl -latomic
+# LDFLAGS for quickjs loading.
+QUICKJS_LDFLAGS = $(shell ./make-helper.sh --js-libs)
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
@@ -108,7 +108,7 @@ js_hello_moz : js_hello_moz.o $(HELLOEXTRA) jseng-moz.o
 	$(CC) js_hello_moz.o $(HELLOEXTRA) jseng-moz.o $(LDFLAGS) -lmozjs-$(SMV) -lstdc++ -o $@
 
 js_hello_quick : js_hello_quick.c
-	gcc $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o ../../quickjs/libquickjs.a -o js_hello_quick -lm -ldl -lpthread -latomic
+	gcc $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
 
 hello: js_hello_duk js_hello_v8 js_hello_moz js_hello_quick
 
