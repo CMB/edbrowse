@@ -3000,14 +3000,14 @@ I have to know where, in this structure, to find the list of jobs.
 And that could change version to version.
 So, gross as it is, I dip into quickjs.c and set a global variable,
 that tells me where job_list is in the structure.
-You must run ../tools/quickjobfixup before you compile and install quickjs,
+You must run ../tools/quickjobfixup before you compile quickjs,
 or JSRuntimeJobIndex will be undefined, and edbrowse will not link.
 That means quickjs.c has to be there.
-As of this writing, quickjs is not packaged or distributed.
 You have to build it from source, just like edbrowse.
 It is then not unreasonable for me to modify that source if I need to,
 and apparently I need to,
 and I assume that source is in a directory parallel to edbrowse.
+(You can override this location with the environment variable QUICKJS_DIR).
 This is all a lot more involved than it should be.
 Ok, here is some stuffe from quickjs/list.h.
 *********************************************************************/

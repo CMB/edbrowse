@@ -105,27 +105,12 @@ have some fixes for known issues that have been reported upstream.
 
 duktape:
 We used this javascript engine for several years, but we don't use it any more.
-If you want to be able to build edbrowseduk, as a separate target,
-then you need the duktape library. Most distributors can skip this step.
-If duktape is not part of your distribution, download from github, compile, and install.
-
-git clone https://github.com/svaarala/duktape.git
-cd duktape
-#  build the version for distribution, without all the debugging features
-make dist
-make dist/source
-cd dist/source
-make -f Makefile.sharedlibrary
-make -f Makefile.sharedlibrary install (as root)
-make -f Makefile.cmdline
-#  if you want the duktape shell
-ln -s `pwd`/duk /usr/local/bin/duk (as root)
-you may have to run ldconfig to access this new library.
+It is not supported.
 
 quickjs:
 This is the javascript engine for edbrowse.
 It is probably not packaged.
-Even if it is, you have to build from source to mesh with edbrowse.
+Even if it is, you have to build it from source to mesh with edbrowse.
 git clone https://github.com/bellard/quickjs
 It is best to clone this tree in a directory adjacent to edbrowse.
 That is, edbrowse and quickjs are in the same directory.
@@ -302,19 +287,16 @@ Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
 
 src/jseng-duk.c:
-The javascript engine built around the duktape js library.
-Manage all the js objects corresponding to the web page in edbrowse.
-All the js details are hidden in this file.
-this is encapsulation, hiding the js library from the rest of edbrowse.
+The javascript engine built around the duktape js library. Not supported.
 
 src/jseng-quick.c:
 The javascript engine built around the quick js library.
 Manage all the js objects corresponding to the web page in edbrowse.
+All the js details are hidden in this file.
+this is encapsulation, hiding the js library from the rest of edbrowse.
 
 src/jseng-moz.cpp:
-The javascript engine built around the mozilla js library.
-Manage all the js objects corresponding to the web page in edbrowse.
-This is C++, but it plays nicely with the rest of edbrowse in C.
+The javascript engine built around the mozilla js library. Not supported.
 
 src/js_hello*
 Various hello world files to exercise various javascript engines.
