@@ -29,7 +29,8 @@ case "$1" in
 	;;
     --odbc-libs)
 	if [ -n "$2" ] ; then
-	    printf -- '-lodbc\n'
+lib=`pkg-config --libs odbc`
+	    printf -- "$lib\n"
 	fi
 	;;
     --debugflags)
