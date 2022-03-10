@@ -206,11 +206,7 @@ Kevin Carhart</A>
 deciphered the mysteries of jquery,
 and upgraded the DOM to support it.
 <A HREF=mailto:neutral@fastmail.com>
-Jeremy O'Brien</A> ported the software to Mac OS X,
-and
-<A href=mailto:ubuntu@geoffair.info>
-Geoff McLane</A>
-provided the Windows port, and a general cmake configure and build system.
+Jeremy O'Brien</A> ported the software to Mac OS X.
 Several people translated the output and error messages into other languages,
 and they are given due credit in the Languages section below.
 
@@ -4917,10 +4913,8 @@ This command assumes there is no whitespace in a folder's name.
 If you simply type make, you get edbrowse with no database functionality.
 A separate option supports database access through odbc.
 To link edbrowse with odbc,
-run `make BUILD_EDBR_ODBC=on'
-in the src directory,
-or in the build directory type
-`cmake -DBUILD_EDBR_ODBC:BOOL=ON ..'.
+run `make EBODBC=on'
+in the src directory.
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.
 A separate target, edbrowseinf, provides a direct link to an
 <A HREF=http://www.informix.com>Informix database</A>.

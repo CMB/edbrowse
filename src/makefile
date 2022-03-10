@@ -4,15 +4,15 @@ CXX ?=		c++
 QUICKJS_DIR ?= ../../quickjs
 #  I would simply export QUICKJS_DIR, but that doesn't work
 #  through $(shell in some versions of gnu make.
-CFLAGS +=	-I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
+CFLAGS +=	-Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
 CFLAGS += $(PLATFORM_CFLAGS)
 #  these includes may be redundent with the standard cc includes.
-BUILD_EDBR_ODBC ?= off
-ifeq ($(BUILD_EDBR_ODBC), on)
-INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy odbc)
-else
+EBODBC ?=
+ifeq ($(EBODBC),)
 INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy)
+else
+INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy odbc)
 endif
 CFLAGS += $(INCLUDES)
 
@@ -20,8 +20,8 @@ PERL = $(shell		which perl)
 TIDY_LIBS = $(shell	pkg-config --libs tidy)
 CURL_LIBS = $(shell	pkg-config --libs libcurl)
 PCRE_LIBS = $(shell	pkg-config --libs libpcre2-8)
-EDBR_ODBC_OBJS = $(shell ./make-helper.sh --odbc-objs "${BUILD_EDBR_ODBC}")
-EDBR_ODBC_LIBS = $(shell ./make-helper.sh --odbc-libs "${BUILD_EDBR_ODBC}")
+EDBR_ODBC_OBJS = $(shell ./make-helper.sh --odbc-objs "${EBODBC}")
+EDBR_ODBC_LIBS = $(shell ./make-helper.sh --odbc-libs "${EBODBC}")
 
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
 EDBR_JS_ASSETS = $(shell ./make-helper.sh --js-assets "${EBDEMIN}")
@@ -35,7 +35,7 @@ CFLAGS += $(DEBUGFLAGS)
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
 # LDFLAGS for quickjs loading.
-QUICKJS_LDFLAGS = $(shell QUICKJS_DIR='$(QUICKJS_DIR)' ./make-helper.sh --js-libs)
+QUICKJS_LDFLAGS = $(shell ./make-helper.sh --js-libs '$(QUICKJS_DIR)')
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
@@ -64,6 +64,9 @@ ebrc.c: ../lang/ebrc-* ../doc/usersguide*.html
 
 msg-strings.c: ../lang/msg-*
 	cd .. ; $(PERL) ./tools/buildmsgstrings.pl
+
+jseng-quick.o : jseng-quick.c
+	$(CC) -I$(QUICKJS_DIR) $(CFLAGS) -c jseng-quick.c
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
@@ -99,7 +102,7 @@ js_hello_v8 : js_hello_v8.cpp
 	g++ -I/usr/include/v8 js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
 js_hello_quick : js_hello_quick.c
-	gcc $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
+	$(CC) -I$(QUICKJS_DIR) $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
 
 hello: js_hello_quick
 

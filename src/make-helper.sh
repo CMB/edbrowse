@@ -15,20 +15,20 @@ case "$1" in
     --js-libs)
 #  certain operating systems require -latomic
 	if [ "$(uname)" = Linux ] ; then
-	    printf -- "$QUICKJS_DIR/libquickjs.a -ldl -latomic\n"
+	    printf -- "$2/libquickjs.a -ldl -latomic\n"
 	else
-	    printf -- "$QUICKJS_DIR/libquickjs.a -ldl\n"
+	    printf -- "$2/libquickjs.a -ldl\n"
 	fi
 	;;
     --odbc-objs)
-	if [ "$2" = on ] ; then
+	if [ -n "$2" ] ; then
 	    printf -- 'dbodbc.o dbops.o\n'
 	else
 	    printf -- 'dbstubs.o\n'
 	fi
 	;;
     --odbc-libs)
-	if [ "$2" = on ] ; then
+	if [ -n "$2" ] ; then
 	    printf -- '-lodbc\n'
 	fi
 	;;
