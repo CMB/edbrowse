@@ -8,6 +8,7 @@ CFLAGS +=	-I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
 CFLAGS += $(PLATFORM_CFLAGS)
 #  these includes may be redundent with the standard cc includes.
+BUILD_EDBR_ODBC ?= off
 ifeq ($(BUILD_EDBR_ODBC), on)
 INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy odbc)
 else
@@ -19,7 +20,6 @@ PERL = $(shell		which perl)
 TIDY_LIBS = $(shell	pkg-config --libs tidy)
 CURL_LIBS = $(shell	pkg-config --libs libcurl)
 PCRE_LIBS = $(shell	pkg-config --libs libpcre2-8)
-BUILD_EDBR_ODBC ?= off
 EDBR_ODBC_OBJS = $(shell ./make-helper.sh --odbc-objs "${BUILD_EDBR_ODBC}")
 EDBR_ODBC_LIBS = $(shell ./make-helper.sh --odbc-libs "${BUILD_EDBR_ODBC}")
 
