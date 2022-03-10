@@ -1,22 +1,28 @@
-# Default settings:
+#  compiler and flags
 CC ?=		cc
 CXX ?=		c++
-PREFIX ?=	/usr/local
-bindir = $(PREFIX)/bin
 QUICKJS_DIR ?= ../../quickjs
 #  I would simply export QUICKJS_DIR, but that doesn't work
 #  through $(shell in some versions of gnu make.
-CFLAGS +=	-I/usr/local/include -I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
-CXXFLAGS +=	-I/usr/local/include -I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
-BUILD_EDBR_ODBC ?= off
+CFLAGS +=	-I$(QUICKJS_DIR) -Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
 CFLAGS += $(PLATFORM_CFLAGS)
+#  these includes may be redundent with the standard cc includes.
+ifeq ($(BUILD_EDBR_ODBC), on)
+INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy odbc)
+else
+INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy)
+endif
+CFLAGS += $(INCLUDES)
+
 PERL = $(shell		which perl)
 TIDY_LIBS = $(shell	pkg-config --libs tidy)
 CURL_LIBS = $(shell	pkg-config --libs libcurl)
 PCRE_LIBS = $(shell	pkg-config --libs libpcre2-8)
+BUILD_EDBR_ODBC ?= off
 EDBR_ODBC_OBJS = $(shell ./make-helper.sh --odbc-objs "${BUILD_EDBR_ODBC}")
 EDBR_ODBC_LIBS = $(shell ./make-helper.sh --odbc-libs "${BUILD_EDBR_ODBC}")
+
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
 EDBR_JS_ASSETS = $(shell ./make-helper.sh --js-assets "${EBDEMIN}")
 
@@ -25,7 +31,6 @@ EDBR_JS_ASSETS = $(shell ./make-helper.sh --js-assets "${EBDEMIN}")
 DEBUGFLAGS = $(shell ./make-helper.sh --debugflags "${EBDEBUG}")
 STRIP = $(shell ./make-helper.sh --strip "${EBDEBUG}")
 CFLAGS += $(DEBUGFLAGS)
-CXXFLAGS += $(DEBUGFLAGS)
 
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
@@ -48,7 +53,7 @@ EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h
-jseng-duk.o jseng-moz.o jseng-quick.o : eb.h ebprot.h messages.h
+jseng-duk.o jseng-quick.o : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: $(EDBR_JS_ASSETS)
@@ -65,6 +70,8 @@ msg-strings.c: ../lang/msg-*
 edbrowse: $(EBOBJS) jseng-quick.o
 	$(CC) $(EBOBJS) jseng-quick.o $(QUICKJS_LDFLAGS) $(LDFLAGS)  -o $@
 
+PREFIX ?=	/usr/local
+bindir = $(PREFIX)/bin
 #  You probably need to be root to do this.
 install:
 	install -Dm755 edbrowse $(DESTDIR)$(bindir)/edbrowse
@@ -79,7 +86,7 @@ edbrowse-infx: $(EBOBJS) dbops.o dbinfx.o jseng-duk.o
 	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) dbops.o dbinfx.o $(LDFLAGS) -lduktape
 
 clean:
-	rm -f *.o edbrowse edbrowseqk edbrowsesm edbrowseduk \
+	rm -f *.o edbrowse edbrowseduk \
 	startwindow.c ebrc.c msg-strings.c
 
 #  some hello world targets, for testing and debugging
