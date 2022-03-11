@@ -2584,7 +2584,7 @@ prettify_network_data(const char *s, size_t size, FILE * destination)
 {
 	size_t i;
 	if(size > 4000) {
-		printf("length %d\n", size);
+		printf("length %zu\n", size);
 		return;
 	}
 

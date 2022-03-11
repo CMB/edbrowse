@@ -87,7 +87,7 @@ char *lineFormat(const char *line, ...)
 	s = lineFormatStack(line, 0, &p);
 	va_end(p);
 	return s;
-}				/* lineFormat */
+}
 
 #define LFBUFSIZE 100000
 static char lfbuf[LFBUFSIZE];	/* line formatting buffer */
@@ -212,7 +212,7 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 				continue;
 			}	/* null with no length specified */
 			pdir = 's';
-			n = (int)"";
+			n = (long)"";
 		}
 		/* parameter is null */
 		if (inquote)
@@ -261,7 +261,7 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 			}
 			break;
 		case 's':
-			if (n == (int)lfbuf)
+			if (n == (long)lfbuf)
 				errorPrint(selfref);
 /* extra code to prevent %09s from printing out all zeros
 when the argument is null (empty string) */
@@ -285,7 +285,7 @@ Note that the calling function may wish to process additional arguments
 before calling va_end. */
 
 	return lfbuf;
-}				/* lineFormatStack */
+}
 
 /* given a datatype, return the character that, when appended to %,
 causes lineFormat() to print the data element properly. */
@@ -320,7 +320,7 @@ static char sprintfChar(char datatype)
 		c = 0;
 	}			/* switch */
 	return c;
-}				/* sprintfChar */
+}
 
 /*********************************************************************
 Using the values just fetched or selected, build a line in unload format.
@@ -344,7 +344,7 @@ char *sql_mkunld(char delim)
 	}			/* loop over returns */
 
 	return lineFormatStack(fmt, rv_data, 0);
-}				/* sql_mkunld */
+}
 
 /* like the above, but we build a comma-separated list with quotes,
 ready for SQL insert or update.
@@ -371,7 +371,7 @@ char *sql_mkinsupd()
 	fmt[3 * i - 1] = 0;
 
 	return lineFormatStack(fmt, rv_data, 0);
-}				/* sql_mkinsupd */
+}
 
 /*********************************************************************
 Date time functions.
@@ -388,7 +388,7 @@ bool isLeapYear(int year)
 	if (year % 400)
 		return false;
 	return true;
-}				/* isLeapYear */
+}
 
 /* convert year, month, and day into a date. */
 /* return -1 = bad year, -2 = bad month, -3 = bad day */
@@ -416,7 +416,7 @@ date dateEncode(int year, int month, int day)
 	d += (day - 1);
 	d -= 598632;
 	return d;
-}				/* dateEncode */
+}
 
 /* convert a date back into year, month, and day */
 /* the inverse of the above */
@@ -444,7 +444,7 @@ void dateDecode(date d, int *yp, int *mp, int *dp)
 	*yp = year;
 	*mp = month;
 	*dp = day;
-}				/* dateDecode */
+}
 
 /* convert a string into a date */
 /* return -4 for bad format */
@@ -491,7 +491,7 @@ date stringDate(const char *s, bool yearfirst)
 	day = 10 * (buf[2] - '0') + buf[3] - '0';
 	year = atoi(buf + 4);
 	return dateEncode(year, month, day);
-}				/* stringDate */
+}
 
 /* convert a date into a string, held in a static buffer */
 /* cram squashes out the century, delimit puts in slashes */
@@ -525,7 +525,7 @@ char *dateString(date d, int flags)
 		strmove(s, s + 1);
 	}
 	return buf;
-}				/* dateString */
+}
 
 char *timeString(interval seconds, int flags)
 {
@@ -561,7 +561,7 @@ char *timeString(interval seconds, int flags)
 			strmove(buf + 4, buf + 5);
 	}
 	return buf;
-}				/* timeString */
+}
 
 /* convert string into time.
  * Like stringDate, we can return bad hour, bad minute, bad second, or bad format */
@@ -624,7 +624,7 @@ interval stringTime(const char *t)
 	if (s < 0 || s >= 60)
 		return -3;
 	return h * 3600L + m * 60 + s;
-}				/* stringTime */
+}
 
 char *moneyString(money m)
 {
@@ -635,7 +635,7 @@ char *moneyString(money m)
 		*s++ = '-', m = -m;
 	sprintf(s, "$%ld.%02d", m / 100, (int)(m % 100));
 	return buf;
-}				/* moneyString */
+}
 
 money stringMoney(const char *s)
 {
@@ -657,7 +657,7 @@ money stringMoney(const char *s)
 		return -nullint;
 	m = (long)(d * 100.0 + 0.5);
 	return m * sign;
-}				/* stringMoney */
+}
 
 /* Make sure edbrowse is connected to the database */
 bool ebConnect(void)
@@ -675,12 +675,12 @@ bool ebConnect(void)
 	}
 
 	return true;
-}				/* ebConnect */
+}
 
 void dbClose(void)
 {
 	sql_disconnect();
-}				/* dbClose */
+}
 
 static char myTab[64];
 static const char *myWhere;
@@ -1502,7 +1502,7 @@ The cursors should be sorted by this key.
 
 static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements */
 			const char *orderby,	/* which fetched column is the unique key */
-			int (*f)(char, char*, char*, int),	/* call this function for differences */
+			int (*f)(char, char*, char*, long),	/* call this function for differences */
 			char delim)
 {				/* sql_mkunld() delimiter, or call mkinsupd if delim = 0 */
 	short cid1, cid2;	/* the cursor ID numbers */
@@ -1513,7 +1513,7 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 	char sortstring1[80], sortstring2[80];
 	int sortcol;
 	char sorttype;
-	int passkey1, passkey2;
+	long passkey1, passkey2;
 	static const char sortnull[] = "cursor_comm, sortval%d is null";
 	static const char sortlong[] =
 	    "cursor_comm cannot key on strings longer than %d";
@@ -1529,7 +1529,7 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 		errorPrint("2cursor_com(), column %s has bad type %c", orderby,
 			   sorttype);
 	if (sorttype == 'S')
-		passkey1 = (int)sortstring1, passkey2 = (int)sortstring2;
+		passkey1 = (long)sortstring1, passkey2 = (long)sortstring2;
 
 	eof1 = eof2 = false;
 	get1 = get2 = true;
@@ -1640,7 +1640,7 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 	nzFree(blob2);
 	sql_closeFree(cid1);
 	sql_closeFree(cid2);
-}				/* cursor_comm */
+}
 
 /*********************************************************************
 Sync up two tables, or corresponding sections of two tables.
@@ -1671,7 +1671,7 @@ int findColByName(const char *name)
 	return i;
 }				/* findColByName */
 
-static int syncup_comm_fn(char action, char *line1, char *line2, int key)
+static int syncup_comm_fn(char action, char *line1, char *line2, long key)
 {
 	switch (action) {
 	case '<':		/* delete */

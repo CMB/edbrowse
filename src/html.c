@@ -824,7 +824,7 @@ passes:
 			continue;
 		}
 
-		if (async && asyncTimer && down_jsbg && cw->browseMode) {
+		if (async && down_jsbg && cw->browseMode) {
 			if (!t->intimer) {
 				scriptSetsTimeout(t);
 				t->intimer = true;
@@ -3283,7 +3283,7 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 void scriptSetsTimeout(Tag *t)
 {
 	struct jsTimer *jt = allocZeroMem(sizeof(struct jsTimer));
-// asychronous scripts or xhr not throttled by timerspeed
+// asychronous scripts or xhr are not throttled by timerspeed
 	jt->sec = 0;
 	jt->ms = asyncTimer;
 	jt->isInterval = true;

@@ -76,7 +76,8 @@ static bool badtrans;
 
 /* Through globals, make error info available to the application. */
 int rv_lastStatus, rv_stmtOffset;
-long rv_vendorStatus;
+int rv_vendorStatus;
+static SQLINTEGER vs0;
 char *rv_badToken;
 
 static void debugStatement(void)
@@ -222,8 +223,9 @@ static bool errorTrap(const char *cxerr)
 
 	while (true) {
 		rc = SQLError(henv, hdbc, hstmt,
-			      (uchar *) errcodes, &rv_vendorStatus, errorText,
+			      (uchar *) errcodes, &vs0, errorText,
 			      sizeof(errorText), &waste);
+		rv_vendorStatus = vs0;
 		if (rc == SQL_NO_DATA) {
 			if (firstError) {
 				printf
@@ -677,7 +679,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 	       const char *filename, void *offset, int length)
 {
 	char blobcmd[100];
-	SQLINTEGER output_length;
+	SQLLEN output_length;
 	bool isfile;
 	int fd;
 
@@ -753,7 +755,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 
 		output_length = 0;
 		rc = SQLParamData(hstmt, (void **)&output_length);
-		if ((char *)output_length != blobcmd) {
+		if ((void *)output_length != blobcmd) {
 			close(fd);
 			errorPrint("2blobInsert got bad key from SQLParamData");
 		}
@@ -761,7 +763,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 		lseek(fd, 0L, 0);
 		while (length) {
 			int n = length;
-			if (n > sizeof(blobbuf))
+			if ((unsigned)n > sizeof(blobbuf))
 				n = sizeof(blobbuf);
 			if (read(fd, blobbuf, n) != n) {
 				close(fd);
@@ -938,7 +940,7 @@ static void retsFromOdbc(void)
 			/* we'll deal with blob overflow later */
 			if (rc == SQL_SUCCESS_WITH_INFO
 			    && c_type == SQL_C_BINARY
-			    && output_length > sizeof(blobbuf))
+			    && (unsigned)output_length > sizeof(blobbuf))
 				rc = SQL_SUCCESS;
 			if (errorTrap(0))
 				break;
@@ -1016,7 +1018,7 @@ static void retsFromOdbc(void)
 				/* SQL doesn't null terminate its text blobs, but we do. */
 				rv_blobLoc = allocMem(output_length + 1);
 				l = output_length;
-				if (l > sizeof(blobbuf))
+				if ((unsigned)l > sizeof(blobbuf))
 					l = sizeof(blobbuf);
 				memcpy(rv_blobLoc, blobbuf, l);
 				if (l < output_length) {	/* more to do */
@@ -1050,7 +1052,7 @@ static void retsFromOdbc(void)
 			while (true) {
 				int outbytes;
 				l = output_length;
-				if (l > sizeof(blobbuf))
+				if ((unsigned)l > sizeof(blobbuf))
 					l = sizeof(blobbuf);
 				outbytes = write(fd, blobbuf, l);
 				if (outbytes < l) {

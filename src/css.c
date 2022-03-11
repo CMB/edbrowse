@@ -2393,7 +2393,7 @@ Meantime, this code manages :root up the chain, as in :root>div,
 all the div sections just below the current node.
 *********************************************************************/
 			if (!rootnode) {
-				if ((t->action == TAGACT_HTML))
+				if (t->action == TAGACT_HTML)
 					goto next_mod;
 				return false;
 			}

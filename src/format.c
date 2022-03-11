@@ -2276,7 +2276,7 @@ void loadEmojis(void)
 
 	s = ejbase, lineno = 0;
 	while(++lineno, *s) {
-		bool limitprint;
+		bool limitprint = false;
 		long uc;
 		t = strchr(s, '\n');
 		if(t) *t++ = 0; else t = s + strlen(s);

@@ -831,7 +831,7 @@ You'll see this after the perform function runs.
 
 		if (key == 'b' || key == 'f') {
 			char subkey;
-			struct FOLDER *g;
+			struct FOLDER *g = 0;
 			if (key == 'b')
 				i_printf(MSG_Batch);
 			else
