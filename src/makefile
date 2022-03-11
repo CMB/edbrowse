@@ -8,20 +8,14 @@ CFLAGS +=	-Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
 CFLAGS += $(PLATFORM_CFLAGS)
 #  these includes may be redundent with the standard cc includes.
-EBODBC ?=
-ifeq ($(EBODBC),)
-INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy)
-else
 INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy odbc)
-endif
 CFLAGS += $(INCLUDES)
 
 PERL = $(shell		which perl)
 TIDY_LIBS = $(shell	pkg-config --libs tidy)
 CURL_LIBS = $(shell	pkg-config --libs libcurl)
 PCRE_LIBS = $(shell	pkg-config --libs libpcre2-8)
-EDBR_ODBC_OBJS = $(shell ./make-helper.sh --odbc-objs "${EBODBC}")
-EDBR_ODBC_LIBS = $(shell ./make-helper.sh --odbc-libs "${EBODBC}")
+ODBC_LIBS = $(shell pkg-config --libs odbc)
 
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
 EDBR_JS_ASSETS = $(shell ./make-helper.sh --js-assets "${EBDEMIN}")
@@ -33,7 +27,7 @@ STRIP = $(shell ./make-helper.sh --strip "${EBDEBUG}")
 CFLAGS += $(DEBUGFLAGS)
 
 #  Libraries and linker flags for edbrowse.
-LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(EDBR_ODBC_LIBS) -lpthread -lm
+LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(ODBC_LIBS) -lpthread -lm
 # LDFLAGS for quickjs loading.
 QUICKJS_LDFLAGS = $(shell ./make-helper.sh --js-libs '$(QUICKJS_DIR)')
 
@@ -49,7 +43,7 @@ all: edbrowse
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 	html.o format.o plugin.o ebrc.o \
 	messages.o stringfile.o html-tidy.o decorate.o \
-	msg-strings.o http.o isup.o css.o startwindow.o $(EDBR_ODBC_OBJS)
+	msg-strings.o http.o isup.o css.o startwindow.o dbops.o dbodbc.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h

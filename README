@@ -133,9 +133,8 @@ quickjs code is part of edbrowse, and a quickjs package,
 or a dependency thereto, is not necessary.
 
 unixODBC:
-If you want database access, you need unixODBC and unixODBC-devel.
-Select the odbc option via:
-make EBODBC=on in the src directory.
+Edbrowse provides database access through odbc.
+Thus you need unixODBC and unixODBC-devel.
 ODBC has been stable for quite some time.
 unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
@@ -154,7 +153,6 @@ The makefile supports the environment variables EBDEBUG=on,
 (or yes or y or 1 or any nonempty string),
 for symbolic debugging via gdb, and EBDEMIN=on for javascript deminimization.
 Distributors should not set these flags.
-Set EBODBC to a nonempty string to build edbrowse with odbc capability.
 
 ------------------------------------------------------------
 

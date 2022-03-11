@@ -4910,11 +4910,8 @@ This command assumes there is no whitespace in a folder's name.
 
 <H3> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
 
-If you simply type make, you get edbrowse with no database functionality.
-A separate option supports database access through odbc.
-To link edbrowse with odbc,
-run `make EBODBC=on'
-in the src directory.
+<P>
+Edbrowse can connect to sql databases through odbc.
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.
 A separate target, edbrowseinf, provides a direct link to an
 <A HREF=http://www.informix.com>Informix database</A>.

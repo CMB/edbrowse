@@ -20,19 +20,6 @@ case "$1" in
 	    printf -- "$2/libquickjs.a -ldl\n"
 	fi
 	;;
-    --odbc-objs)
-	if [ -n "$2" ] ; then
-	    printf -- 'dbodbc.o dbops.o\n'
-	else
-	    printf -- 'dbstubs.o\n'
-	fi
-	;;
-    --odbc-libs)
-	if [ -n "$2" ] ; then
-lib=`pkg-config --libs odbc`
-	    printf -- "$lib\n"
-	fi
-	;;
     --debugflags)
 	if [ -n "$2" ] ; then
 	    printf -- '-g -ggdb -Wextra\n'
