@@ -1,37 +1,40 @@
 #!/bin/sh
-case "$1" in
-    --platform-cflags)
-	if [ "$(uname)" = Linux ] ; then
-	    printf -- '-DEDBROWSE_ON_LINUX\n'
-	fi
-	;;
-    --js-assets)
-	if [ -n "$2" ] ; then
-	    printf -- 'shared.js startwindow.js demin.js\n'
-	else
-	    printf -- 'shared.js startwindow.js endwindow.js\n'
-	fi
-	;;
-    --js-libs)
-#  certain operating systems require -latomic
-	if [ "$(uname)" = Linux ] ; then
-	    printf -- "$2/libquickjs.a -ldl -latomic\n"
-	else
-	    printf -- "$2/libquickjs.a -ldl\n"
-	fi
-	;;
-    --debugflags)
-	if [ -n "$2" ] ; then
-	    printf -- '-g -ggdb -Wextra\n'
-	fi
-	;;
-    --strip)
-	if [ -z "$2" ] ; then
-	    printf -- '-s\n'
-	fi
-	;;
-    *)
-	printf -- "Unknown request $1\n" 1>&2
+
+if [ $# -lt 1 ]; then
+	printf %s\\n "Usage: $0 <command>[args]" >&2
 	exit 1
-	;;
+fi
+
+cmd="$1"
+shift
+case "${cmd}" in
+	pkg-config-includes)
+        pkg_config_libs=""
+        for lib in "$@";do
+            pkg_config_name="${lib%:*}"
+            if pkg-config --exists "${pkg_config_name}"; then
+                pkg_config_libs="${pkg_config_libs} ${pkg_config_name}"
+            fi
+        done
+        pkg-config --cflags-only-I "${pkg_config_libs}"
+        ;;
+	pkg-config-libs)
+        pkg_config_libs=""
+        other_libs=""
+        for lib in "$@";do
+            pkg_config_name="${lib%:*}"
+            lib_name="${lib#*:}"
+            if pkg-config --exists "${pkg_config_name}"; then
+                pkg_config_libs="${pkg_config_libs} ${pkg_config_name}"
+            else
+                other_libs="${other_libs} -l${lib_name}"
+            fi
+        done
+        printf %s\\n "$(pkg-config --libs "${pkg_config_libs}") ${other_libs}"
+        ;;
+
+	*)
+		printf %s\\n "Unknown request $1" 1>&2
+		exit 1
+		;;
 esac

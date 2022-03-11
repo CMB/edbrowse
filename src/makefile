@@ -1,35 +1,43 @@
 #  compiler and flags
 CC ?=		cc
-CXX ?=		c++
+PERL ?= perl
 QUICKJS_DIR ?= ../../quickjs
-#  I would simply export QUICKJS_DIR, but that doesn't work
-#  through $(shell in some versions of gnu make.
 CFLAGS +=	-Wall -Wno-unused -D_FILE_OFFSET_BITS=64
-PLATFORM_CFLAGS = $(shell ./make-helper.sh --platform-cflags)
+ifeq ($(shell uname),Linux)
+	PLATFORM_CFLAGS = -DEDBROWSE_ON_LINUX
+endif
 CFLAGS += $(PLATFORM_CFLAGS)
-#  these includes may be redundent with the standard cc includes.
-INCLUDES = $(shell pkg-config --cflags-only-I libcurl libpcre2-8 tidy odbc)
+
+# determine includes and linker flags
+DEPENDENCIES = libcurl:curl odbc libpcre2-8:pcre2-8 readline tidy
+INCLUDES = $(shell ./make-helper.sh pkg-config-includes $(DEPENDENCIES))
+LINKER_LIBS = $(shell ./make-helper.sh pkg-config-libs $(DEPENDENCIES))
 CFLAGS += $(INCLUDES)
 
-PERL = $(shell		which perl)
-TIDY_LIBS = $(shell	pkg-config --libs tidy)
-CURL_LIBS = $(shell	pkg-config --libs libcurl)
-PCRE_LIBS = $(shell	pkg-config --libs libpcre2-8)
-ODBC_LIBS = $(shell pkg-config --libs odbc)
-
 #  Set EBDEMIN to a nonempty string to support dynamic js deminimization
-EDBR_JS_ASSETS = $(shell ./make-helper.sh --js-assets "${EBDEMIN}")
+ifneq ($(EBDEMIN),)
+	EDBR_JS_ASSETS = shared.js startwindow.js demin.js
+else
+	EDBR_JS_ASSETS = shared.js startwindow.js endwindow.js
+endif
 
 # If EBDEBUG is set to a non-empty string, build with debug flags and
 # don't strip executables.
-DEBUGFLAGS = $(shell ./make-helper.sh --debugflags "${EBDEBUG}")
-STRIP = $(shell ./make-helper.sh --strip "${EBDEBUG}")
+ifneq ($(EBDEBUG),)
+	DEBUGFLAGS = -g -ggdb -Wextra
+else
+	STRIP = -s
+endif
 CFLAGS += $(DEBUGFLAGS)
 
 #  Libraries and linker flags for edbrowse.
-LDFLAGS = $(STRIP) $(PCRE_LIBS) $(CURL_LIBS) -lreadline $(TIDY_LIBS) $(ODBC_LIBS) -lpthread -lm
+LDFLAGS = $(STRIP) $(LINKER_LIBS) -lpthread -lm
+
 # LDFLAGS for quickjs loading.
-QUICKJS_LDFLAGS = $(shell ./make-helper.sh --js-libs '$(QUICKJS_DIR)')
+QUICKJS_LDFLAGS = $(QUICKJS_DIR)/libquickjs.a -ldl
+ifeq ($(shell uname),Linux)
+	QUICKJS_LDFLAGS += -latomic
+endif
 
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
@@ -68,10 +76,12 @@ edbrowse: $(EBOBJS) jseng-quick.o
 	$(CC) $(EBOBJS) jseng-quick.o $(QUICKJS_LDFLAGS) $(LDFLAGS)  -o $@
 
 PREFIX ?=	/usr/local
-bindir = $(PREFIX)/bin
 #  You probably need to be root to do this.
 install:
-	install -Dm755 edbrowse $(DESTDIR)$(bindir)/edbrowse
+	mkdir -p -m 755 $(DESTDIR)$(PREFIX)/bin
+	install -m755 edbrowse $(DESTDIR)$(PREFIX)/bin
+	mkdir -p -m 755 $(DESTDIR)$(PREFIX)/share/doc/edbrowse
+	install -m644 ../doc/usersguide.html $(DESTDIR)$(PREFIX)/share/doc/edbrowse
 
 #  native Informix library for database access.
 #  Others could be built, e.g. Oracle, but odbc is the most general.
