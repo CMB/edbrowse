@@ -142,10 +142,8 @@ unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
 Compiling edbrowse:
 
-For a time, edbrowse could be built on windows using cmake.
-We have some legacy files for this purpose,
-but it is no longer supported.
-On other systems, you should be able to use make.
+For a time, edbrowse could be built on windows, but this is no longer supported.
+On all other systems, you should be able to use make.
 cd src
 make
 
@@ -365,7 +363,7 @@ Other connectors could be built, e.g. Oracle,
 but it's probably easier just to go through odbc.
 
 src/dbstubs.c:
-Stubs for database functions, if you build edbrowse without database access.
+Stubs for database functions, if you want to build edbrowse without database access.
 
 ------------------------------------------------------------
 
