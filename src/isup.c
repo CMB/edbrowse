@@ -500,27 +500,24 @@ bool isURL(const char *url)
 bool isSQL(const char *s)
 {
 	char c = *s;
-	const char *c1 = 0;
+	const char *colon = 0;
 
-	if (!sqlPresent)
+	if (!sqlPresent || c != ']')
 		goto no;
 
-	if (isURL(s))
-		goto no;
-
+	c = *++s;
 // look for word] or word:word]
 	if (!isalphaByte(c))
 		goto no;
-
 	for (++s; (c = *s); ++s) {
 		if (c == '_')
 			continue;
 		if (isalnumByte(c))
 			continue;
 		if (c == ':') {
-			if (c1)
+			if (colon)
 				goto no;
-			c1 = s;
+			colon = s;
 			continue;
 		}
 		if (c == ']')

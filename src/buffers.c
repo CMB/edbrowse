@@ -2317,8 +2317,8 @@ Again the data is in buffer and we need to play it here.
 			setError(MSG_DBOtherFile);
 			return false;
 		}
-		t1 = strchr(cf->fileName, ']');
-		t2 = strchr(filename, ']');
+		t1 = strchr(cf->fileName + 1, ']');
+		t2 = strchr(filename + 1, ']');
 		if (t1 - cf->fileName != t2 - filename ||
 		    memcmp(cf->fileName, filename, t2 - filename)) {
 			setError(MSG_DBOtherTable);
@@ -7751,7 +7751,7 @@ afterdelete:
 		if (first) {
 			if (cw->sqlMode && !isSQL(line)) {
 				strcpy(newline, cf->fileName);
-				strmove(strchr(newline, ']') + 1, line);
+				strmove(strchr(newline + 1, ']') + 1, line);
 				line = newline;
 			}
 			j = readFile(line, (cmd != 'r'), 0, 0, 0);

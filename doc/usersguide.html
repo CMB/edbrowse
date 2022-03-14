@@ -18,9 +18,9 @@ a:link { color: red; }
 a:active { color: green; }
 a:visited { color: red; }
 a:hover { color: green; }
-h2 { text-align: center; color: navy; font-size: 1.6em; }
-h3 { text-align: center; color: darkslateblue; font-size: 1.0em; }
-h4 { text-align: center; color: royalblue; font-size: 1.0em; }
+h1 { text-align: center; color: navy; font-size: 1.6em; }
+h2 { text-align: center; color: darkslateblue; font-size: 1.0em; }
+h3 { text-align: center; color: royalblue; font-size: 1.0em; }
 hr { border-style: solid; color: black; height: 2px; }
 p.cen { text-align: center; }
 </style>
@@ -28,11 +28,11 @@ p.cen { text-align: center; }
 
 <BODY>
 
-<H2> edbrowse Documentation, a User's Guide </H2>
+<h1> edbrowse Documentation, a User's Guide </h1>
 
-<H2> Chapter 0, <A NAME=top> Contents </A> </H2>
+<h1> Chapter 0, <A NAME=top> Contents </A> </h1>
 
-<H3> Chapter 1, Preface </H3>
+<h2> Chapter 1, Preface </h2>
 
 <UL>
 <LI><A HREF=#maint> Maintainer </A>
@@ -44,7 +44,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#lang> Other Languages </A>
 </UL>
 
-<H3> Chapter 2, Quick Reference Guide </H3>
+<h2> Chapter 2, Quick Reference Guide </h2>
 
 <UL>
 <LI><A HREF=#guide> Quick Reference Guide </A>
@@ -53,7 +53,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#wiki> Edbrowse Wiki </A>
 </UL>
 
-<H3> Chapter 3, The Editor </H3>
+<h2> Chapter 3, The Editor </h2>
 
 <UL>
 <LI><A HREF=#dev> Important Deviations From /bin/ed </A>
@@ -69,7 +69,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#race> Race Conditions </A>
 </UL>
 
-<H3> Chapter 4, Web Browser </H3>
+<h2> Chapter 4, Web Browser </h2>
 
 <UL>
 <LI><A HREF=#url> Accessing A URL </A>
@@ -98,7 +98,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#frame> Frames </A>
 </UL>
 
-<H3> Chapter 5, Javascript </H3>
+<h2> Chapter 5, Javascript </h2>
 
 <UL>
 <LI><A HREF=#js> Introduction to Javascript </A>
@@ -108,7 +108,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#jex> Javascript Debugger </A>
 </UL>
 
-<H3> Chapter 6, Edbrowse Scripts and the Configuration File </H3>
+<h2> Chapter 6, Edbrowse Scripts and the Configuration File </h2>
 
 <UL>
 <LI><A HREF=#cfg> The Config File </A>
@@ -121,7 +121,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#sampcfg> A Sample Config File </A>
 </UL>
 
-<H3> Chapter 7, Mail Client </H3>
+<h2> Chapter 7, Mail Client </h2>
 
 <UL>
 <LI><A HREF=#sm> Send Mail </A>
@@ -134,7 +134,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#imap> Imap Client </A>
 </UL>
 
-<H3> Chapter 8, Database Access </H3>
+<h2> Chapter 8, Database Access </h2>
 
 <UL>
 <LI><A HREF=#sqlb> Building edbrowse with Database Access </A>
@@ -146,9 +146,9 @@ p.cen { text-align: center; }
 </UL>
 
 <HR>
-<H2> Chapter 1, Preface </H2>
+<h1> Chapter 1, Preface </h1>
 
-<H3> <A NAME="maint"> Maintainer </A> </H3>
+<h2> <A NAME="maint"> Maintainer </A> </h2>
 
 <P>
 The edbrowse home page is <A href=http://edbrowse.org>edbrowse.org</A>.
@@ -156,7 +156,7 @@ The edbrowse home page is <A href=http://edbrowse.org>edbrowse.org</A>.
 Chris Brannon</A>
 is the current project maintainer and webmaster.
 
-<H3> <A NAME=auth> Author </A> </H3>
+<h2> <A NAME=auth> Author </A> </h2>
 
 <P>
 <A HREF=mailto:eklhad@gmail.com>
@@ -169,7 +169,7 @@ Please see the
 wikipedia article</A> for a history of edbrowse and an overview of its features.
 -->
 
-<H3> <A NAME=copy> Copyright Notice </A> </H3>
+<h2> <A NAME=copy> Copyright Notice </A> </h2>
 
 <P>
 This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2022.
@@ -177,7 +177,7 @@ It is made available by the authors under the terms of the GNU General Public Li
 as articulated by the Free Software Foundation.
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
 
-<H3> <A NAME=disclaim> Disclaimer </A> </H3>
+<h2> <A NAME=disclaim> Disclaimer </A> </h2>
 
 <P>
 Edbrowse is provided as-is,
@@ -191,7 +191,7 @@ This is a spare-time project written by a couple of volunteers,
 that (understandably) cannot attain the quality and rigor of corporate or government software.
 By using this program, you agree to use it as-is.
 
-<H3> <A NAME=ack> Acknowledgements </A> </H3>
+<h2> <A NAME=ack> Acknowledgements </A> </h2>
 
 <P>
 <A HREF=mailto:chris@the-brannons.com>
@@ -210,7 +210,7 @@ Jeremy O'Brien</A> ported the software to Mac OS X.
 Several people translated the output and error messages into other languages,
 and they are given due credit in the Languages section below.
 
-<H3> <A NAME=over> Overview </A> </H3>
+<h2> <A NAME=over> Overview </A> </h2>
 
 <P>
 This program is, at first glance, a reimplementation of /bin/ed.
@@ -295,7 +295,7 @@ This documentation assumes you are familiar with ed.
 In fact it helps if you are fluent in ed.
 Experience with Internet browsers and the associated terminology is also helpful.
 
-<H3> <A NAME=lang> Other Languages </A> </H3>
+<h2> <A NAME=lang> Other Languages </A> </h2>
 
 <P>
 First, a few words about character sets (charsets).
@@ -455,9 +455,9 @@ Edbrowse always sends a language designator to the web servers, because some web
 If you do set localizeweb yourself, be sure to set it to language code hyphen territory code.
 
 <hr>
-<H2> Chapter 2, Quick Reference Guide </H2>
+<h1> Chapter 2, Quick Reference Guide </h1>
 
-<H3> <A NAME=guide> Quick Reference Guide </A> </H3>
+<h2> <A NAME=guide> Quick Reference Guide </A> </h2>
 
 <P>
 Here are the ed and edbrowse commands, all in one place.
@@ -774,7 +774,7 @@ db3 : set debug level, 0 through 9
 <br>step$exp = expression : set step$l to 2 when expression is true, breaking at each step thereafter
 <br>arg$ : reference the arguments object from within a breakpoint
 
-<H3> <A NAME=tips> Tips for Avoiding Line Numbers </A> </H3>
+<h2> <A NAME=tips> Tips for Avoiding Line Numbers </A> </h2>
 
 <P>
 If you haven't spent time using the ed editor, you may find this program awkward.
@@ -815,14 +815,14 @@ Similarly, you can look for input fields by searching for the less than sign.
 This will make sense as you read about the representation of web pages below.
 And of course, multiple operations can be scripted, an important feature of edbrowse.
 
-<H3> <A NAME=mlist> Mailing List </A> </H3>
+<h2> <A NAME=mlist> Mailing List </A> </h2>
 
 <P>
 There is a mailing list for users of edbrowse and other command line utilities.
 You can subscribe by sending a message to
 <a href=mailto:commandline+subscribe@lists.the-brannons.com>commandline+subscribe@lists.the-brannons.com</a>.
 
-<H3> <A NAME=wiki> Edbrowse Wiki </A> </H3>
+<h2> <A NAME=wiki> Edbrowse Wiki </A> </h2>
 
 <P>
 There is a wiki devoted to edbrowse,
@@ -830,9 +830,9 @@ including tips and tricks, and sample .ebrc configurations and functions.
 See <A href=http://edbrowse.org>edbrowse.org</A> for more information.
 
 <hr>
-<H2> Chapter 3, The Editor </H2>
+<h1> Chapter 3, The Editor </h1>
 
-<H3> <A NAME=dev> Important Deviations From /bin/ed </A> </H3>
+<h2> <A NAME=dev> Important Deviations From /bin/ed </A> </h2>
 
 <P>
 Certain search/substitute commands may behave differently under this editor.
@@ -1116,7 +1116,7 @@ These include the simultaneous edit of multiple files
 similar to emacs and vi,
 and the ability to browse an html file and edit its fill-out form.
 
-<H3> <A NAME=brace> Balancing Braces </A> </H3>
+<h2> <A NAME=brace> Balancing Braces </A> </h2>
 
 <P>
 The capital B command is of interest to programmers,
@@ -1164,7 +1164,7 @@ or use comments to keep braces in balance.
 <P>
 static char openstring[] = "{block"; /* closing } is found elsewhere */
 
-<H3> <A NAME=cx> Context Switch </A> </H3>
+<h2> <A NAME=cx> Context Switch </A> </h2>
 
 <P>
 This program allows you to edit multiple files at the same time,
@@ -1339,7 +1339,7 @@ If a second line number is not given, the single line is read.
 An e command by itself prints the current session, in case you've forgotten.
 This is similar to f, by itself, which prints the current file.
 
-<H3> <A NAME=usage> Usage </A> </H3>
+<h2> <A NAME=usage> Usage </A> </h2>
 
 <P>
 type `edbrowse -h' to produce the following usage message.
@@ -1430,7 +1430,7 @@ alias e="/usr/bin/edbrowse"
 If you do this you can use `e filename'
 to edit a new file, whether you are inside edbrowse or at the shell prompt.
 
-<H3> <A NAME=bin> Binary Characters </A> </H3>
+<h2> <A NAME=bin> Binary Characters </A> </h2>
 
 <P>
 At all times, even when entering a file name, this program scans its input
@@ -1505,7 +1505,7 @@ Every line ends in ~0d.
 Issue one of the three commands shown above to undos the file.
 However, edbrowse usually converts these dos files automatically for you, unless you have disabled this feature with the iu command.
 
-<H3> <A NAME=emoji> Emojis </A> </H3>
+<h2> <A NAME=emoji> Emojis </A> </h2>
 
 <P>
 An emoji is a small image that is represented by a high unicode.
@@ -1611,7 +1611,7 @@ Happy birthday 💛🧡💙💚 🎂
 Perhaps something is extremely funny, and you want to indicate same with three roll-on-floor-laughing emojis.
 Type ~jmisc, or whatever group has this emoji, then roll,roll,roll to produce three of them.
 
-<H3> <A NAME=bfile> Binary Files </A> </H3>
+<h2> <A NAME=bfile> Binary Files </A> </h2>
 
 <P>
 Data is considered binary if it is sufficiently large
@@ -1650,7 +1650,7 @@ You can disable binary detection with the `bd' command, whence your file will re
 This is a corner case, since utf8 is nearly universal.
 Therefore, the bd command is deprecated, and could go away in a future version of edbrowse.
 
-<H3> <A NAME=dir> Directory Scan, File Manager </A> </H3>
+<h2> <A NAME=dir> Directory Scan, File Manager </A> </h2>
 
 <P>
 If you edit a directory
@@ -1917,7 +1917,7 @@ Use the command sort+a for the standard alphabetical sort, and sort-a for a reve
 sort+t sorts by modification time, from oldest to newest, and sort-t reverses this, with the newest files at the top.
 sort+s and sort-s sort by file size.
 
-<H3> <A NAME=case> Upper/Lower Case </A> </H3>
+<h2> <A NAME=case> Upper/Lower Case </A> </h2>
 
 <P>
 The `lc' command converts a line to lower case,
@@ -1939,7 +1939,7 @@ All the other substitution suffixes apply.
 To change foo, Foo, FOo, and FOO to FOO, everywhere,
 type ,s/\bfoo\b/uc/ig.
 
-<H3> <A NAME=bl> Break Line </A> </H3>
+<h2> <A NAME=bl> Break Line </A> </h2>
 
 <P>
 The `bl' command breaks the current line into sentences and phrases,
@@ -1992,7 +1992,7 @@ Again, the fll command changes the format line length.
 Each character counts as one column, so wide characters, e.g. a line with several emojis, might cause an overflow on your terminal.
 Try fll 78 to give yourself some breathing room.
 
-<H3> <A NAME=race> Race Conditions </A> </H3>
+<h2> <A NAME=race> Race Conditions </A> </h2>
 
 <P>
 Suppose you are writing a file,
@@ -2049,9 +2049,9 @@ but edbrowse doesn't have it, simply because I haven't gotten round to writing i
 This feature is not in high demand.
 
 <hr>
-<H2> Chapter 4, Web Browser </H2>
+<h1> Chapter 4, Web Browser </h1>
 
-<H3> <A NAME=url> Accessing A URL </A> </H3>
+<h2> <A NAME=url> Accessing A URL </A> </h2>
 
 <P>
 Instead of invoking `e filename', you can invoke `e http://this.that.com/file.html',
@@ -2110,7 +2110,7 @@ In this case you'll want to retain the public url,
 which will always work, even if the company relocates its web server.
 Use your best judgment.
 
-<H3> <A NAME=browse> Browse Mode </A> </H3>
+<h2> <A NAME=browse> Browse Mode </A> </h2>
 
 <P>
 If the editor contains html text, from any source,
@@ -2268,7 +2268,7 @@ If a url is opened from the command line,
 as in `e www.google.com', it is automatically browsed.
 Type `ub' to revert back to the raw html.
 
-<H3> <A NAME=math> Technical, Math </A> </H3>
+<h2> <A NAME=math> Technical, Math </A> </h2>
 
 <P>
 Most people never read technical web pages, but if you do...
@@ -2311,7 +2311,7 @@ These translations are designed to work with the pages of the
 an archive of advanced mathematics
 that attempts to be both sighted and blind friendly at the same time.
 
-<H3> <A NAME=title> Title, Description, Keywords </A> </H3>
+<h2> <A NAME=title> Title, Description, Keywords </A> </h2>
 
 <P>
 While in browse mode, the commands ft, fd, and fk
@@ -2336,7 +2336,7 @@ It does not change, even if you change the file name.
 This is the same string that is put into a bookmark if you issue the A command on a line without any links.
 See Web and Email Addresses below.
 
-<H3> <A NAME=rf> The Refresh Command </A> </H3>
+<h2> <A NAME=rf> The Refresh Command </A> </h2>
 
 <P>
 Type `rf' to refresh the current file.
@@ -2360,7 +2360,7 @@ For example, you might use the shell escape to execute
 `cat x y &gt;z',
 yet z will not appear in your directory scan until you type rf.
 
-<H3> <A NAME=hlink> Hyperlinks </A> </H3>
+<h2> <A NAME=hlink> Hyperlinks </A> </h2>
 
 <P>
 A link to another web page is enclosed in braces, like this:
@@ -2434,7 +2434,7 @@ Deleting the line does not delete the file, substituting in the line does not re
 If your text file contains filenames that you want to go to, you have to be in the directory that contains those files, (unless they are absolute pathnames).
 This aspect of g can be convenient at times, but please don't confuse it with directory mode.
 
-<H3> <A NAME=ilink> Internal Links </A> </H3>
+<h2> <A NAME=ilink> Internal Links </A> </h2>
 
 <P>
 Although most links lead to other web pages,
@@ -2458,7 +2458,7 @@ Often the words are the same.
 Activate {Appendix I}, and you'll probably see the section heading "Appendix I".
 Enter z10 to read the first few lines of the appendix.
 
-<H3> <A NAME=back> The Back Key </A> </H3>
+<h2> <A NAME=back> The Back Key </A> </h2>
 
 <P>
 If you edit a new file via the `e', `b', or `g' command,
@@ -2539,7 +2539,7 @@ An alternative, if you often want to go back to the table of contents, is to
 mark the current position with kr, then return to it via the label 'r.
 Even with this label set, &amp; is often more convenient, since it takes you back to the last heading you jumped on, whence you can proceed down the table of contents to the next section that interests you.
 
-<H3> <A NAME=move> The M Command </A> </H3>
+<h2> <A NAME=move> The M Command </A> </h2>
 
 <P>
 If you want to read and/or interact with several web pages in parallel,
@@ -2589,7 +2589,7 @@ You can issue the M command without a destination if you are not sure which sess
 Edbrowse will pick an empty session for you
 and print something like "moved to session 15".
 
-<H3> <A NAME=music> Background Music </A> </H3>
+<h2> <A NAME=music> Background Music </A> </h2>
 
 <P>
 If you are trying to listen to a speech synthesizer,
@@ -2620,7 +2620,7 @@ It will say something like,
 "I don't know how to process an mp3 file".
 This is consistent with other browsers, which use plugins to play multimedia files that are retrieved from the Internet.
 
-<H3> <A NAME=heading> Headings </A> </H3>
+<h2> <A NAME=heading> Headings </A> </h2>
 
 <P>
 Some web pages are written with headings, from level 1 to level 6.
@@ -2630,7 +2630,7 @@ Thus h2 is not part of the text; it is a markup character.
 You can jump to different headings using the familiar ed commands:
 /h2 for the next level 2 heading, ?h1 for the previous level 1 heading, and /h\d for the next heading at any level.
 
-<H3> <A NAME=input> Input Fields </A> </H3>
+<h2> <A NAME=input> Input Fields </A> </h2>
 
 <P>
 The input fields of an on-line form are indicated by angle brackets.
@@ -2673,7 +2673,7 @@ It clears all the data you have entered, so you can start over.
 Default values will be restored.
 Thus the third line goes back to &lt;en&gt;, rather than &lt;&gt;.
 
-<H3> <A NAME=entry> Data Entry </A> </H3>
+<h2> <A NAME=entry> Data Entry </A> </h2>
 
 <P>
 Filling out a form is relatively easy,
@@ -2805,7 +2805,7 @@ rather than i1=kangaroo, if the second field on the current line is a submit but
 You only need specify a field number
 when there are multiple input fields, or multiple buttons, on the current line.
 
-<H3> <A NAME=textarea> Text Areas </A> </H3>
+<h2> <A NAME=textarea> Text Areas </A> </h2>
 
 <P>
 Some Internet forms allow you to type freely, as in "Please enter your comments here."
@@ -2865,7 +2865,7 @@ the text in buffer 2, associated with the second editing session,
 will replace the words "bufffer 2" in the input field,
 and your carefully crafted comments are on their way.
 
-<H3> <A NAME=button> Push The Button </A> </H3>
+<h2> <A NAME=button> Push The Button </A> </h2>
 
 <P>
 If the third input field on the current line is a reset or submit button,
@@ -2901,7 +2901,7 @@ Remember that buttons can run Javascript, without being type submit or reset.
 These are all pressed by the i* command.
 If more than one button is on the current line, any style of button, then i* is not sufficient; you have to specify which button, as in i3*.
 
-<H3> <A NAME=hover> Hover Text </A> </H3>
+<h2> <A NAME=hover> Hover Text </A> </h2>
 
 <P>
 Some websites cause text to appear when you hover over a link or icon; then it disappears when you move the mouse away.
@@ -2949,7 +2949,7 @@ Thus you might want to see what you are missing.
 The showall command is rarely needed when javascript is turned off.
 Without Javascript and css, all the hover text and all the invisible sections are shown.
 
-<H3> <A NAME=colors> Colors on the Page </A> </H3>
+<h2> <A NAME=colors> Colors on the Page </A> </h2>
 
 <P>
 In an accessible world,
@@ -2995,7 +2995,7 @@ Also, you can configure your adapter to read these higher unicodes any way you l
 <p>
 Colors come from css, and css doesn't run without Javascript, thus this feature only works with Javascript enabled.
 </p>
-<H3> <A NAME=addr> Web And Email Addresses </A> </H3>
+<h2> <A NAME=addr> Web And Email Addresses </A> </h2>
 
 <P>
 The capital A command shows you the web addresses behind
@@ -3097,7 +3097,7 @@ Now you can type &lt;bma to add a link to your favorites,
 and you don't have to worry about typos.
 It's shorter than `w+ $bookmarks' anyway.
 
-<H3> <A NAME=cook> Cookies </A> </H3>
+<h2> <A NAME=cook> Cookies </A> </h2>
 
 Most websites serve cookies,
 which your browser is expected to retain
@@ -3127,7 +3127,7 @@ and the second could conceivably clobber some cookies that were set by the first
 It's only a minor nuisance, and you might not even notice.
 Still, a future version of edbrowse might use one global http server to get around this problem.
 
-<H3> <A NAME=ssl> Secure Connections </A> </H3>
+<h2> <A NAME=ssl> Secure Connections </A> </h2>
 
 <P>
 Edbrowse supports the most common method of encrypting web traffic,
@@ -3207,7 +3207,7 @@ so it's OK to be a little bit paranoid,
 in fact it's probably a good idea,
 but don't let that stop you from making your online purchases.
 
-<H3> <A NAME=ftp> FTP Retrievals </A> </H3>
+<h2> <A NAME=ftp> FTP Retrievals </A> </h2>
 
 <P>
 This browser supports the retrieval of ftp files and directories.
@@ -3255,14 +3255,14 @@ and the other works well when the server is behind a router.
 You can specify ftp mode active by entering the command `ftpa+',
 or ftp mode passive by `ftpa-'.
 
-<H3> <A NAME=gopher> Gopher Support </A> </H3>
+<h2> <A NAME=gopher> Gopher Support </A> </h2>
 
 <P>
 Gopher is similar to ftp, providing an easy way to download files from a public site.
 Edbrowse supports this via the gopher:// protocol.
 Once again, directory listings are converted into html, so you can activate a hyperlink and proceed to a submenu or download a file.
 
-<H3> <A NAME=proxy> Proxy Servers </A> </H3>
+<h2> <A NAME=proxy> Proxy Servers </A> </h2>
 
 <P>
 A proxy server is a web server that sits between your web browser and remote websites.
@@ -3321,7 +3321,7 @@ As shown in this example, different protocols can be separated by pipes.
 Beware, placing a * in the protocol field embraces all protocols, including ftp, pop3, and smtp.
 Mail will attempt to pass through this proxy, just like web traffic.
 
-<H3> <A NAME=frame> Frames </A> </H3>
+<h2> <A NAME=frame> Frames </A> </h2>
 
 <P>
 Frames are a mechanism whereby a web page can fetch and display several other web pages on the screen at once.
@@ -3365,9 +3365,9 @@ We've got the lowest prices anywhere.
 Frame {bottom}
 
 <hr>
-<H2> Chapter 5, Javascript </H2>
+<h1> Chapter 5, Javascript </h1>
 
-<H3> <A NAME=js> Introduction to Javascript </A> </H3>
+<h2> <A NAME=js> Introduction to Javascript </A> </h2>
 
 Javascript is software, embedded in the web page, that runs on your computer.
 These functions do not run on the web server,
@@ -3450,7 +3450,7 @@ The javascript engine was interrupted in mid operation, and its behavior is unpr
 However, I have tried it a few times and it seems to work.
 </p>
 
-<H3> <A NAME=valid> Validating Forms </A> </H3>
+<h2> <A NAME=valid> Validating Forms </A> </h2>
 
 When a web page asks for user input,
 it often includes a
@@ -3494,7 +3494,7 @@ You will see a message like, "Line 352 has been updated",
 where 352 contains the submenu.
 Type 352I? to see the newly created menu options.
 
-<H3> <A NAME=popup> Popups and Popunders </A> </H3>
+<h2> <A NAME=popup> Popups and Popunders </A> </h2>
 
 A popup is a window that suddenly appears in front of the window you really want to see.
 It usually advertises something, and is often annoying,
@@ -3531,7 +3531,7 @@ page you were looking at.
 If you need access to a popup window and the main page in parallel,
 use the <A HREF=#move>M command</A>.
 
-<H3> <A NAME=onc> Onchange and Undo </A> </H3>
+<h2> <A NAME=onc> Onchange and Undo </A> </h2>
 
 <P>
 When you set or change the value of an input field,
@@ -3556,7 +3556,7 @@ Sometimes the input field is long, and a substitute doesn't do what you expect i
 If you are formulating a text response in a textarea, that is done in another buffer,
 and you have the full power of the editor, including the undo command.
 
-<H3> <A NAME=jex> Javascript Debugger </A> </H3>
+<h2> <A NAME=jex> Javascript Debugger </A> </h2>
 
 <P>
 In browse mode, the jdb (javascript debug) command
@@ -3582,9 +3582,9 @@ These are: the db commands (to change debugging), e number (to jump to another e
 bflist, bglist, timers, demin, and shell escapes.
 
 <hr>
-<H2> Chapter 6, Edbrowse Scripts and the Configuration File </H2>
+<h1> Chapter 6, Edbrowse Scripts and the Configuration File </h1>
 
-<H3> <A NAME=cfg> Config File </A> </H3>
+<h2> <A NAME=cfg> Config File </A> </h2>
 
 <P>
 At startup, edbrowse reads and parses a config file.
@@ -3624,7 +3624,7 @@ This will be described later, under email clients.
 <LI><P> Describe a table or a view in an sql database.
 </OL>
 
-<H3> <A NAME=keyval> Keyword = Value </A> </H3>
+<h2> <A NAME=keyval> Keyword = Value </A> </h2>
 
 The best documentation is an example, so let's dive right in.
 
@@ -3918,7 +3918,7 @@ mail accounts and filters in one file, plugins in another, functions in another 
 However, edbrowse -c only brings up the base config file, and would not provide direct access to these other files.
 So it is a matter of taste; some people use this feature and some don't.
 
-<H3> <A NAME=agent> User Agent </A> </H3>
+<h2> <A NAME=agent> User Agent </A> </h2>
 
 Every time you fetch a web page from the Internet,
 your browser identifies itself to the host.
@@ -3960,7 +3960,7 @@ google.com will not present the h3 headings on the search results unless you loo
 I don't know why, I'm just trying to go with the flow.
 Other sites are also particular about the type of browser, and none of them are looking for edbrowse.
 
-<H3> <A NAME=script> Edbrowse Functions </A> </H3>
+<h2> <A NAME=script> Edbrowse Functions </A> </h2>
 
 <P>
 You can bundle a set of edbrowse commands together under one name,
@@ -4110,7 +4110,7 @@ It then deletes the blank lines at the top.
 You can use loop(100){ ... } to repeat a set of commands 100 times.
 This feature is not used very often.
 
-<H3> <A NAME=init> The Init Function </A> </H3>
+<h2> <A NAME=init> The Init Function </A> </h2>
 
 The function named "init" is run at edbrowse startup.
 Use this to establish your default settings - even read in your bookmark file,
@@ -4144,7 +4144,7 @@ or leave it out altogether if you are happy with edbrowse out of the box.
 The -d option on the command line overrides any db settings that are made by the init script.
 Thus edbrowse -d4 could make a lot of noise, even if db0 is the first entry in your init script.
 
-<H3> <A NAME=ma> Mail Accounts </A> </H3>
+<h2> <A NAME=ma> Mail Accounts </A> </h2>
 
 The next chapter describes edbrowse as a mail client,
 so let's use the config file to define some email accounts.
@@ -4201,7 +4201,7 @@ is controlled by your config file as well.
 This will be <A HREF=#filter>described later</A>,
 as part of the fetchmail client.
 
-<H3> <A NAME=mt> Plugin Descriptors </A> </H3>
+<h2> <A NAME=mt> Plugin Descriptors </A> </h2>
 
 <P>
 Plugins are determined by the extension of the file, or in some cases the protocol.
@@ -4284,7 +4284,7 @@ Note, there are pdf to text converters that skip the middle html step,
 but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf,
 so I thought it worthwhile going through html, even though it adds another step.
 
-<H3> <A NAME=sampcfg> A Sample Config File </A> </H3>
+<h2> <A NAME=sampcfg> A Sample Config File </A> </h2>
 
 The best documentation is an example,
 so I have provided a sample config file with fake data.
@@ -4296,9 +4296,9 @@ and
 <A href=sample_it.ebrc>Italian</A>.
 
 <hr>
-<H2> Chapter 7, Mail Client </H2>
+<h1> Chapter 7, Mail Client </h1>
 
-<H3> <A NAME=sm> Send Mail </A> </H3>
+<h2> <A NAME=sm> Send Mail </A> </h2>
 
 Email the contents of your current editing session to someone else
 via the `sm' command.
@@ -4449,7 +4449,7 @@ Don't push the button again!
 The mail has been sent,
 and you'll be hearing from the company in the next few days.
 
-<H3> <A NAME=smc> Send Mail Client </A> </H3>
+<h2> <A NAME=smc> Send Mail Client </A> </h2>
 
 as described in the previous section,
 edbrowse incorporates the features of a mail client.
@@ -4472,7 +4472,7 @@ A leading - indicates an alternate format, like this.
 <P>
 edbrowse -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
 
-<H3> <A NAME=retrmail> Retrieving Mail </A> </H3>
+<h2> <A NAME=retrmail> Retrieving Mail </A> </h2>
 
 If edbrowse is invoked with the -f option, it will fetch mail from all
 accounts, except the ones that you have marked nofetch.
@@ -4500,7 +4500,7 @@ alias workmail="edbrowse -fm3"
 alias mail="echo use mymail, wifemail, or workmail"
 </font></PRE>
 
-<H3> <A NAME=imr> Interactive Mail Reader </A> </H3>
+<h2> <A NAME=imr> Interactive Mail Reader </A> </h2>
 
 If edbrowse is run with the -m option, and no other arguments,
 it is an interactive mail reader,
@@ -4552,7 +4552,7 @@ As mentioned previously, it's a good idea to run a weekly cron job to clean
 out the trash bin; if that cron job removes subdirectories, it will ensure
 that raw mail does not accumulate indefinitely.
 
-<H3> <A NAME=mailfmt> Formatted Mail </A> </H3>
+<h2> <A NAME=mailfmt> Formatted Mail </A> </h2>
 
 When mail is retrieved, it is saved in the directory of unread
 messages without any formatting applied.
@@ -4572,7 +4572,7 @@ finish your email session, edit that file,
 and type b to browse.
 Now the html is active, as though you were looking at a web page on somebody's site.
 
-<H3> <A NAME=filter> Mail Filtering </A> </H3>
+<h2> <A NAME=filter> Mail Filtering </A> </h2>
 
 The config file supports a modest level of mail filtering.
 You can redirect incoming mail
@@ -4720,7 +4720,7 @@ Use the -p option to pass over the filters, as in `e -pm1'.
 I set this when looking at other people's mail, such as my wife's account.
 I don't want her mail sent somewhere else because it matches one of my filter rules.
 
-<H3> <A NAME=reply> Mail Reply </A> </H3>
+<h2> <A NAME=reply> Mail Reply </A> </h2>
 
 The `re' command prepares a formatted email for reply.
 The "Reply to" line (which must exist) is moved to the top.
@@ -4789,7 +4789,7 @@ You must re-edit the saved mail message,
 browse, and reply.
 Like everything else in edbrowse, you'll get use to it once you play with it.
 
-<H3> <A NAME=imap> Imap Client </A> </H3>
+<h2> <A NAME=imap> Imap Client </A> </h2>
 
 A pop3 client, as described above, fetches mail down to your computer,
 whereupon you are responsible for it.
@@ -4906,9 +4906,9 @@ You can rename a folder via `rename foo bar'.
 This command assumes there is no whitespace in a folder's name.
 
 <hr>
-<H2> Chapter 8, Database Access </H2>
+<h1> Chapter 8, Database Access </h1>
 
-<H3> <A NAME=sqlb> Building edbrowse with Database Access </A> </H3>
+<h2> <A NAME=sqlb> Building edbrowse with Database Access </A> </h2>
 
 <P>
 Edbrowse can connect to sql databases through odbc.
@@ -4921,17 +4921,17 @@ You are basically implementing the interface described in dbapi.h,
 using the C database development toolkit provided by the vendor.
 Since odbc connects to everything, it will probably meet your needs.
 
-<H3> <A NAME=rtb> Reading Tables </A> </H3>
+<h2> <A NAME=rtb> Reading Tables </A> </h2>
 
 When a file name is of a certain format, with http:// in front,
 it is deemed to be a url.
 Edbrowse does not look on your computer for the file; it goes out to the Internet.
 Similarly, when the file name has a certain format,
 it is assumed to be a table or view in the database.
-If you have a table called customers, follow it up with a right bracket.
+If you have a table called customers, put it in right brackets.
 
 <P>
-e customers]
+e ]customers]
 
 <P>
 This allows you to bring in the entire table,
@@ -4971,62 +4971,62 @@ you will not be able to update or delete.
 Rows in the table are readonly.
 
 <P>
-The table syntax is more than just an identifier and a right bracket.
-You can follow the right bracket with a where clause.
+The table syntax is more than just an identifier between brackets.
+You can follow the second bracket with a where clause.
 This is important if you don't want the entire table,
 especially if there are millions of rows.
 Here are some table commands and their meanings.
 
 <P>
-customers]
+]customers]
 <br>
 Set the buffer up for the customers table, but don't fetch any rows.
 
 <P>
-customers]*
+]customers]*
 <br>
 Fetch all the rows in the table.
 
 <P>
-customers]37
+]customers]37
 <br>
 Fetch the customer whose serial number is 37.
 The primary key is assumed; your table has to have a primary key
 if you are going to use this syntax.
 
 <P>
-customers]1=37
+]customers]1=37
 <br>
 Fetch the row whose first column is 37.
 
 <P>
-customers]37-59
+]customers]37-59
 <br>
 Fetch the customers with serial numbers between 37 and 59 inclusive.
 
 <P>
-customers]3=Smith
+]customers]3=Smith
 <br>
 Fetch the customers whose last name is Smith.
 
 <P>
-customers]lastname=Smith
+]customers]lastname=Smith
 <br>
 Same as above.
 
 <P>
-customers]last=Smith
+]customers]last=Smith
 <br>
 Same as above.
 If the string uniquely gloms onto a column name, we're all set.
 
 <P>
-customers]last=Barn*
+]customers]last=Barn*
 <br>
 Fetch the customers whose last names begin with Barn.
 
 <P>
-customers]birth=01/01/1960-12/31/1960
+]customers]birth=01/01/1960-12/31/1960
 <br>
 Fetch the customers who were born in 1960.
 
@@ -5039,8 +5039,8 @@ but you can switch to another editing session to look at another table
 without losing the rows you are working on.
 
 <P>
-When reading rows into a growing buffer, you can usually omit the table, since it has to be customers] every time.
-For instance, you can bring in customer #738 by typing `r customers]738' or `r 738'.
+When reading rows into a growing buffer, you can usually omit the table, since it has to be ]customers] every time.
+For instance, you can bring in customer #738 by typing `r ]customers]738' or `r 738'.
 
 <P>
 If you want a clean slate, type `rf' to refresh the buffer.
@@ -5072,7 +5072,7 @@ To fetch binary columns, use the fbc command.
 It is not possible to fetch more than one binary column at a time,
 so make sure your select only grabs one such column.
 
-<H3> <A NAME=dsource> Data source </A> </H3>
+<h2> <A NAME=dsource> Data source </A> </h2>
 
 To do anything with the database, your config file must specify
 the name of the data source, the login, and the password.
@@ -5091,11 +5091,11 @@ Make sure you do not refer to any old rows in buffer after you have switched to 
 
 <P>
 In some cases you can access other databases without changing the data source.
-For instance, you can read the parts table in the inventory database by calling up inventory:parts].
+For instance, you can read the parts table in the inventory database by calling up ]inventory:parts].
 This is standard sql syntax for looking at tables in another database;
 edbrowse just passes it through.
 
-<H3> <A NAME=insupd> Insert, Update, Delete </A> </H3>
+<h2> <A NAME=insupd> Insert, Update, Delete </A> </h2>
 
 Now that we have run a few selects, let's modify some data.
 These operations are known as insert, update, and delete in the database world.
@@ -5165,7 +5165,7 @@ As mentioned before, referential integrity should be employed wherever it makes 
 As a last check, I only let you delete 100 rows at a time.
 Be careful, and run regular backups.
 
-<H3> <A NAME=td> Table Descriptors </A> </H3>
+<h2> <A NAME=td> Table Descriptors </A> </h2>
 
 Suppose a table contains 100 fields.
 Displaying all those fields is awkward, to say the least.
@@ -5204,7 +5204,7 @@ If you receive a Not-Null error, it could be due to one of the other columns,
 which requires an entered value.
 It is usually safer to insert a row using the complete table.
 
-<H3> <A NAME=gosql> Go SQL </A> </H3>
+<h2> <A NAME=gosql> Go SQL </A> </h2>
 
 If you know the trick, you can feed sql statements directly to the database,
 similar to the isql program that ships with odbc.

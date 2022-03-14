@@ -713,7 +713,7 @@ static void pushQuoted(char **s, int *slen, const char *value, int colno)
 	stringAndString(s, slen, value);
 	if (quotemark)
 		stringAndChar(s, slen, quotemark);
-}				/* pushQuoted */
+}
 
 static char *lineFields[MAXTCOLS];
 
@@ -748,7 +748,7 @@ static char *keysQuoted(void)
 	stringAndString(&u, &ulen, " = ");
 	pushQuoted(&u, &ulen, lineFields[key3], key3);
 	return u;
-}				/* keysQuoted */
+}
 
 static void buildSelectClause(void)
 {
@@ -762,7 +762,7 @@ static void buildSelectClause(void)
 	}
 	stringAndString(&scl, &scllen, " from ");
 	stringAndString(&scl, &scllen, td->name);
-}				/* buildSelectClause */
+}
 
 static char date2buf[24];
 static bool dateBetween(const char *s)
@@ -778,7 +778,7 @@ static bool dateBetween(const char *s)
 		return false;
 	*e = 0;
 	return stringIsDate(date2buf) | stringIsDate(e + 1);
-}				/* dateBetween */
+}
 
 static bool buildWhereClause(void)
 {
@@ -873,13 +873,14 @@ setcol_n:
 	}
 
 	return true;
-}				/* buildWhereClause */
+}
 
 static bool setTable(void)
 {
 	static const short exclist[] = { EXCNOTABLE, EXCNOCOLUMN, 0 };
 	int cid, nc, i, part1, part2, part3, part4;
 	const char *s = cf->fileName;
+	++s; // don't need the leading ]
 	const char *t = strchr(s, ']');
 	if ((unsigned)(t - s) >= sizeof(myTab))
 		errorPrint("2table name too long, limit %d characters",
@@ -961,7 +962,7 @@ static bool setTable(void)
 
 	cw->table = td;
 	return true;
-}				/* setTable */
+}
 
 void showColumns(void)
 {
@@ -1102,7 +1103,7 @@ bool sqlReadRows(const char *filename, char **bufptr)
 	if (!setTable())
 		return false;
 
-	myWhere = strchr(filename, ']') + 1;
+	myWhere = strchr(filename + 1, ']') + 1;
 	if (!*myWhere)
 		return true;
 
@@ -1117,7 +1118,7 @@ bool sqlReadRows(const char *filename, char **bufptr)
 		return false;
 
 	return rowsIntoBuffer(cid, td->types, bufptr, &lcnt);
-}				/* sqlReadRows */
+}
 
 /* Split a line at pipe boundaries, and make sure the field count is correct */
 static bool intoFields(char *line)
