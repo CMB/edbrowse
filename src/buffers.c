@@ -1459,7 +1459,7 @@ void delText(int start, int end)
 	cw->dot = start;
 	if (cw->dot > cw->dol)
 		cw->dot = cw->dol;
-/* by convention an empty buffer has no map */
+// by convention an empty buffer has no map
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
@@ -1467,6 +1467,55 @@ void delText(int start, int end)
 			free(cw->r_map);
 			cw->r_map = 0;
 		}
+	}
+}
+
+// for g/re/or v/re/d,     only for d,  only a text file
+// Algorithm is linear not quadratic.
+static void delTextG(void)
+{
+	int i, j;
+	int *label;
+	struct lineMap *t;
+
+// we wouldn't be here unless some lines match, so...
+	undoPush();
+
+// last line deleted?
+	t = cw->map + cw->dol;
+	if (t->gflag)
+		cw->nlMode = false;
+
+	 t = cw->map + 1;
+	for(i = j = 1; i <= cw->dol; ++i, ++t) {
+		label = NULL;
+		if(t->gflag) { // goodbye
+// did this line have a label?
+			while ((label = nextLabel(label)))
+				if(*label == i)
+					*label = 0;
+			cw->dot = j;
+			continue;
+		}
+		if(i > j) {
+			cw->map[j] = *t;
+			while ((label = nextLabel(label)))
+				if(*label == i)
+					*label = j;
+		}
+		++j;
+	}
+
+// map of lines has to null terminate
+	cw->map[j] = *t;
+
+	cw->dol = j - 1;
+	if (cw->dot > cw->dol)
+		cw->dot = cw->dol;
+// by convention an empty buffer has no map
+	if (!cw->dol) {
+		free(cw->map);
+		cw->map = 0;
 	}
 }
 
@@ -3573,9 +3622,17 @@ static bool doGlobal(const char *line)
 		return false;
 	}
 
-/* apply the subcommand to every line with a star */
-	globSub = true;
 	setError(-1);
+
+// check for mass delete
+	if(stringEqual(line, "d") &&
+	!(cw->dirMode | cw->browseMode | cw->sqlMode)) {
+		delTextG();
+		return true;
+	}
+
+// apply the subcommand to every marked line 
+	globSub = true;
 	if (!*line)
 		line = "p";
 	origdot = cw->dot;
