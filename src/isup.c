@@ -522,6 +522,7 @@ bool isSQL(const char *s)
 		}
 		if (c == ']')
 			goto yes;
+		goto no;
 	}
 
 no:
