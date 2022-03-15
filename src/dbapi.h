@@ -43,7 +43,6 @@ typedef long interval;
 typedef long money;
 
 #define sql_debug (debugLevel >= 3)
-#define sql_debug2 (debugLevel >= 4)
 extern const char *sql_debuglog;	/* log of debug prints */
 extern const char *sql_database;	/* name of current database */
 

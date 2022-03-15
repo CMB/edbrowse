@@ -703,14 +703,22 @@ static void pushQuoted(char **s, int *slen, const char *value, int colno)
 	}
 
 	if (coltype != 'F' && coltype != 'N') {
-/* Microsoft insists on single quote. */
+// Microsoft insists on single quote.
 		quotemark = '\'';
-		if (strchr(value, quotemark))
-			quotemark = '"';
 	}
 	if (quotemark)
 		stringAndChar(s, slen, quotemark);
-	stringAndString(s, slen, value);
+// do we have to escape stuff?
+	if(quotemark && strchr(value, quotemark)) {
+		const char *w = value;
+		while(*w) {
+			if(*w == quotemark)
+				stringAndChar(s, slen, quotemark);
+			stringAndChar(s, slen, *w++);
+		}
+	} else {
+		stringAndString(s, slen, value);
+	}
 	if (quotemark)
 		stringAndChar(s, slen, quotemark);
 }
@@ -1024,7 +1032,7 @@ void showColumns(void)
 		}		/* switch */
 		printf("%s\n", desc);
 	}
-}				/* showColumns */
+}
 
 void showForeign(void)
 {
@@ -1032,7 +1040,7 @@ void showForeign(void)
 		return;
 	i_printf(MSG_Fkeys, td->name);
 	fetchForeign(td->name);
-}				/* showForeign */
+}
 
 /* Select rows of data and put them into the text buffer */
 static bool rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)

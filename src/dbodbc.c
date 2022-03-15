@@ -86,7 +86,7 @@ static void debugStatement(void)
 		return;
 	if (sql_debug)
 		appendFileNF(sql_debuglog, stmt_text);
-	if (sql_debug2)
+	if (sql_debug)
 		puts(stmt_text);
 }				/* debugStatement */
 
@@ -795,7 +795,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 
 	if (sql_debug)
 		appendFile(sql_debuglog, "%d rows affected", rv_lastNrows);
-	if (sql_debug2)
+	if (sql_debug)
 		printf("%ld rows affected\n", rv_lastNrows);
 	SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
 	exclist = 0;
@@ -1343,7 +1343,7 @@ static bool execInternal(const char *stmt, int mode)
 			if (sql_debug)
 				appendFile(sql_debuglog, "%d rows affected",
 					   rv_lastNrows);
-			if (sql_debug2)
+			if (sql_debug)
 				printf("%ld rows affected\n", rv_lastNrows);
 		}
 	}
@@ -1477,7 +1477,7 @@ static int prepareCursor(const char *stmt, bool scrollflag)
 	hstmt = o->hstmt;
 	if (sql_debug)
 		appendFile(sql_debuglog, "new cursor %d", o->cid);
-	if (sql_debug2)
+	if (sql_debug)
 		printf("new cursor %d\n", o->cid);
 	rc = SQLSetStmtOption(hstmt, SQL_CURSOR_TYPE,
 			      scrollflag ? SQL_CURSOR_STATIC :
