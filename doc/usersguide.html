@@ -143,6 +143,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#insupd> Insert, Update, Delete </A>
 <LI><A HREF=#td> Table Descriptors </A>
 <LI><A HREF=#gosql> Go SQL </A>
+<LI><A HREF=#pipes> Pipes in the Data </A>
 </UL>
 
 <HR>
@@ -5206,6 +5207,7 @@ It is usually safer to insert a row using the complete table.
 
 <h2> <A NAME=gosql> Go SQL </A> </h2>
 
+<p>
 If you know the trick, you can feed sql statements directly to the database,
 similar to the isql program that ships with odbc.
 Within a text buffer (not a table buffer),
@@ -5235,6 +5237,43 @@ Call them up, modify parameters, and go again, like a qbe screen.
 where custnum = addrnum and addrtype = "HOME"
 <br>
 and custnum between 500 and 600;
+
+<h2> <A NAME=pipes> Pipes in the Data </A> </h2>
+
+<P>
+Since | is our reserved separator, what happens if the strings contain pipes?
+Edbrowse escapes each literal pipe with a backslash.
+If Fred's first name has a pipe in it, it might present as Fr\|ed|Flintstone.
+(The pipe is silent, of course.)
+A backslash in any other context is simply a backslash.
+It means nothing to edbrowse or SQL.
+If his first name presents as F\r\|ed, then it is F\r|ed in the database.
+Remember this convension as you use the s command to update a row.
+When inserting a pipe, where there was none before, you have to insert \|.
+If you don't, it will look like a field separator, and edbrowse will tell you the line has too many fields.
+
+<P>
+When entering a new row field by field, (in append mode), there is no need to escape the pipe.
+Each field is added one at a time, and thus there is no confusion; the pipe is not ambiguous.
+Enter the first name as Fr|ed, and it will go into the database that way,
+then present as Fr\|ed in the new row in the edbrowse buffer.
+
+<P>
+Neither should you escape a | when feeding sql directly into the engine.
+
+<P>
+] update customer set firstname = "Fr|ed" where custnum = 2139;
+<br>
+g
+
+<P>
+This pipe convension supports almost every row in almost every database, however,
+it fails if a field ends in a backslash.
+That naturally blends into the pipe that is the field separator.
+Such data cannot be represented in edbrowse.
+If you try to read it into a buffer,
+corresponding to that table, edbrowse prints an error, "field ends in backslash", and aborts the read.
+It's not a perfect solution.
 
 <HR><P class=cen>
 <A href=#top>Return to top</A>

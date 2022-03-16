@@ -409,7 +409,7 @@ aucune colonne ne correspond à %s
 la table %s n'existe pas
 nom de colonne invalide
 impossible de sélectionner plus d'une colonne contenant des données binaires
-les données contiennent le caractère pipe, réservé comme délimiteur de champ
+les données contiennent le caractère anti-slash
 les données contiennent des sauts de ligne
 trop de champs dans la ligne, s'il vous plait, ne mettez pas de caractères pipe dans le texte
 pas assez de champs dans la ligne, s'il vous plait, ne supprimez pas de caractères pipe dans le texte

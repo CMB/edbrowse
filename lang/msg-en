@@ -409,7 +409,7 @@ no column matches %s
 no such table %s
 invalid column name
 cannot select more than one blob column
-the data contains pipes, which is my reserved delimiter
+the data contains a backslash at the end of a field
 the data contains newlines
 line contains too many fields, please do not introduce any pipes into the text
 line contains too few fields, please do not remove any pipes from the text

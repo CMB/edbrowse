@@ -509,7 +509,7 @@ enum {
 	MSG_DBNoTable,
 	MSG_DBBadColumn,
 	MSG_DBManyBlobs,
-	MSG_DBPipes,
+	MSG_DBBackslash,
 	MSG_DBNewline,
 	MSG_DBAddField,
 	MSG_DBLostField,

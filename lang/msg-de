@@ -409,7 +409,7 @@ keine Spalte passt auf %s
 keine Spalte %s
 ungültiger Name der Spalte
 kann nicht mehr als eine Blob-Spalte auswählen
-Daten enthält | (Pipes), welches das interne Trennzeichen ist
+Daten enthält durch backslash
 Daten enthält Zeilenumbrüche
 Zeile enthält zu viele Felder, bitte fügen Sie keine | (Pipes) in die Daten ein
 Zeile enthält zu wenige Felder, entfernen Sie keine | (Pipes) aus den Daten

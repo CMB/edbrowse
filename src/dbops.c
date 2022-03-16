@@ -332,18 +332,42 @@ put them back into binary, ready for retsCopy().
 char *sql_mkunld(char delim)
 {
 	char fmt[NUMRETS * 4 + 1];
-	int i;
+	int i, np;
 	char pftype;
+	char *unld;
 
 	for (i = 0; i < rv_numRets; ++i) {
 		pftype = sprintfChar(rv_type[i]);
 		if (!pftype)
 			errorPrint("2sql_mkunld cannot convert datatype %c",
 				   rv_type[i]);
-		sprintf(fmt + 4 * i, "%%0%c%c", pftype, delim);
+		sprintf(fmt + 4 * i, "%%0%c%c", pftype, '\177');
 	}			/* loop over returns */
 
-	return lineFormatStack(fmt, rv_data, 0);
+	unld = lineFormatStack(fmt, rv_data, 0);
+
+// I assume delete was not in any of the strings.
+// Should probably use 0xff instead but that is nonascii and someone
+// might try to turn it into utf8 and idk.
+	for(i= np =0; unld[i]; ++i)
+		if(unld[i] == delim) ++np;
+	if(i + np >= LFBUFSIZE)
+		errorPrint(lfoverflow, LFBUFSIZE);
+	for(i = 0; unld[i]; ++i) {
+		char c = unld[i];
+		if(c == '\177') {
+			unld[i] = delim;
+			if(i && unld[i-1] == '\\')
+				return 0;
+		}
+		if(c == delim) {
+			strmove(unld + i + 1, unld + i);
+			unld[i] = '\\';
+			++i;
+		}
+	}
+
+	return unld;
 }
 
 /* like the above, but we build a comma-separated list with quotes,
@@ -711,9 +735,14 @@ static void pushQuoted(char **s, int *slen, const char *value, int colno)
 	if (quotemark)
 		stringAndChar(s, slen, quotemark);
 // do we have to escape stuff?
-	if(quotemark && strchr(value, quotemark)) {
+	if((quotemark && strchr(value, quotemark)) ||
+	strchr(value, '|')) {
 		const char *w = value;
 		while(*w) {
+			if(*w == '\\' && w[1] == '|') {
+				++w;
+				continue;
+			}
 			if(*w == quotemark)
 				stringAndChar(s, slen, quotemark);
 			stringAndChar(s, slen, *w++);
@@ -1056,18 +1085,16 @@ static bool rowsIntoBuffer(int cid, const char *types, char **bufptr, int *lcnt)
 	rbuf = initString(&rbuflen);
 
 	while (sql_fetchNext(cid, 0)) {
-		unld = sql_mkunld('\177');
-		if (strchr(unld, '|')) {
-			setError(MSG_DBPipes);
+		unld = sql_mkunld('|');
+		if(!unld) {
+			setError(MSG_DBBackslash);
 			goto abort;
 		}
 		if (strchr(unld, '\n')) {
 			setError(MSG_DBNewline);
 			goto abort;
 		}
-		for (s = unld; *s; ++s)
-			if (*s == '\177')
-				*s = '|';
+		s = unld + strlen(unld);
 		s[-1] = '\n';	/* overwrite the last pipe */
 
 /* look for blob column */
@@ -1101,7 +1128,7 @@ abort:
 	sql_closeFree(cid);
 	*bufptr = rbuf;
 	return rc;
-}				/* rowsIntoBuffer */
+}
 
 bool sqlReadRows(const char *filename, char **bufptr)
 {
@@ -1139,7 +1166,12 @@ static bool intoFields(char *line)
 
 	while (1) {
 		lineFields[j] = s;
+step:
 		s = strpbrk(s, "|\n");
+		if(*s == '|' && s > line && s[-1] == '\\') {
+			++s;
+			goto step;
+		}
 		c = *s;
 		*s++ = 0;
 		++j;
@@ -1166,7 +1198,7 @@ static bool rowCountCheck(int action, int cnt1)
 
 	setError(MSG_DBDeleteCount + action, cnt1, cnt2);
 	return false;
-}				/* rowCountCheck */
+}
 
 static int keyCountCheck(void)
 {
@@ -1182,7 +1214,7 @@ static int keyCountCheck(void)
 		return 3;
 	setError(MSG_DBManyKeyCol);
 	return 0;
-}				/* keyCountCheck */
+}
 
 /* Typical error conditions for insert update delete */
 static const short insupdExceptions[] = {
@@ -1270,7 +1302,7 @@ bool sqlDelRows(int start, int end)
 	}
 
 	return true;
-}				/* sqlDelRows */
+}
 
 bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 {
@@ -1284,6 +1316,13 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 /* compare all the way out to newline, so we know both strings end at the same time */
 	if (slen == dlen && !memcmp(source, dest, slen + 1))
 		return true;
+
+	if(dlen && dest[dlen-1] == '\\') {
+		puts("field cannot end in \\");
+// this doesn't go through the setError() system
+		setError(-1);
+		return false;
+	}
 
 	if (!setTable())
 		return false;
@@ -1306,7 +1345,13 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	s = (char *)source;
 
 	while (1) {
-		t = strpbrk(s, "|\n");
+		t = s;
+step:
+		t = strpbrk(t, "|\n");
+		if(*t == '|' && t > (char*)source && t[-1] == '\\') {
+			++t;
+			goto step;
+		}
 		l1 = t - s;
 		l2 = strlen(lineFields[j]);
 		if (l1 != l2 || memcmp(s, lineFields[j], l1)) {
@@ -1350,7 +1395,7 @@ abort:
 	nzFree(d2);
 	nzFree(u1);
 	return false;
-}				/* sqlUpdateRow */
+}
 
 bool sqlAddRows(int ln)
 {
@@ -1359,6 +1404,7 @@ bool sqlAddRows(int ln)
 	char *unld, *s;
 	int u1len, u2len, u3len;
 	int j, l;
+	int p, np; // number of pipes
 	double dv;
 	char inp[256];
 	bool rc;
@@ -1384,6 +1430,10 @@ reenter:
 			l = strlen(inp);
 			if (l && inp[l - 1] == '\n')
 				inp[--l] = 0;
+			if(l && inp[l-1] == '\\') {
+				puts("field cannot end in \\");
+				goto reenter;
+			}
 			if (stringEqual(inp, ".")) {
 				nzFree(u1);
 				nzFree(u2);
@@ -1399,12 +1449,7 @@ reenter:
 				goto goodfield;
 			}
 
-/* verify the integrity of the entered field */
-			if (strchr(inp, '|')) {
-				puts("please, no pipes in the data");
-				goto reenter;
-			}
-
+// verify the integrity of the entered field
 			switch (td->types[j]) {
 			case 'N':
 				s = inp;
@@ -1443,7 +1488,7 @@ reenter:
 
 goodfield:
 
-/* turn 0 into next serial number */
+// turn 0 into next serial number
 			if (j == td->key1 - 1 && td->types[j] == 'N' &&
 			    stringEqual(inp, "0")) {
 				int nextkey =
@@ -1454,6 +1499,23 @@ goodfield:
 					goto reenter;
 				}
 				sprintf(inp, "%d", nextkey + 1);
+			}
+
+// count pipes in input
+			for(p = np = 0; inp[p]; ++p)
+				if(inp[p] == '|') ++np;
+			if((unsigned)(np + l) >= sizeof(inp)) {
+				puts("string becomes too long when pipes are escaped");
+				goto reenter;
+			}
+			if(np) {
+// this is inefficient but who cares.
+				for(p = 0; inp[p]; ++p) {
+					if(inp[p] == '|') {
+						strmove(inp + p + 1, inp + p);
+						inp[p++] = '\\';
+					}
+				}
 			}
 
 			if (*u1)
@@ -1486,6 +1548,7 @@ goodfield:
 		sql_select("%s where rowid = %d", scl, rowid, 0);
 		nzFree(scl);
 		unld = sql_mkunld('|');
+// check for unld == null
 		l = strlen(unld);
 		unld[l - 1] = '\n';	/* overwrite the last pipe */
 #else
@@ -1503,7 +1566,7 @@ goodfield:
 
 /* This pointis not reached; make the compilerhappy */
 	return true;
-}				/* sqlAddRows */
+}
 
 /*********************************************************************
 run the analog of /bin/comm on two open cursors,
@@ -1515,8 +1578,9 @@ The cursors should be sorted by this key.
 static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select statements */
 			const char *orderby,	/* which fetched column is the unique key */
 			int (*f)(char, char*, char*, long),	/* call this function for differences */
+// sql_mkunld() delimiter, or call mkinsupd if delim = 0
 			char delim)
-{				/* sql_mkunld() delimiter, or call mkinsupd if delim = 0 */
+{
 	short cid1, cid2;	/* the cursor ID numbers */
 	char *line1, *line2, *s;	/* the two fetched rows */
 	void *blob1, *blob2;	/* one blob per table */
@@ -1702,7 +1766,7 @@ static int syncup_comm_fn(char action, char *line1, char *line2, long key)
 }				/* syncup_comm_fn */
 
 /* make table1 look like table2 */
-void syncup_table(const char *table1, const char *table2,	/* the two tables */
+void syncup_table(const char *table1, const char *table2,	// the two tables
 		  const char *keycol,	/* the key column */
 		  const char *otherclause)
 {
@@ -1738,7 +1802,7 @@ void syncup_table(const char *table1, const char *table2,	/* the two tables */
 	}
 
 	cursor_comm(stmt1, stmt2, keycol,  syncup_comm_fn, 0);
-}				/* syncup_table */
+}
 
 int goSelect(int *startLine, char **rbuf)
 {

@@ -409,7 +409,7 @@ nessuna colonna ha riscontro per %s
 nessuna tavola chiamata %s
 nome colonna non valido
 impossibile selezionare più di una colonna blob alla volta
-i dati contengono pipes, che sono il mio delimitatore riservato
+i dati contengono terminato backslash
 i dati contengono caratteri newline
 la riga contiene troppi campi, per favore non introdurre pipes nel testo
 la riga contiene un numero di campi troppo ridotto, per favore non rimuovere pipes dal testo

@@ -409,7 +409,7 @@ wiele kolumn pasuje do %s
 brak tabeli %s
 nieprawidłowa nazwa kolumny
 nie można wybrać więcej niż jednej kolumny BLOB
-dane zawierają pionowe kreski - zastrzeżony separator
+dane zawierają pionowe backslash
 dane zawierają znaki końca linii
 wiersz zawiera zbyt wiele pól, nie wprowadzaj pionowych kresek do tekstu
 wiersz zawiera zbyt mało pól, nie usuwaj pionowych kresek z tekstu

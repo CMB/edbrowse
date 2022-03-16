@@ -409,7 +409,7 @@ nenhuma coluna condiz com %s
 tabela %s não existe
 nome de coluna inválido
 não posso selecionar mais que uma coluna de bolha
-dados possuem pipas que são os meus delimitadores reservados
+dados possuem terminado barra invertida
 dados contêm novas linhas
 a linha possui campos demais; por favor não insira pipas no texto
 a linha possui muito poucos campos; por favor não remova nenhuma pipa do texto
