@@ -703,8 +703,10 @@ static void pushQuoted(char **s, int *slen, const char *value, int colno)
 	}
 
 	if (coltype != 'F' && coltype != 'N') {
-// Microsoft insists on single quote.
 		quotemark = '\'';
+// I hear microsoft sql server requires single quote, idk
+		if(strchr(value, quotemark))
+			quotemark = '"';
 	}
 	if (quotemark)
 		stringAndChar(s, slen, quotemark);
@@ -1153,7 +1155,7 @@ static bool intoFields(char *line)
 		return true;
 	setError(MSG_DBLostField);
 	return false;
-}				/* intoFields */
+}
 
 static bool rowCountCheck(int action, int cnt1)
 {
@@ -1275,7 +1277,7 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	char *d2;		/* clone of dest */
 	char *wherekeys;
 	char *s, *t;
-	int j, l1, l2, nkeys, key1, key2;
+	int j, l1, l2, nkeys, key1, key2, key3;
 	char *u1;		/* column=value of the update statement */
 	int u1len;
 
@@ -1291,6 +1293,7 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 		return false;
 	key1 = td->key1 - 1;
 	key2 = td->key2 - 1;
+	key3 = td->key3 - 1;
 
 	d2 = (char *)clonePstring(dest);
 	if (!intoFields(d2)) {
@@ -1307,7 +1310,7 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 		l1 = t - s;
 		l2 = strlen(lineFields[j]);
 		if (l1 != l2 || memcmp(s, lineFields[j], l1)) {
-			if (j == key1 || j == key2) {
+			if (j == key1 || j == key2 || j == key3) {
 				setError(MSG_DBChangeKey);
 				goto abort;
 			}
