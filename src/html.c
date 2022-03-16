@@ -4447,8 +4447,9 @@ nop:
 			static const char *openstring[] = { 0,
 				"[", "^(", "`"
 			};
-			t->lic = ns_l;
 			liCheck(t);
+			tagInStream(tagno);
+			t->lic = ns_l;
 			stringAndString(&ns, &ns_l, openstring[j]);
 			break;
 		}
@@ -4459,8 +4460,8 @@ nop:
 /* backup, and see if we can get rid of the parentheses or brackets */
 		l = t->lic + j;
 		u = ns + l;
-/* skip past <span> tag indicator */
-		if (*u == InternalCodeChar) {
+/* skip past <span> tag indicators */
+		while (*u == InternalCodeChar) {
 			++u;
 			while (isdigit(*u))
 				++u;
@@ -4481,7 +4482,7 @@ nop:
 		stringAndChar(&ns, &ns_l, (j == 2 ? ')' : ']'));
 		break;
 unparen:
-/* ok, we can trash the original ( or [ */
+// ok, we can trash the original ( or [
 		l = t->lic + j;
 		strmove(ns + l - 1, ns + l);
 		--ns_l;
