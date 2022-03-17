@@ -678,9 +678,9 @@ emoji file contains an invalid unicode at line %d\n
 emoji file, syntax error at line %d\n
 no options start with %s
 multiple options start with %s
-0
-0
-0
+field cannot end in backslash
+cannot update the column name
+warning, only the first %d columns will be selected
 0
 0
 0

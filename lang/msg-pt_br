@@ -409,8 +409,8 @@ nenhuma coluna condiz com %s
 tabela %s não existe
 nome de coluna inválido
 não posso selecionar mais que uma coluna de bolha
-dados possuem terminado barra invertida
-dados contêm novas linhas
+campo termina em barra invertida; leitura cancelada
+campo contém mudança de linha; leitura cancelada
 a linha possui campos demais; por favor não insira pipas no texto
 a linha possui muito poucos campos; por favor não remova nenhuma pipa do texto
 coluna chave não especificada
@@ -678,9 +678,9 @@ arquivo de emoji contém um símbolo unicode inválido na linha %d\n
 arquivo de emoji: erro de sintaxe na linha %d\n
 nenhuma opção começa com %s
 diversas opções começam com %s
-0
-0
-0
+campo não pode terminar em barra invertida
+não posso atualizar o nome da coluna
+alerta: somente as primeiras %d colunas serão selecionadas
 0
 0
 0

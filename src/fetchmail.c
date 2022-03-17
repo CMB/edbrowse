@@ -1679,7 +1679,7 @@ int fetchMail(int account)
 		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
 		nzFree(message_url);
-		message_url = NULL;
+		message_url = 0;
 	}
 
 fetchmail_cleanup:
@@ -1690,6 +1690,7 @@ fetchmail_cleanup:
 	curl_easy_cleanup(mail_handle);
 	nzFree(message_url);
 	nzFree(mailbox_url);
+	message_url = mailbox_url = 0;
 	nzFree(mailstring);
 	mailstring = initString(&mailstring_l);
 	return nfetch;

@@ -409,8 +409,8 @@ keine Spalte passt auf %s
 keine Spalte %s
 ungültiger Name der Spalte
 kann nicht mehr als eine Blob-Spalte auswählen
-Daten enthält durch backslash
-Daten enthält Zeilenumbrüche
+Feld endet mit einem umgekehrten Schrägstrich, Lesen abgebrochen
+Feld enthält Zeilenumbruch, Lesen abgebrochen
 Zeile enthält zu viele Felder, bitte fügen Sie keine | (Pipes) in die Daten ein
 Zeile enthält zu wenige Felder, entfernen Sie keine | (Pipes) aus den Daten
 keine Spalte für den Primärschlüssel in dieser Tabelle
@@ -436,9 +436,9 @@ SPNEGO Authentisierungsmethode aktiviert
 konnte lokales CSS nicht abrufen\n
 konnte CSS von %s nicht abrufen, Code %ld\n
 konnte CSS nicht abrufen\n
-0
-0
-0
+Feld kann nicht mit einem umgekehrten Schrägstrich enden
+Spaltenname kann nicht aktualisiert werden
+Warnung, nur die ersten %d Spalten werden ausgewählt
 0
 0
 0

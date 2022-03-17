@@ -778,4 +778,7 @@ enum {
 	MSG_EmojiSyntax,
 	MSG_OptStartNone,
 	MSG_OptStartMany,
+	MSG_EndBackslash,
+	MSG_UpdateColname,
+	MSG_FirstColumns,
 };

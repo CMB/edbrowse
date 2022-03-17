@@ -718,9 +718,11 @@ static struct DBTABLE *td;
 /*********************************************************************
 See if a line is part of an unfolded row.
 It must begin with a column name followed by a colon.
-Then back up to see if the unfolded row begins with @row:
+Then back up to see if the unfolded row begins with the row starter,
 Return the column number, or -1 if it is an inline row.
 *********************************************************************/
+
+static const char RowStart[] = "@row:\n";
 
 static int isUnfolded(const pst line, int ln)
 {
@@ -744,7 +746,7 @@ static int isUnfolded(const pst line, int ln)
 	if(j == td->ncols) return -1;
 // looks good, back up and look for top of row
 	s = (const char *)fetchLine(ln - j - 1, -1);
-	return stringEqual(s, "@row:\n") ? j : -1;
+	return stringEqual(s, RowStart) ? j : -1;
 }
 
 // put quotes around a column value
@@ -1002,9 +1004,7 @@ static bool setTable(void)
 		}
 		nc = rv_numRets;
 		if (nc > MAXTCOLS) {
-			printf
-			    ("warning, only the first %d columns will be selected\n",
-			     MAXTCOLS);
+			i_printf(MSG_FirstColumns, MAXTCOLS);
 			nc = MAXTCOLS;
 		}
 		td->types = cloneString(rv_type);
@@ -1221,6 +1221,47 @@ step:
 	return false;
 }
 
+void sql_unfold(int start, int end, char action)
+{
+	int ln, ln2, newdol = 0;
+	struct lineMap *newmap;
+	int j, nc = td->ncols, npipes, len2;
+	const char *s, *s0;
+	char *v, *w;
+	bool changes = false;
+
+// how many lines in the buffer after the operation?
+	for(ln = 1; ln <= cw->dol; ++ln) {
+		s = (const char *)fetchLine(ln, -1);
+		if(stringEqual(s, RowStart)) { // unfolded
+			if((action == '-' || action == 0) &&
+			((start <= ln && end >= ln) ||
+			(start <= ln + nc && end >= ln + nc) ||
+			(start > ln && end < ln + nc)))
+				++newdol, changes = true;
+			else
+				newdol += nc + 1;
+			ln += nc;
+			continue;
+		}
+		if((action == '+' || action == 0) &&
+		start <= ln && end >= ln)
+			newdol += nc + 1, changes = true;
+		else
+			++newdol;
+	}
+	debugPrint(3, "newdol %d", newdol);
+
+	if(!changes)
+		return;
+
+	newmap = allocZeroMem(LMSIZE * (newdol + 2));
+	ln2 = 1;
+
+	free(newmap);
+	puts("unfold not yet implemented");
+}
+
 static bool rowCountCheck(int action, int cnt1)
 {
 	int cnt2 = rv_lastNrows;
@@ -1350,9 +1391,7 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 		return true;
 
 	if(dlen && dest[dlen-1] == '\\') {
-		puts("field cannot end in \\");
-// this doesn't go through the setError() system
-		setError(-1);
+		setError(MSG_EndBackslash);
 		return false;
 	}
 
@@ -1463,7 +1502,7 @@ reenter:
 			if (l && inp[l - 1] == '\n')
 				inp[--l] = 0;
 			if(l && inp[l-1] == '\\') {
-				puts("field cannot end in \\");
+				i_puts(MSG_EndBackslash);
 				goto reenter;
 			}
 			if (stringEqual(inp, ".")) {

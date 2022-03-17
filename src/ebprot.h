@@ -42,10 +42,9 @@ bool fetchForeign(char *tname) ;
 
 /* sourcefile=dbops.c */
 int findColByName(const char *name) ;
-
-/* sourcefile=dbstubs.c */
 bool sqlReadRows(const char *filename, char **bufptr) ;
 void dbClose(void) ;
+void sql_unfold(int start, int end, char action);
 void showColumns(void) ;
 void showForeign(void) ;
 bool showTables(void) ;
