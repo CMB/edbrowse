@@ -6191,8 +6191,11 @@ range2:
 		line = newline;
 	}
 
-	if (stringEqual(line, "ur")) {
+	if (stringEqual(line, "ur") ||
+	stringEqual(line, "ur+") ||
+	stringEqual(line, "ur-")) {
 		Tag *w;
+		char c = line[2];
 		cmd = 'e'; // trick to always show the errors
 		if(!cw->dot) {
 			setError(MSG_EmptyBuffer);
@@ -6248,8 +6251,15 @@ Should the newly entered row be unfolded? idk
 			if((w = line2tr(i)))
 				w->inur = false;
 		for(i = startRange; i <= endRange; ++i)
-			if((w = line2tr(i)) && !w->inur)
-				w->inur = true, w->ur ^= 1;
+			if((w = line2tr(i)) && !w->inur) {
+				w->inur = true;
+				if(c == 0)
+					w->ur ^= 1;
+				if(c == '+')
+					w->ur = 1;
+				if(c == '-')
+					w->ur = 0;
+			}
 		rerender(1);
 		return true;
 	}

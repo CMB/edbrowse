@@ -711,7 +711,7 @@ g : go to the link on the current line
 <br>ib : allocate an input buffer for this textarea
 <br>ib7 : use buffer 7 for this input textarea
 <br>shc : show columns of an html table
-<br>ur : unfold a row in an html table
+<br>ur : unfold a row in an html table (toggle)
 <br>M4 : move this web page to session 4 and back up to the previous page
 <br>M : move this web page to an empty session and back up
 <br>js : allow Javascript (toggle)
@@ -2237,6 +2237,9 @@ price: $67.50
 
 <P>
 This is a toggle command, i.e. ur on an unfolded row puts it back on one line, pipe separated.
+As with other toggle commands, ur+ unfolds the row, or leaves it unfolded, and ur- puts it back on one line.
+
+<P>
 You can apply this command to a range, 17,29ur, but don't apply it to an entire web page,
 since html tables are often used for screen layout, rather than an actual table.
 The result could be very ugly.

@@ -715,7 +715,39 @@ static int wcllen;
 static char wherecol[COLNAMELEN + 2];
 static struct DBTABLE *td;
 
-/* put quotes around a column value */
+/*********************************************************************
+See if a line is part of an unfolded row.
+It must begin with a column name followed by a colon.
+Then back up to see if the unfolded row begins with @row:
+Return the column number, or -1 if it is an inline row.
+*********************************************************************/
+
+static int isUnfolded(const pst line, int ln)
+{
+	int j;
+	unsigned l;
+	const char *s = (const char *)line;
+	const char *t = s;
+	if(!isalphaByte(*t))
+		return -1;
+	for(++t; *t; ++t) {
+		if(*t == ':') break;
+		if(!isalnumByte(*s) && *s != '_')
+			return -1;
+	}
+// has to match a column name
+	l = t - s;
+	for(j = 0; j < td->ncols; ++j) {
+		const char *w = td->cols[j];
+		if(l == strlen(w) && !memcmp(w, s, l)) break;
+	}
+	if(j == td->ncols) return -1;
+// looks good, back up and look for top of row
+	s = (const char *)fetchLine(ln - j - 1, -1);
+	return stringEqual(s, "@row:\n") ? j : -1;
+}
+
+// put quotes around a column value
 static void pushQuoted(char **s, int *slen, const char *value, int colno, bool fixpipe)
 {
 	char quotemark = 0;
