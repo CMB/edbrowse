@@ -716,7 +716,7 @@ static char wherecol[COLNAMELEN + 2];
 static struct DBTABLE *td;
 
 /* put quotes around a column value */
-static void pushQuoted(char **s, int *slen, const char *value, int colno)
+static void pushQuoted(char **s, int *slen, const char *value, int colno, bool fixpipe)
 {
 	char quotemark = 0;
 	char coltype = td->types[colno];
@@ -736,10 +736,10 @@ static void pushQuoted(char **s, int *slen, const char *value, int colno)
 		stringAndChar(s, slen, quotemark);
 // do we have to escape stuff?
 	if((quotemark && strchr(value, quotemark)) ||
-	strchr(value, '|')) {
+	(fixpipe && strchr(value, '|'))) {
 		const char *w = value;
 		while(*w) {
-			if(*w == '\\' && w[1] == '|') {
+			if(*w == '\\' && w[1] == '|' && fixpipe) {
 				++w;
 				continue;
 			}
@@ -769,7 +769,7 @@ static char *keysQuoted(void)
 	stringAndString(&u, &ulen, "where ");
 	stringAndString(&u, &ulen, td->cols[key1]);
 	stringAndString(&u, &ulen, " = ");
-	pushQuoted(&u, &ulen, lineFields[key1], key1);
+	pushQuoted(&u, &ulen, lineFields[key1], key1, true);
 	if (!key2)
 		return u;
 
@@ -777,7 +777,7 @@ static char *keysQuoted(void)
 	stringAndString(&u, &ulen, " and ");
 	stringAndString(&u, &ulen, td->cols[key2]);
 	stringAndString(&u, &ulen, " = ");
-	pushQuoted(&u, &ulen, lineFields[key2], key2);
+	pushQuoted(&u, &ulen, lineFields[key2], key2, true);
 	if (!key3)
 		return u;
 
@@ -785,7 +785,7 @@ static char *keysQuoted(void)
 	stringAndString(&u, &ulen, " and ");
 	stringAndString(&u, &ulen, td->cols[key3]);
 	stringAndString(&u, &ulen, " = ");
-	pushQuoted(&u, &ulen, lineFields[key3], key3);
+	pushQuoted(&u, &ulen, lineFields[key3], key3, true);
 	return u;
 }
 
@@ -904,11 +904,11 @@ setcol_n:
 		stringAndString(&wcl, &wcllen, "\" and \"");
 		stringAndString(&wcl, &wcllen, date2buf + strlen(date2buf) + 1);
 		stringAndChar(&wcl, &wcllen, '"');
-	} else if (w[strlen(w) - 1] == '*') {
-		stringAndString(&wcl, &wcllen, lineFormat(" matches %S", w));
+	} else if (w[strlen(w) - 1] == '%') {
+		stringAndString(&wcl, &wcllen, lineFormat(" like %S", w));
 	} else {
 		stringAndString(&wcl, &wcllen, " = ");
-		pushQuoted(&wcl, &wcllen, w, colno - 1);
+		pushQuoted(&wcl, &wcllen, w, colno - 1, false);
 	}
 
 	return true;
@@ -1371,7 +1371,7 @@ step:
 				stringAndString(&u1, &u1len, ", ");
 			stringAndString(&u1, &u1len, td->cols[j]);
 			stringAndString(&u1, &u1len, " = ");
-			pushQuoted(&u1, &u1len, lineFields[j], j);
+			pushQuoted(&u1, &u1len, lineFields[j], j, true);
 		}
 
 		if (*t == '\n')
@@ -1524,7 +1524,7 @@ goodfield:
 
 			if (*u2)
 				stringAndChar(&u2, &u2len, ',');
-			pushQuoted(&u2, &u2len, inp, j);
+			pushQuoted(&u2, &u2len, inp, j, true);
 
 			stringAndString(&u3, &u3len, inp);
 			stringAndChar(&u3, &u3len, '|');

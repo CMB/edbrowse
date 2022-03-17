@@ -5022,9 +5022,13 @@ Same as above.
 If the string uniquely gloms onto a column name, we're all set.
 
 <P>
-]customers]last=Barn*
+]customers]last=Barn%
 <br>
 Fetch the customers whose last names begin with Barn.
+This uses the like operator in sql, like "Barn%".
+This operator is more portable that matches or glob.
+It is case insensitive, thus you would get the same rows with last=barn%.
+Unfortunately this makes it difficult to use an index on last name, if there is one, for fast retrieval.
 
 <P>
 ]customers]birth=01/01/1960-12/31/1960
@@ -5259,7 +5263,7 @@ Enter the first name as Fr|ed, and it will go into the database that way,
 then present as Fr\|ed in the new row in the edbrowse buffer.
 
 <P>
-Neither should you escape a | when feeding sql directly into the engine.
+Neither should you escape a | when feeding sql directly into the engine using the go sql feature.
 
 <P>
 ] update customer set firstname = "Fr|ed" where custnum = 2139;
@@ -5274,6 +5278,10 @@ Such data cannot be represented in edbrowse.
 If you try to read it into a buffer,
 corresponding to that table, edbrowse prints an error, "field ends in backslash", and aborts the read.
 It's not a perfect solution.
+
+<P>
+Since the row is represented on one edbrowse line, it can't contain a newline.
+If there are nonascii characters, we hope they are utf-8, or they will display strangely.
 
 <HR><P class=cen>
 <A href=#top>Return to top</A>
