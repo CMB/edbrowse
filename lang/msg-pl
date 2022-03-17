@@ -409,8 +409,8 @@ wiele kolumn pasuje do %s
 brak tabeli %s
 nieprawidłowa nazwa kolumny
 nie można wybrać więcej niż jednej kolumny BLOB
-dane zawierają pionowe backslash
-dane zawierają znaki końca linii
+pole kończy się odwróconym ukośnikiem (backslash), anuluję wczytywanie
+pole zawiera znaki końca linii, anuluję wczytywanie
 wiersz zawiera zbyt wiele pól, nie wprowadzaj pionowych kresek do tekstu
 wiersz zawiera zbyt mało pól, nie usuwaj pionowych kresek z tekstu
 brak kolumny z kluczem głównym dla tej tabeli
@@ -668,16 +668,16 @@ opcja zawiera %c
 nazwa pliku zawiera %c
 wymagane pole %s jest puste
 limit
-0
-nieprawidłowa @ składnia
-%s: książka emojis %s nie jest regularnym plikiem
-0
-0
-0
-0
-0
-0
-0
+sesja %d nie może przyjąć tekstu
+nieprawidłowa @-składnia
+%s: biblioteka emoji %s nie jest regularnym plikiem
+plik emoji zawiera nieprawidłowy znak 0x%x w linii %d\n
+plik emoji zawiera nieprawidłowy znak %c w linii %d\n
+zbyt wiele emoji w grupie %s, limit %d\n
+plik emoji zawiera nieprawidłowy kod Unicode w linii %d\n
+plik emoji, błąd składni w linii %d\n
+żadna opcja nie zaczyna się od %s
+wiele opcji zaczyna się od %s
 0
 0
 0
