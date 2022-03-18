@@ -723,6 +723,7 @@ Return the column number, or -1 if it is an inline row.
 *********************************************************************/
 
 static const char RowStart[] = "@row:\n";
+static const int RowStartLen = 6;
 
 static int isUnfolded(int ln)
 {
@@ -731,7 +732,7 @@ static int isUnfolded(int ln)
 	const pst line = fetchLine(ln, -1);
 	const char *s = (const char *)line;
 	const char *t = s;
-	if(stringEqual(s, RowStart)) return 0;
+	if(!memcmp(s, RowStart, RowStartLen)) return 0;
 	if(!isalphaByte(*t)) return -1;
 	for(++t; *t; ++t) {
 		if(*t == ':') break;
@@ -747,7 +748,7 @@ static int isUnfolded(int ln)
 	if(j == td->ncols) return -1;
 // looks good, back up and look for top of row
 	s = (const char *)fetchLine(ln - j - 1, -1);
-	return stringEqual(s, RowStart) ? j + 1 : -1;
+	return !memcmp(s, RowStart, RowStartLen) ? j + 1 : -1;
 }
 
 // return 1 if the start of a row, 2 if the end of a row
@@ -801,14 +802,24 @@ static void pushQuoted(char **s, int *slen, const char *value, int colno, bool f
 		stringAndChar(s, slen, quotemark);
 }
 
+static void push1field(char **s, int *slen, int ln, int colno)
+{
+	unsigned l;
+	char*v = (char*)fetchLine(ln, -1);
+	v = strchr(v, ':') + 1;
+	l = pstLength((pst)v) - 1;
+	v[l] = 0; // I'll put it bacck
+	pushQuoted(s, slen, v, colno, false);
+	v[l] = '\n';
+}
+
 static char *lineFields[MAXTCOLS];
 
 static char *keysQuoted(void)
 {
 	char *u;
 	int ulen;
-	int key1 = td->key1, key2 = td->key2;
-	int key3 = td->key3;
+	int key1 = td->key1, key2 = td->key2, key3 = td->key3;
 	if (!key1)
 		return 0;
 	u = initString(&ulen);
@@ -833,6 +844,38 @@ static char *keysQuoted(void)
 	stringAndString(&u, &ulen, td->cols[key3]);
 	stringAndString(&u, &ulen, " = ");
 	pushQuoted(&u, &ulen, lineFields[key3], key3, true);
+	return u;
+}
+
+static char *keysUnfoldQuoted(int ln0)
+{
+	char *u;
+	int ulen;
+	int key1 = td->key1, key2 = td->key2, key3 = td->key3;
+	if (!key1)
+		return 0;
+	u = initString(&ulen);
+	--key1;
+	stringAndString(&u, &ulen, "where ");
+	stringAndString(&u, &ulen, td->cols[key1]);
+	stringAndString(&u, &ulen, " = ");
+	push1field(&u, &ulen, ln0 + key1 + 1, key1);
+	if (!key2)
+		return u;
+
+	--key2;
+	stringAndString(&u, &ulen, " and ");
+	stringAndString(&u, &ulen, td->cols[key2]);
+	stringAndString(&u, &ulen, " = ");
+	push1field(&u, &ulen, ln0 + key2 + 1, key2);
+	if (!key3)
+		return u;
+
+	--key3;
+	stringAndString(&u, &ulen, " and ");
+	stringAndString(&u, &ulen, td->cols[key3]);
+	stringAndString(&u, &ulen, " = ");
+	push1field(&u, &ulen, ln0 + key3 + 1, key3);
 	return u;
 }
 
@@ -1238,7 +1281,7 @@ void sql_unfold(int start, int end, char action)
 {
 	int ln, ln2, newdol = 0;
 	struct lineMap *newmap;
-	int j, nc = td->ncols, npipes, len2;
+	int j, nc = td->ncols, len2;
 	const char *s, *s0;
 	char *v, *w;
 	bool changes = false;
@@ -1246,7 +1289,7 @@ void sql_unfold(int start, int end, char action)
 // how many lines in the buffer after the operation?
 	for(ln = 1; ln <= cw->dol; ++ln) {
 		s = (const char *)fetchLine(ln, -1);
-		if(stringEqual(s, RowStart)) { // row is unfolded
+		if(!memcmp(s, RowStart, RowStartLen)) { // row is unfolded
 			if((action == '-' || action == 0) &&
 			((start <= ln && end >= ln) ||
 			(start <= ln + nc && end >= ln + nc) ||
@@ -1275,23 +1318,23 @@ void sql_unfold(int start, int end, char action)
 
 	for(ln = 1; ln <= cw->dol; ++ln) {
 		s = (const char *)fetchLine(ln, -1);
-		if(stringEqual(s, RowStart)) { // row is unfolded
+		if(!memcmp(s, RowStart, RowStartLen)) { // row is unfolded
 			if((action == '-' || action == 0) &&
 			((start <= ln && end >= ln) ||
 			(start <= ln + nc && end >= ln + nc) ||
 			(start > ln && end < ln + nc))) {
 				free((char*)s);
 // how many pipes do we need to escape?
-				npipes = len2 = 0;
+				len2 = 0;
 				for(j = 1; j <= nc; ++j) {
 					s = (const char *)fetchLine(ln + j, -1);
 					s = strchr(s, ':') + 1;
-					len2 += strlen(s);
-					for(; *s; ++s)
+					for(; *s != '\n'; ++s, ++len2)
 						if(*s == '|')
-							++npipes;
+							++len2;
+					++len2;
 				}
-				v = w = allocMem(len2 + npipes + 1);
+				v = w = allocMem(len2);
 				for(j = 1; j <= nc; ++j) {
 					s0 = s = (const char *)fetchLine(ln + j, -1);
 					s = strchr(s, ':') + 1;
@@ -1302,7 +1345,7 @@ void sql_unfold(int start, int end, char action)
 					*w++ = '|';
 					free((char*)s0);
 				}
-				w[-1] = '\n', *w = 0;
+				w[-1] = '\n';
 				cw->dot = ln2;
 				newmap[ln2++].text = (pst)v;
 			} else {
@@ -1317,12 +1360,12 @@ void sql_unfold(int start, int end, char action)
 		if((action == '+' || action == 0) &&
 		start <= ln && end >= ln) {
 			cw->dot = ln2;
-			newmap[ln2++].text = (pst)cloneString(RowStart);
+			newmap[ln2++].text = clonePstring((pst)RowStart);
 // I'm going to muck with the line, cause we're going to free it anyways.
 			intoFields((char*)s);
 			for(j = 0; j < nc; ++j) {
 				s0 = lineFields[j];
-				len2 = strlen(s0) + strlen(td->cols[j]) + 3;
+				len2 = strlen(s0) + strlen(td->cols[j]) + 2;
 				v = w = allocMem(len2);
 				strcpy(v, td->cols[j]);
 				w = v + strlen(v);
@@ -1331,8 +1374,7 @@ void sql_unfold(int start, int end, char action)
 					if(*s0 == '\\' && s0[1] == '|') continue;
 				*w++ = *s0;
 				}
-				*w++ = '\n';
-				*w = 0;
+				*w = '\n';
 				newmap[ln2 + j].text = (pst)v;
 			}
 			ln2 += nc;
@@ -1422,7 +1464,7 @@ static bool insupdError(int action, int rcnt)
 	}
 
 	return rowCountCheck(action, rcnt);
-}				/* insupdError */
+}
 
 bool sqlDelRows(int start, int end)
 {
@@ -1469,6 +1511,7 @@ bool sqlDelRows(int start, int end)
 
 bool sqlUpdateRow(int ln, pst source, int slen, pst dest, int dlen)
 {
+	int ui, ln0;
 	char *d2;		/* clone of dest */
 	char *wherekeys;
 	char *s, *t;
@@ -1476,14 +1519,13 @@ bool sqlUpdateRow(int ln, pst source, int slen, pst dest, int dlen)
 	char *u1;		/* column=value of the update statement */
 	int u1len;
 
-	if(unfoldRowCheck(ln) != 3) {
-		puts("update on an unfolded row not yet implemented, but it's gonna be cool.");
-		return false;
-	}
+// find the unfold index
+	ui = isUnfolded(ln);
+	ln0 = (ui >= 0 ? ln - ui : 0);
 
 /* compare all the way out to newline, so we know both strings end at the same time */
 	if (slen == dlen && !memcmp(source, dest, slen + 1))
-		return true;
+		return true; // no change
 
 	if(dlen && dest[dlen-1] == '\\') {
 		setError(MSG_EndBackslash);
@@ -1499,6 +1541,43 @@ bool sqlUpdateRow(int ln, pst source, int slen, pst dest, int dlen)
 	key1 = td->key1 - 1;
 	key2 = td->key2 - 1;
 	key3 = td->key3 - 1;
+	u1 = initString(&u1len);
+
+	if(ln0) {
+		int clen;
+// updating a field in an unfolded row
+		debugPrint(3, "foldupdate base %d\n", ln0);
+		j = ui - 1;
+		if (ln == ln0 || j == key1 || j == key2 || j == key3) {
+			setError(MSG_DBChangeKey);
+			return false;
+		}
+		clen = strlen(td->cols[j]);
+		if(dlen <= clen || memcmp(dest, td->cols[j], clen) || dest[clen] != ':') {
+			setError(MSG_UpdateColname);
+			return false;
+		}
+		if (td->types[j] == 'B') {
+			setError(MSG_DBChangeBlob);
+			return false;
+		}
+		if (td->types[j] == 'T') {
+			setError(MSG_DBChangeText);
+			return false;
+		}
+		stringAndString(&u1, &u1len, td->cols[j]);
+		stringAndString(&u1, &u1len, " = ");
+		dest += clen + 1;
+		clen = pstLength(dest) - 1;
+		dest[clen] = 0; // I'll put it back
+		pushQuoted(&u1, &u1len, (char*)dest, j, false);
+		dest[clen] = '\n';
+		wherekeys = keysUnfoldQuoted(ln0);
+		sql_exclist(insupdExceptions);
+		sql_exec("update %s set %s %s", td->name, u1, wherekeys);
+		nzFree(wherekeys), nzFree(u1);
+		return insupdError(2, 1);
+	}
 
 	d2 = (char *)clonePstring(dest);
 	if (!intoFields(d2)) {
@@ -1507,9 +1586,7 @@ bool sqlUpdateRow(int ln, pst source, int slen, pst dest, int dlen)
 	}
 
 	j = 0;
-	u1 = initString(&u1len);
 	s = (char *)source;
-
 	while (1) {
 		t = s;
 step:
@@ -1586,7 +1663,6 @@ bool sqlAddRows(int ln)
 	}
 
 	while (1) {
-  printf("dot %d\n", cw->dot);
 		u1 = initString(&u1len);
 		u2 = initString(&u2len);
 		u3 = initString(&u3len);

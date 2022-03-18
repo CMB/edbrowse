@@ -1424,7 +1424,7 @@ void delText(int start, int end)
 	int *label = NULL;
 
 /* browse has no undo command */
-	if (cw->browseMode) {
+	if (cw->browseMode | cw->sqlMode) {
 		for (ln = start; ln <= end; ++ln)
 			nzFree(cw->map[ln].text);
 	} else {
@@ -4341,10 +4341,12 @@ static int substituteText(const char *line)
 /* normal substitute */
 				undoPush();
 				mptr = cw->map + ln;
+				if(cw->sqlMode)
+					nzFree(mptr->text);
 				mptr->text = allocMem(replaceStringLength + 1);
 				memcpy(mptr->text, replaceString,
 				       replaceStringLength + 1);
-				if (cw->dirMode || cw->sqlMode) {
+				if (cw->dirMode) {
 					undoCompare();
 					cw->undoable = false;
 				}

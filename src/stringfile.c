@@ -289,7 +289,7 @@ char *cloneString(const char *s)
 	t = allocString(len);
 	strcpy(t, s);
 	return t;
-}				/* cloneString */
+}
 
 char *cloneMemory(const char *s, int n)
 {
@@ -297,7 +297,7 @@ char *cloneMemory(const char *s, int n)
 	if (n)
 		memcpy(t, s, n);
 	return t;
-}				/* cloneMemory */
+}
 
 void leftClipString(char *s)
 {
@@ -309,7 +309,7 @@ void leftClipString(char *s)
 			break;
 	if (t > s)
 		strmove(s, t);
-}				/* leftClipString */
+}
 
 /* shift string one to the right */
 void shiftRight(char *s, char first)
@@ -673,18 +673,18 @@ int perl2c(char *t)
 }				/* perl2c */
 
 /* The length of a perl string includes its terminating newline */
-unsigned pstLength(pst s)
+unsigned pstLength(const pst s)
 {
-	pst t;
+	const uchar *t;
 	if (!s)
 		i_printfExit(MSG_NullPtr);
 	t = s;
 	while (*t != '\n')
 		++t;
 	return t + 1 - s;
-}				/* pstLength */
+}
 
-pst clonePstring(pst s)
+pst clonePstring(const pst s)
 {
 	pst t;
 	unsigned len;
@@ -694,7 +694,7 @@ pst clonePstring(pst s)
 	t = (pst) allocMem(len);
 	memcpy(t, s, len);
 	return t;
-}				/* clonePstring */
+}
 
 // Strings are assumed distinct, hence the use of memcpy.
 void copyPstring(pst s, const pst t)

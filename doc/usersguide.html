@@ -144,6 +144,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#td> Table Descriptors </A>
 <LI><A HREF=#gosql> Go SQL </A>
 <LI><A HREF=#pipes> Pipes in the Data </A>
+<LI><A HREF=#dbur> Unfolded Rows </A>
 </UL>
 
 <HR>
@@ -5285,6 +5286,31 @@ It's not a perfect solution.
 <P>
 Since the row is represented on one edbrowse line, it can't contain a newline.
 If there are nonascii characters, we hope they are utf-8, or they will display strangely.
+
+<h2> <A NAME=dbur> Unfolded Rows </A> </h2>
+
+<p>
+The ur command unfolds a row, just as it does with an html table.
+The row begins with the keyword @row:,
+then each line contains a field in that row.
+The format is fieldname:value.
+This is particularly useful for wide tables, i.e. tables with many columns.
+Unfold a row and find the field you are looking for.
+Furthermore, you can update this field with the s command, and you won't accidentally update a different field, as could easily occur when they are all on one line.
+Type ur again, or ur-, to put the row back on one line.
+
+<P>
+When a row is unfolded, pipes are no longer escaped with a backslash.
+Since there is only one field per line, there is no ambiguity.
+
+<P>
+An unfolded row cannot be deleted.
+Type ur and then d to delete the row.
+
+<P>
+If you append rows while in the middle of an unfolded row, edbrowse moves to the end of that row.
+An unfolded row is a block of text that cannot be broken up.
+Similarly, the m command will not move part of an unfolded row, nor move other text into the middle of an unfolded row.
 
 <HR><P class=cen>
 <A href=#top>Return to top</A>

@@ -292,8 +292,8 @@ void debugPrint(int lev, const char *msg, ...) ;
 void setDebugFile(const char *name); //@
 void nl(void) ;
 int perl2c(char *t) ;
-unsigned pstLength(pst s) ;
-pst clonePstring(pst s) ;
+unsigned pstLength(const pst s) ;
+pst clonePstring(const pst s) ;
 void copyPstring(pst s, const pst t) ;
 bool fdIntoMemory(int fd, char **data, int *len) ;
 bool fileIntoMemory(const char *filename, char **data, int *len) ;
