@@ -988,12 +988,12 @@ static void undoPush(void)
 /* if in browse mode, we really shouldn't be here at all!
  * But we could if substituting on an input field, since substitute is also
  * a regular ed command. */
-	if (cw->browseMode)
+	if (cw->browseMode | cw->sqlMode)
 		return;
-
 	if (madeChanges)
 		return;
 	madeChanges = true;
+	debugPrint(6, "undoPush");
 
 	cw->undoable = true;
 	if (!cw->quitMode)
@@ -1818,6 +1818,12 @@ static bool moveCopy(void)
 		setError(MSG_DestInBlock);
 		return false;
 	}
+	if(!(unfoldRowCheck(startRange)&1) ||
+	!(unfoldRowCheck(endRange)&2) ||
+	!(unfoldRowCheck(destLine)&2)) {
+		setError(MSG_BreakRow);
+		return false;
+	}
 	if (cmd == 'm' && (dl == er || dl == sr)) {
 		return true;
 	}
@@ -1875,7 +1881,7 @@ static bool moveCopy(void)
 	cw->dot = endRange;
 	cw->dot += (dl < sr ? -diff : diff);
 	return true;
-}				/* moveCopy */
+}
 
 /* Join lines from startRange to endRange. */
 static bool joinText(void)
@@ -4270,8 +4276,8 @@ static int substituteText(const char *line)
 			}
 
 			*replaceStringEnd = '\n';
-			if (!sqlUpdateRow((pst) p, len - 1, (pst) replaceString,
-					  replaceStringLength))
+			if (!sqlUpdateRow(ln, (pst) p, len - 1,
+			(pst) replaceString, replaceStringLength))
 				goto abort;
 		}
 
@@ -4308,7 +4314,7 @@ static int substituteText(const char *line)
 					p[len - 1] = '\n';
 				}
 			}	// source and dest are different
-		} // dirMode
+}
 
 		if (cw->browseMode) {
 			if (nullcount) {
@@ -7644,19 +7650,8 @@ redirect:
 			setError(MSG_InsertFunction);
 			return false;
 		}
-		if (cw->sqlMode) {
-			j = cw->dol;
-			rc = sqlAddRows(endRange);
-/* adjust dot */
-			j = cw->dol - j;
-			if (j)
-				cw->dot = endRange + j;
-			else if (!endRange && cw->dol)
-				cw->dot = 1;
-			else
-				cw->dot = endRange;
-			return rc;
-		}
+		if (cw->sqlMode)
+			return sqlAddRows(endRange);
 		return inputLinesIntoBuffer();
 	}
 

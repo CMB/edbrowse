@@ -724,14 +724,15 @@ Return the column number, or -1 if it is an inline row.
 
 static const char RowStart[] = "@row:\n";
 
-static int isUnfolded(const pst line, int ln)
+static int isUnfolded(int ln)
 {
 	int j;
 	unsigned l;
+	const pst line = fetchLine(ln, -1);
 	const char *s = (const char *)line;
 	const char *t = s;
-	if(!isalphaByte(*t))
-		return -1;
+	if(stringEqual(s, RowStart)) return 0;
+	if(!isalphaByte(*t)) return -1;
 	for(++t; *t; ++t) {
 		if(*t == ':') break;
 		if(!isalnumByte(*s) && *s != '_')
@@ -746,7 +747,19 @@ static int isUnfolded(const pst line, int ln)
 	if(j == td->ncols) return -1;
 // looks good, back up and look for top of row
 	s = (const char *)fetchLine(ln - j - 1, -1);
-	return stringEqual(s, RowStart) ? j : -1;
+	return stringEqual(s, RowStart) ? j + 1 : -1;
+}
+
+// return 1 if the start of a row, 2 if the end of a row
+int unfoldRowCheck(int ln)
+{
+	int j;
+	if(!ln || !cw->sqlMode) return 3;
+	j = isUnfolded(ln);
+	if(j < 0) return 3;
+	if(j == 0) return 1;
+	if(j == td->ncols) return 2;
+	return 0;
 }
 
 // put quotes around a column value
@@ -1233,7 +1246,7 @@ void sql_unfold(int start, int end, char action)
 // how many lines in the buffer after the operation?
 	for(ln = 1; ln <= cw->dol; ++ln) {
 		s = (const char *)fetchLine(ln, -1);
-		if(stringEqual(s, RowStart)) { // unfolded
+		if(stringEqual(s, RowStart)) { // row is unfolded
 			if((action == '-' || action == 0) &&
 			((start <= ln && end >= ln) ||
 			(start <= ln + nc && end >= ln + nc) ||
@@ -1258,8 +1271,81 @@ void sql_unfold(int start, int end, char action)
 	newmap = allocZeroMem(LMSIZE * (newdol + 2));
 	ln2 = 1;
 
-	free(newmap);
-	puts("unfold not yet implemented");
+// All this text manipulation would be so much easier in perl.
+
+	for(ln = 1; ln <= cw->dol; ++ln) {
+		s = (const char *)fetchLine(ln, -1);
+		if(stringEqual(s, RowStart)) { // row is unfolded
+			if((action == '-' || action == 0) &&
+			((start <= ln && end >= ln) ||
+			(start <= ln + nc && end >= ln + nc) ||
+			(start > ln && end < ln + nc))) {
+				free((char*)s);
+// how many pipes do we need to escape?
+				npipes = len2 = 0;
+				for(j = 1; j <= nc; ++j) {
+					s = (const char *)fetchLine(ln + j, -1);
+					s = strchr(s, ':') + 1;
+					len2 += strlen(s);
+					for(; *s; ++s)
+						if(*s == '|')
+							++npipes;
+				}
+				v = w = allocMem(len2 + npipes + 1);
+				for(j = 1; j <= nc; ++j) {
+					s0 = s = (const char *)fetchLine(ln + j, -1);
+					s = strchr(s, ':') + 1;
+					for(; *s != '\n'; ++s) {
+						if(*s == '|') *w++ = '\\';
+						*w++ = *s;
+					}
+					*w++ = '|';
+					free((char*)s0);
+				}
+				w[-1] = '\n', *w = 0;
+				cw->dot = ln2;
+				newmap[ln2++].text = (pst)v;
+			} else {
+// no change, just copy
+				for(j = 0; j <= nc; ++j)
+					newmap[ln2 + j].text = cw->map[ln + j].text;
+				ln2 += nc + 1;
+			}
+			ln += nc;
+			continue;
+		}
+		if((action == '+' || action == 0) &&
+		start <= ln && end >= ln) {
+			cw->dot = ln2;
+			newmap[ln2++].text = (pst)cloneString(RowStart);
+// I'm going to muck with the line, cause we're going to free it anyways.
+			intoFields((char*)s);
+			for(j = 0; j < nc; ++j) {
+				s0 = lineFields[j];
+				len2 = strlen(s0) + strlen(td->cols[j]) + 3;
+				v = w = allocMem(len2);
+				strcpy(v, td->cols[j]);
+				w = v + strlen(v);
+				*w++ = ':';
+				for(; *s0; ++s0) {
+					if(*s0 == '\\' && s0[1] == '|') continue;
+				*w++ = *s0;
+				}
+				*w++ = '\n';
+				*w = 0;
+				newmap[ln2 + j].text = (pst)v;
+			}
+			ln2 += nc;
+			free((char*)s);
+		} else {
+// no change, just copy
+			newmap[ln2++].text = cw->map[ln].text;
+		}
+	}
+
+	free(cw->map);
+	cw->map = newmap;
+	cw->dol = newdol;
 }
 
 static bool rowCountCheck(int action, int cnt1)
@@ -1361,6 +1447,10 @@ bool sqlDelRows(int start, int end)
  * I have to write the one-line-at-a-time code anyways,
  * I'll just use that for now. */
 	while (ndel--) {
+		if(unfoldRowCheck(ln) != 3) {
+			setError(MSG_DelUnfold);
+			return false;
+		}
 		char *wherekeys;
 		char *line = (char *)fetchLine(ln, 0);
 		intoFields(line);
@@ -1377,7 +1467,7 @@ bool sqlDelRows(int start, int end)
 	return true;
 }
 
-bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
+bool sqlUpdateRow(int ln, pst source, int slen, pst dest, int dlen)
 {
 	char *d2;		/* clone of dest */
 	char *wherekeys;
@@ -1385,6 +1475,11 @@ bool sqlUpdateRow(pst source, int slen, pst dest, int dlen)
 	int j, l1, l2, nkeys, key1, key2, key3;
 	char *u1;		/* column=value of the update statement */
 	int u1len;
+
+	if(unfoldRowCheck(ln) != 3) {
+		puts("update on an unfolded row not yet implemented, but it's gonna be cool.");
+		return false;
+	}
 
 /* compare all the way out to newline, so we know both strings end at the same time */
 	if (slen == dlen && !memcmp(source, dest, slen + 1))
@@ -1483,7 +1578,15 @@ bool sqlAddRows(int ln)
 	if (!setTable())
 		return false;
 
+// Don't add a row in the middle of an unfolded row.
+	if(ln) {
+		j = isUnfolded(ln);
+		if(j >= 0)
+			ln += td->ncols - j;
+	}
+
 	while (1) {
+  printf("dot %d\n", cw->dot);
 		u1 = initString(&u1len);
 		u2 = initString(&u2len);
 		u3 = initString(&u3len);

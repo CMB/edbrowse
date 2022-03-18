@@ -681,8 +681,8 @@ multiple options start with %s
 field cannot end in backslash
 cannot update the column name
 warning, only the first %d columns will be selected
-0
-0
+move breaks the structure of an unfolded row
+cannot delete an unfolded row
 0
 0
 0

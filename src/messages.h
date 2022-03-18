@@ -781,4 +781,6 @@ enum {
 	MSG_EndBackslash,
 	MSG_UpdateColname,
 	MSG_FirstColumns,
+	MSG_BreakRow,
+	MSG_DelUnfold,
 };
