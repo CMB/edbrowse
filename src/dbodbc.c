@@ -1214,11 +1214,12 @@ Count(*) becomes decimal(15,0).  So be careful.
 #endif
 		}
 
+#if 0
 		if (current_driver == DRIVER_SQLITE) {
-/* Every column looks like a text blob, but it is really a string. */
-			coltype = SQL_CHAR;
-			colprec = STRINGLEN;
+// at some point we had to turn text blob into string.
+// Guess we don't need to do that any more.
 		}
+#endif
 
 		rv_nullable[i] = (nullable != SQL_NO_NULLS);
 
