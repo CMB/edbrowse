@@ -409,8 +409,8 @@ aucune colonne ne correspond à %s
 la table %s n'existe pas
 nom de colonne invalide
 impossible de sélectionner plus d'une colonne contenant des données binaires
-les données contiennent le caractère anti-slash
-les données contiennent des sauts de ligne
+champ terminé par un backslash, lecture interrompue
+champ contient un retour de ligne, lecture interrompue
 trop de champs dans la ligne, s'il vous plait, ne mettez pas de caractères pipe dans le texte
 pas assez de champs dans la ligne, s'il vous plait, ne supprimez pas de caractères pipe dans le texte
 colonne index non spécifiée
@@ -678,9 +678,9 @@ le fichier d'emoji contient un unicode invalide à la ligne %d\n
 fichier d'emoji, erreur de syntaxe à la ligne %d\n
 aucune option ne commence par %s
 les options multiples commencent avec %s
-0
-0
-0
+un champ ne peut se terminer par un backslash
+impossible de mettre à jour le nom de colonne
+attention, seules les %d premières colonnes seront sélectionnées
 0
 0
 0

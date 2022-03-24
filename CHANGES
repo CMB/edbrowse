@@ -1,6 +1,6 @@
 Here are some changes introduced by recent versions of edbrowse.
 
-3.8.2
+3.8.3
 The unfold buffer (ur) command in database mode. Use this to update individual fields.
 
 3.8.2.1

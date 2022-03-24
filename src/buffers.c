@@ -3224,9 +3224,13 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			}
 /* Nothing special; we retain the escape character. */
 			*e++ = c;
+#if 0
+// I don't know what this was for...
+// Like I had to turn \3 into \03,   but why?
 			if (isleft && d >= '0' && d <= '7'
 			    && (*line < '0' || *line > '7'))
 				*e++ = '0';
+#endif
 			*e++ = d;
 			continue;
 		}
@@ -3341,7 +3345,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			strcpy(globalSubs.temp_rhs, re);
 	}
 
-	debugPrint(7, "%s regexp %s", (isleft ? "search" : "replace"), re);
+	debugPrint(6, "%s regexp %s", (isleft ? "search" : "replace"), re);
 	return true;
 }
 
@@ -7268,7 +7272,7 @@ past_g_file:
 			sprintf(newline, "/%s%c +/%c\\n%s%s",
 				esc, first, first, (line[1] ? "/" : ""),
 				line + 1);
-			debugPrint(7, "shorthand regexp %s", newline);
+			debugPrint(6, "shorthand regexp %s", newline);
 			line = newline;
 		}
 		first = *line;

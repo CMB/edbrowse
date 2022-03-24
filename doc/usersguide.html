@@ -5297,6 +5297,9 @@ The format is fieldname:value.
 This is particularly useful for wide tables, i.e. tables with many columns.
 Unfold a row and find the field you are looking for.
 Furthermore, you can update this field with the s command, and you won't accidentally update a different field, as could easily occur when they are all on one line.
+See below for more details.
+
+<P>
 Type ur again, or ur-, to put the row back on one line.
 
 <P>
@@ -5306,11 +5309,23 @@ Since there is only one field per line, there is no ambiguity.
 <P>
 An unfolded row cannot be deleted.
 Type ur and then d to delete the row.
+I may change this behavior in the future, but for now, people might think they are deleting that particular field, and then the whole row goes away, and that could cause confusion.
 
 <P>
 If you append rows while in the middle of an unfolded row, edbrowse moves to the end of that row.
 An unfolded row is a block of text that cannot be broken up.
 Similarly, the m command will not move part of an unfolded row, nor move other text into the middle of an unfolded row.
+
+<P>
+The unfolded row is particularly useful when updating a field in a wide table.
+A substitute command on a long line might inadvertantly update the wrong field, which could then invoke an sql trigger, which could have cascading effects that are difficult to undo.
+However, if the row is unfolded, you are looking at one field at a time.
+The s command can only affect that field.
+This runs the sql update, just as it would if the row was on one line.
+Remember that pipes need not be escaped here.
+s/Fred/Fr|ed/ places a pipe in the middle of Fred's name.
+Type ur, to put the row on one line, and his name presents as Fr\|ed, to disambiguate from the field separators.
+Type ur again and the field goes back to Fr|ed.
 
 <HR><P class=cen>
 <A href=#top>Return to top</A>
