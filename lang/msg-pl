@@ -140,7 +140,7 @@ brak zapamiętanych fraz podstawienia
 wyrażenie regularne zbyt długie
 wiersz kończy się ukośnikiem wstecznym (backslash)
 nieoczekiwany nawias zamykający ')'
-fraza podstawienia może wykorzystywać jedynie '$1' do '$9'
+fraza podstawienia może wykorzystywać jedynie '$0' do '$9'
 modyfikator %s nie posiada znaku poprzedzającego
 brak zamykającego nawiasu kwadratowego ']'
 brak zamykającego nawiasu ')'

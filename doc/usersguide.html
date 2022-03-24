@@ -869,8 +869,9 @@ That is, ( and ) now match the literal characters,
 and \( and \) are used to demark substrings of the matched text.
 These substrings are then referenced, in the replacement string, by $1 through $9.
 Similarly, | means a literal |, and \| is alternation.
-I also change the sense of &amp;, on the right hand side,
-to mean what it means in ed.
+I also change the sense of &amp; on the right,
+so that it means what it means in ed, i.e. the entire matched string.
+$0 also means the matched string; this is a feature of perl.
 I leave ^ $ . [ ] + * ? and {m,n} alone, to be interpreted by perl,
 as described in the perlre man page.
 However, if * is the first character, it is treated as a literal star.
@@ -881,7 +882,7 @@ Similarly, an open bracket by itself is treated as literal.
 These changes to regular expressions, to look more like ed, may be confusing
 if you are a perl expert,
 however, these changes make this
-editor easier to use for everyone,
+editor easier to use for others,
 especially the experienced ed users.
 Below are some additional differences between this program and /bin/ed.
 

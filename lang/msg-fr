@@ -140,7 +140,7 @@ chaîne de remplacement non conservée
 expression régulière trop grande
 ligne terminée par un anti-slash
 parenthèse fermante inattendue
-on ne peut remplacer que de $1 à $9
+on ne peut remplacer que de $0 à $9
 le modificateur %s n'est précédé d'aucun caractère
 pas de crochet fermant
 pas de parenthèse fermante

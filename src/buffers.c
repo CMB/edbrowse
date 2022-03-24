@@ -3112,8 +3112,9 @@ static const char valid_laddr[] = "0123456789-'.$+/?";
  * A pointer to the second delimiter is returned, along with the
  * (possibly reformatted) regular expression. */
 
+static bool ebre = true;
 static bool
-regexpCheck(const char *line, bool isleft, bool ebmuck,
+regexpCheck(const char *line, bool isleft,
 // result parameters
 	    char **rexp, const char **split)
 {
@@ -3139,45 +3140,48 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 	start = line;
 	c = *line;
 
-	if (ebmuck) {
-		if (isleft) {
-			if (c == delim || c == 0) {
-				if (!cw->lhs_yes) {
-					setError(MSG_NoSearchString);
-					return false;
-				}
-				strcpy(re, cw->lhs);
-				strcpy(globalSubs.temp_lhs, cw->lhs);
-				globalSubs.lhs_bang = cw->lhs_bang;
-				globalSubs.lhs_ci = cw->lhs_ci;
-				*split = line;
-				return true;
-			}
-/* Interpret lead * or lone [ as literal */
-			if (strchr("*?+", c) || (c == '[' && !line[1])) {
-				*e++ = '\\';
-				*e++ = c;
-				++line;
-				ondeck = true;
-			}
+// empty expression becomes remembered expression
+	if (isleft && (c == delim || c == 0)) {
+		if (!cw->lhs_yes) {
+			setError(MSG_NoSearchString);
+			return false;
+		}
+		strcpy(re, cw->lhs);
+		strcpy(globalSubs.temp_lhs, cw->lhs);
+		globalSubs.lhs_bang = cw->lhs_bang;
+		globalSubs.lhs_ci = cw->lhs_ci;
+		*split = line;
+		return true;
+	}
+
+// % becomes remembered expression
+	if (!isleft && c == '%' && (line[1] == delim || line[1] == 0)) {
+		if (!cw->rhs_yes) {
+			setError(MSG_NoReplaceString);
+			return false;
+		}
+		strcpy(re, cw->rhs);
+		strcpy(globalSubs.temp_rhs, cw->rhs);
+		*split = line + 1;
+		return true;
+	}
+
+	if (ebre && isleft) {
+// Interpret lead * or lone [ as literal
+		if (strchr("*?+", c) || (c == '[' && !line[1])) {
+			*e++ = '\\';
+			*e++ = c;
+			++line;
+			ondeck = true;
+		}
 // and similarly for /^* and /^[
-			if (c == '^' && (c = line[1]) &&
-			(strchr("*?+", c) || (c == '[' && !line[2]))) {
-				*e++ = '^';
-				*e++ = '\\';
-				*e++ = c;
-				line += 2;
-				ondeck = true;
-			}
-		} else if (c == '%' && (line[1] == delim || line[1] == 0)) {
-			if (!cw->rhs_yes) {
-				setError(MSG_NoReplaceString);
-				return false;
-			}
-			strcpy(re, cw->rhs);
-			strcpy(globalSubs.temp_rhs, cw->rhs);
-			*split = line + 1;
-			return true;
+		if (c == '^' && (c = line[1]) &&
+		(strchr("*?+", c) || (c == '[' && !line[2]))) {
+			*e++ = '^';
+			*e++ = '\\';
+			*e++ = c;
+			line += 2;
+			ondeck = true;
 		}
 	}
 
@@ -3196,33 +3200,31 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			}
 			ondeck = true;
 			was_ques = false;
-/* I can't think of any reason to remove the escaping \ from any character,
- * except ()|, where we reverse the sense of escape. */
-			if (ebmuck && isleft && !cc
-			    && (d == '(' || d == ')' || d == '|')) {
+// I can't think of any reason to remove the escaping \ from any character,
+// except ()|, where we reverse the sense of escape.
+			if (ebre && isleft && !cc
+			    && strchr("()|", d)) {
 				if (d == '|')
 					ondeck = false, was_ques = true;
 				if (d == '(')
-					++paren, ondeck = false, was_ques =
-					    false;
+					++paren, ondeck = false, was_ques = false;
 				if (d == ')')
-					--paren;
-				if (paren < 0) {
+				if (--paren < 0) {
 					setError(MSG_UnexpectedRight);
 					return false;
 				}
 				*e++ = d;
 				continue;
 			}
-			if (d == delim || (ebmuck && !isleft && d == '&')) {
-// this next line is for ?/?? searching backwards for ?
+			if (d == delim || (ebre && !isleft && d == '&')) {
+// this next line is for ?\?? searching backwards for ?
 // We can't pass bare ? to pcre or it is interpreted
 				if(d == '?')
 					*e++ = '\\';
 				*e++ = d;
 				continue;
 			}
-/* Nothing special; we retain the escape character. */
+// Nothing special, retain the escape character.
 			*e++ = c;
 #if 0
 // I don't know what this was for...
@@ -3235,28 +3237,28 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			continue;
 		}
 
-		/* escaping backslash */
-		/* Break out if we hit the delimiter. */
+// Break out if we hit the delimiter.
 		if (c == delim)
 			break;
 
 /* Remember, I reverse the sense of ()| */
 		if (isleft) {
-			if ((ebmuck && (c == '(' || c == ')' || c == '|'))
+			if ((ebre && strchr("()|", c))
 			    || (c == '^' && line != start && !cc))
 				*e++ = '\\';
 			if (c == '$' && d && d != delim)
 				*e++ = '\\';
 		}
 
+// $10 or higher produces an allocation error, so I guess we need to check for this
 		if (c == '$' && !isleft && isdigitByte(d)) {
-			if (d == '0' || isdigitByte(line[2])) {
+			if (isdigitByte(line[2])) {
 				setError(MSG_RexpDollar);
 				return false;
 			}
 		}
-		/* dollar digit on the right */
-		if (!isleft && c == '&' && ebmuck) {
+
+		if (!isleft && c == '&' && ebre) {
 			*e++ = '$';
 			*e++ = '0';
 			++line;
@@ -3279,11 +3281,6 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		if (c == '[')
 			cc = true;
 
-/* Skip all these checks for javascript,
- * it probably has the expression right anyways. */
-		if (!ebmuck)
-			continue;
-
 /* Modifiers must have a preceding character.
  * Except ? which can reduce the greediness of the others. */
 		if (c == '?' && !was_ques) {
@@ -3293,7 +3290,7 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 		}
 
 		mod = 0;
-		if (c == '?' || c == '*' || c == '+')
+		if (strchr("?+*", c))
 			mod = 1;
 		if (c == '{' && isdigitByte(d)) {
 			const char *t = line + 1;
@@ -3321,29 +3318,27 @@ regexpCheck(const char *line, bool isleft, bool ebmuck,
 			ondeck = false;
 			continue;
 		}
-		/* modifier */
+
 		ondeck = true;
 		was_ques = false;
-	}			/* loop over chars in the pattern */
+	}			// loop over chars in the pattern
 	*e = 0;
 
 	*split = line;
 
-	if (ebmuck) {
-		if (cc) {
-			setError(MSG_NoBracket);
-			return false;
-		}
-		if (paren) {
-			setError(MSG_NoParen);
-			return false;
-		}
-
-		if (isleft)
-			strcpy(globalSubs.temp_lhs, re);
-		else
-			strcpy(globalSubs.temp_rhs, re);
+	if (cc) {
+		setError(MSG_NoBracket);
+		return false;
 	}
+	if (paren) {
+		setError(MSG_NoParen);
+		return false;
+	}
+
+	if (isleft)
+		strcpy(globalSubs.temp_lhs, re);
+	else
+		strcpy(globalSubs.temp_rhs, re);
 
 	debugPrint(6, "%s regexp %s", (isleft ? "search" : "replace"), re);
 	return true;
@@ -3438,7 +3433,7 @@ const char **split)
 		}
 		if(!line[1] && cw->lhs_yes)
 			unmatch = cw->lhs_bang, ci = (cw->lhs_ci | caseInsensitive);
-		if (!regexpCheck(line, true, true, &re, &line))
+		if (!regexpCheck(line, true, &re, &line))
 			return false;
 		if (*line == first) {
 			++line;
@@ -3571,7 +3566,7 @@ static bool doGlobal(const char *line)
 		return false;
 	}
 
-	if (!regexpCheck(line, true, true, &re, &line))
+	if (!regexpCheck(line, true, &re, &line))
 		return false;
 	if (*line && *line != delim) {
 		setError(MSG_NoDelimit);
@@ -3721,7 +3716,7 @@ static char *replaceStringEnd;
 
 static int
 replaceText(const char *line, int len, const char *rhs,
-	    bool ebmuck, int nth, bool global, int ln)
+	    int nth, bool global, int ln)
 {
 	int offset = 0, lastoffset, instance = 0;
 	int span;
@@ -3766,7 +3761,7 @@ replaceText(const char *line, int len, const char *rhs,
 
 /* Now copy over the rhs */
 /* Special case lc mc uc */
-		if (ebmuck && (rhs[0] == 'l' || rhs[0] == 'm' || rhs[0] == 'u')
+		if (ebre && (rhs[0] == 'l' || rhs[0] == 'm' || rhs[0] == 'u')
 		    && rhs[1] == 'c' && rhs[2] == 0) {
 			int savelen = rlen;
 			span = re_vector[1] - re_vector[0];
@@ -3827,7 +3822,7 @@ replaceText(const char *line, int len, const char *rhs,
 					stringAndChar(&r, &rlen, octal);
 					continue;
 				}	/* octal */
-				if (!ebmuck)
+				if (!ebre)
 					stringAndChar(&r, &rlen, '\\');
 				stringAndChar(&r, &rlen, d);
 				continue;
@@ -4116,10 +4111,10 @@ static int substituteText(const char *line)
 			return -1;
 		}
 
-		if (!regexpCheck(line, true, true, &re, &line))
+		if (!regexpCheck(line, true, &re, &line))
 			return -1;
 		strcpy(lhs, re);
-		if (!regexpCheck(line, false, true, &re, &line))
+		if (!regexpCheck(line, false, &re, &line))
 			return -1;
 		strcpy(rhs, re);
 
@@ -4243,10 +4238,10 @@ static int substituteText(const char *line)
 				t = strstr(s, searchend);
 				if (!t)
 					continue;
-				j = replaceText(s, t - s, rhs, true, nth,
+				j = replaceText(s, t - s, rhs, nth,
 						g_mode, ln);
 			} else {
-				j = replaceText(p, len - 1, rhs, true, nth,
+				j = replaceText(p, len - 1, rhs, nth,
 						g_mode, ln);
 			}
 			if (j < 0)

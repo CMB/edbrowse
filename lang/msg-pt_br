@@ -140,7 +140,7 @@ nenhuma cadeia de substituição memorizada
 expressão regular longa demais
 a linha termina em barra invertida
 fecho inesperado )
-cadeia de substituição pode usar apenas $1 até $9
+cadeia de substituição pode usar apenas $0 até $9
 o modificador %s não possui caractere predecessor
 sem fecho ]
 sem fecho )

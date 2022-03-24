@@ -140,7 +140,7 @@ nessuna stringa di sostituzione ricordata
 regular expression troppo lunga
 la linea finisce con un backslash
 chiusura ) non attesa
-la stringa di sostituzione può usare solamente da $1 a $9
+la stringa di sostituzione può usare solamente da $0 a $9
 il modificatore %s non è preceduto da un carattere
 ] di chiusura mancante
 ) di chiusura mancante

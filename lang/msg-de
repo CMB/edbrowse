@@ -140,7 +140,7 @@ keine gespeicherte Zeichenkette zum Ersetzen
 regulärer Ausdruck zu lang
 Zeile endet auf umgekehrten Schrägstrich
 unerwartetes Ende )
-Ersetzungstext kann nur $1 bis $9 verwenden
+Ersetzungstext kann nur $0 bis $9 verwenden
 %s Modifier hat kein vorangestelltes Zeichen
 keine schließende ]
 keine schließende )

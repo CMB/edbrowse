@@ -140,7 +140,7 @@ no remembered replacement string
 regular expression too long
 line ends in backslash
 unexpected closing )
-replacement string can only use $1 through $9
+replacement string can only use $0 through $9
 %s modifier has no preceding character
 no closing ]
 no closing )
