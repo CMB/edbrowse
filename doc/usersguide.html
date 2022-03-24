@@ -558,6 +558,7 @@ and print the result
 <br>ci : searches and substitutions are case insensitive (toggle)
 <br>sg : substitution strings are global across sessions (toggle)
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
+<br>ebre : edbrowse modified regular expressions, to be more like ed (toggle)
 <br>sw : search with wrap (toggle)
 <br>g/x/ p : print every line that has an x
 <br>g/x : same as above
@@ -881,10 +882,16 @@ This is convenient; when you want to replace * + or ? you don't have to escape i
 Similarly, an open bracket by itself is treated as literal.
 These changes to regular expressions, to look more like ed, may be confusing
 if you are a perl expert,
-however, these changes make this
-editor easier to use for others,
+however, these changes make this editor easier to use for others,
 especially the experienced ed users.
 Below are some additional differences between this program and /bin/ed.
+
+<P>
+Perl users may wish to turn edbrowse modified regular expressions off via ebre-.
+At this point edbrowse passes regular expressions to perl with almost no changes.
+If a script employs complex regular expressions with many parentheses, that script might begin with ebre-, so these parentheses need not be escaped.
+You can use look ahead, look behind, back references, and all the cool pcre features in a recognizable format.
+The ebre setting is restored when the script is complete.
 
 <UL>
 <LI><P>

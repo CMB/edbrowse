@@ -46,7 +46,7 @@ bool inInput, inInitFunction, listNA;
 int fileSize;
 char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 bool fetchBlobColumns;
-bool caseInsensitive, searchStringsAll, searchWrap = true;
+bool caseInsensitive, searchStringsAll, searchWrap = true, ebre = true;
 bool binaryDetect = true;
 bool inputReadLine;
 bool curlAuthNegotiate = false;
@@ -927,7 +927,7 @@ int runEbFunction(const char *line)
 
 // local copies of settings, to restore after function runs.
 	struct {
-		bool rl, endm, lna, H, ci, sg, su8, sw, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse;
+		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse;
 		uchar dw, ls_sort;
 		char lsformat[12], showProgress;
 		char *currentAgent;
@@ -984,6 +984,7 @@ int runEbFunction(const char *line)
 		save.fbc = fetchBlobColumns;
 		save.ls_reverse = ls_reverse;
 		save.sw = searchWrap;
+		save.ebre = ebre;
 		save.hr = allowRedirection;
 		save.sr = sendReferrer;
 		save.js = allowJS;
@@ -1151,6 +1152,7 @@ done:
 		listNA = save.lna;
 		ls_reverse = save.ls_reverse;
 		searchWrap = save.sw;
+		ebre = save.ebre;
 		allowRedirection = save.hr;
 		sendReferrer = save.sr;
 		allowJS = save.js;

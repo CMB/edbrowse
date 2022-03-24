@@ -3112,7 +3112,6 @@ static const char valid_laddr[] = "0123456789-'.$+/?";
  * A pointer to the second delimiter is returned, along with the
  * (possibly reformatted) regular expression. */
 
-static bool ebre = true;
 static bool
 regexpCheck(const char *line, bool isleft,
 // result parameters
@@ -3248,6 +3247,18 @@ regexpCheck(const char *line, bool isleft,
 				*e++ = '\\';
 			if (c == '$' && d && d != delim)
 				*e++ = '\\';
+			if (!ebre && !cc
+			    && strchr("()|", c)) {
+				if (c == '|')
+					ondeck = false, was_ques = true;
+				if (c == '(')
+					++paren, ondeck = false, was_ques = false;
+				if (c == ')')
+				if (--paren < 0) {
+					setError(MSG_UnexpectedRight);
+					return false;
+				}
+			}
 		}
 
 // $10 or higher produces an allocation error, so I guess we need to check for this
@@ -4102,7 +4113,7 @@ static int substituteText(const char *line)
 		else if (*line == '$')
 			whichField = -1, ++line;
 		if (!*line) {
-			setError(MSG_RexpMissing2, icmd);
+			setError(MSG_RexpMissing, icmd);
 			return -1;
 		}
 
@@ -5080,6 +5091,20 @@ et_go:
 		searchStringsAll = (line[2] == '+');
 		if (helpMessagesOn)
 			i_puts(searchStringsAll + MSG_SubLocal);
+		return true;
+	}
+
+	if (stringEqual(line, "ebre")) {
+		ebre ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(ebre + MSG_EbreOff);
+		return true;
+	}
+
+	if (stringEqual(line, "ebre+") || stringEqual(line, "ebre-")) {
+		ebre = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(ebre + MSG_EbreOff);
 		return true;
 	}
 

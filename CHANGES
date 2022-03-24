@@ -3,6 +3,8 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.3
 The unfold buffer (ur) command in database mode. Use this to update individual fields.
 
+The ebre, edbrowse modified regular expressions, command.  (toggle)
+
 3.8.2.1
 Make the makefile process more portable and more flexible for packagers and individuals.
 

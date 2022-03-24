@@ -264,7 +264,7 @@ cannot submit using protocol %s
 %d is out of range, please use %s1, or simply %s
 cannot replace multiple instances of the empty string
 download aborted.
-no regular expression after %c
+0
 multiple numbers after the third delimiter
 unexpected substitution suffix after the third delimiter
 cannot use both a numeric suffix and the `g' suffix simultaneously
@@ -683,8 +683,8 @@ cannot update the column name
 warning, only the first %d columns will be selected
 move breaks the structure of an unfolded row
 cannot delete an unfolded row
-0
-0
+perl regular expressions
+edbrowse regular expressions
 0
 0
 0

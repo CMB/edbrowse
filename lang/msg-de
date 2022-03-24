@@ -264,7 +264,7 @@ kann nicht über Protokoll %s versenden
 %d ist außerhalb des Bereichs; nutzen Sie %s1, oder einfach %s
 kann nicht mehrere Vorkommen einer leeren Zeichenkette ersetzen
 Download abgebrochen
-kein regulärer Ausdruck nach Kommando %C
+0
 mehrere Zahlen nach dem dritten Trennzeichen
 unerwartetes Ersetzkommando nach dem dritten Trennzeichen
 kann kein numerisches Kommando und das g-Kommando gleichzeitig verwenden
@@ -683,8 +683,8 @@ mehrere Optionen beginnen mit %s
 0
 0
 0
-0
-0
+perl regulärer Ausdrucken
+edbrowse regulärer Ausdrucken
 0
 0
 0

@@ -264,7 +264,7 @@ impossible de soumettre avec le protocole %s
 %d hors limites, utilisez s'il vous plait  %s1, ou simplement %s
 impossible de remplacer plusieurs fois la chaîne vide
 téléchargement abandonné.
-pas d'expression régulière après %c
+0
 nombres multiples après le troisième délimiteur
 suffixe de substitution inattendu après le troisième délimiteur
 impossible d'utiliser simultanément un suffixe numérique et le suffixe `g'
@@ -683,8 +683,8 @@ impossible de mettre à jour le nom de colonne
 attention, seules les %d premières colonnes seront sélectionnées
 0
 0
-0
-0
+expression régulière perl
+expression régulière edbrowse
 0
 0
 0

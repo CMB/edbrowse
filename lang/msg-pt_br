@@ -264,7 +264,7 @@ impossível submeter usando protocolo %s
 %d fora do intervalo; por favor use %s1 ou simplesmente %s
 impossível substituir várias ocorrências de uma cadeia vazia
 transferência abortada.
-sem expressão regular após %c
+0
 vários números após o terceiro delimitador
 sufixo de substituição inesperado após o terceiro delimitador
 impossível usar um sufixo numérico e o sufixo `g' simultaneamente
@@ -683,8 +683,8 @@ não posso atualizar o nome da coluna
 alerta: somente as primeiras %d colunas serão selecionadas
 0
 0
-0
-0
+wyrażenie regularne perl
+wyrażenie regularne edbrowse
 0
 0
 0

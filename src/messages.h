@@ -364,7 +364,7 @@ enum {
 	MSG_InputRange2,
 	MSG_ManyEmptyStrings,
 	MSG_DownAbort,
-	MSG_RexpMissing2,
+	MSG_notused267,
 	MSG_SubNumbersMany,
 	MSG_SubSuffixBad,
 	MSG_SubNumberG,
@@ -783,4 +783,6 @@ enum {
 	MSG_FirstColumns,
 	MSG_BreakRow,
 	MSG_DelUnfold,
+	MSG_EbreOff,
+	MSG_EbreOn,
 };

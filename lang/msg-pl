@@ -264,7 +264,7 @@ nie można wysłać używając protokołu %s
 %d jest poza zakresem, użyj %s1 lub po prostu %s
 nie można zamienić wielu instancji pustego ciągu znaków
 anulowano pobieranie.
-brak wyrażenia regularnego po %c
+0
 wiele liczb po trzecim separatorze
 nieoczekiwany tekst podstawienia po trzecim separatorze
 nie można użyć liczby i 'g' jednocześnie jako przyrostka
@@ -683,8 +683,8 @@ wiele opcji zaczyna się od %s
 0
 0
 0
-0
-0
+wyrażenie regularne perl
+wyrażenie regularne edbrowse
 0
 0
 0
