@@ -1128,6 +1128,7 @@ So this is a simple workaround.
 		if (g->down_state == 6) {
 // Header has indicated a plugin by content type or protocol or suffix.
 			curl_easy_cleanup(h);
+			mt = cf->mt;
 			goto mimestream;
 		}
 

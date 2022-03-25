@@ -1966,7 +1966,7 @@ nokeyword:
 					cfgLine0(MSG_EBRC_NoType);
 				if (!mt->desc)
 					cfgLine0(MSG_EBRC_NDesc);
-				if (!mt->suffix && !mt->prot)
+				if (!mt->suffix && !mt->prot && !mt->content)
 					cfgLine0(MSG_EBRC_NoSuffix);
 				if (!mt->program)
 					cfgLine0(MSG_EBRC_NoProgram);

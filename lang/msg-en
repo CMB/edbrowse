@@ -525,7 +525,7 @@ cannot access %s, (secure)
 %s: missing reply at line %d
 %s: missing type at line %d
 %s: missing description at line %d
-%s: missing suffix or protocol list at line %d
+%s: missing suffix or protocol or content at line %d
 %s: missing program at line %d
 %s: missing table name at line %d
 %s: missing short name at line %d
