@@ -22,7 +22,7 @@ print F2 "<P>\n";
 while(<F1>) {
 $in_qrg = 1 if /qrg start/;
 next if ! $in_qrg;
-$in_qrg = 0 if /<[hH]3/;
+$in_qrg = 0 if /<[hH][234]/;
 next if ! $in_qrg;
 chomp;
 #  in case \r is not removed on windows
