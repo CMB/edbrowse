@@ -5038,8 +5038,8 @@ If the string uniquely gloms onto a column name, we're all set.
 <br>
 Fetch the customers whose last names begin with Barn.
 This uses the like operator in sql, like "Barn%".
-This operator is more portable that matches or glob.
-It is case insensitive, thus you would get the same rows with last=barn%.
+This operator is more portable than matches or glob.
+However, it is case insensitive, thus you would get the same rows with last=barn%.
 Unfortunately this makes it difficult to use an index on last name, if there is one, for fast retrieval.
 
 <P>
