@@ -4082,9 +4082,10 @@ nocolor:
 					cnzFree(a);
 					sprintf(hnum, "%c0}", InternalCodeChar);
 					deltag = t;
-// <a title=x>   x appears on hover
+					break;
 				} else if (t->jslink     && (a =
 					get_property_string_t(t, "title"))) {
+// <a title=x>   x appears on hover
 					++hovcount;
 					if (showHover) {
 						stringAndString(&ns, &ns_l, a);
@@ -4126,11 +4127,14 @@ nocolor:
 // regular span
 			if((u || a) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
-			if (u)
+			if (u) { // aria-label
 				stringAndString(&ns, &ns_l, u), nzFree(u);
-			else if (a)
+				deltag = t;
+				goto nop;
+			}
+			if (a)
 				stringAndString(&ns, &ns_l, a);
-			if((u || a) && t->firstchild)
+			if(a && t->firstchild)
 				stringAndChar(&ns, &ns_l, ' ');
 			goto nop;
 		}
