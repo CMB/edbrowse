@@ -5318,6 +5318,15 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "crs")) {
+		if (curlActive) {
+			mergeCookies();
+			eb_curl_global_cleanup();
+		}
+		curlActive = false;
+		return true;
+	}
+
 	if (stringEqual(line, "can")) {
 		curlAuthNegotiate ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
