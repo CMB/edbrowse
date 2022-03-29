@@ -2458,7 +2458,7 @@ all the div sections just below the current node.
 				if (bulkmatch)
 					rc = t->rdonly;
 				else
-					rc = get_property_bool_t(t, "readonly");
+					rc = get_property_bool_t(t, "readOnly") | get_property_bool_t(t, "readonly");
 				if (p[6] == 'w')
 					rc ^= 1;
 			}

@@ -1327,7 +1327,7 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if(allowJS && t->jslink)
-		t->rdonly = get_property_bool_t(t, "readonly");
+		t->rdonly = get_property_bool_t(t, "readOnly") | get_property_bool_t(t, "readonly");
 	if (t->rdonly) {
 		setError(MSG_Readonly);
 		return false;

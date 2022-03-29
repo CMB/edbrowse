@@ -545,7 +545,7 @@ Validity.prototype.dom$class = "Validity";
 /*********************************************************************
 All these should be getters, or should they?
 Consider the tooLong attribute.
-tooLong could compare the length of the input with the maxlength attribute,
+tooLong could compare the length of the input with the maxLength attribute,
 that's what the gettter would do, but edbrowse already does that at entry time.
 In general, shouldn't edbrowse check for most r all of these on entry,
 so then most of these wouldn't have to be getters?
