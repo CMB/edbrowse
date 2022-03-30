@@ -1361,9 +1361,12 @@ t.insertBefore(r, t.childNodes[idx]);
 return r;
 }
 
-function deleteCell(r) {
-if(r.dom$class != "HTMLTableCellElement") return;
-this.removeChild(r);
+function deleteCell(n) {
+var l = this.cells.length;
+if(typeof n != "number") n = -1;
+if(n == -1) n = 0;
+if(n >= 0 && n < l)
+this.removeChild(this.cells[n]);
 }
 
 /*********************************************************************
