@@ -4127,14 +4127,11 @@ nocolor:
 // regular span
 			if((u || a) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
-			if (u) { // aria-label
+			if (u) // aria-label
 				stringAndString(&ns, &ns_l, u), nzFree(u);
-				deltag = t;
-				goto nop;
-			}
-			if (a)
+			else if (a)
 				stringAndString(&ns, &ns_l, a);
-			if(a && t->firstchild)
+			if((u || a) && t->firstchild)
 				stringAndChar(&ns, &ns_l, ' ');
 			goto nop;
 		}
