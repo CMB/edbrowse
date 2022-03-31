@@ -2479,6 +2479,9 @@ static struct MHINFO *headerGlean(char *start, char *end)
 				--q;	/* try again */
 			}
 			strncpy(w->subject, vl, vr - vl);
+// put subject on one line; should this happen before the reformatting?
+			for(vr = vl; *vr; ++vr)
+				if(*vr == '\n') *vr = ' ';
 			vl = w->subject;
 			mhReformat(vl);
 			vr = vl + strlen(vl);
