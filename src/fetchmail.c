@@ -2479,11 +2479,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 				--q;	/* try again */
 			}
 			strncpy(w->subject, vl, vr - vl);
-			vl = w->subject;
-// put subject on one line; should this happen before the reformatting?
-			for(vr = vl; *vr; ++vr)
-				if(*vr == '\n') *vr = ' ';
-			mhReformat(vl);
+			mhReformat((vl = w->subject));
 			vr = vl + strlen(vl);
 			isoDecode(vl, &vr);
 			*vr = 0;
@@ -2926,8 +2922,11 @@ static char *headerShow(struct MHINFO *w, bool top)
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
 			lines = true;
+// it's very rare for a from line to break; you have to have a small fll value.
+			if(mailIsHtml) strcat(buf, "<pre nowspc>");
 			strcat(buf, "From ");
 			strcat(buf, w->from);
+			if(mailIsHtml) strcat(buf, "</pre>");
 			strcat(buf, "\n");
 		}
 		if (w->date[0] && !ismc) {
