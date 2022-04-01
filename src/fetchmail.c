@@ -2876,9 +2876,13 @@ static char *headerShow(struct MHINFO *w, bool top)
 		}
 	} else {
 
-/* This is at the top of the file */
+// This is at the top of the file
 		if (w->subject[0]) {
-			sprintf(buf, "Subject: %s\n", w->subject);
+// the <pre nowspc keeps the subject on one line
+			sprintf(buf, "%sSubject: %s%s\n",
+			(mailIsHtml ? "<pre nowspc>" : ""),
+			w->subject,
+			(mailIsHtml ? "</pre>" : ""));
 			lines = true;
 		}
 		if (nattach && ismc) {
@@ -2983,7 +2987,7 @@ static int mailTextType(struct MHINFO *w)
 	if (memEqualCI(w->start, "<html>", 6))
 		return CT_HTML;
 	return w->ct == CT_HTML ? CT_HTML : CT_TEXT;
-}				/* mailTextType */
+}
 
 static void formatMail(struct MHINFO *w, bool top)
 {
@@ -3057,7 +3061,7 @@ static void formatMail(struct MHINFO *w, bool top)
 		formatMail(v, false);
 		break;
 	}
-}				/* formatMail */
+}
 
 /* Browse the email file. */
 char *emailParse(char *buf)
@@ -3091,7 +3095,7 @@ char *emailParse(char *buf)
 		lastMailText = buf;
 	}
 	return fm;
-}				/* emailParse */
+}
 
 /*********************************************************************
 Set up for a reply.
@@ -3292,7 +3296,7 @@ nextline:
 		rc = addTextToBuffer((unsigned char *)out, j, 1, false);
 	nzFree(out);
 	return rc;
-}				/* setupReply */
+}
 
 static void writeReplyInfo(const char *addstring)
 {
@@ -3304,7 +3308,7 @@ static void writeReplyInfo(const char *addstring)
 	write(rfh, cw->mailInfo, strlen(cw->mailInfo));
 	write(rfh, "\n", 1);
 	close(rfh);
-}				/* writeReplyInfo */
+}
 
 static void readReplyInfo(void)
 {

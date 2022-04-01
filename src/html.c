@@ -4236,14 +4236,15 @@ nop:
 			break;
 /* one of those rare moments when I really need </tag> in the text stream */
 		j = (opentag ? tagno : t->balance->seqno);
-/* I need to manage the paragraph breaks here, rather than t->info->para,
- * which would rule if I simply redirected to nop.
- * But the order is wrong if I do that. */
-		if (opentag)
+// I need to manage the paragraph breaks here, rather than t->info->para,
+// which would rule if I simply redirected to nop.
+// But the order is wrong if I do that.
+// This can be suppressed by <pre nowspc>
+		if (opentag && !attribVal(t, "nowspc"))
 			stringAndChar(&ns, &ns_l, '\f');
 		sprintf(hnum, "%c%d*", InternalCodeChar, j);
 		ns_hnum();
-		if (!opentag)
+		if (!opentag && !attribVal(t, "nowspc"))
 			stringAndChar(&ns, &ns_l, '\f');
 		break;
 
