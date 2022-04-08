@@ -347,6 +347,7 @@ void jClearSync(void)
 {
 	if (cw->browseMode) {
 		cw->sank = false;
+		debugPrint(4, "clear sync");
 		return;
 	}
 /* when we are able to jSyncup windows other than the foreground window,
@@ -2879,7 +2880,7 @@ void rerender(int rr_command)
 	bool z;
 	void (*say_fn) (int, ...);
 
-	debugPrint(4, "rerender");
+	debugPrint(4, "rerender(%d)", rr_command);
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += rr_interval;

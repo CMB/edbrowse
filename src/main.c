@@ -1120,6 +1120,12 @@ ahead:
 
 /* Here we go! */
 		debugPrint(3, "< %s", new);
+		if (cw->mustrender) {
+			time_t now;
+			time(&now);
+			if (now >= cw->nextrender)
+				rerender(-1);
+		}
 		jClearSync();
 		ok = edbrowseCommand(new, true);
 		free(new);
