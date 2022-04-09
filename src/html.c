@@ -4082,6 +4082,7 @@ nocolor:
 					stringAndString(&ns, &ns_l, a);
 					cnzFree(a);
 					sprintf(hnum, "%c0}", InternalCodeChar);
+					ns_hnum();
 					deltag = t;
 					break;
 				} else if (t->jslink     && (a =
