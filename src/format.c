@@ -55,30 +55,13 @@ void prepareForField(char *h)
 }
 
 /*********************************************************************
-The primary goal of this routine is to turn
-Hey,{ click here } for more information
-into
-Hey, {click here}  for more information
-But of course we won't do that if the section is preformatted.
-Nor can we muck with the whitespace that might be present in an input field <>.
-Also swap 32* whitespace, pushing invisible anchors forward.
-If a change is made, the procedure is run again,
-kinda like bubble sort.
-It has the potential to be terribly inefficient,
-but that doesn't seem to happen in practice.
-Use cnt to count the iterations, just for debugging.
-| is considered a whitespace character. Why is that?
-Html tables are mostly used for visual layout, but sometimes not.
-I use | to separate the cells of a table, but if there's nothing in them,
-or at least no text, then I get rid of the pipes.
-But every cell is going to have an invisible anchor from <td>, so that js can,
-perhaps, set innerHTML inside this cell.
-So there's something there, but nothing there.
-I push these tags past pipes, so I can clear it all away.
-One web page in ten thousand will actually set html inside a cell,
-after the fact, and when that happens the text won't be in the right place,
-it won't have the pipes around it that it should.
-I'm willing to accept that for now.
+The characters 03 and 04 delimite the cells of a table, or data, respectively.
+We often don't know, so fall back to table.
+And tables are often used to format a page, not a real table.  Ugh!
+This routine turns either of these into |
+However if there is one such | on a line, and it is a table cell marker,
+we remove it. Most of the time the table is page layout,
+and the | would only confuse things.
 *********************************************************************/
 
 static void cellDelimiters(char *buf)
@@ -100,41 +83,38 @@ static void cellDelimiters(char *buf)
 		}
 		if (!strchr("\f\r\n", *s))
 			continue;
-/* newline here, if just one cell delimiter then blank it out */
+// newline here, if just one cell delimiter then blank it out
 		if (cellcount == 1)
 			*lastcell = ' ';
 		cellcount = 0;
 	}
-}				/* cellDelimiters */
+}
 
-static void anchorSwap(char *buf)
+/*********************************************************************
+this is transliteration, like /bin/tr
+If the output char is x, it goes away, like tr -d
+Some characters, like unicode A0, turn into space,
+so we need to do this now, before swapping anchors and whitespace.
+Watch out for utf8 - don't translate the a0 in c3a0.  That is a grave.
+But a0 by itself is breakspace; turn it into space.
+And c2a0 is utf8 breakspace.
+99.9% of the time we are in utf8 mode.
+I strip out the private utf8 codes.
+Those should never be used on a public website.
+If they are used by your private work website, and you need to retain them,
+export EB_PUA=on
+Don't do any of these transliterations in an input field.
+Those must be exactly preserved, obviously.
+*********************************************************************/
+
+static void html_tr(char *buf)
 {
-	char c, d, *s, *ss, *w, *a;
-	bool pretag;		// <pre>
-	bool premode;		// inside <pre> </pre>
-	bool inputmode;		// inside an input field
-	bool slash;		// closing tag
-	bool change;		// made a swap somewhere
-	bool strong;		// strong whitespace, newline or paragraph
-	int n, cnt;
-	char tag[20];
-	const char *pua; // for private use area
-
-// this is transliteration, like /bin/tr
-// I use to convert a6 and c2 to hyphen space, not sure why
+	char *s, *ss, *w, c, d;
+	int n;
 	static const char from[] = "\x1b\x95\x99\x9c\x9d\x91\x92\x93\x94\xa0\xad\x96\x97\x85";
-// x goes away, like tr -d
 	static const char becomes[] = "_*'`'`'`' x---";
-
-/* Transliterate a few characters.  One of them is 0xa0 to space,
- * so we need to do this now, before the anchors swap with whitespace.
- * Watch out for utf8 - don't translate the a0 in c3a0.  That is a grave.
- * But a0 by itself is breakspace; turn it into space.
- * And c2a0 is a0 is breakspace.
- * Don't do any of these transliterations in an input field. */
-
-	inputmode = false;
-	pua = getenv("EB_PUA");
+	bool inputmode = false;
+	char *pua = getenv("EB_PUA");
 	if(pua && !*pua) pua = 0;
 
 	for (s = w = buf; (c = *s); ++s) {
@@ -156,7 +136,7 @@ static void anchorSwap(char *buf)
 		if (inputmode)
 			goto put1;
 
-/* utf8 test */
+// utf8 test
 		if ((c & 0xc0) == 0xc0 && (d & 0xc0) == 0x80) {
 			unsigned int uni = 0, ubytes = 0;
 			if ((c & 0x3c) == 0) {
@@ -171,7 +151,7 @@ static void anchorSwap(char *buf)
 					goto put1;
 				}
 			}
-/* copy the utf8 sequence as is */
+// copy the utf8 sequence as is
 			uni = 0;
 			*w++ = c;
 			++s;
@@ -185,20 +165,17 @@ static void anchorSwap(char *buf)
 				c = (char) ((uchar)c >> (1+ubytes));
 				uni |= ((unsigned int)c << (ubytes*6));
 // We can do things with high unicodes here, if we wish.
-
 // Suppresse private unicodes, which shouldn't appear on public websites,
 // and if they do, there isn't a consistent way to read them.
-// set EB_PUA=on if you want to retain them.
 			if(((uni >= 0xe000 && uni < 0xf8ff) ||
 			(uni >= 0xf0000 && uni < 0xffffd) ||
 			(uni >= 0x100000 && uni < 0x10fffd)) &&
 			!pua)
 				w -= ubytes+1;
-
 			continue;
 		}
 
-/* Now assuming iso8859-1, which is practically deprecated */
+// Now assuming iso8859-1, which is practically deprecated
 		ss = strchr(from, c);
 		if (ss) {
 			c = becomes[ss - from];
@@ -206,30 +183,47 @@ static void anchorSwap(char *buf)
 				continue;
 		}
 
-#if 0
-// Should we modify empty anchors in any way?
-		if (c != InternalCodeChar)
-			goto put1;
-		if (!isdigitByte(s[1]))
-			goto put1;
-		for (a = s + 2; isdigitByte(*a); ++a) ;
-		if (*a != '{')
-			goto put1;
-		for (++a; *a == ' '; ++a) ;
-		if (a[0] != InternalCodeChar || a[1] != '0' || a[2] != '}')
-			goto put1;
-// do something with empty {} here.
-// Following code just skips it, but we likely shouldn't do that.
-		s = a + 2;
-		continue;
-#endif
-
 put1:
 		*w++ = c;
 	}
 	*w = 0;
+}
 
-/* anchor whitespace swap preserves the length of the string */
+/*********************************************************************
+The primary goal of this routine is to turn
+Hey,{ click here } for more information
+into
+Hey, {click here}  for more information
+But of course we won't do that if the section is preformatted.
+Nor can we muck with the whitespace that might be present in an input field <>.
+Also swap 32* whitespace, pushing invisible anchors forward.
+If a change is made, the procedure is run again,
+kinda like bubble sort.
+It has the potential to be terribly inefficient,
+but that doesn't seem to happen in practice.
+Use cnt to count the iterations, for debugging purposes.
+| is considered a whitespace character. Why is that?
+Html tables are mostly used for visual layout, but sometimes not.
+I use | to separate the cells of a table, but if there's nothing in them,
+or at least no text, then I get rid of the pipes.
+But every cell is going to have an invisible anchor from <td>, so that js can,
+perhaps, set innerHTML inside this cell.
+So there's something there, but nothing there.
+I push these tags past the pipes, so I can clear it all away.
+All this swapping preserves the length of the string.
+*********************************************************************/
+
+static void anchorSwap(char *buf)
+{
+	char c, d, *s, *ss, *w, *a;
+	bool pretag;		// <pre>
+	bool premode;		// inside <pre> </pre>
+	bool slash;		// closing tag
+	bool change;		// made a swap somewhere
+	bool strong;		// strong whitespace, newline or paragraph
+	int n, cnt;
+	char tag[20];
+
 	cnt = 0;
 	change = true;
 	while (change) {
@@ -826,7 +820,7 @@ char *htmlReformat(char *buf)
 	char *fmark;		/* mark the start of a frame */
 
 	cellDelimiters(buf);
-
+	html_tr(buf);
 	anchorSwap(buf);
 
 	longcut = lperiod = lcomma = lright = lany = 0;
