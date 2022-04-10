@@ -297,10 +297,16 @@ normalChar:
 /* end of loop making changes */
 	}
 	debugPrint(4, "anchorSwap %d", cnt);
+}
 
 /* Framing characters like [] around an anchor are unnecessary here,
  * because we already frame it in braces.
  * Get rid of these characters, even in premode. */
+static void anchorUnframe(char *buf)
+{
+	char c, d, *s, *w, *a;
+	int n;
+
 	for (s = w = buf; (c = *s); ++s) {
 		char open, close, linkchar;
 		if (!strchr("{[(<", c))
@@ -338,7 +344,7 @@ normalChar:
 				++n;
 			d = a[n++];
 			if (!d)
-				break;	/* should never happen */
+				break;	// should never happen
 			if (strchr("{}<>", d))
 				break;
 		}
@@ -356,13 +362,19 @@ normalChar:
 		continue;
 putc:
 		*w++ = c;
-	}			/* loop over buffer */
+	}			// loop over buffer
 	*w = 0;
 	debugPrint(4, "anchors unframed");
+}
 
-/* Now compress the implied linebreaks into one. */
-	premode = false;
-	ss = 0;
+// Now compress the implied linebreaks into one.
+static void html_ws(char *buf)
+{
+	char c, d, *s, *w, *a;
+	int n;
+	bool premode = false, pretag, strong, slash;
+	char *ss = 0;
+
 	for (s = buf; (c = *s); ++s) {
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
@@ -396,7 +408,7 @@ putc:
 		for (w = ss; w <= s; ++w)
 			if (*w == '\r' && w != a)
 				*w = ' ';
-	}			/* loop over buffer */
+	}			// loop over buffer
 	debugPrint(4, "whitespace combined");
 
 /* Due to the anchor swap, the buffer could end in whitespace
@@ -822,6 +834,8 @@ char *htmlReformat(char *buf)
 	cellDelimiters(buf);
 	html_tr(buf);
 	anchorSwap(buf);
+	anchorUnframe(buf);
+	html_ws(buf);
 
 	longcut = lperiod = lcomma = lright = lany = 0;
 	colno = 1;
