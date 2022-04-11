@@ -197,6 +197,7 @@ Hey, {click here}  for more information
 But of course we won't do that if the section is preformatted.
 Nor can we muck with the whitespace that might be present in an input field <>.
 Also swap 32* whitespace, pushing invisible anchors forward.
+All this swapping preserves the length of the string.
 If a change is made, the procedure is run again,
 kinda like bubble sort.
 It has the potential to be terribly inefficient,
@@ -210,7 +211,6 @@ But every cell is going to have an invisible anchor from <td>, so that js can,
 perhaps, set innerHTML inside this cell.
 So there's something there, but nothing there.
 I push these tags past the pipes, so I can clear it all away.
-All this swapping preserves the length of the string.
 *********************************************************************/
 
 static void anchorSwap(char *buf)
@@ -386,8 +386,28 @@ static void html_ws(char *buf)
 		}
 		if (!isspaceByte(c))
 			continue;
+
+// whitespace region starts here.
+// Look for pipes inside whitespace, these are usually cell delimiters.
 		strong = false;
-		a = 0;
+		for (w = s; isspaceByte(*w) || *w == '|'; ++w) {
+			if(*w == '|') {
+				if(strong) continue;
+				break;
+			}
+			if(*w != ' ') strong = true;
+		}
+// pipes have to be internal to whitespace to be moved;
+// pipes at the end are left alone.
+		if(*w && *w != InternalCodeChar)
+			while(w[-1] == '|') --w;
+// move pipes to the front
+		for(ss = --w; w >= s; --w)
+			if(*w != '|') *ss-- = *w;
+		while(ss >= s) *ss-- = '|';
+		while(*s == '|') ++s;
+
+		strong = false, a = 0;
 		for (w = s; isspaceByte(*w); ++w) {
 			if (*w == '\n' || *w == '\f')
 				strong = true;
