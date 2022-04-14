@@ -1062,6 +1062,7 @@ int runEbFunction(const char *line)
 				continue;
 			}
 /* Apparently it's the close of an if or an else, just fall through */
+			--nest;
 			goto nextline;
 		}
 
