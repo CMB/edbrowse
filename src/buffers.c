@@ -6023,6 +6023,7 @@ bool jump2anchor(const Tag *jumptag, const char *newhash)
 {
 	int i;
 	const Tag *tag;
+	const Tag *jump0 = jumptag;
 
 // If we got here by clicking on <a href=#stuff> then jumptag is set.
 // If  from b www.xyz.com#stuff, then it is not set,
@@ -6047,11 +6048,13 @@ bool jump2anchor(const Tag *jumptag, const char *newhash)
 	for (i = 1; i <= cw->dol; ++i) {
 		char *p = (char *)fetchLine(i, -1);
 		if (lineHasTag(p, jumptag->seqno)) {
-			struct histLabel *label =
-			    allocMem(sizeof(struct histLabel));
-			label->label = cw->dot;
-			label->prev = cw->histLabel;
-			cw->histLabel = label;
+			if(jump0) {
+				struct histLabel *label =
+				    allocMem(sizeof(struct histLabel));
+				label->label = cw->dot;
+				label->prev = cw->histLabel;
+				cw->histLabel = label;
+			}
 			cw->dot = i;
 			printDot();
 			return true;
@@ -7427,10 +7430,13 @@ rebrowse:
 			}
 /* Same url, but a different #section */
 			s = findHash(line);
-			if (!s) {	/* no section specified */
+			if (!s) {	// no section specified
+				struct histLabel *label =
+				    allocMem(sizeof(struct histLabel));
+				label->label = cw->dot;
+				label->prev = cw->histLabel;
+				cw->histLabel = label;
 				cw->dot = 1;
-				if (!cw->dol)
-					cw->dot = 0;
 				printDot();
 				return true;
 			}
