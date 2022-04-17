@@ -231,7 +231,7 @@ cannot browse a binary file
 cannot browse an empty file
 this doesn't look like browsable text
 already browsing
-label %s is not found
+label %s not found
 i not available in browse mode
 cannot run an insert command from an edbrowse function
 several lines from %d to %d have been updated\n

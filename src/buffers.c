@@ -1936,7 +1936,7 @@ static struct DSR *dsr_list;
 extern struct stat this_stat;
 uchar ls_sort;		// sort method for directory listing
 bool ls_reverse;		// reverse sort
-static char lsformat[12];	/* size date etc on a directory listing */
+char lsformat[12];	/* size date etc on a directory listing */
 
 /* compare routine for quicksort directory scan */
 static int dircmp(const void *s, const void *t)
@@ -6056,7 +6056,8 @@ bool jump2anchor(const Tag *jumptag, const char *newhash)
 				cw->histLabel = label;
 			}
 			cw->dot = i;
-			printDot();
+			if(debugLevel >= 1)
+				printDot();
 			return true;
 		}
 	}
@@ -7437,7 +7438,8 @@ rebrowse:
 				label->prev = cw->histLabel;
 				cw->histLabel = label;
 				cw->dot = 1;
-				printDot();
+				if(debugLevel >= 1)
+					printDot();
 				return true;
 			}
 			line = s;

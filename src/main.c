@@ -974,6 +974,8 @@ int runEbFunction(const char *line)
 		save.timerspeed = timerspeed;
 		save.dw = dirWrite;
 		save.ls_sort = ls_sort;
+		strcpy(save.lsformat, lsformat);
+		save.showProgress = showProgress;
 		save.bg = down_bg;
 		save.jsbg = down_jsbg;
 		save.iu = iuConvert;
@@ -1150,6 +1152,8 @@ done:
 		timerspeed = save.timerspeed;
 		dirWrite = save.dw;
 		ls_sort = save.ls_sort;
+		strcpy(lsformat, save.lsformat);
+		showProgress = save.showProgress;
 		down_bg = save.bg;
 		down_jsbg = save.jsbg;
 		iuConvert = save.iu;
@@ -1244,15 +1248,11 @@ void unreadConfigFile(void)
 	nzFree(downDir), downDir = 0;
 	nzFree(mailDir), mailDir = 0;
 	nzFree(cacheDir);
-	cacheDir = NULL;
+	cacheDir = 0;
 	nzFree(mailUnread), mailUnread = 0;
 	nzFree(mailReply), mailReply = 0;
 
 	webTimeout = mailTimeout = 0;
-	displayLength = 500;
-
-	setDataSource(NULL);
-	setHTTPLanguage(eb_language);
 	delete_ebhosts();
 }
 

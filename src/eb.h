@@ -340,6 +340,7 @@ extern char *ebUserDir;		/* $ebTempDir/nnn user ID appended */
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
 extern bool fetchBlobColumns, ls_reverse;
 extern uchar ls_sort, dirWrite;
+extern char lsformat[12];
 extern bool caseInsensitive, searchStringsAll, searchWrap, ebre;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
