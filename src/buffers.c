@@ -1470,7 +1470,7 @@ void delText(int start, int end)
 	}
 }
 
-// for g/re/or v/re/d,     only for d,  only a text file
+// for g/re/d or v/re/d,     only for d,  only a text file
 // Algorithm is linear not quadratic.
 static void delTextG(void)
 {
@@ -1918,7 +1918,66 @@ static bool joinText(void)
 
 	cw->dot = startRange;
 	return true;
-}				/* joinText */
+}
+
+// for g/re/j or J
+// Algorithm is linear not quadratic.
+// We'll want to tweak this for .,+2J etc
+static bool joinTextG(char action, int n)
+{
+	int i, j, size;
+	int *label;
+	struct lineMap *t;
+	pst p1, p2, newline;
+	bool rc = true;
+
+	 t = cw->map + 1;
+	for(i = j = 1; i <= cw->dol; ++i, ++t) {
+		if(i > j) {
+			cw->map[j] = *t;
+			label = NULL;
+			while ((label = nextLabel(label)))
+				if(*label == i)
+					*label = j;
+		}
+		if(t->gflag && i == cw->dol) {
+			setError(MSG_EndJoin);
+			rc = false;
+		}
+		if(t->gflag && i < cw->dol) { // join
+// did the next line have a label?
+			label = NULL;
+			while ((label = nextLabel(label)))
+				if(*label == i + 1)
+					*label = 0;
+			cw->dot = j;
+			undoPush();
+			size = pstLength(fetchLine(i, -1));
+			size += pstLength(fetchLine(i + 1, -1));
+		newline = p2 = allocMem(size);
+			p1 = fetchLine(i, -1);
+			size = pstLength(p1);
+			memcpy(p2, p1, size);
+			p2 += size;
+			p2[-1] = ' ';
+			if (action == 'j') --p2;
+			p1 = fetchLine(i + 1, -1);
+			size = pstLength(p1);
+			memcpy(p2, p1, size);
+			cw->map[j].text = newline;
+			++i, ++t; // skip a line
+		}
+		++j;
+	}
+
+// map of lines has to null terminate
+	cw->map[j] = *t;
+
+	cw->dol = j - 1;
+	if (cw->dot > cw->dol)
+		cw->dot = cw->dol;
+	return rc;
+}
 
 // directory sort record, for nonalphabetical sorts.
 struct DSR {
@@ -3645,6 +3704,12 @@ static bool doGlobal(const char *line)
 	!(cw->dirMode | cw->browseMode | cw->sqlMode)) {
 		delTextG();
 		return true;
+	}
+
+// check for mass join
+	if((stringEqual(line, "j") || stringEqual(line, "J")) &&
+	!(cw->dirMode | cw->browseMode | cw->sqlMode)) {
+		return joinTextG(line[0], 1);
 	}
 
 // apply the subcommand to every marked line 
