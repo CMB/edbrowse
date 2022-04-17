@@ -690,6 +690,8 @@ g : go to the link on the current line
 <br>g? : print the url for the link on the current line
 <br>g2? : print the url for the second link
 <br>g$? : print the url for the last link
+<br>A : create a buffer of <a> tags for the hyperlinks on the current line
+<br>4,7A : create a buffer of <a> tags for the hyperlinks on lines 4 through 7
 <br>exp : expand a frame
 <br>,exp : expand all frames
 <br>ctr : contract a frame
@@ -3013,7 +3015,7 @@ Colors come from css, and css doesn't run without Javascript, thus this feature 
 
 <P>
 The capital A command shows you the web addresses behind
-the links on the current line.
+the links on the current line, or on a range of lines, as in 4,7A.
 Each web address will be surrounded by &lt;a&gt; and &lt;/a&gt; tags,
 ready to be pasted into a bookmark file, if that is what you wish.
 These addresses exist in a new editing session; the previous session has been pushed onto the stack.
@@ -3049,7 +3051,7 @@ and append the URL to that file automatically,
 but as this example shows, you might not want all the links.
 In fact the email link makes no sense in a bookmark file.
 Also, you may want to change the description of the link,
-though in this example the description is pretty reasonable.
+though in this example the description is reasonable.
 
 <P>
 Alternatively, you might discard the url and retain the email address,
@@ -3061,7 +3063,8 @@ to that recipient.
 Subsequent sections will describe the use of edbrowse as a mail client.
 
 <P>
-If there are no links on the current line, or you are not in browse mode,
+If A is applied to a single line,
+and there are no links on that line, or you are not in browse mode,
 the current filename is used.
 This is useful when you want to bookmark the current page,
 rather than some other page pointed to by a link.

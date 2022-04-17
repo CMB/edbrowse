@@ -148,7 +148,7 @@ addchar:
 /* This is not a code sequence I recognize. */
 /* This should never happen; just move along. */
 		goto addchar;
-	}			/* loop over p */
+	}			// loop over p
 	*t = c;			/* terminating character */
 }
 
@@ -5889,11 +5889,13 @@ static char *showLinks(void)
 	char *a = initString(&a_l);
 	bool click, dclick;
 	char c, *p, *s, *t, *q, *line, *h, *h2;
-	int j, k = 0, tagno;
+	int j, k, ln, tagno;
 	const Tag *tag;
 
 	if (cw->browseMode && endRange) {
-		line = (char *)fetchLine(endRange, -1);
+	    for(ln = startRange; ln <= endRange; ++ln) {
+		line = (char *)fetchLine(ln, -1);
+		k = 0;
 		for (p = line; (c = *p) != '\n'; ++p) {
 			if (c != InternalCodeChar)
 				continue;
@@ -5906,24 +5908,22 @@ static char *showLinks(void)
 			++k;
 			findField(line, 0, k, 0, 0, &tagno, &h, &tag);
 			if (tagno != j)
-				continue;	/* should never happen */
+				continue;	// should never happen
 
 			click = tagHandler(tagno, "onclick");
 			dclick = tagHandler(tagno, "ondblclick");
 
-/* find the closing brace */
-/* It might not be there, could be on the next line. */
+// find the closing brace
+// It might not be there, could be on the next line.
 			for (s = p + 1; (c = *s) != '\n'; ++s)
 				if (c == InternalCodeChar && s[1] == '0'
 				    && s[2] == '}')
 					break;
-/* Ok, everything between p and s exclusive is the description */
+// Ok, everything between p and s exclusive is the description
 			if (!h)
 				h = emptyString;
-			if (stringEqual(h, "#")) {
-				nzFree(h);
-				h = emptyString;
-			}
+			if (stringEqual(h, "#"))
+				nzFree(h), h = emptyString;
 
 			if (memEqualCI(h, "mailto:", 7)) {
 				stringAndBytes(&a, &a_l, p + 1, s - p - 1);
@@ -5955,17 +5955,17 @@ static char *showLinks(void)
 			}
 
 			nzFree(h);
-/* next line is the description of the bookmark */
+// next line is the description of the bookmark
 			h = pullString(p + 1, s - p - 1);
 			h2 = htmlEscape(h);
 			stringAndString(&a, &a_l, h2);
 			stringAndString(&a, &a_l, "\n</a>\n");
-			nzFree(h);
-			nzFree(h2);
-		}		/* loop looking for hyperlinks */
+			nzFree(h), nzFree(h2);
+		}		// loop looking for hyperlinks
+	    }
 	}
 
-	if (!a_l) {		/* nothing found yet */
+	if (!a_l && endRange == startRange) {		/* nothing found yet */
 		if (!(h = cw->saveURL)) {
 			setError(MSG_NoFileName);
 			return 0;
@@ -6001,7 +6001,7 @@ static char *showLinks(void)
 		nzFree(h);
 	}
 
-	removeHiddenNumbers((pst) a, 0);
+	if(a_l) removeHiddenNumbers((pst) a, 0);
 	return a;
 }
 
