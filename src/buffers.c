@@ -917,7 +917,7 @@ static Window undoWindow;
 static int qscmp(const void *s, const void *t)
 {
 	return memcmp(s, t, sizeof(char *));
-}				/* qscmp */
+}
 
 /* Free undo lines not used by the current session. */
 static void undoCompare(void)
@@ -979,7 +979,7 @@ then free them.
 	free(map);
 	undoWindow.map = 0;
 	debugPrint(6, "undoCompare strip %d", cnt);
-}				/* undoCompare */
+}
 
 static void undoPush(void)
 {
@@ -1012,7 +1012,7 @@ static void undoPush(void)
 		uw->map = allocMem((cw->dol + 2) * LMSIZE);
 		memcpy(uw->map, cw->map, (cw->dol + 2) * LMSIZE);
 	}
-}				/* undoPush */
+}
 
 static void freeWindow(Window *w)
 {
@@ -1045,7 +1045,7 @@ static void freeWindow(Window *w)
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
 	free(w);
-}				/* freeWindow */
+}
 
 /*********************************************************************
 Here are a few routines to switch contexts from one buffer to another.
@@ -1470,35 +1470,38 @@ void delText(int start, int end)
 	}
 }
 
-// for g/re/d or v/re/d,     only for d,  only a text file
+// for g/re/d or v/re/d,  only a text file
 // Algorithm is linear not quadratic.
-static void delTextG(void)
+// n+1 is number of lines to delete.
+static bool delTextG(int n)
 {
 	int i, j;
 	int *label;
 	struct lineMap *t;
-
-// we wouldn't be here unless some lines match, so...
-	undoPush();
-
-// last line deleted?
-	t = cw->map + cw->dol;
-	if (t->gflag)
-		cw->nlMode = false;
+	bool rc = true;
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
-		label = NULL;
-		if(t->gflag) { // goodbye
-// did this line have a label?
+		if(t->gflag && rc && i + n > cw->dol) {
+			setError(MSG_LineHigh);
+			rc = false;
+		}
+		if(t->gflag && rc && i + n <= cw->dol) { // goodbye
+// did these lines have a label?
+			label = NULL;
 			while ((label = nextLabel(label)))
-				if(*label == i)
+				if(*label >= i && *label <= i + n)
 					*label = 0;
 			cw->dot = j;
+			undoPush();
+			if(i + n == cw->dol)
+				cw->nlMode = false;
+			i += n, t += n;
 			continue;
 		}
 		if(i > j) {
 			cw->map[j] = *t;
+			label = NULL;
 			while ((label = nextLabel(label)))
 				if(*label == i)
 					*label = j;
@@ -1517,6 +1520,7 @@ static void delTextG(void)
 		free(cw->map);
 		cw->map = 0;
 	}
+	return rc;
 }
 
 /* Delete files from a directory as you delete lines.
@@ -1651,7 +1655,7 @@ gone:
 // if you type D instead of d, I don't want to lose that.
 	cmd = icmd;
 	return true;
-}				/* delFiles */
+}
 
 // Move or copy files from one directory to another
 static bool moveFiles(void)
@@ -1922,10 +1926,10 @@ static bool joinText(void)
 
 // for g/re/j or J
 // Algorithm is linear not quadratic.
-// We'll want to tweak this for .,+2J etc
+// n+1 is number of lines to delete.
 static bool joinTextG(char action, int n)
 {
-	int i, j, size;
+	int i, j, k, size;
 	int *label;
 	struct lineMap *t;
 	pst p1, p2, newline;
@@ -1940,32 +1944,32 @@ static bool joinTextG(char action, int n)
 				if(*label == i)
 					*label = j;
 		}
-		if(t->gflag && i == cw->dol) {
+		if(t->gflag && rc && i + n > cw->dol) {
 			setError(MSG_EndJoin);
 			rc = false;
 		}
-		if(t->gflag && i < cw->dol) { // join
+		if(t->gflag && rc && i + n <= cw->dol) { // join
 // did the next line have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
-				if(*label == i + 1)
+				if(*label > i && *label <= i + n)
 					*label = 0;
 			cw->dot = j;
 			undoPush();
-			size = pstLength(fetchLine(i, -1));
-			size += pstLength(fetchLine(i + 1, -1));
-		newline = p2 = allocMem(size);
-			p1 = fetchLine(i, -1);
-			size = pstLength(p1);
-			memcpy(p2, p1, size);
-			p2 += size;
-			p2[-1] = ' ';
-			if (action == 'j') --p2;
-			p1 = fetchLine(i + 1, -1);
-			size = pstLength(p1);
-			memcpy(p2, p1, size);
+			for(k = size = 0; k <= n; ++k)
+				size += pstLength(fetchLine(i + k, -1));
+			newline = p2 = allocMem(size);
+			for(k = size = 0; k <= n; ++k) {
+				p1 = fetchLine(i + k, -1);
+				size = pstLength(p1);
+				memcpy(p2, p1, size);
+				if(k == n) break;
+				p2 += size;
+				p2[-1] = ' ';
+				if (action == 'j') --p2;
+			}
 			cw->map[j].text = newline;
-			++i, ++t; // skip a line
+			i += n, t += n; // skip joined lines
 		}
 		++j;
 	}
@@ -2197,7 +2201,7 @@ success:
 	if (cmd == 'r')
 		debugPrint(1, "%d", fileSize);
 	return true;
-}				/* readDirectory */
+}
 
 /* Read a file, or url, into the current buffer.
  * Post/get data is passed, via the second parameter, if it's a URL. */
@@ -3702,8 +3706,7 @@ static bool doGlobal(const char *line)
 // check for mass delete
 	if(stringEqual(line, "d") &&
 	!(cw->dirMode | cw->browseMode | cw->sqlMode)) {
-		delTextG();
-		return true;
+		return delTextG(0);
 	}
 
 // check for mass join
@@ -3779,7 +3782,7 @@ static void fieldNumProblem(int desc, char *c, int n, int nt, int nrt)
 		setError(MSG_InputRange, n, c, c, nt);
 	else
 		setError(MSG_InputRange2, n, c, c);
-}				/* fieldNumProblem */
+}
 
 /* Perform a substitution on a given line.
  * The lhs has been compiled, and the rhs is passed in for replacement.
@@ -4122,7 +4125,7 @@ findField(const char *line, int ftype, int n,
 		*href = nmh;
 	else
 		nzFree(nmh);
-}				/* findField */
+}
 
 static void
 findInputField(const char *line, int ftype, int n, int *total, int *realtotal,
@@ -5940,13 +5943,13 @@ bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
 	*len = size;
 	(*data)[size] = 0;
 	return true;
-}				/* unfoldBufferW */
+}
 
 bool unfoldBuffer(int cx, bool cr, char **data, int *len)
 {
 	const Window *w = sessionList[cx].lw;
 	return unfoldBufferW(w, cr, data, len);
-}				/* unfoldBuffer */
+}
 
 static char *showLinks(void)
 {
