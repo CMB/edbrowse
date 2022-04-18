@@ -1473,12 +1473,14 @@ void delText(int start, int end)
 // for g/re/d or v/re/d,  only a text file
 // Algorithm is linear not quadratic.
 // n+1 is number of lines to delete.
-static bool delTextG(int n)
+static bool delTextG(char action, int n)
 {
-	int i, j;
+	int i, j, k;
 	int *label;
 	struct lineMap *t;
 	bool rc = true;
+
+	debugPrint(3, "mass delete");
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
@@ -1497,6 +1499,12 @@ static bool delTextG(int n)
 			if(i + n == cw->dol)
 				cw->nlMode = false;
 			i += n, t += n;
+			if(action == 'd') continue;
+			k = i + 1;
+			if(k <= cw->dol) { displayLine(k); continue; }
+			k = j - 1;
+			if(k) { displayLine(k); continue; }
+			i_puts(MSG_Empty);
 			continue;
 		}
 		if(i > j) {
@@ -1926,7 +1934,7 @@ static bool joinText(void)
 
 // for g/re/j or J
 // Algorithm is linear not quadratic.
-// n+1 is number of lines to delete.
+// n+1 is number of lines to join.
 static bool joinTextG(char action, int n)
 {
 	int i, j, k, size;
@@ -1934,6 +1942,13 @@ static bool joinTextG(char action, int n)
 	struct lineMap *t;
 	pst p1, p2, newline;
 	bool rc = true;
+
+	debugPrint(3, "mass join");
+
+	if(!n) {
+		setError(MSG_Join1);
+		return false;
+	}
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
@@ -3634,6 +3649,8 @@ static bool doGlobal(const char *line)
 	struct lineMap *t;
 	char *re;		/* regular expression */
 	int i, origdot, yesdot, nodot;
+	int block; // range for mass delete
+	const char *p;
 
 	if (!delim) {
 		setError(MSG_RexpMissing, icmd);
@@ -3703,17 +3720,27 @@ static bool doGlobal(const char *line)
 
 	setError(-1);
 
-// check for mass delete
-	if(stringEqual(line, "d") &&
-	!(cw->dirMode | cw->browseMode | cw->sqlMode)) {
-		return delTextG(0);
-	}
-
-// check for mass join
-	if((stringEqual(line, "j") || stringEqual(line, "J")) &&
-	!(cw->dirMode | cw->browseMode | cw->sqlMode)) {
-		return joinTextG(line[0], 1);
-	}
+// check for mass delete or mass join
+	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
+	p = line, block = -1;
+	if(*p == '.' && isalphaByte(p[1])) { ++p; goto masscommand; }
+	if(!strncmp(p, ".,+", 3)) { p += 3; goto massnumber; }
+	if(!strncmp(p, ".,.+", 4)) { p += 4; goto massnumber; }
+	goto masscommand;
+massnumber:
+	if(!isdigitByte(*p)) block = 1;
+	else block = strtol(p, (char**)&p, 10);
+masscommand:
+	if(p[0] && p[1]) goto nomass;
+	if(*p == 'd' || *p == 'D') {
+		if(block < 0) block = 0;
+		return delTextG(*p, block);
+}
+	if(*p == 'j' || *p == 'J') {
+		if(block < 0) block = 1;
+		return joinTextG(*p, block);
+}
+nomass:
 
 // apply the subcommand to every marked line 
 	globSub = true;
