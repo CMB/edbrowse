@@ -464,6 +464,11 @@ static void linkPipe(int start)
 		    !stringEqualCI(rel, "stylesheet"))
 // not a stylesheet, it doesn't matter
 			continue;
+		if(!mark[1]) { // special case, | at the end
+// not sure what to do here.
+			*mark = 0; // get rid of |
+			continue;
+		}
 		e = l->sibling;
 		n = mark - l->href;
 		url = allocMem(n + 1);
@@ -471,28 +476,24 @@ static void linkPipe(int start)
 		url[n] = 0;
 		a = follow = cloneString(mark+1);
 		while(*a) {
-			char *resolve;
 			if((b = strchr(a, ',')))
 				*b = 0;
-			resolve = resolveURL(url, a);
-			if(a == follow) {
+			if(*a) {
+				char *resolve = resolveURL(url, a);
+				if(a == follow) {
 // first one, just displace the href url
-				nzFree(l->href);
-				l->href = resolve;
-			} else {
-				Tag *t = newTag(cf, "link");
-				t->href = resolve;
-				if(rel)
-					setTagAttr(t, "rel", cloneString(rel));
-				if(type)
-					setTagAttr(t, "type", cloneString(type));
-				t->parent = l->parent;
-				t->sibling = e;
-				l->sibling = t;
-				l = t;
-			}
-			if(!b)
-				break;
+					nzFree(l->href);
+					l->href = resolve;
+				} else {
+					Tag *t = newTag(cf, "link");
+					t->href = resolve;
+					if(rel) setTagAttr(t, "rel", cloneString(rel));
+					if(type) setTagAttr(t, "type", cloneString(type));
+					t->parent = l->parent;
+					t->sibling = e, l->sibling = t, l = t;
+				}
+				}
+			if(!b) break;
 			a = b + 1;
 		}
 		free(url);
