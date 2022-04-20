@@ -1177,6 +1177,8 @@ void cxSwitch(int cx, bool interactive)
 	if (interactive && debugLevel) {
 		if (created)
 			i_printf(MSG_SessionNew);
+		else if (cw->htmltitle)
+			i_printf(MSG_String, cw->htmltitle);
 		else if (cf->fileName)
 			i_printf(MSG_String, cf->fileName);
 		else
@@ -1186,8 +1188,8 @@ void cxSwitch(int cx, bool interactive)
 		eb_puts("");
 	}
 
-/* The next line is required when this function is called from main(),
- * when the first arg is a url and there is a second arg. */
+// The next line is required when this function is called from main(),
+// when the first arg is a url and there is a second arg.
 	startRange = endRange = cw->dot;
 }
 
@@ -6923,7 +6925,7 @@ replaceframe:
 				i_printf(MSG_String, " jdb");
 			eb_puts("");
 			return true;
-		}		/* another session */
+		}		// another session
 		if (first) {
 			if (cw->dirMode) {
 				setError(MSG_DirRename);
