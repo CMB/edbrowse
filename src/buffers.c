@@ -2230,6 +2230,7 @@ static bool readFile(const char *filename, bool newwin,
 	bool rc;		/* return code */
 	bool fileprot = false;
 	char *nopound;
+	const char *hash;
 	char filetype;
 
 	serverData = 0;
@@ -2295,6 +2296,16 @@ static bool readFile(const char *filename, bool newwin,
 		if (!rc)
 			return false;
 		changeFileName = g.cfn;	// allocated
+
+		if(changeFileName &&
+		(hash = findHash(filename)) &&
+		!findHash(changeFileName)) {
+// carry the hash after redirection
+			changeFileName = realloc(changeFileName,
+			strlen(changeFileName) + strlen(hash) + 1);
+			strcat(changeFileName, hash);
+		}
+
 		if (newwin) {
 			cw->referrer = g.referrer;	// allocated
 			if (g.cfn) {
