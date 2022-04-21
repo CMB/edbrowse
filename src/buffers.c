@@ -1488,6 +1488,11 @@ static bool delTextG(char action, int n, int back)
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
+		if(t->gflag && rc && j - back <= 0) {
+			cw->dot = j;
+			setError(j - back < 0 ? MSG_LineLow : MSG_AtLine0);
+			rc = false;
+		}
 		if(t->gflag && rc && i + n > cw->dol) {
 			cw->dot = j;
 			setError(MSG_LineHigh);
@@ -1497,13 +1502,14 @@ static bool delTextG(char action, int n, int back)
 // did these lines have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
-				if(*label >= i && *label <= i + n)
+				if((*label >= i && *label <= i + n) ||
+				(*label < j && *label >= j - back))
 					*label = 0;
 			cw->dot = j;
 			undoPush();
 			if(i + n == cw->dol)
 				cw->nlMode = false;
-			i += n, t += n;
+			j -= back, i += n, t += n;
 			if(action == 'd') continue;
 			k = i + 1;
 			if(k <= cw->dol) { displayLine(k); continue; }
@@ -1964,6 +1970,11 @@ static bool joinTextG(char action, int n, int back)
 				if(*label == i)
 					*label = j;
 		}
+		if(t->gflag && rc && j - back <= 0) {
+			cw->dot = j;
+			setError(j - back < 0 ? MSG_LineLow : MSG_AtLine0);
+			rc = false;
+		}
 		if(t->gflag && rc && i + n > cw->dol) {
 			cw->dot = j;
 			setError(MSG_EndJoin);
@@ -1973,14 +1984,25 @@ static bool joinTextG(char action, int n, int back)
 // did the next lines have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
-				if(*label > i && *label <= i + n)
+				if((*label > i && *label <= i + n) ||
+				(*label <= j && *label > j - back))
 					*label = 0;
 			cw->dot = j;
 			undoPush();
 			for(k = size = 0; k <= n; ++k)
 				size += pstLength(fetchLine(i + k, -1));
+			for(k = 1; k <= back; ++k)
+				size += pstLength(fetchLine(j - k, -1));
 			newline = p2 = allocMem(size);
-			for(k = size = 0; k <= n; ++k) {
+			for(k = back; k > 0; --k) {
+				p1 = fetchLine(j - k, -1);
+				size = pstLength(p1);
+				memcpy(p2, p1, size);
+				p2 += size;
+				p2[-1] = ' ';
+				if (action == 'j') --p2;
+			}
+			for(k = 0; k <= n; ++k) {
 				p1 = fetchLine(i + k, -1);
 				size = pstLength(p1);
 				memcpy(p2, p1, size);
@@ -1989,6 +2011,7 @@ static bool joinTextG(char action, int n, int back)
 				p2[-1] = ' ';
 				if (action == 'j') --p2;
 			}
+			j -= back;
 			cw->map[j].text = newline;
 			i += n, t += n; // skip past joined lines
 		}
