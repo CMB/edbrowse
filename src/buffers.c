@@ -2904,31 +2904,21 @@ endline:
 	return true;
 }
 
-static bool readContext(int cx, int readLine1, int readLine2)
+static int readContext0(int entry, int cx, int readLine1, int readLine2)
 {
-	Window *lw;
-	int i, fardol, nlines;
+	Window *lw = sessionList[cx].lw;
+	int i, fardol = lw->dol, lines;
 	struct lineMap *t;
-	bool at_the_end;
-
-	if (!cxCompare(cx))
-		return false;
-	if (!cxActive(cx, true))
-		return false;
-
+	bool at_the_end = cw->dol == entry;
 	fileSize = 0;
-	lw = sessionList[cx].lw;
-	fardol = lw->dol;
 	if (!fardol)
-		return true;
-	if (cw->dol == endRange)
+		return 0;
+	if(at_the_end)
 		cw->nlMode = false;
-
-if(readLine1 < 0)
+	if(readLine1 < 0)
 		readLine1 = 1, readLine2 = fardol;
-	nlines = readLine2 + 1 - readLine1;
-
-	newpiece = t = allocZeroMem(nlines * LMSIZE);
+	lines = readLine2 + 1 - readLine1;
+	newpiece = t = allocZeroMem(lines * LMSIZE);
 	for (i = readLine1; i <= readLine2; ++i, ++t) {
 		pst p = fetchLineContext(i, (lw->dirMode ? -1 : 1), cx);
 		int len = pstLength(p);
@@ -2959,10 +2949,7 @@ if(readLine1 < 0)
 		}
 		t->text = p;
 		fileSize += len;
-	}			/* loop over lines in the "other" context */
-
-	at_the_end = cw->dol == endRange;
-	addToMap(nlines, endRange);
+	}			// loop over lines in the other context
 	if (lw->nlMode && readLine2 == lw->dol) {
 		--fileSize;
 		if (at_the_end)
@@ -2970,9 +2957,22 @@ if(readLine1 < 0)
 	}
 	if (binaryDetect & !cw->binMode && lw->binMode) {
 		cw->binMode = true;
-		if(debugLevel >= 1)
+		if(debugLevel)
 			i_puts(MSG_BinaryData);
 	}
+	return lines;
+}
+
+static bool readContext(int cx, int readLine1, int readLine2)
+{
+	int lines;
+	if (!cxCompare(cx))
+		return false;
+	if (!cxActive(cx, true))
+		return false;
+	lines = readContext0(endRange, cx, readLine1, readLine2);
+	if(lines)
+		addToMap(lines, endRange);
 	return true;
 }
 
