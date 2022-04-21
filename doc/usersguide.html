@@ -1030,7 +1030,7 @@ for example, consider r !seq 100000, followed by g/[678]$/d.
 Line 6 is deleted, then the remaining lines are pulled up to fill in the gap.
 Next line 7 is deleted, then 8, then 16, and so on.
 This direct algorithm is quadratic in the size of the file, and becomes untenable for large files.
-Edbrowse invokes a linear algorithm when the subcommand deletes or joins a fixed number of lines, starting with the marked line, e.g. g/re/ .,+3J.
+Edbrowse invokes a linear algorithm when the subcommand deletes or joins a fixed number of lines containing the marked line, e.g. g/re/ .,+3J.
 In this case edbrowse prints "mass delete" or "mass join" at debug level 3 or higher.
 Contact the developers if you feel other g commands should be optimized.
 g/re/ 1t. or g/re/ r7 could have the same nonlinear performance issues.

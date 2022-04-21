@@ -1505,11 +1505,11 @@ static bool delTextG(char action, int n, int back)
 				if((*label >= i && *label <= i + n) ||
 				(*label < j && *label >= j - back))
 					*label = 0;
-			cw->dot = j;
 			undoPush();
 			if(i + n == cw->dol)
 				cw->nlMode = false;
 			j -= back, i += n, t += n;
+			cw->dot = j;
 			if(action == 'd') continue;
 			k = i + 1;
 			if(k <= cw->dol) { displayLine(k); continue; }
@@ -1956,7 +1956,7 @@ static bool joinTextG(char action, int n, int back)
 
 	debugPrint(3, "mass join %d %d", back, n);
 
-	if(!n) {
+	if(!(back + n)) {
 		setError(MSG_Join1);
 		return false;
 	}
@@ -1987,7 +1987,6 @@ static bool joinTextG(char action, int n, int back)
 				if((*label > i && *label <= i + n) ||
 				(*label <= j && *label > j - back))
 					*label = 0;
-			cw->dot = j;
 			undoPush();
 			for(k = size = 0; k <= n; ++k)
 				size += pstLength(fetchLine(i + k, -1));
@@ -2013,6 +2012,7 @@ static bool joinTextG(char action, int n, int back)
 			}
 			j -= back;
 			cw->map[j].text = newline;
+			cw->dot = j;
 			i += n, t += n; // skip past joined lines
 		}
 		++j;
@@ -3763,6 +3763,31 @@ static bool doGlobal(const char *line)
 // check for mass delete or mass join
 	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
 	p = line, block = -1, back = 0;
+// prior lines, must begin with - or .-
+	if(*p == '-' || (*p == '.' && p[1] == '-')) {
+		if(*p == '.') ++p;
+		++p;
+		back = 1;
+		if(isdigitByte(*p))
+			back = strtol(p, (char**)&p, 10);
+// special case for -j, which is ok cause it still involves the current line.
+		if(back <= 1 && (*p == 'j' || *p == 'J')) {
+			block = 1 - back;
+			goto masscommand;
+		}
+// at this point we need a comma
+		if(*p != ',') goto nomass;
+		++p;
+// now we need . alone or + or .+
+		if(*p != '.' && *p != '+') goto nomass;
+		if(*p == '.') ++p;
+		block = 0;
+		if(*p != '+') goto masscommand;
+		block = 1, ++p;
+		if(isdigitByte(*p))
+			block = strtol(p, (char**)&p, 10);
+		goto masscommand;
+	}
 	if(*p == '.' && isalphaByte(p[1])) { ++p; goto masscommand; }
 	if(!strncmp(p, ".,+", 3)) { p += 3; goto massnumber; }
 	if(!strncmp(p, ".,.+", 4)) { p += 4; goto massnumber; }
