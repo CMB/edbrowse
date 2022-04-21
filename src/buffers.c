@@ -1475,18 +1475,21 @@ void delText(int start, int end)
 // for g/re/d or v/re/d,  only a text file
 // Algorithm is linear not quadratic.
 // n+1 is number of lines to delete.
-static bool delTextG(char action, int n)
+// It is a challenge to make this function behave exactly as edbrowse would,
+// if we were running d on each marked line.
+static bool delTextG(char action, int n, int back)
 {
 	int i, j, k;
 	int *label;
 	struct lineMap *t;
 	bool rc = true;
 
-	debugPrint(3, "mass delete");
+	debugPrint(3, "mass delete %d %d", back, n);
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
 		if(t->gflag && rc && i + n > cw->dol) {
+			cw->dot = j;
 			setError(MSG_LineHigh);
 			rc = false;
 		}
@@ -1937,7 +1940,7 @@ static bool joinText(void)
 // for g/re/j or J
 // Algorithm is linear not quadratic.
 // n+1 is number of lines to join.
-static bool joinTextG(char action, int n)
+static bool joinTextG(char action, int n, int back)
 {
 	int i, j, k, size;
 	int *label;
@@ -1945,7 +1948,7 @@ static bool joinTextG(char action, int n)
 	pst p1, p2, newline;
 	bool rc = true;
 
-	debugPrint(3, "mass join");
+	debugPrint(3, "mass join %d %d", back, n);
 
 	if(!n) {
 		setError(MSG_Join1);
@@ -1962,11 +1965,12 @@ static bool joinTextG(char action, int n)
 					*label = j;
 		}
 		if(t->gflag && rc && i + n > cw->dol) {
+			cw->dot = j;
 			setError(MSG_EndJoin);
 			rc = false;
 		}
 		if(t->gflag && rc && i + n <= cw->dol) { // join
-// did the next line have a label?
+// did the next lines have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
 				if(*label > i && *label <= i + n)
@@ -1986,7 +1990,7 @@ static bool joinTextG(char action, int n)
 				if (action == 'j') --p2;
 			}
 			cw->map[j].text = newline;
-			i += n, t += n; // skip joined lines
+			i += n, t += n; // skip past joined lines
 		}
 		++j;
 	}
@@ -3662,7 +3666,7 @@ static bool doGlobal(const char *line)
 	struct lineMap *t;
 	char *re;		/* regular expression */
 	int i, origdot, yesdot, nodot;
-	int block; // range for mass delete
+	int block, back; // range for mass delete
 	const char *p;
 
 	if (!delim) {
@@ -3735,7 +3739,7 @@ static bool doGlobal(const char *line)
 
 // check for mass delete or mass join
 	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
-	p = line, block = -1;
+	p = line, block = -1, back = 0;
 	if(*p == '.' && isalphaByte(p[1])) { ++p; goto masscommand; }
 	if(!strncmp(p, ".,+", 3)) { p += 3; goto massnumber; }
 	if(!strncmp(p, ".,.+", 4)) { p += 4; goto massnumber; }
@@ -3747,11 +3751,11 @@ masscommand:
 	if(p[0] && p[1]) goto nomass;
 	if(*p == 'd' || *p == 'D') {
 		if(block < 0) block = 0;
-		return delTextG(*p, block);
+		return delTextG(*p, block, back);
 }
 	if(*p == 'j' || *p == 'J') {
 		if(block < 0) block = 1;
-		return joinTextG(*p, block);
+		return joinTextG(*p, block, back);
 }
 nomass:
 

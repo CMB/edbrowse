@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#  add a line to quickjs.c, after struct JSRuntime,
-#  to tell edbrowse where the pending jobs are in that structure.
+#  add a line to quickjs.c, at the end,
+#  to tell edbrowse where the pending jobs are in struct JSRuntime.
 #  You need to do this before you build and install quickjs.
 #  The optional argument is the directory of the quickjs tree,
 #  otherwise I use QUICKJS_DIR if defined, an absolute path please,
@@ -41,17 +41,7 @@ echo "quickjs.c has already been fixed up for edbrowse"
 exit 0
 fi
 
-echo "editing quickjs.c"
-ed "$p3" <<'!'
-/struct *JSRuntime/p
-/};/p
-a
-
-// Tell edbrowse where the jobs field is within this structure.
-int JSRuntimeJobIndex = (int) offsetof(struct JSRuntime, job_list);
-.
-w
-q
-!
+echo "modifying quickjs.c"
+echo -e '\n// Tell edbrowse where the jobs field is within struct JSRuntime\nint JSRuntimeJobIndex = (int) offsetof(struct JSRuntime, job_list);' >>"$p3"
 echo ok
 exit 0
