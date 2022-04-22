@@ -1179,8 +1179,13 @@ You can explicitly balance &lt;&gt;, as in multiline html tags,
 or `', used in some preprocessors such as m4.
 
 <P>
+B can be used on a line without braces, or with no unbalanced braces.
+B} on the fourth line moves to the third line, the start of the block that contains that line.
+B{ on the fourth line moves to the last line.
+
+<P>
 Comments or literal strings that contain balancing punctuation marks will
-definitely throw edbrowse off the track.
+throw edbrowse off the track.
 If you are the author of the source,
 you might want to avoid braces in comments,
 or use comments to keep braces in balance.

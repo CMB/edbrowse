@@ -5946,17 +5946,9 @@ static bool balanceLine(const char *line)
 			direction = -1;
 		}
 		unbalanced(c, d, endRange, &backward, &forward);
-		if (direction > 0) {
-			if ((level = forward) == 0) {
-				setError(MSG_BalanceNoOpen, c);
-				return false;
-			}
-		} else {
-			if ((level = backward) == 0) {
-				setError(MSG_BalanceNoOpen, d);
-				return false;
-			}
-		}
+		level = direction > 0 ? forward : backward;
+		if (!level)
+			level = 1;
 	} else {
 
 /* Look for anything unbalanced, probably a brace. */
@@ -5971,9 +5963,7 @@ static bool balanceLine(const char *line)
 			level = backward + forward;
 			if (!level)
 				continue;
-			direction = 1;
-			if (backward)
-				direction = -1;
+			direction = backward ? -1 : 1;
 			break;
 		}
 		if (!level) {
