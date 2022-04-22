@@ -1030,10 +1030,18 @@ for example, consider r !seq 100000, followed by g/[678]$/d.
 Line 6 is deleted, then the remaining lines are pulled up to fill in the gap.
 Next line 7 is deleted, then 8, then 16, and so on.
 This direct algorithm is quadratic in the size of the file, and becomes untenable for large files.
-Edbrowse invokes a linear algorithm when the subcommand deletes or joins a fixed number of lines containing the marked line, e.g. g/re/ .,+3J.
+Therefore, edbrowse invokes a linear algorithm when the subcommand deletes or joins a fixed number of lines containing the marked line, e.g. g/re/ .,+3J.
 In this case edbrowse prints "mass delete" or "mass join" at debug level 3 or higher.
+Reading from a buffer is also optimized.
+g/re/ r7
+this prints "mass read" at debug level 3.
+You must read from a buffer, and read the entire buffer.
+If you want to inject the contents of a file, read that file into a buffer and then use the above construct.
+This is more efficient anyways; you don't want to open that file over and over again.
+To implement g/xyz/ 1,3t. efficiently: 1,3w7 g/xyz/r7 q7.
+To implement g/xyz/+r5 efficiently: g/xyz/+s/$/uvw/ g/uvw$/r5 ,s/uvw$//.
+Other tricks are possible.
 Contact the developers if you feel other g commands should be optimized.
-g/re/ 1t. or g/re/ r7 could have the same nonlinear performance issues.
 
 <LI><P>
 You cannot enter one command across two physical lines

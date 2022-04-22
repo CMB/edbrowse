@@ -2976,6 +2976,60 @@ static bool readContext(int cx, int readLine1, int readLine2)
 	return true;
 }
 
+static void readContextG(int cx, int readLine1, int readLine2)
+{
+	int i, j;
+	int *label;
+	struct lineMap *t, *newmap;
+	int g_count, g_last;
+	int fardol = sessionList[cx].lw->dol, lines;
+
+	debugPrint(3, "mass read  %d %d %d %d", cx, readLine1, readLine2, fardol);
+
+	g_count = g_last = 0;
+	 t = cw->map + 1;
+	for(i = 1; i <= cw->dol; ++i, ++t)
+		if(t->gflag) ++g_count, g_last = i;
+
+// reading from an empty buffer changes nothing
+	if(!fardol) {
+		cw->dot = g_last;
+		fileSize = 0;
+		return;
+	}
+
+	if(readLine1 < 0)
+		readLine1 = 1, readLine2 = fardol;
+	lines = readLine2 + 1 - readLine1;
+
+	newmap = allocMem(LMSIZE * (cw->dol + 2 + lines * g_count));
+	 t = cw->map;
+	*newmap = *t++;
+	for(i = j = 1; i <= cw->dol; ++i, ++t) {
+		newmap[j] = *t;
+		if(i > j) {
+			label = NULL;
+			while ((label = nextLabel(label)))
+				if(*label == i)
+					*label = j;
+		}
+		if(t->gflag) { // read
+			undoPush();
+			readContext0(i, cx, readLine1, readLine2);
+			memcpy(newmap + j + 1, newpiece, LMSIZE*lines);
+			free(newpiece), newpiece = 0;
+			j += lines;
+			cw->dot = j;
+		}
+		++j;
+	}
+
+// map of lines has to null terminate
+	newmap[j] = *t;
+	free(cw->map), cw->map = newmap;
+	cw->dol = j - 1;
+}
+
 static bool writeContext(int cx, int writeLine)
 {
 	Window *lw, *save_cw;
@@ -3763,6 +3817,18 @@ static bool doGlobal(const char *line)
 // check for mass delete or mass join
 	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
 	p = line, block = -1, back = 0;
+	if(*p == 'r' && isdigitByte(p[1])) {
+// mass read is limited to a buffer, and the entire buffer
+		block = strtol(p + 1, (char**)&p, 10);
+		if(*p) goto nomass;
+		cmd = 'e'; // show errors
+		if (!cxCompare(block))
+			return false;
+		if (!cxActive(block, true))
+			return false;
+		readContextG(block, -1, -1);
+		return true;
+	}
 // prior lines, must begin with - or .-
 	if(*p == '-' || (*p == '.' && p[1] == '-')) {
 		if(*p == '.') ++p;

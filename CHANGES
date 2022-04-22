@@ -5,7 +5,7 @@ The unfold buffer (ur) command in database mode. Use this to update individual f
 
 The ebre, edbrowse modified regular expressions, command.  (toggle)
 
-mass delete and mass join, more efficient versions of global commands.
+mass delete, join, and read, more efficient versions of global commands.
 
 3.8.2.1
 Make the makefile process more portable and more flexible for packagers and individuals.
