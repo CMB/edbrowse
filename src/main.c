@@ -927,11 +927,12 @@ int runEbFunction(const char *line)
 
 // local copies of settings, to restore after function runs.
 	struct {
-		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse;
+		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo;
 		uchar dw, ls_sort;
 		char lsformat[12], showProgress;
 		char *currentAgent;
 		int agentIndex, debugLevel, timerspeed;
+		int ll, fll;
 	} save;
 
 /* Separate function name and arguments */
@@ -1000,6 +1001,9 @@ int runEbFunction(const char *line)
 		save.ci = caseInsensitive;
 		save.su8 = re_utf8;
 		save.vs = verifyCertificates;
+		save.ll = displayLength;
+		save.fll = formatLineLength;
+		save.fllo = formatOverflow;
 	}
 
 /* collect arguments, ~0 first */
@@ -1177,6 +1181,9 @@ done:
 		caseInsensitive = save.ci;
 		re_utf8 = save.su8;
 		verifyCertificates = save.vs;
+		displayLength = save.ll;
+		formatLineLength = save.fll;
+		formatOverflow = save.fllo;
 	}
 	return rc;
 
