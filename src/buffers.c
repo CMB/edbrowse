@@ -3768,8 +3768,9 @@ static bool doGlobal(const char *line)
 		if(*p == '.') ++p;
 		++p;
 		back = 1;
+		while(*p == '-') ++back, ++p;
 		if(isdigitByte(*p))
-			back = strtol(p, (char**)&p, 10);
+			back = strtol(p, (char**)&p, 10) + (back-1);
 // special case for -j, which is ok cause it still involves the current line.
 		if(back <= 1 && (*p == 'j' || *p == 'J')) {
 			block = 1 - back;
@@ -3784,8 +3785,9 @@ static bool doGlobal(const char *line)
 		block = 0;
 		if(*p != '+') goto masscommand;
 		block = 1, ++p;
+		while(*p == '+') ++block, ++p;
 		if(isdigitByte(*p))
-			block = strtol(p, (char**)&p, 10);
+			block = strtol(p, (char**)&p, 10) + (block-1);
 		goto masscommand;
 	}
 	if(*p == '.' && isalphaByte(p[1])) { ++p; goto masscommand; }
@@ -3793,8 +3795,10 @@ static bool doGlobal(const char *line)
 	if(!strncmp(p, ".,.+", 4)) { p += 4; goto massnumber; }
 	goto masscommand;
 massnumber:
-	if(!isdigitByte(*p)) block = 1;
-	else block = strtol(p, (char**)&p, 10);
+	block = 1;
+	while(*p == '+') ++block, ++p;
+	if(isdigitByte(*p))
+		block = strtol(p, (char**)&p, 10) + (block-1);
 masscommand:
 	if(p[0] && p[1]) goto nomass;
 	if(*p == 'd' || *p == 'D') {
