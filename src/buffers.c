@@ -3817,19 +3817,94 @@ static bool doGlobal(const char *line)
 // check for mass delete or mass join
 	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
 	p = line, block = -1, back = 0;
+	if(*p == '.' && p[1] == 'r') ++p;
 	if(*p == 'r' && isdigitByte(p[1])) {
-// mass read is limited to a buffer, and the entire buffer
+// mass read must read from a buffer
 		block = strtol(p + 1, (char**)&p, 10);
-		if(*p) goto nomass;
+		if(!*p) {
+			cmd = 'e'; // show errors
+			if (!cxCompare(block) || !cxActive(block, true))
+				return false;
+			readContextG(block, -1, -1);
+			return true;
+		}
+		if(*p != '@') goto nomass;
 		cmd = 'e'; // show errors
-		if (!cxCompare(block))
-			return false;
-		if (!cxActive(block, true))
-			return false;
-		readContextG(block, -1, -1);
-		return true;
+// This is basically a copy of the code we see in the command parser,
+// This should really be put into an atPartCracker() routine.
+		int lno1, lno2 = -1;
+		const Window *w2; // far window
+		char *q = strchr(line, ',');
+		if(q) *q = 0;
+		if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
+		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
+		(p[1] == ';' && p[2] == 0 && !q) ||
+		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
+		(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
+		(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
+		(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
+// syntax is good
+			if(!cxCompare(block) || !cxActive(block, true))
+				return false;
+			w2 = sessionList[block].lw;
+			if(!w2->dol) {
+				setError(MSG_EmptyBuffer);
+				return false;
+			}
+// session is ok, how bout the line numbers?
+			if(p[1] == '\'' &&
+			 !(lno1 = w2->labels[p[2] - 'a'])) {
+				setError(MSG_NoLabel, p[2]);
+				return false;
+			}
+			if(p[1] == '$')
+				lno1 = w2->dol;
+			if(p[1] == '.')
+				lno1 = w2->dot;
+			if(p[1] == ';')
+				lno1 = w2->dot, lno2 = w2->dol;
+			if(p[1] == '+')
+				lno1 = w2->dot + 1;
+			if(p[1] == '-')
+				lno1 = w2->dot - 1;
+			if(q) {
+				if(q[1] == '\'' &&
+				 !(lno2 = w2->labels[q[2] - 'a'])) {
+					setError(MSG_NoLabel, q[2]);
+					return false;
+				}
+				if(q[1] == '$')
+					lno2 = w2->dol;
+				if(q[1] == '.')
+					lno2 = w2->dot;
+				if(q[1] == '+')
+					lno2 = w2->dot + 1;
+				if(q[1] == '-')
+					lno2 = w2->dot - 1;
+			}
+			if(lno2 < 0)
+				lno2 = lno1;
+			if(lno1 == 0 || lno2 == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+			if(lno1 > w2->dol || lno2 > w2->dol) {
+				setError(MSG_LineHigh);
+				return false;
+			}
+			if(lno1 > lno2) {
+				setError(MSG_BadRange);
+				return false;
+			}
+			readContextG(block, lno1, lno2);
+			return true;
+		}
+				setError(MSG_AtSyntax);
+				return false;
 	}
-// prior lines, must begin with - or .-
+
+// Now check for d or j
+// prior lines must begin with - or .-
 	if(*p == '-' || (*p == '.' && p[1] == '-')) {
 		if(*p == '.') ++p;
 		++p;
