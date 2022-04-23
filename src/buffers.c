@@ -6252,6 +6252,21 @@ static char *showLinks(void)
 			nzFree(h);
 // next line is the description of the bookmark
 			h = pullString(p + 1, s - p - 1);
+			if(*s == '\n' && ln < cw->dol) {
+// description continues on the next line, and maybe beyond
+// but I'm only going to look at the next line.
+				int l;
+				char *p1 = (char*)fetchLine(ln+1, -1), *s1;
+				for (s1 = p1; (c = *s1) != '\n'; ++s1)
+					if (c == InternalCodeChar && s1[1] == '0'
+					    && s1[2] == '}')
+						break;
+				l = strlen(h);
+				h = realloc(h, l + 1 + (s1-p1) + 1);
+				h[l] = ' ';
+				memcpy(h + l + 1, p1, s1-p1);
+				h[l + 1 + (s1-p1)] = 0;
+			}
 			h2 = htmlEscape(h);
 			stringAndString(&a, &a_l, h2);
 			stringAndString(&a, &a_l, "\n</a>\n");
@@ -7579,7 +7594,7 @@ past_g_file:
 	}
 
 	if (cmd == 's') {
-/* Some shorthand, like s,2 to split the line at the second comma */
+// Some shorthand, like s,2 to split the line at the second comma
 		if (!first) {
 			strcpy(newline, "//%");
 			line = newline;
