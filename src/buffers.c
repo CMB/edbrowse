@@ -6262,7 +6262,7 @@ static char *showLinks(void)
 					    && s1[2] == '}')
 						break;
 				l = strlen(h);
-				h = realloc(h, l + 1 + (s1-p1) + 1);
+				h = reallocMem(h, l + 1 + (s1-p1) + 1);
 				h[l] = ' ';
 				memcpy(h + l + 1, p1, s1-p1);
 				h[l + 1 + (s1-p1)] = 0;
