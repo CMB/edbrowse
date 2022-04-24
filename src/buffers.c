@@ -4390,29 +4390,30 @@ and an indication that we need to abort any g// in progress.
 static int substituteText(const char *line)
 {
 	int whichField = 0;
-	bool bl_mode = false;	/* running the bl command */
-	bool g_mode = false;	/* s/x/y/g */
+	bool bl_mode = false;	// running the bl command
+	bool g_mode = false;	// s/x/y/g
 	bool ci = caseInsensitive;
 	bool forget = false;
+	bool ok = true; // substitutions ok so far
 	bool save_nlMode;
 	char c, *s, *t;
-	int nth = 0;		/* s/x/y/7 */
-	int lastSubst = 0;	/* last successful substitution */
-	char *re;		/* the parsed regular expression */
-	int ln;			/* line number */
+	int nth = 0;		// s/x/y/7
+	int lastSubst = 0;	// last successful substitution
+	char *re;		// the parsed regular expression
+	int ln, ln2;			// line number
 	int j, linecount, slashcount, nullcount, tagno, total, realtotal;
 	char lhs[MAXRE], rhs[MAXRE];
-	struct lineMap *mptr;
+	struct lineMap *mptr, *newmap = 0;
 
 	replaceString = 0;
 
-	subPrint = 1;		/* default is to print the last line substituted */
+	subPrint = 1;		// default is to print the last line substituted
 	re_cc = 0;
 	if (stringEqual(line, "`bl"))
 		bl_mode = true, breakLineSetup();
 
 	if (!bl_mode) {
-/* watch for s2/x/y/ for the second input field */
+// watch for s2/x/y/ for the second input field
 		if (isdigitByte(*line))
 			whichField = strtol(line, (char **)&line, 10);
 		else if (*line == '$')
@@ -4434,28 +4435,24 @@ static int substituteText(const char *line)
 			return -1;
 		strcpy(rhs, re);
 
-		if (*line) {	/* third delimiter */
+		if (*line) {	// third delimiter
 			++line;
 			subPrint = 0;
 			while ((c = *line)) {
 				if (c == 'g') {
-					g_mode = true;
-					++line;
+					g_mode = true, ++line;
 					continue;
 				}
 				if (c == 'i') {
-					ci = true;
-					++line;
+					ci = true, ++line;
 					continue;
 				}
 				if (c == 'f') {
-					forget = true;
-					++line;
+					forget = true, ++line;
 					continue;
 				}
 				if (c == 'p') {
-					subPrint = 2;
-					++line;
+					subPrint = 2, ++line;
 					continue;
 				}
 				if (isdigitByte(c)) {
@@ -4465,15 +4462,15 @@ static int substituteText(const char *line)
 					}
 					nth = strtol(line, (char **)&line, 10);
 					continue;
-				}	/* number */
+				}	// number
 				setError(MSG_SubSuffixBad);
 				return -1;
-			}	/* loop gathering suffix flags */
+			}	// loop gathering suffix flags
 			if (g_mode && nth) {
 				setError(MSG_SubNumberG);
 				return -1;
 			}
-		}		/* closing delimiter */
+		}		// closing delimiter
 
 		if (nth == 0 && !g_mode)
 			nth = 1;
@@ -4491,9 +4488,8 @@ static int substituteText(const char *line)
 		if (!re_cc)
 			return -1;
 	} else {
-
 		subPrint = 0;
-	}			/* bl_mode or not */
+	}
 
 	if (!globSub)
 		setError(-1);
@@ -4510,16 +4506,16 @@ static int substituteText(const char *line)
 		if (bl_mode) {
 			int newlen;
 			if (!breakLine(p, len, &newlen)) {
-/* you just should never be here */
+// you just should never be here
 				setError(MSG_BreakLong, 0);
 				nzFree(breakLineResult);
 				breakLineResult = 0;
 				return -1;
 			}
-/* empty line is not allowed */
+// empty line is not allowed
 			if (!newlen)
 				breakLineResult[newlen++] = '\n';
-/* perhaps no changes were made */
+// perhaps no changes were made
 			if (newlen == len && !memcmp(p, breakLineResult, len)) {
 				nzFree(breakLineResult);
 				breakLineResult = 0;
@@ -4527,8 +4523,8 @@ static int substituteText(const char *line)
 			}
 			replaceString = breakLineResult;
 			undoSpecialClear();
-/* But the regular substitute doesn't have the \n on the end.
- * We need to make this one conform. */
+// But the regular substitute doesn't have the \n on the end.
+// We need to make this one conform.
 			replaceStringLength = newlen - 1;
 		} else {
 
@@ -4546,7 +4542,7 @@ static int substituteText(const char *line)
 				sprintf(search, "%c%d<", InternalCodeChar,
 					tagno);
 				sprintf(searchend, "%c0>", InternalCodeChar);
-/* Ok, if the line contains a null, this ain't gonna work. */
+// Ok, if the line contains a null, this ain't gonna work.
 				s = strstr(p, search);
 				if (!s)
 					continue;
@@ -4566,7 +4562,7 @@ static int substituteText(const char *line)
 				continue;
 		}
 
-/* Did we split this line into many lines? */
+// Did we split this line into many lines?
 		replaceStringEnd = replaceString + replaceStringLength;
 		linecount = slashcount = nullcount = 0;
 		for (t = replaceString; t < replaceStringEnd; ++t) {
@@ -4597,13 +4593,13 @@ static int substituteText(const char *line)
 		}
 
 		if (cw->dirMode) {
-/* move the file, then update the text */
+// move the file, then update the text
 			char src[ABSPATH], *dest;
 			if (slashcount + nullcount + linecount) {
 				setError(MSG_DirNameBad);
 				goto abort;
 			}
-			p[len - 1] = 0;	/* temporary */
+			p[len - 1] = 0;	// temporary
 			t = makeAbsPath(p);
 			p[len - 1] = '\n';
 			if (!t)
@@ -4644,7 +4640,7 @@ static int substituteText(const char *line)
 // if substituting one line, remember it for undo
 			if(startRange == endRange && !globSub)
 				undoSpecial = getFieldFromBuffer(tagno), undo1line = ln, undoField = whichField;
-/* We're managing our own printing, so leave notify = 0 */
+// We're managing our own printing, so leave notify = 0
 			if (!infReplace(tagno, replaceString, false))
 				goto abort;
 			undoCompare();
@@ -4653,7 +4649,7 @@ static int substituteText(const char *line)
 
 			*replaceStringEnd = '\n';
 			if (!linecount) {
-/* normal substitute */
+// normal substitute
 				undoPush();
 				mptr = cw->map + ln;
 				if(cw->sqlMode)
@@ -4666,7 +4662,7 @@ static int substituteText(const char *line)
 					cw->undoable = false;
 				}
 			} else {
-/* Becomes many lines, this is the tricky case. */
+// Becomes many lines, this is the tricky case.
 				save_nlMode = cw->nlMode;
 				delText(ln, ln);
 				addTextToBuffer((pst) replaceString,
@@ -4675,21 +4671,21 @@ static int substituteText(const char *line)
 				cw->nlMode = save_nlMode;
 				endRange += linecount;
 				ln += linecount;
-/* There's a quirk when adding newline to the end of a buffer
- * that had no newline at the end before. */
+// There's a quirk when adding newline to the end of a buffer
+// that had no newline at the end before.
 				if (cw->nlMode && ln == cw->dol
 				    && replaceStringEnd[-1] == '\n') {
 					delText(ln, ln);
 					--ln, --endRange;
 				}
 			}
-		}		/* browse or not */
+		}		// browse or not
 
 		if (subPrint == 2)
 			displayLine(ln);
 		lastSubst = ln;
 		nzFree(replaceString);
-/* we may have just freed the result of a breakline command */
+// we may have just freed the result of a breakline command
 		breakLineResult = 0;
 	}			// loop over lines in the range
 
@@ -4721,7 +4717,7 @@ abort:
 		pcre2_code_free(re_cc);
 	}
 	nzFree(replaceString);
-/* we may have just freed the result of a breakline command */
+// we may have just freed the result of a breakline command
 	breakLineResult = 0;
 	return -1;
 }
