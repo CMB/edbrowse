@@ -3278,6 +3278,82 @@ static bool shellEscape(const char *line)
 	return true;
 }
 
+// parse portion syntax as in 7@'a,'b. ASsume context has been cracked,
+// and line begins with @.
+static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
+{
+	int lno1, lno2 = -1; // line numbers
+	const Window *w2; // far window
+	char *q = strchr(p, ',');
+	if(q) *q = 0;
+// check syntax first, then validate session number
+	if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
+	(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
+	(p[1] == ';' && p[2] == 0 && !q) ||
+	(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
+	(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
+	(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
+	(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
+// syntax is good
+		if(!cxCompare(cx) || !cxActive(cx, true))
+			return globSub = false;
+		w2 = sessionList[cx].lw;
+		if(!w2->dol && !writeMode) {
+			setError(MSG_EmptyBuffer);
+			return globSub = false;
+		}
+// session is ok, how bout the line numbers?
+		if(p[1] == '\'' &&
+		 !(lno1 = w2->labels[p[2] - 'a'])) {
+			setError(MSG_NoLabel, p[2]);
+			return globSub = false;
+		}
+		if(p[1] == '$')
+			lno1 = w2->dol;
+		if(p[1] == '.')
+			lno1 = w2->dot;
+		if(p[1] == ';')
+			lno1 = w2->dot, lno2 = w2->dol;
+		if(p[1] == '+')
+			lno1 = w2->dot + 1;
+		if(p[1] == '-')
+			lno1 = w2->dot - 1;
+		if(q) {
+			if(q[1] == '\'' &&
+			 !(lno2 = w2->labels[q[2] - 'a'])) {
+				setError(MSG_NoLabel, q[2]);
+				return globSub = false;
+			}
+			if(q[1] == '$')
+				lno2 = w2->dol;
+			if(q[1] == '.')
+				lno2 = w2->dot;
+			if(q[1] == '+')
+				lno2 = w2->dot + 1;
+			if(q[1] == '-')
+				lno2 = w2->dot - 1;
+		}
+		if(lno2 < 0)
+			lno2 = lno1;
+		if((lno1 == 0 || lno2 == 0) && !writeMode) {
+			setError(MSG_AtLine0);
+			return globSub = false;
+		}
+		if(lno1 > w2->dol || lno2 > w2->dol) {
+			setError(MSG_LineHigh);
+			return globSub = false;
+		}
+		if(lno1 > lno2) {
+			setError(MSG_BadRange);
+			return globSub = false;
+		}
+		*lp1 = lno1, *lp2 = lno2;
+		return true;
+	}
+	setError(MSG_AtSyntax);
+	return globSub = false;
+}
+
 /* Valid delimiters for search/substitute.
  * note that \ is conspicuously absent, not a valid delimiter.
  * I also avoid nestable delimiters such as parentheses.
@@ -3751,8 +3827,6 @@ static bool doGlobal(const char *line)
 	struct lineMap *t;
 	char *re;		/* regular expression */
 	int i, origdot, yesdot, nodot;
-	int block, back; // range for mass delete
-	const char *p;
 
 	if (!delim) {
 		setError(MSG_RexpMissing, icmd);
@@ -3824,11 +3898,13 @@ static bool doGlobal(const char *line)
 
 // check for mass delete or mass join
 	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
-	p = line, block = -1, back = 0;
+	int block = -1, back = 0; // range for mass delete
+// atPartCracker() might overwrite comma with null, so p has to be char*
+	char *p = (char*)line;
 	if(*p == '.' && p[1] == 'r') ++p;
 	if(*p == 'r' && isdigitByte(p[1])) {
 // mass read must read from a buffer
-		block = strtol(p + 1, (char**)&p, 10);
+		block = strtol(p + 1, &p, 10);
 		if(!*p) {
 			cmd = 'e'; // show errors
 			if (!cxCompare(block) || !cxActive(block, true))
@@ -3838,77 +3914,11 @@ static bool doGlobal(const char *line)
 		}
 		if(*p != '@') goto nomass;
 		cmd = 'e'; // show errors
-// This is basically a copy of the code we see in the command parser,
-// This should really be put into an atPartCracker() routine.
 		int lno1, lno2 = -1;
-		const Window *w2; // far window
-		char *q = strchr(line, ',');
-		if(q) *q = 0;
-		if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
-		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
-		(p[1] == ';' && p[2] == 0 && !q) ||
-		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
-		(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
-		(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
-		(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
-// syntax is good
-			if(!cxCompare(block) || !cxActive(block, true))
-				return false;
-			w2 = sessionList[block].lw;
-			if(!w2->dol) {
-				setError(MSG_EmptyBuffer);
-				return false;
-			}
-// session is ok, how bout the line numbers?
-			if(p[1] == '\'' &&
-			 !(lno1 = w2->labels[p[2] - 'a'])) {
-				setError(MSG_NoLabel, p[2]);
-				return false;
-			}
-			if(p[1] == '$')
-				lno1 = w2->dol;
-			if(p[1] == '.')
-				lno1 = w2->dot;
-			if(p[1] == ';')
-				lno1 = w2->dot, lno2 = w2->dol;
-			if(p[1] == '+')
-				lno1 = w2->dot + 1;
-			if(p[1] == '-')
-				lno1 = w2->dot - 1;
-			if(q) {
-				if(q[1] == '\'' &&
-				 !(lno2 = w2->labels[q[2] - 'a'])) {
-					setError(MSG_NoLabel, q[2]);
-					return false;
-				}
-				if(q[1] == '$')
-					lno2 = w2->dol;
-				if(q[1] == '.')
-					lno2 = w2->dot;
-				if(q[1] == '+')
-					lno2 = w2->dot + 1;
-				if(q[1] == '-')
-					lno2 = w2->dot - 1;
-			}
-			if(lno2 < 0)
-				lno2 = lno1;
-			if(lno1 == 0 || lno2 == 0) {
-				setError(MSG_AtLine0);
-				return false;
-			}
-			if(lno1 > w2->dol || lno2 > w2->dol) {
-				setError(MSG_LineHigh);
-				return false;
-			}
-			if(lno1 > lno2) {
-				setError(MSG_BadRange);
-				return false;
-			}
-			readContextG(block, lno1, lno2);
-			return true;
-		}
-				setError(MSG_AtSyntax);
-				return false;
+		if(!atPartCracker(block, false, p, &lno1, &lno2))
+			return false;
+		readContextG(block, lno1, lno2);
+		return true;
 	}
 
 // Now check for d or j
@@ -3919,7 +3929,7 @@ static bool doGlobal(const char *line)
 		back = 1;
 		while(*p == '-') ++back, ++p;
 		if(isdigitByte(*p))
-			back = strtol(p, (char**)&p, 10) + (back-1);
+			back = strtol(p, &p, 10) + (back-1);
 // special case for -j, which is ok cause it still involves the current line.
 		if(back <= 1 && (*p == 'j' || *p == 'J')) {
 			block = 1 - back;
@@ -3936,7 +3946,7 @@ static bool doGlobal(const char *line)
 		block = 1, ++p;
 		while(*p == '+') ++block, ++p;
 		if(isdigitByte(*p))
-			block = strtol(p, (char**)&p, 10) + (block-1);
+			block = strtol(p, &p, 10) + (block-1);
 		goto masscommand;
 	}
 	if(*p == '.' && isalphaByte(p[1])) { ++p; goto masscommand; }
@@ -3947,7 +3957,7 @@ massnumber:
 	block = 1;
 	while(*p == '+') ++block, ++p;
 	if(isdigitByte(*p))
-		block = strtol(p, (char**)&p, 10) + (block-1);
+		block = strtol(p, &p, 10) + (block-1);
 masscommand:
 	if(p[0] && p[1]) goto nomass;
 	if(*p == 'd' || *p == 'D') {
@@ -6704,135 +6714,42 @@ replaceframe:
 	if (cmd == 'w' && first == '+')
 		writeMode = O_APPEND, first = *++line;
 	else if(cmd == 'w' && isdigit(first)) {
-		int sno, lno; // session number line number
-		const Window *w2; // far window
-		sno = strtol(line, &p, 10);
-// check syntax first, then validate session number
-		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
-		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
-		(isdigit(p[1]) && (lno = stringIsNum(p+1)) >= 0))) {
+// check for at syntax
+		int sno = strtol(line, &p, 10);
+		int writeLine2;
+		if(*p == '@') {
+			if(!atPartCracker(sno, true, p, &writeLine, &writeLine2))
+				return false;
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
-				return false;
-			}
-			if(!cxCompare(sno) || !cxActive(sno, true))
 				return globSub = false;
-			w2 = sessionList[sno].lw;
+			}
+			const Window *w2 = sessionList[sno].lw;
 			if(w2->dirMode | w2->binMode | w2->browseMode | w2->sqlMode) {
 				setError(MSG_TextRec, sno);
 				return globSub = false;
 			}
-// session is ok, how bout the line number?
-			if(p[1] == '\'' &&
-			!(lno = w2->labels[p[2] - 'a'])) {
-				setError(MSG_NoLabel, p[2]);
-				return globSub = false;
-			}
-			if(p[1] == '$')
-				lno = w2->dol;
-			if(p[1] == '.')
-				lno = w2->dot;
-			if(p[1] == '+')
-				lno = w2->dot + 1;
-			if(p[1] == '-')
-				lno = w2->dot - 1;
-			if(lno > w2->dol) {
-				setError(MSG_LineHigh);
-				return globSub = false;
-			}
-// writeLine will remember that this happened, and succeeded.
-			writeLine = lno;
-// Clobber @, so it just looks like writing to a session,
+			writeLine = writeLine2;
+// by being positive, writeLine will remember that this happened.
+// Clobber @, so it looks like writing to a session,
 // and we'll set cx and go down that path,
 // then writeLine will send us down another path at the last minute.
 			*p = 0;
-		} else if(*p == '@') {
-			setError(MSG_AtSyntax);
-			return globSub = false;
 		}
 	}
 
-// may as well check r range while we're at it.
+// may as well check r at syntax while we're at it.
 	if(cmd == 'r' && isdigit(first)) {
-		int sno, lno1, lno2 = -1; // session number line numbers
-		const Window *w2; // far window
-		char *q = strchr(line, ',');
-		if(q)
-			*q = 0; // I'll put it back
-		sno = strtol(line, &p, 10);
-// check syntax first, then validate session number
-		if(*p == '@' && ((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
-		(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
-		(p[1] == ';' && p[2] == 0 && !q) ||
-		(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
-		(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
-		(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
-		(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
-// syntax is good
-			if(!cxCompare(sno) || !cxActive(sno, true))
-				return globSub = false;
-			w2 = sessionList[sno].lw;
-			if(!w2->dol) {
-				setError(MSG_EmptyBuffer);
-				return globSub = false;
-			}
-// session is ok, how bout the line numbers?
-			if(p[1] == '\'' &&
-			 !(lno1 = w2->labels[p[2] - 'a'])) {
-				setError(MSG_NoLabel, p[2]);
-				return globSub = false;
-			}
-			if(p[1] == '$')
-				lno1 = w2->dol;
-			if(p[1] == '.')
-				lno1 = w2->dot;
-			if(p[1] == ';')
-				lno1 = w2->dot, lno2 = w2->dol;
-			if(p[1] == '+')
-				lno1 = w2->dot + 1;
-			if(p[1] == '-')
-				lno1 = w2->dot - 1;
-			if(q) {
-				if(q[1] == '\'' &&
-				 !(lno2 = w2->labels[q[2] - 'a'])) {
-					setError(MSG_NoLabel, q[2]);
-					return globSub = false;
-				}
-				if(q[1] == '$')
-					lno2 = w2->dol;
-				if(q[1] == '.')
-					lno2 = w2->dot;
-				if(q[1] == '+')
-					lno2 = w2->dot + 1;
-				if(q[1] == '-')
-					lno2 = w2->dot - 1;
-			}
-			if(lno2 < 0)
-				lno2 = lno1;
-			if(lno1 == 0 || lno2 == 0) {
-				setError(MSG_AtLine0);
-				return globSub = false;
-			}
-			if(lno1 > w2->dol || lno2 > w2->dol) {
-				setError(MSG_LineHigh);
-				return globSub = false;
-			}
-			if(lno1 > lno2) {
-				setError(MSG_BadRange);
-				return globSub = false;
-			}
-// readLine will remember that this happened, and succeeded.
-			readLine1 = lno1, readLine2 = lno2;
-// Clobber @, so it just looks like reading from a session,
+		int sno = strtol(line, &p, 10);
+		if(*p == '@') { // at syntax
+			if(!atPartCracker(sno, false, p, &readLine1, &readLine2))
+				return false;
+// by being positive, readLine1 will remember that this happened.
+// Clobber @, so it looks like reading from a session,
 // and we'll set cx and go down that path,
 // then readLine will send us down another path at the last minute.
 			*p = 0;
-		} else if(*p == '@') {
-			setError(MSG_AtSyntax);
-			return globSub = false;
 		}
-		if(q)
-			*q = ',';
 	}
 
 	if(cmd == 'u' && cw->dirMode && undoSpecial) {
