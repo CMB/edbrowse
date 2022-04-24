@@ -1245,56 +1245,64 @@ static void addToMap(int nlines, int destl)
 	newpiece = 0;
 }
 
-/* Add a block of text into the buffer; uses addToMap(). */
-bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
+static int text2linemap(const pst inbuf, int length, bool *nlflag)
 {
-	int i, j, linecount = 0;
+	int i, j, lines = 0;
 	struct lineMap *t;
 
+	*nlflag = false;
 	if (!length)		// nothing to add
-		return true;
+		return lines;
 
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n') {
-			++linecount;
+			++lines;
 			if (sizeof(int) == 4) {
-				if (linecount + cw->dol > MAXLINES)
+				if (lines + cw->dol > MAXLINES)
 					i_printfExit(MSG_LineLimit);
 			}
 		}
 
-	if (destl == cw->dol)
-		cw->nlMode = false;
 	if (inbuf[length - 1] != '\n') {
-/* doesn't end in newline */
-		++linecount;	/* last line wasn't counted */
-		if (destl == cw->dol) {
-			cw->nlMode = true;
-			if (cmd != 'b' && !cw->binMode && showtrail)
-				i_puts(MSG_NoTrailing);
-		}
+// doesn't end in newline
+		++lines, *nlflag = true;
 	}
 
-	newpiece = t = allocZeroMem(linecount * LMSIZE);
+	newpiece = t = allocZeroMem(lines * LMSIZE);
 	i = 0;
-	while (i < length) {	/* another line */
+	while (i < length) {	// another line
 		j = i;
 		while (i < length)
 			if (inbuf[i++] == '\n')
 				break;
 		if (inbuf[i - 1] == '\n') {
-/* normal line */
+// normal line
 			t->text = allocMem(i - j);
 		} else {
-/* last line with no nl */
+// last line with no nl
 			t->text = allocMem(i - j + 1);
 			t->text[i - j] = '\n';
 		}
 		memcpy(t->text, inbuf + j, i - j);
 		++t;
-	}			/* loop breaking inbuf into lines */
+	}			// loop breaking inbuf into lines
+	return lines;
+}
 
-	addToMap(linecount, destl);
+// Add a block of text into the buffer; uses text2linemap() and addToMap().
+bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
+{
+	bool nlflag;
+	int lines = text2linemap(inbuf, length, &nlflag);
+	if(!lines) return true;
+	if (destl == cw->dol)
+		cw->nlMode = false;
+	if (nlflag && destl == cw->dol) {
+		cw->nlMode = true;
+		if (cmd != 'b' && !cw->binMode && showtrail)
+			i_puts(MSG_NoTrailing);
+	}
+	addToMap(lines, destl);
 	return true;
 }
 
