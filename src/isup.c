@@ -211,6 +211,10 @@ char *htmlEscape0(const char *s, bool do_and)
 			stringAndString(&t, &l, "&amp;");
 			continue;
 		}
+		if (*s == '\'' && do_and) {
+			stringAndString(&t, &l, "&apos;");
+			continue;
+		}
 		if (*s == '<') {
 			stringAndString(&t, &l, "&lt;");
 			continue;
