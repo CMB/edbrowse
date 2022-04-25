@@ -57,6 +57,7 @@ p.cen { text-align: center; }
 
 <UL>
 <LI><A HREF=#dev> Important Deviations From /bin/ed </A>
+<LI><A HREF=#edperf> Performance of the Editor </A>
 <LI><A HREF=#brace> Balancing Braces </A>
 <LI><A HREF=#cx> Context Switch </A>
 <LI><A HREF=#usage> Usage </A>
@@ -1025,27 +1026,6 @@ At this point ed stops, but I sweep again, and discover the second line, that co
 Neither implementation is particularly right or wrong, as far as I can tell.
 
 <LI><P>
-Certain g commands have been optimized for performance.
-for example, consider r !seq 100000, followed by g/[678]$/d.
-Line 6 is deleted, then the remaining lines are pulled up to fill in the gap.
-Next line 7 is deleted, then 8, then 16, and so on.
-This direct algorithm is quadratic in the size of the file, and becomes untenable for large files.
-Therefore, edbrowse invokes a linear algorithm when the subcommand deletes or joins a fixed number of lines containing the marked line, e.g. g/re/ .,+3J.
-In this case edbrowse prints "mass delete" or "mass join" at debug level 3 or higher.
-
-<P>
-Reading from a buffer is also optimized.
-g/re/ r7
-this prints "mass read" at debug level 3.
-You must read the contents of a buffer, or part of the buffer using the @ syntax.
-If you want to inject the contents of a file, read that file into a buffer first, and then use the above construct.
-This is more efficient anyways; you don't want to open that file over and over again.
-To implement g/xyz/ 1,3t. efficiently: 1,3w7 g/xyz/r7 q7.
-To implement g/xyz/+r5 efficiently: g/xyz/+s/$/uvw/ g/uvw$/r5 ,s/uvw$//.
-Other tricks are possible.
-Contact the developers if you feel other g commands should be optimized.
-
-<LI><P>
 You cannot enter one command across two physical lines
 by putting a backslash at the end of the first line.
 And there's no need to in any case, because perl supports \n translation.
@@ -1149,6 +1129,39 @@ new and interesting features, completely foreign to ed.
 These include the simultaneous edit of multiple files
 similar to emacs and vi,
 and the ability to browse an html file and edit its fill-out form.
+
+<h2> <A NAME=edperf> Performance of the Editor </A> </h2>
+
+<p>
+Certain g commands have been optimized for performance.
+for example, consider r !seq 100000, followed by g/[678]$/d.
+Line 6 is deleted, then the remaining lines are pulled up to fill in the gap.
+Next line 7 is deleted, then 8, then 16, and so on.
+This direct algorithm is quadratic in the size of the file, and becomes untenable for large files.
+Therefore, edbrowse invokes a linear algorithm when the subcommand deletes or joins a fixed number of lines containing the marked line, e.g. g/re/ -,+3J.
+In this case edbrowse prints "mass delete" or "mass join" at debug level 3 or higher.
+
+<P>
+Reading from a buffer is also optimized.
+g/re/ r7
+this prints "mass read" at debug level 3.
+You must read the contents of a buffer, or part of the buffer using the @ syntax.
+If you want to inject the contents of a file many times over, read that file into a buffer first, and then use the above construct.
+This is more efficient anyways; you don't want to open that file over and over again.
+
+<P>
+To implement g/xyz/ 1,3t. efficiently: 1,3w7 g/xyz/r7 q7.
+To implement g/xyz/+r5 efficiently: g/xyz/+s/$/uvw/ g/uvw$/r5 ,s/uvw$//.
+Other tricks are possible.
+
+<P>
+The s comand across a range, or the entire buffer, is optimized when it turns one line into many, e.g. ,s/doghouse/dog\nhouse/.
+However, this is not optimized when under the g command.
+If you want to split doghouse on lines that begin with xyz, instead of g/^xyz/ s/doghouse/dog\nhouse/
+try ,s/\(^xyz.*dog\)house/$1\nhouse/
+
+<P>
+Contact the developers if you feel other editor commands should be optimized.
 
 <h2> <A NAME=brace> Balancing Braces </A> </h2>
 

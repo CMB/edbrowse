@@ -4403,6 +4403,14 @@ The return can be true or false, with the usual meaning,
 but also a return of -1, which is failure,
 and an indication that we need to abort any g// in progress.
 -1 is a serious problem.
+If a line becomes more than one line after substitution, s/doghouse/dog\nhouse/
+we switch to newmap mode for efficiency. In case this happens
+thousands of times in a million line file.
+realloc newmap as necessary, adding 10% each time.
+There is always enough for dol2 lines and zero on each end.
+Like the other mass operations, this does not happen if in
+directory or browse or sql mode.
+None of those should inject newlines anyways.
 *********************************************************************/
 
 static int substituteText(const char *line)
@@ -4413,24 +4421,25 @@ static int substituteText(const char *line)
 	bool ci = caseInsensitive;
 	bool forget = false;
 	bool ok = true; // substitutions ok so far
-	bool save_nlMode;
 	char c, *s, *t;
 	int nth = 0;		// s/x/y/7
 	int lastSubst = 0;	// last successful substitution
 	char *re;		// the parsed regular expression
 	int ln, ln2;			// line number
+	int dol2, alloc2;
 	int j, linecount, slashcount, nullcount, tagno, total, realtotal;
 	char lhs[MAXRE], rhs[MAXRE];
 	struct lineMap *mptr, *newmap = 0;
+	bool hasMoved[MARKLETTERS];
 
 	replaceString = 0;
+	memset(hasMoved, 0, sizeof(hasMoved));
 
-	subPrint = 1;		// default is to print the last line substituted
 	re_cc = 0;
-	if (stringEqual(line, "`bl"))
-		bl_mode = true, breakLineSetup();
-
-	if (!bl_mode) {
+	if (stringEqual(line, "`bl")) {
+		bl_mode = true, breakLineSetup(), subPrint = 0;
+	} else {
+		subPrint = 1;	// default is to print the last line substituted
 // watch for s2/x/y/ for the second input field
 		if (isdigitByte(*line))
 			whichField = strtol(line, (char **)&line, 10);
@@ -4440,12 +4449,10 @@ static int substituteText(const char *line)
 			setError(MSG_RexpMissing, icmd);
 			return -1;
 		}
-
 		if (cw->dirMode && !dirWrite) {
 			setError(MSG_DirNoWrite);
 			return -1;
 		}
-
 		if (!regexpCheck(line, true, &re, &line))
 			return -1;
 		strcpy(lhs, re);
@@ -4505,18 +4512,26 @@ static int substituteText(const char *line)
 		regexpCompile(lhs, ci);
 		if (!re_cc)
 			return -1;
-	} else {
-		subPrint = 0;
 	}
 
 	if (!globSub)
 		setError(-1);
 
-	for (ln = startRange; ln <= endRange && !intFlag; ++ln) {
+	ln2 = 0;
+	for (ln = startRange; ln <= endRange; ++ln) {
 		char *p;
 		int len;
 
+		if(newmap) {
+			newmap[ln2] = cw->map[ln];
+			for(j = 0; j < MARKLETTERS; ++j)
+				if(cw->labels[j] == ln && !hasMoved[j])
+					cw->labels[j] = ln2, hasMoved[j] = true;
+		}
+
 		replaceString = 0;
+		if(intFlag) goto abort;
+		if(!ok) { ++ln2; continue; }
 
 		p = (char *)fetchLine(ln, -1);
 		len = pstLength((pst) p);
@@ -4526,17 +4541,16 @@ static int substituteText(const char *line)
 			if (!breakLine(p, len, &newlen)) {
 // you just should never be here
 				setError(MSG_BreakLong, 0);
-				nzFree(breakLineResult);
-				breakLineResult = 0;
-				return -1;
+				nzFree(breakLineResult), breakLineResult = 0;
+				goto abort;
 			}
 // empty line is not allowed
 			if (!newlen)
 				breakLineResult[newlen++] = '\n';
 // perhaps no changes were made
 			if (newlen == len && !memcmp(p, breakLineResult, len)) {
-				nzFree(breakLineResult);
-				breakLineResult = 0;
+				nzFree(breakLineResult), breakLineResult = 0;
+				++ln2;
 				continue;
 			}
 			replaceString = breakLineResult;
@@ -4549,7 +4563,6 @@ static int substituteText(const char *line)
 			if (cw->browseMode) {
 				char search[20];
 				char searchend[4];
-				undoPush();
 				findInputField(p, 1, whichField, &total,
 					       &realtotal, &tagno);
 				if (!tagno) {
@@ -4561,8 +4574,9 @@ static int substituteText(const char *line)
 					tagno);
 				sprintf(searchend, "%c0>", InternalCodeChar);
 // Ok, if the line contains a null, this ain't gonna work.
+// There should be no nulls in a browsed file.
 				s = strstr(p, search);
-				if (!s)
+				if (!s) // should never happen
 					continue;
 				s = strchr(s, '<') + 1;
 				t = strstr(s, searchend);
@@ -4576,8 +4590,7 @@ static int substituteText(const char *line)
 			}
 			if (j < 0)
 				goto abort;
-			if (!j)
-				continue;
+			if (!j) { ++ln2; continue; }
 		}
 
 // Did we split this line into many lines?
@@ -4598,17 +4611,15 @@ static int substituteText(const char *line)
 				setError(MSG_ReplaceNewline);
 				goto abort;
 			}
-
 			if (nullcount) {
 				setError(MSG_ReplaceNull);
 				goto abort;
 			}
-
 			*replaceStringEnd = '\n';
 			if (!sqlUpdateRow(ln, (pst) p, len - 1,
 			(pst) replaceString, replaceStringLength))
 				goto abort;
-		}
+		} // sql mode
 
 		if (cw->dirMode) {
 // move the file, then update the text
@@ -4643,7 +4654,7 @@ static int substituteText(const char *line)
 					p[len - 1] = '\n';
 				}
 			}	// source and dest are different
-}
+} // dir mode
 
 		if (cw->browseMode) {
 			if (nullcount) {
@@ -4665,56 +4676,100 @@ static int substituteText(const char *line)
 			cw->undoable = false;
 		} else {
 
+// time to update the text in the buffer
+			undoPush();
 			*replaceStringEnd = '\n';
 			if (!linecount) {
 // normal substitute
-				undoPush();
-				mptr = cw->map + ln;
+				mptr = newmap ? newmap + ln2 : cw->map + ln;
 				if(cw->sqlMode)
 					nzFree(mptr->text);
 				mptr->text = allocMem(replaceStringLength + 1);
 				memcpy(mptr->text, replaceString,
 				       replaceStringLength + 1);
-				if (cw->dirMode) {
-					undoCompare();
-					cw->undoable = false;
-				}
+				if (cw->dirMode)
+					undoCompare(), cw->undoable = false;
+				++ln2;
 			} else {
 // Becomes many lines, this is the tricky case.
-				save_nlMode = cw->nlMode;
-				delText(ln, ln);
-				addTextToBuffer((pst) replaceString,
-						replaceStringLength + 1, ln - 1,
-						false);
-				cw->nlMode = save_nlMode;
-				endRange += linecount;
-				ln += linecount;
+				bool notused;
+				text2linemap((pst) replaceString,
+				replaceStringLength + 1, &notused);
+				if(!newmap) {
+// switching over to newmap
+					debugPrint(3, "mass substitute");
+					dol2 = cw->dol;
+					alloc2 = dol2 / 9 * 10 + 60;
+					newmap = allocMem(LMSIZE * alloc2);
+					memcpy(newmap, cw->map,LMSIZE*(ln2 = ln));
+				}
+				dol2 += linecount;
+				if(dol2 + 2 > alloc2) {
+					alloc2 = dol2 / 9 * 10 + 20;
+					newmap = realloc(newmap, LMSIZE*alloc2);
+				}
+				++linecount;
+				memcpy(newmap + ln2, newpiece, linecount*LMSIZE);
+				free(newpiece), newpiece = 0;
+				ln2 += linecount;
 // There's a quirk when adding newline to the end of a buffer
 // that had no newline at the end before.
 				if (cw->nlMode && ln == cw->dol
-				    && replaceStringEnd[-1] == '\n') {
-					delText(ln, ln);
-					--ln, --endRange;
-				}
+				    && replaceStringEnd[-1] == '\n')
+					--ln2, --dol2;
 			}
 		}		// browse or not
 
-		if (subPrint == 2)
-			displayLine(ln);
-		lastSubst = ln;
+		if (subPrint == 2) {
+			if(!newmap) {
+				displayLine(ln);
+			} else {
+// this is hinky as hell, swap newmap in just to display the line
+				mptr = cw->map, cw->map = newmap;
+				displayLine(ln2 - 1);
+				cw->map = mptr;
+			}
+		}
+		lastSubst = newmap ? ln2 - 1 : ln;
 		nzFree(replaceString);
 // we may have just freed the result of a breakline command
 		breakLineResult = 0;
+		continue;
+
+abort:
+		if (re_cc) {
+			pcre2_match_data_free(match_data);
+			pcre2_code_free(re_cc);
+		}
+		nzFree(replaceString);
+	// we may have just freed the result of a breakline command
+		breakLineResult = 0;
+		ok = false;
+		++ln2;
 	}			// loop over lines in the range
+
+	if(newmap) { // close it out
+		for(; ln <= cw->dol; ++ln, ++ln2) {
+			newmap[ln2] = cw->map[ln];
+			for(j = 0; j < MARKLETTERS; ++j)
+				if(cw->labels[j] == ln && !hasMoved[j])
+					cw->labels[j] = ln2, hasMoved[j] = true;
+		}
+		newmap[ln2] = cw->map[ln]; // null terminate
+		free(cw->map), cw->map = newmap;
+cw->dol = ln2 - 1;
+	}
+
+	if (intFlag && !ok) {
+		setError(MSG_Interrupted);
+		return -1;
+	}
+
+	if(!ok) return -1;
 
 	if (re_cc) {
 		pcre2_match_data_free(match_data);
 		pcre2_code_free(re_cc);
-	}
-
-	if (intFlag) {
-		setError(MSG_Interrupted);
-		return -1;
 	}
 
 	if (!lastSubst) {
@@ -4728,16 +4783,6 @@ static int substituteText(const char *line)
 	if (subPrint == 1 && !globSub)
 		printDot();
 	return true;
-
-abort:
-	if (re_cc) {
-		pcre2_match_data_free(match_data);
-		pcre2_code_free(re_cc);
-	}
-	nzFree(replaceString);
-// we may have just freed the result of a breakline command
-	breakLineResult = 0;
-	return -1;
 }
 
 /*********************************************************************
