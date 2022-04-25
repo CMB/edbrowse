@@ -4229,7 +4229,7 @@ findField(const char *line, int ftype, int n,
 	char *h, *nmh;
 	char c;
 	static const char urlok[] =
-	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?@#%&-_+=:~";
+	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?@#%&-_+=:~*()'";
 
 	if (href)
 		*href = 0;
@@ -4326,9 +4326,9 @@ findField(const char *line, int ftype, int n,
 	nmh = 0;
 	s = line;
 	while (true) {
-/* skip past weird characters */
+// skip ahead to a letter, like http
 		while ((c = *s) != '\n') {
-			if (strchr(urlok, c))
+			if (isalpha(c))
 				break;
 			++s;
 		}
@@ -4339,10 +4339,24 @@ findField(const char *line, int ftype, int n,
 			++s;
 		h = pullString1(ss, s);
 // When a url ends in period, that is almost always the end of the sentence,
-// Please check out www.foobar.com/snork.
+// as in please check out www.foobar.com/snork.
 // and rarely part of the url.
-		if (s[-1] == '.')
+// Similarly for comma and apostrophe
+		if (s[-1] == '.' || s[-1] == ',' || s[-1] == '\'')
 			h[s - ss - 1] = 0;
+		if(s[-1] == ')') {
+// an unbalanced ) is probably not part of the url
+			int l = 0;
+// we can use ss here, we don't need it as a marker any more
+			for(ss = h + strlen(h) - 1; ss > h; --ss) {
+				if(*ss == ')') { ++l; continue; }
+				if(*ss == '(') { --l;
+					if(!l) break; // balanced
+				}
+			}
+			if(ss == h) // unbalanced
+				h[strlen(h) - 1] = 0;
+		}
 		unpercentURL(h);
 		if (!isURL(h)) {
 			free(h);
@@ -4368,7 +4382,7 @@ findField(const char *line, int ftype, int n,
 		nm = -1;
 		free(nmh);
 		nmh = 0;
-	}			/* loop over line */
+	}			// loop over line
 
 	if (nm < 0)
 		nm = 0;
