@@ -4726,8 +4726,9 @@ static int substituteText(const char *line)
 			} else {
 // this is hinky as hell, swap newmap in just to display the line
 				mptr = cw->map, cw->map = newmap;
+				j = cw->dol, cw->dol = dol2;
 				displayLine(ln2 - 1);
-				cw->map = mptr;
+				cw->map = mptr, cw->dol = j;
 			}
 		}
 		lastSubst = newmap ? ln2 - 1 : ln;
