@@ -642,7 +642,7 @@ bool getProtHostURL(const char *url, char *pp, char *hp)
 		}
 	}
 	return true;
-}				/* getProtHostURL */
+}
 
 // return user:password. Fails only if user or password too long.
 int getCredsURL(const char *url, char *buf)
@@ -679,7 +679,7 @@ const char *getDataURL(const char *url)
 	if (!rc)
 		return 0;
 	return s;
-}				/* getDataURL */
+}
 
 // return null for free syntax
 static const char *getDataURL1(const char *url)
@@ -690,7 +690,7 @@ static const char *getDataURL1(const char *url)
 	if (!rc || fs)
 		return 0;
 	return s;
-}				/* getDataURL1 */
+}
 
 void getDirURL(const char *url, const char **start_p, const char **end_p)
 {
@@ -719,7 +719,7 @@ void getDirURL(const char *url, const char **start_p, const char **end_p)
 slash:
 	*start_p = myslash;
 	*end_p = myslash + 1;
-}				/* getDirURL */
+}
 
 // I assume this is a properly formatted URL, thus # indicates hash
 char *findHash(const char *s)
@@ -1166,7 +1166,7 @@ static char dohex(char c, const char **sp)
 		d = ' ';	/* don't allow nulls */
 	*sp = s;
 	return d;
-}				/* dohex */
+}
 
 char *decodePostData(const char *data, const char *name, int seqno)
 {

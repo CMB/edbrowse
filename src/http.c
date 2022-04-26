@@ -130,6 +130,7 @@ static size_t curl_header_callback(char *header_line, size_t size, size_t nmemb,
 				   struct i_get *g);
 static bool ftpConnect(struct i_get *g, char *creds_buf);
 static bool gopherConnect(struct i_get *g);
+static bool dataConnect(struct i_get *g);
 static bool read_credentials(char *buffer);
 static const char *message_for_response_code(int code);
 
@@ -835,6 +836,11 @@ bool httpConnect(struct i_get *g)
 			setError(MSG_DomainEmpty);
 		return false;
 	}
+
+// data is like no other protocol
+	if(stringEqual(prot, "data"))
+		return dataConnect(g);
+
 // plugins can only be ok from one thread, the interactive thread
 // that calls up web pages at the user's behest.
 // None of this machinery need be threadsafe.
@@ -2221,6 +2227,39 @@ gopher_transfer_fail:
 		g->length = j;
 	}
 
+	return true;
+}
+
+static bool dataConnect(struct i_get *g)
+{
+	char *copy = cloneString(g->url);
+	char *colon = strchr(copy, ':') + 1;
+	char *comma = strchr(copy, ',');
+	debugPrint(3, "data protocol");
+	if(!comma) { // should never happen
+		debugPrint(3, "data has no comma");
+		nzFree(copy);
+		return 0;
+	}
+	*comma++ = 0;
+	if(comma - copy >= 8 && stringEqual(comma - 8, ";base64")) {
+		char *end;
+		if(base64Decode(comma, &end)) {
+			debugPrint(3, "base64 error in data");
+			nzFree(copy);
+			return true;
+		}
+		g->length = end - comma;
+		g->buffer = allocMem(g->length);
+		memcpy(g->buffer, comma, g->length);
+	} else {
+		unpercentString(comma);
+		g->length = strlen(comma);
+		g->buffer = cloneString(comma);
+	}
+// pull the type out of the data if we can
+	nzFree(copy);
+	g->cfn = cloneString("data:");
 	return true;
 }
 
