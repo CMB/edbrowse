@@ -2243,7 +2243,8 @@ static bool dataConnect(struct i_get *g)
 	}
 	*comma++ = 0;
 	if(comma - copy >= 8 && stringEqual(comma - 8, ";base64")) {
-		char *end;
+		debugPrint(3, "data:base64");
+		char *end = comma + strlen(comma);
 		if(base64Decode(comma, &end)) {
 			debugPrint(3, "base64 error in data");
 			nzFree(copy);
