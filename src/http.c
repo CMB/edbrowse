@@ -2252,12 +2252,23 @@ static bool dataConnect(struct i_get *g)
 		g->length = end - comma;
 		g->buffer = allocMem(g->length);
 		memcpy(g->buffer, comma, g->length);
+		comma[-8] = 0;
 	} else {
 		unpercentString(comma);
 		g->length = strlen(comma);
 		g->buffer = cloneString(comma);
 	}
+	if(*colon) {
 // pull the type out of the data if we can
+		strncpy(g->content, colon, sizeof(g->content) - 1);
+		caseShift(g->content, 'l');
+		debugPrint(3, "content %s", g->content);
+		g->charset = strchr(g->content, ';');
+		if (g->charset)
+			*(g->charset)++ = 0;
+	}
+	g->hcl = g->length;
+	debugPrint(4, "content length %lld", g->hcl);
 	nzFree(copy);
 	g->cfn = cloneString("data:");
 	return true;
