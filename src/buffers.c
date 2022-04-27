@@ -4338,15 +4338,22 @@ findField(const char *line, int ftype, int n,
 		while (strchr(urlok, *s))
 			++s;
 		h = pullString1(ss, s);
+// act upon the llinks we create, href='blah'
+		if(memEqualCI(h, "href=", 5)) strmove(h, h + 5);
+		if(memEqualCI(h, "src=", 4)) strmove(h, h + 4);
+		if(*h == '\'' || *h == ':') strmove(h, h + 1);
+		int l = strlen(h);
+		if(!l) { free(h); continue; }
 // When a url ends in period, that is almost always the end of the sentence,
 // as in please check out www.foobar.com/snork.
 // and rarely part of the url.
 // Similarly for comma and apostrophe
-		if (s[-1] == '.' || s[-1] == ',' || s[-1] == '\'')
-			h[s - ss - 1] = 0;
-		if(s[-1] == ')') {
+		c = h[l - 1];
+		if (c == '.' || c == ',' || c == '\'')
+			h[l - 1] = 0;
+		if(c == ')') {
 // an unbalanced ) is probably not part of the url
-			int l = 0;
+			l = 0;
 // we can use ss here, we don't need it as a marker any more
 			for(ss = h + strlen(h) - 1; ss > h; --ss) {
 				if(*ss == ')') { ++l; continue; }

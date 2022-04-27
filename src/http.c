@@ -2242,6 +2242,7 @@ static bool dataConnect(struct i_get *g)
 		return 0;
 	}
 	*comma++ = 0;
+	unpercentString(comma);
 	if(comma - copy >= 8 && stringEqual(comma - 8, ";base64")) {
 		debugPrint(3, "data:base64");
 		char *end = comma + strlen(comma);
@@ -2255,7 +2256,6 @@ static bool dataConnect(struct i_get *g)
 		memcpy(g->buffer, comma, g->length);
 		comma[-8] = 0;
 	} else {
-		unpercentString(comma);
 		g->length = strlen(comma);
 		g->buffer = cloneString(comma);
 	}

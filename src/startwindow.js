@@ -947,10 +947,12 @@ else p.appendChild(s.firstChild);
 
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
-HTMLCanvasElement = function() {};
-HTMLCanvasElement.prototype = new HTMLElement;
-HTMLCanvasElement.prototype.dom$class = "HTMLCanvasElement";
-HTMLCanvasElement.prototype.getContext = function(x) { return { addHitRegion: eb$nullfunction,
+// Because of the canvas element, I can't but the monster getContext function
+// into the prototype, I have to set it in the constructor.
+HTMLCanvasElement = function() {
+this.getContext = function(x) { return {
+canvas: this,
+ addHitRegion: eb$nullfunction,
 arc: eb$nullfunction,
 arcTo: eb$nullfunction,
 beginPath: eb$nullfunction,
@@ -998,7 +1000,9 @@ stroke: eb$nullfunction,
 strokeRect: eb$nullfunction,
 strokeText: eb$nullfunction,
 transform: eb$nullfunction,
-translate: eb$nullfunction }};
+translate: eb$nullfunction }}}
+HTMLCanvasElement.prototype = new HTMLElement;
+HTMLCanvasElement.prototype.dom$class = "HTMLCanvasElement";
 HTMLCanvasElement.prototype.toDataURL = function() {
 if(this.height === 0 || this.width === 0) return "data:,";
 // this is just a stub
