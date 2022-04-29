@@ -176,7 +176,7 @@ il nome del file non contiene /
 il nome di file termina con /
 caratteri non validi dopo il comando sm
 devi specificare esattamente uno tra %s dopo il comando B
-la riga non contiene un %c aperto
+0
 sia %c che %c sono sbilanciati su questa riga, prova B%c o B%c
 la riga non contiene una parentesi tonda, quadra o grafa sbilanciata
 impossibile trovare la riga che bilanci %c
@@ -685,8 +685,8 @@ multiple opzioni iniziano con %s
 0
 perl regular expressions
 edbrowse regular expressions
-0
-0
+la sessione + è fuori dai limiti, limite %d
+la sessione - è fuori dai limiti, limite %d
 0
 0
 0

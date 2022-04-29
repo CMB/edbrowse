@@ -176,7 +176,7 @@ Dateiname enthält keinen /
 Dateiname endet auf /
 ungültige Zeichen nach dem Kommando sm
 Nach dem Kommando e darf nur genau eines aus %s verwendet werden.
-Zeile enthält keine öffnende %c
+0
 %c und %c nicht gleichermaßen vorhanden auf dieser Zeile, versuchen Sie B%c oder B%c
 Zeile enthält keine ungleich verteilten runde, eckige oder geschweifte Klammern
 kann keine Zeile finden, in der %c ausgeglichen würde
@@ -685,8 +685,8 @@ mehrere Optionen beginnen mit %s
 0
 perl regulärer Ausdrucken
 edbrowse regulärer Ausdrucken
-0
-0
+Sitzung + ist außerhalb des Bereichs, %d Sitzungen
+Sitzung - ist außerhalb des Bereichs, %d Sitzungen
 0
 0
 0

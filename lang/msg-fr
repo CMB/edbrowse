@@ -176,7 +176,7 @@ le nom de fichier ne contient pas le caractère /
 le nom de fichier se termine par le caractère /
 commande sm suivie de caractères invalides
 vous devez spécifier exactement un %s après la commande B
-la ligne ne contient pas de %c ouvrant(e)
+0
 %c et %c non équilibrés sur cette ligne, essayez B%c ou B%c
 la ligne ne contient pas de parenthèses, de crochets ou d'accolades non équilibrés
 ne peux trouver de ligne équilibrant %c
@@ -685,8 +685,8 @@ attention, seules les %d premières colonnes seront sélectionnées
 0
 expression régulière perl
 expression régulière edbrowse
-0
-0
+débordement de la session +, la limite est de %d
+débordement de la session -, la limite est de %d
 0
 0
 0

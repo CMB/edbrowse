@@ -176,7 +176,7 @@ nome do arquivo não possui /
 nome do arquivo termina em /
 caracteres inválidos após o comando sm
 você deve especificar exatamente um dos %s após o comando B
-linha não possui um %c de abertura
+0
 ambos %c e %c não estão completados nesta linha; experimente B%c ou B%c
 linha não possui uma chave, um parêntese ou um colchete não completado
 impossível achar a linha que completa o %c
@@ -685,8 +685,8 @@ alerta: somente as primeiras %d colunas serão selecionadas
 0
 wyrażenie regularne perl
 wyrażenie regularne edbrowse
-0
-0
+a sessão + está fora do limite %d
+a sessão - está fora do limite %d
 0
 0
 0

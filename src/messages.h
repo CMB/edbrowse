@@ -785,4 +785,6 @@ enum {
 	MSG_DelUnfold,
 	MSG_EbreOff,
 	MSG_EbreOn,
+	MSG_EPlus,
+	MSG_EMinus,
 };

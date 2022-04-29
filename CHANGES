@@ -8,6 +8,8 @@ The ebre, edbrowse modified regular expressions, command.  (toggle)
 mass delete, join, and read, more efficient versions of global commands.
 Mass substitute across a range of lines when s injects newline into the string.
 
+e+ and e- commands.
+
 <a href=data:blah> protocol.
 
 3.8.2.1

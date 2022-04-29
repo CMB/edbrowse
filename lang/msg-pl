@@ -176,7 +176,7 @@ nazwa pliku nie zawiera '/'
 nazwa pliku kończy się znakiem '/'
 niedozwolone znaki po poleceniu 'sm'
 musisz podać dokładnie jedno z '%s' po poleceniu 'B'
-wiersz nie zawiera otwartego %c
+0
 zarówno %c jak i %c nie są domknięte w tym wierszu, spróbuj B%c lub B%c
 wiersz nie zawiera niedomkniętych nawiasów zwykłych, klamrowych ani kwadratowych
 nie można znaleźć wiersza z domknięciem %c
@@ -685,8 +685,8 @@ wiele opcji zaczyna się od %s
 0
 wyrażenie regularne perl
 wyrażenie regularne edbrowse
-0
-0
+sesja + jest poza dozwoloną granicą: %d
+sesja - jest poza dozwoloną granicą: %d
 0
 0
 0

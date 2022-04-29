@@ -4957,6 +4957,28 @@ static int twoLetter(const char *line, const char **runThis)
 	if (stringEqual(line, "qt"))
 		ebClose(0);
 
+	if(stringEqual(line, "e+")) {
+		for(n = context + 1; n < MAXSESSION; ++n)
+			if(sessionList[n].lw) {
+					cxSwitch(n, true);
+					return true;
+				}
+		cmd = 'e';
+		setError(MSG_EPlus, context);
+		return false;
+	}
+
+	if(stringEqual(line, "e-")) {
+		for(n = context - 1; n > 0; --n)
+			if(sessionList[n].lw) {
+					cxSwitch(n, true);
+					return true;
+				}
+		cmd = 'e';
+		setError(MSG_EMinus, context);
+		return false;
+	}
+
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
 		return true;
