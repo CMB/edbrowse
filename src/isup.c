@@ -27,38 +27,39 @@ struct PROTOCOL {
 	bool need_slashes;
 	bool need_slash_after_host;
 } protocols[] = {
-	{
-	"file", 0, true, false, false}, {
-	"http", 80, false, true, true}, {
-	"https", 443, false, true, true}, {
-	"pop3", 110, false, true, true}, {
-	"pop3s", 995, false, true, true}, {
-	"imap", 220, false, true, true}, {
-	"imaps", 993, false, true, true}, {
-	"smtp", 25, false, true, true}, {
-	"submission", 587, false, true, true}, {
-	"smtps", 465, false, true, true}, {
-	"proxy", 3128, false, true, true}, {
-	"ftp", 21, false, true, true}, {
-	"sftp", 22, false, true, true}, {
-	"scp", 22, false, true, true}, {
-	"ftps", 990, false, true, true}, {
-	"tftp", 69, false, true, true}, {
-	"rtsp", 554, false, true, true}, {
-	"pnm", 7070, false, true, true}, {
-	"finger", 79, false, true, true}, {
-	"smb", 139, false, true, true}, {
-	"mailto", 0, false, false, false}, {
-	"telnet", 23, false, false, false}, {
-	"tn3270", 0, false, false, false}, {
-	"data", 0, true, false, false}, {
-	"javascript", 0, true, false, false}, {
-	"git", 0, false, true, false}, {
-	"svn", 0, false, true, false}, {
-	"gopher", 70, false, true, true}, {
-	"magnet", 0, false, false, false}, {
-	"irc", 0, false, true, false}, {
-"", 0, false, false, false},};
+	{"file", 0, true, false, false},
+	{"http", 80, false, true, true},
+	{"https", 443, false, true, true},
+	{"pop3", 110, false, true, true},
+	{"pop3s", 995, false, true, true},
+	{"imap", 220, false, true, true},
+	{"imaps", 993, false, true, true},
+	{"smtp", 25, false, true, true},
+	{"submission", 587, false, true, true},
+	{"smtps", 465, false, true, true},
+	{"proxy", 3128, false, true, true},
+	{"ftp", 21, false, true, true},
+	{"sftp", 22, false, true, true},
+	{"scp", 22, false, true, true},
+	{"ftps", 990, false, true, true},
+	{"tftp", 69, false, true, true},
+	{"rtsp", 554, false, true, true},
+	{"pnm", 7070, false, true, true},
+	{"finger", 79, false, true, true},
+	{"smb", 139, false, true, true},
+	{"mailto", 0, false, false, false},
+	{"telnet", 23, false, false, false},
+	{"tn3270", 0, false, false, false},
+	{"data", 0, true, false, false},
+	{"javascript", 0, true, false, false},
+	{"data", 0, true, false, false},
+	{"git", 0, false, true, false},
+	{"svn", 0, false, true, false},
+	{"gopher", 70, false, true, true},
+	{"magnet", 0, false, false, false},
+	{"irc", 0, false, true, false},
+	{"", 0, false, false, false},
+};
 
 static int protocolByName(const char *p, int l)
 {
@@ -310,6 +311,7 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 {
 	const char *p, *q, *pp;
 	int a;
+	bool has_slashes = false;
 
 	if (proto)
 		*proto = NULL;
@@ -343,7 +345,7 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 	if (!url)
 		return false;
 
-/* Find the leading protocol:// */
+// Find the leading protocol://
 	a = -1;
 	p = strchr(url, ':');
 	if (p) {
@@ -359,7 +361,7 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 	if (p) {
 		q = p + 1;
 		if (*q == '/')
-			++q;
+			++q, has_slashes = true;
 		if (*q == '/')
 			++q;
 		skipWhite(&q);
@@ -391,6 +393,10 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 	} else
 		return false;
 
+// so we can edit the file u:v
+	if(a < 0 && !has_slashes)
+		return false;
+
 	if (a < 0 || protocols[a].free_syntax) {
 		if (data)
 			*data = p;
@@ -404,7 +410,7 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 	if (a < 0)
 		return true;	// don't know anything else
 
-/* find the end of the domain */
+// find the end of the domain
 	q = p + strcspn(p, "@?#/\1");
 	if (*q == '@') {	/* user:password@host */
 		pp = strchr(p, ':');
@@ -568,7 +574,7 @@ const char *getProtURL(const char *url)
 	memcpy(buf, s, l);
 	buf[l] = 0;
 	return buf;
-}				/* getProtURL */
+}
 
 // Is this a url without http:// in front?
 bool missingProtURL(const char *url)
@@ -1240,7 +1246,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 	}
 
 	return 0;
-}				/* decodePostData */
+}
 
 void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 {
@@ -1262,7 +1268,7 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 		*subj_p = decodePostData(url, "subject", 0);
 	if (body_p)
 		*body_p = decodePostData(url, "body", 0);
-}				/* decodeMailURL */
+}
 
 // Does a url match a pattern, from an entry in .ebrc
 // edbrowse.org matches edbrowse.org and foo.edbrowse.org
@@ -1342,7 +1348,7 @@ static bool isComment(const char *line)
 {
 	return (line[0] == '#' &&
 		strncmp(line, httponly_prefix, httponly_prefix_len) != 0);
-}				/* isComment */
+}
 
 static int count_tabs(const char *the_string)
 {

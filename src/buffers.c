@@ -330,6 +330,7 @@ static bool jdb_passthrough(const char *s)
 		"dbcss", "dbcss+", "dbcss-", "db",
 		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
+		"e+", "e-", "eret",
 		"bflist", "bglist", "help", 0
 	};
 	int i;

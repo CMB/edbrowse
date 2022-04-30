@@ -1157,7 +1157,7 @@ To implement g/xyz/+r5 efficiently: g/xyz/+s/$/uvw/ g/uvw$/r5 ,s/uvw$//.
 Other tricks are possible.
 
 <P>
-The s comand across a range is optimized when it turns one line into many, e.g. ,s/doghouse/dog\nhouse/.
+The s (substitute) command across a range is optimized when it turns one line into many, e.g. ,s/doghouse/dog\nhouse/.
 However, it is not optimized when under the g command.
 If you want to split doghouse on lines that begin with xyz, instead of g/^xyz/ s/doghouse/dog\nhouse/
 try ,s/\(^xyz.*dog\)house/$1\nhouse/
