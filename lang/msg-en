@@ -64,7 +64,7 @@ warning, the directory is inaccessible - the listing will be empty
 disaster, error message length %d is too long\n
 line %d: 
 not in directory mode
-buffer %d has been updated\n
+session %d has been updated\n
 no options
 form has been reset
 submitting form
@@ -89,8 +89,8 @@ Sorry, file %s already exists.\n
 abbreviated 
 empty attachment
 attachment 
-no buffers left, attachment discarded
-could not copy the attachment into buffer %d
+no sessions left, attachment discarded
+could not copy the attachment into session %d
 cannot create file %s, attachment is discarded\n
 cannot write to file %s, attachment is discarded\n
 no mail
@@ -202,7 +202,7 @@ nothing to undo
 please enter k[a-z]
 cannot label an entire range
 backing up 0 is invalid
-warning: no buffers available to handle the ancillary window
+warning: no sessions available to handle the ancillary window
 unexpected text after the q command
 cannot change the name of a directory
 cannot change the name of a table
@@ -219,8 +219,8 @@ cannot apply the %s command to a range
 g not available in database mode
 cannot apply the i%c command to a range
 cannot use i< in a global command
-buffer %d is empty
-buffer %d contains more than one line
+session %d is empty
+session %d contains more than one line
 cannot open %s
 cannot read from %s
 < text contains nulls
@@ -287,7 +287,7 @@ could not read the data from the server
 download complete
 cannot identify %s on the network
 the %s protocol is not supported by edbrowse
-warning: could not preload <buffer %d> with its initial text\n
+warning: could not preload <session %d> with its initial text\n
 download in progress
 cannot connect to %s
 download: 
@@ -627,7 +627,7 @@ search and substitute using utf8
 Warning: you may need to (temporarily) disable utf8 search and substitute\nwith the su8 command for this to work properly.
 primary key comprises more than 3 columns
 cannot determine the next value for the serial key(0)
-Table names are in buffer %d\n
+Table names are in session %d\n
 no datasource specified
 connecting to datasource %s\n
 row
