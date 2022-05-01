@@ -2737,7 +2737,7 @@ my ($j, $line, $href);
 
 if($fmode&$browsemode) {
 $line = fetchLine $endRange, 0;
-while($line =~ /\x80([\x85-\x8f]+){/g) {
+while($line =~ /\x80([\x85-\x8f]+)\{/g) {
 $j = revealNumber $1;
 $h = $$btags[$j];
 $href = $$h{href};
@@ -2971,7 +2971,7 @@ my ($i, $j, $h, $href, $line);
 my $addrtext = "";
 if($fmode&$browsemode) {
 $line = fetchLine $endRange, 0;
-while($line =~ /\x80([\x85-\x8f]+){(.*?)}/g) {
+while($line =~ /\x80([\x85-\x8f]+)\{(.*?)}/g) {
 $j = revealNumber $1;
 $i = $2;
 $h = $$btags[$j];
@@ -5184,7 +5184,7 @@ $refbuf =~ s/\s+$//;  # don't need trailing blank lines
 #  Let's start with link space link or link separater link
 $refbuf =~ s/} ?[-,|]? ?(\x80[\x85-\x8f]+{['"]?\w)/}\n$1/g;
 #  Separating punctuation at the end of the line.
-$refbuf =~ s/^({[^{}]+} ?),$/$1/mg;
+$refbuf =~ s/^(\{[^{}]+} ?),$/$1/mg;
 #  Delimiter at the start of line, before the first link.
 $refbuf =~ s/\n[-,|] ?(\x80[\x85-\x8f]+{['"]?\w)/\n$1/g;
 #  word delimiting punctuation space link.
