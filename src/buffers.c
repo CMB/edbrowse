@@ -1049,7 +1049,7 @@ static void freeWindow(Window *w)
 }
 
 /*********************************************************************
-Here are a few routines to switch contexts from one buffer to another.
+Here are a few routines to switch contexts from one session to another.
 This is how the user edits multiple sessions, or browses multiple
 web pages, simultaneously.
 *********************************************************************/
@@ -1112,11 +1112,11 @@ bool cxQuit(int cx, int action)
 	    lastq != cx &&
 /* last command was not q */
 	    !ismc &&
-/* not in fetchmail mode, which uses the same buffer over and over again */
+// not in fetchmail mode, which uses the same buffer over and over again
 	    !(w->dirMode | w->sqlMode) &&
-/* not directory or sql mode */
+// not directory or sql mode
 	    (!w->f0.fileName || !isURL(w->f0.fileName))) {
-/* not changing a url */
+// not changing a url
 		lastqq = cx;
 		setError(MSG_ExpectW);
 		if (cx != context)
@@ -1307,7 +1307,7 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 	return true;
 }
 
-/* Pass input lines straight into the buffer, until the user enters . */
+// Pass input lines straight into the buffer until the user enters .
 
 static bool inputLinesIntoBuffer(void)
 {
@@ -2093,7 +2093,7 @@ static int dircmp(const void *s, const void *t)
 	return rc;
 }
 
-/* Read the contents of a directory into the current buffer */
+// Read the contents of a directory into the current buffer
 static bool readDirectory(const char *filename)
 {
 	int len, j, linecount;
@@ -2256,8 +2256,8 @@ success:
 	return true;
 }
 
-/* Read a file, or url, into the current buffer.
- * Post/get data is passed, via the second parameter, if it's a URL. */
+// Read a file, or url, into the current buffer.
+// Post/get data is passed, via the second parameter, if it's a URL.
 static bool readFile(const char *filename, bool newwin,
 		     int fromframe, const char *fromthis, const char *orig_head)
 {
@@ -3694,7 +3694,7 @@ const char **split)
 		bool unmatch = false;
 		bool forget = false;
 		signed char incr;	/* forward or back */
-/* Don't look through an empty buffer. */
+// Don't look through an empty buffer.
 		if (cw->dol == 0) {
 			setError(MSG_EmptyBuffer);
 			return false;
@@ -7156,7 +7156,7 @@ replaceframe:
 	}
 
 	if (cmd == 'w') {
-		if (cx) {	/* write to another buffer */
+		if (cx) {	// write to another session
 			if (writeMode == O_APPEND) {
 				setError(MSG_BufferAppend);
 				return false;
@@ -7303,7 +7303,7 @@ replaceframe:
 /* we likely just created it; now quit it */
 		if (cxActive(cx, false) && !cxQuit(cx, 2))
 			return false;
-/* If changes were made to this buffer, they are undoable after the move */
+// If changes were made to this buffer, they are undoable after the move
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
@@ -8113,7 +8113,8 @@ bool edbrowseCommand(const char *line, bool script)
 	return rc;
 }
 
-/* Take some text, usually empty, and put it in a side buffer. */
+// Take some text, usually empty, and put it in a side buffer
+// in a different session.
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname)
 {
 	int svcx = context;

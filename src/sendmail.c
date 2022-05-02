@@ -301,7 +301,7 @@ empty:
 				setError(MSG_BufferXEmpty, cx);
 				goto freefail;
 			}
-			sprintf(newfilename, "<buffer %d>", cx);
+			sprintf(newfilename, "<session %d>", cx);
 			file = newfilename;
 			if (sessionList[cx].lw->f0.fileName)
 				file = sessionList[cx].lw->f0.fileName;
@@ -318,8 +318,8 @@ empty:
 	}			/* ismail negative or normal */
 
 	if (ismail) {
-/* Put newline at the end.  Yes, the buffer is allocated
- * with space for newline and null. */
+// Put newline at the end.  Yes, the buffer is allocated
+// with space for newline and null.
 		if (buf[buflen - 1] != '\n')
 			buf[buflen++] = '\n';
 /* check for subject: line */
@@ -436,7 +436,7 @@ empty:
 // alternative from a buffer is usually html; this doesn't fly if wev
 // send it over as plain text. This is a crude test.
 // Just look for a leading <
-	if(!strncmp(file, "<buffer ", 8)) {
+	if(!strncmp(file, "<session ", 9)) {
 		for (i = 0; i < buflen; ++i) {
 			c = buf[i];
 			if(!isspace(c)) break;

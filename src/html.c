@@ -320,7 +320,7 @@ void jSyncup(bool fromtimer, const Tag *active)
 				set_property_string_t(t, "value", 0);
 				continue;
 			}
-/* Now value is just <buffer 3>, which is meaningless. */
+/* Now value is just <session 3>, which is meaningless. */
 			nzFree(value);
 			cx = t->lic;
 			if (!cx)
@@ -4285,15 +4285,15 @@ nop:
 		if (itype == INP_TA) {
 			j = t->lic;
 			if (j)
-				sprintf(hnum, "%c%d<buffer %d%c0>",
+				sprintf(hnum, "%c%d<session %d%c0>",
 					InternalCodeChar, t->seqno, j,
 					InternalCodeChar);
 			else if (t->value[0])
-				sprintf(hnum, "%c%d<buffer text%c0>",
+				sprintf(hnum, "%c%d<session text%c0>",
 					InternalCodeChar, t->seqno,
 					InternalCodeChar);
 			else
-				sprintf(hnum, "%c%d<buffer ?%c0>",
+				sprintf(hnum, "%c%d<session ?%c0>",
 					InternalCodeChar, t->seqno,
 					InternalCodeChar);
 			ns_hnum();
@@ -4652,7 +4652,7 @@ bool itext(int d)
 			continue;
 		t->lic = sideBuffer(d, t->value, -1, 0);
 		change = true;
-		sprintf(newtext, "buffer %d", t->lic);
+		sprintf(newtext, "session %d", t->lic);
 // updateFieldInBuffer is crazy inefficient in that it searches through the
 // whole buffer, and we know it's on the current line, but really, how often
 // do you invoke this command?

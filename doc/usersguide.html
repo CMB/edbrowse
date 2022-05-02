@@ -596,12 +596,12 @@ f : print the name of the current file
 <br>w+ foo : append to foo
 <br>w/ : write to the lass component of the filename
 <br>8,20w7 : write lines 8 through 20 to session 7, overwriting whatever was there before
-<br>'a,'bw7@'c : write this block of text into buffer 7, at the line with label c
+<br>'a,'bw7@'c : write this block of text into session 7, at the line with label c
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
-<br>bflist : buffer list, all edbrowse sessions and their file names
+<br>bflist : buffer list, all edbrowse sessions and their file names or titles
 <br>bd : binary detection on files (toggle)
 <br>iu : automatically convert between iso8859 and utf8 (toggle)
 <P>
@@ -707,9 +707,9 @@ g : go to the link on the current line
 <br>s/,red/ : remove red from the select list
 <br>selsep=| : change the separator between items in a select list
 <br>selsep= : print the separator
-<br>i&lt;5 : read buffer 5 into the text input field, one line of text
-<br>i&lt;5@3 : read line 3 from buffer 5 into the text input field
-<br>i&lt;5@'c : read line label c from buffer 5 into the text input field
+<br>i&lt;5 : read session 5 into the text input field, one line of text
+<br>i&lt;5@3 : read line 3 from session 5 into the text input field
+<br>i&lt;5@'c : read line label c from session 5 into the text input field
 <br>i&lt;foo : read file foo into the text input field, one line of text
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
@@ -717,7 +717,7 @@ g : go to the link on the current line
 <br>i3? : describe the third input field on the current line
 <br>ipass2 : prompt for the content of the second input field, disabling echo
 <br>ib : allocate an input buffer for this textarea
-<br>ib7 : use buffer 7 for this input textarea
+<br>ib7 : use session 7 for this input textarea
 <br>shc : show columns of an html table
 <br>ur : unfold a row in an html table (toggle)
 <br>M4 : move this web page to session 4 and back up to the previous page
@@ -1148,7 +1148,7 @@ Reading from a buffer is also optimized.
 g/re/ r7
 this prints "mass read" at debug level 3.
 You must read the contents of a buffer, or part of the buffer using the @ syntax.
-If you want to inject the contents of a file many times over, read that file into a buffer first, and then use the above construct.
+If you want to inject the contents of a file many times over, read that file into a buffer in another session first, and then use the above construct.
 This is more efficient anyways; you don't want to open that file over and over again.
 
 <P>
@@ -1258,7 +1258,7 @@ Make sure everything is copacetic before you switch to another session.
 
 <P>
 Use the bflist (buffer list) command to see a list of all the editing sessions that are currently open.
-Edbrowse presents the session number, and the title if the session is a web page, or the file name.
+Edbrowse presents the session number, and the title if the session's buffer holds a web page, else it prints the file name.
 
 <P>
 Let's run through a cut&amp;paste example.
@@ -1359,7 +1359,7 @@ A single space can change the meaning.
 Here is another way, that reads instead of writes.
 It uses the special notation r2@'a,'b, which reads the prescribed text from a to b, into session 1, at the current location.
 The at sign makes all the difference.
-Say the word at to yourself: read the text starting *at* this line in the other buffer.
+Say the word at to yourself: read the text starting *at* this line in the other session.
 A label or a line number or $ or . or + or - or ; must follow @, and there can be no whitespace.
 There is no need to implement r3@, reading the entire file, as that is the same as r3.
 Complex expressions like @/xyz/-3 are not allowed here.
@@ -1437,7 +1437,7 @@ Note that set -e has the same effect in a bash script.
 Use -c alone to suppress processing of, and edit, the .ebrc configuration file.
 (This config file will be described later.)
 You might want to do this if your config file has syntax errors, which are displayed when edbrowse starts.
-Your config file is automatically loaded into buffer 1.
+Your config file is automatically loaded into session 1.
 Make changes, save the file, and type `config' to reload the file.
 If there is another error you may need to make another change, save, and config again.
 Continue until there are no errors.
@@ -2895,12 +2895,12 @@ The editing session is chosen for you, and appears in the input field.
 Consider the following form.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>Enter your email address: &lt;&gt;
-Enter your comments: &lt;buffer ?&gt;
+Enter your comments: &lt;session ?&gt;
 </font></PRE>
 
 <P>
 If you wish to enter any comments, you must allocate the buffer using the ib command.
-At this point &lt;buffer ?&gt; changes to &lt;buffer 2&gt; (or some such).
+At this point &lt;session ?&gt; changes to &lt;session 2&gt; (or some such).
 Session 2 was not active when browsing began, but it is now.
 Type e2 to move to session 2, prepare your comments,
 then type e1 to return to the input form.
@@ -2911,18 +2911,18 @@ This can be useful in scripts, whence you know where your buffers are and can po
 
 <P>
 On most web pages, the text area starts out blank,
-whence buffer 2 will be empty,
+whence session 2 will be empty,
 but this is not always the case.
 Be sure to check for pre-existing text before you start typing your thoughts.
 A particularly arrogant site might preload the text area with:
 "I love your website because:".
-Preset text is indicated by &lt;buffer text&gt; rather than &lt;buffer ?&gt;.
+Preset text is indicated by &lt;session text&gt; rather than &lt;session ?&gt;.
 
 <P>
 When you finally submit the form,
 as discussed in the next section,
-the text in buffer 2, associated with the second editing session,
-will replace the words "bufffer 2" in the input field,
+the text in session 2
+will replace the words "session 2" in the input field,
 and your carefully crafted comments are on their way.
 
 <h2> <A NAME=button> Push The Button </A> </h2>
@@ -3182,7 +3182,7 @@ Don't edit it when any web pages are active, or you may run into race conditions
 
 <P>
 speaking of race conditions, don't surf the net using separate instances of edbrowse running in different virtual consoles.
-Instead, run one instance of edbrowse with different web pages in different buffers.
+Instead, run one instance of edbrowse with different web pages in different sessions.
 Parallel edbrowse programs could each write out the cookie file independently,
 and the second could conceivably clobber some cookies that were set by the first.
 It's only a minor nuisance, and you might not even notice.
@@ -3614,7 +3614,7 @@ This effectively puts the old text back, and runs the onchange code, as though y
 Sometimes the input field is long, and a substitute doesn't do what you expect it to do, so the undo command is convenient.
 
 <P>
-If you are formulating a text response in a textarea, that is done in another buffer,
+If you are formulating a text response in a textarea, that is done in another session,
 and you have the full power of the editor, including the undo command.
 
 <h2> <A NAME=jex> Javascript Debugger </A> </h2>
@@ -5123,8 +5123,8 @@ But don't rely on it!
 Now, how about the seventh column in our example, the one called "picture"?
 This is the customer's picture, a jpg image that is in binary,
 and cannot be easily folded into an editing session.
-Instead, it is stored in another buffer,
-e.g. buffer 9, and this is indicated by &lt;9&gt;.
+Instead, it is stored in another session,
+e.g. session 9, and this is indicated by &lt;9&gt;.
 You can switch to session 9 and save the file, or throw it away.
 
 <P>
@@ -5152,7 +5152,7 @@ datasource = retail,mylogin,mypassword
 
 <P>
 This can be changed at run time by the ds= command.
-Make sure you do not refer to any old rows in buffer after you have switched to a new data source.
+Make sure you do not refer to any old rows in your buffer after you have switched to a new data source.
 
 <P>
 In some cases you can access other databases without changing the data source.
