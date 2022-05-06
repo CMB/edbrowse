@@ -4216,6 +4216,44 @@ replaceText(const char *line, int len, const char *rhs,
 	return true;
 }
 
+// find the open textarea on the current line.
+static int openTA(pst s)
+{
+	uchar c;
+	bool hascodes = false;
+	int tag, lev = 0;
+	const Tag *t;
+	while((c = *s) != '\n') {
+		if(c != InternalCodeChar || !isdigitByte(s[1])) { ++s; continue; }
+		hascodes = true;
+		tag = strtol((char*)s + 1, (char**)&s, 10);
+		c = *s;
+		if(c == '<') ++lev;
+		if(c == '>') --lev;
+	}
+// lev should always be 0 or 1
+	if(lev != 1) return hascodes ? -1 : 0;
+	t = tagList[tag];
+	if(t->action == TAGACT_INPUT && t->itype == INP_TA) return tag;
+	debugPrint(3, "tag %d should be the start of a textarea", tag);
+	return -1;
+}
+
+// find the open textarea, if you are editing that textarea.
+static int findOpenTA(int ln)
+{
+	pst p;
+	int tag;
+	for(--ln; ln; --ln) {
+		p = fetchLine(ln, -1);
+		tag = openTA(p);
+		if(tag < 0) return 0;
+		if(tag > 0) return tag;
+	}
+// all the way back to the start of the buffer
+	return 0;
+}
+
 static void
 findField(const char *line, int ftype, int n,
 	  int *total, int *realtotal, int *tagno, char **href,
@@ -4283,17 +4321,27 @@ findField(const char *line, int ftype, int n,
 				else
 					nm = -1;
 			}
-		}		/* loop over line */
+		}		// loop over line
+
+// see if we're in the midst of a textarea
+		if(!nt && ftype == 1 &&
+		(n < 0 || n == 1) &&
+		(j = findOpenTA(endRange))) {
+// at present there should be no way to get here
+			debugPrint(1, "open textarea %d shouldn't exist", j);
+			if (total) *total = 1;
+			if (realtotal) *realtotal = 1;
+			if (tagno) *tagno = j;
+			return;
+		}
+
 	}
 
 	if (nm < 0)
 		nm = 0;
-	if (total)
-		*total = nrt;
-	if (realtotal)
-		*realtotal = nt;
-	if (tagno)
-		*tagno = nm;
+	if (total) *total = nrt;
+	if (realtotal) *realtotal = nt;
+	if (tagno) *tagno = nm;
 	if (!ftype && nm) {
 		t = tagList[nm];
 		if (tagp)
