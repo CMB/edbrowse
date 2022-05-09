@@ -42,10 +42,10 @@ void prepareForBrowse(char *h, int h_len)
 }
 
 /* An input field cannot contain newline, null, or the InternalCodeChar */
-// Revised June 2018, maybe newline is ok. We need it for textarea.
 void prepareForField(char *h)
 {
 	while (*h) {
+// this line is goofy cause null would terminate the loop
 		if (*h == 0)
 			*h = ' ';
 		if (*h == InternalCodeChar)

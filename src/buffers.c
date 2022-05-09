@@ -4894,13 +4894,14 @@ Speaking of e<file and its ilk, here is the function that
 reads in the data.
 *********************************************************************/
 
-static char *lessFile(const char *line)
+static char *lessFile(const char *line, bool tamode)
 {
 	bool fromfile = false;
 	int j, n;
 	int lno1, lno2;
 	const Window *w2; // far window
 	char *line2;
+	int line2len;
 	skipWhite(&line);
 	if (!*line) {
 		setError(MSG_NoFileSpecified);
@@ -4918,26 +4919,28 @@ static char *lessFile(const char *line)
 				setError(MSG_BufferXEmpty, n);
 				return 0;
 			}
-				if (dol > 1) {
+				if (dol > 1 && !tamode) {
 					setError(MSG_BufferXLines, n);
 					return 0;
 				}
-			lno1 = 1;
+			lno1 = 1, lno2 = dol;
 		} else {
 			if(!atPartCracker(n, false, p, &lno1, &lno2))
 				return false;
-			if (lno2 > lno1) {
+			if (lno2 > lno1 && !tamode) {
 				setError(MSG_BufferXLines, n);
 				return 0;
 			}
 		}
-		p = (char *)fetchLineContext(lno1, 1, n);
-		plen = pstLength((pst) p);
-		line2 = allocMem(plen + 1);
-		memcpy(line2, p, plen);
-		line2[plen] = 0;
-		n = plen;
-		nzFree(p);
+		line2 = initString(&line2len);
+		while(lno1 <= lno2) {
+			p = (char *)fetchLineContext(lno1, 1, n);
+			plen = pstLength((pst) p);
+			stringAndBytes(&line2, &line2len, p, plen);
+			nzFree(p);
+			++lno1;
+		}
+		n = line2len;
 	} else {
 		if (!envFile(line, &line))
 			return 0;
@@ -4948,14 +4951,16 @@ static char *lessFile(const char *line)
 	for (j = 0; j < n; ++j) {
 		if (line2[j] == 0) {
 			setError(MSG_LessNull);
+			nzFree(line2);
 			return 0;
 		}
 		if (line2[j] == '\r'
 		    && !fromfile && j < n - 1 && line2[j + 1] != '\n') {
 			setError(MSG_InputCR);
+			nzFree(line2);
 			return 0;
 		}
-		if (line2[j] == '\r' || line2[j] == '\n')
+		if ((line2[j] == '\r' || line2[j] == '\n') && !tamode)
 			break;
 	}
 	line2[j] = 0;
@@ -5437,7 +5442,7 @@ et_go:
 // and be sure to document it in usersguide.
 #if 0
 	if (strchr("bwref", line[0]) && line[1] == '<') {
-		allocatedLine = lessFile(line + 2);
+		allocatedLine = lessFile(line + 2, false);
 		if (allocatedLine == 0)
 			return false;
 		n = strlen(allocatedLine);
@@ -7723,7 +7728,7 @@ past_g_file:
 						setError((t->lic ? MSG_Textarea : MSG_Textarea0), t->lic);
 						return false;
 					}
-					allocatedLine = lessFile(line);
+					allocatedLine = lessFile(line, false);
 					if (!allocatedLine)
 						return false;
 					prepareForField(allocatedLine);

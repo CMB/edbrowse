@@ -1841,10 +1841,10 @@ void freeTags(Window *w)
 			continue;
 		if (t->itype != INP_TA)
 			continue;
-		if (!(n = t->lic))
+		if ((n = t->lic) > 0)
 			continue;
 		freeEmptySideBuffer(n);
-	}			/* loop over tags */
+	}			// loop over tags
 
 	for (i = 0; i < w->numTags; ++i, ++e) {
 		t = *e;
