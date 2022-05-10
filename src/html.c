@@ -2361,9 +2361,12 @@ void domSetsTagValue(Tag *t, const char *newtext)
 	if (t->itype == INP_HIDDEN || t->itype == INP_RADIO
 	    || t->itype == INP_FILE)
 		return;
+	nzFree(t->value);
+	t->value = cloneString(newtext);
 	if (t->itype == INP_TA) {
 		int side = t->lic;
-		if (side <= 0 || side >= MAXSESSION || side == context)
+		if(side < 0) side = t->lic = 0;
+		if (side == 0 || side >= MAXSESSION || side == context)
 			return;
 		if (sessionList[side].lw == NULL)
 			return;
@@ -2372,8 +2375,6 @@ void domSetsTagValue(Tag *t, const char *newtext)
 		sideBuffer(side, newtext, -1, 0);
 		return;
 	}
-	nzFree(t->value);
-	t->value = cloneString(newtext);
 }
 
 bool charInOptions(char c)
