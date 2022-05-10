@@ -33,8 +33,8 @@ bool edbrowseCommand(const char *line, bool script) ;
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname);
 void freeEmptySideBuffer(int n);
 bool browseCurrentBuffer(void) ;
-bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p);
-char *getFieldFromBuffer(int tagno);
+bool locateTagInBuffer(int tagno, int *ln1_p, int *ln2_p, char **p1_p, char **p2_p, char **s_p, char **t_p);
+char *getFieldFromBuffer(int tagno, int ln0);
 int fieldIsChecked(int tagno);
 
 /* sourcefile=dbodbc.c (and others) */
@@ -113,7 +113,7 @@ char *htmlParse(char *buf, int remote);
 bool htmlTest(void);
 void infShow(int tagno, const char *search);
 bool itext(int d);
-bool infReplace(int tagno, const char *newtext, bool notify);
+bool infReplace(int tagno, char *newtext, bool notify);
 bool infPush(int tagno, char **post_string);
 void domSetsTagValue(Tag *t, const char *newtext);
 void domSubmitsForm(Tag *t, bool reset);

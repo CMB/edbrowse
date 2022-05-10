@@ -1100,7 +1100,7 @@ bool cxQuit(int cx, int action)
 	if (!w)
 		i_printfExit(MSG_QuitNoActive, cx);
 
-/* action = 3 means we can trash data */
+// action = 3 means we can trash data
 	if (action == 3) {
 		w->changeMode = false;
 		action = 2;
@@ -4738,7 +4738,7 @@ static int substituteText(const char *line)
 			*replaceStringEnd = 0;
 // if substituting one line, remember it for undo
 			if(startRange == endRange && !globSub)
-				undoSpecial = getFieldFromBuffer(tagno), undo1line = ln, undoField = whichField;
+				undoSpecial = getFieldFromBuffer(tagno, 0), undo1line = ln, undoField = whichField;
 // We're managing our own printing, so leave notify = 0
 			if (!infReplace(tagno, replaceString, false))
 				goto abort;
@@ -4897,7 +4897,7 @@ reads in the data.
 static char *lessFile(const char *line, bool tamode)
 {
 	bool fromfile = false;
-	int j, n;
+	int j, k, n;
 	int lno1, lno2;
 	const Window *w2; // far window
 	char *line2;
@@ -4948,19 +4948,19 @@ static char *lessFile(const char *line, bool tamode)
 			return 0;
 		fromfile = true;
 	}
+	for (j = k = 0; j < n; ++j) {
+		if(line2[j] == '\r' && j < n - 1 && line2[j+1] == '\n')
+			continue;
+		line2[k++] = line2[j];
+	}
+	n = k;
 	for (j = 0; j < n; ++j) {
 		if (line2[j] == 0) {
-			setError(MSG_LessNull);
+			setError(MSG_InputNull2);
 			nzFree(line2);
 			return 0;
 		}
-		if (line2[j] == '\r'
-		    && !fromfile && j < n - 1 && line2[j + 1] != '\n') {
-			setError(MSG_InputCR);
-			nzFree(line2);
-			return 0;
-		}
-		if ((line2[j] == '\r' || line2[j] == '\n') && !tamode)
+		if (line2[j] == '\n' && !tamode)
 			break;
 	}
 	line2[j] = 0;
@@ -6941,7 +6941,7 @@ replaceframe:
 		s = strchr(s, '<') + 1;
 		if(!(t = strstr(s, searchend)))
 			return false;
-		undoSpecial = getFieldFromBuffer(tagno);
+		undoSpecial = getFieldFromBuffer(tagno, 0);
 		j = infReplace(tagno, oldline, true);
 		nzFree(oldline);
 		if(!j)
@@ -7724,20 +7724,15 @@ past_g_file:
 						setError(MSG_IG);
 						return (globSub = false);
 					}
-					if (t->itype == INP_TA) {
-						setError((t->lic ? MSG_Textarea : MSG_Textarea0), t->lic);
-						return false;
-					}
-					allocatedLine = lessFile(line, false);
+					allocatedLine = lessFile(line, (t->itype == INP_TA));
 					if (!allocatedLine)
 						return false;
-					prepareForField(allocatedLine);
 					line = allocatedLine;
 					scmd = '=';
 				}
 
 				if (scmd == '=') {
-					rc = infReplace(tagno, line, true);
+					rc = infReplace(tagno, (char*)line, true);
 					if (newlocation)
 						goto redirect;
 					return rc;
@@ -8385,10 +8380,12 @@ bool browseCurrentBuffer(void)
 	return true;
 }
 
-bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
+bool locateTagInBuffer(int tagno, int *ln1_p, int *ln2_p,
+char **p1_p, char **p2_p,
+char **s_p, char **t_p)
 {
 	int ln, n;
-	char *p, *s, *t, c;
+	char *p, *s = 0, *t, c;
 	char search[20];
 	char searchend[4];
 
@@ -8397,43 +8394,67 @@ bool locateTagInBuffer(int tagno, int *ln_p, char **p_p, char **s_p, char **t_p)
 	n = strlen(search);
 	for (ln = 1; ln <= cw->dol; ++ln) {
 		p = (char *)fetchLine(ln, -1);
+		if(s) goto look4end;
 		for (s = p; (c = *s) != '\n'; ++s) {
 			if (c != InternalCodeChar)
 				continue;
 			if (!strncmp(s, search, n))
 				break;
 		}
-		if (c == '\n')
-			continue;	/* not here, try next line */
+		if (c == '\n') { s = 0; continue; }
 		s = strchr(s, '<') + 1;
-		t = strstr(s, searchend);
-		if (!t)
-			i_printfExit(MSG_NoClosingLine, ln);
-		*ln_p = ln;
-		*p_p = p;
+		*ln1_p = ln;
+		*p1_p = p;
 		*s_p = s;
+look4end:
+		t = (ln == *ln1_p ? s : p);
+		for (; (c = *t) != '\n'; ++t)
+			if(!strncmp(t, searchend, 3)) break;
+		if(c == '\n') continue;
 		*t_p = t;
+		*ln2_p = ln;
+		*p2_p = p;
 		return true;
 	}
 
 	return false;
 }
 
-char *getFieldFromBuffer(int tagno)
+char *getFieldFromBuffer(int tagno, int ln0)
 {
-	int ln;
-	char *p, *s, *t;
-	if (locateTagInBuffer(tagno, &ln, &p, &s, &t))
+	int ln1, ln2;
+	char *p1, *p2, *s, *t;
+	char *a;
+	int len, j;
+	if (!locateTagInBuffer(tagno, &ln1, &ln2, &p1, &p2, &s, &t))
+		return 0; 	// apparently the line has been deleted
+	if(ln1 == ln2) // high runner case
 		return pullString1(s, t);
-	/* line has been deleted, revert to the reset value */
-	return 0;
+
+// fold the textarea into one string
+	a = initString(&len);
+	while(*s != '\n')
+		stringAndChar(&a, &len, *s++);
+// in this context we need crlf
+	stringAndChar(&a, &len, '\r');
+	stringAndChar(&a, &len, '\n');
+	for(; ln1 < ln2; ++ln1) {
+		p1 = (char*)fetchLine(ln1, -1);
+		j = pstLength((pst)p1);
+		stringAndBytes(&a, &len, p1, j);
+		a[len-1] = '\r';
+	stringAndChar(&a, &len, '\n');
+	}
+	while(p2 != t)
+		stringAndChar(&a, &len, *p2++);
+	return a;
 }
 
 int fieldIsChecked(int tagno)
 {
-	int ln;
-	char *p, *s, *t;
-	if (locateTagInBuffer(tagno, &ln, &p, &s, &t))
+	int ln1, ln2;
+	char *p1, *p2, *s, *t;
+	if (locateTagInBuffer(tagno, &ln1, &ln2, &p1, &p2, &s, &t))
 		return (*s == '+');
 	return -1;
 }

@@ -297,7 +297,7 @@ void jSyncup(bool fromtimer, const Tag *active)
 			continue;
 		}
 
-		value = getFieldFromBuffer(t->seqno);
+		value = getFieldFromBuffer(t->seqno, 0);
 /* If that line has been deleted from the user's buffer,
  * indicated by value = 0,
  * then don't do anything. */
@@ -305,7 +305,7 @@ void jSyncup(bool fromtimer, const Tag *active)
 			continue;
 
 		if (itype == INP_SELECT) {
-/* set option.selected in js based on the option(s) in value */
+// set option.selected in js based on the option(s) in value
 			locateOptions(t, (value ? value : t->value), 0, 0,
 				      true);
 			if (value) {
@@ -320,17 +320,17 @@ void jSyncup(bool fromtimer, const Tag *active)
 				set_property_string_t(t, "value", 0);
 				continue;
 			}
-/* Now value is just <session 3>, which is meaningless. */
-			nzFree(value);
-			cx = t->lic;
-			if (!cx)
-				continue;
+			if((cx = t->lic) >= 0) {
+// Now value is just <session 3>, which is meaningless.
+				nzFree(value);
+				if (!cx) continue;
 // unfoldBuffer could fail if we have quit that session.
-			if (!unfoldBuffer(cx, false, &cxbuf, &j))
+				if (!unfoldBuffer(cx, false, &cxbuf, &j))
+					continue;
+				set_property_string_t(t, "value", cxbuf);
+				nzFree(cxbuf);
 				continue;
-			set_property_string_t(t, "value", cxbuf);
-			nzFree(cxbuf);
-			continue;
+			}
 		}
 
 		if (value) {
@@ -338,7 +338,7 @@ void jSyncup(bool fromtimer, const Tag *active)
 			nzFree(t->value);
 			t->value = value;
 		}
-	}			/* loop over tags */
+	}			// loop over tags
 
 	debugPrint(4, "jSyncup ends");
 }
@@ -1280,19 +1280,19 @@ This works because undo is disabled in browse mode.
 static void
 updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 {
-	int ln, n, plen;
-	char *p, *s, *t, *new;
+	int ln1, ln2, n, plen;
+	char *p1, *p2, *s, *t, *new;
 
-	if (locateTagInBuffer(tagno, &ln, &p, &s, &t)) {
-		n = (plen = pstLength((pst) p)) + strlen(newtext) - (t - s);
+	if (locateTagInBuffer(tagno, &ln1, &ln2, &p1, &p2, &s, &t)) {
+		n = (plen = pstLength((pst) p1)) + strlen(newtext) - (t - s);
 		new = allocMem(n);
-		memcpy(new, p, s - p);
-		strcpy(new + (s - p), newtext);
-		memcpy(new + strlen(new), t, plen - (t - p));
-		free(cw->map[ln].text);
-		cw->map[ln].text = (pst) new;
+		memcpy(new, p1, s - p1);
+		strcpy(new + (s - p1), newtext);
+		memcpy(new + strlen(new), t, plen - (t - p1));
+		free(cw->map[ln1].text);
+		cw->map[ln1].text = (pst) new;
 		if (notify && debugLevel> 0)
-			displayLine(ln);
+			displayLine(ln1);
 		return;
 	}
 
@@ -1301,7 +1301,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 }
 
 /* Update an input field. */
-bool infReplace(int tagno, const char *newtext, bool notify)
+bool infReplace(int tagno, char *newtext, bool notify)
 {
 	Tag *t = tagList[tagno];
 	const Tag *v;
@@ -1310,6 +1310,17 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	int itype = t->itype;
 	int itype_minor = t->itype_minor;
 	int newlen = strlen(newtext);
+
+	if (strchr(newtext, '\n')) {
+		setError(MSG_InputNewline);
+		return false;
+	}
+	if (strchr(newtext, '\r')) {
+		setError(MSG_InputCR);
+		return false;
+	}
+
+	prepareForField(newtext);
 
 /* sanity checks on the input */
 	if (itype <= INP_SUBMIT) {
@@ -1323,8 +1334,8 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 
 	if (itype == INP_TA) {
-		setError((t->lic ? MSG_Textarea : MSG_Textarea0), t->lic);
-		return false;
+		if(t->lic > 0) cxQuit(t->lic, 3);
+		t->lic = -1;
 	}
 
 	if(allowJS && t->jslink)
@@ -1335,11 +1346,6 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 	}
 	if (inputDisabled(t)) {
 		setError(MSG_Disabled);
-		return false;
-	}
-
-	if (strchr(newtext, '\n')) {
-		setError(MSG_InputNewline);
 		return false;
 	}
 
@@ -1369,13 +1375,14 @@ bool infReplace(int tagno, const char *newtext, bool notify)
 			return true;
 		}
 		if(!t->multiple) {
-			if (!envFile(newtext, &newtext))
+			const char *z2;
+			if (!envFile(newtext, &z2))
 				return false;
-			if (newtext[0] && (access(newtext, 4) || fileTypeByName(newtext, false) != 'f')) {
-				setError(MSG_FileAccess, newtext);
+			if (z2[0] && (access(z2, 4) || fileTypeByName(z2, false) != 'f')) {
+				setError(MSG_FileAccess, z2);
 				return false;
 			}
-			u = cloneString(newtext);
+			u = cloneString(z2);
 		} else {
 			const char *v = newtext, *w, *z2;
 			char *z;
@@ -1609,7 +1616,7 @@ static char *fetchTextVar(const Tag *t)
 	}
 
 	if (t->itype > INP_HIDDEN) {
-		v = getFieldFromBuffer(t->seqno);
+		v = getFieldFromBuffer(t->seqno, 0);
 		if (v)
 			return v;
 	}
@@ -1886,17 +1893,30 @@ skip_encode:
 			int cx = t->lic;
 			char *cxbuf;
 			int cxlen;
+			if(cx < 0) {
+				dynamicvalue = fetchTextVar(t);
+				if(!dynamicvalue) // don't know what happened
+				cx = 0;
+			}
 			if (cx) {
 				if (fsep == '-') {
+// do this as an attachment
 					char cxstring[12];
-/* do this as an attachment */
+					if(cx < 0) {
+						cx = sideBuffer(0, dynamicvalue, 0, NULL);
+						nzFree(dynamicvalue), dynamicvalue = 0;
+					}
 					sprintf(cxstring, "%d", cx);
-					if (!postNameVal
-					    (name, cxstring, fsep, 1))
+					rc = postNameVal
+					    (name, cxstring, fsep, 1);
+					if(t->lic < 0) cxQuit(cx, 3);
+					if(!rc)
 						goto fail;
 					continue;
-				}	/* attach */
-				if (!unfoldBuffer(cx, true, &cxbuf, &cxlen))
+				} // attach
+				if(cx < 0)
+					cxbuf = dynamicvalue, cxlen = strlen(dynamicvalue);
+				else if (!unfoldBuffer(cx, true, &cxbuf, &cxlen))
 					goto fail;
 				for (j = 0; j < cxlen; ++j)
 					if (cxbuf[j] == 0) {
@@ -1925,7 +1945,7 @@ skip_encode:
 		}
 
 		if (itype == INP_SELECT) {
-			char *display = getFieldFromBuffer(t->seqno);
+			char *display = getFieldFromBuffer(t->seqno, 0);
 			char *s, *e;
 			if (!display) {	/* off the air */
 				Tag *v;
@@ -4282,7 +4302,7 @@ nop:
 		if (itype == INP_HIDDEN)
 			break;
 		liCheck(t);
-		if (itype == INP_TA) {
+		if (itype == INP_TA && t->lic >= 0) {
 			j = t->lic;
 			if (j)
 				sprintf(hnum, "%c%d<session %d%c0>",

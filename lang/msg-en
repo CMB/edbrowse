@@ -132,7 +132,7 @@ cannot create %s
 cannot write to %s
 session is not interactive
 line %c is out of range
-cannot embed nulls in a shell command
+cannot embed null in a shell command
 label %c not set
 invalid delimiter
 no remembered search string
@@ -224,7 +224,7 @@ session %d contains more than one line
 cannot open %s
 cannot read from %s
 < text contains nulls
-line contains an embedded carriage return
+cannot embed carriage return in an input field
 gopher download: 
 file is currently in buffer - please use the rf command to refresh
 cannot browse a binary file
@@ -274,8 +274,8 @@ replacement data contains null characters
 cannot embed slash, newline, or null in a directory name
 destination file already exists
 cannot rename file to %s
-cannot embed nulls in an input field
-cannot embed newlines in an input field
+cannot embed null in an input field
+cannot embed newline in an input field
 no input fields present
 no links present
 no buttons present

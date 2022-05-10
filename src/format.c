@@ -41,15 +41,14 @@ void prepareForBrowse(char *h, int h_len)
 	h[j] = 0;
 }
 
-/* An input field cannot contain newline, null, or the InternalCodeChar */
+/* An input field cannot contain cr, lf, null, or the InternalCodeChar */
 void prepareForField(char *h)
 {
 	while (*h) {
 // this line is goofy cause null would terminate the loop
-		if (*h == 0)
-			*h = ' ';
-		if (*h == InternalCodeChar)
-			*h = InternalCodeCharAlternate;
+		if (*h == 0) *h = ' ';
+		if (*h == '\r') *h = '\07';
+		if (*h == InternalCodeChar) *h = InternalCodeCharAlternate;
 		++h;
 	}
 }
