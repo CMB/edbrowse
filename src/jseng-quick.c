@@ -3483,14 +3483,19 @@ JS_NewCFunction(cx, nat_media, "media", 1), 0);
 JS_NewCFunction(cx, nat_unframe, "unframe", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$unframe2",
 JS_NewCFunction(cx, nat_unframe2, "unframe2", 1), 0);
+// Yes, there really are sites that overwrite setTimeout
     JS_DefinePropertyValueStr(cx, g, "setTimeout",
-JS_NewCFunction(cx, nat_setTimeout, "setTimeout", 2), 0);
+JS_NewCFunction(cx, nat_setTimeout, "setTimeout", 2),
+JS_PROP_CONFIGURABLE|JS_PROP_WRITABLE);
     JS_DefinePropertyValueStr(cx, g, "clearTimeout",
-JS_NewCFunction(cx, nat_clearTimeout, "clearTimeout", 1), 0);
+JS_NewCFunction(cx, nat_clearTimeout, "clearTimeout", 1),
+JS_PROP_CONFIGURABLE|JS_PROP_WRITABLE);
     JS_DefinePropertyValueStr(cx, g, "setInterval",
-JS_NewCFunction(cx, nat_setInterval, "setInterval", 2), 0);
+JS_NewCFunction(cx, nat_setInterval, "setInterval", 2),
+JS_PROP_CONFIGURABLE|JS_PROP_WRITABLE);
     JS_DefinePropertyValueStr(cx, g, "clearInterval",
-JS_NewCFunction(cx, nat_clearTimeout, "clearInterval", 1), 0);
+JS_NewCFunction(cx, nat_clearTimeout, "clearInterval", 1),
+JS_PROP_CONFIGURABLE|JS_PROP_WRITABLE);
     JS_DefinePropertyValueStr(cx, g, "eb$parent",
 JS_NewCFunction(cx, nat_parent, "parent", 0), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$top",
