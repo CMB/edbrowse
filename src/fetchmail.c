@@ -2201,14 +2201,15 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 	if (w->ct < CT_MULTI) {
 		quote = 0;
 		for (q = s + 1; q < t; ++q) {
-			if (isalnumByte(q[-1]))
-				continue;
-/* could be name= or filename= */
-			if (memEqualCI(q, "file", 4))
-				q += 4;
-			if (!memEqualCI(q, "name=", 5))
-				continue;
-			q += 5;
+			if (isalnumByte(q[-1])) continue;
+// could be name= or filename=
+			if (memEqualCI(q, "file", 4)) q += 4;
+			if (!memEqualCI(q, "name", 4)) continue;
+			q += 4;
+			while(*q == ' ') ++q;
+			if(*q != '=') continue;
+			++q;
+			while(*q == ' ') ++q;
 			if (*q == '"') {
 				quote = *q;
 				++q;
@@ -2235,15 +2236,17 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 			break;
 		}
 	}
-	/* regular file */
+
 	if (w->ct >= CT_MULTI) {
 		quote = 0;
 		for (q = s + 1; q < t; ++q) {
-			if (isalnumByte(q[-1]))
-				continue;
-			if (!memEqualCI(q, "boundary=", 9))
-				continue;
-			q += 9;
+			if (isalnumByte(q[-1])) continue;
+			if (!memEqualCI(q, "boundary", 8)) continue;
+			q += 8;
+			while(*q == ' ') ++q;
+			if(*q != '=') continue;
+			++q;
+			while(*q == ' ') ++q;
 			if (*q == '"') {
 				quote = *q;
 				++q;
