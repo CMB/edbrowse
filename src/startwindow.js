@@ -191,6 +191,7 @@ availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
 colorDepth: 24};
 
 console = {
+debug: function(obj) { mw$.logtime(3, "debug", obj); },
 log: function(obj) { mw$.logtime(3, "log", obj); },
 info: function(obj) { mw$.logtime(3, "info", obj); },
 warn: function(obj) { mw$.logtime(3, "warn", obj); },
