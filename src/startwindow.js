@@ -210,7 +210,6 @@ Object.defineProperty(document, "scrollingElement", {get: mw$.getBody});
 document.hasChildNodes = mw$.hasChildNodes;
 // This is set to body after browse.
 document.activeElement = null;
-document.documentMode = 5;
 
 navigator = {};
 navigator.appName = "edbrowse";
