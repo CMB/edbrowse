@@ -6166,7 +6166,19 @@ static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 	char *t, *open;
 	char *p = (char *)fetchLine(ln, 1);
 	bool change;
+	char qc;
 	int backward, forward;
+
+// line is allocated, so blank out anything that looks like a string.
+	for(qc = 0, t = p; *t != '\n'; ++t) {
+		if(qc) { // in a string
+			if(*t == '\\' && t[1] != '\n') t[1] = ' ';
+			if(*t == qc) qc = 0;
+			*t = ' ';
+			continue;
+		}
+		if(*t == '"' || *t == '\'') qc = *t;
+	}
 
 	change = true;
 	while (change) {
@@ -6202,8 +6214,8 @@ static bool balanceLine(const char *line)
 {
 	char c, d;		/* open and close */
 	char selected;
-	static char openlist[] = "{([<`";
-	static char closelist[] = "})]>'";
+	static char openlist[] = "{([<";
+	static char closelist[] = "})]>";
 	static const char alllist[] = "{}()[]<>`'";
 	char *t;
 	int level = 0;

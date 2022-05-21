@@ -1201,8 +1201,7 @@ not knowing whether to look backwards or forwards.
 Type B{ or B}.
 
 <P>
-You can explicitly balance &lt;&gt;, as in multiline html tags,
-or `', used in some preprocessors such as m4.
+You can explicitly balance &lt;&gt;, as in multiline html tags.
 
 <P>
 B can be used on a line without braces, or with no unbalanced braces.
@@ -1214,14 +1213,9 @@ If a line contains many braces, such as }}}, B}1 balances the first unbalanced b
 In this example, B is the same as B} is the same as B}3.
 
 <P>
-Comments or literal strings that contain balancing punctuation marks will
-throw edbrowse off the track.
-If you are the author of the source,
-you might want to avoid braces in comments,
-or use comments to keep braces in balance.
-
-<P>
-static char openstring[] = "{block"; /* closing } is found elsewhere */
+Edbrowse skips past strings, so that c = '{', or s = "abc}def", should not derail this function.
+However, comments, or bare regular expressions, (as seen in perl or javascript), that contain punctuation marks,
+will throw edbrowse off the track.
 
 <h2> <A NAME=cx> Context Switch </A> </h2>
 
