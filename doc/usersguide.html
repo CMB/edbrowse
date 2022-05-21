@@ -516,9 +516,10 @@ p : print the current line
 <br>z : print another 22 lines
 <br>= : print the number of lines in the file
 <br>.= : print the current line number
-<br>B : find the line with the balancing brace
-<br>B[ : find the line with the balancing bracket
-<br>B( : find the line with the balancing parenthesis
+<br>B : find the line with the balancing open or closed brace
+<br>B[ : find the line with the balancing closed bracket
+<br>B( : find the line with the balancing closed parenthesis
+<br>B{2 : find the line that balances the second (from the inside out) unbalanced brace
 <P>
 Help Messages
 <P>
@@ -1207,6 +1208,10 @@ or `', used in some preprocessors such as m4.
 B can be used on a line without braces, or with no unbalanced braces.
 B} on the fourth line moves to the third line, the start of the block that contains that line.
 B{ on the fourth line moves to the last line.
+
+<P>
+If a line contains many braces, such as }}}, B}1 balances the first unbalanced brace, from the inside out.
+In this example, B is the same as B} is the same as B}3.
 
 <P>
 Comments or literal strings that contain balancing punctuation marks will

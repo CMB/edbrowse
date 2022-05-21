@@ -6210,10 +6210,13 @@ static bool balanceLine(const char *line)
 	int i, direction, forward, backward;
 
 	if ((c = *line)) {
-		if (!strchr(alllist, c) || line[1]) {
+		const int cx = stringIsNum(line + 1);
+		if (!strchr(alllist, c) || (line[1] && cx == -1)) {
 			setError(MSG_BalanceChar, alllist);
 			return false;
 		}
+		if (!cx)
+			return true;
 		if ((t = strchr(openlist, c))) {
 			d = closelist[t - openlist];
 			direction = 1;
@@ -6223,10 +6226,14 @@ static bool balanceLine(const char *line)
 			c = openlist[t - closelist];
 			direction = -1;
 		}
-		unbalanced(c, d, endRange, &backward, &forward);
-		level = direction > 0 ? forward : backward;
-		if (!level)
-			level = 1;
+		if (line[1])
+			level = cx;
+		else {
+			unbalanced(c, d, endRange, &backward, &forward);
+			level = direction > 0 ? forward : backward;
+			if (!level)
+				level = 1;
+		}
 	} else {
 
 /* Look for anything unbalanced, probably a brace. */
