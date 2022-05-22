@@ -4669,7 +4669,7 @@ bool itext(int d)
 			continue;
 		inp = true;
 		t = tagList[n];
-		if (t->itype != INP_TA || t->lic)
+		if (t->itype != INP_TA || t->lic > 0)
 			continue;
 		t->lic = sideBuffer(d, t->value, -1, 0);
 		change = true;
