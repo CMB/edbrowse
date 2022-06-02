@@ -4655,7 +4655,7 @@ bool itext(int d)
 	pst p;			// the raw line to scan
 	int n;
 	Tag *t;
-	char newtext[20];
+	char newtext[20], *v = 0;
 	bool change = false, inp = false;
 
 	p = fetchLine(ln, -1);
@@ -4671,7 +4671,11 @@ bool itext(int d)
 		t = tagList[n];
 		if (t->itype != INP_TA || t->lic > 0)
 			continue;
-		t->lic = sideBuffer(d, t->value, -1, 0);
+// this way works with or without javascript
+		if(t->lic < 0 && !(t->jslink && allowJS))
+			v = fetchTextVar(t);
+		t->lic = sideBuffer(d, (v ? v : t->value), -1, 0);
+		nzFree(v);
 		change = true;
 		sprintf(newtext, "session %d", t->lic);
 // updateFieldInBuffer is crazy inefficient in that it searches through the
