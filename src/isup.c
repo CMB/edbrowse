@@ -52,7 +52,6 @@ struct PROTOCOL {
 	{"tn3270", 0, false, false, false},
 	{"data", 0, true, false, false},
 	{"javascript", 0, true, false, false},
-	{"data", 0, true, false, false},
 	{"git", 0, false, true, false},
 	{"svn", 0, false, true, false},
 	{"gopher", 70, false, true, true},
@@ -393,9 +392,17 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 	} else
 		return false;
 
-// so we can edit the file u:v
+/*********************************************************************
+I wanted to add the following, so we can edit the file u:v, that is,
+u:v is not a url.
 	if(a < 0 && !has_slashes)
 		return false;
+However, this breaks nasa.gov. They actually have in their js:
+                            if (f.hasDOM && (t = ot.call(e, 'foobar:baz')), 'foobar:' === t)
+So we have to treat foobar:baz as a url with the foobar protocol.
+That means you can't edit the file u:v directly.
+Use ./u:v or some other mechanism. I know, it's annoying, what can I do?
+*********************************************************************/
 
 	if (a < 0 || protocols[a].free_syntax) {
 		if (data)
