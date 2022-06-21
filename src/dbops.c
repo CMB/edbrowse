@@ -1,7 +1,4 @@
-/* dbops.c
- * Database operations.
- * This file is part of the edbrowse project, released under GPL.
- */
+/* dbops.c, database operations. */
 
 #include "eb.h"
 #include "dbapi.h"

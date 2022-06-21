@@ -1,7 +1,4 @@
-/* main.c
- * Entry point, arguments and options.
- * This file is part of the edbrowse project, released under GPL.
- */
+/* main.c, Entry point, arguments and options, config file. */
 
 #include "eb.h"
 

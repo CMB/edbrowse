@@ -1,7 +1,4 @@
-/* html.c
- * Parse html tags.
- * This file is part of the edbrowse project, released under GPL.
- */
+/* html.c, parse and render html. */
 
 #include "eb.h"
 

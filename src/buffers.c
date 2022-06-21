@@ -1,7 +1,4 @@
-/* buffers.c
- * Text buffer support routines, manage text and edit sessions.
- * This file is part of the edbrowse project, released under GPL.
- */
+/* buffers.c, Text buffer support routines, manage text and edit sessions. */
 
 #include "eb.h"
 

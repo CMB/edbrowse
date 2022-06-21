@@ -1,6 +1,4 @@
-/* messages.h
- * This file is part of the edbrowse project, released under GPL.
- */
+/* messages.h, symbolic constants for edbrowse messages. */
 
 /*********************************************************************
 Symbolic constants for message numbers.

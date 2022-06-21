@@ -4,8 +4,7 @@ We receive calls from edbrowse,
 getting and setting properties for various DOM objects.
 This is the quick js version.
 If you package this with the quick js libraries,
-you will need to include the MIT open source license,
-along with the GPL, general public license, for edbrowse.
+you will need to include the MIT open source license.
 *********************************************************************/
 
 #include "eb.h"

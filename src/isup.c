@@ -1329,7 +1329,6 @@ bool frameSecurityFile(const char *thisfile)
 
 /* cookie functions.
  * (c) 2002 Mikulas Patocka
- * This file is part of the Links project, released under GPL
  * Modified by Karl Dahlke for integration with edbrowse.
  * Modified by Chris Brannon to allow cooperation with libcurl.
  */
@@ -2509,7 +2508,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 
 /* user password authorization for web access
  * (c) 2002 Mikulas Patocka
- * This file is part of the Links project, released under GPL.
+ * This file was originally part of the Links project, released under GPL.
  * Modified by Karl Dahlke for integration with edbrowse.
  */
 

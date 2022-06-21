@@ -1,6 +1,4 @@
-/* stringfile.c: manage strings, files, and directories for edbrowse.
-* This file is part of the edbrowse project, released under GPL.
- */
+/* stringfile.c: manage strings, files, and directories for edbrowse. */
 
 #include "eb.h"
 

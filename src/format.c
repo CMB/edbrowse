@@ -1,7 +1,4 @@
-/* format.c
- * Format text, establish line breaks, manage whitespace.
- * This file is part of the edbrowse project, released under GPL.
- */
+/* format.c, Format text, establish line breaks, manage whitespace. */
 
 #include "eb.h"
 

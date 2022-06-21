@@ -1,8 +1,4 @@
-/* dbstubs.c
- * Stubs for the database functions.
- * After all, most people will compile this without database access.
- * This file is part of the edbrowse project, released under GPL.
- */
+/* dbstubs.c, Stubs for the database functions. */
 
 #include "eb.h"
 

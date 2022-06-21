@@ -2,7 +2,6 @@
  * Error, warning, and info messages in your host language,
  * as determined by the variable $LANG.
  * Messages can be generated in iso-8859-1, but utf8 is recommended.
- * This file is part of the edbrowse project, released under GPL.
  */
 
 #include "eb.h"

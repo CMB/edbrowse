@@ -1,7 +1,4 @@
-/* eb.h
- * Copyright (c) Karl Dahlke, 2008
- * This file is part of the edbrowse project, released under GPL.
- */
+/* eb.h, edbrowse header file. */
 
 #ifndef EB_H
 #define EB_H 1

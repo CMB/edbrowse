@@ -1,7 +1,4 @@
-/* http.c
- * HTTP protocol client implementation
- * This file is part of the edbrowse project, released under GPL.
- */
+/* http.c,  HTTP protocol client implementation */
 
 #include "eb.h"
 
