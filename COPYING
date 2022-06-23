@@ -1,16 +1,16 @@
 This program is copyright (C) Karl Dahlke, 2000-2022.
 It is made available by the author under the terms of the GNU General Public
-License (GPL) version 2, as articulated by the Free Software Foundation.
+License (GPL) version 2 or later, as articulated by the Free Software Foundation.
 http://www.fsf.org/licensing/licenses/gpl.html
 It may be used for any purpose, and redistributed,
 provided this copyright notice is included.
 
 This program uses libcurl.so for http/ftp access.
-This is released under the Mozilla public license (mpl).
+This is released under the curl license, a derivative of the MIT license.
 I didn't change any of the source; I merely link to these libraries.
 If you wish to release a version of edbrowse with these shared
 libraries included,
-or a statically linked executable, you will need to specify both gpl and mpl.
+or a statically linked executable, you will need to specify both GPL and curl.
 
 Some aspects of the DOM, e.g. Blob,
 are third party software, released under the MIT public license.
@@ -18,4 +18,4 @@ See shared.js for this code.
 Also, we employ the quick js engine, which is released under the MIT public license.
 
 In summary: GPL + MIT public license,
-+ Mozilla public license if edbrowse is packaged with curl.
++ curl license if edbrowse is packaged with curl.
