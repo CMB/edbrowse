@@ -1,6 +1,0 @@
-bldlog-1.txt
-edbrowse
-edbrowse.1
-edbrowse.1.gz
-install_manifest.txt
-

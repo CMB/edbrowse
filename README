@@ -103,10 +103,6 @@ and might not work properly, or even compile with an earlier version.
 Note that the latest tagged version is 5.1.25, but 5.1.26 and later
 have some fixes for known issues that have been reported upstream.
 
-duktape:
-We used this javascript engine for several years, but we don't use it any more.
-It is not supported.
-
 quickjs:
 This is the javascript engine for edbrowse.
 It is probably not packaged.
@@ -155,7 +151,7 @@ Distributors should not set these flags.
 ------------------------------------------------------------
 
 Edbrowse creates a system wide temp directory if it is not already present.
-This is /tmp/.edbrowse in Unix, and $(TEMP)/edbrowse in Windows.
+This is /tmp/.edbrowse.
 This directory contains a subdirectory per user, mod 700 for added security.
 Thus one user cannot spy on the temp files, perhaps sensitive internet data,
 of another user.
@@ -285,17 +281,11 @@ src/decorate.c:
 Decorate the tree with js objects corresponding to the html nodes
 if js is enabled.
 
-src/jseng-duk.c:
-The javascript engine built around the duktape js library. Not supported.
-
 src/jseng-quick.c:
 The javascript engine built around the quick js library.
 Manage all the js objects corresponding to the web page in edbrowse.
 All the js details are hidden in this file.
 this is encapsulation, hiding the js library from the rest of edbrowse.
-
-src/jseng-moz.cpp:
-The javascript engine built around the mozilla js library. Not supported.
 
 src/js_hello*
 Various hello world files to exercise various javascript engines.
@@ -344,12 +334,6 @@ A snapshot of http://acid3.acidtests.org, with modifications,
 so that some or all of the acid tests pass under edbrowse.
 This is a work in progress.
 My modifications are indicated by the comment   //@`
-
-win32/dirent.c:
-Access directories in Windows.
-
-win32/vsprtf.c:
-Windows implementation of asprintf().
 
 src/dbops.c:
 Database operations; insert update delete.

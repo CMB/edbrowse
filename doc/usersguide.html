@@ -981,9 +981,7 @@ Shell meta characters are expanded, provided the result is one file name.
 You can read or write a file by typing a minimal portion of its name.
 Neither $variables nor stars are expanded for files on the command line,
 as this expansion is already done for you by the Unix shell.
-Windows users should compile using the setargv.obj utility,
-which performs wildcard expansion on command line arguments.
-Thus you should be able to edit *.c in any operating system
+Thus you should be able to edit *.c,
 and get all the C source files in the current directory.
 
 <P>
@@ -1720,7 +1718,7 @@ So unset LC_ALL and set the other LC_ variables individually, according to your 
 Make sure LC_MESSAGES is set, so you can interact with linux in your language.
 
 <P>
-Use the `hf' option to see the hidden files, on Windows or Unix.
+Use the `hf' option to see the hidden files.
 (This includes the parent directory ..).
 Type g to go to one of these files or sub directories.
 Type ^ to get back to where you were.
@@ -1923,7 +1921,6 @@ Type lsl for the length, lss for the approximate size, lst for the mod time,
 lsp for the owner group permissions, lsi for the inode, lsk for the number of hard links,
 lsy for the path associated with this symbolic link,
 or lsm for the major and minor device numbers.
-(The last 5 do not apply on Windows.)
 These can be combined, e.g. lspk prints permissions and the number of hard links.
 ls is the same as lsst, size and mod time.
 Edbrowse prints ~ if the attributes cannot be acquired, e.g. asking the size of a broken symbolic link. The original symbol was a question mark, but that was easily confused with the question mark of an invalid command.
@@ -3743,7 +3740,7 @@ cachesize = 200
 Edbrowse stores some web pages locally, in a cache, so that they can be fetched directly from your computer when you visit them again.
 (All modern browsers do this.)
 You can specify the cache directory where these files are stored.
-If omitted, edbrowse selects ~/.ebcache on Unix, or a directory in your temp area on Windows.
+If omitted, edbrowse selects ~/.ebcache.
 On a multiuser system, your cache should be private, since it literally contains the web pages you are looking at.
 Separate users should not share the same cache space.
 The cache directory is created mode 0700, if it does not already exist.

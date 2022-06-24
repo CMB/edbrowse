@@ -55,7 +55,7 @@ EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h
-jseng-duk.o jseng-quick.o : eb.h ebprot.h messages.h
+jseng-quick.o : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: $(EDBR_JS_ASSETS)
@@ -89,17 +89,14 @@ dbinfx.o : dbinfx.ec
 	esql -c dbinfx.ec
 
 #  Informix executable
-edbrowse-infx: $(EBOBJS) dbops.o dbinfx.o jseng-duk.o
-	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) dbops.o dbinfx.o $(LDFLAGS) -lduktape
+#edbrowse-infx: $(EBOBJS) dbops.o dbinfx.o jseng-duk.o
+#	esql $(ESQLDFLAGS) -o edbrowse-infx $(EBOBJS) dbops.o dbinfx.o $(LDFLAGS) -lduktape
 
 clean:
-	rm -f *.o edbrowse edbrowseduk \
+	rm -f *.o edbrowse \
 	startwindow.c ebrc.c msg-strings.c
 
 #  some hello world targets, for testing and debugging
-
-js_hello_duk: js_hello_duk.c
-	$(CC) js_hello_duk.c -o js_hello_duk -lduktape -lm
 
 #  need packages nodejs and libnode-dev
 js_hello_v8 : js_hello_v8.cpp
