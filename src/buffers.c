@@ -4410,7 +4410,6 @@ findField(const char *line, int ftype, int n,
 			if(ss == h) // unbalanced
 				h[strlen(h) - 1] = 0;
 		}
-		unpercentURL(h);
 		if (!isURL(h)) {
 			free(h);
 			continue;
