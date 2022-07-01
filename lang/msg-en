@@ -118,7 +118,7 @@ directories are readonly, type dw to enable directory changes
 could not create .Trash under your home directory, to hold the deleted files
 could not remove file %s
 Could not move %s to the trash bin, set dx mode to actually remove the file
-destination lies inside the block to be moved or copied
+destination lies inside the block to be moved
 no change
 cannot join one line
 cannot read from the database into another file

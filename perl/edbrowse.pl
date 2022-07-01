@@ -2389,9 +2389,10 @@ sub moveCopy()
 {
 $dest++;  # more convenient
 $endr1 = $endRange+1;  # more convenient
+$cmd eq 't' or
 $dest <= $startRange or
 $dest >= $endr1 or
-$errorMsg = "destination lies inside the block to be moved or copied", return 0;
+$errorMsg = "destination lies inside the block to be moved", return 0;
 if($cmd eq 'm' and
 ($dest == $endr1 or $dest == $startRange)) {
 $errorMsg = "no change" if ! $inglob;

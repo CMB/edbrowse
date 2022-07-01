@@ -118,7 +118,7 @@ os diretórios são somente leitura; digite dw para ativar a escrita em diretór
 não foi possível criar o .Trash no seu diretório home para armazenar arquivos apagados
 não foi possível remover o arquivo %s
 não foi possível mover %s para a lixeira; ative o modo dx para remover permanentemente o arquivo
-local de destino fica dentro do bloco a copiar ou mover
+local de destino fica dentro do bloco a mover
 sem mudança
 impossível juntar uma linha
 impossível ler do banco de dados para outro arquivo

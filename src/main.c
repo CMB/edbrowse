@@ -187,7 +187,8 @@ void ebClose(int n)
 
 static struct ebhost {
 // j = nojs, v = novs, p = proxy, f = function,
-// s = subject, t = to, r = reply, a = agentsite
+// s = subject, t = to, r = reply, a = agentsite,
+// J = js, j = nojs
 	char type, filler;
 	short n;
 // watch out, these fields are highly overloaded, depending on type
@@ -252,6 +253,17 @@ bool javaOK(const char *url)
 		return false;
 	if (isDataURI(url))
 		return true;
+	for (j = 0; (unsigned)j < ebhosts_avail; ++j)
+		if (ebhosts[j].type == 'J' &&
+		    patternMatchURL(url, ebhosts[j].host))
+			return true;
+// inheritance
+	if(cf->hbase && cf->hbase[0]) {
+		for (j = 0; (unsigned)j < ebhosts_avail; ++j)
+			if (ebhosts[j].type == 'J' &&
+			    patternMatchURL(cf->hbase, ebhosts[j].host))
+				return true;
+	}
 	for (j = 0; (unsigned)j < ebhosts_avail; ++j)
 		if (ebhosts[j].type == 'j' &&
 		    patternMatchURL(url, ebhosts[j].host))
@@ -1278,7 +1290,7 @@ static const char *const keywords[] = {
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
 	"adbook", "envelope", "emojis", "emoji",
-"include", 0};
+"include", "js", 0};
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
@@ -1754,9 +1766,11 @@ inside:
 		case 28:	/* nojs */
 			if (*v == '.')
 				++v;
+/* Is this essential?
 			q = strchr(v, '.');
 			if (!q || q[1] == 0)
 				cfgLine1(MSG_EBRC_DomainDot, v);
+*/
 			add_ebhost(v, 'j');
 			continue;
 
@@ -1893,6 +1907,17 @@ inside:
 			g->next = cfgFirst, cfgFirst = g;
 			f = g;
 			goto top;
+
+		case 45:	/* js */
+			if (*v == '.')
+				++v;
+/* Is this essential?
+			q = strchr(v, '.');
+			if (!q || q[1] == 0)
+				cfgLine1(MSG_EBRC_DomainDot, v);
+*/
+			add_ebhost(v, 'J');
+			continue;
 
 		default:
 			cfgLine1(MSG_EBRC_KeywordNYI, s);

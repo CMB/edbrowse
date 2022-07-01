@@ -1843,7 +1843,7 @@ static bool moveCopy(void)
 	int lowcut, highcut, diff, i, ln;
 	int *label = NULL;
 
-	if (dl > sr && dl < er) {
+	if (cmd == 'm' && dl > sr && dl < er) {
 		setError(MSG_DestInBlock);
 		return false;
 	}
