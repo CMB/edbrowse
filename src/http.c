@@ -2087,6 +2087,13 @@ ftp_transfer_fail:
 	return transfer_success;
 }
 
+int ftpWrite(const char *url)
+{
+	puts("ftp put not yet implemented");
+	setError(MSG_NoWriteURL);
+	return false;
+}
+
 /* Like httpConnect, but for gopher */
 static bool gopherConnect(struct i_get *g)
 {

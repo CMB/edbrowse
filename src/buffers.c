@@ -2723,6 +2723,8 @@ static bool writeFile(const char *name, int mode)
 	}
 
 	if (isURL(name)) {
+		if(!strncmp(name, "ftp://", 6))
+			return ftpWrite(name);
 		setError(MSG_NoWriteURL);
 		return false;
 	}
