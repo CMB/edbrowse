@@ -1065,7 +1065,8 @@ void jsRunData(const Tag *t, const char *filename, int lineno)
 	delete_property(cx, *((JSValue*)t->f0->docobj), "currentScript");
 // onload handler? Should this run even if the script fails?
 // Right now it does.
-	if (t->js_file && !isDataURI(t->href) &&
+// The script could be removed, replaced by other nodes by innerHTML.
+	if (t->jslink && t->js_file && !isDataURI(t->href) &&
 	typeof_property(cx, *((JSValue*)t->jv), "onload") == EJ_PROP_FUNCTION)
 		run_event(cx, *((JSValue*)t->jv), "script", "onload");
 	debugPrint(5, "< ok");
