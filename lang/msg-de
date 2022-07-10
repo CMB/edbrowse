@@ -176,7 +176,7 @@ Dateiname enthält keinen /
 Dateiname endet auf /
 ungültige Zeichen nach dem Kommando sm
 Nach dem Kommando e darf nur genau eines aus %s verwendet werden.
-0
+kann eine URL nicht anhängen
 %c und %c nicht gleichermaßen vorhanden auf dieser Zeile, versuchen Sie B%c oder B%c
 Zeile enthält keine ungleich verteilten runde, eckige oder geschweifte Klammern
 kann keine Zeile finden, in der %c ausgeglichen würde

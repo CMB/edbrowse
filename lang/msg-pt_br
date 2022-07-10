@@ -125,7 +125,7 @@ impossível ler do banco de dados para outro arquivo
 impossível ler tabelas diferentes dentro da mesma sessão
 nome do arquivo faltando
 domínio vazio na URL
-impossível escrever numa URL
+impossível adicionar numa URL
 impossível escrever numa tabela do banco de dados
 impossível escrever um arquivo vazio
 impossível criar %s
@@ -176,7 +176,7 @@ nome do arquivo não possui /
 nome do arquivo termina em /
 caracteres inválidos após o comando sm
 você deve especificar exatamente um dos %s após o comando B
-0
+impossível escrever numa URL
 ambos %c e %c não estão completados nesta linha; experimente B%c ou B%c
 linha não possui uma chave, um parêntese ou um colchete não completado
 impossível achar a linha que completa o %c

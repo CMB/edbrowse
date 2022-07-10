@@ -176,7 +176,7 @@ nazwa pliku nie zawiera '/'
 nazwa pliku kończy się znakiem '/'
 niedozwolone znaki po poleceniu 'sm'
 musisz podać dokładnie jedno z '%s' po poleceniu 'B'
-0
+nie można dołączyć pod adresem URL
 zarówno %c jak i %c nie są domknięte w tym wierszu, spróbuj B%c lub B%c
 wiersz nie zawiera niedomkniętych nawiasów zwykłych, klamrowych ani kwadratowych
 nie można znaleźć wiersza z domknięciem %c

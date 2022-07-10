@@ -176,7 +176,7 @@ file name does not contain /
 file name ends in /
 invalid characters after the sm command
 you must specify exactly one of %s after the B command
-0
+cannot append to a url
 both %c and %c are unbalanced on this line, try B%c or B%c
 line does not contain an unbalanced brace, parenthesis, or bracket
 cannot find the line that balances %c

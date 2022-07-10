@@ -2089,8 +2089,27 @@ ftp_transfer_fail:
 
 int ftpWrite(const char *url)
 {
+// It's a drag, but we can only upload from a file, not from memory.
+	char *tempfile;
+	static int idx = 0;
+	bool saveChangeMode = cw->changeMode;
+	if (!ebUserDir) {
+		setError(MSG_TempNone);
+		return false;
+	}
+	++idx;
+	if (asprintf(&tempfile, "%s/ftp%d-%d",
+		     ebUserDir, getpid(), idx) < 0)
+		i_printfExit(MSG_MemAllocError, strlen(ebUserDir) + 24);
+	if(!writeFile(tempfile, 0)) {
+		unlink(tempfile), free(tempfile);
+		return false;
+	}
+	printf("temp file length %d\n", fileSize);
 	puts("ftp put not yet implemented");
+	fileSize = -1, cw->changeMode = saveChangeMode;
 	setError(MSG_NoWriteURL);
+	unlink(tempfile), free(tempfile);
 	return false;
 }
 

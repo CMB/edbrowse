@@ -176,7 +176,7 @@ il nome del file non contiene /
 il nome di file termina con /
 caratteri non validi dopo il comando sm
 devi specificare esattamente uno tra %s dopo il comando B
-0
+non posso accodare ad un url
 sia %c che %c sono sbilanciati su questa riga, prova B%c o B%c
 la riga non contiene una parentesi tonda, quadra o grafa sbilanciata
 impossibile trovare la riga che bilanci %c

@@ -276,7 +276,7 @@ enum {
 	MSG_YesSlash,
 	MSG_SMBadChar,
 	MSG_BalanceChar,
-	MSG_notused179,
+	MSG_NoAppendURL,
 	MSG_BalanceAmbig,
 	MSG_BalanceNothing,
 	MSG_Unbalanced,

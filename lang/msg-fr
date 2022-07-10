@@ -176,7 +176,7 @@ le nom de fichier ne contient pas le caractère /
 le nom de fichier se termine par le caractère /
 commande sm suivie de caractères invalides
 vous devez spécifier exactement un %s après la commande B
-0
+impossible d'ajouter à un sur une url
 %c et %c non équilibrés sur cette ligne, essayez B%c ou B%c
 la ligne ne contient pas de parenthèses, de crochets ou d'accolades non équilibrés
 ne peux trouver de ligne équilibrant %c

@@ -24,6 +24,7 @@ void cxSwitch(int cx, bool interactive) ;
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) ;
 void delText(int start, int end) ;
 bool readFileArgv(const char *filename, int fromframe, const char *orig_head);
+bool writeFile(const char *name, int mode);
 Tag *line2frame(int ln);
 bool unfoldBufferW(const struct ebWindow *w, bool cr, char **data, int *len);
 bool unfoldBuffer(int cx, bool cr, char **data, int *len);
