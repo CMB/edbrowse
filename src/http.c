@@ -2092,7 +2092,17 @@ int ftpWrite(const char *url)
 // It's a drag, but we can only upload from a file, not from memory.
 	char *tempfile;
 	static int idx = 0;
-	bool saveChangeMode = cw->changeMode;
+	bool saveChangeMode = cw->changeMode, transfer_success;
+	struct i_get g0;
+	CURL *h = 0;		// the curl handle for ftp
+	CURLcode curlret = CURLE_OK;
+	FILE *f = 0;
+
+	if(url[strlen(url) - 1] == '/') {
+		setError(MSG_NoDir0);
+		return false;
+	}
+
 	if (!ebUserDir) {
 		setError(MSG_TempNone);
 		return false;
@@ -2103,14 +2113,47 @@ int ftpWrite(const char *url)
 		i_printfExit(MSG_MemAllocError, strlen(ebUserDir) + 24);
 	if(!writeFile(tempfile, 0)) {
 		unlink(tempfile), free(tempfile);
+// keep fileSize as is, in case we wrote part of it
 		return false;
 	}
-	printf("temp file length %d\n", fileSize);
-	puts("ftp put not yet implemented");
-	fileSize = -1, cw->changeMode = saveChangeMode;
-	setError(MSG_NoWriteURL);
+
+	memset(&g0, 0, sizeof(g0));
+	g0.url = url;
+	transfer_success = false;
+	if(!(h = http_curl_init(&g0)))
+		goto fail;
+
+/*********************************************************************
+example: https://curl.se/libcurl/c/ftpupload.html
+This does a lot of things that I don't think we need to do.
+On windows you need a callback read function, but edbrowse doesn't run on windows,
+so I'm going to leave that one off.
+Custom headers to upload to a different name, and then rename the local file.
+We don't need to do that either.
+*********************************************************************/
+
+	f = fopen(tempfile, (cw->binMode ? "rb" : "r"));
+	if(!f) { // this should never happen
+		setError(MSG_OpenFail, tempfile);
+		goto fail;
+	}
+	curl_easy_setopt(h, CURLOPT_UPLOAD, 1L);
+	curl_easy_setopt(h, CURLOPT_URL, url);
+	curl_easy_setopt(h, CURLOPT_READDATA, f);
+	curl_easy_setopt(h, CURLOPT_INFILESIZE_LARGE, (curl_off_t)fileSize);
+	curlret = curl_easy_perform(h);
+
+fail:
+	if (h) curl_easy_cleanup(h);
+	if(f) fclose(f);
+	if(curlret == CURLE_OK) transfer_success = true;
+	if (transfer_success == false) {
+		fileSize = -1, cw->changeMode = saveChangeMode;
+			ebcurl_setError(curlret, url, 0, g0.error);
+	}
+	i_get_free(&g0, !transfer_success);
 	unlink(tempfile), free(tempfile);
-	return false;
+	return transfer_success;
 }
 
 /* Like httpConnect, but for gopher */
@@ -2357,7 +2400,7 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_init_status = curl_easy_setopt(h, CURLOPT_COOKIEFILE, "");
 	if (curl_init_status != CURLE_OK)
 		goto libcurl_init_fail;
-/* Lots of these setopt calls shouldn't fail.  They just diddle a struct. */
+// Lots of these setopt calls shouldn't fail.  They just diddle a struct.
 	curl_easy_setopt(h, CURLOPT_SOCKOPTFUNCTION, my_curl_safeSocket);
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(h, CURLOPT_WRITEDATA, g);

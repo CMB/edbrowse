@@ -588,11 +588,14 @@ f : print the name of the current file
 <br>eret : return to the session you were previously in
 <br>enew : create a new empty buffer in the current session
 <br>e foo : edit the file named foo
+<br>e ftp://login:password@example.com/file  ftp download
+<br>e scp://login:password@example.com/absolute-path  scp download
 <br>r foo : read the contents of foo into the current buffer
 <br>r7 : read the contents of session 7 into the current buffer
 <br>r7@3,8 : read session 7 lines 3 through 8 into the current buffer
 <br>r7@-,+ : read 3 lines around . into the current buffer
 <br>r7@'a,'b : read the designated block into the current buffer
+<br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
 <br>w/ : write to the lass component of the filename
@@ -600,6 +603,8 @@ f : print the name of the current file
 <br>'a,'bw7@'c : write this block of text into session 7, at the line with label c
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
+<br>w ftp://login:password@example.com/file  ftp upload
+<br>w scp://login:password@example.com/absolute-path  scp upload
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
@@ -3828,8 +3833,6 @@ there is only a slight difference.
 nojs = space.com
 <P>
 Specify domains that don't need javascript.
-You can eliminate annoying error messages and speed up access
-by disabling javascript for certain websites.
 Javascript will not be run on pages within these domains,
 nor will it be fetched from these domains.
 The above directive will also drop javascript from subdomains such as www.space.com.
@@ -3838,6 +3841,13 @@ The above directive will also drop javascript from subdomains such as www.space.
 You can include a path or partial path after the domain, as in space.com/popups.
 This will block the popup ads that you don't want to see, which often generate edbrowse errors in any case.
 Subdomains are not considered when a path is given; the domain must match exactly.
+
+<p>
+This seems like a useful feature, but it is risky.
+The popup page may define a variable that the rest of javascript needs to run properly.
+thus, you probably shouldn't block certain pages on this site, or other domains that are fetched on behalf of this website,
+such as google-analytics.com or googlesyndication.com.
+Fetching all those other pages slows down edbrowse, and seems like a waste of time, but if you need javascript, you probably need all of it.
 
 <P>
 novs = example.com

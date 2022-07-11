@@ -12,6 +12,8 @@ e+ and e- commands.
 
 <a href=data:blah> protocol.
 
+scp and ftp uploads.
+
 Textarea can be treated like a text input field if you can keep all the text on one line.
 
 3.8.2.1

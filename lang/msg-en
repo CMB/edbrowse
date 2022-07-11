@@ -264,7 +264,7 @@ cannot submit using protocol %s
 %d is out of range, please use %s1, or simply %s
 cannot replace multiple instances of the empty string
 download aborted.
-0
+cannot write to the directory
 multiple numbers after the third delimiter
 unexpected substitution suffix after the third delimiter
 cannot use both a numeric suffix and the `g' suffix simultaneously

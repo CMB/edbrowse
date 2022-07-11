@@ -364,7 +364,7 @@ enum {
 	MSG_InputRange2,
 	MSG_ManyEmptyStrings,
 	MSG_DownAbort,
-	MSG_notused267,
+	MSG_NoDir0,
 	MSG_SubNumbersMany,
 	MSG_SubSuffixBad,
 	MSG_SubNumberG,

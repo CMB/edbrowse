@@ -264,7 +264,7 @@ impossibile svolgere il submit usando il protocollo %s
 %d è fuori range, per favore usa da %s1, o semplicemente %s
 impossibile sostituire multiple istanze della stringa vuota
 download interrotto.
-0
+impossibile scrivere sulla cartella
 multipli numeri specificati dopo il terzo delimitatore
 suffisso di submit inatteso dopo il terzo delimitatore
 non è possibile usare un suffisso numerico e il suffisso `g' simultaneamente
