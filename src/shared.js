@@ -1397,6 +1397,8 @@ function getAttribute(name) {
 var w = my$win();
 name = name.toLowerCase();
 if(implicitMember(this, name)) return null;
+// not to collide with the array length
+if(name === "length") name = "lx$yth";
 // has to be a real attribute
 if(!this.attributes$2) return null;
 if(!this.attributes[name]) return null;
@@ -1413,8 +1415,11 @@ function getAttributeNames(name) {
 var w = my$win();
 var a = new w.Array;
 if(!this.attributes$2) return a;
-for(var l = 0; l < this.attributes$2.lx$yth; ++l)
-a.push(this.attributes$2[l].name);
+for(var l = 0; l < this.attributes$2.length; ++l) {
+var z = this.attributes$2[l].name;
+if(z === "lx$yth") z = "length";
+a.push(z);
+}
 return a;
 }
 
@@ -1427,6 +1432,8 @@ function hasAttributeNS(space, name) { return this.getAttributeNS(space, name) !
 function setAttribute(name, v) {
 var w = my$win();
 name = name.toLowerCase();
+var mutname = name;
+if(name === "length") name = "lx$yth";
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 this.style.cssText = v;
@@ -1456,7 +1463,7 @@ if(!this.dataset) this.dataset$2 = {};
 this.dataset[dataCamel(name)] = v;
 } else this[name] = v;
 }
-mutFixup(this, true, name, oldv);
+mutFixup(this, true, mutname, oldv);
 }
 function markAttribute(name) { this.setAttribute(name, "from@@html"); }
 function setAttributeNS(space, name, v) {
@@ -1467,6 +1474,8 @@ this.setAttribute(name, v);
 function removeAttribute(name) {
 if(!this.attributes$2) return;
     name = name.toLowerCase();
+var mutname = name;
+if(name === "length") name = "lx$yth";
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 // wow I have no clue what this means but it happens, https://www.maersk.com
@@ -1489,14 +1498,14 @@ var a = this.attributes[name]; // hash access
 if(!a) return;
 // Have to roll our own splice.
 var i, found = false;
-for(i=0; i<this.attributes.lx$yth-1; ++i) {
+for(i=0; i<this.attributes.length-1; ++i) {
 if(!found && this.attributes[i] == a) found = true;
 if(found) this.attributes[i] = this.attributes[i+1];
 }
-this.attributes.lx$yth = i;
+this.attributes.length = i;
 delete this.attributes[i];
 delete this.attributes[name];
-mutFixup(this, true, name, oldv);
+mutFixup(this, true, mutname, oldv);
 }
 function removeAttributeNS(space, name) {
 if(space && !name.match(/:/)) name = space + ":" + name;
@@ -1508,6 +1517,7 @@ this.removeAttribute(name);
 function getAttributeNode(name) {
 if(!this.attributes$2) return null;
     name = name.toLowerCase();
+if(name === "length") name = "lx$yth";
 return this.attributes[name] ? this.attributes[name] : null;
 }
 
@@ -1723,7 +1733,7 @@ node2.style$2[l] = node1.style$2[l];
 
 if (node1.attributes$2) { // has attributes
 if(debug) alert3("copy attributes");
-for(var l=0; l<node1.attributes.lx$yth; ++l) {
+for(var l=0; l<node1.attributes.length; ++l) {
 if(debug) alert3("copy attribute " + node1.attributes[l].name);
 node2.setAttribute(node1.attributes[l].name, node1.attributes[l].value);
 }
@@ -2198,7 +2208,7 @@ if(t.class) s += ' class="' + t.class + '"';
 if(t.id) s += ' id="' + t.id + '"';
 */
 if(t.attributes$2) {
-for(var l = 0; l < t.attributes$2.lx$yth; ++l) {
+for(var l = 0; l < t.attributes$2.length; ++l) {
 var a = t.attributes$2[l];
 // we need to html escape certain characters, which I do a few of.
 s += ' ' + a.name + "='" + a.value.toString().replace(/['<>&]/g,function(a){return "&#"+a.charCodeAt(0)+";"}) + "'";

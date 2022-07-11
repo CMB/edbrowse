@@ -1425,9 +1425,9 @@ Attr.prototype.isId = function() { return this.name === "id"; }
 
 // this is sort of an array and sort of not.
 // For one thing, you can call setAttribute("length", "snork"), so I can't use length.
-NamedNodeMap = function() { this.lx$yth = 0};
+NamedNodeMap = function() { this.length = 0};
 NamedNodeMap.prototype.dom$class = "NamedNodeMap";
-NamedNodeMap.prototype.push = function(s) { this[this.lx$yth++] = s; }
+NamedNodeMap.prototype.push = function(s) { this[this.length++] = s; }
 NamedNodeMap.prototype.item = function(n) { return this[n]; }
 NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerCase()]; }
 NamedNodeMap.prototype.setNamedItem = function(name, v) { this.owner.setAttribute(name, v);}
@@ -2283,7 +2283,7 @@ localStorage.removeAttribute = mw$.removeAttribute;
 localStorage.removeItem = localStorage.removeAttribute;
 localStorage.clear = function() {
 var l;
-while(l = localStorage.attributes.lx$yth)
+while(l = localStorage.attributes.length)
 localStorage.removeItem(localStorage.attributes[l-1].name);
 }
 
@@ -2298,7 +2298,7 @@ sessionStorage.removeAttribute = mw$.removeAttribute;
 sessionStorage.removeItem = sessionStorage.removeAttribute;
 sessionStorage.clear = function() {
 var l;
-while(l = sessionStorage.attributes.lx$yth)
+while(l = sessionStorage.attributes.length)
 sessionStorage.removeItem(sessionStorage.attributes[l-1].name);
 }
 
