@@ -12,7 +12,7 @@ e+ and e- commands.
 
 <a href=data:blah> protocol.
 
-scp and ftp uploads.
+scp and ftp uploads via the w command, and other uploads when curl supports the transfer protocol.
 
 Textarea can be treated like a text input field if you can keep all the text on one line.
 

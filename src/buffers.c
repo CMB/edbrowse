@@ -2738,6 +2738,9 @@ bool writeFile(const char *name, int mode)
 			return false;
 		}
 		if(!strncmp(name, "ftp://", 6) ||
+		!strncmp(name, "ftps://", 7) ||
+		!strncmp(name, "sftp://", 7) ||
+		!strncmp(name, "tftp://", 7) ||
 		!strncmp(name, "scp://", 6))
 			return ftpWrite(name);
 		setError(MSG_NoWriteURL);
