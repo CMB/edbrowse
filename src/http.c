@@ -2119,6 +2119,7 @@ int ftpWrite(const char *url)
 
 	memset(&g0, 0, sizeof(g0));
 	g0.url = url;
+	g0.headers = initString(&g0.headers_len);
 	transfer_success = false;
 	if(!(h = http_curl_init(&g0)))
 		goto fail;
