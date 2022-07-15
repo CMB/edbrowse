@@ -223,7 +223,7 @@ session %d is empty
 session %d contains more than one line
 cannot open %s
 cannot read from %s
-< text contains nulls
+the %s protocol is not supported by curl
 cannot embed carriage return in an input field
 gopher download: 
 file is currently in buffer - please use the rf command to refresh

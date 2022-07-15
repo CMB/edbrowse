@@ -223,7 +223,7 @@ o buffer %d está vazio
 o buffer %d contém mais que uma linha
 impossível abrir %s
 impossível ler a partir de %s
-texto de < contém caracteres nulos
+o protocolo %s não é suportado pelo curl
 a linha possui um retorno de carro embutido
 download via gopher: 
 arquivo atualmente no buffer - use por favor o comando rf para atualizar

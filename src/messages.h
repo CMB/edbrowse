@@ -323,7 +323,7 @@ enum {
 	MSG_BufferXLines,
 	MSG_NoOpen,
 	MSG_NoRead,
-	MSG_notused226,
+	MSG_CurlProtBad,
 	MSG_InputCR,
 	MSG_GopherDownload,
 	MSG_AlreadyInBuffer,

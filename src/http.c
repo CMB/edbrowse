@@ -1851,7 +1851,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 
 	switch (curlret) {
 	case CURLE_UNSUPPORTED_PROTOCOL:
-		(*fn) (MSG_WebProtBad, prot);
+		(*fn) (MSG_CurlProtBad, prot);
 		break;
 
 	case CURLE_URL_MALFORMAT:
