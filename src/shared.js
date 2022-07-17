@@ -2525,8 +2525,8 @@ this.href$val = h;
 function url_hrefset(v) {
 var w = my$win(), d = my$doc(), inconstruct = true;
 // if passed a url, turn it back into a string
-if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
 if(v === null || v === undefined) v = "";
+if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
 if(typeof v != "string") return;
 if(typeof this.href$val == "string") {
 // Ok, we already had a url, and here's another one.
