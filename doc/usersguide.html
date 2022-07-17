@@ -3861,6 +3861,17 @@ such as google-analytics.com or googlesyndication.com.
 Fetching all those other pages slows down edbrowse, and seems like a waste of time, but if you need javascript, you probably need all of it.
 
 <P>
+js = nasa.gov
+<P>
+ Specify a site that must have javascript to run properly, such as nasa.gov.
+This directive is used under a different paradigm.
+Use nojs to block .com, .net, and .gov, for example, thus js hardly ever runs.
+Then turn on the websites that require js.
+Some users prefer to run edbrowse in this fashion.
+It's definitely faster.
+However, if you run into a new site that requires javascript, you have to edit your config file, add the new site, run config, and rebrowse.
+
+<P>
 novs = example.com
 <P>
 Indicate hostnames for which SSL certificate verification should not
