@@ -1260,7 +1260,8 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 	const char *s;
 	if (memEqualCI(url, "mailto:", 7))
 		url += 7;
-	s = url + strcspn(url, "/?");
+	s = strchr(url, '?');
+	if(!s) s = url + strlen(url);
 	if (addr_p)
 		*addr_p = pullString1(url, s);
 	if (subj_p)
