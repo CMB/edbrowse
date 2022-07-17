@@ -787,4 +787,6 @@ enum {
 	MSG_EbreOn,
 	MSG_EPlus,
 	MSG_EMinus,
+	MSG_EBRC_KeyNoFile,
+	MSG_EBRC_KeyNoRead,
 };

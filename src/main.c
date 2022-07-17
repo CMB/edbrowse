@@ -28,7 +28,7 @@ bool ftpActive;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
 int verifyCertificates = 1;
-char *sslCerts;
+char *sslCerts, *pubKey;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxMime;
@@ -1261,6 +1261,7 @@ void unreadConfigFile(void)
 	nzFree(emojiFile), emojiFile = 0, clearEmojis();
 	nzFree(cookieFile), cookieFile = 0;
 	nzFree(sslCerts), sslCerts = 0;
+	nzFree(pubKey), pubKey = 0;
 	nzFree(downDir), downDir = 0;
 	nzFree(mailDir), mailDir = 0;
 	nzFree(cacheDir);
@@ -1290,7 +1291,7 @@ static const char *const keywords[] = {
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
 	"adbook", "envelope", "emojis", "emoji",
-"include", "js", 0};
+"include", "js", "pubkey", 0};
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
@@ -1917,6 +1918,20 @@ inside:
 				cfgLine1(MSG_EBRC_DomainDot, v);
 */
 			add_ebhost(v, 'J');
+			continue;
+
+		case 46:	/* pubkey */
+			nzFree(pubKey), pubKey = 0;
+			v = envFileAlloc(v);
+			if(!v) continue;
+			ftype = fileTypeByName(v, false);
+			if (ftype && ftype != 'f')
+				cfgAbort1(MSG_EBRC_KeyNoFile, v);
+			j = open(v, O_RDONLY);
+			if (j < 0)
+				cfgAbort1(MSG_EBRC_KeyNoRead, v);
+			close(j);
+			pubKey = v;
 			continue;
 
 		default:

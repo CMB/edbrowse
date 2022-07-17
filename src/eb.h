@@ -286,7 +286,8 @@ extern int timerspeed; // slowdown factor for javascript timers
 extern int rr_interval; // rerender the screen after this many seconds
 extern FILE *debugFile;
 extern char *debugFileName;
-extern char *sslCerts;		/* ssl certificates to validate the secure server */
+extern char *sslCerts;		// ssl certificates to validate the secure server
+extern char *pubKey;		// publick key file for ssh etc
 extern int verifyCertificates;	/* is a certificate required for the ssl connection? */
 extern int displayLength;	// when printing a line
 extern int formatLineLength;	// when formatting html

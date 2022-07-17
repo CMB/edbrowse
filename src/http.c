@@ -2414,6 +2414,8 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0);
 	curl_easy_setopt(h, CURLOPT_PROGRESSFUNCTION, curl_progress);
 	curl_easy_setopt(h, CURLOPT_PROGRESSDATA, g);
+	if(pubKey)
+		curl_easy_setopt(h, CURLOPT_SSH_PUBLIC_KEYFILE, pubKey);
 	curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, webTimeout);
 	curl_easy_setopt(h, CURLOPT_USERAGENT, currentAgent);
 	curl_easy_setopt(h, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);

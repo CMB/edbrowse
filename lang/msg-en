@@ -687,8 +687,8 @@ perl regular expressions
 edbrowse regular expressions
 session + is out of bounds, limit %d
 session - is out of bounds, limit %d
-0
-0
+%s: public key file %s is not a regular file
+%s: public key file %s does not exist or is not readable.
 0
 0
 0
