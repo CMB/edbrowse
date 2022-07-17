@@ -866,8 +866,8 @@ var cn = cnlist[i]; // class name
 var u = ulist[i]; // url name
 eval('Object.defineProperty(' + cn + '.prototype, "' + u + '", { \
 get: function() { return this.href$2 ? this.href$2 : ""}, \
-set: function(h) { if(h instanceof URL || h.dom$class == "URL") h = h.toString(); \
-if(h === null || h === undefined) h = ""; \
+set: function(h) { if(h === null || h === undefined) h = ""; \
+if(h instanceof URL || h.dom$class == "URL") h = h.toString(); \
 var w = my$win(); \
 if(typeof h != "string") { alert3("hrefset " + typeof h); \
 w.hrefset$p.push("' + cn + '"); \
