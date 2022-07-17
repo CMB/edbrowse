@@ -16,6 +16,9 @@ scp and ftp uploads via the w command, and other uploads when curl supports the 
 
 Textarea can be treated like a text input field if you can keep all the text on one line.
 
+js = website (in config file)
+This is the inverse of nojs = website
+
 3.8.2.1
 Make the makefile process more portable and more flexible for packagers and individuals.
 
