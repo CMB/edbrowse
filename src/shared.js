@@ -2347,6 +2347,7 @@ var w = my$win();
 var c = w.$jt$c;
 var sn = w.$jt$sn;
 w.$jt$sn = ++sn;
+w.$zct[c+sn] = 0;
 return a + "trace" + "@(" + c + sn + ")" + b;
 }
 

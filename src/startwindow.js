@@ -144,6 +144,8 @@ Object.defineProperty(window, "step$go", {get:function(){return top.step$go}, se
 // I don't use this trick on step$exp, because an expression should really live within its frame
 }
 
+$zct = {}; // counters for trace points
+
 document.open = function() { return this }
 
 /* Some visual attributes of the window.
