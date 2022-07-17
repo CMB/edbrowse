@@ -937,7 +937,7 @@ void run_function_onestring_win(const Frame *f, const char *name, const char *s)
 static 	const char *bp_string =
 	  ";(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
 static 	const char *trace_string =
-	  ";(function(arg$,l$ne){ var c$ne=($zct[l$ne]>=0?++$zct[l$ne]:($zct[l$ne]=0)); if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne+':'+c$ne); return; } if(l$ne) alert('break at line ' + l$ne+':'+c$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
+	  ";(function(arg$,l$ne){ var c$ne=($zct[l$ne]>=0?++$zct[l$ne]:($zct[l$ne]=1)); if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne+':'+c$ne); return; } if(l$ne) alert('break at line ' + l$ne+':'+c$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
 static char *run_script(JSContext *cx, const char *s)
 {
 	char *result = 0;
