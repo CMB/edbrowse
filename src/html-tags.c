@@ -17,3 +17,7 @@ which we then import into the edbrowse tree of tags.
 
 #include "eb.h"
 
+void html2tags(const char *htmltext, bool startpage)
+{
+}
+

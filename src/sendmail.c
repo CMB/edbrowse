@@ -820,6 +820,8 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 	curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
 
 	if(debugLevel >= 6) {
+		debugPrint(6, "outgoing message");
+		debugPrint(6, "%s", message);
 		puts("debug don't send");
 	} else {
 		res = curl_easy_perform(handle);

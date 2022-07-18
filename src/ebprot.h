@@ -10,7 +10,7 @@ we need to indicate that all the other functions are straight C.
 extern "C" {
 #endif
 
-/* sourcefile=buffers.c */
+// sourcefile=buffers.c
 void undoSpecialClear(void);
 void removeHiddenNumbers(pst p, uchar terminate);
 pst fetchLine(int n, int show);
@@ -38,10 +38,10 @@ bool locateTagInBuffer(int tagno, int *ln1_p, int *ln2_p, char **p1_p, char **p2
 char *getFieldFromBuffer(int tagno, int ln0);
 int fieldIsChecked(int tagno);
 
-/* sourcefile=dbodbc.c (and others) */
+// sourcefile=dbodbc.c (and others)
 bool fetchForeign(char *tname) ;
 
-/* sourcefile=dbops.c */
+// sourcefile=dbops.c
 int findColByName(const char *name) ;
 bool sqlReadRows(const char *filename, char **bufptr) ;
 void dbClose(void) ;
@@ -56,7 +56,7 @@ bool sqlAddRows(int ln) ;
 bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
-/* sourcefile=fetchmail.c */
+// sourcefile=fetchmail.c
 bool setEnvelopeFormat(const char *s);
 int fetchMail(int account);
 int fetchAllMail(void);
@@ -66,7 +66,7 @@ void mail64Error(int err);
 char *emailParse(char *buf);
 bool setupReply(bool all);
 
-/* sourcefile=format.c */
+// sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);
 void prepareForField(char *h);
 bool breakLine(const char *line, int len, int *newlen);
@@ -98,7 +98,7 @@ void clearEmojis(void);
 void loadEmojis(void);
 char *selectEmoji(const char *p, int len);
 
-/* sourcefile=html.c */
+// sourcefile=html.c
 void dwStart(void);
 void set_basehref(const char *b);
 bool tagHandler(int seqno, const char *name);
@@ -138,10 +138,13 @@ void domOpensWindow(const char *href, const char *name);
 struct htmlTag *line2tr(int ln);
 bool showHeaders(int ln);
 
-/* sourcefile=html-tidy.c */
+// sourcefile=html-tags.c
+void html2tags(const char *htmltext, bool startpage);
+
+// sourcefile=html-tidy.c
 void html2nodes(const char *htmltext, bool startpage);
 
-/* sourcefile=decorate.c */
+// sourcefile=decorate.c
 void traverseAll(int start);
 const char *attribVal(const Tag *t, const char *name);
 bool attribPresent(const Tag *t, const char *name);
@@ -166,7 +169,7 @@ void html_from_setter( Tag *innerParent, const char *h);
 void debugGenerated(const char *h);
 bool frameFromContext(jsobjtype cx);
 
-/* sourcefile=http.c */
+// sourcefile=http.c
 void eb_curl_global_init(void);
 void eb_curl_global_cleanup(void);
 size_t eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get *g);
@@ -188,7 +191,7 @@ bool frameExpand(bool expand, int ln1, int ln2);
 int frameExpandLine(int ln, Tag *t);
 bool reexpandFrame(void);
 
-/* sourcefile=main.c */
+// sourcefile=main.c
 void ebClose(int n);
 void setDataSource(char *v);
 bool javaOK(const char *url);
@@ -202,14 +205,14 @@ struct DBTABLE *newTableDescriptor(const char *name);
 bool readConfigFile(void);
 const char *fetchReplace(const char *u);
 
-/* sourcefile=plugin.c */
+// sourcefile=plugin.c
 const struct MIMETYPE *findMimeByURL(const char *url, uchar *sxfirst);
 const struct MIMETYPE *findMimeByFile(const char *filename);
 const struct MIMETYPE *findMimeByContent(const char *content);
 bool runPluginCommand(const struct MIMETYPE *m, const char *inurl, const char *infile, const char *indata, int inlength, char **outdata, int *outlength);
 int playBuffer(const char *line, const char *playfile);
 
-/* sourcefile=sendmail.c */
+// sourcefile=sendmail.c
 bool loadAddressBook(void);
 const char *reverseAlias(const char *reply);
 bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p);
@@ -218,7 +221,7 @@ bool sendMail(int account, const char **recipients, const char *body, int subjat
 bool validAccount(int n);
 bool sendMailCurrent(int sm_account, bool dosig);
 
-/* sourcefile=messages.c */
+// sourcefile=messages.c
 void eeCheck(void);
 void eb_puts(const char *s);
 void selectLanguage(void); //@ called once at startup
@@ -335,7 +338,7 @@ void appendFile(const char *fname, const char *message, ...) ;
 void appendFileNF(const char *filename, const char *msg) ;
 int eb_system(const char *cmd, bool print_on_success);
 
-/* sourcefile=isup.c */
+// sourcefile=isup.c
 void unpercentURL(char *url) ;
 void unpercentString(char *s) ;
 char *percentURL(const char *start, const char *end);
@@ -383,7 +386,7 @@ bool getUserPassRealm(const char *url, char *creds, const char *realm);
 // atomic operation, so the previous routines can run from other threads.
 bool addWebAuthorization(const char *url, const char *credentials, bool proxy, const char *realm);
 
-/* sourcefile=css.c */
+// sourcefile=css.c
 void writeShortCache(void);
 bool matchMedia(char *t);
 void cssDocLoad(int frameNumber, char *s, bool pageload);
@@ -394,7 +397,7 @@ bool querySelector0(const char *selstring, Tag *top);
 void cssApply(int frameNumber, Tag *t, int pe);
 void cssText(const char *rulestring);
 
-/* sourcefile=jseng-* */
+// sourcefile=jseng-quick.c
 void disconnectTagObject(Tag *t);
 void reconnectTagObject(Tag *t);
 bool has_property_t(const Tag *t, const char *name);
