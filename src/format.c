@@ -754,7 +754,7 @@ static int formfeedCount(const char *buf, int len)
 		if (buf[i] == '\f')
 			++ff;
 	return ff;
-}				/* formfeedCount */
+}
 
 bool breakLine(const char *line, int len, int *newlen)
 {
@@ -830,7 +830,7 @@ bool breakLine(const char *line, int len, int *newlen)
 	debugPrint(7, "chunk<EOL>%d.%d", colno, lspace);
 	*newlen = bl_cursor - bl_start;
 	return !bl_overflow;
-}				/* breakLine */
+}
 
 void breakLineSetup(void)
 {
@@ -950,7 +950,7 @@ char *htmlReformat(char *buf)
 	}
 
 	return new;
-}				/* htmlReformat */
+}
 
 /*********************************************************************
 Crunch a to-list or a copy-to-list down to its email addresses.
@@ -1015,7 +1015,7 @@ append:
 			*s = ',';
 	if (*line)
 		strcat(line, ",");
-}				/* extractEmailAddresses */
+}
 
 static void cutDuplicateEmail(char *line, const char *dup, int duplen)
 {
@@ -1031,7 +1031,7 @@ static void cutDuplicateEmail(char *line, const char *dup, int duplen)
 		}
 		line = s + 1;
 	}
-}				/* cutDuplicateEmail */
+}
 
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 {
@@ -1081,7 +1081,7 @@ void cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 			cutDuplicateEmail(cclist, r, len);
 		}
 	}
-}				/* cutDuplicateEmails */
+}
 
 bool isEmailAddress(const char *s)
 {
@@ -1127,7 +1127,7 @@ int byteOrderMark(const uchar * buf, int buflen)
 	if (buflen >= 4 && !memcmp(buf, "\x0\x0\xfe\xff", 4))
 		return 6;
 	return 0;
-}				/* byteOrderMark */
+}
 
 /*********************************************************************
 We got some data from a file or from the internet.
@@ -1544,7 +1544,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	*outbuflen_p = j;
 }
 
-/* convert a 32 bit unicode character into utf8 */
+// convert a 32 bit unicode character into utf8
 char *uni2utf8(unsigned int unichar)
 {
 	static uchar outbuf[12];
@@ -1961,7 +1961,7 @@ bool parseDataURI(const char *uri, char **mediatype, char **data, int *data_l)
 	}
 
 	return true;
-}				/* parseDataURI */
+}
 
 uchar fromHex(char d, char e)
 {
@@ -1972,7 +1972,7 @@ uchar fromHex(char d, char e)
 		e -= ('a' - '9' - 1);
 	d -= '0', e -= '0';
 	return ((((uchar) d) << 4) | (uchar) e);
-}				/* fromHex */
+}
 
 // find the color closest to the rgb value.
 // Input string is allocated; return is either the einput string
