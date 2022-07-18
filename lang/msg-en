@@ -223,7 +223,7 @@ session %d is empty
 session %d contains more than one line
 cannot open %s
 cannot read from %s
-the %s protocol is not supported by curl
+the %s protocol is not supported by %s
 cannot embed carriage return in an input field
 gopher download: 
 file is currently in buffer - please use the rf command to refresh
@@ -286,7 +286,7 @@ could not read the data from the server
 %s is not a url
 download complete
 cannot identify %s on the network
-the %s protocol is not supported by edbrowse
+0
 warning: could not preload <session %d> with its initial text\n
 download in progress
 cannot connect to %s
@@ -689,8 +689,8 @@ session + is out of bounds, limit %d
 session - is out of bounds, limit %d
 %s: public key file %s is not a regular file
 %s: public key file %s does not exist or is not readable.
-0
-0
+tidy disabled
+tidy enabled
 0
 0
 0

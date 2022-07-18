@@ -223,7 +223,7 @@ le tampon %d est vide
 le tampon %d contient plus d'une ligne
 impossible d'ouvrir %s
 impossible de lire %s
-le protocole %s n'est pas supporté par curl
+le protocole %s n'est pas supporté par %s
 il y a un retour-chariot dans la ligne
 téléchargement gopher: 
 le fichier est actuellement dans le tampon - utilisez la commande rf pour le réafficher
@@ -286,7 +286,7 @@ impossible de lire les données sur le serveur
 %s n'est pas une url
 téléchargement terminé
 impossible d'identifier %s sur le réseau
-le protocole %s n'est pas supporté par edbrowse
+0
 attention : impossible de précharger le texte initial dans le <tampon %d>\n
 télachargement en cours
 connexion impossible à %s

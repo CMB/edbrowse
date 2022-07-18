@@ -342,7 +342,8 @@ extern char lsformat[12];
 extern bool caseInsensitive, searchStringsAll, searchWrap, ebre;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
-extern bool allowJS;		/* javascript on */
+extern bool allowJS;		// javascript on
+extern bool useTidy;		// use the tidy html parser
 extern bool blockJS; // javascript is blocked
 extern bool htmlGenerated;
 extern bool ftpActive;

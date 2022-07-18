@@ -278,6 +278,7 @@ encodeAttachment(const char *file, int ismail, bool webform,
 	int buflen, i, cx;
 	int nacount, nullcount, nlcount;
 
+	debugPrint(5, "subject at line %d", ismail);
 	if (ismail < 0) {
 		buf = cloneString(file);
 		buflen = strlen(buf);
@@ -367,7 +368,7 @@ empty:
 				nzFree(subjiso);
 			}
 		}
-		debugPrint(6, "subject = %s", subjectLine);
+		debugPrint(5, "subject = %s", subjectLine);
 /* Blank lines after subject are optional, and ignored. */
 		for (t = buf + buflen; v < t; ++v)
 			if (*v != '\r' && *v != '\n')
@@ -469,7 +470,7 @@ empty:
 		longline = true;
 	if (!s && i > 120)
 		longline = true;
-	debugPrint(6, "attaching %s length %d nonascii %d nulls %d longline %d",
+	debugPrint(5, "attaching %s length %d nonascii %d nulls %d longline %d",
 		   file, buflen, nacount, nullcount, longline);
 	nacount += nullcount;
 
@@ -564,10 +565,11 @@ empty:
 	ce = (nacount ? "8bit" : "7bit");
 
 success:
-	debugPrint(6, "encoded %s %s length %d", ct, ce, strlen(buf));
+	debugPrint(5, "encoded %s %s length %d", ct, ce, strlen(buf));
 	*enc_p = ce;
 	*type_p = ct;
 	*data_p = buf;
+	debugPrint(6, "%s", buf);
 	return true;
 
 freefail:
@@ -817,7 +819,11 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 	curl_easy_setopt(handle, CURLOPT_READDATA, &upload);
 	curl_easy_setopt(handle, CURLOPT_UPLOAD, 1L);
 
-	res = curl_easy_perform(handle);
+	if(debugLevel >= 6) {
+		puts("debug don't send");
+	} else {
+		res = curl_easy_perform(handle);
+	}
 	if (res == CURLE_OK)
 		smtp_success = true;
 
@@ -932,7 +938,7 @@ sendMail(int account, const char **recipients, const char *body,
 		}
 		setError(MSG_ABNoAlias2, s);
 		return false;
-	}			/* recipients */
+	}			// recipients
 
 	if (!j) {
 		setError(MSG_RecipNone);
@@ -963,7 +969,7 @@ sendMail(int account, const char **recipients, const char *body,
 				return false;
 			}
 		}
-	}			/* loop over attachments */
+	}			// loop over attachments
 
 	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded))
 		return false;
@@ -972,7 +978,7 @@ sendMail(int account, const char **recipients, const char *body,
 
 	boundary = makeBoundary();
 
-/* Build the outgoing mail, as one string. */
+// Build the outgoing mail as one string.
 	out = initString(&j);
 
 	firstrec = true;

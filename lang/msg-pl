@@ -223,7 +223,7 @@ bufor %d jest pusty
 bufor %d zawiera więcej niż jeden wiersz
 nie można otworzyć %s
 nie można wczytać %s
-protokół %s nie jest wspierany przez curl
+protokół %s nie jest wspierany przez %s
 wiersz zawiera znak powrotu karetki
 ściąganie gopher: 
 plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć
@@ -286,7 +286,7 @@ nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.
 nie można zidentyfikować %s w sieci
-protokół %s nie jest wspierany przez edbrowse
+0
 uwaga: nie można załadować <bufora %d> z tekstem początkowym\n
 pobieranie w toku
 nie można się połączyć z %s

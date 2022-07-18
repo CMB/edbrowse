@@ -223,7 +223,7 @@ o buffer %d está vazio
 o buffer %d contém mais que uma linha
 impossível abrir %s
 impossível ler a partir de %s
-o protocolo %s não é suportado pelo curl
+o protocolo %s não é suportado pelo %s
 a linha possui um retorno de carro embutido
 download via gopher: 
 arquivo atualmente no buffer - use por favor o comando rf para atualizar
@@ -286,7 +286,7 @@ não consegui ler os dados do servidor
 %s não é uma URL
 transferência completa
 impossível identificar %s na rede
-o protocolo %s não é suportado pelo edbrowse
+0
 aviso: não foi possível precarregar o <buffer %d> com o texto inicial do mesmo\n
 transferência em progresso
 não é possível conectar a %s

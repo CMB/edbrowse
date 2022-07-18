@@ -897,9 +897,9 @@ mimestream:
 		return ftpConnect(g, creds_buf);
 	} else {
 		if (g->foreground)
-			setError(MSG_WebProtBad, prot);
+			setError(MSG_WebProtBad, prot, "edbrowse");
 		else if (debugLevel >= 3) {
-			i_printf(MSG_WebProtBad, prot);
+			i_printf(MSG_WebProtBad, prot, "edbrowse");
 			nl();
 		}
 		return false;
@@ -1851,7 +1851,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 
 	switch (curlret) {
 	case CURLE_UNSUPPORTED_PROTOCOL:
-		(*fn) (MSG_CurlProtBad, prot);
+		(*fn) (MSG_WebProtBad, prot, "curl");
 		break;
 
 	case CURLE_URL_MALFORMAT:
