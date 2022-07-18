@@ -7,8 +7,9 @@
 
 #include <time.h>
 
-#define MAXRECAT 100		/* max number of recipients or attachments */
-#define MAXMSLINE 1024		/* max mail server line */
+#define MAXRECAT 100		// max number of recipients or attachments
+#define MAXMSLINE 1024		// max mail server line
+#define LONGLINELIMIT 78
 
 static char serverLine[MAXMSLINE];
 static bool doSignature;
@@ -459,16 +460,16 @@ empty:
 			continue;
 		++nlcount;
 		t = buf + i;
-		if (s && t - s > 120)
+		if (s && t - s > LONGLINELIMIT)
 			longline = true;
-		if (!s && i > 120)
+		if (!s && i > LONGLINELIMIT)
 			longline = true;
 		s = t;
 	}
 	t = buf + i;
-	if (s && t - s > 120)
+	if (s && t - s > LONGLINELIMIT)
 		longline = true;
-	if (!s && i > 120)
+	if (!s && i > LONGLINELIMIT)
 		longline = true;
 	debugPrint(5, "attaching %s length %d nonascii %d nulls %d longline %d",
 		   file, buflen, nacount, nullcount, longline);
