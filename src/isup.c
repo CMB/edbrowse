@@ -47,7 +47,7 @@ struct PROTOCOL {
 	{"pnm", 7070, false, true, true},
 	{"finger", 79, false, true, true},
 	{"smb", 139, false, true, true},
-	{"mailto", 0, false, false, false},
+	{"mailto", 0, true, false, false},
 	{"telnet", 23, false, false, false},
 	{"tn3270", 0, false, false, false},
 	{"data", 0, true, false, false},
