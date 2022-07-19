@@ -119,9 +119,65 @@ opencomment:
 		}
 
 // create this tag in the edbrowse world.
-		printf("<%s>\n", tagname);
+		printf("<%s> at %d\n", tagname, ln);
 
 		findAttributes(t, gt);
+
+		if(stringEqualCI(tagname, "script")) {
+/*********************************************************************
+A script, javascript or otherwise, can contain virtually any string.
+We can't expect an html scanner, like this one, to understand
+the syntax of every scripting language that might ever embed.
+To this end, constructs like this are invalid.
+	var foo = "hello </script> world";
+Such has to be written
+	var foo = "hello </scr" + "ipt> world";
+With this understanding, we can, and should, scan for </script
+*********************************************************************/
+			if(!(lt = strcasestr(seek, "</script"))) {
+				printf("open script, html parsing stops here\n");
+				return;
+			}
+			if(!(gt = strchr(lt, '>'))) {
+				printf("open script, html parsing stops here\n");
+				return;
+			}
+// pull out the script, do not andify or change in any way.
+			   printf("script length %d\n", lt - seek);
+// adjust line number
+			for(u = seek; u < gt; ++u)
+				if(*u == '\n') ++ln;
+			puts("</script>");
+			seek = s = gt + 1;
+			continue;
+		}
+
+		if(stringEqualCI(tagname, "textarea")) {
+/*********************************************************************
+A textarea can contain tags and these are not to be interpreted. In fact a
+textarea is sometimes html code that you are suppose to embed in your web page.
+With this understanding, we can, and should, scan for </textarea
+*********************************************************************/
+			if(!(lt = strcasestr(seek, "</textarea"))) {
+				printf("open textarea, html parsing stops here\n");
+				return;
+			}
+			if(!(gt = strchr(lt, '>'))) {
+				printf("open textarea, html parsing stops here\n");
+				return;
+			}
+// pull out the text and andify.
+			w = pullAnd(seek, lt);
+			   printf("script length %d\n", strlen(w));
+			nzFree(w);
+// adjust line number
+			for(u = seek; u < gt; ++u)
+				if(*u == '\n') ++ln;
+			puts("</textarea>");
+			seek = s = gt + 1;
+			continue;
+		}
+
 	}
 
 // seek points to the last piece of the buffer, after the last tag
@@ -2245,18 +2301,16 @@ static const struct entity { unsigned int u; const char *word; } andlist[] = {
 static unsigned andLookup(char *entity, char *v)
 {
 	int i, l, r, d;
-	char save_c;
-	save_c = *v, *v = 0;
+	int n = v - entity;
 // left, right, binary search
 	l = -1;
 	r = sizeof(andlist) / sizeof(struct entity);
 	while(r - l > 1) {
 		i = (l + r) / 2;
-		d = strcmp(entity, andlist[i].word);
-		if(!d) { *v = save_c; return andlist[i].u; }
+		d = strncmp(entity, andlist[i].word, n);
+		if(!d) return andlist[i].u;
 		if(d > 0) l = i; else r = i;
 	}
-	*v = save_c;
 	return 0; // not found
 }
 
