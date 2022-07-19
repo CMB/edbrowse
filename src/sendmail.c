@@ -502,9 +502,9 @@ empty:
 	}
 
 	if (!webform) {
-// Do we need to use quoted-printable?
-// Perhaps this hshould read (nacount > 0)
-		if (nacount * 20 > buflen || nullcount || longline) {
+// Do we need to use quoted-printable? Ever?
+//		if (nacount * 20 > buflen || nullcount || longline)
+		if (nullcount) {
 			char *newbuf;
 			int l, colno = 0, space = 0;
 
