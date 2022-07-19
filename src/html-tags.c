@@ -24,6 +24,8 @@ static unsigned andLookup(char *entity, char *v);
 
 static Tag *working_t;
 static int ln; // line number
+// 0 prehtml 1 prehead, 2 inhead, 3 posthead, 4 inbody, 5 postbody 6 posthtml
+static int headbody;
 
 void html2tags(const char *htmltext, bool startpage)
 {
@@ -33,6 +35,7 @@ void html2tags(const char *htmltext, bool startpage)
 	const char *seek, *s, *t, *u;
 	char *w;
 	bool slash; // </foo>
+	bool ws; // all whitespace
 	char tagname[MAXTAGNAME];
 
 	seek = s = htmltext, ln = 1;
@@ -55,15 +58,20 @@ void html2tags(const char *htmltext, bool startpage)
 
 // text fragment between tags
 		if(lt > seek) {
-			w = pullAnd(seek, lt);
-			  printf("text{%s}\n", w);
-			working_t = newTag(cf, "text");
-			working_t->textval = w;
-			working_t = newTag(cf, "text");
-			working_t->slash = true;
 // adjust line number
-			for(u = seek; u < lt; ++u)
+			for(ws = true, u = seek; u < lt; ++u) {
 				if(*u == '\n') ++ln;
+				if(!isspace(*u)) ws = false;
+			}
+// ignore whitespace that is not in the head or the body
+			if(!ws || headbody == 4) {
+				w = pullAnd(seek, lt);
+				  printf("text{%s}\n", w);
+				working_t = newTag(cf, "text");
+				working_t->textval = w;
+				working_t = newTag(cf, "text");
+				working_t->slash = true;
+			}
 		}
 
 // special code here for html comment
@@ -119,6 +127,12 @@ opencomment:
 			printf("</%s>\n", tagname);
 			working_t = newTag(cf, tagname);
 			working_t->slash = true;
+			if(stringEqualCI(tagname, "head"))
+				headbody = 3, puts("post head");
+			if(stringEqualCI(tagname, "body"))
+				headbody = 5, puts("post body");
+			if(stringEqualCI(tagname, "html"))
+				headbody = 6, puts("post html");
 			continue;
 		}
 
@@ -145,7 +159,7 @@ With this understanding, we can, and should, scan for </script
 				printf("open script, html parsing stops here\n");
 				return;
 			}
-			if(!(gt = strpbrk(lt, "<>")) || *gt == '<') {
+			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
 				printf("open script, html parsing stops here\n");
 				return;
 			}
@@ -181,7 +195,7 @@ With this understanding, we can, and should, scan for </textarea
 				printf("open textarea, html parsing stops here\n");
 				return;
 			}
-			if(!(gt = strpbrk(lt, "<>")) || *gt == '<') {
+			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
 				printf("open textarea, html parsing stops here\n");
 				return;
 			}
@@ -205,16 +219,28 @@ With this understanding, we can, and should, scan for </textarea
 			continue;
 		}
 
+		if(stringEqualCI(tagname, "html"))
+			headbody = 1, puts("in html");
+		if(stringEqualCI(tagname, "head"))
+			headbody = 2, puts("in head");
+		if(stringEqualCI(tagname, "body"))
+			headbody = 4, puts("in body");
 	}
 
 // seek points to the last piece of the buffer, after the last tag
 	if(*seek) {
-		w = pullAnd(seek, seek + strlen(seek));
-		  printf("text{%s}\n", w);
-		working_t = newTag(cf, "text");
-		working_t->textval = w;
-		working_t = newTag(cf, "text");
-		working_t->slash = true;
+		for(ws = true, u = seek; *u; ++u) {
+			if(*u == '\n') ++ln;
+			if(!isspace(*u)) ws = false;
+		}
+		if(!ws || headbody == 4) {
+			w = pullAnd(seek, seek + strlen(seek));
+			  printf("text{%s}\n", w);
+			working_t = newTag(cf, "text");
+			working_t->textval = w;
+			working_t = newTag(cf, "text");
+			working_t->slash = true;
+		}
 	}
 
 }

@@ -1990,8 +1990,9 @@ static void intoTree(Tag *parent)
 		prev = t;
 
 checkattributes:
-/* check for some common attributes here */
 		action = t->action;
+		if(!t->attributes) goto no_attributes;
+// check for some common attributes here
 		if (stringInListCI(t->attributes, "onclick") >= 0)
 			t->onclick = t->doorway = true;
 		if (stringInListCI(t->attributes, "onchange") >= 0)
@@ -2096,10 +2097,11 @@ checkattributes:
 			}
 		}
 
-/* href=javascript:foo() is another doorway into js */
+// href=javascript:foo() is another doorway into js
 		if (t->href && memEqualCI(t->href, "javascript:", 11))
 			t->doorway = true;
-/* And of course the primary doorway */
+
+no_attributes:
 		if (action == TAGACT_SCRIPT) {
 			t->doorway = true;
 			t->scriptgen = htmlGenerated;
