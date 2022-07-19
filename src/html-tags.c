@@ -26,6 +26,24 @@ static Tag *working_t;
 static int ln; // line number
 // 0 prehtml 1 prehead, 2 inhead, 3 posthead, 4 inbody, 5 postbody 6 posthtml
 static int headbody;
+static bool premode;
+
+// compress whitespace
+static void compress(char *s)
+{
+	int i, j;
+	char c;
+	bool space = false;
+	for (i = j = 0; (c = s[i]); ++i) {
+		if (isspaceByte(c)) {
+			if (!space)
+				s[j++] = ' ', space = true;
+			continue;
+		}
+		s[j++] = c, space = false;
+	}
+	s[j] = 0;
+}
 
 void html2tags(const char *htmltext, bool startpage)
 {
@@ -38,7 +56,7 @@ void html2tags(const char *htmltext, bool startpage)
 	bool ws; // all whitespace
 	char tagname[MAXTAGNAME];
 
-	seek = s = htmltext, ln = 1;
+	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
 
 // loop looking for tags
 	while(*s) {
@@ -66,6 +84,7 @@ void html2tags(const char *htmltext, bool startpage)
 // ignore whitespace that is not in the head or the body
 			if(!ws || headbody == 4) {
 				w = pullAnd(seek, lt);
+				if(!premode) compress(w);
 				  printf("text{%s}\n", w);
 				working_t = newTag(cf, "text");
 				working_t->textval = w;
@@ -235,6 +254,7 @@ With this understanding, we can, and should, scan for </textarea
 		}
 		if(!ws || headbody == 4) {
 			w = pullAnd(seek, seek + strlen(seek));
+			if(!premode) compress(w);
 			  printf("text{%s}\n", w);
 			working_t = newTag(cf, "text");
 			working_t->textval = w;

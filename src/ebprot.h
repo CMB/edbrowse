@@ -217,7 +217,7 @@ int playBuffer(const char *line, const char *playfile);
 // sourcefile=sendmail.c
 bool loadAddressBook(void);
 const char *reverseAlias(const char *reply);
-bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p);
+bool encodeAttachment(const char *file, int ismail, bool webform, const char **type_p, const char **enc_p, char **data_p, bool *long_p);
 char *makeBoundary(void);
 bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, const char *refline, int nalt, bool dosig);
 bool validAccount(int n);

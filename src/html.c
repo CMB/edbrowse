@@ -1721,7 +1721,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 				stringAndString(&pfs, &pfs_l, (cut ? cut + 1 : val));
 				stringAndChar(&pfs, &pfs_l, '"');
 			}
-			if (!encodeAttachment(val, 0, true, &ct, &ce, &enc))
+			if (!encodeAttachment(val, 0, true, &ct, &ce, &enc, 0))
 				return false;
 			if(!(isfile&2))
 				enc = makeDosNewlines(enc);

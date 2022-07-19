@@ -269,7 +269,8 @@ static char *charsetString(const char *ct, const char *ce)
  * and the string file is not the filename, but rather, the mail to send. */
 bool
 encodeAttachment(const char *file, int ismail, bool webform,
-		 const char **type_p, const char **enc_p, char **data_p)
+		 const char **type_p, const char **enc_p, char **data_p,
+bool *long_p)
 {
 	char *buf;
 	char c;
@@ -570,6 +571,7 @@ success:
 	*enc_p = ce;
 	*type_p = ct;
 	*data_p = buf;
+if(long_p) *long_p = longline;
 	debugPrint(6, "%s", buf);
 	return true;
 
@@ -855,7 +857,7 @@ sendMail(int account, const char **recipients, const char *body,
 	char *out = 0;
 	bool sendmail_success = false;
 	bool mustmime = false;
-	bool firstrec;
+	bool firstrec, longline;
 	const char *ct, *ce;
 	char *encoded = 0;
 
@@ -974,7 +976,7 @@ sendMail(int account, const char **recipients, const char *body,
 		}
 	}			// loop over attachments
 
-	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded))
+	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded, &longline))
 		return false;
 	if (ce[0] == 'q')
 		mustmime = true;
@@ -1073,7 +1075,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 
 	if (mustmime) {
 		for (i = 0; (s = attachments[i]); ++i) {
-			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded))
+			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded, &longline))
 				return false;
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,
 				boundary, eol, ct, charsetString(ct, ce));
