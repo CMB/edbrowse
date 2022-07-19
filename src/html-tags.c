@@ -70,6 +70,7 @@ static const struct specialtag {
 	} specialtags[] = {
 {"script", 0, 1, 1, 0},
 {"meta", 1, 1, 1, 0},
+{"title", 0, 1, 1, 0},
 {"base", 1, 1, 1, 0},
 {"br", 1, 1, 0, 0},
 {"hr", 1, 1, 0, 0},
@@ -95,6 +96,15 @@ static const struct specialtag {
 // the end of the world if they do.
 {0, 0,0,0, 0},
 };
+
+static int isAutoclose(const char *name)
+{
+	const struct specialtag *k;
+	for(k = specialtags; k->name; ++k)
+		if(stringEqualCI(name, k->name))
+			return k->autoclose;
+	return false;
+}
 
 // generate a tag using newTag, which does most of the work
 static void makeTag(const char *name, bool slash, const char *mark)
@@ -270,6 +280,10 @@ opencomment:
 		makeTag(tagname, false, seek);
 		working_t->innerHTML = emptyString; // for now
 		findAttributes(t, gt);
+		if(isAutoclose(tagname)) {
+			if(dhs) puts("autoclose");
+			makeTag(tagname, true, seek);
+		}
 
 		if(stringEqualCI(tagname, "script")) {
 // remember the line number for error messages
@@ -285,18 +299,18 @@ Such has to be written
 With this understanding, we can, and should, scan for </script
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</script"))) {
-				printf("open script, html parsing stops here\n");
+				if(dhs) printf("open script, html parsing stops here\n");
 				return;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				printf("open script, html parsing stops here\n");
+				if(dhs) printf("open script, html parsing stops here\n");
 				return;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspace(*seek)) ++seek;
-			   printf("script length %d\n", lt - seek);
+			   if(dhs) printf("script length %d\n", lt - seek);
 			if(lt > seek) {
 // pull out the script, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
@@ -317,11 +331,11 @@ textarea is sometimes html code that you are suppose to embed in your web page.
 With this understanding, we can, and should, scan for </textarea
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</textarea"))) {
-				printf("open textarea, html parsing stops here\n");
+				if(dhs) printf("open textarea, html parsing stops here\n");
 				return;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				printf("open textarea, html parsing stops here\n");
+				if(dhs) printf("open textarea, html parsing stops here\n");
 				return;
 			}
 // adjust line number
@@ -331,7 +345,7 @@ With this understanding, we can, and should, scan for </textarea
 			if(lt > seek) {
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
-				   printf("textarea length %d\n", strlen(w));
+				   if(dhs) printf("textarea length %d\n", strlen(w));
 				makeTag("text", false, 0);
 				working_t->textval = w;
 				makeTag("text", true, 0);
@@ -352,7 +366,7 @@ With this understanding, we can, and should, scan for </textarea
 		if(!ws || headbody == 4) {
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w);
-			  printf("text{%s}\n", w);
+			  if(dhs) printf("text{%s}\n", w);
 			makeTag("text", false, 0);
 			working_t->textval = w;
 			makeTag("text", true, 0);
@@ -385,14 +399,13 @@ static void findAttributes(const char *start, const char *end)
 		qc = 0;
 		if(*v1 == '"' || *v1 == '\'') qc = *v1++;
 		for(v2 = v1; v2 < end; ++v2)
-			if((!qc && isspace(*v2)) || (qc && *v2 != qc)) break;
+			if((!qc && isspace(*v2)) || (qc && *v2 == qc)) break;
 		setAttribute(a1, a2, v1, v2);
 		if(*v2 == qc) ++v2;
 		s = v2;
 	}
 }
 
-// this is just a print for now
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2)
 {
 	char *w;
@@ -400,7 +413,7 @@ static void setAttribute(const char *a1, const char *a2, const char *v1, const c
 	w = pullAnd(v1, v2);
 // yeah this is tacky, write on top of a const, but I'll put it back.
 	save_c = *a2, *(char*)a2 = 0;
-	printf("%s=%s\n", a1, w);
+	if(dhs) printf("%s=%s\n", a1, w);
 	setTagAttr(working_t, a1, w);
 	*(char*)a2 = save_c;
 }
