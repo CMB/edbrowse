@@ -3214,7 +3214,7 @@ So check for serverData null here. Once again we pop the frame.
 	cdt->atvals = allocZeroMem(sizeof(char*));
 	debugPrint(3, "parse html from frame");
 /* call the tidy parser to build the html nodes */
-	html2nodes(serverData, true);
+	htmlScanner(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
 	htmlGenerated = false;
@@ -3336,7 +3336,7 @@ bool reexpandFrame(void)
 	start = cw->numTags;
 	debugPrint(3, "parse html from frame replace");
 /* call the tidy parser to build the html nodes */
-	html2nodes(serverData, true);
+	htmlScanner(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
 	cf->browseMode = false;

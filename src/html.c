@@ -476,7 +476,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 		debugPrint(4, "parse under top");
 	debugGenerated(h);
 
-	html2nodes(h, false);
+	htmlScanner(h, false);
 	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
 	prerender(false);
@@ -1037,7 +1037,7 @@ char *htmlParse(char *buf, int remote)
 
 	debugPrint(3, "parse html from browse");
 /* call the tidy parser to build the html nodes */
-	html2nodes(buf, true);
+	htmlScanner(buf, true);
 	nzFree(buf);
 	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);

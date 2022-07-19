@@ -98,7 +98,6 @@ bool attribPresent(const Tag *t, const char *name)
 
 // Push an attribute onto an html tag.
 // Value is already allocated, name is not.
-// So far only used by domSetsLinkage.
 void setTagAttr(Tag *t, const char *name, char *val)
 {
 	int nattr = 0;		/* number of attributes */
@@ -2122,7 +2121,7 @@ void html_from_setter(Tag *t, const char *h)
 // Cut all the children away from t
 	underKill(t);
 
-	html2nodes(h, false);
+	htmlScanner(h, false);
 	htmlGenerated = true;
 	htmlNodesIntoTree(l, t);
 	prerender(0);

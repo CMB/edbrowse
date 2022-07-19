@@ -22,9 +22,11 @@ static void setAttribute(const char *a1, const char *a2, const char *v1, const c
 static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 
+static Tag *working_t;
+static int ln; // line number
+
 void html2tags(const char *htmltext, bool startpage)
 {
-	int ln = 1; // line number
 	int i;
 	const char *lt; // les than sign
 	const char *gt; // greater than sign
@@ -33,7 +35,8 @@ void html2tags(const char *htmltext, bool startpage)
 	bool slash; // </foo>
 	char tagname[MAXTAGNAME];
 
-	seek = s = htmltext;
+	seek = s = htmltext, ln = 1;
+
 // loop looking for tags
 	while(*s) {
 // the next literal < should begin the next tag
@@ -54,7 +57,10 @@ void html2tags(const char *htmltext, bool startpage)
 		if(lt > seek) {
 			w = pullAnd(seek, lt);
 			  printf("text{%s}\n", w);
-			nzFree(w);
+			working_t = newTag(cf, "text");
+			working_t->textval = w;
+			working_t = newTag(cf, "text");
+			working_t->slash = true;
 // adjust line number
 			for(u = seek; u < lt; ++u)
 				if(*u == '\n') ++ln;
@@ -96,10 +102,7 @@ opencomment:
 		tagname[i] = 0;
 // the next > should close the tag
 // <tag foo="bar>bar"> is not valid, you should be using &gt; in this case
-		gt = strchr(t, '>');
-// if no > then I'll go up to the next <
-// this isn't correct html but that's how tidy handles it
-		if(!gt) gt = strchr(t, '<');
+		gt = strpbrk(t, "<>");
 		if(!gt) {
 			printf("open tag %s, html parsing stops here\n", tagname);
 			return;
@@ -114,16 +117,20 @@ opencomment:
 // close the corresponging open tag. If none found then discard this one.
 // create this tag in the edbrowse world.
 			printf("</%s>\n", tagname);
-// No need to gather attributes
+			working_t = newTag(cf, tagname);
+			working_t->slash = true;
 			continue;
 		}
 
 // create this tag in the edbrowse world.
 		printf("<%s> at %d\n", tagname, ln);
-
+		working_t = newTag(cf, tagname);
+		working_t->innerHTML = emptyString; // for now
 		findAttributes(t, gt);
 
 		if(stringEqualCI(tagname, "script")) {
+// remember the line number for error messages
+			working_t->js_ln = ln;
 /*********************************************************************
 A script, javascript or otherwise, can contain virtually any string.
 We can't expect an html scanner, like this one, to understand
@@ -138,16 +145,28 @@ With this understanding, we can, and should, scan for </script
 				printf("open script, html parsing stops here\n");
 				return;
 			}
-			if(!(gt = strchr(lt, '>'))) {
+			if(!(gt = strpbrk(lt, "<>")) || *gt == '<') {
 				printf("open script, html parsing stops here\n");
 				return;
 			}
-// pull out the script, do not andify or change in any way.
-			   printf("script length %d\n", lt - seek);
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
+			while(isspace(*seek)) ++seek;
+			   printf("script length %d\n", lt - seek);
+			if(lt > seek) {
+// pull out the script, do not andify or change in any way.
+				w = pullString(seek, lt - seek);
+// need two copies, one for the text node and one for innerHTML
+				working_t->innerHTML = cloneString(w);
+				working_t = newTag(cf, "text");
+				working_t->textval = w;
+				working_t = newTag(cf, "text");
+				working_t->slash = true;
+			}
 			puts("</script>");
+			working_t = newTag(cf, tagname);
+			working_t->slash = true;
 			seek = s = gt + 1;
 			continue;
 		}
@@ -162,18 +181,26 @@ With this understanding, we can, and should, scan for </textarea
 				printf("open textarea, html parsing stops here\n");
 				return;
 			}
-			if(!(gt = strchr(lt, '>'))) {
+			if(!(gt = strpbrk(lt, "<>")) || *gt == '<') {
 				printf("open textarea, html parsing stops here\n");
 				return;
 			}
-// pull out the text and andify.
-			w = pullAnd(seek, lt);
-			   printf("script length %d\n", strlen(w));
-			nzFree(w);
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
+			while(isspace(*seek)) ++seek; // should we be doing this?
+			if(lt > seek) {
+// pull out the text and andify.
+				w = pullAnd(seek, lt);
+				   printf("textarea length %d\n", strlen(w));
+				working_t = newTag(cf, "text");
+				working_t->textval = w;
+				working_t = newTag(cf, "text");
+				working_t->slash = true;
+			}
 			puts("</textarea>");
+			working_t = newTag(cf, tagname);
+			working_t->slash = true;
 			seek = s = gt + 1;
 			continue;
 		}
@@ -184,7 +211,10 @@ With this understanding, we can, and should, scan for </textarea
 	if(*seek) {
 		w = pullAnd(seek, seek + strlen(seek));
 		  printf("text{%s}\n", w);
-		nzFree(w);
+		working_t = newTag(cf, "text");
+		working_t->textval = w;
+		working_t = newTag(cf, "text");
+		working_t->slash = true;
 	}
 
 }
@@ -224,12 +254,13 @@ static void findAttributes(const char *start, const char *end)
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2)
 {
 	char *w;
-	w = pullAnd(a1, a2);
-	printf("%s=", w);
-	nzFree(w);
+	char save_c;
 	w = pullAnd(v1, v2);
-	printf("%s\n", w);
-	nzFree(w);
+// yeah this is tacky, write on top of a const, but I'll put it back.
+	save_c = *a2, *(char*)a2 = 0;
+	printf("%s=%s\n", a1, w);
+	setTagAttr(working_t, a1, w);
+	*(char*)a2 = save_c;
 }
 
 // make an allocated copy of the designated string,

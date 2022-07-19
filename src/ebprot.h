@@ -144,6 +144,8 @@ void html2tags(const char *htmltext, bool startpage);
 // sourcefile=html-tidy.c
 void html2nodes(const char *htmltext, bool startpage);
 
+#define htmlScanner (useTidy ? html2nodes : html2tags)
+
 // sourcefile=decorate.c
 void traverseAll(int start);
 const char *attribVal(const Tag *t, const char *name);
