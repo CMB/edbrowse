@@ -978,6 +978,7 @@ sendMail(int account, const char **recipients, const char *body,
 
 	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded, &longline))
 		return false;
+// set longline to false here to disable the format=flowed feature
 	if (ce[0] == 'q')
 		mustmime = true;
 
@@ -1049,8 +1050,10 @@ sendMail(int account, const char **recipients, const char *body,
 	if (!mustmime) {
 /* no mime components required, we can just send the mail. */
 		sprintf(serverLine,
-			"Content-Type: %s%s%sContent-Transfer-Encoding: %s%s%s",
-			ct, charsetString(ct, ce), eol, ce, eol, eol);
+			"Content-Type: %s%s%s%sContent-Transfer-Encoding: %s%s%s",
+			ct, charsetString(ct, ce),
+			(longline ? "; format=flowed" : ""), eol,
+			ce, eol, eol);
 		stringAndString(&out, &j, serverLine);
 	} else {
 		sprintf(serverLine,
@@ -1063,8 +1066,10 @@ sendMail(int account, const char **recipients, const char *body,
 this format, some or all of this message may not be legible.\r\n\r\n--");
 		stringAndString(&out, &j, boundary);
 		sprintf(serverLine,
-			"%sContent-Type: %s%s%sContent-Transfer-Encoding: %s%s%s",
-			eol, ct, charsetString(ct, ce), eol, ce, eol, eol);
+			"%sContent-Type: %s%s%s%sContent-Transfer-Encoding: %s%s%s",
+			eol, ct, charsetString(ct, ce),
+			(longline ? "; format=flowed" : ""), eol,
+			ce, eol, eol);
 		stringAndString(&out, &j, serverLine);
 	}
 
@@ -1075,7 +1080,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 
 	if (mustmime) {
 		for (i = 0; (s = attachments[i]); ++i) {
-			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded, &longline))
+			if (!encodeAttachment(s, 0, false, &ct, &ce, &encoded, 0))
 				return false;
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,
 				boundary, eol, ct, charsetString(ct, ce));

@@ -45,6 +45,33 @@ static void compress(char *s)
 	s[j] = 0;
 }
 
+// generate a tag using newTag, which does most of the work
+static void makeTag(const char *name, bool slash)
+{
+	Tag *t = newTag(cf, name);
+	working_t = t;
+	t->slash = slash;
+	if(!slash) {
+		if(stringEqualCI(name, "html"))
+			headbody = 1, puts("in html");
+		if(stringEqualCI(name, "head"))
+			headbody = 2, puts("in head");
+		if(stringEqualCI(name, "body"))
+			headbody = 4, puts("in body");
+		if(stringEqualCI(name, "pre"))
+			premode = true, puts("pre");
+	} else {
+		if(stringEqualCI(name, "head"))
+			headbody = 3, puts("post head");
+		if(stringEqualCI(name, "body"))
+			headbody = 5, puts("post body");
+		if(stringEqualCI(name, "html"))
+			headbody = 6, puts("post html");
+		if(stringEqualCI(name, "pre"))
+			premode = false, puts("not pre");
+	}
+}
+
 void html2tags(const char *htmltext, bool startpage)
 {
 	int i;
@@ -86,10 +113,9 @@ void html2tags(const char *htmltext, bool startpage)
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
 				  printf("text{%s}\n", w);
-				working_t = newTag(cf, "text");
+				makeTag("text", false);
 				working_t->textval = w;
-				working_t = newTag(cf, "text");
-				working_t->slash = true;
+				makeTag("text", true);
 			}
 		}
 
@@ -144,20 +170,13 @@ opencomment:
 // close the corresponging open tag. If none found then discard this one.
 // create this tag in the edbrowse world.
 			printf("</%s>\n", tagname);
-			working_t = newTag(cf, tagname);
-			working_t->slash = true;
-			if(stringEqualCI(tagname, "head"))
-				headbody = 3, puts("post head");
-			if(stringEqualCI(tagname, "body"))
-				headbody = 5, puts("post body");
-			if(stringEqualCI(tagname, "html"))
-				headbody = 6, puts("post html");
+			makeTag(tagname, true);
 			continue;
 		}
 
 // create this tag in the edbrowse world.
 		printf("<%s> at %d\n", tagname, ln);
-		working_t = newTag(cf, tagname);
+		makeTag(tagname, false);
 		working_t->innerHTML = emptyString; // for now
 		findAttributes(t, gt);
 
@@ -192,14 +211,12 @@ With this understanding, we can, and should, scan for </script
 				w = pullString(seek, lt - seek);
 // need two copies, one for the text node and one for innerHTML
 				working_t->innerHTML = cloneString(w);
-				working_t = newTag(cf, "text");
+				makeTag("text", false);
 				working_t->textval = w;
-				working_t = newTag(cf, "text");
-				working_t->slash = true;
+				makeTag("text", true);
 			}
 			puts("</script>");
-			working_t = newTag(cf, tagname);
-			working_t->slash = true;
+			makeTag(tagname, true);
 			seek = s = gt + 1;
 			continue;
 		}
@@ -226,24 +243,15 @@ With this understanding, we can, and should, scan for </textarea
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
 				   printf("textarea length %d\n", strlen(w));
-				working_t = newTag(cf, "text");
+				makeTag("text", false);
 				working_t->textval = w;
-				working_t = newTag(cf, "text");
-				working_t->slash = true;
+				makeTag("text", true);
 			}
 			puts("</textarea>");
-			working_t = newTag(cf, tagname);
-			working_t->slash = true;
+			makeTag(tagname, true);
 			seek = s = gt + 1;
 			continue;
 		}
-
-		if(stringEqualCI(tagname, "html"))
-			headbody = 1, puts("in html");
-		if(stringEqualCI(tagname, "head"))
-			headbody = 2, puts("in head");
-		if(stringEqualCI(tagname, "body"))
-			headbody = 4, puts("in body");
 	}
 
 // seek points to the last piece of the buffer, after the last tag
@@ -256,10 +264,9 @@ With this understanding, we can, and should, scan for </textarea
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w);
 			  printf("text{%s}\n", w);
-			working_t = newTag(cf, "text");
+			makeTag("text", false);
 			working_t->textval = w;
-			working_t = newTag(cf, "text");
-			working_t->slash = true;
+			makeTag("text", true);
 		}
 	}
 
