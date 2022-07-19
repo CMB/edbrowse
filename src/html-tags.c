@@ -17,6 +17,8 @@ which we then import into the edbrowse tree of tags.
 
 #include "eb.h"
 
+static bool dhs = true; // debug html scanner
+
 static void findAttributes(const char *start, const char *end);
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2);
 static char *pullAnd(const char *start, const char *end);
@@ -45,30 +47,119 @@ static void compress(char *s)
 	s[j] = 0;
 }
 
-// generate a tag using newTag, which does most of the work
-static void makeTag(const char *name, bool slash)
+static struct opentag {
+	struct opentag *next;
+	char name[MAXTAGNAME];
+	const char *start; // for innerHTML
+} *stack;
+
+static struct opentag *balance(const char *name)
 {
-	Tag *t = newTag(cf, name);
-	working_t = t;
+	struct opentag *k = stack;
+	while(k) {
+		if(stringEqualCI(name, k->name)) return k;
+		k = k->next;
+	}
+	return 0;
+}
+
+static const struct specialtag {
+	const char *name;
+	bool autoclose, nonest, inhead;
+	const char *second;
+	} specialtags[] = {
+{"script", 0, 1, 1, 0},
+{"meta", 1, 1, 1, 0},
+{"base", 1, 1, 1, 0},
+{"br", 1, 1, 0, 0},
+{"hr", 1, 1, 0, 0},
+{"input", 1, 1, 0, 0},
+{"link", 1, 1, 1, 0},
+{"p",0,1, 0, 0},
+{"h1",0, 0,1, 0},
+{"h2",0, 0,1, 0},
+{"h3",0, 0,1, 0},
+{"h4",0, 0,1, 0},
+{"h5",0, 0,1, 0},
+{"h6",0, 0,1, 0},
+{"a",0,1, 0, 0},
+{"form",0,1, 0, 0},
+{"li",0,1, 0, "ul,ol"},
+{"td",0,1, 0, "table"},
+{"th",0,1, 0, "table"},
+{"tr",0,1, 0, "table"},
+{"thead",0,1, 0, "table"},
+{"tbody",0,1, 0, "table"},
+{"tfoot",0,1, 0, "table"},
+// other tags shouldn't nest, like <i>, but I suppose it isn't
+// the end of the world if they do.
+{0, 0,0,0, 0},
+};
+
+// generate a tag using newTag, which does most of the work
+static void makeTag(const char *name, bool slash, const char *mark)
+{
+	Tag *t;
+	struct opentag *k;
+
+	if(slash) {
+		if(!(k = balance(name))) {
+// </foo> without <foo>, may as well just throw it away.
+			if(dhs) puts("unbalanced");
+			return;
+		}
+// now handle <i><b></i></b>
+// the balancing tag is not at the top of the stack, where it should be!
+// I think the best thing is to close out the other tags.
+		while(stack != k) {
+			if(dhs) printf("force closure of %s\n", stack->name);
+			makeTag(stack->name, true, mark);
+		}
+	}
+
+	working_t = t = newTag(cf, name);
 	t->slash = slash;
+
 	if(!slash) {
-		if(stringEqualCI(name, "html"))
-			headbody = 1, puts("in html");
-		if(stringEqualCI(name, "head"))
-			headbody = 2, puts("in head");
-		if(stringEqualCI(name, "body"))
-			headbody = 4, puts("in body");
-		if(stringEqualCI(name, "pre"))
-			premode = true, puts("pre");
+		k = allocMem(sizeof(struct opentag));
+		strcpy(k->name, name);
+		k->start = mark;
+		k->next = stack, stack = k;
+		if(stringEqualCI(name, "html")) {
+			headbody = 1;
+			if(dhs) puts("in html");
+		}
+		if(stringEqualCI(name, "head")) {
+			headbody = 2;
+			if(dhs) puts("in head");
+		}
+		if(stringEqualCI(name, "body")) {
+			headbody = 4;
+			if(dhs) puts("in body");
+		}
+		if(stringEqualCI(name, "pre")) {
+			premode = true;
+			if(dhs) puts("pre");
+		}
 	} else {
-		if(stringEqualCI(name, "head"))
-			headbody = 3, puts("post head");
-		if(stringEqualCI(name, "body"))
-			headbody = 5, puts("post body");
-		if(stringEqualCI(name, "html"))
-			headbody = 6, puts("post html");
-		if(stringEqualCI(name, "pre"))
-			premode = false, puts("not pre");
+		stack = k->next;
+		free(k);
+		if(stringEqualCI(name, "head")) {
+			headbody = 3;
+			if(dhs) puts("post head");
+		}
+		if(stringEqualCI(name, "body")) {
+			headbody = 5;
+			if(dhs) puts("post body");
+		}
+		if(stringEqualCI(name, "html")) {
+			headbody = 6;
+			if(dhs) puts("post html");
+		}
+		if(stringEqualCI(name, "pre")) {
+			premode = false;
+			if(dhs) puts("not pre");
+		}
 	}
 }
 
@@ -112,10 +203,10 @@ void html2tags(const char *htmltext, bool startpage)
 			if(!ws || headbody == 4) {
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
-				  printf("text{%s}\n", w);
-				makeTag("text", false);
+				  if(dhs) printf("text{%s}\n", w);
+				makeTag("text", false, 0);
 				working_t->textval = w;
-				makeTag("text", true);
+				makeTag("text", true, 0);
 			}
 		}
 
@@ -135,7 +226,7 @@ closecomment:
 				if(u[-i] != '-') break;
 			if(i < hyphens) { ++u; goto closecomment; }
 // this is a valid comment
-			puts("comment");
+			if(dhs) puts("comment");
 // adjust line number
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
@@ -169,14 +260,14 @@ opencomment:
 		if(slash) {
 // close the corresponging open tag. If none found then discard this one.
 // create this tag in the edbrowse world.
-			printf("</%s>\n", tagname);
-			makeTag(tagname, true);
+			if(dhs) printf("</%s>\n", tagname);
+			makeTag(tagname, true, lt);
 			continue;
 		}
 
 // create this tag in the edbrowse world.
-		printf("<%s> at %d\n", tagname, ln);
-		makeTag(tagname, false);
+		if(dhs) printf("<%s> at %d\n", tagname, ln);
+		makeTag(tagname, false, seek);
 		working_t->innerHTML = emptyString; // for now
 		findAttributes(t, gt);
 
@@ -209,14 +300,12 @@ With this understanding, we can, and should, scan for </script
 			if(lt > seek) {
 // pull out the script, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
-// need two copies, one for the text node and one for innerHTML
-				working_t->innerHTML = cloneString(w);
-				makeTag("text", false);
+				makeTag("text", false, 0);
 				working_t->textval = w;
-				makeTag("text", true);
+				makeTag("text", true, 0);
 			}
-			puts("</script>");
-			makeTag(tagname, true);
+			if(dhs) puts("</script>");
+			makeTag(tagname, true, lt);
 			seek = s = gt + 1;
 			continue;
 		}
@@ -243,12 +332,12 @@ With this understanding, we can, and should, scan for </textarea
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
 				   printf("textarea length %d\n", strlen(w));
-				makeTag("text", false);
+				makeTag("text", false, 0);
 				working_t->textval = w;
-				makeTag("text", true);
+				makeTag("text", true, 0);
 			}
-			puts("</textarea>");
-			makeTag(tagname, true);
+			if(dhs) puts("</textarea>");
+			makeTag(tagname, true, lt);
 			seek = s = gt + 1;
 			continue;
 		}
@@ -264,9 +353,9 @@ With this understanding, we can, and should, scan for </textarea
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w);
 			  printf("text{%s}\n", w);
-			makeTag("text", false);
+			makeTag("text", false, 0);
 			working_t->textval = w;
-			makeTag("text", true);
+			makeTag("text", true, 0);
 		}
 	}
 
@@ -366,6 +455,7 @@ putc:
 
 // entity words and codes taken from
 // https://www.w3schools.com/charsets/ref_html_entities_4.asp
+// then sorted for binary search.
 static const struct entity { unsigned int u; const char *word; } andlist[] = {
 {198, "AElig"},
 {193, "Aacute"},
