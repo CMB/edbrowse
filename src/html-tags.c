@@ -131,6 +131,12 @@ static int isCrossclose(const char *name)
 	return stringInListCI(list, name) >= 0;
 }
 
+static int isCrossclose2(const char *name)
+{
+	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","p","table","ul","ol","dl","hr",0};
+	return stringInListCI(list, name) >= 0;
+}
+
 static int isNonest(const char *name, const struct opentag *k)
 {
 	const struct specialtag *y;
@@ -374,7 +380,7 @@ tag_ok:
 			if(dhs) printf("prior close %s\n", stack->name);
 			makeTag(stack->name, true, lt);
 		}
-		if(stack && isCrossclose(stack->name)) {
+		if(stack && isCrossclose2(tagname)) {
 			for(k = stack; k; k = k->next) {
 				if(isCrossclose(k->name)) {
 					if(dhs) printf("cross close %s\n", k->name);
@@ -2657,6 +2663,7 @@ static unsigned andLookup(char *entity, char *v)
 	while(r - l > 1) {
 		i = (l + r) / 2;
 		d = strncmp(entity, andlist[i].word, n);
+		if(!d && andlist[i].word[n]) d = -1;
 		if(!d) return andlist[i].u;
 		if(d > 0) l = i; else r = i;
 	}

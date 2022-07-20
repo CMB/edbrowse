@@ -4068,7 +4068,11 @@ nocolor:
 			break;
 		liCheck(t);
 		if (!invisible) {
-			tagInStream(tagno);
+// I'm not gonna include the node numbers for all the text nodes;
+// a lot of text nodes are whitespace and the tag numbers just confuse things.
+// This assumes you're not goint to jump to a text node,
+// or otherwise interact with it from the command line.
+//			tagInStream(tagno);
 			stringAndString(&ns, &ns_l, t->textval);
 		}
 		break;
