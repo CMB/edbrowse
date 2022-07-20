@@ -71,7 +71,9 @@ static const struct specialtag {
 	const char *second;
 	} specialtags[] = {
 {"script", 0, 0, 1, 0},
+{"style", 0, 0, 1, 0},
 {"meta", 1, 0, 1, 0},
+{"bgsound", 1, 0, 1, 0},
 {"title", 0, 0, 1, 0},
 {"base", 1, 0, 1, 0},
 {"link", 1, 0, 1, 0},
@@ -114,6 +116,19 @@ static int isInhead(const char *name)
 		if(stringEqualCI(name, y->name))
 			return y->inhead;
 	return false;
+}
+
+static int isNextclose(const char *name)
+{
+// there are so few of these; may as well just make a list
+	static const char * const list[] = {"title", "option", 0};
+	return stringInListCI(list, name) >= 0;
+}
+
+static int isCrossclose(const char *name)
+{
+	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","p",0};
+	return stringInListCI(list, name) >= 0;
 }
 
 static int isNonest(const char *name, const struct opentag *k)
@@ -190,11 +205,6 @@ static void makeTag(const char *name, bool slash, const char *mark)
 			if(dhs) puts("pre");
 		}
 	} else {
-		stack = k->next;
-// set up for innerHTML
-		if(k->t->info->bits & TAG_INNERHTML && k->start && mark)
-			k->t->innerHTML = pullString(k->start, mark - k->start);
-		free(k);
 		if(stringEqualCI(name, "head")) {
 			headbody = 3;
 			if(dhs) puts("post head");
@@ -211,6 +221,11 @@ static void makeTag(const char *name, bool slash, const char *mark)
 			premode = false;
 			if(dhs) puts("not pre");
 		}
+		stack = k->next;
+// set up for innerHTML
+		if(k->t->info->bits & TAG_INNERHTML && k->start && mark)
+			k->t->innerHTML = pullString(k->start, mark - k->start);
+		free(k);
 	}
 }
 
@@ -227,6 +242,7 @@ void html2tags(const char *htmltext, bool startpage)
 	const struct opentag *k;
 
 	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
+	stack = 0;
 
 // loop looking for tags
 	while(*s) {
@@ -252,9 +268,9 @@ void html2tags(const char *htmltext, bool startpage)
 				if(!isspace(*u)) ws = false;
 			}
 // Ignore whitespace that is not in the head or the body.
-// Ignore text in the head section or after body.
-			if(headbody != 2 && headbody < 5 && (!ws || headbody == 4)) {
-				pushState(seek, false);
+// Ignore text after body
+			if(headbody < 5 && (!ws || headbody == 4)) {
+				pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
 				  if(dhs) printf("text{%s}\n", w);
@@ -322,14 +338,49 @@ opencomment:
 // create this tag in the edbrowse world.
 		if(dhs) printf("<%s> line %d\n", tagname, ln);
 // has to start and end with html
-		if(headbody == 0 && !stringEqualCI(tagname, "html")) {
-			makeTag("html", false, lt);
+		if(stringEqualCI(tagname, "html")) {
+			if(headbody > 0) { if(dhs) puts("sequence"); continue; }
+			goto tag_ok;
 		}
-// but first see if we need to close a prior instance of this tag
+		if(headbody == 0)
+			makeTag("html", false, lt);
+		if(stringEqualCI(tagname, "head")) {
+			if(headbody > 1) { if(dhs) puts("sequence"); continue; }
+			goto tag_ok;
+		}
+		if(!isInhead(tagname)) {
+			if(headbody == 1) {
+				if(dhs) puts("initiate and terminate head");
+				makeTag("head", false, lt);
+				makeTag("head", true, lt);
+			} else if(headbody == 2) {
+				if(dhs) puts("terminate head");
+				makeTag("head", true, lt);
+			}
+		} else pushState(lt, true);
+		if(stringEqualCI(tagname, "body")) {
+			if(headbody > 3) { if(dhs) puts("sequence"); continue; }
+			goto tag_ok;
+		}
+		if(headbody == 3) pushState(lt, false);
+tag_ok:
+//  see if we need to close a prior instance of this tag
 		k = balance(tagname);
 		if(k && isNonest(tagname, k)) {
 			if(dhs) puts("not nestable");
 			makeTag(tagname, true, lt);
+		}
+		if(stack && isNextclose(stack->name)) {
+			if(dhs) printf("prior close %s\n", stack->name);
+			makeTag(stack->name, true, lt);
+		}
+		if(stack && isCrossclose(stack->name)) {
+			for(k = stack; k; k = k->next) {
+				if(isCrossclose(k->name)) {
+					if(dhs) printf("cross close %s\n", k->name);
+					makeTag(k->name, true, lt);
+				}
+			}
 		}
 		makeTag(tagname, false, seek);
 		findAttributes(t, gt);
@@ -377,6 +428,34 @@ With this understanding, we can, and should, scan for </script
 			continue;
 		}
 
+		if(stringEqualCI(tagname, "style")) {
+// this is like script; leave it alone!
+			if(!(lt = strcasestr(seek, "</style"))) {
+				if(dhs) printf("open style at line %d, html parsing stops here\n", ln);
+				goto stop;
+			}
+			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
+				if(dhs) printf("open style at line %d, html parsing stops here\n", ln);
+				goto stop;
+			}
+// adjust line number
+			for(u = seek; u < gt; ++u)
+				if(*u == '\n') ++ln;
+			while(isspace(*seek)) ++seek;
+			   if(dhs) printf("style length %d\n", lt - seek);
+			if(lt > seek) {
+// pull out the style, do not andify or change in any way.
+				w = pullString(seek, lt - seek);
+				makeTag("text", false, 0);
+				working_t->textval = w;
+				makeTag("text", true, 0);
+			}
+			if(dhs) puts("</style>");
+			makeTag(tagname, true, lt);
+			seek = s = gt + 1;
+			continue;
+		}
+
 		if(stringEqualCI(tagname, "textarea")) {
 /*********************************************************************
 A textarea can contain tags and these are not to be interpreted. In fact a
@@ -416,8 +495,8 @@ With this understanding, we can, and should, scan for </textarea
 			if(*u == '\n') ++ln;
 			if(!isspace(*u)) ws = false;
 		}
-		if(headbody != 2 && headbody < 5 && (!ws || headbody == 4)) {
-			pushState(seek, false);
+		if(headbody < 5 && (!ws || headbody == 4)) {
+			pushState(seek, true);
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w);
 			  if(dhs) printf("text{%s}\n", w);
