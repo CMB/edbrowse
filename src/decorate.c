@@ -194,7 +194,6 @@ Tag *findOpenList(Tag *t)
 }
 
 /*********************************************************************
-tidy workaround functions.
 Consider html like this.
 <body>
 <A href=http://www.edbrowse.org>Link1
@@ -203,7 +202,8 @@ Consider html like this.
 </body>
 Each anchor should close the one before, thus rendering as
  {Link1} {Link2} {Link3}
-But tidy does not do this; it allows anchors to nest, thus
+But tidy does not do this, and neither do I, at present.
+I allow anchors to nest, thus
  {Link1{Link2{Link3}}}
 Not a serious problem really, it just looks funny.
 And yes, html like this does appear in the wild.
@@ -913,7 +913,9 @@ void prerender(int start)
 	nestedAnchors(start);
 	emptyAnchors(start);
 	insert_tbody(start);
+	if(useTidy) {
 	tableForm(start);
+	}
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;

@@ -502,8 +502,7 @@ onclick="alert('page is being replaced'); window.location.href='http://www.carte
 <br>Message Body:
 <textarea name=body rows=6 cols=50 required>
 Type your brilliant thoughts here.
-We'll get back to you if we like what you have to say.
-</textarea>
+We'll get back to you if we like what you have to say.</textarea>
 <div id=album>
 </div
 >

@@ -17,7 +17,7 @@ which we then import into the edbrowse tree of tags.
 
 #include "eb.h"
 
-static bool dhs = true; // debug html scanner
+static bool dhs = false; // debug html scanner
 
 static void findAttributes(const char *start, const char *end);
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2);
