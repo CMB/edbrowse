@@ -23,6 +23,7 @@ static void findAttributes(const char *start, const char *end);
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2);
 static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
+static void pushState(const char *start, bool head_ok);
 
 static Tag *working_t;
 static int ln; // line number
@@ -51,6 +52,7 @@ static struct opentag {
 	struct opentag *next;
 	char name[MAXTAGNAME];
 	const char *start; // for innerHTML
+	Tag *t;
 } *stack;
 
 static struct opentag *balance(const char *name)
@@ -65,45 +67,80 @@ static struct opentag *balance(const char *name)
 
 static const struct specialtag {
 	const char *name;
-	bool autoclose, nonest, inhead;
+	bool autoclose, nestable, inhead;
 	const char *second;
 	} specialtags[] = {
-{"script", 0, 1, 1, 0},
-{"meta", 1, 1, 1, 0},
-{"title", 0, 1, 1, 0},
-{"base", 1, 1, 1, 0},
-{"br", 1, 1, 0, 0},
-{"hr", 1, 1, 0, 0},
-{"input", 1, 1, 0, 0},
-{"link", 1, 1, 1, 0},
-{"p",0,1, 0, 0},
-{"h1",0, 0,1, 0},
-{"h2",0, 0,1, 0},
-{"h3",0, 0,1, 0},
-{"h4",0, 0,1, 0},
-{"h5",0, 0,1, 0},
-{"h6",0, 0,1, 0},
-{"a",0,1, 0, 0},
-{"form",0,1, 0, 0},
-{"li",0,1, 0, "ul,ol"},
-{"td",0,1, 0, "table"},
-{"th",0,1, 0, "table"},
-{"tr",0,1, 0, "table"},
-{"thead",0,1, 0, "table"},
-{"tbody",0,1, 0, "table"},
-{"tfoot",0,1, 0, "table"},
-// other tags shouldn't nest, like <i>, but I suppose it isn't
-// the end of the world if they do.
+{"script", 0, 0, 1, 0},
+{"meta", 1, 0, 1, 0},
+{"title", 0, 0, 1, 0},
+{"base", 1, 0, 1, 0},
+{"link", 1, 0, 1, 0},
+{"br", 1, 0, 0, 0},
+{"hr", 1, 0, 0, 0},
+{"img", 1, 0, 0, 0},
+{"image", 1, 0, 0, 0},
+{"input", 1, 0, 0, 0},
+{"ul",0,1, 0, 0},
+{"ol",0,1, 0, 0},
+{"li",0,0, 0, "ul,ol"},
+{"dl",0,1, 0, 0},
+{"dd",0,0, 0, "dl"},
+{"table",0,1, 0, 0},
+{"td",0,0, 0, "table"},
+{"th",0,0, 0, "table"},
+{"tr",0,0, 0, "table"},
+{"thead",0,0, 0, "table"},
+{"tbody",0,0, 0, "table"},
+{"tfoot",0,0, 0, "table"},
+{"div",0,1, 0, 0},
+{"font",0,1, 0, 0},
+{"span",0,1, 0, 0},
 {0, 0,0,0, 0},
 };
 
 static int isAutoclose(const char *name)
 {
-	const struct specialtag *k;
-	for(k = specialtags; k->name; ++k)
-		if(stringEqualCI(name, k->name))
-			return k->autoclose;
+	const struct specialtag *y;
+	for(y = specialtags; y->name; ++y)
+		if(stringEqualCI(name, y->name))
+			return y->autoclose;
 	return false;
+}
+
+static int isInhead(const char *name)
+{
+	const struct specialtag *y;
+	for(y = specialtags; y->name; ++y)
+		if(stringEqualCI(name, y->name))
+			return y->inhead;
+	return false;
+}
+
+static int isNonest(const char *name, const struct opentag *k)
+{
+	const struct specialtag *y;
+	const char *s, *t;
+	char watch[MAXTAGNAME];
+	const struct opentag *l;
+	for(y = specialtags; y->name; ++y)
+		if(stringEqualCI(name, y->name))
+			break;
+	if(!y->name) return true;
+	if(y->nestable) return false;
+// td can be inside td, if there is table in between,
+// second indicates this in-between tag
+	if(!(s = y->second)) return true;
+	while(*s) {
+		t = strchr(s, ',');
+		if(!t) t = s + strlen(s);
+		strncpy(watch, s, t-s);
+		watch[t - s] = 0;
+		for(l = stack; l != k; l = l->next)
+			if(stringEqualCI(l->name, watch)) return false;
+		s = t;
+		if(*s == ',') ++s;
+	}
+	return true;
 }
 
 // generate a tag using newTag, which does most of the work
@@ -133,6 +170,7 @@ static void makeTag(const char *name, bool slash, const char *mark)
 	if(!slash) {
 		k = allocMem(sizeof(struct opentag));
 		strcpy(k->name, name);
+		k->t = t;
 		k->start = mark;
 		k->next = stack, stack = k;
 		if(stringEqualCI(name, "html")) {
@@ -153,6 +191,9 @@ static void makeTag(const char *name, bool slash, const char *mark)
 		}
 	} else {
 		stack = k->next;
+// set up for innerHTML
+		if(k->t->info->bits & TAG_INNERHTML && k->start && mark)
+			k->t->innerHTML = pullString(k->start, mark - k->start);
 		free(k);
 		if(stringEqualCI(name, "head")) {
 			headbody = 3;
@@ -183,6 +224,7 @@ void html2tags(const char *htmltext, bool startpage)
 	bool slash; // </foo>
 	bool ws; // all whitespace
 	char tagname[MAXTAGNAME];
+	const struct opentag *k;
 
 	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
 
@@ -209,8 +251,10 @@ void html2tags(const char *htmltext, bool startpage)
 				if(*u == '\n') ++ln;
 				if(!isspace(*u)) ws = false;
 			}
-// ignore whitespace that is not in the head or the body
-			if(!ws || headbody == 4) {
+// Ignore whitespace that is not in the head or the body.
+// Ignore text in the head section or after body.
+			if(headbody != 2 && headbody < 5 && (!ws || headbody == 4)) {
+				pushState(seek, false);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
 				  if(dhs) printf("text{%s}\n", w);
@@ -243,8 +287,8 @@ closecomment:
 			seek = s = u + 1;
 			continue;
 opencomment:
-			puts("open comment, html parsing stops here");
-			return;
+			if(dhs) printf("open comment at line %d, html parsing stops here\n", ln);
+			goto stop;
 		}
 
 // at this point it is <tag or </tag
@@ -259,7 +303,7 @@ opencomment:
 		gt = strpbrk(t, "<>");
 		if(!gt) {
 			printf("open tag %s, html parsing stops here\n", tagname);
-			return;
+			goto stop;
 		}
 // adjust line number for this tag
 		for(u = lt; u < gt; ++u)
@@ -276,9 +320,18 @@ opencomment:
 		}
 
 // create this tag in the edbrowse world.
-		if(dhs) printf("<%s> at %d\n", tagname, ln);
+		if(dhs) printf("<%s> line %d\n", tagname, ln);
+// has to start and end with html
+		if(headbody == 0 && !stringEqualCI(tagname, "html")) {
+			makeTag("html", false, lt);
+		}
+// but first see if we need to close a prior instance of this tag
+		k = balance(tagname);
+		if(k && isNonest(tagname, k)) {
+			if(dhs) puts("not nestable");
+			makeTag(tagname, true, lt);
+		}
 		makeTag(tagname, false, seek);
-		working_t->innerHTML = emptyString; // for now
 		findAttributes(t, gt);
 		if(isAutoclose(tagname)) {
 			if(dhs) puts("autoclose");
@@ -299,12 +352,12 @@ Such has to be written
 With this understanding, we can, and should, scan for </script
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</script"))) {
-				if(dhs) printf("open script, html parsing stops here\n");
-				return;
+				if(dhs) printf("open script at line %d, html parsing stops here\n", ln);
+				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				if(dhs) printf("open script, html parsing stops here\n");
-				return;
+				if(dhs) printf("open script at line %d, html parsing stops here\n", ln);
+				goto stop;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
@@ -331,12 +384,12 @@ textarea is sometimes html code that you are suppose to embed in your web page.
 With this understanding, we can, and should, scan for </textarea
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</textarea"))) {
-				if(dhs) printf("open textarea, html parsing stops here\n");
-				return;
+				if(dhs) printf("open textarea at line %d, html parsing stops here\n", ln);
+				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				if(dhs) printf("open textarea, html parsing stops here\n");
-				return;
+				if(dhs) printf("open textarea at line %d, html parsing stops here\n", ln);
+				goto stop;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
@@ -363,7 +416,8 @@ With this understanding, we can, and should, scan for </textarea
 			if(*u == '\n') ++ln;
 			if(!isspace(*u)) ws = false;
 		}
-		if(!ws || headbody == 4) {
+		if(headbody != 2 && headbody < 5 && (!ws || headbody == 4)) {
+			pushState(seek, false);
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w);
 			  if(dhs) printf("text{%s}\n", w);
@@ -373,6 +427,35 @@ With this understanding, we can, and should, scan for </textarea
 		}
 	}
 
+stop:
+// we should have a head and a body
+	pushState(s, false);
+
+// has to start and end with html
+if(headbody < 6)
+		makeTag("html", true, s);
+
+	if(stack)
+		debugPrint(1, "stack not empty after html scan");
+}
+
+static void pushState(const char *start, bool head_ok)
+{
+	if(headbody == 0) {
+		makeTag("html", false, start);
+	}
+	if(headbody == 1) {
+		if(dhs) puts("initiate head");
+		makeTag("head", false, start);
+	}
+	if(headbody == 2 && !head_ok) {
+		if(dhs) puts("terminate head");
+		makeTag("head", true, start);
+	}
+	if(headbody == 3) {
+		if(dhs) puts("initiate body");
+		makeTag("body", false, start);
+	}
 }
 
 static void findAttributes(const char *start, const char *end)
