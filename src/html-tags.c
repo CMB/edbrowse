@@ -138,6 +138,14 @@ static int isCrossclose2(const char *name)
 	return stringInListCI(list, name) >= 0;
 }
 
+// space after these tags isn't significant
+static int isWall(const char *name)
+{
+	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","p","table","tr","td","th",0};
+	return stringInListCI(list, name) >= 0;
+}
+
+
 static int isNonest(const char *name, const struct opentag *k)
 {
 	const struct specialtag *y;
@@ -262,7 +270,7 @@ void html2tags(const char *htmltext, bool startpage)
 		if(*t == '/') ++t, slash = true;
 
 // bare < just passes through
-		if((!slash && *t != '!' && !isalpha(*t) && strncmp(t, "?xml", 4)) ||
+		if((!slash && *t != '!' && !isalpha(*t) && !memEqualCI(t, "?xml", 4)) ||
 		(slash && !isalpha(*t))) {
 			s = t + 1;
 			continue;
@@ -277,7 +285,7 @@ void html2tags(const char *htmltext, bool startpage)
 			}
 // Ignore whitespace that is not in the head or the body.
 // Ignore text after body
-			if(headbody < 5 && (!ws || headbody == 4)) {
+			if(headbody < 5 && (!ws || (headbody == 4 && !isWall(stack->name)))) {
 				pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
@@ -324,7 +332,7 @@ opencomment:
 		}
 
 // xml specifier - I don't really understand this.
-		if(!strncmp(t, "?xml", 4)) {
+		if(memEqualCI(t, "?xml", 4)) {
 			if(!(gt = strstr(t, "?>"))) {
 				if(dhs) puts("open xml");
 				s = t;

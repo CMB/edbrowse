@@ -168,13 +168,13 @@ void spaceCrunch(char *s, bool onespace, bool unprint)
 	if (space && j)
 		--j;		/* drop trailing space */
 	s[j] = 0;
-}				/* spaceCrunch */
+}
 
 /* Like strcpy, but able to cope with overlapping strings. */
 char *strmove(char *dest, const char *src)
 {
 	return (char *)memmove(dest, src, strlen(src) + 1);
-}				/* strmove */
+}
 
 /* OO has a lot of unnecessary overhead, and a few inconveniences,
  * but I really miss it right now.  The following
@@ -208,7 +208,7 @@ void stringAndString(char **s, int *l, const char *t)
 		*s = p;
 	}
 	strcpy(p + oldlen, t);
-}				/* stringAndString */
+}
 
 void stringAndBytes(char **s, int *l, const char *t, int cnt)
 {
@@ -230,7 +230,7 @@ void stringAndBytes(char **s, int *l, const char *t, int cnt)
 	}
 	memcpy(p + oldlen, t, cnt);
 	p[oldlen + cnt] = 0;
-}				/* stringAndBytes */
+}
 
 void stringAndChar(char **s, int *l, char c)
 {
@@ -252,14 +252,14 @@ void stringAndChar(char **s, int *l, char c)
 	}
 	p[oldlen] = c;
 	p[oldlen + 1] = 0;
-}				/* stringAndChar */
+}
 
 void stringAndNum(char **s, int *l, int n)
 {
 	char a[16];
 	sprintf(a, "%d", n);
 	stringAndString(s, l, a);
-}				/* stringAndNum */
+}
 
 /* 64M 16K etc */
 void stringAndKnum(char **s, int *l, int n)
@@ -272,7 +272,7 @@ void stringAndKnum(char **s, int *l, int n)
 	else
 		sprintf(a, "%d", n);
 	stringAndString(s, l, a);
-}				/* stringAndKnum */
+}
 
 char *cloneString(const char *s)
 {
@@ -316,7 +316,7 @@ void shiftRight(char *s, char first)
 	for (; l >= 0; --l)
 		s[l + 1] = s[l];
 	s[0] = first;
-}				/* shiftRight */
+}
 
 char *Cify(const char *s, int n)
 {
@@ -329,7 +329,7 @@ char *Cify(const char *s, int n)
 			*u = ' ';
 	*u = 0;
 	return t;
-}				/* Cify */
+}
 
 /* pull a substring out of a larger string,
  * and make it its own allocated string */
@@ -487,8 +487,8 @@ int stringInList(const char *const *list, const char *s)
 int stringInListCI(const char *const *list, const char *s)
 {
 	int i = 0;
-	if (!list)
-		i_printfExit(MSG_NullStrListCI);
+	if (!list) return -1;
+//		i_printfExit(MSG_NullStrListCI);
 	if (s)
 		while (*list) {
 			if (stringEqualCI(s, *list))
@@ -497,7 +497,7 @@ int stringInListCI(const char *const *list, const char *s)
 			++list;
 		}
 	return -1;
-}				/* stringInListCI */
+}
 
 int charInList(const char *list, char c)
 {

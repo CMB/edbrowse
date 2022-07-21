@@ -23,7 +23,7 @@ char *currentAgent;
 int agentIndex;
 char selsep = ',';
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
-bool useTidy = true;
+bool useTidy = false;
 bool blockJS;
 bool ftpActive;
 int webTimeout = 20, mailTimeout = 0;
