@@ -1508,6 +1508,16 @@ MouseEvent.prototype.shiftKey = false;
 MouseEvent.prototype.metaKey = false;
 MouseEvent.prototype.initMouseEvent = function() { this.initEvent.apply(this, arguments)}
 
+PromiseRejectionEvent = function(etype){
+    this.bubbles =     this.cancelable = true;
+    this.cancelled = this.defaultPrevented = false;
+    this.currentTarget =     this.target = null;
+    this.eventPhase = 0;
+    this.timeStamp = new Date().getTime();
+if(typeof etype == "string") this.type = etype;
+};
+PromiseRejectionEvent.prototype = new Event;
+
 CustomEvent = function(etype, o){
 alert3("customEvent " + etype + " " + typeof o);
     this.bubbles =     this.cancelable = true;

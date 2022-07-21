@@ -910,10 +910,10 @@ Are there other situations where we need to supress meta processing?
 void prerender(int start)
 {
 /* some cleanup routines to rearrange the tree */
-	nestedAnchors(start);
 	emptyAnchors(start);
 	insert_tbody(start);
 	if(useTidy) {
+	nestedAnchors(start);
 	tableForm(start);
 	}
 

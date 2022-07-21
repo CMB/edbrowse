@@ -719,7 +719,7 @@ var rc = NodeFilter.FILTER_ACCEPT;
 if(this.callback) rc = this.callback(a);
 if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
 }
-a = incr > 0 ? a.nextSibling() : a.previousSibling();
+a = incr > 0 ? a.nextSibling : a.previousSibling;
 }
 return null;
 }
@@ -734,7 +734,7 @@ var rc = NodeFilter.FILTER_ACCEPT;
 if(this.callback) rc = this.callback(a);
 if(rc == NodeFilter.FILTER_ACCEPT) { this.currentNode = a; return a; }
 }
-a = incr > 0 ? a.nextSibling() : a.previousSibling();
+a = incr > 0 ? a.nextSibling : a.previousSibling;
 }
 return null;
 }

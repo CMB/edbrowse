@@ -526,11 +526,13 @@
 // We ran into this in the very first test  [0].
 // So acid expects the next node to be text with newline in it,
 // which is whitespace, and skipped over by allButWS, thus landing on div.
-// So for different reasons, acid and I agree, it's div, but,
+// So for different reasons, acid and tidy agree, it's div, but,
 // if you back up to previous node acid expects the text with \n,
-// but tidy doesn't generate that, so we go all the way back to h1.
-// This line use to expect 3, I changed it to 1.
-      expect(w.nextSibling().previousSibling.nodeType, 1);
+// but tidy doesn't generate that, so it goes all the way back to h1.
+// This line use to expect 3, I changed it to 1 for tidy.
+// But I do generate those whitespace nodes.
+// So I changed it back to 3, haha.
+      expect(w.nextSibling().previousSibling.nodeType, 3);
       expect(w.nextSibling(), document.getElementsByTagName('p')[6]);
       expect(w.nextSibling(), document.getElementsByTagName('map')[0]);
       expect(w.lastChild(), document.getElementsByTagName('table')[0]);

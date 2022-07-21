@@ -307,6 +307,14 @@ closecomment:
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
 			seek = s = u + 1;
+// see if this is doctype
+			t = lt + 2 + hyphens;
+			if(headbody == 0 && memEqualCI(t, "doctype", 7) &&
+			!isalnum(t[7])) {
+				if(dhs) puts("doctype");
+				makeTag("doctype", false, 0);
+				makeTag("doctype", true, 0);
+			}
 			continue;
 opencomment:
 			if(dhs) printf("open comment at line %d, html parsing stops here\n", ln);
