@@ -2,17 +2,13 @@
 html-tags.c: parse the html tags and attributes.
 This was originally handled by the tidy library, but tidy is no longer maintained.
 Bugs are accumulating, and we continue to work around those bugs,
-in html-tidy.c and in decorate.c, and it's getting old.
-So, at some point, this file will do the job,
-and will be maintained by us.
+in html-tidy.c and in decorate.c, but we can't continue along this path.
+Thus I wrote this html tag scanner.
 I believe it is easier, in the long run, to roll our own, rather than using
-yet another html library, but I could be wrong,
-tidy may have left a bad taste in my mouth.
-In any case, I don't think it's terribly hard,
-certainly easier than a javascript parser, so let's give it a whirl.
+tidy, or any other library.
 Note that we can paste the tags directly into the edbrowse tree;
 any other library, including tidy, builds its own tree of nodes,
-which we then import into the edbrowse tree of tags.
+which we must then import into the edbrowse tree of tags.
 *********************************************************************/
 
 #include "eb.h"
@@ -352,20 +348,35 @@ opencomment:
 		tagname[i] = 0;
 // tidy converts all tags to lower case; I will do the same
 		caseShift(tagname, 'l');
-// the next > should close the tag,
-//		gt = strpbrk(t, "<>");
-// but watch out. Look at acid3.
-// Apparently this crap is legal   <area alt="<'>">
-// You should be using &gt; but I guess when quoted like this, it flies.
-// So I have to step along and watch for quotes.
+
+/*********************************************************************
+the next > should close the tag,
+		gt = strpbrk(t, "<>");
+but watch out. Look at acid3.
+Apparently this crap is legal   <area alt="<'>">
+You should be using &gt; but I guess when quoted like this, it flies.
+And tidy is ok with it, not even a warning.
+So I have to step along and watch for quotes.
+But then I get this from usps.gov:
+<table role="presentation" width="100%"         style="padding-bottom: 30px; max-width: 820px!important;>
+Unbalanced quotes, bad html, somehow tidy knows what to do with it.
+I haven't given the tidy team enough credit.
+So my compromise is to take the first literal > if the quoted
+string that contains the > would run past end of line.
+That makes acid3 and usps.gov happy.
+*********************************************************************/
+
 		for(gt = t, qc = 0; *gt; ++gt) {
 			if(qc) {
 				if(qc == *gt) qc = 0; // unquote
+				if((*gt == '<' || *gt == '>') && !u) u = gt;
+				if(*gt == '\n' && u) { gt = u; break; }
 				continue;
 			}
 			if(*gt == '<' || *gt == '>') break;
-			if(*gt == '"' || *gt == '\'') qc = *gt;
+			if(*gt == '"' || *gt == '\'') qc = *gt, u = 0;
 		}
+
 		if(!gt) {
 			printf("open tag %s, html parsing stops here\n", tagname);
 			goto stop;

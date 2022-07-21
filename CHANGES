@@ -3,6 +3,8 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.3
 The unfold row (ur) command in database mode. Use this to update individual fields.
 
+Write our own html tag scanner, and divest from tidy, which use to do this work for us.
+
 The ebre, edbrowse modified regular expressions, command.  (toggle)
 
 mass delete, join, and read, more efficient versions of global commands.
