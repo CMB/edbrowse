@@ -262,7 +262,7 @@ void html2tags(const char *htmltext, bool startpage)
 		if(*t == '/') ++t, slash = true;
 
 // bare < just passes through
-		if((!slash && *t != '!' && !isalpha(*t)) ||
+		if((!slash && *t != '!' && !isalpha(*t) && strncmp(t, "?xml", 4)) ||
 		(slash && !isalpha(*t))) {
 			s = t + 1;
 			continue;
@@ -321,6 +321,18 @@ closecomment:
 opencomment:
 			if(dhs) printf("open comment at line %d, html parsing stops here\n", ln);
 			goto stop;
+		}
+
+// xml specifier - I don't really understand this.
+		if(!strncmp(t, "?xml", 4)) {
+			if(!(gt = strstr(t, "?>"))) {
+				if(dhs) puts("open xml");
+				s = t;
+				continue;
+			}
+			if(dhs) puts("xml");
+			s = seek = gt + 2;
+			continue;
 		}
 
 // at this point it is <tag or </tag
