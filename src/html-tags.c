@@ -80,6 +80,7 @@ static const struct specialtag {
 {"br", 1, 0, 0, 0},
 {"hr", 1, 0, 0, 0},
 {"img", 1, 0, 0, 0},
+{"area", 1, 0, 0, 0},
 {"image", 1, 0, 0, 0},
 {"input", 1, 0, 0, 0},
 {"ul",0,1, 0, 0},
@@ -244,6 +245,7 @@ void html2tags(const char *htmltext, bool startpage)
 	char *w;
 	bool slash; // </foo>
 	bool ws; // all whitespace
+	char qc; // quote character
 	char tagname[MAXTAGNAME];
 	const struct opentag *k;
 
@@ -328,9 +330,22 @@ opencomment:
 			++t;
 		}
 		tagname[i] = 0;
-// the next > should close the tag
-// <tag foo="bar>bar"> is not valid, you should be using &gt; in this case
-		gt = strpbrk(t, "<>");
+// tidy converts all tags to lower case; I will do the same
+		caseShift(tagname, 'l');
+// the next > should close the tag,
+//		gt = strpbrk(t, "<>");
+// but watch out. Look at acid3.
+// Apparently this crap is legal   <area alt="<'>">
+// You should be using &gt; but I guess when quoted like this, it flies.
+// So I have to step along and watch for quotes.
+		for(gt = t, qc = 0; *gt; ++gt) {
+			if(qc) {
+				if(qc == *gt) qc = 0; // unquote
+				continue;
+			}
+			if(*gt == '<' || *gt == '>') break;
+			if(*gt == '"' || *gt == '\'') qc = *gt;
+		}
 		if(!gt) {
 			printf("open tag %s, html parsing stops here\n", tagname);
 			goto stop;
@@ -563,7 +578,7 @@ static void findAttributes(const char *start, const char *end)
 		if(!isalpha(*s)) { ++s; continue; }
 		a1 = s; // start of attribute
 		a2 = a1 + 1;
-		while(*a2 == '_' || isalnum(*a2)) ++a2;
+		while(*a2 == '_' || *a2 == '-' || isalnum(*a2)) ++a2;
 		for(s = a2; isspace(*s); ++s)  ;
 		if(*s != '=' || s == end) {
 // it could be an attribute with no value, but then we need whitespace

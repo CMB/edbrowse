@@ -782,20 +782,16 @@ if(div === null) { var e = new Error; e.code = 14; throw e; }
     function () {
       // test 28: getElementById()
       // ...and name=""
-//@` Here is another tidy collision. <form name=z> generates name=z and id=z
+//@` Here is a tidy collision. <form name=z> generates name=z and id=z
 // tidy adds the extra id=z unsolicited.
 // This doesn't happen with other tags such as span, just form,
 // and guess what, acid3 tests <form>.
 // I could check for both name and id being the same, and remove id=z, thinking
 // it was tidy generated, but what if the tag is <form name=z id=z>
 // I'd rather have a false positive than a false negative.
-// So this test is commented out.
-// The test passes if you don't do tidyCleanAndRepair,
-// but a lot of other things go wrong if we don't clean up the html,
-// so let's not throw the baby out with the bathwater.
-/*
+// So this test was commented out.
+// I put it back in, now that I'm not using tidy.
       assert(document.getElementById('form') !== document.getElementsByTagName('form')[0], "getElementById() searched on 'name'");
-*/
       // ...and a space character as the ID
       var div = document.createElement('div');
       div.appendChild(document.createTextNode('FAIL'));
