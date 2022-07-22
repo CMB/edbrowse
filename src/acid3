@@ -532,7 +532,9 @@
 // This line use to expect 3, I changed it to 1 for tidy.
 // But I do generate those whitespace nodes.
 // So I changed it back to 3, haha.
-      expect(w.nextSibling().previousSibling.nodeType, 3);
+// But then I don't generate whitespace after h1, I call it the wall,
+// so I changed it back to 1, haha.
+      expect(w.nextSibling().previousSibling.nodeType, 1);
       expect(w.nextSibling(), document.getElementsByTagName('p')[6]);
       expect(w.nextSibling(), document.getElementsByTagName('map')[0]);
       expect(w.lastChild(), document.getElementsByTagName('table')[0]);

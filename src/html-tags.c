@@ -13,7 +13,8 @@ which we must then import into the edbrowse tree of tags.
 
 #include "eb.h"
 
-static bool dhs = false; // debug html scanner
+bool dhs; // debug html scanner
+// This makes a lot of output; maybe it should go to a file like debug css does
 
 static void findAttributes(const char *start, const char *end);
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2);
@@ -137,7 +138,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","p","table","tr","td","th",0};
+	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tr","td","th",0};
 	return stringInListCI(list, name) >= 0;
 }
 
@@ -638,7 +639,7 @@ static void setAttribute(const char *a1, const char *a2, const char *v1, const c
 	w = pullAnd(v1, v2);
 // yeah this is tacky, write on top of a const, but I'll put it back.
 	save_c = *a2, *(char*)a2 = 0;
-	if(dhs) printf("%s=%s\n", a1, w);
+	if(dhs && debugLevel >= 3) printf("%s=%s\n", a1, w);
 	setTagAttr(working_t, a1, w);
 	*(char*)a2 = save_c;
 }

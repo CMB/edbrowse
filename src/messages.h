@@ -791,4 +791,6 @@ enum {
 	MSG_EBRC_KeyNoRead,
 	MSG_TidyOff,
 	MSG_TidyOn,
+	MSG_DebugTagsOff,
+	MSG_DebugTagsOn,
 };

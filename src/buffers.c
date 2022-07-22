@@ -325,6 +325,7 @@ static bool jdb_passthrough(const char *s)
 		"dbcn", "dbcn+", "dbcn-",
 		"dbev", "dbev+", "dbev-",
 		"dbcss", "dbcss+", "dbcss-", "db",
+		"dbtags", "dbtags+", "dbtags-",
 		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
 		"e+", "e-", "eret",
@@ -5917,6 +5918,20 @@ et_go:
 			i_puts(debugCSS + MSG_DebugCSSOff);
 		if (debugCSS)
 			unlink(cssDebugFile);
+		return true;
+	}
+
+	if (stringEqual(line, "dbtags")) {
+		dhs ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(dhs + MSG_DebugTagsOff);
+		return true;
+	}
+
+	if (stringEqual(line, "dbtags+") || stringEqual(line, "dbtags-")) {
+		dhs = (line[6] == '+');
+		if (helpMessagesOn)
+			i_puts(dhs + MSG_DebugTagsOff);
 		return true;
 	}
 

@@ -278,7 +278,7 @@ struct DBTABLE {
 extern CURL *global_http_handle;
 extern CURLSH *global_share_handle;
 extern int debugLevel;		/* 0 to 9 */
-extern bool debugClone, debugEvent, debugThrow, debugCSS;
+extern bool debugClone, debugEvent, debugThrow, debugCSS, dhs;
 extern bool demin; // deminimize javascript
 extern bool uvw; // trace points
 extern bool gotimers; // run javascript timers

@@ -194,61 +194,6 @@ Tag *findOpenList(Tag *t)
 }
 
 /*********************************************************************
-Consider html like this.
-<body>
-<A href=http://www.edbrowse.org>Link1
-<A href=http://www.edbrowse.org>Link2
-<A href=http://www.edbrowse.org>Link3
-</body>
-Each anchor should close the one before, thus rendering as
- {Link1} {Link2} {Link3}
-But tidy does not do this, and neither do I, at present.
-I allow anchors to nest, thus
- {Link1{Link2{Link3}}}
-Not a serious problem really, it just looks funny.
-And yes, html like this does appear in the wild.
-This routine restructures the tree to move the inner anchor
-back up to the same level as the outer anchor.
-*********************************************************************/
-
-static void nestedAnchors(int start)
-{
-	Tag *a1, *a2, *p, *c;
-	int j;
-
-	for (j = start; j < cw->numTags; ++j) {
-		a2 = tagList[j];
-		if (a2->action != TAGACT_A)
-			continue;
-		a1 = findOpenTag(a2, TAGACT_A);
-		if (!a1)
-			continue;
-
-/* delete a2 from the tree */
-		p = a2->parent;
-		a2->parent = 0;
-		if (p->firstchild == a2)
-			p->firstchild = a2->sibling;
-		else {
-			c = p->firstchild;
-			while (c->sibling) {
-				if (c->sibling == a2) {
-					c->sibling = a2->sibling;
-					break;
-				}
-				c = c->sibling;
-			}
-		}
-		a2->sibling = 0;
-
-/* then link a2 up next to a1 */
-		a2->parent = a1->parent;
-		a2->sibling = a1->sibling;
-		a1->sibling = a2;
-	}
-}
-
-/*********************************************************************
 Tables are suppose to have bodies, I guess.
 So <table><tr> becomes <table><tbody><tr>
 Find each table and look at its children.
@@ -913,7 +858,6 @@ void prerender(int start)
 	emptyAnchors(start);
 	insert_tbody(start);
 	if(useTidy) {
-	nestedAnchors(start);
 	tableForm(start);
 	}
 
@@ -1636,8 +1580,8 @@ const struct tagInfo availableTags[] = {
 	{"tt", "teletype", TAGACT_NOP, 0, 0},
 	{"center", "centered text", TAGACT_P, 2, 5},
 	{"caption", "a caption", TAGACT_NOP, 5, 0},
-	{"head", "the html header information", TAGACT_HEAD, 0, 5},
-	{"body", "the html body", TAGACT_BODY, 0, 5},
+	{"head", "the html header information", TAGACT_HEAD, 10, 5},
+	{"body", "the html body", TAGACT_BODY, 10, 5},
 	{"text", "a text section", TAGACT_TEXT, 0, 4},
 	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
 	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},

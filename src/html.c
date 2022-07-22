@@ -4213,6 +4213,7 @@ nocolor:
 	case TAGACT_BR:
 	case TAGACT_P:
 	case TAGACT_H:
+	case TAGACT_BODY:
 	case TAGACT_NOP:
 nop:
 		if (invisible)
