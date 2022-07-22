@@ -364,13 +364,16 @@ I haven't given the tidy team enough credit.
 So my compromise is to take the first literal > if the quoted
 string that contains the > would run past end of line.
 That makes acid3 and usps.gov happy.
+But some web pages are all on a line to save bits,
+so also break out at >< like a new tag is starting.
 *********************************************************************/
 
 		for(gt = t, qc = 0; *gt; ++gt) {
 			if(qc) {
 				if(qc == *gt) qc = 0; // unquote
-				if((*gt == '<' || *gt == '>') && !u) u = gt;
+				if(*gt == '>' && !u) u = gt;
 				if(*gt == '\n' && u) { gt = u; break; }
+				if(*gt == '>' && gt[1] == '<' && u) { gt = u; break; }
 				continue;
 			}
 			if(*gt == '<' || *gt == '>') break;
