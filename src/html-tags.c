@@ -51,6 +51,7 @@ static struct opentag {
 	const char *start; // for innerHTML
 	Tag *t;
 } *stack;
+static bool lastPush;
 
 static struct opentag *balance(const char *name)
 {
@@ -138,7 +139,8 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tr","td","th","ul","ol","dl","li","dt",0};
+	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
+	if(!lastPush) return false;
 	return stringInListCI(list, name) >= 0;
 }
 
@@ -256,6 +258,7 @@ void html2tags(const char *htmltext, bool startpage)
 
 	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
 	stack = 0;
+	lastPush = 0;
 
 // loop looking for tags
 	while(*s) {
@@ -396,6 +399,7 @@ so also break out at >< like a new tag is starting.
 // create this tag in the edbrowse world.
 			if(dhs) printf("</%s>\n", tagname);
 			makeTag(tagname, true, lt);
+			lastPush = false;
 			continue;
 		}
 
@@ -447,6 +451,7 @@ tag_ok:
 			}
 		}
 		makeTag(tagname, false, seek);
+		lastPush = true;
 		findAttributes(t, gt);
 		if(isAutoclose(tagname)) {
 			if(dhs) puts("autoclose");

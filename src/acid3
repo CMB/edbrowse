@@ -520,21 +520,8 @@
       expect(w.firstChild(), document.getElementsByTagName('h1')[0]);
       expect(w.firstChild().nodeType, 3);
       expect(w.parentNode(), document.getElementsByTagName('h1')[0]);
-//@` To my mind, nextSibling will take us from h1 to div, adjacent nodes
-// under body, but remember, acid thinks brousers create nodes
-// for every blip of whitespace between tags.
-// We ran into this in the very first test  [0].
-// So acid expects the next node to be text with newline in it,
-// which is whitespace, and skipped over by allButWS, thus landing on div.
-// So for different reasons, acid and tidy agree, it's div, but,
-// if you back up to previous node acid expects the text with \n,
-// but tidy doesn't generate that, so it goes all the way back to h1.
-// This line use to expect 3, I changed it to 1 for tidy.
-// But I do generate those whitespace nodes.
-// So I changed it back to 3, haha.
-// But then I don't generate whitespace after h1, I call it the wall,
-// so I changed it back to 1, haha.
-      expect(w.nextSibling().previousSibling.nodeType, 1);
+//@` whether we inject whitespace between the h1 heading and div
+      expect(w.nextSibling().previousSibling.nodeType, 3);
       expect(w.nextSibling(), document.getElementsByTagName('p')[6]);
       expect(w.nextSibling(), document.getElementsByTagName('map')[0]);
       expect(w.lastChild(), document.getElementsByTagName('table')[0]);
@@ -2125,7 +2112,7 @@ frames[1].contentDocument;
   </div>
   <p id="result"><span id="score">JS</span><span id="slash" class="hidden">/</span><span>?</span></p>
   <!-- The following line is used in a number of the tests. It is done using document.write() to sidestep complaints of validity. -->
-  <script type="text/javascript">document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tr><td><p><\/tbody> <\/table><\/map>');</script>
+  <script type="text/javascript">document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tr><td><p><\/tbody><\/table><\/map>');</script>
   <p id="instructions">To pass the test,<span></span> a browser must use its default settings, the animation has to be smooth, the score has to end on 100/100, and the final page has to look exactly, pixel for pixel, like <a href="reference.html">this reference rendering</a>.</p>
   <p id="remove-last-child-test">Scripting must be enabled to use this test.</p>
  </body>
