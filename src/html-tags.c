@@ -290,6 +290,7 @@ void html2tags(const char *htmltext, bool startpage)
 				if(!premode) compress(w);
 				  if(dhs) printf("text{%s}\n", w);
 				makeTag("text", false, 0);
+				if(!ws) atWall = false;
 				working_t->textval = w;
 				makeTag("text", true, 0);
 			}

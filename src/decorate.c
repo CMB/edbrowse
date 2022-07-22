@@ -347,39 +347,6 @@ static void emptyAnchors(int start)
 	}
 }
 
-/*********************************************************************
-If a form is in a table, but not in tr or td, it closes immediately,
-and all the following inputs are orphaned.
-Check for an empty form beneath table, and move all the following siblings
-down into the form.
-*********************************************************************/
-
-static void tableForm(int start)
-{
-	int j;
-	Tag *form, *table, *t;
-
-	for (j = start; j < cw->numTags; ++j) {
-		form = tagList[j];
-		if (form->action != TAGACT_FORM || form->firstchild)
-			continue;
-		t = form;
-		for (table = form->sibling; table; table = table->sibling) {
-			if (table->action == TAGACT_TABLE &&
-			    tagBelow(table, TAGACT_INPUT)) {
-/* table with inputs below; move it to form */
-/* hope this doesn't break anything */
-				table->parent = form;
-				form->firstchild = table;
-				t->sibling = table->sibling;
-				table->sibling = 0;
-				break;
-			}
-			t = table;
-		}
-	}
-}
-
 void formControl(Tag *t, bool namecheck)
 {
 	int itype = t->itype;
@@ -857,9 +824,6 @@ void prerender(int start)
 /* some cleanup routines to rearrange the tree */
 	emptyAnchors(start);
 	insert_tbody(start);
-	if(useTidy) {
-	tableForm(start);
-	}
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
