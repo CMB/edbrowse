@@ -84,7 +84,7 @@ static const struct specialtag {
 {"ol",0,1, 0, 0},
 {"li",0,0, 0, "ul,ol"},
 {"dl",0,1, 0, 0},
-{"dd",0,0, 0, "dl"},
+{"dt",0,0, 0, "dl"},
 {"table",0,1, 0, 0},
 {"td",0,0, 0, "table"},
 {"th",0,0, 0, "table"},
@@ -138,7 +138,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tr","td","th",0};
+	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tr","td","th","ul","ol","dl","li","dt",0};
 	return stringInListCI(list, name) >= 0;
 }
 
