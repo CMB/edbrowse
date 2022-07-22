@@ -520,8 +520,9 @@
       expect(w.firstChild(), document.getElementsByTagName('h1')[0]);
       expect(w.firstChild().nodeType, 3);
       expect(w.parentNode(), document.getElementsByTagName('h1')[0]);
-//@` whether we inject whitespace between the h1 heading and div
-      expect(w.nextSibling().previousSibling.nodeType, 3);
+//@` whether we inject whitespace between the h1 heading and div.
+// We don't, because </h1> is a wall, so change from 3 to 1.
+      expect(w.nextSibling().previousSibling.nodeType, 1);
       expect(w.nextSibling(), document.getElementsByTagName('p')[6]);
       expect(w.nextSibling(), document.getElementsByTagName('map')[0]);
       expect(w.lastChild(), document.getElementsByTagName('table')[0]);
@@ -2112,7 +2113,7 @@ frames[1].contentDocument;
   </div>
   <p id="result"><span id="score">JS</span><span id="slash" class="hidden">/</span><span>?</span></p>
   <!-- The following line is used in a number of the tests. It is done using document.write() to sidestep complaints of validity. -->
-  <script type="text/javascript">document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tr><td><p><\/tbody><\/table><\/map>');</script>
+  <script type="text/javascript">document.write('<map name=""><area href="" shape="rect" coords="2,2,4,4" alt="<\'>"><iframe src="empty.png">FAIL<\/iframe><iframe src="empty.txt">FAIL<\/iframe><iframe src="empty.html" id="selectors"><\/iframe><form action="" name="form"><input type=HIDDEN><\/form><table><tr><td><p><\/tbody> <\/table><\/map>');</script>
   <p id="instructions">To pass the test,<span></span> a browser must use its default settings, the animation has to be smooth, the score has to end on 100/100, and the final page has to look exactly, pixel for pixel, like <a href="reference.html">this reference rendering</a>.</p>
   <p id="remove-last-child-test">Scripting must be enabled to use this test.</p>
  </body>

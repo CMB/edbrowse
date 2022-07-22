@@ -51,7 +51,7 @@ static struct opentag {
 	const char *start; // for innerHTML
 	Tag *t;
 } *stack;
-static bool lastPush;
+static bool atWall;
 
 static struct opentag *balance(const char *name)
 {
@@ -139,8 +139,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
-	if(!lastPush) return false;
+	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
 	return stringInListCI(list, name) >= 0;
 }
 
@@ -258,7 +257,7 @@ void html2tags(const char *htmltext, bool startpage)
 
 	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
 	stack = 0;
-	lastPush = 0;
+	atWall = 0;
 
 // loop looking for tags
 	while(*s) {
@@ -285,7 +284,7 @@ void html2tags(const char *htmltext, bool startpage)
 			}
 // Ignore whitespace that is not in the head or the body.
 // Ignore text after body
-			if(headbody < 5 && (!ws || (headbody == 4 && !isWall(stack->name)))) {
+			if(headbody < 5 && (!ws || (headbody == 4 && !atWall))) {
 				pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
@@ -399,7 +398,7 @@ so also break out at >< like a new tag is starting.
 // create this tag in the edbrowse world.
 			if(dhs) printf("</%s>\n", tagname);
 			makeTag(tagname, true, lt);
-			lastPush = false;
+			atWall = isWall(tagname);
 			continue;
 		}
 
@@ -451,7 +450,7 @@ tag_ok:
 			}
 		}
 		makeTag(tagname, false, seek);
-		lastPush = true;
+		atWall = isWall(tagname);
 		findAttributes(t, gt);
 		if(isAutoclose(tagname)) {
 			if(dhs) puts("autoclose");
