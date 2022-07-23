@@ -1484,6 +1484,7 @@ void delText(int start, int end)
 // n+1 is number of lines to delete.
 // It is a challenge to make this function behave exactly as edbrowse would,
 // if we were running d on each marked line.
+static bool delFiles(int start, int end, bool withtext);
 static bool delTextG(char action, int n, int back)
 {
 	int i, j, k;
@@ -1506,6 +1507,16 @@ static bool delTextG(char action, int n, int back)
 			rc = false;
 		}
 		if(t->gflag && rc && i + n <= cw->dol) { // goodbye
+		if(cw->dirMode) {
+// mass delete in directory mode is only deleting a single line.
+// Honestly what other kind of global delete would you ever do
+// in directory mode?
+			rc = delFiles(i, i, false);
+// in case this fails, set dot to where we are
+			cw->dot = j;
+		}
+	}
+		if(t->gflag && rc && i + n <= cw->dol) {
 // did these lines have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
@@ -3903,12 +3914,13 @@ static bool doGlobal(const char *line)
 	setError(-1);
 
 // check for mass delete or mass join
-	if(cw->dirMode | cw->browseMode | cw->sqlMode) goto nomass;
+	if(cw->browseMode | cw->sqlMode) goto nomass;
 	int block = -1, back = 0; // range for mass delete
 // atPartCracker() might overwrite comma with null, so p has to be char*
 	char *p = (char*)line;
 	if(*p == '.' && p[1] == 'r') ++p;
 	if(*p == 'r' && isdigitByte(p[1])) {
+		if(cw->dirMode) goto nomass;
 // mass read must read from a buffer
 		block = strtol(p + 1, &p, 10);
 		if(!*p) {
@@ -3968,8 +3980,10 @@ masscommand:
 	if(p[0] && p[1]) goto nomass;
 	if(*p == 'd' || *p == 'D') {
 		if(block < 0) block = 0;
+		if(cw->dirMode && (block > 1 || back > 0)) goto nomass;
 		return delTextG(*p, block, back);
 }
+	if(cw->dirMode) goto nomass;
 	if(*p == 'j' || *p == 'J') {
 		if(block < 0) block = 1;
 		return joinTextG(*p, block, back);
