@@ -850,7 +850,7 @@ sendMail(int account, const char **recipients, const char *body,
 {
 	char *from, *fromiso, *reply;
 	const struct MACCOUNT *a, *ao, *localMail;
-	const char *s, *boundary;
+	const char *s, *s2, *boundary;
 	char reccc[MAXRECAT + MAXCC];
 	char *t;
 	int nat, nrec, cx, i, j;
@@ -1085,21 +1085,28 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 			sprintf(serverLine, "%s--%s%sContent-Type: %s%s", eol,
 				boundary, eol, ct, charsetString(ct, ce));
 			stringAndString(&out, &j, serverLine);
-/* If the filename has a quote in it, forget it. */
-/* Also, suppress filename if this is an alternate presentation. */
+// If the filename has a quote in it, forget it.
+// Also, suppress filename if this is an alternate presentation.
+			s2 = 0;
 			if (!nalt && !strchr(s, '"')
 			    && (ismc || stringIsNum(s) < 0)) {
 // for security reasons, and convenience, don't present the absolute path.
-				const char *s2 = strrchr(s, '/');
+				s2 = strrchr(s, '/');
 				if(s2) {
 					if(!*++s2)
 // attaching a directory?  This just shouldn't happen.
 						s2 = 0;
 				} else s2 = s;
-				if(s2) {
-					sprintf(serverLine, "; name=\"%s\"", s2);
-					stringAndString(&out, &j, serverLine);
-				}
+			}
+			if(s2) {
+				sprintf(serverLine, "; name=\"%s\"", s2);
+				stringAndString(&out, &j, serverLine);
+			}
+			sprintf(serverLine, "%sContent-Disposition: attachment", eol);
+			stringAndString(&out, &j, serverLine);
+			if(s2) {
+				sprintf(serverLine, "; filename=\"%s\"", s2);
+				stringAndString(&out, &j, serverLine);
 			}
 			sprintf(serverLine,
 				"%sContent-Transfer-Encoding: %s%s%s", eol, ce,

@@ -987,7 +987,7 @@ static void undoPush(void)
 /* if in browse mode, we really shouldn't be here at all!
  * But we could if substituting on an input field, since substitute is also
  * a regular ed command. */
-	if (cw->browseMode | cw->sqlMode)
+	if (cw->browseMode | cw->sqlMode | cw->dirMode)
 		return;
 	if (madeChanges)
 		return;
@@ -1553,7 +1553,7 @@ static bool delTextG(char action, int n, int back)
  * Set dw to move them to your recycle bin.
  * Set dx to delete them outright. */
 
-static bool delFiles(void)
+static bool delFiles(int start, int end, bool withtext)
 {
 	int ln, j;
 
@@ -1567,9 +1567,10 @@ static bool delFiles(void)
 		return false;
 	}
 
+	if(end < start) return true;
 	cmd = 'e';		// show errors
 
-	for (ln = startRange; ln <= endRange; ++ln) {
+	for (ln = start; ln <= end; ++ln) {
 		char *file, *t, *path, *ftype, *a;
 		char qc = '\''; // quote character
 		file = (char *)fetchLine(ln, 0);
@@ -1581,8 +1582,8 @@ static bool delFiles(void)
 		if (!path) {
 abort:
 			free(file);
-			if (ln != startRange)
-				delText(startRange, ln - 1);
+			if (ln != start && withtext)
+				delText(start, ln - 1);
 			return false;
 		}
 
@@ -1671,7 +1672,7 @@ unlink:
 			}
 		}
 	}
-	delText(startRange, endRange);
+	if(withtext) delText(start, end);
 
 // if you type D instead of d, I don't want to lose that.
 	cmd = icmd;
@@ -8099,7 +8100,7 @@ redirect:
 
 	if (cmd == 'd' || cmd == 'D') {
 		if (cw->dirMode) {
-			j = delFiles();
+			j = delFiles(startRange, endRange, true);
 			undoCompare();
 			cw->undoable = false;
 			undoSpecialClear();
