@@ -303,8 +303,7 @@ void html2tags(const char *htmltext, bool startpage)
 			while(t[0] == '-' && t[1] == '-')
 				t += 2, hyphens += 2;
 			u = t;
-//   <!------> is not self contained
-			if(*u == '>') ++u;
+//   <!------> is a self contained comment
 closecomment:
 			u = strchr(u, '>');
 			if(!u) goto opencomment;

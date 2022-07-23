@@ -1555,7 +1555,7 @@ static bool delTextG(char action, int n, int back)
 
 static bool delFiles(void)
 {
-	int ln, cnt, j;
+	int ln, j;
 
 	if (!dirWrite) {
 		setError(MSG_DirNoWrite);
@@ -1569,9 +1569,7 @@ static bool delFiles(void)
 
 	cmd = 'e';		// show errors
 
-	ln = startRange;
-	cnt = endRange - startRange + 1;
-	while (cnt--) {
+	for (ln = startRange; ln <= endRange; ++ln) {
 		char *file, *t, *path, *ftype, *a;
 		char qc = '\''; // quote character
 		file = (char *)fetchLine(ln, 0);
@@ -1581,7 +1579,10 @@ static bool delFiles(void)
 		*t = 0;
 		path = makeAbsPath(file);
 		if (!path) {
+abort:
 			free(file);
+			if (ln != startRange)
+				delText(startRange, ln - 1);
 			return false;
 		}
 
@@ -1604,26 +1605,26 @@ static bool delFiles(void)
 		if (dirWrite == 2 && *ftype == '/') {
 			if(!qc) {
 				setError(MSG_MetaChar);
-				free(file);
-				return false;
+				goto abort;
 			}
 			asprintf(&a, "rm -rf %c%s%c",
 			qc, path, qc);
 			j = system(a);
 			free(a);
-			if(!j)
-				goto gone;
-			setError(MSG_NoDirDelete);
-			free(file);
-			return false;
+			if(!j) {
+				free(file);
+				continue;
+			} else {
+				setError(MSG_NoDirDelete);
+				goto abort;
+			}
 		}
 
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
 unlink:
 			if (unlink(path)) {
 				setError(MSG_NoRemove, file);
-				free(file);
-				return false;
+				goto abort;
 			}
 		} else {
 			char bin[ABSPATH];
@@ -1637,30 +1638,28 @@ unlink:
 // let mv do the work
 						if(!qc) {
 							setError(MSG_MetaChar);
-							free(file);
-							return false;
+							goto abort;
 						}
 						asprintf(&a, "mv -n %c%s%c",
 						qc, path, qc);
 						j = system(a);
 						free(a);
-						if(!j)
-							goto gone;
-						setError(MSG_MoveFileSystem , path);
-						free(file);
-						return false;
+						if(!j) {
+							free(file);
+							continue;
+						} else {
+							setError(MSG_MoveFileSystem , path);
+							goto abort;
+						}
 					}
 					if (!fileIntoMemory
-					    (path, &rmbuf, &rmlen)) {
-						free(file);
-						return false;
-					}
+					    (path, &rmbuf, &rmlen))
+						goto abort;
 					if (!memoryOutToFile(bin, rmbuf, rmlen,
 							     MSG_TempNoCreate2,
 							     MSG_NoWrite2)) {
-						free(file);
 						nzFree(rmbuf);
-						return false;
+						goto abort;
 					}
 					nzFree(rmbuf);
 					goto unlink;
@@ -1668,15 +1667,11 @@ unlink:
 
 // some other rename error
 				setError(MSG_NoMoveToTrash, file);
-				free(file);
-				return false;
+				goto abort;
 			}
 		}
-
-gone:
-		free(file);
-		delText(ln, ln);
 	}
+	delText(startRange, endRange);
 
 // if you type D instead of d, I don't want to lose that.
 	cmd = icmd;
