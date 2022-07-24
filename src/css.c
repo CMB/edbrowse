@@ -1476,7 +1476,8 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 		"first-child", "last-child", "only-child", "checked",
 		"first-of-type", "last-of-type", "only-of-type",
 		"first", "last",
-		"empty", "disabled", "enabled", "read-only", "read-write",
+		"empty", "input",
+		"disabled", "enabled", "read-only", "read-write",
 		"scope", "root",
 		0
 	};
@@ -2431,6 +2432,14 @@ all the div sections just below the current node.
 					break;
 			}
 			nzFree(sibs);
+			if (rc)
+				goto next_mod;
+			return false;
+		}
+
+		if (stringEqual(p, ":input")) {
+			rc = false;
+			rc = inputLike(t, 0);
 			if (rc)
 				goto next_mod;
 			return false;
