@@ -297,6 +297,19 @@ DOCUMENT_POSITION_CONTAINS = mw$.DOCUMENT_POSITION_CONTAINS;
 DOCUMENT_POSITION_CONTAINED_BY = mw$.DOCUMENT_POSITION_CONTAINED_BY;
 document.compareDocumentPosition = mw$.compareDocumentPosition;
 
+// This should be in the native string class
+String.prototype.at = function(n) {
+if(typeof n != "number") return undefined;
+var l = this.length;
+if(n >= 0) {
+if(n >= l) return undefined;
+return this.charAt(n);
+}
+n = -n;
+if(n > l) return undefined;
+return this.charAt(l-n);
+}
+
 /*********************************************************************
 The URL class is head-spinning in its complexity and its side effects.
 Almost all of these can be handled in JS,

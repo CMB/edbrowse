@@ -1149,6 +1149,12 @@ Therefore, edbrowse invokes a linear algorithm when the subcommand deletes or jo
 In this case edbrowse prints "mass delete" or "mass join" at debug level 3 or higher.
 
 <P>
+These commands are not optimized in browse mode, sql mode, or directory mode - with one exception.
+g/re/d, wherein we delete the marked lines, is optimized in directory mode.
+And what else would you do in directory mode anyways?
+g/\.o$/d makes sense, g/\.o$/-d, or anything else, is risky and unpredictable.
+
+<P>
 Reading from a buffer is also optimized.
 g/re/ r7
 this prints "mass read" at debug level 3.
