@@ -2062,6 +2062,14 @@ static bool inputLike(Tag *t, int flavor)
 		nzFree(v);
 		return rc;
 	}
+	if (flavor == 3) {	// :input
+// I can't find this documented anywhere.
+// It's not just an innput tag, or we would query on input;
+// this is :input, it means something else.
+// Here is my guess.
+// No submit buttons, no hidden fields, etc.
+		return action == TAGACT_SELECT || t->itype >= INP_TEXT;
+	}
 	return true;
 }
 
@@ -2438,8 +2446,7 @@ all the div sections just below the current node.
 		}
 
 		if (stringEqual(p, ":input")) {
-			rc = false;
-			rc = inputLike(t, 0);
+			rc = inputLike(t, 3);
 			if (rc)
 				goto next_mod;
 			return false;
