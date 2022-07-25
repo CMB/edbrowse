@@ -1475,8 +1475,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 	static const char *const okcolon[] = {
 		"first-child", "last-child", "only-child", "checked",
 		"first-of-type", "last-of-type", "only-of-type",
-		"first", "last",
-		"empty", "input",
+		"first", "last", "empty",
 		"disabled", "enabled", "read-only", "read-write",
 		"scope", "root",
 		0
@@ -2063,11 +2062,6 @@ static bool inputLike(Tag *t, int flavor)
 		return rc;
 	}
 	if (flavor == 3) {	// :input
-// I can't find this documented anywhere.
-// It's not just an innput tag, or we would query on input;
-// this is :input, it means something else.
-// Here is my guess.
-// No submit buttons, no hidden fields, etc.
 		return action == TAGACT_SELECT || t->itype >= INP_TEXT;
 	}
 	return true;
@@ -2440,13 +2434,6 @@ all the div sections just below the current node.
 					break;
 			}
 			nzFree(sibs);
-			if (rc)
-				goto next_mod;
-			return false;
-		}
-
-		if (stringEqual(p, ":input")) {
-			rc = inputLike(t, 3);
 			if (rc)
 				goto next_mod;
 			return false;
