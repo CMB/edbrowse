@@ -9,7 +9,7 @@
 
 #define MAXRECAT 100		// max number of recipients or attachments
 #define MAXMSLINE 1024		// max mail server line
-#define LONGLINELIMIT 78
+#define LONGLINELIMIT 74
 
 static char serverLine[MAXMSLINE];
 static bool doSignature;
@@ -502,9 +502,9 @@ empty:
 	}
 
 	if (!webform) {
-// Do we need to use quoted-printable? Ever?
-//		if (nacount * 20 > buflen || nullcount || longline)
-		if (nullcount) {
+// Use qp for long lines, it doesn't hurt,
+// and when I send I copy lines into a static buffer, of a fixed length.
+		if (nullcount || longline) {
 			char *newbuf;
 			int l, colno = 0, space = 0;
 
@@ -623,7 +623,7 @@ static char *messageTimeID(void)
 	return buf;
 }
 
-static void appendAttachment(const char *s, char **out, int *l)
+static void appendAttachment(const char *s, char **out, int *l, bool longline)
 {
 	const char *t;
 	int n;
@@ -634,8 +634,13 @@ static void appendAttachment(const char *s, char **out, int *l)
 		n = t - s;
 		if (t[-1] == '\r')
 			--n;
-		if (n)
+		if (n) {
 			memcpy(serverLine, s, n);
+// if format=flowed, put spaces on the end of lines. Experimental!
+			if(longline && serverLine[n-1] != '=' &&
+			serverLine[n-1] != ' ')
+				serverLine[n++] = ' ';
+		}
 		serverLine[n] = 0;
 		strcat(serverLine, eol);
 		stringAndString(out, l, serverLine);
@@ -978,7 +983,6 @@ sendMail(int account, const char **recipients, const char *body,
 
 	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded, &longline))
 		return false;
-// set longline to false here to disable the format=flowed feature
 	if (ce[0] == 'q')
 		mustmime = true;
 
@@ -1074,7 +1078,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	}
 
 /* Now send the body, line by line. */
-	appendAttachment(encoded, &out, &j);
+	appendAttachment(encoded, &out, &j, longline);
 	nzFree(encoded);
 	encoded = 0;
 
@@ -1112,7 +1116,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 				"%sContent-Transfer-Encoding: %s%s%s", eol, ce,
 				eol, eol);
 			stringAndString(&out, &j, serverLine);
-			appendAttachment(encoded, &out, &j);
+			appendAttachment(encoded, &out, &j, false);
 			nzFree(encoded);
 			encoded = 0;
 		}		/* loop over attachments */
