@@ -11,7 +11,7 @@
 #endif
 
 #define MHLINE 512		// length of a mail header line
-/* headers and other information about an email */
+// headers and other information about an email
 struct MHINFO {
 	struct MHINFO *next, *prev;
 	struct listHead components;
@@ -23,13 +23,13 @@ struct MHINFO {
 	char date[MHLINE];
 	char boundary[MHLINE];
 	int boundlen;
-/* recipients and cc recipients */
+// recipients and cc recipients
 	char *tolist, *cclist;
 	int tolen, cclen;
-	char mid[MHLINE];	/* message id */
-	char ref[MHLINE];	/* references */
-	char cfn[MHLINE];	/* content file name */
-	uchar ct, ce;		/* content type, content encoding */
+	char mid[MHLINE];	// message id
+	char ref[MHLINE];	// references
+	char cfn[MHLINE];	// content file name
+	uchar ct, ce;		// content type, content encoding
 	bool andOthers;
 	bool doAttach;
 	bool atimage;
@@ -37,11 +37,11 @@ struct MHINFO {
 	uchar error64;
 };
 
-static int nattach;		/* number of attachments */
-static int nimages;		/* number of attached images */
-static char *firstAttach;	/* name of first file */
+static int nattach;		// number of attachments
+static int nimages;		// number of attached images
+static char *firstAttach;	// name of first file
 static bool mailIsHtml;
-static char *fm;		/* formatted mail string */
+static char *fm;		// formatted mail string
 static int fm_l;
 static struct MHINFO *lastMailInfo;
 static char *lastMailText;
@@ -3020,10 +3020,9 @@ static void formatMail(struct MHINFO *w, bool top)
 			stringAndBytes(&fm, &fm_l, start, end - start);
 			if (mailIsHtml && ct != CT_HTML)
 				stringAndString(&fm, &fm_l, "</pre>\n");
-		}
+		} // text present
 
-		/* text present */
-		/* There could be a mail message inline */
+		// There could be a mail message inline
 		foreach(v, w->components) {
 			if (end > start)
 				stringAndString(&fm, &fm_l,
@@ -3073,7 +3072,8 @@ char *emailParse(char *buf)
 	mailIsHtml = ignoreImages = false;
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf));
-	mailIsHtml = (mailTextType(w) == CT_HTML);
+	if(mhtml)
+		mailIsHtml = (mailTextType(w) == CT_HTML);
 	if (mailIsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
 	formatMail(w, true);
@@ -3363,4 +3363,4 @@ found:
 	}
 
 	nzFree(buf);
-}				/* readReplyInfo */
+}

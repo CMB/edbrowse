@@ -296,23 +296,23 @@ extern int webTimeout, mailTimeout;
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool curlActive; // is curl running?
-extern bool ismc;		/* Is the program running as a mail client? */
-extern bool isimap;		/* Is the program running as an imap client? */
-// next two variables work around curl bug 7284
+extern bool ismc;		// Is the program running as a mail client?
+extern bool isimap;		// Is the program running as an imap client?
+extern bool passMail;		// pass mail across the filters
+extern bool mhtml; // present mail in html format
 extern bool down_bg;		// download in background
 extern bool down_jsbg;		// download javascript in background
 extern bool re_utf8, endMarks;
 extern char showProgress; // feedback as a file is downloaded
 extern char selsep; // selection separator
-extern char eb_language[];		/* edbrowse language, determined by $LANG */
+extern char eb_language[];		// edbrowse language, determined by $LANG
 extern  const char *const supported_languages[];
 extern int eb_lang; // encoded version of the above, for languages that we recognize
-extern bool cons_utf8;		/* does the console expect utf8? */
-extern bool iuConvert;		/* perform iso utf8 conversions automatically */
-extern char type8859;		/* 1 through 15 */
-extern bool js_redirects;	/* window.location = new_url */
-extern bool passMail;		/* pass mail across the filters */
-extern bool errorExit;		/* exit on any error, for scripting purposes */
+extern bool cons_utf8;		// does the console expect utf8?
+extern bool iuConvert;		// perform iso utf8 conversions automatically
+extern char type8859;		// 1 through 15
+extern bool js_redirects;	// window.location = new_url
+extern bool errorExit;		// exit on any error, for scripting purposes
 extern bool isInteractive;
 extern volatile bool intFlag;	/* set this when interrupt signal is caught */
 extern time_t intStart;
