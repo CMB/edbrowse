@@ -242,7 +242,7 @@ de multiples options contiennent la chaîne %s
 c'est un bouton; tapez i* pour le déclencher
 c'est un bouton de validation; tapez i* pour le déclencher
 c'est un bouton d'annulation; tapez i* pour le déclencher
-c'est une zone de texte, vous devez l'éditer dans la session %d
+0
 champ en lecture seule
 une zone de saisie ne peut contenir un saut de ligne
 saisie trop long, la limite est de %d caractères

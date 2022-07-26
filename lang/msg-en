@@ -242,7 +242,7 @@ multiple options contain %s
 this is a button; use i* to push the button
 this is a submit button; use i* to push the button
 this is a reset button; use i* to push the button
-this is a textarea, you must edit it from session %d
+file is larger than 2 gig
 readonly field
 input field cannot contain a newline character
 input too long, limit %d characters
@@ -689,12 +689,12 @@ session + is out of bounds, limit %d
 session - is out of bounds, limit %d
 %s: public key file %s is not a regular file
 %s: public key file %s does not exist or is not readable.
-tidy disabled
-tidy enabled
+mail in plain text
+mail in html
 debug html scanner disabled
 debug html scanner enabled
-0
-0
+tidy disabled
+tidy enabled
 0
 0
 0

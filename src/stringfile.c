@@ -342,7 +342,7 @@ char *pullString(const char *s, int l)
 	memcpy(t, s, l);
 	t[l] = 0;
 	return t;
-}				/* pullString */
+}
 
 char *pullString1(const char *s, const char *t)
 {
@@ -482,7 +482,7 @@ int stringInList(const char *const *list, const char *s)
 			++list;
 		}
 	return -1;
-}				/* stringInList */
+}
 
 int stringInListCI(const char *const *list, const char *s)
 {
@@ -508,26 +508,26 @@ int charInList(const char *list, char c)
 	if (!s)
 		return -1;
 	return s - list;
-}				/* charInList */
+}
 
 /* In an empty list, next and prev point back to the list, not to 0. */
 /* We also allow zero. */
 bool listIsEmpty(const struct listHead * l)
 {
 	return l->next == l || l->next == 0;
-}				/* listIsEmpty */
+}
 
 void initList(struct listHead *l)
 {
 	l->prev = l->next = l;
-}				/* initList */
+}
 
 void delFromList(void *x)
 {
 	struct listHead *xh = (struct listHead *)x;
 	((struct listHead *)xh->next)->prev = xh->prev;
 	((struct listHead *)xh->prev)->next = xh->next;
-}				/* delFromList */
+}
 
 void addToListFront(struct listHead *l, void *x)
 {
@@ -536,7 +536,7 @@ void addToListFront(struct listHead *l, void *x)
 	xh->prev = l;
 	l->next = (struct listHead *)x;
 	((struct listHead *)xh->next)->prev = (struct listHead *)x;
-}				/* addToListFront */
+}
 
 void addToListBack(struct listHead *l, void *x)
 {
@@ -545,7 +545,7 @@ void addToListBack(struct listHead *l, void *x)
 	xh->next = l;
 	l->prev = (struct listHead *)x;
 	((struct listHead *)xh->prev)->next = (struct listHead *)x;
-}				/* addToListBack */
+}
 
 void addAtPosition(void *p, void *x)
 {
@@ -719,6 +719,14 @@ bool fdIntoMemory(int fd, char **data, int *len)
 
 	n = 0;
 	do {
+		if(length >= 0x7fffff00 - blocksize) {
+			nzFree(buf);
+			nzFree(chunk);
+			*data = emptyString;
+			*len = 0;
+			setError(MSG_BigFile);
+			return false;
+		}
 		n = read(fd, chunk, blocksize);
 		if (n < 0) {
 			nzFree(buf);

@@ -242,7 +242,7 @@ wiele opcji zawiera ciąg %s
 to jest przycisk; użyj 'i*' aby go przycisnąć
 to jest przycisk wysyłania formularza; użyj 'i*' aby go przycisnąć
 to jest przycisk resetowania; użyj 'i*' aby go przycisnąć
-to jest pole tekstowe, musisz je edytować z poziomu sesji %d
+0
 pole tylko do odczytu
 pole wprowadzania nie może zawierać znaku końca linii
 tekst zbyt długi, limit %d znaków

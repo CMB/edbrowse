@@ -242,7 +242,7 @@ multiple opzioni contengono la stringa %s
 questo è un bottone; usa i* per premere il bottone
 questo è un bottone submit; usa i* per premere il bottone
 questo è un bottone reset; usa i* per premere il bottone
-questa è una textarea, devi editarla dalla sessione %d
+0
 campo di sola lettura
 il campo di input non può contenere un carattere newline
 campo di input troppo lungo, il limite è di %d caratteri
