@@ -5736,6 +5736,20 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "mhtml")) {
+		mhtml ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(mhtml + MSG_MhtmlOff);
+		return true;
+	}
+
+	if (stringEqual(line, "mhtml+") || stringEqual(line, "mhtml-")) {
+		mhtml = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(mhtml + MSG_MhtmlOff);
+		return true;
+	}
+
 	if (stringEqual(line, "H")) {
 		if (helpMessagesOn ^= 1)
 			if (debugLevel >= 1)
