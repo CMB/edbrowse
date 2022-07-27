@@ -38,7 +38,7 @@ static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
 time_t intStart;
-bool ismc, isimap, passMail, mhtml = true;
+bool ismc, isimap, passMail, mhtml;
 // next two variables work around curl bug 7284
 bool inInput, inInitFunction, listNA;
 int fileSize;
