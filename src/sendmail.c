@@ -638,8 +638,12 @@ static void appendAttachment(const char *s, char **out, int *l, bool longline)
 			memcpy(serverLine, s, n);
 // if format=flowed, put spaces on the end of lines. Experimental!
 			if(longline && serverLine[n-1] != '=' &&
-			serverLine[n-1] != ' ')
+			serverLine[n-1] != ' ' &&
+			t[0] && t[1] &&
+			t[1] != '\n' && t[1] != '\r')
 				serverLine[n++] = ' ';
+// We might be aboe to remove = from a line that ends in space =
+// format=flowed will fix everything up anyways.
 		}
 		serverLine[n] = 0;
 		strcat(serverLine, eol);
