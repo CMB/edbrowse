@@ -2101,7 +2101,7 @@ owner: document,
 /*********************************************************************
 This is my tentative implementation of hasFeature:
 hasFeature: function(mod, v) {
-// tidy claims html5 so we'll run with that
+// I'll say edbrowse supports html5
 var supported = { "html": "5", "Core": "?", "XML": "?"};
 if(!supported[mod]) return false;
 if(v == undefined) return true; // no version specified

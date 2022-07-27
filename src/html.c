@@ -4,7 +4,7 @@
 
 #ifdef _MSC_VER			// sleep(secs) macro
 #define SLEEP(a) Sleep(a * 1000)
-extern int gettimeofday(struct timeval *tp, void *tzp);	// from tidys.lib
+extern int gettimeofday(struct timeval *tp, void *tzp);
 #else // !_MSC_VER
 #define SLEEP sleep
 #endif // _MSC_VER y/n
@@ -523,7 +523,7 @@ void prepareScript(Tag *t)
 			t->href = new_url;
 		}
 		t->async = get_property_bool_t(t, "async");
-// A side effect of tidy + edbrowse is that the text of the script is a
+// A side effect of my scanner is that the text of the script is a
 // childNode of script, but I don't think it should be.
 		if (t->firstchild && t->firstchild->action == TAGACT_TEXT)
 			run_function_onearg_t(t, "removeChild", t->firstchild);
@@ -1036,7 +1036,6 @@ char *htmlParse(char *buf, int remote)
 	cf->hbase = cloneString(cf->fileName);
 
 	debugPrint(3, "parse html from browse");
-/* call the tidy parser to build the html nodes */
 	htmlScanner(buf, true);
 	nzFree(buf);
 	htmlGenerated = false;
@@ -3140,7 +3139,7 @@ void runOnload(void)
 			unloadHyperlink("document.body.onunload", "Body");
 		if (action == TAGACT_FORM)
 			run_event_t(t, "form", "onload");
-/* tidy5 says there is no form.onunload */
+// tidy5 says there is no form.onunload
 		if (action == TAGACT_FORM && t->onunload) {
 			char formfunction[48];
 			sprintf(formfunction, "document.forms[%d].onunload", fn);

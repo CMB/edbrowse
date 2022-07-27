@@ -420,7 +420,7 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 	JS_SetPropertyStr(cx, this, "childNodes", JS_DupValue(cx, c2));
 	JS_SetPropertyStr(cx, this, "inner$HTML", JS_NewAtomString(cx, h));
 
-// Put some tags around the html, so tidy can parse it.
+// Put some tags around the html, so we can parse it.
 	run = initString(&run_l);
 	stringAndString(&run, &run_l, "<!DOCTYPE public><body>");
 	stringAndString(&run, &run_l, h);
