@@ -1804,7 +1804,8 @@ static void intoTree(Tag *parent)
 						c->sibling = t;
 					}
 				}
-				goto checkattributes;
+				intoTree(t);
+				continue;
 			}
 		}
 
@@ -1819,125 +1820,6 @@ static void intoTree(Tag *parent)
 			treeAttach->firstchild = t;
 		}
 		prev = t;
-
-checkattributes:
-		action = t->action;
-		if(!t->attributes) goto no_attributes;
-// check for some common attributes here
-		if (stringInListCI(t->attributes, "onclick") >= 0)
-			t->onclick = t->doorway = true;
-		if (stringInListCI(t->attributes, "onchange") >= 0)
-			t->onchange = t->doorway = true;
-		if (stringInListCI(t->attributes, "onsubmit") >= 0)
-			t->onsubmit = t->doorway = true;
-		if (stringInListCI(t->attributes, "onreset") >= 0)
-			t->onreset = t->doorway = true;
-		if (stringInListCI(t->attributes, "onload") >= 0)
-			t->onload = t->doorway = true;
-		if (stringInListCI(t->attributes, "onunload") >= 0)
-			t->onunload = t->doorway = true;
-		if (stringInListCI(t->attributes, "checked") >= 0)
-			t->checked = t->rchecked = true;
-		if (stringInListCI(t->attributes, "readonly") >= 0)
-			t->rdonly = true;
-		if (stringInListCI(t->attributes, "disabled") >= 0)
-			t->disabled = true;
-		if (stringInListCI(t->attributes, "multiple") >= 0)
-			t->multiple = true;
-		if (stringInListCI(t->attributes, "required") >= 0)
-			t->required = true;
-		if (stringInListCI(t->attributes, "async") >= 0)
-			t->async = true;
-		if ((j = stringInListCI(t->attributes, "name")) >= 0) {
-/* temporarily, make another copy; some day we'll just point to the value */
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->name = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "id")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->id = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "class")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->jclass = cloneString(v);
-		}
-// classname is an alias for class
-		if ((j = stringInListCI(t->attributes, "classname")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->jclass = cloneString(v);
-		}
-		if ((j = stringInListCI(t->attributes, "value")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			t->value = cloneString(v);
-			t->rvalue = cloneString(v);
-		}
-// Resolve href against the base, but wait a minute, what if it's <p href=blah>
-// and we're not suppose to resolve it? I don't ask about the parent node.
-// Well, in general, I don't carry the href attribute into the js node.
-// I only do it when it is relevant, such as <a> or <area>.
-// See the exceptions in pushAttributes() in this file.
-// I know, it's confusing.
-		if ((j = stringInListCI(t->attributes, "href")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			if (v) {
-				v = resolveURL(cf->hbase, v);
-				cnzFree(t->atvals[j]);
-				t->atvals[j] = v;
-				if (action == TAGACT_BASE && !cf->baseset) {
-					nzFree(cf->hbase);
-					cf->hbase = cloneString(v);
-					cf->baseset = true;
-				}
-				t->href = cloneString(v);
-			}
-		}
-		if ((j = stringInListCI(t->attributes, "src")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			if (v) {
-				v = resolveURL(cf->hbase, v);
-				cnzFree(t->atvals[j]);
-				t->atvals[j] = v;
-				if (!t->href)
-					t->href = cloneString(v);
-			}
-		}
-		if ((j = stringInListCI(t->attributes, "action")) >= 0) {
-			v = t->atvals[j];
-			if (v && !*v)
-				v = 0;
-			if (v) {
-				v = resolveURL(cf->hbase, v);
-				cnzFree(t->atvals[j]);
-				t->atvals[j] = v;
-				if (!t->href)
-					t->href = cloneString(v);
-			}
-		}
-
-// href=javascript:foo() is another doorway into js
-		if (t->href && memEqualCI(t->href, "javascript:", 11))
-			t->doorway = true;
-
-no_attributes:
-		if (action == TAGACT_SCRIPT) {
-			t->doorway = true;
-			t->scriptgen = htmlGenerated;
-		}
-
 		intoTree(t);
 	}
 }
@@ -1954,8 +1836,8 @@ void html_from_setter(Tag *t, const char *h)
 // Cut all the children away from t
 	underKill(t);
 
-	htmlScanner(h, false);
 	htmlGenerated = true;
+	htmlScanner(h, false);
 	htmlNodesIntoTree(l, t);
 	prerender(0);
 	innerParent = t;

@@ -476,8 +476,8 @@ static void runGeneratedHtml(Tag *t, const char *h)
 		debugPrint(4, "parse under top");
 	debugGenerated(h);
 
-	htmlScanner(h, false);
 	htmlGenerated = true;
+	htmlScanner(h, false);
 	htmlNodesIntoTree(l, t);
 	prerender(false);
 	decorate(0);
@@ -1036,9 +1036,9 @@ char *htmlParse(char *buf, int remote)
 	cf->hbase = cloneString(cf->fileName);
 
 	debugPrint(3, "parse html from browse");
+	htmlGenerated = false;
 	htmlScanner(buf, true);
 	nzFree(buf);
-	htmlGenerated = false;
 	htmlNodesIntoTree(0, NULL);
 	prerender(false);
 

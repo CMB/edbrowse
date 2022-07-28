@@ -483,6 +483,8 @@ With this understanding, we can, and should, scan for </script
 				if(*u == '\n') ++ln;
 			while(isspace(*seek)) ++seek;
 			   if(dhs) printf("script length %d\n", lt - seek);
+			working_t->doorway = true;
+			working_t->scriptgen = htmlGenerated;
 			if(lt > seek) {
 // pull out the script, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
@@ -611,6 +613,9 @@ static void findAttributes(const char *start, const char *end)
 	char qc; // quote character
 	const char *a1, *a2; // attribute name
 	const char *v1, *v2; // attribute value
+	Tag *t = working_t; // shorthand
+	int action, j;
+	const char *v;
 
 	while(s < end) {
 // look for a C identifier, then whitespace, then =
@@ -634,6 +639,110 @@ static void findAttributes(const char *start, const char *end)
 		if(*v2 == qc) ++v2;
 		s = v2;
 	}
+
+// Certain attributes map back to members of t for html rendering.
+// Remember we need to operate even without javascript.
+	if(!t->attributes) return;
+
+	action = t->action;
+	if (stringInListCI(t->attributes, "onclick") >= 0)
+		t->onclick = t->doorway = true;
+	if (stringInListCI(t->attributes, "onchange") >= 0)
+		t->onchange = t->doorway = true;
+	if (stringInListCI(t->attributes, "onsubmit") >= 0)
+		t->onsubmit = t->doorway = true;
+	if (stringInListCI(t->attributes, "onreset") >= 0)
+		t->onreset = t->doorway = true;
+	if (stringInListCI(t->attributes, "onload") >= 0)
+		t->onload = t->doorway = true;
+	if (stringInListCI(t->attributes, "onunload") >= 0)
+		t->onunload = t->doorway = true;
+	if (stringInListCI(t->attributes, "checked") >= 0)
+		t->checked = t->rchecked = true;
+	if (stringInListCI(t->attributes, "readonly") >= 0)
+		t->rdonly = true;
+	if (stringInListCI(t->attributes, "disabled") >= 0)
+		t->disabled = true;
+	if (stringInListCI(t->attributes, "multiple") >= 0)
+		t->multiple = true;
+	if (stringInListCI(t->attributes, "required") >= 0)
+		t->required = true;
+	if (stringInListCI(t->attributes, "async") >= 0)
+		t->async = true;
+	if ((j = stringInListCI(t->attributes, "name")) >= 0) {
+// temporarily make another copy; some day we'll point to the value
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		t->name = cloneString(v);
+	}
+	if ((j = stringInListCI(t->attributes, "id")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		t->id = cloneString(v);
+	}
+	if ((j = stringInListCI(t->attributes, "class")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		t->jclass = cloneString(v);
+	}
+// classname is an alias for class
+	if ((j = stringInListCI(t->attributes, "classname")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		t->jclass = cloneString(v);
+	}
+	if ((j = stringInListCI(t->attributes, "value")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		t->value = cloneString(v);
+		t->rvalue = cloneString(v);
+	}
+// Resolve href against the base, but wait a minute, what if it's <p href=blah>
+// and we're not suppose to resolve it? I don't ask about the parent node.
+// Well, in general, I don't carry the href attribute into the js node.
+// I only do it when it is relevant, such as <a> or <area>.
+// See the exceptions in pushAttributes() in decorate.c
+// I know, it's confusing.
+	if ((j = stringInListCI(t->attributes, "href")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		if (v) {
+			v = resolveURL(cf->hbase, v);
+			cnzFree(t->atvals[j]);
+			t->atvals[j] = v;
+			if (action == TAGACT_BASE && !cf->baseset) {
+				nzFree(cf->hbase);
+				cf->hbase = cloneString(v);
+				cf->baseset = true;
+			}
+			t->href = cloneString(v);
+		}
+	}
+	if ((j = stringInListCI(t->attributes, "src")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		if (v) {
+			v = resolveURL(cf->hbase, v);
+			cnzFree(t->atvals[j]);
+			t->atvals[j] = v;
+			if (!t->href)
+				t->href = cloneString(v);
+		}
+	}
+	if ((j = stringInListCI(t->attributes, "action")) >= 0) {
+		v = t->atvals[j];
+		if (v && !*v) v = 0;
+		if (v) {
+			v = resolveURL(cf->hbase, v);
+			cnzFree(t->atvals[j]);
+			t->atvals[j] = v;
+			if (!t->href)
+				t->href = cloneString(v);
+		}
+	}
+// href=javascript:foo() is another doorway into js
+	if (t->href && memEqualCI(t->href, "javascript:", 11))
+		t->doorway = true;
 }
 
 static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2)

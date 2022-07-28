@@ -3213,10 +3213,10 @@ So check for serverData null here. Once again we pop the frame.
 	cdt->attributes = allocZeroMem(sizeof(char*));
 	cdt->atvals = allocZeroMem(sizeof(char*));
 	debugPrint(3, "parse html from frame");
+	htmlGenerated = false;
 	htmlScanner(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
-	htmlGenerated = false;
 	htmlNodesIntoTree(start + 1, cdt);
 	prerender(0);
 
@@ -3334,11 +3334,11 @@ bool reexpandFrame(void)
 
 	start = cw->numTags;
 	debugPrint(3, "parse html from frame replace");
+	htmlGenerated = false;
 	htmlScanner(serverData, true);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
 	cf->browseMode = false;
-	htmlGenerated = false;
 	htmlNodesIntoTree(start, cdt);
 	cdt->step = 0;
 	prerender(0);
