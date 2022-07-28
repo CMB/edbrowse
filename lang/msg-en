@@ -689,8 +689,8 @@ session + is out of bounds, limit %d
 session - is out of bounds, limit %d
 %s: public key file %s is not a regular file
 %s: public key file %s does not exist or is not readable.
-mail in plain text
-mail in html
+0
+0
 debug html scanner disabled
 debug html scanner enabled
 tidy disabled
