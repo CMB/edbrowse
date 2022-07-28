@@ -2740,7 +2740,9 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		return w;
 	}
 
+#if 0
 	// Scan through, we might have a mail message included inline
+// Trying to pull mime components out of my ass? What was I thinking?
 	vl = 0;			/* first mail header keyword line */
 	for (s = start; s < end; s = t + 1) {
 		char first = *s;
@@ -2785,6 +2787,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		addToListBack(&w->components, child);
 		w->end = end = vl;
 	}
+#endif
 
 textonly:
 /* Any additional processing of the text, from start to end, can go here. */
