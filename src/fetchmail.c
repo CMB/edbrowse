@@ -2592,6 +2592,8 @@ static struct MHINFO *headerGlean(char *start, char *end)
 				w->ct = CT_MULTI;
 			if (memEqualCI(vl, "multipart/alternative", 21))
 				w->ct = CT_ALT;
+			if (memEqualCI(vl, "multipart/related", 17))
+				w->ct = CT_ALT;
 
 			ctExtras(w, s, t);
 			continue;
@@ -2966,30 +2968,23 @@ static int mailTextType(struct MHINFO *w)
 	if (w->doAttach)
 		return CT_OTHER;
 
-/* jump right into the hard part, multi/alt */
+// jump right into the hard part, multi/alt
 	if (w->ct >= CT_MULTI) {
 		foreach(v, w->components) {
 			rc = mailTextType(v);
-			if (rc == CT_HTML)
-				return rc;
-			if (rc == CT_OTHER)
-				continue;
-			if (w->ct == CT_MULTI)
-				return rc;
-			texttype = rc;
+			if(rc > texttype) texttype = rc;
 		}
 		return texttype;
 	}
 
-	/* multi */
-	/* If there is no text, return nothing */
+	// If there is no text, return nothing
 	if (w->start == w->end)
 		return CT_OTHER;
-/* I don't know if this is right, but I override the type,
- * and make it html, if we start out with <html> */
+// I don't know if this is right, but I override the type,
+// and make it html if we start out with <html>
 	if (memEqualCI(w->start, "<html>", 6))
 		return CT_HTML;
-	return w->ct == CT_HTML ? CT_HTML : CT_TEXT;
+	return w->ct;
 }
 
 static void formatMail(struct MHINFO *w, bool top)
@@ -3035,13 +3030,13 @@ static void formatMail(struct MHINFO *w, bool top)
 		return;
 	}
 
-	if (ct == CT_MULTI) {
-		foreach(v, w->components)
-		    formatMail(v, false);
-		return;
-	}
-
-/* alternate presentations, pick the best one */
+// alternate presentations, pick the best one.
+// Even if it is generically multipart, I go down this path,
+// cause I don't know what to do.
+// I can't present plain components if we are in html mode,
+// nor html components in plain text mode.
+// This algorithm isn't right, at many levels, but seems to work for
+// virtually every email out there.
 	best = j = 0;
 	foreach(v, w->components) {
 		int subtype = mailTextType(v);
