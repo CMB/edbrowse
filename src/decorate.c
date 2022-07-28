@@ -1729,8 +1729,6 @@ static void intoTree(Tag *parent)
 {
 	Tag *t, *prev = 0;
 	int j;
-	const char *v;
-	int action;
 
 	if (!parent)
 		debugPrint(tdb, "root {");
@@ -1751,22 +1749,8 @@ static void intoTree(Tag *parent)
 		}
 
 		if (htmlGenerated) {
-/*Some things are different if the html is generated, not part of the original web page.
- * The head section will be empty, as the first tag is <body>
- * You want to pass through <body>
- * to the children below. */
-			action = t->action;
-			if (action == TAGACT_HEAD) {
-				debugPrint(tdb, "node skip %s", t->info->name);
-				t->dead = true;
-				++cw->deadTags;
-				intoTree(t);
-				continue;
-			}
-			if (action == TAGACT_HTML || action == TAGACT_BODY) {
+			if (t->action == TAGACT_HTML || t->action == TAGACT_BODY) {
 				debugPrint(tdb, "node pass %s", t->info->name);
-				t->dead = true;
-				++cw->deadTags;
 				intoTree(t);
 				continue;
 			}

@@ -204,6 +204,7 @@ static void makeTag(const char *name, bool slash, const char *mark)
 		if(stringEqualCI(name, "html")) {
 			headbody = 1;
 			if(dhs) puts("in html");
+			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqualCI(name, "head")) {
 			headbody = 2;
@@ -212,6 +213,7 @@ static void makeTag(const char *name, bool slash, const char *mark)
 		if(stringEqualCI(name, "body")) {
 			headbody = 4;
 			if(dhs) puts("in body");
+			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqualCI(name, "pre")) {
 			premode = true;
@@ -417,9 +419,13 @@ so also break out at >< like a new tag is starting.
 		}
 		if(!isInhead(tagname)) {
 			if(headbody == 1) {
-				if(dhs) puts("initiate and terminate head");
-				makeTag("head", false, lt);
-				makeTag("head", true, lt);
+				if(htmlGenerated) {
+					if(dhs) puts("skip head section\nin head\npost head");
+				} else {
+					if(dhs) puts("initiate and terminate head");
+					makeTag("head", false, lt);
+					makeTag("head", true, lt);
+				}
 			} else if(headbody == 2) {
 				if(dhs) puts("terminate head");
 				makeTag("head", true, lt);
