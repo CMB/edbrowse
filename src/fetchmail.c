@@ -34,6 +34,7 @@ struct MHINFO {
 	bool doAttach;
 	bool atimage;
 	bool pgp;
+	bool dispat;
 	uchar error64;
 };
 
@@ -2596,6 +2597,13 @@ static struct MHINFO *headerGlean(char *start, char *end)
 			continue;
 		}
 
+		if (memEqualCI(s, "content-disposition:", q - s)) {
+			if (memEqualCI(vl, "attachment", 10))
+				w->dispat = true;
+//			ctExtras(w, s, t);
+			continue;
+		}
+
 		if (memEqualCI(s, "content-transfer-encoding:", q - s)) {
 			if (memEqualCI(vl, "quoted-printable", 16))
 				w->ce = CE_QP;
@@ -2678,26 +2686,21 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		if (w->error64 != GOOD_BASE64_DECODE)
 			mail64Error(w->error64);
 	}
-	if ((w->ce == CE_64 && w->ct == CT_OTHER) ||
-	    w->ct == CT_APPLIC || w->cfn[0]) {
-		w->doAttach = true;
-		++nattach;
-		q = w->cfn;
-		if (*q) {	/* name present */
+	if(w->ct < CT_MULTI &&
+	(w->dispat || w->ct == CT_OTHER || w->ct == CT_APPLIC)) {
+		w->doAttach = true, ++nattach;
+		if(*(q = w->cfn)) { // name present
 			if (stringEqual(q, "winmail.dat")) {
-				w->atimage = true;
-				++nimages;
+				w->atimage = true, ++nimages;
 			} else if ((q = strrchr(q, '.'))) {
 				static const char *const imagelist[] = {
 					"gif", "jpg", "tif", "bmp", "asc",
 					"png", 0
 				};
-/* the asc isn't an image, it's a signature card. */
-/* Similarly for the winmail.dat */
-				if (stringInListCI(imagelist, q + 1) >= 0) {
-					w->atimage = true;
-					++nimages;
-				}
+// the asc isn't an image, it's a signature card.
+// Similarly for the winmail.dat
+				if (stringInListCI(imagelist, q + 1) >= 0)
+					w->atimage = true, ++nimages;
 			}
 			if (!w->atimage && nattach == nimages + 1)
 				firstAttach = w->cfn;
@@ -2706,7 +2709,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 	}
 
 /* loop over the mime components */
-	if (w->ct == CT_MULTI || w->ct == CT_ALT) {
+	if (w->ct >= CT_MULTI) {
 		char *lastbound = 0;
 		bool endmode = false;
 		struct MHINFO *child;
@@ -2735,8 +2738,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		return w;
 	}
 
-	/* mime or alt */
-	/* Scan through, we might have a mail message included inline */
+	// Scan through, we might have a mail message included inline
 	vl = 0;			/* first mail header keyword line */
 	for (s = start; s < end; s = t + 1) {
 		char first = *s;
