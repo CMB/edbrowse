@@ -27,7 +27,7 @@ void dwStart(void)
 	if (cf->dw)
 		return;
 	cf->dw = initString(&cf->dw_l);
-	stringAndString(&cf->dw, &cf->dw_l, "<!DOCTYPE public><body>");
+	stringAndString(&cf->dw, &cf->dw_l, "<body>");
 }
 
 bool handlerPresent(const Tag *t, const char *name)

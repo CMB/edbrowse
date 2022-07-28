@@ -1710,7 +1710,6 @@ void initTagArray(void)
 bool htmlGenerated;
 static Tag *treeAttach;
 static int tree_pos;
-static bool treeDisable;
 static void intoTree(Tag *parent);
 static const int tdb = 5;	// tree debug level
 
@@ -1718,7 +1717,6 @@ void htmlNodesIntoTree(int start, Tag *attach)
 {
 	treeAttach = attach;
 	tree_pos = start;
-	treeDisable = false;
 	debugPrint(tdb, "@@tree of nodes");
 	intoTree(0);
 	debugPrint(tdb, "}\n@@end tree");
@@ -1752,30 +1750,20 @@ static void intoTree(Tag *parent)
 			return;
 		}
 
-		if (treeDisable) {
-			debugPrint(tdb, "node skip %s", t->info->name);
-			t->dead = true;
-			++cw->deadTags;
-			intoTree(t);
-			continue;
-		}
-
 		if (htmlGenerated) {
 /*Some things are different if the html is generated, not part of the original web page.
- * You can skip past <head> altogether, including its
- * descendants, and you want to pass through <body>
+ * The head section will be empty, as the first tag is <body>
+ * You want to pass through <body>
  * to the children below. */
 			action = t->action;
 			if (action == TAGACT_HEAD) {
 				debugPrint(tdb, "node skip %s", t->info->name);
 				t->dead = true;
 				++cw->deadTags;
-				treeDisable = true;
 				intoTree(t);
-				treeDisable = false;
 				continue;
 			}
-			if (action == TAGACT_DOCTYPE || action == TAGACT_HTML || action == TAGACT_BODY) {
+			if (action == TAGACT_HTML || action == TAGACT_BODY) {
 				debugPrint(tdb, "node pass %s", t->info->name);
 				t->dead = true;
 				++cw->deadTags;
@@ -1794,8 +1782,7 @@ static void intoTree(Tag *parent)
 					   t->info->name, w);
 				t->parent = treeAttach;
 				if (treeAttach) {
-					Tag *c =
-					    treeAttach->firstchild;
+					Tag *c =     treeAttach->firstchild;
 					if (!c)
 						treeAttach->firstchild = t;
 					else {

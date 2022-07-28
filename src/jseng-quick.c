@@ -422,7 +422,7 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 
 // Put some tags around the html, so we can parse it.
 	run = initString(&run_l);
-	stringAndString(&run, &run_l, "<!DOCTYPE public><body>");
+	stringAndString(&run, &run_l, "<body>");
 	stringAndString(&run, &run_l, h);
 	stringAndString(&run, &run_l, "</body>");
 
