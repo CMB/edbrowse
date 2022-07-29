@@ -448,7 +448,9 @@ tag_ok:
 			makeTag(stack->name, true, lt);
 		}
 		if(stack && isCrossclose2(tagname)) {
-			for(k = stack; k; k = k->next) {
+			struct opentag *hold;
+			for(k = stack; k; k = hold) {
+				hold = k->next;
 				if(isCrossclose(k->name)) {
 					if(dhs) printf("cross close %s\n", k->name);
 					makeTag(k->name, true, lt);
