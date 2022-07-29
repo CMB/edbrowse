@@ -4283,14 +4283,16 @@ nop:
 			if (!stringEqual(t->info->name, "button"))
 				break;
 // <button></button> with no text yields "push".
+			j = 0;
 			while (ns_l && isspace(ns[ns_l - 1]))
-				--ns_l;
+				--ns_l, j = 1;
 			if (ns_l >= 3 && ns[ns_l - 1] == '<'
 			    && isdigit(ns[ns_l - 2]))
 				stringAndString(&ns, &ns_l,
 						i_getString(MSG_Push));
 			ns_ic();
 			stringAndString(&ns, &ns_l, "0>");
+			if(j) stringAndChar(&ns, &ns_l, ' ');
 			if (endcolor)
 				swapArrow();
 			break;

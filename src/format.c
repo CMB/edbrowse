@@ -217,7 +217,7 @@ static void anchorSwap(char *buf)
 	bool slash;		// closing tag
 	bool change;		// made a swap somewhere
 	bool strong;		// strong whitespace, newline or paragraph
-	int n, cnt;
+	int n, cnt, tagno;
 	char tag[20];
 
 	cnt = 0;
@@ -256,8 +256,8 @@ static void anchorSwap(char *buf)
 /* some conditions that should never happen */
 			if (!isdigitByte(s[1]))
 				goto normalChar;
-			n = strtol(s + 1, &ss, 10);
-			preFormatCheck(n, &pretag, &slash);
+			tagno = strtol(s + 1, &ss, 10);
+			preFormatCheck(tagno, &pretag, &slash);
 			d = *ss;
 			if (!strchr("{}<>*", d))
 				goto normalChar;
@@ -284,11 +284,12 @@ static void anchorSwap(char *buf)
 
 			if ((d == '*' || d == '{') && !premode)
 				a = s;
+			if(d == '<' && stringEqual(tagList[tagno]->info->name, "button"))
+				a = s;
 			s = ss;
 
 normalChar:
 			w = 0;	/* no more whitespace */
-/* end of loop over the chars in the buffer */
 		}
 /* end of loop making changes */
 	}
