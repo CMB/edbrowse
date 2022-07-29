@@ -9,7 +9,7 @@ endif
 CFLAGS += $(PLATFORM_CFLAGS)
 
 # determine includes and linker flags
-DEPENDENCIES = libcurl:curl odbc libpcre2-8:pcre2-8 readline tidy
+DEPENDENCIES = libcurl:curl odbc libpcre2-8:pcre2-8 readline
 INCLUDES = $(shell ./make-helper.sh pkg-config-includes $(DEPENDENCIES))
 LINKER_LIBS = $(shell ./make-helper.sh pkg-config-libs $(DEPENDENCIES))
 CFLAGS += $(INCLUDES)
@@ -50,7 +50,7 @@ all: edbrowse
 #  edbrowse objects
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 	html.o html-tags.o format.o plugin.o ebrc.o \
-	messages.o stringfile.o html-tidy.o decorate.o \
+	messages.o stringfile.o decorate.o \
 	msg-strings.o http.o isup.o css.o startwindow.o dbops.o dbodbc.o
 
 #  Header file dependencies.

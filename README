@@ -82,27 +82,6 @@ This happens if openssl is too old,
 or just doesn't support the ciphers that the website expects.
 This is beyond edbrowse, and beyond curl; you have to upgrade openssl.
 
-tidy:
-Edbrowse uses the tidy-html5 HTML parser.
-It is often available as a package, and it hasn't changed much in the past
-couple years, so you can probably use it as is.
-If you need to compile it, then follow these instructions.
-The tidy-html5 build process uses cmake.  Please either use your
-package manager to get cmake (for instance, apt-get install cmake),
-or follow the instructions at http://www.cmake.org/download/
-Once you have cmake, follow the latest tidy-html5 code from:
-git clone git://github.com/htacg/tidy-html5
-cd tidy-html5/build/cmake
-cmake ../..
-make
-make install # as root
-Now the latest tidy-html5 library will be available to edbrowse.
-you may have to run ldconfig to access this new library.
-Edbrowse requires tidy-html5 version 5.1.25 or greater,
-and might not work properly, or even compile with an earlier version.
-Note that the latest tagged version is 5.1.25, but 5.1.26 and later
-have some fixes for known issues that have been reported upstream.
-
 quickjs:
 This is the javascript engine for edbrowse.
 It is probably not packaged.
@@ -178,12 +157,12 @@ and http redirection.
 3: javascript execution and errors.
    cookies, http codes, form data, and sql statements logged.
 4: show the socket connections, and the http headers in and out.
-   html syntax errors as per tidy5.
    side effects of running javascript.
    Dynamic node linkage.
-5: messages to and from javascript, url resolution, tidy html nodes.
-   Tree of nodes internal to edbrowse.
+5: messages to and from javascript, url resolution.
+Show mail headers when browsing a mail file.
 6: show javascript to be executed
+Show the entire email without sending it.
 7: reformatted regular expressions, breakline chunks,
 JSValues allocated and freed.
 8: text lines freed, debug garbage collection
@@ -238,8 +217,10 @@ Handles https connections as well,
 and 301/302 redirection.
 gopher, ftp, sftp, download files, possibly in the background.
 
+src/html-tags.c:
+Scan the html tags and build a tree of nodes.
+
 src/html.c:
-Manage the html tags and the tree of nodes.
 Turn js side effects, like document.write or innerHTML,
 back into html tags if that makes sense.
 Submit/reset forms.
@@ -316,12 +297,6 @@ it isn't compiled in unless $EBDEMIN is set to on.
 
 src/endwindow.js:
 This is the close of shared.js, and it stands in if demin.js is not used.
-
-src/html-tidy.c:
-Use tidy5 to parse html and return a tree of nodes.
-This is another form of encapsulation.
-We could, in the future, write html-foo.c, having the same interface,
-if we prefer html parser foo instead.
 
 src/jsrt:
 This is the javascript regression test for edbrowse.
@@ -435,7 +410,7 @@ This is a copy of the quick reference guide in usersguide.html.
 ------------------------------------------------------------
 
 There is an in-built javascript dom debugger that you enter via the jdb command.
-. or bye to exit.
+bye to exit.
 Javascript expressions are evaluated, and the document objects are available.
 document.head is the head of your document <head>,
 document.body is the body <body>,

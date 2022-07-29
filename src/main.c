@@ -10,7 +10,7 @@
 
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.8.2.1+";
+const char *version = "3.8.3";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;

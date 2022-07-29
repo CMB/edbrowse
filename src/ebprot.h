@@ -141,9 +141,6 @@ bool showHeaders(int ln);
 // sourcefile=html-tags.c
 void htmlScanner(const char *htmltext, Tag *above);
 
-// sourcefile=html-tidy.c
-void html2nodes(const char *htmltext, bool startpage);
-
 // sourcefile=decorate.c
 void traverseAll(int start);
 const char *attribVal(const Tag *t, const char *name);
