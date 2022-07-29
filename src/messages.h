@@ -793,6 +793,4 @@ enum {
 	MSG_notused693,
 	MSG_DebugTagsOff,
 	MSG_DebugTagsOn,
-	MSG_TidyOff,
-	MSG_TidyOn,
 };

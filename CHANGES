@@ -7,8 +7,11 @@ Write our own html tag scanner, and divest from tidy, which use to do this work 
 
 The ebre, edbrowse modified regular expressions, command.  (toggle)
 
+format=flowed, and content-disposition, in emails.
+
 mass delete, join, and read, more efficient versions of global commands.
 Mass substitute across a range of lines when s injects newline into the string.
+Mass delete in directory mode.
 
 e+ and e- commands.
 

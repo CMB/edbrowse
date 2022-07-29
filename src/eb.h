@@ -343,7 +343,6 @@ extern bool caseInsensitive, searchStringsAll, searchWrap, ebre;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */
 extern bool allowJS;		// javascript on
-extern bool useTidy;		// use the tidy html parser
 extern bool blockJS; // javascript is blocked
 extern bool htmlGenerated;
 extern bool ftpActive;
@@ -552,13 +551,11 @@ extern const struct tagInfo availableTags[];
  * These tags are at times linked with js objects,
  * or even created by js objects. */
 struct htmlTag {
-/* maintain a tree structure */
+// maintain a tree structure
 	struct htmlTag *parent, *firstchild, *sibling;
-/* connect <foo> and </foo> */
-	struct htmlTag *balance;
 	struct htmlTag *same; // same action
-	struct ebFrame *f0; /* frame that owns this tag */
-	struct ebFrame *f1; /* subordinate frame if this is a <frame> tag */
+	struct ebFrame *f0; // frame that owns this tag
+	struct ebFrame *f1; // subordinate frame if this is a <frame> tag
 	jsobjtype jv;		// javascript value
 	int seqno; // tag sequence number in this window
 	int gsn; // global sequence number, for rooting

@@ -4314,10 +4314,6 @@ void underKill(Tag *t)
 		u->sibling = u->parent = 0;
 		u->deleted = u->dead = true;
 		++cw->deadTags;
-		if (t->balance) {
-			t->balance->dead = true;
-			++cw->deadTags;
-		}
 		disconnectTagObject(u);
 		underKill(u);
 	}

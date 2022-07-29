@@ -139,12 +139,10 @@ struct htmlTag *line2tr(int ln);
 bool showHeaders(int ln);
 
 // sourcefile=html-tags.c
-void html2tags(const char *htmltext, bool startpage);
+void htmlScanner(const char *htmltext, Tag *above);
 
 // sourcefile=html-tidy.c
 void html2nodes(const char *htmltext, bool startpage);
-
-#define htmlScanner (useTidy ? html2nodes : html2tags)
 
 // sourcefile=decorate.c
 void traverseAll(int start);
@@ -163,9 +161,6 @@ void decorate(int start);
 void freeTags(struct ebWindow *w);
 Tag *newTag(const Frame *f, const char *tagname);
 void initTagArray(void);
-void tag_gc(void);
-void tag_gc(void);
-void htmlNodesIntoTree(int start, Tag *attach);
 void underKill(Tag *t);
 void html_from_setter( Tag *innerParent, const char *h);
 void debugGenerated(const char *h);

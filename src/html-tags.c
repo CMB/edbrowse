@@ -22,10 +22,13 @@ static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 static void pushState(const char *start, bool head_ok);
 
+bool htmlGenerated;
 static Tag *working_t;
 static int ln; // line number
+static int start_idx;
+static Tag *overnode;
 // 0 prehtml 1 prehead, 2 inhead, 3 posthead, 4 inbody, 5 postbody 6 posthtml
-static int headbody;
+static uchar headbody;
 static bool premode;
 
 // compress whitespace
@@ -174,7 +177,7 @@ static int isNonest(const char *name, const struct opentag *k)
 // generate a tag using newTag, which does most of the work
 static void makeTag(const char *name, bool slash, const char *mark)
 {
-	Tag *t;
+	Tag *t, *c, *parent;
 	struct opentag *k;
 
 	if(slash) {
@@ -192,15 +195,28 @@ static void makeTag(const char *name, bool slash, const char *mark)
 		}
 	}
 
-	working_t = t = newTag(cf, name);
-	t->slash = slash;
-
 	if(!slash) {
+		working_t = t = newTag(cf, name);
+		if((t->action == TAGACT_HTML || t->action == TAGACT_BODY) && htmlGenerated)
+			goto skiplink;
+		t->parent = parent = stack ? stack->t : overnode;
+		if(parent) {
+			if(!(c =     parent->firstchild))
+				parent->firstchild = t;
+			else {
+				while (c->sibling)
+					c = c->sibling;
+				c->sibling = t;
+			}
+		}
+skiplink:
+
 		k = allocMem(sizeof(struct opentag));
 		strcpy(k->name, name);
 		k->t = t;
 		k->start = mark;
 		k->next = stack, stack = k;
+
 		if(stringEqualCI(name, "html")) {
 			headbody = 1;
 			if(dhs) puts("in html");
@@ -218,6 +234,9 @@ static void makeTag(const char *name, bool slash, const char *mark)
 		if(stringEqualCI(name, "pre")) {
 			premode = true;
 			if(dhs) puts("pre");
+// Need a tag for </pre>. It's weird.
+			t = newTag(cf, name);
+			t-> slash = t->dead = true, ++cw->deadTags;
 		}
 	} else {
 		if(stringEqualCI(name, "head")) {
@@ -236,6 +255,7 @@ static void makeTag(const char *name, bool slash, const char *mark)
 			premode = false;
 			if(dhs) puts("not pre");
 		}
+
 		stack = k->next;
 // set up for innerHTML
 		if(k->t->info->bits & TAG_INNERHTML && k->start && mark)
@@ -244,7 +264,7 @@ static void makeTag(const char *name, bool slash, const char *mark)
 	}
 }
 
-void html2tags(const char *htmltext, bool startpage)
+void htmlScanner(const char *htmltext, Tag *above)
 {
 	int i;
 	const char *lt; // les than sign
@@ -260,6 +280,8 @@ void html2tags(const char *htmltext, bool startpage)
 	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
 	stack = 0;
 	atWall = 0;
+	start_idx = cw->numTags;
+	overnode = above;
 
 // loop looking for tags
 	while(*s) {
@@ -448,7 +470,7 @@ tag_ok:
 			makeTag(stack->name, true, lt);
 		}
 		if(stack && isCrossclose2(tagname)) {
-			struct opentag *hold;
+			const struct opentag *hold;
 			for(k = stack; k; k = hold) {
 				hold = k->next;
 				if(isCrossclose(k->name)) {
@@ -591,6 +613,26 @@ stop:
 // has to start and end with html
 if(headbody < 6)
 		makeTag("html", true, s);
+
+	if(htmlGenerated) {
+		if(cw->numTags < start_idx + 2 ||
+		!overnode ||
+		(working_t = tagList[start_idx + 1])->action != TAGACT_BODY) {
+			debugPrint(1, "cannot move generated html up past <html><body>");
+		} else {
+			Tag *u = working_t->firstchild;
+			Tag *v = overnode->firstchild;
+			if(!v) overnode->firstchild = u;
+			else {
+				while(v->sibling) v = v->sibling;
+				v->sibling = u;
+			}
+			while(u) {
+				u->parent = overnode;
+				u = u->sibling;
+			}
+		}
+	}
 
 	if(stack)
 		debugPrint(1, "stack not empty after html scan");

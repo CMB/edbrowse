@@ -477,8 +477,7 @@ static void runGeneratedHtml(Tag *t, const char *h)
 	debugGenerated(h);
 
 	htmlGenerated = true;
-	htmlScanner(h, false);
-	htmlNodesIntoTree(l, t);
+	htmlScanner(h, t);
 	prerender(false);
 	decorate(0);
 	debugPrint(3, "end parse html from docwrite");
@@ -1037,9 +1036,8 @@ char *htmlParse(char *buf, int remote)
 
 	debugPrint(3, "parse html from browse");
 	htmlGenerated = false;
-	htmlScanner(buf, true);
+	htmlScanner(buf, NULL);
 	nzFree(buf);
-	htmlNodesIntoTree(0, NULL);
 	prerender(false);
 
 /* if the html doesn't use javascript, then there's
@@ -4259,7 +4257,7 @@ nop:
 		if (!retainTag)
 			break;
 /* one of those rare moments when I really need </tag> in the text stream */
-		j = (opentag ? tagno : t->balance->seqno);
+		j = (opentag ? tagno : tagno + 1);
 // I need to manage the paragraph breaks here, rather than t->info->para,
 // which would rule if I simply redirected to nop.
 // But the order is wrong if I do that.

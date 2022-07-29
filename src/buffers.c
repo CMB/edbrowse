@@ -5722,20 +5722,6 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "tidy")) {
-		useTidy ^= 1;
-		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(useTidy + MSG_TidyOff);
-		return true;
-	}
-
-	if (stringEqual(line, "tidy+") || stringEqual(line, "tidy-")) {
-		useTidy = (line[4] == '+');
-		if (helpMessagesOn)
-			i_puts(useTidy + MSG_TidyOff);
-		return true;
-	}
-
 	if (stringEqual(line, "H")) {
 		if (helpMessagesOn ^= 1)
 			if (debugLevel >= 1)

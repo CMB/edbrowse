@@ -693,8 +693,8 @@ session - is out of bounds, limit %d
 0
 debug html scanner disabled
 debug html scanner enabled
-tidy disabled
-tidy enabled
+0
+0
 0
 0
 0
