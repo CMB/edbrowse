@@ -146,9 +146,9 @@ bool attribPresent(const Tag *t, const char *name);
 Tag *newTag(const Frame *f, const char *tagname);
 void freeTags(struct ebWindow *w);
 void initTagArray(void);
+void traverseAll(int start);
 
 // sourcefile=decorate.c
-void traverseAll(int start);
 Tag *findOpenTag(Tag *t, int action);
 Tag *findOpenList(Tag *t);
 void formControl(Tag *t, bool namecheck);

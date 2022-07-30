@@ -1153,7 +1153,6 @@ bool attribPresent(const Tag *t, const char *name)
 
 // make an allocated copy of the designated string,
 // then decode the & fragments.
-
 static char *pullAnd(const char *start, const char *end)
 {
 	char *s, *t;
@@ -3233,5 +3232,42 @@ static unsigned andLookup(char *entity, char *v)
 		if(d > 0) l = i; else r = i;
 	}
 	return 0; // not found
+}
+
+// Here is a general routine to traverse the tree, with a callback function.
+nodeFunction traverse_callback;
+static bool treeOverflow;
+
+static void traverseNode(Tag *node)
+{
+	Tag *child;
+	if (node->visited) {
+		treeOverflow = true;
+		debugPrint(4, "node revisit %s %d", node->info->name, node->seqno);
+		return;
+	}
+	node->visited = true;
+	(*traverse_callback) (node, true);
+	for (child = node->firstchild; child; child = child->sibling)
+		traverseNode(child);
+	(*traverse_callback) (node, false);
+}
+
+void traverseAll(int start)
+{
+	Tag *t;
+	int i;
+	treeOverflow = false;
+	for (i = start; i < cw->numTags; ++i)
+		tagList[i]->visited = false;
+	for (i = start; i < cw->numTags; ++i) {
+		t = tagList[i];
+		if (!t->parent && !t->dead) {
+			debugPrint(6, "traverse start at %s %d", t->info->name, t->seqno);
+			traverseNode(t);
+		}
+	}
+	if (treeOverflow)
+		debugPrint(3, "malformed tree!");
 }
 

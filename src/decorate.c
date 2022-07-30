@@ -16,56 +16,10 @@ Window *cw;
 Frame *cf;
 int gfsn;
 
-/* traverse the tree of nodes with a callback function */
-nodeFunction traverse_callback;
-
 /* possible callback functions in this file */
 static void prerenderNode(Tag *node, bool opentag);
 static void jsNode(Tag *node, bool opentag);
 static void pushAttributes(const Tag *t);
-
-static bool treeOverflow;
-
-static void traverseNode(Tag *node)
-{
-	Tag *child;
-
-	if (node->visited) {
-		treeOverflow = true;
-		debugPrint(4, "node revisit %s %d", node->info->name,
-			   node->seqno);
-		return;
-	}
-	node->visited = true;
-
-	(*traverse_callback) (node, true);
-	for (child = node->firstchild; child; child = child->sibling)
-		traverseNode(child);
-	(*traverse_callback) (node, false);
-}
-
-void traverseAll(int start)
-{
-	Tag *t;
-	int i;
-
-	treeOverflow = false;
-	for (i = start; i < cw->numTags; ++i) {
-		t = tagList[i];
-		t->visited = false;
-	}
-
-	for (i = start; i < cw->numTags; ++i) {
-		t = tagList[i];
-		if (!t->parent && !t->slash && !t->dead) {
-			debugPrint(6, "traverse start at %s %d", t->info->name, t->seqno);
-			traverseNode(t);
-		}
-	}
-
-	if (treeOverflow)
-		debugPrint(3, "malformed tree!");
-}
 
 static int nopt;		/* number of options */
 /* None of these tags nest, so it is reasonable to talk about
