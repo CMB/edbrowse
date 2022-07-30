@@ -3217,7 +3217,7 @@ So check for serverData null here. Once again we pop the frame.
 	htmlScanner(serverData, cdt);
 	nzFree(serverData);	/* don't need it any more */
 	serverData = 0;
-	prerender(0);
+	prerender();
 
 /*********************************************************************
 At this point cdt->step is 1; the html tree is built, but not decorated.
@@ -3226,7 +3226,7 @@ cdt doesn't have or need an object; it's a place holder.
 	cdt->step = 2;
 
 	if (cf->jslink) {
-		decorate(0);
+		decorate();
 		set_basehref(cf->hbase);
 		run_function_bool_win(cf, "eb$qs$start");
 		if (jssrc)
@@ -3339,11 +3339,11 @@ bool reexpandFrame(void)
 	serverData = 0;
 	cf->browseMode = false;
 	cdt->step = 0;
-	prerender(0);
+	prerender();
 	cdt->step = 2;
 
 	if (cf->jslink) {
-		decorate(0);
+		decorate();
 		set_basehref(cf->hbase);
 		run_function_bool_win(cf, "eb$qs$start");
 		runScriptsPending(true);

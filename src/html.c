@@ -478,8 +478,8 @@ static void runGeneratedHtml(Tag *t, const char *h)
 
 	htmlGenerated = true;
 	htmlScanner(h, t);
-	prerender(false);
-	decorate(0);
+	prerender();
+	decorate();
 	debugPrint(3, "end parse html from docwrite");
 }
 
@@ -1038,7 +1038,7 @@ char *htmlParse(char *buf, int remote)
 	htmlGenerated = false;
 	htmlScanner(buf, NULL);
 	nzFree(buf);
-	prerender(false);
+	prerender();
 
 /* if the html doesn't use javascript, then there's
  * no point in generating it.
@@ -1048,7 +1048,7 @@ char *htmlParse(char *buf, int remote)
 		freeJSContext(cf);
 
 	if (isJSAlive) {
-		decorate(0);
+		decorate();
 		set_basehref(cf->hbase);
 		run_function_bool_win(cf, "eb$qs$start");
 		runScriptsPending(true);
@@ -1063,7 +1063,7 @@ char *htmlParse(char *buf, int remote)
 	}
 	debugPrint(3, "end parse html from browse");
 
-	a = render(0);
+	a = render();
 	debugPrint(6, "|%s|\n", a);
 	newbuf = htmlReformat(a);
 	nzFree(a);
@@ -1494,6 +1494,27 @@ success:
 fail:
 	nzFree(display);
 	return false;
+}
+
+// return an allocated string containing the text entries for the checked options
+char *displayOptions(const Tag *sel)
+{
+	const Tag *t;
+	char *opt;
+	int opt_l;
+
+	opt = initString(&opt_l);
+	for (t = cw->optlist; t; t = t->same) {
+		if (t->controller != sel)
+			continue;
+		if (!t->checked)
+			continue;
+		if (*opt)
+			stringAndChar(&opt, &opt_l, selsep);
+		stringAndString(&opt, &opt_l, t->textval);
+	}
+
+	return opt;
 }
 
 /*********************************************************************
@@ -2916,7 +2937,7 @@ void rerender(int rr_command)
 	}
 
 /* and the new screen */
-	a = render(0);
+	a = render();
 	newbuf = htmlReformat(a);
 	nzFree(a);
 
@@ -4632,7 +4653,7 @@ unparen:
 }
 
 /* returns an allocated string */
-char *render(int start)
+char *render(void)
 {
 	Frame *f;
 	for (f = &cw->f0; f; f = f->next)
@@ -4644,7 +4665,7 @@ char *render(int start)
 	listnest = 0;
 	currentForm = currentA = NULL;
 	traverse_callback = renderNode;
-	traverseAll(start);
+	traverseAll();
 	return ns;
 }
 

@@ -89,7 +89,7 @@ static void finishBrowse(void)
 	if (cw->browseMode)
 		return;
 // We were in the middle of the browse command; this is typical.
-	a = render(0);
+	a = render();
 	newbuf = htmlReformat(a);
 	nzFree(a);
 	cw->rnlMode = cw->nlMode;

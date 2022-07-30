@@ -144,6 +144,27 @@ static void grabover(void)
 #define JS_Release(c, v) JS_FreeValue(c, v)
 #endif
 
+// Find window and frame based on the js context. Set cw and cf accordingly.
+// This is inefficient, but is not called very often.
+static bool frameFromContext(jsobjtype cx)
+{
+	int i;
+	Window *w;
+	Frame *f;
+	for (i = 0; i < MAXSESSION; ++i) {
+		for (w = sessionList[i].lw; w; w = w->prev) {
+			for (f = &(w->f0); f; f = f->next) {
+				if(f->cx == cx) {
+					cf = f, cw = w;
+					return true;
+				}
+			}
+		}
+	}
+	debugPrint(3, "frameFromContext cannot find the frame, job is not executed");
+	return false;
+}
+
 static void processError(JSContext * cx);
 static void uptrace(JSContext * cx, JSValueConst node);
 static bool jsCheckAndThrow(JSContext * cx);

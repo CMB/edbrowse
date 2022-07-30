@@ -3253,14 +3253,14 @@ static void traverseNode(Tag *node)
 	(*traverse_callback) (node, false);
 }
 
-void traverseAll(int start)
+void traverseAll(void)
 {
 	Tag *t;
 	int i;
 	treeOverflow = false;
-	for (i = start; i < cw->numTags; ++i)
+	for (i = 0; i < cw->numTags; ++i)
 		tagList[i]->visited = false;
-	for (i = start; i < cw->numTags; ++i) {
+	for (i = 0; i < cw->numTags; ++i) {
 		t = tagList[i];
 		if (!t->parent && !t->dead) {
 			debugPrint(6, "traverse start at %s %d", t->info->name, t->seqno);
@@ -3269,5 +3269,129 @@ void traverseAll(int start)
 	}
 	if (treeOverflow)
 		debugPrint(3, "malformed tree!");
+}
+
+Tag *findOpenTag(Tag *t, int action)
+{
+	int count = 0;
+	while ((t = t->parent)) {
+		if (t->action == action)
+			return t;
+		if (++count == 10000) {	// tree shouldn't be this deep
+			debugPrint(1, "infinite loop in findOpenTag()");
+			break;
+		}
+	}
+	return 0;
+}
+
+Tag *findOpenSection(Tag *t)
+{
+	int count = 0;
+	while ((t = t->parent)) {
+		if (t->action == TAGACT_TBODY || t->action == TAGACT_THEAD ||
+		    t->action == TAGACT_TFOOT)
+			return t;
+		if (++count == 10000) {	// tree shouldn't be this deep
+			debugPrint(1, "infinite loop in findOpenTag()");
+			break;
+		}
+	}
+	return 0;
+}
+
+Tag *findOpenList(Tag *t)
+{
+	while ((t = t->parent))
+		if (t->action == TAGACT_OL || t->action == TAGACT_UL)
+			return t;
+	return 0;
+}
+
+/*********************************************************************
+Tables are suppose to have bodies, I guess.
+So <table><tr> becomes <table><tbody><tr>
+Find each table and look at its children.
+Note the tags between sections, where section is tHead, tBody, or tFoot.
+If that span includes <tr>, then put those tags under a new tBody.
+*********************************************************************/
+
+static void insert_tbody1(Tag *s1, Tag *s2, Tag *tbl);
+static bool tagBelow(Tag *t, int action);
+
+void insert_tbody(void)
+{
+	int i, end = cw->numTags;
+	Tag *tbl, *s1, *s2;
+
+	for (i = 0; i < end; ++i) {
+		tbl = tagList[i];
+		if (tbl->action != TAGACT_TABLE)
+			continue;
+		s1 = 0;
+		do {
+			s2 = (s1 ? s1->sibling : tbl->firstchild);
+			while (s2 && s2->action != TAGACT_TBODY
+			       && s2->action != TAGACT_THEAD
+			       && s2->action != TAGACT_TFOOT)
+				s2 = s2->sibling;
+			insert_tbody1(s1, s2, tbl);
+			s1 = s2;
+		} while (s1);
+	}
+}
+
+static void insert_tbody1(Tag *s1, Tag *s2, Tag *tbl)
+{
+	Tag *s1a = (s1 ? s1->sibling : tbl->firstchild);
+	Tag *u, *uprev, *ns;	// new section
+
+	if (s1a == s2)		// nothing between
+		return;
+
+// Look for the direct html <table><tr><th>.
+// If th is anywhere else down the path, we won't find it.
+	if (!s1 && s1a->action == TAGACT_TR &&
+	    (u = s1a->firstchild) && stringEqual(u->info->name, "th")) {
+		ns = newTag(cf, "thead");
+		tbl->firstchild = ns;
+		ns->parent = tbl;
+		ns->firstchild = s1a;
+		s1a->parent = ns;
+		ns->sibling = s1a->sibling;
+		s1a->sibling = 0;
+		s1 = ns;
+		s1a = s1->sibling;
+	}
+
+	for (u = s1a; u != s2; u = u->sibling)
+		if (tagBelow(u, TAGACT_TR))
+			break;
+	if (u == s2)		// no rows below
+		return;
+
+	ns = newTag(cf, "tbody");
+	for (u = s1a; u != s2; u = u->sibling)
+		uprev = u, u->parent = ns;
+	if (s1)
+		s1->sibling = ns;
+	else
+		tbl->firstchild = ns;
+	if (s2)
+		uprev->sibling = 0, ns->sibling = s2;
+	ns->firstchild = s1a;
+	ns->parent = tbl;
+}
+
+static bool tagBelow(Tag *t, int action)
+{
+	Tag *c;
+
+	if (t->action == action)
+		return true;
+	for (c = t->firstchild; c; c = c->sibling)
+		if (tagBelow(c, action))
+			return true;
+	return false;
 }
 

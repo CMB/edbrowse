@@ -115,6 +115,7 @@ bool htmlTest(void);
 void infShow(int tagno, const char *search);
 bool itext(int d);
 bool infReplace(int tagno, char *newtext, bool notify);
+char *displayOptions(const Tag *sel);
 bool infPush(int tagno, char **post_string);
 void domSetsTagValue(Tag *t, const char *newtext);
 void domSubmitsForm(Tag *t, bool reset);
@@ -146,22 +147,21 @@ bool attribPresent(const Tag *t, const char *name);
 Tag *newTag(const Frame *f, const char *tagname);
 void freeTags(struct ebWindow *w);
 void initTagArray(void);
-void traverseAll(int start);
+void traverseAll(void);
+Tag *findOpenTag(Tag *t, int action);
+Tag *findOpenSection(Tag *t);
+Tag *findOpenList(Tag *t);
 
 // sourcefile=decorate.c
-Tag *findOpenTag(Tag *t, int action);
-Tag *findOpenList(Tag *t);
 void formControl(Tag *t, bool namecheck);
 void htmlInputHelper(Tag *t);
-char *displayOptions(const Tag *sel);
-void prerender(int start);
-char *render(int start);
+void prerender(void);
+char *render(void);
 const char *fakePropName(void);
-void decorate(int start);
+void decorate(void);
 void underKill(Tag *t);
 void html_from_setter( Tag *innerParent, const char *h);
 void debugGenerated(const char *h);
-bool frameFromContext(jsobjtype cx);
 
 // sourcefile=http.c
 void eb_curl_global_init(void);
