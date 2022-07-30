@@ -140,12 +140,13 @@ bool showHeaders(int ln);
 
 // sourcefile=html-tags.c
 void htmlScanner(const char *htmltext, Tag *above);
+void setTagAttr(Tag *t, const char *name, char *val);
+const char *attribVal(const Tag *t, const char *name);
+bool attribPresent(const Tag *t, const char *name);
+Tag *newTag(const Frame *f, const char *tagname);
 
 // sourcefile=decorate.c
 void traverseAll(int start);
-const char *attribVal(const Tag *t, const char *name);
-bool attribPresent(const Tag *t, const char *name);
-void setTagAttr(Tag *t, const char *name, char *val);
 Tag *findOpenTag(Tag *t, int action);
 Tag *findOpenList(Tag *t);
 void formControl(Tag *t, bool namecheck);
@@ -156,7 +157,6 @@ char *render(int start);
 const char *fakePropName(void);
 void decorate(int start);
 void freeTags(struct ebWindow *w);
-Tag *newTag(const Frame *f, const char *tagname);
 void initTagArray(void);
 void underKill(Tag *t);
 void html_from_setter( Tag *innerParent, const char *h);

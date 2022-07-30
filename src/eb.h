@@ -528,7 +528,7 @@ extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
 extern int maxSession;
 
-/* The information on an html tag */
+// The information on an html tag
 #define MAXTAGNAME 20
 struct tagInfo {
 	const char name[MAXTAGNAME];
@@ -539,12 +539,12 @@ struct tagInfo {
 };
 extern const struct tagInfo availableTags[];
 
-/* Information on tagInfo->bits */
-/* support innerHTML */
+// Information on tagInfo->bits
+// support innerHTML
 #define TAG_INNERHTML 1
-/* You won't see the text between <foo> and </fooo> */
+// You won't see the text between <foo> and </fooo>
 #define TAG_INVISIBLE 2
-/* sometimes </foo> means nothing. */
+// sometimes </foo> means nothing.
 #define TAG_NOSLASH 4
 
 /* The structure for an html tag.

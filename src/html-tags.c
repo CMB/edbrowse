@@ -17,7 +17,7 @@ bool dhs; // debug html scanner
 // This makes a lot of output; maybe it should go to a file like debug css does
 
 static void findAttributes(const char *start, const char *end);
-static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2);
+static void setAttrFromHTML(const char *a1, const char *a2, const char *v1, const char *v2);
 static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 static void pushState(const char *start, bool head_ok);
@@ -263,6 +263,212 @@ skiplink:
 		free(k);
 	}
 }
+
+static void pushTag(Tag *t);
+Tag *newTag(const Frame *f, const char *name)
+{
+	Tag *t, *t1, *t2 = 0;
+	const struct tagInfo *ti;
+	static int gsn = 0;
+
+	for (ti = availableTags; ti->name[0]; ++ti)
+		if (stringEqualCI(ti->name, name))
+			break;
+
+	if (!ti->name[0]) {
+		debugPrint(4, "warning, created node %s reverts to generic",
+			   name);
+		ti = availableTags;
+	}
+
+	t = (Tag *)allocZeroMem(sizeof(Tag));
+	t->action = ti->action;
+	t->f0 = (Frame *) f;		/* set owning frame */
+	t->info = ti;
+	t->seqno = cw->numTags;
+	t->gsn = ++gsn;
+	t->nodeName = cloneString(name);
+	pushTag(t);
+	if (t->action == TAGACT_SCRIPT) {
+		for (t1 = cw->scriptlist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->scriptlist = t;
+	}
+	if (t->action == TAGACT_LINK) {
+		for (t1 = cw->linklist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->linklist = t;
+	}
+	if (t->action == TAGACT_FRAME) {
+		for (t1 = cw->framelist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->framelist = t;
+	}
+	if (t->action == TAGACT_INPUT || t->action == TAGACT_SELECT ||
+	    t->action == TAGACT_TA) {
+		for (t1 = cw->inputlist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->inputlist = t;
+	}
+	if (t->action == TAGACT_OPTION) {
+		for (t1 = cw->optlist; t1; t1 = t1->same)
+			if (!t1->slash)
+				t2 = t1;
+		if (t2)
+			t2->same = t;
+		else
+			cw->optlist = t;
+	}
+	return t;
+}
+
+static void pushTag(Tag *t)
+{
+	int a = cw->allocTags;
+	if (cw->numTags == a) {
+		debugPrint(4, "%d tags, %d dead", a, cw->deadTags);
+/* make more room */
+		a = a / 2 * 3;
+		cw->tags =
+		    (Tag **)reallocMem(cw->tags, a * sizeof(t));
+		cw->allocTags = a;
+	}
+	tagList[cw->numTags++] = t;
+// paranoia check on the number of tags
+	if (sizeof(int) == 4) {
+		if (cw->numTags > MAXLINES)
+			i_printfExit(MSG_LineLimit);
+	}
+}
+
+// first one has to be the unknown.
+// Whitespace: open nl, open para, close nl, close para.
+// Bits: innerHTML,text is invisible, closing tag is insignificant.
+const struct tagInfo availableTags[] = {
+	{"unknown0", "an html entity", TAGACT_UNKNOWN, 5, 1},
+	{"doctype", "doctype", TAGACT_DOCTYPE, 0, 0},
+	{"html", "html", TAGACT_HTML, 0, 0},
+	{"base", "base reference for relative URLs", TAGACT_BASE, 0, 4},
+	{"object", "an html object", TAGACT_OBJECT, 5, 3},
+	{"a", "an anchor", TAGACT_A, 0, 1},
+	{"htmlanchorelement", "an anchor element", TAGACT_A, 0, 1},
+	{"input", "an input item", TAGACT_INPUT, 0, 4},
+	{"element", "an input element", TAGACT_INPUT, 0, 4},
+	{"title", "the title", TAGACT_TITLE, 0, 0},
+	{"textarea", "an input text area", TAGACT_TA, 0, 0},
+	{"select", "an option list", TAGACT_SELECT, 0, 0},
+	{"datalist", "an input list", TAGACT_DATAL, 0, 0},
+	{"option", "a select option", TAGACT_OPTION, 0, 0},
+	{"optgroup", "an optiongroup", TAGACT_OPTG, 0, 0},
+	{"sub", "a subscript", TAGACT_SUB, 0, 0},
+	{"sup", "a superscript", TAGACT_SUP, 0, 0},
+	{"ovb", "an overbar", TAGACT_OVB, 0, 0},
+	{"font", "a font", TAGACT_NOP, 0, 0},
+	{"cite", "a citation", TAGACT_NOP, 0, 0},
+	{"tt", "teletype", TAGACT_NOP, 0, 0},
+	{"center", "centered text", TAGACT_P, 2, 5},
+	{"caption", "a caption", TAGACT_NOP, 5, 0},
+	{"head", "the html header information", TAGACT_HEAD, 10, 5},
+	{"body", "the html body", TAGACT_BODY, 10, 5},
+	{"text", "a text section", TAGACT_TEXT, 0, 4},
+	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
+	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},
+	{"video", "video passage", TAGACT_MUSIC, 0, 4},
+	{"meta", "a meta tag", TAGACT_META, 0, 4},
+	{"style", "a style tag", TAGACT_STYLE, 0, 2},
+	{"link", "a link tag", TAGACT_LINK, 0, 4},
+	{"img", "an image", TAGACT_IMAGE, 0, 4},
+	{"image", "an image", TAGACT_IMAGE, 0, 4},
+	{"br", "a line break", TAGACT_BR, 1, 4},
+	{"p", "a paragraph", TAGACT_P, 10, 1},
+	{"details", "details", TAGACT_NOP, 10, 1},
+	{"fieldset", "a paragraph", TAGACT_NOP, 10, 1},
+	{"blockquote", "a quoted section", TAGACT_BQ, 0, 1},
+	{"header", "a header", TAGACT_HEADER, 2, 5},
+	{"footer", "a footer", TAGACT_FOOTER, 2, 5},
+	{"div", "a divided section", TAGACT_DIV, 5, 1},
+	{"nav", "a navigation section", TAGACT_DIV, 5, 1},
+	{"map", "a map of images", TAGACT_NOP, 5, 0},
+	{"figure", "a figure", TAGACT_NOP, 10, 0},
+	{"figcaption", "a figure caption", TAGACT_NOP, 10, 0},
+	{"document", "a document", TAGACT_DOC, 5, 1},
+	{"fragment", "a document fragment", TAGACT_FRAG, 5, 1},
+	{"comment", "a comment", TAGACT_COMMENT, 0, 2},
+	{"h1", "a level 1 header", TAGACT_H, 10, 1},
+	{"h2", "a level 2 header", TAGACT_H, 10, 1},
+	{"h3", "a level 3 header", TAGACT_H, 10, 1},
+	{"h4", "a level 4 header", TAGACT_H, 10, 1},
+	{"h5", "a level 5 header", TAGACT_H, 10, 1},
+	{"h6", "a level 6 header", TAGACT_H, 10, 1},
+	{"dt", "a term", TAGACT_DT, 2, 4},
+	{"dd", "a definition", TAGACT_DD, 1, 4},
+	{"li", "a list item", TAGACT_LI, 1, 5},
+	{"ul", "a bullet list", TAGACT_UL, 10, 1},
+	{"dir", "a directory list", TAGACT_NOP, 5, 0},
+	{"menu", "a menu", TAGACT_NOP, 5, 0},
+	{"ol", "a numbered list", TAGACT_OL, 10, 1},
+	{"dl", "a definition list", TAGACT_DL, 10, 1},
+	{"hr", "a horizontal line", TAGACT_HR, 5, 4},
+	{"form", "a form", TAGACT_FORM, 10, 1},
+	{"button", "a button", TAGACT_INPUT, 0, 1},
+	{"frame", "a frame", TAGACT_FRAME, 2, 0},
+	{"iframe", "a frame", TAGACT_FRAME, 2, 1},
+	{"map", "an image map", TAGACT_MAP, 2, 4},
+	{"area", "an image map area", TAGACT_AREA, 0, 4},
+	{"table", "a table", TAGACT_TABLE, 10, 1},
+	{"tbody", "a table body", TAGACT_TBODY, 0, 1},
+	{"thead", "a table head", TAGACT_THEAD, 0, 1},
+	{"tfoot", "a table foot", TAGACT_TFOOT, 0, 1},
+	{"tr", "a table row", TAGACT_TR, 5, 1},
+	{"td", "a table entry", TAGACT_TD, 0, 5},
+	{"th", "a table heading", TAGACT_TD, 0, 5},
+	{"pre", "a preformatted section", TAGACT_PRE, 10, 0},
+	{"listing", "a listing", TAGACT_PRE, 1, 0},
+	{"xmp", "an example", TAGACT_PRE, 1, 0},
+	{"fixed", "a fixed presentation", TAGACT_NOP, 1, 0},
+	{"code", "a block of code", TAGACT_NOP, 0, 0},
+	{"samp", "a block of sample text", TAGACT_NOP, 0, 0},
+	{"address", "an address block", TAGACT_NOP, 1, 0},
+	{"script", "a script", TAGACT_SCRIPT, 0, 1},
+	{"noscript", "no script section", TAGACT_NOSCRIPT, 0, 2},
+	{"noframes", "no frames section", TAGACT_NOP, 0, 2},
+	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
+	{"noembed", "no embed section", TAGACT_NOP, 0, 2},
+	{"em", "emphasized text", TAGACT_JS, 0, 0},
+	{"label", "a label", TAGACT_LABEL, 0, 0},
+	{"strike", "emphasized text", TAGACT_JS, 0, 0},
+	{"s", "emphasized text", TAGACT_JS, 0, 0},
+	{"strong", "emphasized text", TAGACT_JS, 0, 0},
+	{"b", "bold text", TAGACT_JS, 0, 0},
+	{"i", "italicized text", TAGACT_JS, 0, 0},
+	{"u", "underlined text", TAGACT_JS, 0, 0},
+	{"var", "variable text", TAGACT_JS, 0, 0},
+	{"kbd", "keyboard text", TAGACT_JS, 0, 0},
+	{"dfn", "definition text", TAGACT_JS, 0, 0},
+	{"q", "quoted text", TAGACT_JS, 0, 0},
+	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
+	{"span", "an html span", TAGACT_SPAN, 0, 1},
+	{"svg", "an svg image", TAGACT_SVG, 0, 1},
+	{"canvas", "a canvas", TAGACT_CANVAS, 0, 1},
+	{"frameset", "a frame set", TAGACT_JS, 0, 0},
+	{"", NULL, 0, 0, 0}
+};
 
 void htmlScanner(const char *htmltext, Tag *above)
 {
@@ -677,7 +883,7 @@ static void findAttributes(const char *start, const char *end)
 		if(*s != '=' || s == end) {
 // it could be an attribute with no value, but then we need whitespace
 			if(s > a2 || s == end)
-				setAttribute(a1, a2, a2, a2);
+				setAttrFromHTML(a1, a2, a2, a2);
 			continue;
 		}
 		for(v1 = s + 1; isspace(*v1); ++v1)  ;
@@ -685,7 +891,7 @@ static void findAttributes(const char *start, const char *end)
 		if(*v1 == '"' || *v1 == '\'') qc = *v1++;
 		for(v2 = v1; v2 < end; ++v2)
 			if((!qc && isspace(*v2)) || (qc && *v2 == qc)) break;
-		setAttribute(a1, a2, v1, v2);
+		setAttrFromHTML(a1, a2, v1, v2);
 		if(*v2 == qc) ++v2;
 		s = v2;
 	}
@@ -795,7 +1001,41 @@ static void findAttributes(const char *start, const char *end)
 		t->doorway = true;
 }
 
-static void setAttribute(const char *a1, const char *a2, const char *v1, const char *v2)
+// Push an attribute onto an html tag.
+// Value is already allocated, name is not.
+void setTagAttr(Tag *t, const char *name, char *val)
+{
+	int nattr = 0;		/* number of attributes */
+	int i = -1;
+	if (!val)
+		return;
+	if (t->attributes) {
+		for (nattr = 0; t->attributes[nattr]; ++nattr)
+			if (stringEqualCI(name, t->attributes[nattr]))
+				i = nattr;
+	}
+	if (i >= 0) {
+		cnzFree(t->atvals[i]);
+		t->atvals[i] = val;
+		return;
+	}
+/* push */
+	if (!nattr) {
+		t->attributes = allocMem(sizeof(char *) * 2);
+		t->atvals = allocMem(sizeof(char *) * 2);
+	} else {
+		t->attributes =
+		    reallocMem(t->attributes, sizeof(char *) * (nattr + 2));
+		t->atvals = reallocMem(t->atvals, sizeof(char *) * (nattr + 2));
+	}
+	t->attributes[nattr] = cloneString(name);
+	t->atvals[nattr] = val;
+	++nattr;
+	t->attributes[nattr] = 0;
+	t->atvals[nattr] = 0;
+}
+
+static void setAttrFromHTML(const char *a1, const char *a2, const char *v1, const char *v2)
 {
 	char *w;
 	char save_c;
@@ -805,6 +1045,25 @@ static void setAttribute(const char *a1, const char *a2, const char *v1, const c
 	if(dhs && debugLevel >= 3) printf("%s=%s\n", a1, w);
 	setTagAttr(working_t, a1, w);
 	*(char*)a2 = save_c;
+}
+
+const char *attribVal(const Tag *t, const char *name)
+{
+	const char *v;
+	int j;
+	if (!t->attributes)
+		return 0;
+	j = stringInListCI(t->attributes, name);
+	if (j < 0)
+		return 0;
+	v = t->atvals[j];
+	return v;
+}
+
+bool attribPresent(const Tag *t, const char *name)
+{
+	int j = stringInListCI(t->attributes, name);
+	return (j >= 0);
 }
 
 // make an allocated copy of the designated string,
