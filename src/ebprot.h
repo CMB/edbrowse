@@ -144,6 +144,8 @@ void setTagAttr(Tag *t, const char *name, char *val);
 const char *attribVal(const Tag *t, const char *name);
 bool attribPresent(const Tag *t, const char *name);
 Tag *newTag(const Frame *f, const char *tagname);
+void freeTags(struct ebWindow *w);
+void initTagArray(void);
 
 // sourcefile=decorate.c
 void traverseAll(int start);
@@ -156,8 +158,6 @@ void prerender(int start);
 char *render(int start);
 const char *fakePropName(void);
 void decorate(int start);
-void freeTags(struct ebWindow *w);
-void initTagArray(void);
 void underKill(Tag *t);
 void html_from_setter( Tag *innerParent, const char *h);
 void debugGenerated(const char *h);

@@ -470,6 +470,91 @@ const struct tagInfo availableTags[] = {
 	{"", NULL, 0, 0, 0}
 };
 
+// Of course we have to free the tags when the window is done.
+static void freeTag(Tag *t)
+{
+	char **a;
+// Even if js has been turned off, if this tag was previously connected to an
+// object, we should disconnect it.
+	if(t->jslink)
+		disconnectTagObject(t);
+	nzFree(t->textval);
+	nzFree(t->name);
+	nzFree(t->id);
+	nzFree(t->jclass);
+	nzFree(t->nodeName);
+	nzFree(t->value);
+	cnzFree(t->rvalue);
+	nzFree(t->href);
+	nzFree(t->js_file);
+	nzFree(t->innerHTML);
+	nzFree(t->custom_h);
+
+	a = (char **)t->attributes;
+	if (a) {
+		while (*a) {
+			nzFree(*a);
+			++a;
+		}
+		free(t->attributes);
+	}
+
+	a = (char **)t->atvals;
+	if (a) {
+		while (*a) {
+			nzFree(*a);
+			++a;
+		}
+		free(t->atvals);
+	}
+
+	free(t);
+}
+
+void freeTags(Window *w)
+{
+	int i, n;
+	Tag *t, **e;
+
+/* if not browsing ... */
+	if (!(e = w->tags))
+		return;
+
+/* drop empty textarea buffers created by this session */
+	for (t = w->inputlist; t; t = t->same) {
+		if (t->action != TAGACT_INPUT)
+			continue;
+		if (t->itype != INP_TA)
+			continue;
+		if ((n = t->lic) > 0)
+			continue;
+		freeEmptySideBuffer(n);
+	}			// loop over tags
+
+	for (i = 0; i < w->numTags; ++i, ++e) {
+		t = *e;
+		freeTag(t);
+	}
+
+	free(w->tags);
+	w->tags = 0;
+	w->numTags = w->allocTags = w->deadTags = 0;
+	w->inputlist = w->scriptlist = w->optlist = w->linklist = 0;
+	w->framelist = 0;
+}
+
+// When window first opens, reserve space for 512 tags.
+void initTagArray(void)
+{
+	cw->numTags = 0;
+	cw->allocTags = 512;
+	cw->deadTags = 0;
+	cw->tags =
+	    (Tag **)allocMem(cw->allocTags *
+					sizeof(Tag *));
+}
+
+// Now for the scanner, create edbrowse tags corresponding to the html tags.
 void htmlScanner(const char *htmltext, Tag *above)
 {
 	int i;
