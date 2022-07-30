@@ -631,6 +631,7 @@ struct htmlTag {
 };
 
 typedef struct htmlTag Tag;
+extern Tag *innerParent;
 
 /* htmlTag.action */
 enum {
@@ -651,9 +652,7 @@ enum {
 	TAGACT_OBJ, TAGACT_DATAL, TAGACT_UNKNOWN,
 };
 
-/* htmlTag.itype */
-/* Warning - the order of these is important! */
-/* Corresponds to inp_types in decorate.c */
+// htmlTag.itype, The order of these is important!
 enum {
 	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
 	INP_HIDDEN, INP_TEXT, INP_FILE,

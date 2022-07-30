@@ -100,7 +100,6 @@ char *selectEmoji(const char *p, int len);
 
 // sourcefile=html.c
 void dwStart(void);
-void set_basehref(const char *b);
 bool tagHandler(int seqno, const char *name);
 void jSyncup(bool fromtimer, const Tag *active);
 void jSideEffects(void);
@@ -113,7 +112,6 @@ void preFormatCheck(int tagno, bool * pretag, bool * slash);
 char *htmlParse(char *buf, int remote);
 bool htmlTest(void);
 void infShow(int tagno, const char *search);
-bool itext(int d);
 bool infReplace(int tagno, char *newtext, bool notify);
 char *displayOptions(const Tag *sel);
 bool infPush(int tagno, char **post_string);
@@ -136,8 +134,11 @@ void delTimers(const Frame *f);
 void runTimer(void);
 void showTimers(void);
 void domOpensWindow(const char *href, const char *name);
+char *render(void);
+bool itext(int d);
 struct htmlTag *line2tr(int ln);
 bool showHeaders(int ln);
+void html_from_setter( Tag *innerParent, const char *h);
 
 // sourcefile=html-tags.c
 void htmlScanner(const char *htmltext, Tag *above);
@@ -151,17 +152,11 @@ void traverseAll(void);
 Tag *findOpenTag(Tag *t, int action);
 Tag *findOpenSection(Tag *t);
 Tag *findOpenList(Tag *t);
-
-// sourcefile=decorate.c
 void formControl(Tag *t, bool namecheck);
 void htmlInputHelper(Tag *t);
 void prerender(void);
-char *render(void);
 const char *fakePropName(void);
 void decorate(void);
-void underKill(Tag *t);
-void html_from_setter( Tag *innerParent, const char *h);
-void debugGenerated(const char *h);
 
 // sourcefile=http.c
 void eb_curl_global_init(void);
@@ -451,6 +446,8 @@ void set_gcs_number(const char *name, int n);
 void set_gcs_bool(const char *name, bool v);
 void set_gcs_string(const char *name, const char *s);
 void jsClose(void);
+void underKill(Tag *t);
+void set_basehref(const char *b);
 void set_location_hash(const char *h);
 
 #ifdef __cplusplus

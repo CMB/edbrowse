@@ -218,7 +218,10 @@ and 301/302 redirection.
 gopher, ftp, sftp, download files, possibly in the background.
 
 src/html-tags.c:
-Scan the html tags and build a tree of nodes.
+htmlScanner(), scan the html tags and build a tree of nodes.
+prerender(), establish attributes and linkages among these nodes.
+decorate(), decorate the tree with js objects corresponding to the html nodes,
+if js is enabled.
 
 src/html.c:
 Turn js side effects, like document.write or innerHTML,
@@ -257,10 +260,6 @@ if you have no such file.
 Different files for different languages.
 Each is converted into a const string in src/ebrc.c,
 thus src/ebrc.c is not a source file.
-
-src/decorate.c:
-Decorate the tree with js objects corresponding to the html nodes
-if js is enabled.
 
 src/jseng-quick.c:
 The javascript engine built around the quick js library.

@@ -5,9 +5,12 @@
 #include <pthread.h>
 #include <signal.h>
 
-/* Define the globals that are declared in eb.h. */
-/* See eb.h for descriptive comments. */
-
+// Define the globals that are declared in eb.h.
+// See eb.h for additional comments.
+// Let's start with the current (foreground) edbrowse window and frame.
+Window *cw;
+Frame *cf;
+int gfsn; // global frame sequence number
 const char *progname;
 const char eol[] = "\r\n";
 const char *version = "3.8.3";
