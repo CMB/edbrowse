@@ -141,7 +141,7 @@ bool showHeaders(int ln);
 void html_from_setter( Tag *innerParent, const char *h);
 
 // sourcefile=html-tags.c
-void htmlScanner(const char *htmltext, Tag *above);
+void htmlScanner(const char *htmltext, Tag *above, bool isgen);
 void setTagAttr(Tag *t, const char *name, char *val);
 const char *attribVal(const Tag *t, const char *name);
 bool attribPresent(const Tag *t, const char *name);

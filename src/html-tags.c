@@ -22,11 +22,11 @@ static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 static void pushState(const char *start, bool head_ok);
 
-bool htmlGenerated;
 static Tag *working_t;
 static int ln; // line number
 static int start_idx;
 static Tag *overnode;
+static bool htmlGenerated;
 // 0 prehtml 1 prehead, 2 inhead, 3 posthead, 4 inbody, 5 postbody 6 posthtml
 static uchar headbody;
 static bool premode;
@@ -555,7 +555,7 @@ void initTagArray(void)
 }
 
 // Now for the scanner, create edbrowse tags corresponding to the html tags.
-void htmlScanner(const char *htmltext, Tag *above)
+void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 {
 	int i;
 	const char *lt; // les than sign
@@ -573,6 +573,7 @@ void htmlScanner(const char *htmltext, Tag *above)
 	atWall = 0;
 	start_idx = cw->numTags;
 	overnode = above;
+	htmlGenerated = isgen;
 
 // loop looking for tags
 	while(*s) {
