@@ -194,13 +194,6 @@ struct DBTABLE *newTableDescriptor(const char *name);
 bool readConfigFile(void);
 const char *fetchReplace(const char *u);
 
-// sourcefile=plugin.c
-const struct MIMETYPE *findMimeByURL(const char *url, uchar *sxfirst);
-const struct MIMETYPE *findMimeByFile(const char *filename);
-const struct MIMETYPE *findMimeByContent(const char *content);
-bool runPluginCommand(const struct MIMETYPE *m, const char *inurl, const char *infile, const char *indata, int inlength, char **outdata, int *outlength);
-int playBuffer(const char *line, const char *playfile);
-
 // sourcefile=sendmail.c
 bool loadAddressBook(void);
 const char *reverseAlias(const char *reply);
@@ -374,6 +367,11 @@ bool getUserPassRealm(const char *url, char *creds, const char *realm);
 // Add authorization entries only in the foreground, but it's an
 // atomic operation, so the previous routines can run from other threads.
 bool addWebAuthorization(const char *url, const char *credentials, bool proxy, const char *realm);
+const struct MIMETYPE *findMimeByURL(const char *url, uchar *sxfirst);
+const struct MIMETYPE *findMimeByFile(const char *filename);
+const struct MIMETYPE *findMimeByContent(const char *content);
+bool runPluginCommand(const struct MIMETYPE *m, const char *inurl, const char *infile, const char *indata, int inlength, char **outdata, int *outlength);
+int playBuffer(const char *line, const char *playfile);
 
 // sourcefile=css.c
 void writeShortCache(void);

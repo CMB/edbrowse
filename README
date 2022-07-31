@@ -204,7 +204,9 @@ Send and receive cookies.  Maintain the cookie jar.
 Maintain a cache of http files.
 Remember user and password for web pages that require authentication.
 Only the basic method is implemented at this time.
-
+Determine the mime type of a file or web page and the corresponding plugin,
+if any. Launch the plugin automatically or on command.
+A plugin can play the file, like music, or render the file, like pdf.
 
 src/format.c:
 Arrange text into lines and paragraphs.
@@ -237,11 +239,6 @@ src/fetchmail.c:
 Fetch mail (pop3 or pop3s or imap).  Decode attachments.
 Browse mail files, separate mime components.
 Delete emails, move emails to other imap folders, search on the imap server.
-
-src/plugin.c:
-Determine the mime type of a file or web page and the corresponding plugin,
-if any. Launch the plugin automatically or on command.
-A plugin can play the file, like music, or render the file, like pdf.
 
 src/messages.h:
 Symbolic constants for the warning/error messages of edbrowse.

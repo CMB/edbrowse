@@ -49,7 +49,7 @@ all: edbrowse
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
-	html.o html-tags.o format.o plugin.o ebrc.o \
+	html.o html-tags.o format.o ebrc.o \
 	messages.o stringfile.o \
 	msg-strings.o http.o isup.o css.o startwindow.o dbops.o dbodbc.o
 
