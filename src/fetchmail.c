@@ -3077,7 +3077,7 @@ char *emailParse(char *buf)
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf));
 	mailIsHtml = (mailTextType(w) == CT_HTML);
-// sometimes there is only an html component, then no choice.
+	if(mailIsHtml & preferPlain) i_puts(MSG_NoPlain);
 	if (mailIsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
 	formatMail(w, true);

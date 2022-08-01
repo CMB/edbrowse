@@ -286,7 +286,7 @@ could not read the data from the server
 %s is not a url
 download complete
 cannot identify %s on the network
-0
+no plain text available
 warning: could not preload <session %d> with its initial text\n
 download in progress
 cannot connect to %s

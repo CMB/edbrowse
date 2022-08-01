@@ -386,7 +386,7 @@ enum {
 	MSG_BadURL,
 	MSG_DownSuccess,
 	MSG_IdentifyHost,
-	MSG_notused289,
+	MSG_NoPlain,
 	MSG_BufferPreload,
 	MSG_DownProgress,
 	MSG_WebConnect,
