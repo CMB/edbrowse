@@ -90,6 +90,7 @@ respace:
 			if(tagList[n]->info->para & 3) continue;
 // looks like a soft tag
 			memcpy(t, s + 1, u - s);
+			t += u - s;
 			s = u;
 			goto respace;
 	}
