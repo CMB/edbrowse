@@ -58,13 +58,42 @@ This routine turns either of these into |
 However if there is one such | on a line, and it is a table cell marker,
 we remove it. Most of the time the table is page layout,
 and the | would only confuse things.
+Remove whitespace before or after <td>, as tidy does.
 *********************************************************************/
 
 static void cellDelimiters(char *buf)
 {
 	char *lastcell = 0;
 	int cellcount = 0;
-	char *s;
+	char *s, *t;
+
+	for (s = t = buf; *s; ++s) {
+		int n;
+		char *u;
+		if(*s != DataCellChar && *s != TableCellChar) {
+			*t++ = *s;
+			continue;
+		}
+// spaces behind
+		while(t > buf && t[-1] == ' ') --t;
+		*t++ = *s; // cell marker
+// spaces ahead
+respace:
+		if(s[1] == ' ') { ++s; goto respace; }
+// tidy turns <td> <i> hello </i> </td> into <td><i>hello</i></td>
+// But not so with <p> or other strong tags.
+// I try to do the same.
+		if(s[1] != InternalCodeChar || !isdigit(s[2])) continue;
+			n = strtol(s + 2, &u, 10);
+// leave input fields alone
+			if(*u != '*' && *u != '{') continue;
+			if(tagList[n]->info->para & 3) continue;
+// looks like a soft tag
+			memcpy(t, s + 1, u - s);
+			s = u;
+			goto respace;
+	}
+	*t = 0;
 
 	for (s = buf; *s; ++s) {
 		if (*s == DataCellChar) {
