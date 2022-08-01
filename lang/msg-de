@@ -662,7 +662,7 @@ zeige letzte %d von %d Nachrichten\n
 zeige erste %d von %d Nachrichten\n
 vorheriger
 kein vorheriger Email
-Das ist ein Textfeld, nutzen Sie \"ib\", um einen neuen Textpuffer anzulegen.
+starten
 %s: Zeile %d, zu viele Standard-Anweisungen in Ihrem E-Mail-Deskriptor, maximal %d.
 Option enthält %c
 Dateiname enthält %c

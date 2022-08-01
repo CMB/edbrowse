@@ -662,7 +662,7 @@ pokazuję ostatnie %d z %d wiadomości\n
 pokazuję pierwsze %d z %d wiadomości\n
 poprzedni
 brak poprzedniej wiadomości
-to jest pole tekstowe, użyj polecenia 'ib' by utworzyć nowy bufor
+uruchom
 %s: wiersz %d, w Twoim deskryptorze poczty jest zbyt wiele domyślnych dyrektyw, limit %d
 opcja zawiera %c
 nazwa pliku zawiera %c

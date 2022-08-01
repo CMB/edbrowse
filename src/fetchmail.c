@@ -713,9 +713,10 @@ reaction:
 action:
 		delflag = false;
 		postkey = 0;
+		preferPlain = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbefdslmnp gwWuUa/");
+		key = getLetter("h?qvbefdslmnp gtwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
@@ -747,7 +748,9 @@ imap_done:
 		if(strchr("wWuUa", key))
 			postkey = key, key = ' ';
 
-		if (key == ' ' || key == 'g') {
+dispmail:
+		if (key == ' ' || key == 'g' || key == 't') {
+			if(key == 't') preferPlain = true;
 /* download the email from the imap server */
 			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
@@ -806,6 +809,7 @@ You'll see this after the perform function runs.
 			key = presentMail();
 /* presentMail has already freed mailstring */
 			postkey = 0;
+			if(key == 'g') goto dispmail;
 		}
 
 		if (key == 'p') {
@@ -1733,6 +1737,7 @@ static void writeReplyInfo(const char *addstring);
 void scanMail(void)
 {
 	int nmsgs, m;
+	char key;
 
 	if (!isInteractive)
 		i_printfExit(MSG_FetchNotBackgnd);
@@ -1759,6 +1764,7 @@ void scanMail(void)
 
 	loadAddressBook();
 
+	preferPlain = false;
 	for (m = 1; m <= nmsgs; ++m) {
 		nzFree(lastMailText);
 		lastMailText = 0;
@@ -1769,9 +1775,13 @@ void scanMail(void)
 			showErrorAbort();
 		unreadBase = unreadMin;
 
-		if (presentMail() == 'd')
+		key = presentMail();
+		if(key == 'g') { --m, --unreadBase; continue; }
+		if(key == 't') { preferPlain ^= 1; --m, --unreadBase; continue; }
+		if (key == 'd')
 			unlink(umf);
-	}			/* loop over mail messages */
+		preferPlain = false;
+	}			// loop over mail messages
 
 	exit(0);
 }
@@ -1867,7 +1877,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 		printf("%c ", displine > cw->dol ? '?' : '*');
 		fflush(stdout);
-		key = getLetter((isimap ? "qvbfh? npwWuUasdm" : "qh? nwud"));
+		key = getLetter((isimap ? "qvbfh? gtnpwWuUasdm" : "qh? gtnwud"));
 		printf("\b\b\b");
 		fflush(stdout);
 	}
@@ -1879,6 +1889,16 @@ key_command:
 
 	case 'n':
 		i_puts(MSG_Next);
+		goto afterinput;
+
+	case 'g':
+		i_puts(MSG_Restart);
+		goto afterinput;
+
+	case 't':
+		i_puts(MSG_Restart);
+		preferPlain ^= 1;
+		key = 'g';
 		goto afterinput;
 
 	case 'p':
@@ -2054,7 +2074,7 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	return strchr("smvbfp", key) ? key : 'n';
+	return strchr("smvbfpg", key) ? key : 'n';
 }
 
 /* Here are the common keywords for mail header lines.

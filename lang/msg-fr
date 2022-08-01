@@ -662,7 +662,7 @@ affichage des derniers %d de %d messages\n
 affichage des premier %d de %d messages\n
 antérieur
 pas de emaile antérieur
-Ceci est une zone de texte, utilisez la commande ib pour créer un nouveau tampon
+redémarrez
 %s : ligne %d, trop de directives par défaut dans la définition de compte mail, le maximum est de %d
 l'option contient %c
 le nom de fichier contient %c

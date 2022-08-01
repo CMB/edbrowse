@@ -662,7 +662,7 @@ visualizzo gli ultimi %d di %d messaggi\n
 visualizzo gli primo %d di %d messaggi\n
 precedente
 non c'è email precedente
-questa è una textarea, usa il comando ib per creare un nuovo buffer
+riavvia
 %s: riga %d, troppe direttive di default nel tuo mail descriptor, limite %d
 opzioni che contengano %c
 files che contengano %c

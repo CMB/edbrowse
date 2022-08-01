@@ -762,7 +762,7 @@ enum {
 	MSG_ShowFirst,
 	MSG_Previous,
 	MSG_NoPrevMail,
-	MSG_notused665,
+	MSG_Restart,
 	MSG_EBRC_MailDirect,
 	MSG_OptionC,
 	MSG_FileC,
