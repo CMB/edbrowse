@@ -42,6 +42,7 @@ static int nattach;		// number of attachments
 static int nimages;		// number of attached images
 static char *firstAttach;	// name of first file
 static bool mailIsHtml;
+static bool preferPlain;
 static char *fm;		// formatted mail string
 static int fm_l;
 static struct MHINFO *lastMailInfo;
@@ -2975,7 +2976,10 @@ static int mailTextType(struct MHINFO *w)
 	if (w->ct >= CT_MULTI) {
 		foreach(v, w->components) {
 			rc = mailTextType(v);
-			if(rc > texttype) texttype = rc;
+			if(!rc) continue;
+			if(!texttype) { texttype = rc; continue; }
+			if(rc == texttype) continue;
+			if(preferPlain ^ (rc == CT_HTML)) texttype = rc;
 		}
 		return texttype;
 	}
@@ -3072,10 +3076,8 @@ char *emailParse(char *buf)
 	mailIsHtml = ignoreImages = false;
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf));
-	if(mhtml)
-		mailIsHtml = (mailTextType(w) == CT_HTML);
+	mailIsHtml = (mailTextType(w) == CT_HTML);
 // sometimes there is only an html component, then no choice.
-	if(w->ct == CT_HTML) mailIsHtml = true;
 	if (mailIsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
 	formatMail(w, true);
