@@ -142,7 +142,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
+	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
 	return stringInListCI(list, name) >= 0;
 }
 
