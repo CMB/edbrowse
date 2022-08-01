@@ -215,6 +215,23 @@ put1:
 	*w = 0;
 }
 
+// For <h3><div>hello</div></h3> which should not happen, but does
+static void h3div(char *buf)
+{
+	char *s;
+	bool in_h = false;
+	for(s = buf; *s; ++s) {
+		if(*s == '\f' && s[1] == 'h' &&
+		(uchar)s[2] >= '1' && (uchar)s[2] <= '6' && s[3] == ' ') {
+			in_h = true, s += 3;
+			continue;
+		}
+		if(isspaceByte(*s)) {
+			if(in_h) *s = ' ';
+		} else in_h = false;
+	}
+}
+
 /*********************************************************************
 The primary goal of this routine is to turn
 Hey,{ click here } for more information
@@ -880,6 +897,7 @@ char *htmlReformat(char *buf)
 
 	cellDelimiters(buf);
 	html_tr(buf);
+	h3div(buf);
 	anchorSwap(buf);
 	anchorUnframe(buf);
 	html_ws(buf);

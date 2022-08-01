@@ -4623,12 +4623,22 @@ Keys have the following meaning.
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>?	summary of key commands
 q	quit the program
 space	display more text
-g	go back to top
+g	go to top
+t	read as plain text
 n	read the next message
 d	delete this message
 w	write this message to a file and delete it
 u	write this message unformatted to a file and delete it
 </font></PRE>
+
+<P>
+Typing space continues to display the email, like /bin/more.
+Type g to go back to the top.
+Type t to view the plain text version of this email, however, the result is often unsatisfying.
+Many emails only have an html component.
+In this case edbrowse tells you there is no plain text component, then renders the email through html, as it did before.
+In other cases there is a plain text component, but it simply says, “This email has no plain text version; please enable html processing on your email client.”
+When a plain text version is available, it can be simpler than the html version.
 
 <P>
 The last two commands, w and u, require a filename, which you enter.
@@ -4957,18 +4967,19 @@ Type / to search for emails by subject, by sender, or by the text in the body of
 Finally type h for the help message, which looks like this.
 
 <PRE><font size=3 face=Arial,Helvetica,sans-serif>
-h   print this help message
-q   quit this program
-s   stop reading from this folder
-n   continue to next message
-p   go back to previous message
-d   delete this email
-m   move this email to another folder
-v   view all
-b   batch move or delete
-f   from move or delete
-space   read and manage this email
-/   search for words in subject, from, or body
+h	print this help message
+q	quit this program
+s	stop reading from this folder
+n	continue to next message
+p	go back to previous message
+d	delete this email
+m	move this email to another folder
+v	view all
+b	batch move or delete
+f	from move or delete
+space	read and manage this email
+t	read as plain text
+/	search for words in subject, from, or body
 </font></PRE>
 
 <P>
