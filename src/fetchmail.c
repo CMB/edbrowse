@@ -2699,6 +2699,7 @@ static struct MHINFO *headerGlean(char *start, char *end)
 		printf("message: %s\n", w->mid);
 		printf("boundary: %d|%s\n", w->boundlen, w->boundary);
 		printf("filename: %s\n", w->cfn);
+		printf("length %d\n", w->end - w->start);
 		printf("content %d/%d\n", w->ct, w->ce);
 	}
 
@@ -2815,8 +2816,8 @@ textonly:
 /* Remove leading blank lines or lines with useless words */
 	for (s = start; s < end; s = t + 1) {
 		t = strchr(s, '\n');
-		if (!t)
-			t = end - 1;	/* should never happen */
+		if (!t || t > end)
+			t = end;
 		vl = s, vr = t;
 		if (vr - vl >= 4 && memEqualCI(vr - 4, "<br>", 4))
 			vr -= 4;
@@ -2836,8 +2837,10 @@ textonly:
 			continue;
 		if (memEqualCI(vl, "original message", vr - vl))
 			continue;
-		break;		/* something real */
+		break;		// something real
 	}
+// s could be end + 1
+	if(s > w->end) s = w->end;
 	w->start = start = s;
 
 	return w;
