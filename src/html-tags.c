@@ -22,7 +22,7 @@ static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 static void pushState(const char *start, bool head_ok);
 
-static Tag *working_t;
+static Tag *working_t, *lasttext;
 static int ln; // line number
 static int start_idx;
 static Tag *overnode;
@@ -31,12 +31,13 @@ static bool htmlGenerated;
 static uchar headbody;
 static bool premode;
 
+static bool atWall;
 // compress whitespace
 static void compress(char *s)
 {
 	int i, j;
 	char c;
-	bool space = false;
+	bool space = atWall;
 	for (i = j = 0; (c = s[i]); ++i) {
 		if (isspaceByte(c)) {
 			if (!space)
@@ -54,7 +55,6 @@ static struct opentag {
 	const char *start; // for innerHTML
 	Tag *t;
 } *stack;
-static bool atWall;
 
 static struct opentag *balance(const char *name)
 {
@@ -142,7 +142,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
+	static const char * const list[] = {"body","title","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
 	return stringInListCI(list, name) >= 0;
 }
 
@@ -570,7 +570,8 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 
 	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
 	stack = 0;
-	atWall = 0;
+	atWall = false;
+	lasttext = 0;
 	start_idx = cw->numTags;
 	overnode = above;
 	htmlGenerated = isgen;
@@ -606,7 +607,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 				if(!premode) compress(w);
 				  if(dhs) printf("text{%s}\n", w);
 				makeTag("text", false, 0);
-				if(!ws) atWall = false;
+				if(!ws) atWall = false, lasttext = working_t;
 				working_t->textval = w;
 				makeTag("text", true, 0);
 			}
@@ -714,7 +715,11 @@ so also break out at >< like a new tag is starting.
 // create this tag in the edbrowse world.
 			if(dhs) printf("</%s>\n", tagname);
 			makeTag(tagname, true, lt);
-			atWall = isWall(tagname);
+			if(isWall(tagname)) {
+				atWall = true;
+				if(lasttext) trimWhite(lasttext->textval);
+				lasttext = 0;
+			}
 			continue;
 		}
 
@@ -772,7 +777,13 @@ tag_ok:
 			}
 		}
 		makeTag(tagname, false, seek);
-		atWall = isWall(tagname);
+		if(isWall(tagname)) {
+			atWall = true;
+			lasttext = 0;
+		}
+		i = working_t->action;
+		if(i == TAGACT_INPUT || i == TAGACT_SELECT)
+			atWall = false;
 		findAttributes(t, gt);
 		if(isAutoclose(tagname)) {
 			if(dhs) puts("autoclose");
