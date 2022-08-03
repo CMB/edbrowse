@@ -782,8 +782,10 @@ tag_ok:
 			lasttext = 0;
 		}
 		i = working_t->action;
-		if(i == TAGACT_INPUT || i == TAGACT_SELECT)
+		if(i == TAGACT_INPUT || i == TAGACT_SELECT) {
 			atWall = false;
+			lasttext = 0;
+		}
 		findAttributes(t, gt);
 		if(isAutoclose(tagname)) {
 			if(dhs) puts("autoclose");
@@ -898,10 +900,10 @@ With this understanding, we can, and should, scan for </textarea
 			if(*u == '\n') ++ln;
 			if(!isspace(*u)) ws = false;
 		}
-		if(headbody < 5 && (!ws || headbody == 4)) {
+		if(headbody < 5 && !ws) {
 			pushState(seek, true);
 			w = pullAnd(seek, seek + strlen(seek));
-			if(!premode) compress(w);
+			if(!premode) compress(w), trimWhite(w);
 			  if(dhs) printf("text{%s}\n", w);
 			makeTag("text", false, 0);
 			working_t->textval = w;

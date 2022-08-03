@@ -212,6 +212,7 @@ src/format.c:
 Arrange text into lines and paragraphs.
 base64 encode and decode for email.
 Convert utf8, iso8859-1, unicode 16, unicode 32, etc.
+Process an html page for final display.
 
 src/http.c:
 Send the http request, and read the data from the web server.
@@ -228,6 +229,7 @@ if js is enabled.
 src/html.c:
 Turn js side effects, like document.write or innerHTML,
 back into html tags if that makes sense.
+Enter data into forms and watch for javascript side effects.
 Submit/reset forms.
 Render the tree of html nodes into a text buffer.
 Rerender the tree after js has run, and report any changes to the user.
