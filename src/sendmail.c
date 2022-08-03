@@ -627,22 +627,38 @@ static void appendAttachment(const char *s, char **out, int *l, bool longline)
 {
 	const char *t;
 	int n;
+	int paraplus = -1;
 	while (*s) {		/* another line */
 		t = strchr(s, '\n');
 		if (!t)
 			t = s + strlen(s);
 		n = t - s;
-		if (t[-1] == '\r')
+		if (n && t[-1] == '\r')
 			--n;
-		if (n) {
+		if(!n) {
+			paraplus = -1;
+		} else {
+			if(longline && paraplus < 0) {
+				paraplus = 0;
+// does this paragraph have any long lines; should we append +
+				const char *u, *v, *x;
+				v = strstr(s, "\n\n"); // end of paragraph
+				x = strstr(s, "\n\r\n");
+				if(!v || (x && x < v)) v = x;
+// a long line will be cut by = by qp encode.
+				u = strstr(s, "=\n");
+				x = strstr(s, "=\r\n");
+				if(!u || (x && x < u)) u = x;
+				if(u && (!v || v > u)) paraplus = 1;
+			}
 			memcpy(serverLine, s, n);
 // if format=flowed, put spaces on the end of lines. Experimental!
-			if(longline && serverLine[n-1] != '=' &&
+			if(longline && paraplus > 0 && serverLine[n-1] != '=' &&
 			serverLine[n-1] != ' ' &&
 			t[0] && t[1] &&
 			t[1] != '\n' && t[1] != '\r')
 				serverLine[n++] = ' ';
-// We might be aboe to remove = from a line that ends in space =
+// We might be able to remove = from a line that ends in space =
 // format=flowed will fix everything up anyways.
 		}
 		serverLine[n] = 0;
