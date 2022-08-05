@@ -1120,11 +1120,13 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 				sprintf(serverLine, "; name=\"%s\"", s2);
 				stringAndString(&out, &j, serverLine);
 			}
-			sprintf(serverLine, "%sContent-Disposition: attachment", eol);
-			stringAndString(&out, &j, serverLine);
-			if(s2) {
-				sprintf(serverLine, "; filename=\"%s\"", s2);
+			if(!nalt) {
+				sprintf(serverLine, "%sContent-Disposition: attachment", eol);
 				stringAndString(&out, &j, serverLine);
+				if(s2) {
+					sprintf(serverLine, "; filename=\"%s\"", s2);
+					stringAndString(&out, &j, serverLine);
+				}
 			}
 			sprintf(serverLine,
 				"%sContent-Transfer-Encoding: %s%s%s", eol, ce,
