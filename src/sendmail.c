@@ -9,7 +9,7 @@
 
 #define MAXRECAT 100		// max number of recipients or attachments
 #define MAXMSLINE 1024		// max mail server line
-#define LONGLINELIMIT 74
+#define LONGLINELIMIT 76
 
 static char serverLine[MAXMSLINE];
 static bool doSignature;
@@ -278,7 +278,7 @@ bool *long_p)
 	char *s, *t, *v;
 	char *ct, *ce;		/* content type, content encoding */
 	int buflen, i, cx;
-	int nacount, nullcount, nlcount;
+	int nacount, nullcount, linelength;
 
 	debugPrint(5, "subject at line %d", ismail);
 	if (ismail < 0) {
@@ -317,7 +317,7 @@ empty:
 				goto freefail;
 			}
 		}
-	}			/* ismail negative or normal */
+	}			// ismail negative or normal
 
 	if (ismail) {
 // Put newline at the end.  Yes, the buffer is allocated
@@ -448,36 +448,30 @@ empty:
 	}
 
 /* Count the nonascii characters */
-	nacount = nullcount = nlcount = 0;
+	nacount = nullcount = linelength = 0;
 	longline = false;
-	s = 0;
-	for (i = 0; i < buflen; ++i) {
-		c = buf[i];
+	for (t = buf, i = 0; i < buflen; ++i, ++t) {
+		c = *t;
 		if (c == '\0')
 			++nullcount;
 		if (c & 0x80)
 			++nacount;
-		if (c != '\n')
+		if (c == '\n') {
+			if(linelength > LONGLINELIMIT) longline = true;
+			linelength = 0;
 			continue;
-		++nlcount;
-		t = buf + i;
-		if (s && t - s > LONGLINELIMIT)
-			longline = true;
-		if (!s && i > LONGLINELIMIT)
-			longline = true;
-		s = t;
+		}
+// measure length of line by utf8 characters
+		if(((uchar)c & 0xc0) != 0x80)
+			++linelength;
 	}
-	t = buf + i;
-	if (s && t - s > LONGLINELIMIT)
-		longline = true;
-	if (!s && i > LONGLINELIMIT)
-		longline = true;
+	if(linelength > LONGLINELIMIT) longline = true;
 	debugPrint(5, "attaching %s length %d nonascii %d nulls %d longline %d",
 		   file, buflen, nacount, nullcount, longline);
 	nacount += nullcount;
 
 /* Set the type of attachment */
-	if (buflen > 20 && nacount * 5 > buflen) {
+	if (buflen > 20 && nacount * 4 > buflen && !ismail) {
 		if (!ct)
 			ct = "application/octet-stream";	/* default type for binary */
 	}
@@ -488,7 +482,7 @@ empty:
  * files uploaded from a web form need not be encoded, unless they contain
  * nulls, which is a quirk of my slapped together software. */
 
-	if ((!webform && buflen > 20 && nacount * 5 > buflen) ||
+	if ((!webform && buflen > 20 && nacount * 4 > buflen) ||
 	    nullcount) {
 		if (ismail) {
 			setError(MSG_MailBinary, file);
@@ -503,8 +497,8 @@ empty:
 
 	if (!webform) {
 // Use qp for long lines, it doesn't hurt,
-// and when I send I copy lines into a static buffer, of a fixed length.
-		if (nullcount || longline) {
+// and when I send I copy lines into a static buffer of a fixed length.
+		if (longline) {
 			char *newbuf;
 			int l, colno = 0, space = 0;
 
