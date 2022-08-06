@@ -6805,6 +6805,11 @@ range2:
 		for(i = startRange; i <= endRange; ++i)
 			if((w = line2tr(i)) && !w->inur) {
 				w->inur = true;
+// could be a <th> row
+				if(w->firstchild &&
+				w->firstchild->action == TAGACT_TD &&
+				w->firstchild->info->name[1] == 'h')
+					continue;
 				if(c == 0)
 					w->ur ^= 1;
 				if(c == '+')
