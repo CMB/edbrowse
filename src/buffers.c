@@ -407,6 +407,26 @@ int select_stdin(struct timeval *ptv)
 }
 #endif
 
+static uchar histcontrol;
+void setHistcontrol(void)
+{
+	const char *hc = getenv("HISTCONTROL");
+	const char *s;
+	if(!hc) return;
+	s = strstr(hc, "ignorespace");
+	if(s && (s == hc || s[-1] == ':') &&
+	(s[11] == ':' || s[11] == 0))
+		histcontrol |= 1;
+	s = strstr(hc, "ignoredups");
+	if(s && (s == hc || s[-1] == ':') &&
+	(s[10] == ':' || s[10] == 0))
+		histcontrol |= 2;
+	s = strstr(hc, "ignoreboth");
+	if(s && (s == hc || s[-1] == ':') &&
+	(s[10] == ':' || s[10] == 0))
+		histcontrol |= 3;
+}
+
 /*********************************************************************
 Get a line from standard in.  Need not be a terminal.
 This routine returns the line in a string, which is allocated,
@@ -592,8 +612,16 @@ There - 50 lines of comments to explain 2 lines of code.
 
 	if (inputReadLine && isInteractive) {
 		last_rl = readline("");
-		if ((last_rl != NULL) && *last_rl)
-			add_history(last_rl);
+		if (last_rl != NULL && *last_rl &&
+		(!(histcontrol&1) || *last_rl != ' ')) {
+			if(!(histcontrol&2)) {
+				add_history(last_rl);
+			} else {
+				HIST_ENTRY *last_history_entry = history_get(history_length);
+				if (last_history_entry == NULL || strcmp(last_rl, last_history_entry->line))
+					add_history(last_rl);
+			}
+		}
 		s = last_rl;
 	} else {
 		while (fgets(line, sizeof(line), stdin)) {

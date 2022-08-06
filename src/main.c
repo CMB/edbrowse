@@ -492,13 +492,16 @@ int main(int argc, char **argv)
 	static char agent0[64] = "edbrowse/";
 
 #ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
-/* In case this is being piped over to a synthesizer, or whatever. */
+// In case this is being piped over to a synthesizer, or whatever.
 	if (fileTypeByHandle(fileno(stdout)) != 'f')
 		setlinebuf(stdout);
 #endif // !_MSC_VER
 
 	selectLanguage();
 	setHTTPLanguage(eb_language);
+
+// bring HISTCONTROL down to edbrowse
+	setHistcontrol();
 
 /* Establish the home directory, and standard edbrowse files thereunder. */
 	home = getenv("HOME");
