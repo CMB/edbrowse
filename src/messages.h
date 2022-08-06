@@ -443,7 +443,7 @@ enum {
 	MSG_ABNoAlias2,
 	MSG_RecipNone,
 	MSG_AttSessionEmpty,
-	MSG_AttAccess,
+	MSG_notused346,
 	MSG_AttRegular,
 	MSG_AttEmpty2,
 	MSG_LineDelete1,

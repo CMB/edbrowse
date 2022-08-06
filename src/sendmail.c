@@ -981,7 +981,7 @@ sendMail(int account, const char **recipients, const char *body,
 		} else {
 			char ftype = fileTypeByName(s, false);
 			if (!ftype) {
-				setError(MSG_AttAccess, s);
+				setError(MSG_NoAccess, s);
 				return false;
 			}
 			if (ftype != 'f') {

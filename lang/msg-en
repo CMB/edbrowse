@@ -343,7 +343,7 @@ No address book specified, please check your configuration file
 alias %s not found in your address book
 no recipients specified
 session %d is empty, cannot attach
-cannot access attachment %s
+0
 file %s is not a regular file, cannot attach
 file %s is empty, cannot attach
 line after %d has been deleted\n
