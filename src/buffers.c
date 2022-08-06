@@ -5045,6 +5045,31 @@ static int twoLetter(const char *line, const char **runThis)
 		return false;
 	}
 
+	if(stringEqual(line, "enum")) {
+		pst p, p0;
+		cmd = 'e';
+		if(!cw->dol) {
+			setError(MSG_AtLine0);
+			return false;
+		}
+		 p0 = p = fetchLine(cw->dot, 1);
+		n = -1;
+		while(*p != '\n') {
+			if(isdigitByte(*p)) {
+				n = atoi((char*)p);
+				break;
+			}
+			++p;
+		}
+		free(p0);
+		if(n < 0) {
+			setError(MSG_NumberExpected);
+			return false;
+		}
+		sprintf(shortline, "e%d", n);
+		return 2;
+	}
+
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
 		return true;

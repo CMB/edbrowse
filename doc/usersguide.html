@@ -585,6 +585,7 @@ f : print the name of the current file
 <br>e3 : move to session 3
 <br>e+ : move to the next editing session
 <br>e- : move to the previous editing session
+<br>enum : move to the session indicated by the number on the current line
 <br>eret : return to the session you were previously in
 <br>enew : create a new empty buffer in the current session
 <br>e foo : edit the file named foo
@@ -1251,6 +1252,12 @@ e+ and e- move to the next and previous editing sessions, like channel up and ch
 
 <P>
 eret returns to the previous editting session, like the button on your tv remote that goes back to the channel you were just watching.
+
+<P>
+enum moves to the sesssion indicated by the number on the current line.
+A new session is created if none was there before.
+The first number on the line is chosen.
+For example, enum on the line jj3jj7jj moves to session 3.
 
 <P>
 If you quit a session you are moved to the next valid editing session,
