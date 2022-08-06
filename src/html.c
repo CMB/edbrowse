@@ -4430,8 +4430,15 @@ nop:
 			Tag *v = ltag->firstchild;
 			j = 1;
 			while(v && v != t) {
-				if(v->action == TAGACT_TR)
-					++j;
+				if(v->action == TAGACT_TR) {
+// sometimes <th> is in the tbody and not in thead.
+					if(v->firstchild &&
+					v->firstchild->action == TAGACT_TD &&
+					v->firstchild->info->name[1] == 'h')
+						; // skip <th> row
+					else
+						++j;
+				}
 				v = v->sibling;
 			}
 			if(v) { // should always happen
@@ -4801,7 +4808,7 @@ bool showHeaders(int ln)
 	if(!t)
 		return false;
 	for(t = t->firstchild; t; t = t->sibling) {
-		if(t->action == TAGACT_THEAD)
+		if(t->action == TAGACT_THEAD || t->action == TAGACT_TBODY)
 			break;
 	}
 	if(!t)
