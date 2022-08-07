@@ -29,6 +29,9 @@ static Tag *overnode;
 static bool htmlGenerated;
 // 0 prehtml 1 prehead, 2 inhead, 3 posthead, 4 inbody, 5 postbody 6 posthtml
 static uchar headbody;
+// This isn't counting 13 bodies buried in the basement, it tracks <body>
+// in <body>, which shouldn't happen, but it does.
+static int bodycount;
 static bool premode;
 
 static bool atWall;
@@ -71,6 +74,8 @@ static const struct specialtag {
 	bool autoclose, nestable, inhead;
 	const char *second;
 	} specialtags[] = {
+// special code to allow nesting of <body> which should never happen
+{"innerbody",0,1, 0, 0},
 {"script", 0, 0, 1, 0},
 {"style", 0, 0, 1, 0},
 {"meta", 1, 0, 1, 0},
@@ -142,7 +147,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","title","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
+	static const char * const list[] = {"body","innerbody","title","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
 	return stringInListCI(list, name) >= 0;
 }
 
@@ -227,7 +232,7 @@ skiplink:
 			if(dhs) puts("in head");
 		}
 		if(stringEqualCI(name, "body")) {
-			headbody = 4;
+			headbody = 4, bodycount = 1;
 			if(dhs) puts("in body");
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
@@ -244,7 +249,7 @@ skiplink:
 			if(dhs) puts("post head");
 		}
 		if(stringEqualCI(name, "body")) {
-			headbody = 5;
+			headbody = 5, bodycount = 0;
 			if(dhs) puts("post body");
 		}
 		if(stringEqualCI(name, "html")) {
@@ -568,7 +573,8 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	char tagname[MAXTAGNAME];
 	const struct opentag *k;
 
-	seek = s = htmltext, ln = 1, premode = false, headbody = 0;
+	seek = s = htmltext, ln = 1, premode = false;
+	headbody = 0, bodycount = 0;
 	stack = 0;
 	atWall = false;
 	lasttext = 0;
@@ -711,7 +717,8 @@ so also break out at >< like a new tag is starting.
 		s = seek; // ready to march on
 
 		if(slash) {
-// close the corresponging open tag. If none found then discard this one.
+			if(stringEqualCI(tagname, "body") && bodycount > 1)
+				strcpy(tagname, "innerbody"), --bodycount;
 // create this tag in the edbrowse world.
 			if(dhs) printf("</%s>\n", tagname);
 			makeTag(tagname, true, lt);
@@ -751,7 +758,9 @@ so also break out at >< like a new tag is starting.
 			}
 		} else pushState(lt, true);
 		if(stringEqualCI(tagname, "body")) {
-			if(headbody > 3) { if(dhs) puts("sequence"); continue; }
+			if(headbody > 4) { if(dhs) puts("sequence"); continue; }
+			if(headbody == 4)
+				strcpy(tagname, "innerbody"), ++bodycount;
 			goto tag_ok;
 		}
 		if(headbody == 3) pushState(lt, false);
