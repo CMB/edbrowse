@@ -4256,9 +4256,17 @@ nop:
 			j &= 3;
 		else
 			j >>= 2;
+
 // <blockquote><p> don't put in the extra whitespace after ``
 		if(ns_l >= 3 && stringEqual(ns + ns_l - 3, "\f``"))
 			j = 0;
+
+// defense against <td><p>stuff</p></td>
+// Supress linebreak if this is first or last child of a cell.
+		if(j && t->parent->action == TAGACT_TD &&
+		((opentag && t->parent->firstchild == t) || (!opentag && !t->sibling)))
+			j = 0;
+
 		if (j) {
 			c = '\f';
 			if (j == 1) {
@@ -4284,6 +4292,7 @@ nop:
 				ns_hnum();
 			}
 		}
+
 /* tags with id= have to be part of the screen, so you can jump to them */
 		if (t->id && opentag && action != TAGACT_LI)
 			tagInStream(tagno);
