@@ -2129,6 +2129,7 @@ static bool readDirectory(const char *filename)
 	struct lineMap *mptr;
 	struct lineMap *backpiece = 0;
 	uchar innersort = (dno ? 0 : ls_sort);
+	bool innerrev = (dno ? false : ls_reverse);
 
 	cw->baseDirName = cloneString(filename);
 /* get rid of trailing slash */
@@ -2139,7 +2140,7 @@ static bool readDirectory(const char *filename)
 
 /* get the files, or fail if there is a problem */
 	if (!sortedDirList
-	    (filename, &newpiece, &linecount, innersort, ls_reverse))
+	    (filename, &newpiece, &linecount, innersort, innerrev))
 		return false;
 	if (!cw->dol) {
 		cw->dirMode = true;
