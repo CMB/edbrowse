@@ -17,7 +17,7 @@ Use this program at your own risk.
 
 ------------------------------------------------------------
 
-Chrome and Explorer are graphical browsers.
+Chrome and Firefox are graphical browsers.
 Lynx and Links are screen browsers.
 This is a command line browser, the only one of its kind.
 The user's guide can be found as doc/usersguide.html in this package,
@@ -82,6 +82,12 @@ This happens if openssl is too old,
 or just doesn't support the ciphers that the website expects.
 This is beyond edbrowse, and beyond curl; you have to upgrade openssl.
 
+unixODBC:
+Edbrowse provides database access through odbc.
+Thus you need unixODBC and unixODBC-devel.
+ODBC has been stable for quite some time.
+unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
+
 quickjs:
 This is the javascript engine for edbrowse.
 It is probably not packaged.
@@ -107,11 +113,9 @@ By default, edbrowse links to this library, and thus the
 quickjs code is part of edbrowse, and a quickjs package,
 or a dependency thereto, is not necessary.
 
-unixODBC:
-Edbrowse provides database access through odbc.
-Thus you need unixODBC and unixODBC-devel.
-ODBC has been stable for quite some time.
-unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
+An already-patched version of quickjs is available via
+git clone https://github.com/n0ot/quickjs-edbrowse
+Clone this in a parallel directory, type make, and then return to edbrowse.
 
 ------------------------------------------------------------
 
