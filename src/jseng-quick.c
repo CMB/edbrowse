@@ -9,9 +9,7 @@ you will need to include the MIT open source license.
 
 #include "eb.h"
 
-#ifdef DOSLIKE
-#include "vsprtf.h"
-#endif // DOSLIKE
+#include <stddef.h>
 
 // the makefile should set -I properly, based on  your environment variable
 // QUICKJS_DIR, or using a reasonable default.
@@ -2992,8 +2990,8 @@ or our side effects, like innerHTML, won't work properly.
 I have to call frameFromContext before the job runs, somewhere
 inside JS_ExecutePendingJob().
 Alternatively, I could call frameFromContext from *all* of my native methods,
-that is, you go from js into the edbrowse world, and I make sure cf and cw
-are set correctly, but that's kind of a pain in the ass.
+that is, you go from js into the edbrowse world and I make sure cf and cw
+are set correctly, but that's kind of a pain.
 On the other hand, trying to get inside of the quickjs function,
 which is suppose to be opaque to me, has its own risks. Well let's continue.
 2. If an edbrowse session quits, I should clean up and throw away
@@ -3003,9 +3001,10 @@ I clean up the timers, but timers are my own creation so that's easy.
 Again, I have to dip into the internal list of pending jobs if I am to do this.
 3. In a perfect world, I would skip over jobs in contexts
 that have been pushed onto the edbrowse stack.
-Again, I do this with timers.
+Windows that are pushed into the background, like control z.
 So I have to go from context to window, and if that window isn't at the top of the stack,
-just skip it for now, cause it may pop up to the top of the stack later.
+just skip it for now, cause it may pop up to the top of the stack later
+via the ^ command.
 All this together compels me to try to get inside of JS_ExecutePendingJob().
 You'll see below I copied their code, so I can modify it;
 I call it my_ExecutePendingJobs().
@@ -3013,7 +3012,7 @@ Plural, because I run all the pending jobs, not just the next one.
 Ok, but I have to bring in some other machinery to support it.
 I copied some primitives for managing linked lists, from list.h,
 and they are remarkably similar to the ones I invented for edbrowse.
-Their list_empty is my listEmpty, exactly the same code, etc.
+Their list_empty is my listEmpty, exactly the same code.
 Great minds think alike.
 But the real problem is the JSRuntime. The API leaves it opaque,
 struct JSRuntime, with no mention of the members.
@@ -3038,7 +3037,6 @@ struct list_head {
     struct list_head *next;
 };
 
-#define offsetof(type, field) ((size_t) &((type *)0)->field)
 #define list_entry(el, type, member) \
     ((type *)((uint8_t *)(el) - offsetof(type, member)))
 #define list_empty(l) ((l)->next == (l))

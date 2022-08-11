@@ -702,8 +702,16 @@ f3:
 
 f4:
 	t = mktime(&tm);
-	if (t != (time_t) - 1)
+// Watch out for 4 byte time overflow, in the year 2038.
+// But it's happening now, with cookies set to expire in the future.
+// We need a portable 64-bit solution.
+// Until then, this is a kludge.
+	if (t != (time_t) - 1 &&
+(sizeof(time_t) > 4 || t <= 0x7fff0000))
 		return t + zone + utcoffset;
+	debugPrint(3, "parseHeaderDate unable to time convert %s", date0);
+// I guess this is better than failing.
+		return 0x7fff0000;
 
 fail:
 	debugPrint(3, "parseHeaderDate fails on %s", date0);
