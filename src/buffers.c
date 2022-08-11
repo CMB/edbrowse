@@ -28,7 +28,8 @@ static bool pcre_utf8_error_stop = false;
 
 /* Static variables for this file. */
 
-uchar dirWrite;		/* directories read write */
+uchar dirWrite;		// directories read write
+bool dno; // directory names only
 bool endMarks;		/* ^ $ on listed lines */
 /* The valid edbrowse commands. */
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
@@ -2127,6 +2128,7 @@ static bool readDirectory(const char *filename)
 	char *v;
 	struct lineMap *mptr;
 	struct lineMap *backpiece = 0;
+	uchar innersort = (dno ? 0 : ls_sort);
 
 	cw->baseDirName = cloneString(filename);
 /* get rid of trailing slash */
@@ -2137,7 +2139,7 @@ static bool readDirectory(const char *filename)
 
 /* get the files, or fail if there is a problem */
 	if (!sortedDirList
-	    (filename, &newpiece, &linecount, ls_sort, ls_reverse))
+	    (filename, &newpiece, &linecount, innersort, ls_reverse))
 		return false;
 	if (!cw->dol) {
 		cw->dirMode = true;
@@ -2156,7 +2158,7 @@ static bool readDirectory(const char *filename)
 		goto success;
 	}
 
-	if (ls_sort)
+	if (innersort)
 		dsr_list = allocZeroMem(sizeof(struct DSR) * linecount);
 
 /* change 0 to nl and count bytes */
@@ -2179,12 +2181,12 @@ static bool readDirectory(const char *filename)
 		*t = '\n';
 		len = t - mptr->text;
 		fileSize += len + 1;
-		if (ls_sort)
+		if (innersort)
 			dsr_list[j].idx = j;
 		if (!abspath)
 			continue;	/* should never happen */
 
-		ftype = fileTypeByName(abspath, true);
+		ftype = fileTypeByName(abspath, 2);
 		if (!ftype)
 			continue;
 		if (isupperByte(ftype)) {	/* symbolic link */
@@ -2216,10 +2218,10 @@ static bool readDirectory(const char *filename)
 			++fileSize;
 		}
 // If sorting a different way, get the attribute.
-		if (ls_sort) {
-			if (ls_sort == 1)
+		if (innersort) {
+			if (innersort == 1)
 				dsr_list[j].u.z = this_stat.st_size;
-			if (ls_sort == 2) {
+			if (innersort == 2) {
 // Honor sub-second timestamp precision if the operating system supports it.
 // Currently only linux - other systems?
 #ifdef linux
@@ -2231,7 +2233,7 @@ static bool readDirectory(const char *filename)
 		}
 
 /* extra stat entries on the line */
-		if (!lsformat[0])
+		if (!lsformat[0] || dno)
 			continue;
 		v = lsattr(abspath, lsformat);
 		if (!*v)
@@ -2253,7 +2255,7 @@ static bool readDirectory(const char *filename)
 		}
 	}			/* loop fixing files in the directory scan */
 
-	if (ls_sort) {
+	if (innersort) {
 		struct lineMap *tmp;
 		qsort(dsr_list, linecount, sizeof(struct DSR), dircmp);
 // Now I have to remap everything.
@@ -2512,7 +2514,7 @@ badfile:
 		return false;
 	}
 
-	filetype = fileTypeByName(filename, false);
+	filetype = fileTypeByName(filename, 0);
 	if (filetype == 'd') {
 		if (!fromframe)
 			return readDirectory(filename);
@@ -4749,7 +4751,7 @@ static int substituteText(const char *line)
 			if (!dest)
 				goto abort;
 			if (!stringEqual(src, dest)) {
-				if (fileTypeByName(dest, true)) {
+				if (fileTypeByName(dest, 1)) {
 					setError(MSG_DestFileExists);
 					goto abort;
 				}
@@ -5222,7 +5224,7 @@ static int twoLetter(const char *line, const char **runThis)
 		path = makeAbsPath(file);
 		*t = '\n';	// put it back
 		t = emptyString;
-		if (path && fileTypeByName(path, true))
+		if (path && fileTypeByName(path, 1))
 			t = lsattr(path, lsmode);
 		if (*t)
 			eb_puts(t);
@@ -5633,6 +5635,20 @@ et_go:
 		dirWrite = 2;
 		if (helpMessagesOn)
 			i_puts(MSG_DirX);
+		return true;
+	}
+
+	if (stringEqual(line, "dno")) {
+		dno ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(dno + MSG_DirNamesOnlyOff);
+		return true;
+	}
+
+	if (stringEqual(line, "dno+") || stringEqual(line, "dno-")) {
+		dno = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(dno + MSG_DirNamesOnlyOff);
 		return true;
 	}
 
@@ -6995,7 +7011,7 @@ replaceframe:
 		dest = makeAbsPath(oldline);
 		if (!dest)
 			return false;
-		if (fileTypeByName(dest, true)) {
+		if (fileTypeByName(dest, 1)) {
 			setError(MSG_DestFileExists);
 			return false;
 		}

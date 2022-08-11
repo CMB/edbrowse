@@ -383,10 +383,10 @@ empty:
 		if (doSignature) {	/* Append .signature file. */
 /* Try account specific .signature file, then fall back to .signature */
 			sprintf(sigFileEnd, "%d", mailAccount);
-			c = fileTypeByName(sigFile, false);
+			c = fileTypeByName(sigFile, 0);
 			if (!c) {
 				*sigFileEnd = 0;
-				c = fileTypeByName(sigFile, false);
+				c = fileTypeByName(sigFile, 0);
 			}
 			if (c != 0) {
 				int fd, n;
@@ -979,7 +979,7 @@ sendMail(int account, const char **recipients, const char *body,
 				return false;
 			}
 		} else {
-			char ftype = fileTypeByName(s, false);
+			char ftype = fileTypeByName(s, 0);
 			if (!ftype) {
 				setError(MSG_NoAccess, s);
 				return false;

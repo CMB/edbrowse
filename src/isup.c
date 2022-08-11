@@ -2004,7 +2004,7 @@ void setupEdbrowseCache(void)
 		cacheDir = allocMem(strlen(ebUserDir) + 7);
 		sprintf(cacheDir, "%s/cache", ebUserDir);
 	}
-	if (fileTypeByName(cacheDir, false) != 'd') {
+	if (fileTypeByName(cacheDir, 0) != 'd') {
 		if (mkdir(cacheDir, 0700)) {
 /* Don't want to abort here; we might be on a readonly filesystem.
  * Don't have a cache directory and can't creat one; yet we should move on. */
@@ -2018,7 +2018,7 @@ void setupEdbrowseCache(void)
 		cacheDir = allocMem(strlen(home) + 10);
 		sprintf(cacheDir, "%s/.ebcache", home);
 	}
-	if (fileTypeByName(cacheDir, false) != 'd') {
+	if (fileTypeByName(cacheDir, 0) != 'd') {
 		if (mkdir(cacheDir, 0700)) {
 /* Don't want to abort here; we might be on a readonly filesystem.
  * Don't have a cache directory and can't creat one; yet we should move on. */

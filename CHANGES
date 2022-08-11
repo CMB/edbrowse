@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.8.4
+dno (names only) command.
+
 3.8.3
 Offer the plain text version of an email via the t command.
 It is often unhelpful, and sometimes not there at all.

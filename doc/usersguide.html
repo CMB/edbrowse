@@ -633,6 +633,7 @@ dr : directory is readonly
 <br>dw : directory is writable, and d moves files to your trash bin
 <br>dx : directory is writable, and d deletes files
 <br>hf : show hidden files in directory listing (toggle)
+<br>dno : directory listing names only (toggle)
 <br>lsl : list length of the file on the current line, directory mode only
 <br>lss : list the approximate size of the file, in kilobytes, megabytes, etc
 <br>lst : list the mod time of the file
@@ -1984,10 +1985,20 @@ Searches and substitutes apply to file names only.
 If you want to view the entire text as text, write it to a file, or to another session.
 
 <P>
+The dno (directory names only) suppresses the supplementary information about file type, name, time, etc.
+This is useful when the directory is on a remote filesystem, and you don't want to issue a stat() call on every file.
+You just get the names of the files.
+The various ls commands still work, along with g to go to that file, even if that file is a directory.
+
+<P>
 Files are sorted alphabetically, according to your locale.
 Use the command sort+a for the standard alphabetical sort, and sort-a for a reverse alphabetical sort.
 sort+t sorts by modification time, from oldest to newest, and sort-t reverses this, with the newest files at the top.
 sort+s and sort-s sort by file size.
+
+<P>
+With dno enabled, sorting by size or time won't work.
+The listing reverts back to alphabetical.
 
 <h2> <A NAME=case> Upper/Lower Case </A> </h2>
 

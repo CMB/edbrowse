@@ -13,7 +13,7 @@ Frame *cf;
 int gfsn; // global frame sequence number
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.8.3";
+const char *version = "3.8.3+";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
@@ -444,7 +444,7 @@ static void setupEdbrowseTempDirectory(void)
 // On a multiuser system, mkdir /tmp/.edbrowse at startup,
 // by root, and then chmod 1777
 
-	if (fileTypeByName(ebTempDir, false) != 'd') {
+	if (fileTypeByName(ebTempDir, 0) != 'd') {
 /* no such directory, try to make it */
 /* this temp edbrowse directory is used by everyone system wide */
 		if (mkdir(ebTempDir, MODE_rwx)) {
@@ -460,7 +460,7 @@ static void setupEdbrowseTempDirectory(void)
 // make room for user ID on the end
 	ebUserDir = allocMem(strlen(ebTempDir) + 30);
 	sprintf(ebUserDir, "%s/edbrowse.%d", ebTempDir, userid);
-	if (fileTypeByName(ebUserDir, false) != 'd') {
+	if (fileTypeByName(ebUserDir, 0) != 'd') {
 /* no such directory, try to make it */
 		if (mkdir(ebUserDir, 0700)) {
 			i_printf(MSG_TempDir, ebUserDir);
@@ -511,7 +511,7 @@ int main(int argc, char **argv)
 		if (home) {
 			char *ebdata = (char *)allocMem(ABSPATH);
 			sprintf(ebdata, "%s\\edbrowse", home);
-			if (fileTypeByName(ebdata, false) != 'd') {
+			if (fileTypeByName(ebdata, 0) != 'd') {
 				FILE *fp;
 				char *cfgfil;
 				if (mkdir(ebdata, 0700)) {
@@ -539,13 +539,13 @@ int main(int argc, char **argv)
 /* I require this, though I'm not sure what this means for non-Unix OS's */
 	if (!home)
 		i_printfExit(MSG_NotHome);
-	if (fileTypeByName(home, false) != 'd')
+	if (fileTypeByName(home, 0) != 'd')
 		i_printfExit(MSG_NotDir, home);
 
 	configFile = allocMem(strlen(home) + 7);
 	sprintf(configFile, "%s/.ebrc", home);
 /* if not present then create it, as was done above */
-	if (fileTypeByName(configFile, false) == 0) {
+	if (fileTypeByName(configFile, 0) == 0) {
 		int fh = creat(configFile, MODE_private);
 		if (fh >= 0) {
 			write(fh, ebrc_string, strlen(ebrc_string));
@@ -557,7 +557,7 @@ int main(int argc, char **argv)
 /* recycle bin and .signature files are unix-like, and not adjusted for windows. */
 	recycleBin = allocMem(strlen(home) + 8);
 	sprintf(recycleBin, "%s/.Trash", home);
-	if (fileTypeByName(recycleBin, false) != 'd') {
+	if (fileTypeByName(recycleBin, 0) != 'd') {
 		if (mkdir(recycleBin, 0700)) {
 /* Don't want to abort here; we might be on a readonly filesystem.
  * Don't have a Trash directory and can't creat one; yet we should move on. */
@@ -569,7 +569,7 @@ int main(int argc, char **argv)
 	if (recycleBin) {
 		mailStash = allocMem(strlen(recycleBin) + 12);
 		sprintf(mailStash, "%s/rawmail", recycleBin);
-		if (fileTypeByName(mailStash, false) != 'd') {
+		if (fileTypeByName(mailStash, 0) != 'd') {
 			if (mkdir(mailStash, 0700)) {
 				free(mailStash);
 				mailStash = 0;
@@ -942,7 +942,7 @@ int runEbFunction(const char *line)
 
 // local copies of settings, to restore after function runs.
 	struct {
-		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo;
+		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno;
 		uchar dw, ls_sort;
 		char lsformat[12], showProgress;
 		char *currentAgent;
@@ -989,6 +989,7 @@ int runEbFunction(const char *line)
 		save.debugLevel = debugLevel;
 		save.timerspeed = timerspeed;
 		save.dw = dirWrite;
+		save.dno = dno;
 		save.ls_sort = ls_sort;
 		strcpy(save.lsformat, lsformat);
 		save.showProgress = showProgress;
@@ -1170,6 +1171,7 @@ done:
 		debugLevel = save.debugLevel;
 		timerspeed = save.timerspeed;
 		dirWrite = save.dw;
+		dno = save.dno;
 		ls_sort = save.ls_sort;
 		strcpy(lsformat, save.lsformat);
 		showProgress = save.showProgress;
@@ -1719,7 +1721,7 @@ inside:
 			nzFree(downDir), downDir = 0; // in case called more than once
 			v = envFileAlloc(v);
 			if(!v) continue;
-			if (fileTypeByName(v, false) != 'd')
+			if (fileTypeByName(v, 0) != 'd')
 // yeah, v is not freed in this pathway, oh well.
 				cfgAbort1(MSG_EBRC_NotDir, v);
 			downDir = v;
@@ -1731,14 +1733,14 @@ inside:
 			nzFree(mailReply), mailReply = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
-			if (fileTypeByName(v, false) != 'd')
+			if (fileTypeByName(v, 0) != 'd')
 				cfgAbort1(MSG_EBRC_NotDir, v);
 			mailDir = v;
 			mailUnread = allocMem(strlen(v) + 20);
 			sprintf(mailUnread, "%s/unread", v);
 /* We need the unread directory, else we can't fetch mail. */
 /* Create it if it isn't there. */
-			if (fileTypeByName(mailUnread, false) != 'd') {
+			if (fileTypeByName(mailUnread, 0) != 'd') {
 				if (mkdir(mailUnread, 0700))
 					cfgAbort1(MSG_EBRC_NotDir, mailUnread);
 			}
@@ -1759,7 +1761,7 @@ inside:
 			nzFree(cookieFile), cookieFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
-			ftype = fileTypeByName(v, false);
+			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_JarNotFile, v);
 			j = open(v, O_WRONLY | O_APPEND | O_CREAT,
@@ -1798,7 +1800,7 @@ inside:
 			nzFree(sslCerts), sslCerts = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
-			ftype = fileTypeByName(v, false);
+			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_SSLNoFile, v);
 			j = open(v, O_RDONLY);
@@ -1867,7 +1869,7 @@ inside:
 			nzFree(addressFile), addressFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
-			ftype = fileTypeByName(v, false);
+			ftype = fileTypeByName(v, 0);
 			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_AbNotFile, v);
 			addressFile = v;
@@ -1881,7 +1883,7 @@ inside:
 			nzFree(emojiFile), emojiFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
-			ftype = fileTypeByName(v, false);
+			ftype = fileTypeByName(v, 0);
 			if (!ftype || ftype != 'f')
 				cfgAbort1(MSG_EBRC_EmojiNotFile, v);
 			emojiFile = v;
@@ -1930,7 +1932,7 @@ inside:
 			nzFree(pubKey), pubKey = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
-			ftype = fileTypeByName(v, false);
+			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_KeyNoFile, v);
 			j = open(v, O_RDONLY);

@@ -1960,7 +1960,7 @@ saveMail:
 	if (stringEqual(atname, "x"))
 		goto afterinput;
 
-	exists = fileTypeByName(atname, false);
+	exists = fileTypeByName(atname, 0);
 	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, MODE_rw);
 	if (fh < 0) {
 		i_printf(MSG_NoCreate, atname);
@@ -2000,7 +2000,7 @@ badsave:
 			for (j = 0; j < 20; ++j) {
 				int rn = rand() % 100000;	/* random number */
 				sprintf(rmf, "%s/%05d", mailStash, rn);
-				if (fileTypeByName(rmf, false))
+				if (fileTypeByName(rmf, 0))
 					continue;
 /* dump the original mail into the file */
 				rmfh =

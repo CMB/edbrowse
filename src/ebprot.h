@@ -289,7 +289,7 @@ bool memoryOutToFile(const char *filename, const char *data, int len, int msgcre
 void truncate0(const char *filename, int fh);
 void caseShift(char *s, char action) ;
 void camelCase(char *s);
-char fileTypeByName(const char *name, bool showlink) ;
+char fileTypeByName(const char *name, int showlink) ;
 char fileTypeByHandle(int fd) ;
 off_t fileSizeByName(const char *name) ;
 off_t fileSizeByHandle(int fd) ;

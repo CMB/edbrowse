@@ -1387,7 +1387,7 @@ bool infReplace(int tagno, char *newtext, bool notify)
 			const char *z2;
 			if (!envFile(newtext, &z2))
 				return false;
-			if (z2[0] && (access(z2, 4) || fileTypeByName(z2, false) != 'f')) {
+			if (z2[0] && (access(z2, 4) || fileTypeByName(z2, 0) != 'f')) {
 				setError(MSG_FileAccess, z2);
 				return false;
 			}
@@ -1408,7 +1408,7 @@ bool infReplace(int tagno, char *newtext, bool notify)
 					nzFree(z), nzFree(u);
 					return false;
 				}
-				if (z2[0] && (access(z2, 4) || fileTypeByName(z2, false) != 'f')) {
+				if (z2[0] && (access(z2, 4) || fileTypeByName(z2, 0) != 'f')) {
 					setError(MSG_FileAccess, z2);
 					nzFree(z), nzFree(u);
 					return false;

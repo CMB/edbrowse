@@ -789,8 +789,8 @@ enum {
 	MSG_EMinus,
 	MSG_EBRC_KeyNoFile,
 	MSG_EBRC_KeyNoRead,
-	MSG_notused692,
-	MSG_notused693,
+	MSG_DirNamesOnlyOff,
+	MSG_DirNamesOnlyOn,
 	MSG_DebugTagsOff,
 	MSG_DebugTagsOn,
 };

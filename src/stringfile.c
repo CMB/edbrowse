@@ -555,7 +555,7 @@ void addAtPosition(void *p, void *x)
 	xh->next = ph->next;
 	ph->next = (struct listHead *)x;
 	((struct listHead *)xh->next)->prev = (struct listHead *)x;
-}				/* addAtPosition */
+}
 
 void freeList(struct listHead *l)
 {
@@ -564,7 +564,7 @@ void freeList(struct listHead *l)
 		delFromList(p);
 		nzFree(p);
 	}
-}				/* freeList */
+}
 
 /* like isalnumByte, but allows _ and - */
 bool isA(char c)
@@ -572,12 +572,12 @@ bool isA(char c)
 	if (isalnumByte(c))
 		return true;
 	return (c == '_' || c == '-');
-}				/* isA */
+}
 
 bool isquote(char c)
 {
 	return c == '"' || c == '\'';
-}				/* isquote */
+}
 
 /* print an error message */
 void errorPrint(const char *msg, ...)
@@ -751,7 +751,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 bool fileIntoMemory(const char *filename, char **data, int *len)
 {
 	int fh;
-	char ftype = fileTypeByName(filename, false);
+	char ftype = fileTypeByName(filename, 0);
 	bool ret;
 	if (ftype && ftype != 'f' && ftype != 'p') {
 		setError(MSG_RegularFile, filename);
@@ -878,7 +878,7 @@ is ported to other operating systems.
 struct stat this_stat;
 static bool this_waslink, this_brokenlink;
 
-char fileTypeByName(const char *name, bool showlink)
+char fileTypeByName(const char *name, int showlink)
 {
 	bool islink = false;
 	char c;
@@ -887,37 +887,29 @@ char fileTypeByName(const char *name, bool showlink)
 	this_waslink = false;
 	this_brokenlink = false;
 
-#ifdef DOSLIKE
-	if (stat(name, &this_stat)) {
+	if(showlink == 2 && dno) {
 		this_brokenlink = true;
-		setError(MSG_NoAccess, name);
-		return 0;
+		return 'f';
 	}
-	mode = this_stat.st_mode & S_IFMT;
-#else // !DOSLIKE
 
 	if (lstat(name, &this_stat)) {
-		this_brokenlink = true;
 		setError(MSG_NoAccess, name);
 		return 0;
 	}
 	mode = this_stat.st_mode & S_IFMT;
 	if (mode == S_IFLNK) {	/* symbolic link */
 		islink = this_waslink = true;
-/* If this fails, I'm guessing it's just a file. */
+// If this fails, I'm guessing it's just a file.
 		if (stat(name, &this_stat)) {
 			this_brokenlink = true;
 			return (showlink ? 'F' : 0);
 		}
 		mode = this_stat.st_mode & S_IFMT;
 	}
-#endif // DOSLIKE y/n
 
 	c = 'f';
 	if (mode == S_IFDIR)
 		c = 'd';
-#ifndef DOSLIKE
-/* I don't think these are Windows constructs. */
 	if (mode == S_IFBLK)
 		c = 'b';
 	if (mode == S_IFCHR)
@@ -926,11 +918,10 @@ char fileTypeByName(const char *name, bool showlink)
 		c = 'p';
 	if (mode == S_IFSOCK)
 		c = 's';
-#endif
-	if (islink & showlink)
+	if (islink && showlink)
 		c = toupper(c);
 	return c;
-}				/* fileTypeByName */
+}
 
 char fileTypeByHandle(int fd)
 {
@@ -945,8 +936,6 @@ char fileTypeByHandle(int fd)
 	c = 'f';
 	if (mode == S_IFDIR)
 		c = 'd';
-#ifndef DOSLIKE
-/* I don't think these are Windows constructs. */
 	if (mode == S_IFBLK)
 		c = 'b';
 	if (mode == S_IFCHR)
@@ -955,9 +944,8 @@ char fileTypeByHandle(int fd)
 		c = 'p';
 	if (mode == S_IFSOCK)
 		c = 's';
-#endif
 	return c;
-}				/* fileTypeByHandle */
+}
 
 off_t fileSizeByName(const char *name)
 {
@@ -1092,9 +1080,9 @@ bool lsattrChars(const char *buf, char *dest)
 	return rc;
 }				/* lsattrChars */
 
-/* expand the ls attributes for a file into a static string. */
-/* This assumes user/group names will not be too long. */
-/* Assumes we just called fileTypeByName. */
+// expand the ls attributes for a file into a static string.
+// This assumes user/group names will not be too long.
+// Assumes we just called fileTypeByName.
 char *lsattr(const char *path, const char *flags)
 {
 	static char buf[200 + ABSPATH];
@@ -1352,7 +1340,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 			p = buf;
 		} else
 			defname = 0;
-		if (isnew && fileTypeByName(p, false)) {
+		if (isnew && fileTypeByName(p, 0)) {
 			i_printf(MSG_FileExists, p);
 			defname = 0;
 			continue;
@@ -1465,7 +1453,7 @@ bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p,
 	}
 
 	return true;
-}				/* sortedDirList */
+}
 
 /* Expand environment variables, then wild cards.
  * But the result should be one and only one file.
