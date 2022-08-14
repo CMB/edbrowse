@@ -3780,11 +3780,11 @@ static void findHeading(const Tag *t, int colno)
 	}
 	t = t->firstchild;
 	for(u = t; u; u = u->sibling)
-		if(u->action == TAGACT_THEAD) {
+		if(u->action == TAGACT_THEAD || u->action == TAGACT_BODY) {
 			t = u;
 			break;
 		}
-	if(t && t->action == TAGACT_THEAD)
+	if(t && (t->action == TAGACT_THEAD || t->action == TAGACT_TBODY))
 		t = t->firstchild;
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
 		return;
