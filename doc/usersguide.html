@@ -268,7 +268,8 @@ If any changes were made, the file is written back to disk.
 The * in the if statement is true if the previous command was successful.
 </UL>
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif><code>function+xy {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif><code>function+xy {
         ,s/x/y/g
         if(*) {
                 w
@@ -1186,7 +1187,8 @@ and will probably not be used by casual home users.
 It locates the line with the balancing brace, parenthesis, or bracket.
 Consider the following code fragment.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif><code>    if(x == 3 &amp;&amp;
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif><code>    if(x == 3 &amp;&amp;
     y == 7) {
         printf("hello\n");
     } else {
@@ -1287,7 +1289,8 @@ and lines beginning with &gt; form the program's responses.
 The # sign delimits my injected comments,
 which would not normally appear in the middle of a line.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; e2   # switch to session 2
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>&lt; e2   # switch to session 2
 &gt; new session
 #  Unlike ed, the r command does not establish a file name, even if the
 #  buffer is empty.
@@ -1314,7 +1317,8 @@ which would not normally appear in the middle of a line.
 <P>
 The following moves the data from one file to another.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; e2
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>&lt; e2
 &gt; new session
 &lt; e bar  # this time I'm going to change bar
 &gt; 28719
@@ -1350,7 +1354,8 @@ Complex expressions like @/xyz/-3 are not allowed here.
 A single space can change the meaning.
 'a,'bw 1@'c writes the block of text to a file named 1@'c, which is not what you want.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
 &lt; e2
 &gt; new session
 &lt; e bar
@@ -1382,7 +1387,8 @@ There is no need to implement r3@, reading the entire file, as that is the same 
 Complex expressions like @/xyz/-3 are not allowed here.
 If a second line number is not given, the single line is read.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
 &lt; e2
 &gt; new session
 &lt; e bar
@@ -1423,7 +1429,8 @@ These options cause edbrowse to act as a mail retriever or interactive
 mail client.
 This will be discussed later.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>edbrowse  -v    (show version)
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>edbrowse  -v    (show version)
 edbrowse -h (this message)
 edbrowse -c (edit config file)
 edbrowse [-d#] -f[#] (fetch mail) 
@@ -1609,7 +1616,8 @@ emoji = /home/mylogin/.ebsys/Emojis.txt
 <P>
 For illustration, here is part of that file.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>#  fruit, and fruit-like plants, like melons
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>#  fruit, and fruit-like plants, like melons
 fruit {
     1f347 grapes
     1f34c banana
@@ -1652,7 +1660,8 @@ The approach is different if a group is selected, but the emoji string doesn't p
 Edbrowse presents a menu of emojis that start with the string you entered, or all the emojis in the group if there is no match.
 Thus ~jfruit.xx, or ~jfruit by itself, produces a menu of emojis in the fruit group.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>
 1: grapes
 2: banana
 3: red apple
@@ -1872,7 +1881,8 @@ but only when the file you want has a name radically different from the other fi
 This isn't always the case.
 Suppose an application generates log files as follows.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>ProgramFooBar.-04-04-1998.06:31:59.log
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>ProgramFooBar.-04-04-1998.06:31:59.log
 ProgramFooBar.-04-11-1998.11:37:14.log
 ProgramFooBar.-04-18-1998.16:22:51.log
 </font></PRE>
@@ -1951,7 +1961,8 @@ The equals sign applies the ls directive to all subsequent directory scans.
 Type ls= to turn this off.
 Here is how the root directory might look with ls=lt.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>bin@/ 36864 Aug 31 2015 16:20
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>bin@/ 36864 Aug 31 2015 16:20
 boot/ 4096 Dec  4 2014 07:54
 cd/ 4096 Nov 30 2014 09:38
 dev/ 3560 Sep  3 2015 05:00
@@ -2293,7 +2304,8 @@ but you can't really trace down a column when using a line editor such as this i
 Better to write the table to a local file and use cut, sort, join, etc.
 Here is a sample table.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>part number|quantity|price
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>part number|quantity|price
 2635|2|$34.80
 1398|1|$67.50
 8118|5|$125.00
@@ -2667,7 +2679,8 @@ Suppose a web page presents
 If you are curious about all three topics,
 issue these commands in this order.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>1g
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>1g
 M2
 2g
 M3
@@ -2733,7 +2746,8 @@ You can jump to different headings using the familiar ed commands:
 The input fields of an on-line form are indicated by angle brackets.
 For example, a search engine might present the following form.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>Keywords: &lt;&gt;
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>Keywords: &lt;&gt;
 Advanced parsing: &lt;-&gt;
 Language: &lt;en&gt;
 Search now: &lt;GO&gt;
@@ -2796,7 +2810,8 @@ or you can type in its menu number.
 Recall the sample form in the previous section.
 If you type i? at the third field, you might see the following.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>select[7] language
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>select[7] language
 1: english
 2: french
 3: german
@@ -2931,7 +2946,8 @@ or read comments in from a prepared file.
 The editing session is chosen for you, and appears in the input field.
 Consider the following form.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>Enter your email address: &lt;&gt;
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>Enter your email address: &lt;&gt;
 Enter your comments: &lt;session ?&gt;
 </font></PRE>
 
@@ -3112,7 +3128,8 @@ you can move them to a more appropriate place in the file later on.
 Finally, use the ^ key to return to the web page you were viewing.
 Here is how it might look.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>&lt; b this.that.com/whatever  # browse a web page
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>&lt; b this.that.com/whatever  # browse a web page
 &gt; 16834  # size of the raw html
 &gt; 7855  # size of the browsable text
 &lt; /kangaroo/i  # looking for kangaroo on the page
@@ -3190,7 +3207,8 @@ Years of accumulated links are gone.
 To avoid this disastrous typo, create a macro to append to your bookmark file.
 I know, we haven't talked about user defined macros yet, but we will.
 And when we do, you should write a "bookmark append" macro that looks like this.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>function+bma {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>function+bma {
   w+ $bookmarks
 }
 </font></PRE>
@@ -4190,7 +4208,8 @@ The ? is suppose to remind you of the question mark that you get when an edbrows
 You can follow up with an else block, by } else {, if you wish.
 The following looks for a line containing foo, and if it finds one,
 it advances to the next line, and if that line contains bar, it deletes it.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>function+silly {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>function+silly {
   /foo/
   if(*) {
     +s/bar//
@@ -4215,7 +4234,8 @@ Other control statements include while(*) while(?) until(*) and until(?).
 The following deletes lines from the top of the file,
 as long as they contain foo or bar.
 It then deletes the blank lines at the top.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>function+topclean {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>function+topclean {
   until(?) {
     1g/foo\|bar/d
   }
@@ -4235,7 +4255,8 @@ The function named "init" is run at edbrowse startup.
 Use this to establish your default settings - even read in your bookmark file,
 so your favorites are close at hand.
 Here is an example.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>function+init {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>function+init {
 #  turn debug off, so we don't see any status messages from this script
 db0
 #  Assume directories can be modified
@@ -4273,7 +4294,8 @@ The first mail account becomes #1, the second becomes #2, and so on.
 <P>
 We already discussed the relevant keywords for an email account.
 All you have to do is enclose them in mail{...}, like this.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>mail {
   default
   inserver = pop3.some-domain.com
   outserver = smtp.some-domain.com
@@ -4300,7 +4322,8 @@ However, if an account has its sendmail stream encrypted, then security is not a
 and we can use these settings to send and receive mail.
 Here is a typical configuration for Google's gmail.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>mail {
   inserver = pop.gmail.com
   outserver = smtp.gmail.com
   secure
@@ -4330,7 +4353,8 @@ Linux users can probably copy this part directly into their own config file.
 It generally does the right thing.
 Here is one example.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>plugin {
 type = audio/mp3
 desc = audio file in mp3 format
 suffix = mp3
@@ -4368,7 +4392,8 @@ Some plugins play files, and some plugins process files.
 The outtype attribute determines the type of plugin.
 In this example, a pdf file turns into html, where it can be browsed in the usual way.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>plugin {
 type = pdf
 desc = pdf file
 suffix = pdf
@@ -4384,7 +4409,8 @@ outtype = H
 Other plugins could convert rich text, Word docs, Open Office docs, etc.
 Set outtype to h if the output is in html, or t if the output is in text.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>plugin {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>plugin {
 type = Word doc
 desc = Microsoft Word document, not docx
 suffix = doc
@@ -4436,7 +4462,8 @@ your home directory, appending its contents if it is found.
 The recipients, attachments, and subject must appear at the top of your file.
 The sm command is picky, so observe the following syntax carefully.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>To: fred.flintstone@bedrock.us
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>To: fred.flintstone@bedrock.us
 CC: barney.rubble@bedrock.us
 account: 1
 attach: hollyrock-brochure.pdf
@@ -4607,7 +4634,8 @@ You may read them, as described in the next section.
 Remember, you can specify several mail accounts in your .ebrc file.
 The first account is indicated by index 1, as in -m1, and so on.
 You can make life easier with some aliases in your .bashrc file.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
 alias mymail="edbrowse -fm1"
 #  My wife's account.
 alias wifemail="edbrowse -pfm2"
@@ -4636,7 +4664,8 @@ a '*' prompt means there is more text to read.
 You respond by hitting a key.
 Keys have the following meaning.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>?	summary of key commands
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>?	summary of key commands
 q	quit the program
 space	display more text
 g	go to top
@@ -4724,7 +4753,8 @@ Of course you can override with an absolute path if you wish.
 <P>
 A mail filtering rule always occurs in the context of a filter block.
 For instance, if you wish to redirect mail from certain people, do this.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>fromfilter {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>fromfilter {
 fred flintstone &gt; fredmail
 fred.flintstone@bedrock.us &gt; fredmail
 jerk@hotmail.com &gt; x
@@ -4762,7 +4792,8 @@ You can also filter mail based on the to: field.
 This is useful if you have several mail accounts,
 or mail aliases that are forwarded to your primary account.
 Here is a sample block.
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>tofilter {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>tofilter {
 support@my-side-business.com &gt; support
 sales@my-side-business.com &gt; sales
 @my-side-business.com &gt; business
@@ -4933,7 +4964,8 @@ This is more of a server side approach.
 The earlier configuration entry for gmail,
 when adjusted for imap, looks like this.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>mail {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>mail {
   imap
   inserver = imap.gmail.com
   outserver = smtp.gmail.com
@@ -4952,7 +4984,8 @@ as is the case with a pop3 account.
 Rather, edbrowse provides access to all the emails on the imap server in an interactive fashion.
 Here is a sample screenshot.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif> 1 INBOX, 0 messages
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif> 1 INBOX, 0 messages
  2 [Gmail]/All Mail, 7 messages
  3 [Gmail]/Drafts, 0 messages
  4 [Gmail]/Important, 0 messages
@@ -4982,7 +5015,8 @@ Type a to save the attachments.
 Type / to search for emails by subject, by sender, or by the text in the body of the email.
 Finally type h for the help message, which looks like this.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>
 h	print this help message
 q	quit this program
 s	stop reading from this folder
@@ -5073,7 +5107,8 @@ and you have forgotten the structure of the table,
 use the shc (show columns) command.
 The output might look like this.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>Table customers, 536281 rows
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>Table customers, 536281 rows
 1 *custnum int
 2 firstname string
 3 lastname string
@@ -5312,7 +5347,8 @@ The short name is the alias, and you can call up the table using this alias.
 It will contain only the columns you specify.
 Here are two descriptors for the aforementioned customers table.
 
-<PRE><font size=3 face=Arial,Helvetica,sans-serif>table {
+<PRE>
+<font size=3 face=Arial,Helvetica,sans-serif>table {
     tname = customers
 #  cnm is my cryptic shorthand for customer name
 #  I want to be cryptic here, cause I'm going to be typing this a lot.

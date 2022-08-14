@@ -795,6 +795,12 @@ tag_ok:
 			atWall = false;
 			lasttext = 0;
 		}
+// The HTML5 specification says that user agents should strip the first
+// newline immediately after the <pre> tag.
+		if(i == TAGACT_PRE) {
+			if(*s == '\r') ++s, ++seek;
+			if(*s == '\n') ++s, ++seek;
+		}
 		findAttributes(t, gt);
 		if(isAutoclose(tagname)) {
 			if(dhs) puts("autoclose");
