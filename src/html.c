@@ -3766,32 +3766,45 @@ static void findHeading(const Tag *t, int colno)
 {
 	int j = 1;
 	const Tag *u;
+	bool ishead = false;
 	td_text = initString(&td_text_l);
 	if(!t->parent ||
 	((t = t->parent)->action != TAGACT_TABLE &&
 	t->action != TAGACT_THEAD &&
 	t->action != TAGACT_TBODY))
 		return;
-	if(t->action != TAGACT_TABLE) {
-// it is tbody or thead
+// can't unfold the header row
+	if(t->action == TAGACT_THEAD) return;
+	if(t->action == TAGACT_TBODY) {
 		t = t->parent;
 		if(!t || t->action != TAGACT_TABLE)
 			return;
 	}
 	t = t->firstchild;
 	for(u = t; u; u = u->sibling)
-		if(u->action == TAGACT_THEAD || u->action == TAGACT_BODY) {
+		if(u->action == TAGACT_THEAD || u->action == TAGACT_TBODY) {
 			t = u;
 			break;
 		}
-	if(t && (t->action == TAGACT_THEAD || t->action == TAGACT_TBODY))
+	if(t && (t->action == TAGACT_THEAD || t->action == TAGACT_TBODY)) {
+		ishead = (t->action == TAGACT_THEAD);
 		t = t->firstchild;
+	}
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
 		return;
 	t = t->firstchild;
 	if(t->action != TAGACT_TD ||
-	!stringEqual(t->info->name, "th"))
+	(!ishead && t->info->name[1] != 'h'))
 		return;
+
+// t is first cell in row, and is <th> or is inside <thead>
+// Make sure it's not a row header in <tbody>
+	if(!ishead) {
+		for(u = t->sibling; u; u = u->sibling)
+			if(u->action == TAGACT_TD) break;
+		if(!u || u->info->name[1] != 'h') return;
+	}
+
 	while(t) {
 		if(t->action == TAGACT_TD) {
 			j += t->js_ln;
@@ -4462,8 +4475,7 @@ nop:
 		if (!retainTag)
 			break;
 		if(!(ltag = t->parent)
-		|| ltag->action != TAGACT_TR || !ltag->ur ||
-		t->info->name[1] == 'h') {
+		|| ltag->action != TAGACT_TR || !ltag->ur) {
 // Traditional table format, pipe separated,
 // on one line if it fits, or wraps in unpredictable ways if it doesn't.
 			if (tdfirst)
@@ -4814,21 +4826,29 @@ bool showHeaders(int ln)
 {
 	const Tag *t = line2table(ln);
 	int colno;
+	bool ishead;
 	if(!t)
 		return false;
-	for(t = t->firstchild; t; t = t->sibling) {
+	for(t = t->firstchild; t; t = t->sibling)
 		if(t->action == TAGACT_THEAD || t->action == TAGACT_TBODY)
 			break;
-	}
 	if(!t)
 		goto fail;
+	ishead = (t->action == TAGACT_THEAD);
 	t = t->firstchild;
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
 		goto fail;
 	t = t->firstchild;
 	if(t->action != TAGACT_TD ||
-	!stringEqual(t->info->name, "th"))
+	t->info->name[1] != 'h')
 		goto fail;
+// if this is tbody, one <th> isn't enough, could be a row header, we need two.
+	if(!ishead) {
+		const Tag *u;
+		for(u = t->sibling; u; u = u->sibling)
+			if(u->action == TAGACT_TD) break;
+		if(!u || u->info->name[1] == 'd') goto fail;
+	}
 	colno = 1;
 	while(t) {
 		if(t->action == TAGACT_TD) {
