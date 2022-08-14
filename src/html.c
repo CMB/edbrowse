@@ -4215,6 +4215,8 @@ nocolor:
 	case TAGACT_BQ:
 		if (invisible)
 			break;
+		if(!opentag)
+			while(ns_l && isspaceByte(ns[ns_l-1])) --ns_l;
 		stringAndString(&ns, &ns_l,
 		(opentag ? "\f``" : "''\f"));
 		break;
