@@ -31,7 +31,7 @@ static bool htmlGenerated;
 static uchar headbody;
 // This isn't counting 13 bodies buried in the basement, it tracks <body>
 // in <body>, which shouldn't happen, but it does.
-static int bodycount;
+static int bodycount, htmlcount;
 static bool premode;
 
 static bool atWall;
@@ -75,6 +75,7 @@ static const struct specialtag {
 	const char *second;
 	} specialtags[] = {
 // special code to allow nesting of <body> which should never happen
+{"innerhtml",0,1, 0, 0},
 {"innerbody",0,1, 0, 0},
 {"script", 0, 0, 1, 0},
 {"style", 0, 0, 1, 0},
@@ -147,7 +148,7 @@ static int isCrossclose2(const char *name)
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
-	static const char * const list[] = {"body","innerbody","title","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
+	static const char * const list[] = {"body","innerbody","innerhtml","title","h1","h2","h3","h4","h5","h6","p","table","thead","tbody","tfoot","tr","td","th","ul","ol","dl","li","dt","div","br","hr","iframe",0};
 	return stringInListCI(list, name) >= 0;
 }
 
@@ -232,7 +233,7 @@ skiplink:
 			if(dhs) puts("in head");
 		}
 		if(stringEqualCI(name, "body")) {
-			headbody = 4, bodycount = 1;
+			headbody = 4, bodycount = htmlcount = 1;
 			if(dhs) puts("in body");
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
@@ -253,7 +254,7 @@ skiplink:
 			if(dhs) puts("post body");
 		}
 		if(stringEqualCI(name, "html")) {
-			headbody = 6;
+			headbody = 6, htmlcount = 0;
 			if(dhs) puts("post html");
 		}
 		if(stringEqualCI(name, "pre")) {
@@ -574,7 +575,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	const struct opentag *k;
 
 	seek = s = htmltext, ln = 1, premode = false;
-	headbody = 0, bodycount = 0;
+	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
 	atWall = false;
 	lasttext = 0;
@@ -719,9 +720,12 @@ so also break out at >< like a new tag is starting.
 		if(slash) {
 			if(stringEqualCI(tagname, "body") && bodycount > 1)
 				strcpy(tagname, "innerbody"), --bodycount;
+			if(stringEqualCI(tagname, "html") && htmlcount > 1)
+				strcpy(tagname, "innerhtml"), --htmlcount;
 // create this tag in the edbrowse world.
 			if(dhs) printf("</%s>\n", tagname);
 			makeTag(tagname, true, lt);
+			if(headbody == 6) goto stop;
 			if(isWall(tagname)) {
 				atWall = true;
 				if(lasttext) trimWhite(lasttext->textval);
@@ -734,7 +738,9 @@ so also break out at >< like a new tag is starting.
 		if(dhs) printf("<%s> line %d\n", tagname, ln);
 // has to start and end with html
 		if(stringEqualCI(tagname, "html")) {
-			if(headbody > 0) { if(dhs) puts("sequence"); continue; }
+			if(headbody == 0) goto tag_ok;
+			if(headbody != 4) { if(dhs) puts("sequence"); continue; }
+			strcpy(tagname, "innerhtml"), ++htmlcount;
 			goto tag_ok;
 		}
 		if(headbody == 0)
