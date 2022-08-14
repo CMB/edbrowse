@@ -559,8 +559,8 @@ struct htmlTag {
 	int seqno; // tag sequence number in this window
 	int gsn; // global sequence number, for rooting
 	char *js_file;
-	int js_ln;			/* line number of javascript */
-	int lic;		/* list item count, highly overloaded */
+	int js_ln;			// line number of javascript
+	int lic;		// list item count, highly overloaded
 	int slic; /* start list item count */
 	int action;
 	const struct tagInfo *info;

@@ -4521,3 +4521,56 @@ void decorate(void)
 	traverseAll();
 }
 
+static void rowspan2(Tag *tr);
+void rowspan(void)
+{
+	const Tag *table, *tbody;
+	Tag *tr, *last_tr = 0;
+	int i;
+
+	for(i = 0; i < cw->numTags; ++i) {
+		table = tagList[i];
+		if(table->action != TAGACT_TABLE || table->dead || table->deleted)
+			continue;
+		for(tbody = table->firstchild; tbody; tbody = tbody->sibling) {
+			if(tbody->action != TAGACT_THEAD && tbody->action != TAGACT_TBODY)
+				continue;
+			for(tr = tbody->firstchild; tr; tr = tr->sibling) {
+				if(tr->action != TAGACT_TR) continue;
+// link to previous row
+				tr->same = last_tr;
+				last_tr = tr;
+				rowspan2(tr);
+			}
+		}
+	}
+}
+
+static void rowspan2(Tag *tr)
+{
+	Tag *td;
+
+// start by setting rowspan and colspan, possibly from javascript.
+// These are stored in lic and js_ln, integers we don't
+// otherwise need in <td>.
+// Yeah I know, it's ugly to overload like this.
+	for(td = tr->firstchild; td; td = td->sibling) {
+		const char *v;
+		td->lic = td->js_ln = 1;
+// from html attributes first
+			v = attribVal(td, "rowspan");
+			if(v && isdigit(*v)) td->lic = atoi(v);
+			v = attribVal(td, "colspan");
+			if(v && isdigit(*v)) td->js_ln = atoi(v);
+		if(allowJS && td->jslink) {
+			int n = get_property_number_t(td, "rowspan");
+			if(n > 0) td->lic = n;
+			n = get_property_number_t(td, "colspan");
+			if(n > 0) td->js_ln = n;
+		}
+		if(td->lic <= 0) td->lic = 1;
+		if(td->js_ln <= 0) td->js_ln = 1;
+	}
+
+}
+

@@ -158,6 +158,7 @@ void htmlInputHelper(Tag *t);
 void prerender(void);
 const char *fakePropName(void);
 void decorate(void);
+void rowspan(void);
 
 // sourcefile=http.c
 void eb_curl_global_init(void);

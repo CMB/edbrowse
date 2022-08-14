@@ -3764,7 +3764,7 @@ static void td_textUnder(const Tag *u)
 // return a column heading by number.
 static void findHeading(const Tag *t, int colno)
 {
-	int j = 0;
+	int j = 1;
 	const Tag *u;
 	td_text = initString(&td_text_l);
 	if(!t->parent ||
@@ -3794,7 +3794,8 @@ static void findHeading(const Tag *t, int colno)
 		return;
 	while(t) {
 		if(t->action == TAGACT_TD) {
-			if(++j == colno) {
+			j += t->js_ln;
+			if(j > colno) {
 // this is the header we want, descend to the text field
 				td_textUnder(t);
 				return;
@@ -4261,7 +4262,7 @@ nop:
 
 // defense against <td><p>stuff</p></td>
 // Supress linebreak if this is first or last child of a cell.
-		if(j && t->parent->action == TAGACT_TD &&
+		if(j && t->parent && t->parent->action == TAGACT_TD &&
 		((opentag && t->parent->firstchild == t) || (!opentag && !t->sibling)))
 			j = 0;
 
@@ -4487,7 +4488,7 @@ nop:
 			j = 1;
 			while(v && v != t) {
 				if(v->action == TAGACT_TD)
-					++j;
+					j += v->js_ln;
 				v = v->sibling;
 			}
 			if(v) { // should always happen
@@ -4685,6 +4686,7 @@ unparen:
 char *render(void)
 {
 	Frame *f;
+	rowspan();
 	for (f = &cw->f0; f; f = f->next)
 		if (f->cx)
 			set_property_bool_win(f, "rr$start", true);
@@ -4830,7 +4832,8 @@ bool showHeaders(int ln)
 	colno = 1;
 	while(t) {
 		if(t->action == TAGACT_TD) {
-			printf("%d ", colno++);
+			printf("%d ", colno);
+			colno += t->js_ln; // colspan
 			td_text = initString(&td_text_l);
 			td_textUnder(t);
 			if(!td_text_l) {
