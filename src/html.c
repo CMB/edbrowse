@@ -4259,10 +4259,6 @@ nop:
 		else
 			j >>= 2;
 
-// <blockquote><p> don't put in the extra whitespace after ``
-		if(ns_l >= 3 && stringEqual(ns + ns_l - 3, "\f``"))
-			j = 0;
-
 // defense against <td><p>stuff</p></td>
 // Supress linebreak if this is first or last child of a cell.
 		if(j && t->parent->action == TAGACT_TD &&

@@ -216,9 +216,10 @@ put1:
 }
 
 // For <h3><div>hello</div></h3> which should not happen, but does
+// And for <blockquote><p> which is prefectly fine
 static void h3div(char *buf)
 {
-	char *s;
+	char *s, *t;
 	bool in_h = false;
 	for(s = buf; *s; ++s) {
 		if(*s == '\f' && s[1] == 'h' &&
@@ -230,6 +231,20 @@ static void h3div(char *buf)
 			if(in_h) *s = ' ';
 		} else in_h = false;
 	}
+	in_h = false;
+	for(s = t = buf; *s; ++s) {
+		if(*s == '\f' && s[1] == '`' && s[2] == '`'
+		&& isspaceByte(s[3])) {
+			memcpy(t, s, 3);
+			in_h = true, s += 3, t += 3;
+			continue;
+		}
+		if(isspaceByte(*s)) {
+			if(in_h) continue;
+		} else in_h = false;
+		*t++ = *s;
+	}
+	*t = 0;
 }
 
 /*********************************************************************
