@@ -249,6 +249,27 @@ static char *dirSuffix(int n)
 	return dirSuffixContext(n, context);
 }
 
+static char *dirSuffix2(int n, const char *path)
+{
+	static char suffix[4], *t;
+	char ftype, c;
+	if(!cw->dnoMode)
+		return dirSuffixContext(n, context);
+// names only, don't have file type information, have to go get it
+	t = suffix;
+	ftype = fileTypeByName(path, 1);
+	if(isupper(ftype)) *t++ = '@', ftype = tolower(ftype);
+	c = 0;
+	if (ftype == 'd') c = '/';
+	if (ftype == 's') c = '^';
+	if (ftype == 'c') c = '<';
+	if (ftype == 'b') c = '*';
+	if (ftype == 'p') c = '|';
+	*t++ = c;
+	*t = 0;
+	return suffix;
+}
+
 /* Display a line to the screen, with a limit on output length. */
 void displayLine(int n)
 {
@@ -1030,6 +1051,7 @@ static void undoPush(void)
 	uw->binMode = cw->binMode;
 	uw->nlMode = cw->nlMode;
 	uw->dirMode = cw->dirMode;
+	uw->dnoMode = cw->dnoMode;
 	if (cw->map) {
 		uw->map = allocMem((cw->dol + 2) * LMSIZE);
 		memcpy(uw->map, cw->map, (cw->dol + 2) * LMSIZE);
@@ -1631,7 +1653,7 @@ abort:
 		if(strstr(path, "\\\\"))
 			qc = 0;
 
-		ftype = dirSuffix(ln);
+		ftype = dirSuffix2(ln, path);
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype)))
 			debugPrint(1, "%s%s ↓", file, ftype);
 		else
@@ -1731,26 +1753,22 @@ static bool moveFiles(void)
 	cnt = endRange - startRange + 1;
 	while (cnt--) {
 		char *file, *t, *ftype;
-		bool iswin = false;
-#ifdef DOSLIKE
-		iswin = true;
-#endif
 		file = (char *)fetchLine(ln, 0);
 		t = strchr(file, '\n');
 		if (!t)
 			i_printfExit(MSG_NoNlOnDir, file);
 		*t = 0;
-		ftype = dirSuffix(ln);
-
-		debugPrint(1, "%s%s %s %s",
-		file, ftype, (icmd == 'm' ? "→" : "≡"), cw2->baseDirName);
-
 		path1 = makeAbsPath(file);
 		if (!path1) {
 			free(file);
 			return false;
 		}
 		path1 = cloneString(path1);
+		ftype = dirSuffix2(ln, path1);
+
+		debugPrint(1, "%s%s %s %s",
+		file, ftype, (icmd == 'm' ? "→" : "≡"), cw2->baseDirName);
+
 
 		cw = cw2;
 		path2 = makeAbsPath(file);
@@ -1773,7 +1791,7 @@ static bool moveFiles(void)
 			if (errno == EXDEV) {
 				char *rmbuf;
 				int rmlen, j;
-				if (!iswin || *ftype || fileSizeByName(path1) > 200000000) {
+				if (*ftype || fileSizeByName(path1) > 200000000) {
 // let mv or cp do the work
 					char *a, qc = '\'';
 					if(strchr(path1, qc) || strchr(path2, qc)) {
@@ -2144,6 +2162,7 @@ static bool readDirectory(const char *filename)
 		return false;
 	if (!cw->dol) {
 		cw->dirMode = true;
+		cw->dnoMode = dno;
 		if(debugLevel >= 1)
 			i_puts(MSG_DirMode);
 		if (lsformat[0])
@@ -2199,16 +2218,11 @@ static bool readDirectory(const char *filename)
 		}
 		ftype = tolower(ftype);
 		c = 0;
-		if (ftype == 'd')
-			c = '/';
-		if (ftype == 's')
-			c = '^';
-		if (ftype == 'c')
-			c = '<';
-		if (ftype == 'b')
-			c = '*';
-		if (ftype == 'p')
-			c = '|';
+		if (ftype == 'd') c = '/';
+		if (ftype == 's') c = '^';
+		if (ftype == 'c') c = '<';
+		if (ftype == 'b') c = '*';
+		if (ftype == 'p') c = '|';
 		if (c) {
 			if (!cw->dirMode)
 				*t = c, *++t = '\n';
