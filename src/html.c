@@ -3762,6 +3762,7 @@ static void td_textUnder(const Tag *u)
 }
 
 // return a column heading by number.
+// This function and the next are used to display an unfolded row.
 static void findHeading(const Tag *t, int colno)
 {
 	int j = 1;
@@ -3823,23 +3824,82 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 {
 	const Tag *v;
 	int j = 1, seqno, ics;
+	char *prior_p, *last_p;
+	int prior_j;
 	char *cs = tr->js_file; // the cellstring
 	if(!cs) cs = emptyString;
+	last_p = cs;
+
+	if (tdfirst) tdfirst = false;
+	else stringAndChar(&ns, &ns_l, '\n');
+
 	for(v = tr->firstchild; v; v = v->sibling) {
 		if(v->action != TAGACT_TD) continue;
+		prior_p = 0;
 		while(isdigit(*cs)) {
+			if(!prior_p) prior_p = cs, prior_j = j;
 			seqno = strtol(cs, &cs, 10);
 			ics = 1;
-			if(*cs == '2') ics = strtol(cs + 1, &cs, 10);
+			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
 			++cs; // skip past comma
 			j += ics;
 		}
 // the comma that stands in for this <td> cell
-		if(*cs == ',') ++cs;
+// could be @3,
+		cs = strchr(cs, ',');
+		cs = (cs ? cs + 1 : emptyString);
 		if(v == td) break;
 		j += v->js_ln;
+		last_p = cs;
 	}
-	if(!v) return; // should never happen
+
+	if(td && !v) return; // should never happen
+	if(!v) {
+// reference rowspan fields from above that slide in
+// at the end of the row.
+		cs = last_p;
+		while(*cs) {
+			if(*cs == ',') { ++cs, ++j; continue; }
+			if(*cs == '@') {
+				ics = strtol(cs + 1, &cs, 10);
+				j += ics, ++cs;
+				continue;
+			}
+			if(!isdigit(*cs)) break; // should be a number
+			seqno = strtol(cs, &cs, 10);
+			ics = 1;
+			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
+			++cs; // skip past comma
+			findHeading(tr, j);
+			if(td_text_l) {
+				stringAndString(&ns, &ns_l, td_text);
+				nzFree(td_text);
+			} else stringAndNum(&ns, &ns_l, j);
+			stringAndString(&ns, &ns_l, ": ↑\n");
+			j += ics;
+		}
+		return;
+	}
+
+// reference rowspan fields from above that slide in
+// just before this cell.
+	if(prior_p) {
+		cs = prior_p;
+		while(isdigit(*cs)) {
+			seqno = strtol(cs, &cs, 10);
+			ics = 1;
+			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
+			++cs; // skip past comma
+			findHeading(tr, prior_j);
+			if(td_text_l) {
+				stringAndString(&ns, &ns_l, td_text);
+				nzFree(td_text);
+			} else stringAndNum(&ns, &ns_l, prior_j);
+			stringAndString(&ns, &ns_l, ": ↑\n");
+			prior_j += ics;
+		}
+	}
+
 	findHeading(tr, j);
 	if(td_text_l) {
 		stringAndString(&ns, &ns_l, td_text);
@@ -4500,6 +4560,10 @@ nop:
 				stringAndString(&ns, &ns_l, rowbuf);
 			}
 		}
+		if(t->ur && !opentag && (ltag = t->parent)
+		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY)) {
+			td2columnHeading(t, 0);
+		}
 	case TAGACT_TABLE:
 		goto nop;
 
@@ -4524,10 +4588,6 @@ nop:
 			}
 		} else {
 // unfolded row, generate the column heading
-			if (tdfirst)
-				tdfirst = false;
-			else
-				stringAndChar(&ns, &ns_l, '\n');
 			td2columnHeading(ltag, t);
 		}
 		tagInStream(tagno);

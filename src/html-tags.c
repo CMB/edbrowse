@@ -4822,8 +4822,7 @@ static void rowspan3(Tag *tr, int ri)
 			continue;
 		}
 		if(*s == '@') {
-			s = strchr(s, ',');
-			continue;
+			while(*s != ',') *t++ = *s++;
 		}
 		*t++ = *s++;
 	}
