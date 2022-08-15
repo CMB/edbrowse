@@ -4690,8 +4690,7 @@ crack:
 		if((save_ihs = ihs)) {
 			if(isdigit(*ihs)) {
 				irl = strtol(ihs, &ihs, 10);
-				++ihs; // skip past /
-				irs = strtol(ihs, &ihs, 10);
+				irs = strtol(ihs + 1, &ihs, 10);
 			}
 			if(*ihs == '@') {
 				ics = strtol(ihs + 1, &ihs, 10);
@@ -4742,8 +4741,7 @@ incorporate:
 		irs = irl = ics = 1;
 		if(isdigit(*ihs)) {
 			irl = strtol(ihs, &ihs, 10);
-			++ihs; // skip past /
-			irs = strtol(ihs, &ihs, 10);
+			irs = strtol(ihs + 1, &ihs, 10);
 		}
 		if(*ihs == '@') {
 			ics = strtol(ihs + 1, &ihs, 10);
@@ -4793,6 +4791,7 @@ static void rowspan3(Tag *tr, int ri)
 	char *ihs; // inherited cellstring
 	int irl, irs; // inherited row level and span
 	char *s, *t;
+	bool needstring = false;
 
 	if(!(ihs = tr->js_file)) return;
 
@@ -4800,15 +4799,20 @@ static void rowspan3(Tag *tr, int ri)
 	while(*s) {
 		if(isdigit(*s)) {
 			irl = strtol(s, &s, 10);
-			++s; // skip past /
-			irs = strtol(s, &s, 10);
+			irs = strtol(s + 1, &s, 10);
 			if(!--irl) continue; // don't need it
 			sprintf(t, "%d", irl);
 			t += strlen(t);
+			needstring = true;
 			continue;
 		}
 		*t++ = *s++;
 	}
 	*t = 0;
-	debugPrint(3, "row %d %s", ri, ihs);
+
+	if(!needstring) {
+		nzFree(ihs);
+		tr->js_file = 0;
+	} else
+		debugPrint(3, "row %d %s", ri, ihs);
 }
