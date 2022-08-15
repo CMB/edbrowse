@@ -3819,6 +3819,35 @@ static void findHeading(const Tag *t, int colno)
 	return;
 }
 
+static void td2columnHeading(const Tag *tr, const Tag *td)
+{
+	const Tag *v;
+	int j = 1, seqno, ics;
+	char *cs = tr->js_file; // the cellstring
+	if(!cs) cs = emptyString;
+	for(v = tr->firstchild; v; v = v->sibling) {
+		if(v->action != TAGACT_TD) continue;
+		while(isdigit(*cs)) {
+			seqno = strtol(cs, &cs, 10);
+			ics = 1;
+			if(*cs == '2') ics = strtol(cs + 1, &cs, 10);
+			++cs; // skip past comma
+			j += ics;
+		}
+// the comma that stands in for this <td> cell
+		if(*cs == ',') ++cs;
+		if(v == td) break;
+		j += v->js_ln;
+	}
+	if(!v) return; // should never happen
+	findHeading(tr, j);
+	if(td_text_l) {
+		stringAndString(&ns, &ns_l, td_text);
+		nzFree(td_text);
+	} else stringAndNum(&ns, &ns_l, j);
+	stringAndString(&ns, &ns_l, ": ");
+}
+
 // return allocated string, as may come from js
 static char *arialabel(const Tag *t)
 {
@@ -4494,27 +4523,12 @@ nop:
 				stringAndChar(&ns, &ns_l, "\3\4 "[j]);
 			}
 		} else {
-// unfolded row, find the column number.
-			Tag *v = ltag->firstchild;
+// unfolded row, generate the column heading
 			if (tdfirst)
 				tdfirst = false;
 			else
 				stringAndChar(&ns, &ns_l, '\n');
-			j = 1;
-			while(v && v != t) {
-				if(v->action == TAGACT_TD)
-					j += v->js_ln;
-				v = v->sibling;
-			}
-			if(v) { // should always happen
-				findHeading(ltag, j);
-				if(td_text_l) {
-					stringAndString(&ns, &ns_l, td_text);
-				nzFree(td_text);
-				} else
-					stringAndNum(&ns, &ns_l, j);
-				stringAndString(&ns, &ns_l, ": ");
-			}
+			td2columnHeading(ltag, t);
 		}
 		tagInStream(tagno);
 		break;
