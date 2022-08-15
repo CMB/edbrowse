@@ -4604,6 +4604,7 @@ Hang on, here we go.
 *********************************************************************/
 
 static void rowspan2(Tag *tr, int ri);
+static void rowspan3(Tag *tr, int ri);
 void rowspan(void)
 {
 	const Tag *table, *tbody;
@@ -4614,6 +4615,7 @@ void rowspan(void)
 		table = tagList[i];
 		if(table->action != TAGACT_TABLE || table->dead || table->deleted)
 			continue;
+
 		ri = 0;
 		for(tbody = table->firstchild; tbody; tbody = tbody->sibling) {
 			if(tbody->action != TAGACT_THEAD && tbody->action != TAGACT_TBODY)
@@ -4627,6 +4629,16 @@ void rowspan(void)
 				nzFree(tr->js_file);
 				tr->js_file = 0;
 				rowspan2(tr, ++ri);
+			}
+		}
+
+		ri = 0;
+		for(tbody = table->firstchild; tbody; tbody = tbody->sibling) {
+			if(tbody->action != TAGACT_THEAD && tbody->action != TAGACT_TBODY)
+				continue;
+			for(tr = tbody->firstchild; tr; tr = tr->sibling) {
+				if(tr->action == TAGACT_TR)
+					rowspan3(tr, ++ri);
 			}
 		}
 	}
@@ -4775,3 +4787,28 @@ addcomma:
 		} else nzFree(ns);
 }
 
+// Simplify the cellstrings
+static void rowspan3(Tag *tr, int ri)
+{
+	char *ihs; // inherited cellstring
+	int irl, irs; // inherited row level and span
+	char *s, *t;
+
+	if(!(ihs = tr->js_file)) return;
+
+	s = t = ihs;
+	while(*s) {
+		if(isdigit(*s)) {
+			irl = strtol(s, &s, 10);
+			++s; // skip past /
+			irs = strtol(s, &s, 10);
+			if(!--irl) continue; // don't need it
+			sprintf(t, "%d", irl);
+			t += strlen(t);
+			continue;
+		}
+		*t++ = *s++;
+	}
+	*t = 0;
+	debugPrint(3, "row %d %s", ri, ihs);
+}
