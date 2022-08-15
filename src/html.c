@@ -4448,14 +4448,17 @@ nop:
 		if(t->ur && opentag && (ltag = t->parent)
 		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY)) {
 // print the row number
-			Tag *v = ltag->firstchild;
+			const Tag *v = ltag->firstchild;
 			j = 1;
 			while(v && v != t) {
 				if(v->action == TAGACT_TR) {
-// sometimes <th> is in the tbody and not in thead.
-					if(v->firstchild &&
+// sometimes the headers are in the tbody and not in thead.
+					if(j == 1 && v->firstchild &&
 					v->firstchild->action == TAGACT_TD &&
-					v->firstchild->info->name[1] == 'h')
+					v->firstchild->info->name[1] == 'h' &&
+					v->firstchild->sibling &&
+					v->firstchild->sibling->action == TAGACT_TD &&
+					v->firstchild->sibling->info->name[1] == 'h')
 						; // skip <th> row
 					else
 						++j;
