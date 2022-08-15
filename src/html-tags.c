@@ -105,6 +105,7 @@ static const struct specialtag {
 {"div",0,1, 0, 0},
 {"font",0,1, 0, 0},
 {"span",0,1, 0, 0},
+{"p",0,0, 0, "blockquote"},
 {0, 0,0,0, 0},
 };
 
@@ -141,7 +142,7 @@ static int isCrossclose(const char *name)
 
 static int isCrossclose2(const char *name)
 {
-	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","p","table","ul","ol","dl","hr",0};
+	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","table","ul","ol","dl","hr",0};
 	return stringInListCI(list, name) >= 0;
 }
 
