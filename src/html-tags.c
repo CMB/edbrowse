@@ -4527,17 +4527,94 @@ void decorate(void)
 	traverseAll();
 }
 
-static void rowspan2(Tag *tr);
+/*********************************************************************
+Consider the table
+<table>
+<tr><td>a</td><td>b</td><td rowspan=2>c</td><td>d</td><td>e</td></tr>
+<tr><td>w</td><td>x</td><td>y</td><td>z</td></tr>
+</table>
+Lef to its own devices, edbrowse represents this as
+a|b|c|d|e
+w|x|y|z
+y is below c, and only 4 cells on the second row.  That's wrong.
+In a perfect world it might look like
+a|b|c|d|e
+w|x|c|y|z
+This could be problematic if c is an entire paragraph with links and so on.
+Duplicating that could screw up javascript.
+Just duplicating its appearance could work but is not trivial.
+Perhaps an up arrow indicating that you need to look up for this value.
+a|b|c|d|e
+w|x|^|y|z
+You don't want to do any of this for a presentation table, only a data table.
+Presentation might have a picture with rowspan=3, then
+three cells to the right, each a section that javascript can access or update.
+edbrowse shows this as
+[picture]
+paragraph 1
+paragraph 2
+paragraph 3
+And that's exactly what you want. You don't particularly
+care that the paragraphs are to the right of the picture on the screen.
+Trying to convey that would be confusing.
+So there are many things to consider here.
+I don't know the answer, but I do know,
+you have to start with an accurate representation.
+If you can't represent it inside, you can't present it.
+As always,we have the javascript double-edged sword.
+1. js might create the entire table, including rowspan attributes, from scratch.
+We can't do this from the html tags, we have to do it when the screen
+is rendered, thus this machinery is called
+from the top of render() in html.c.
+Also, we can't change any of the tags or the tree structure.
+I can't copy tags from one row down to the row below,
+because running js might assume the cells are exactly as they were created.
+That is, 4 cells on row 2, w, x, y, and z.
+Changing that could break js in unexpected ways.
+I can only muck with the display.
+So, represent the location of the cells,
+and the propagation of the cells by rowspan, using edbrowse variables only,
+then figure out what to do about it in render().
+I'm overloading 3 variables in Tag, and I know that's ugly,
+but I don't feel like creating new ones just for <tr>,
+and these three aren't being used by <tr>, so here we go.
+lic is rowspan, js_ln is colspan, and js_file is the cellstring.
+What is a cellstring?
+It is a comma separated list of cells, or merged cells, or inherited cells,
+on that row.
+If the cell is a simple <td></td>, then we don't need anything,
+and we can just append a comma.
+If rowspan = 7, append 1/7, the first row of 7.
+The next row will inherit this in position, and will show 2/7.
+The next row 3/7 and so on.
+If colspan=3, we append @3.
+Both rowspan and colspan are possible, but very unlikely.   1/7@3
+Each cellstring is constructed from the cells on that row
+and the cellstring from the row above.
+When you run into the first <td>, if the inherited string starts with
+3/7 then we have to put in 4/7, and then move on to the new cell <td>.
+This resembels the merge of two sorted lists.
+It's nontrivial though.
+Errors are possible, like
+<tr><td></td><td rowspan=2></td></tr>
+<tr><td colspan=2></td></tr>
+Such should never happen in the real world, but don't be surprised if it does.
+I will defer to rowspan over colspan.
+Hang on, here we go.
+*********************************************************************/
+
+static void rowspan2(Tag *tr, int ri);
 void rowspan(void)
 {
 	const Tag *table, *tbody;
 	Tag *tr, *last_tr = 0;
-	int i;
+	int i, ri;
 
 	for(i = 0; i < cw->numTags; ++i) {
 		table = tagList[i];
 		if(table->action != TAGACT_TABLE || table->dead || table->deleted)
 			continue;
+		ri = 0;
 		for(tbody = table->firstchild; tbody; tbody = tbody->sibling) {
 			if(tbody->action != TAGACT_THEAD && tbody->action != TAGACT_TBODY)
 				continue;
@@ -4546,22 +4623,32 @@ void rowspan(void)
 // link to previous row
 				tr->same = last_tr;
 				last_tr = tr;
-				rowspan2(tr);
+// js_file holds the descriptive string of the cells in the row
+				nzFree(tr->js_file);
+				tr->js_file = 0;
+				rowspan2(tr, ++ri);
 			}
 		}
 	}
 }
 
-static void rowspan2(Tag *tr)
+static void rowspan2(Tag *tr, int ri)
 {
-	Tag *td;
+	Tag *td, *last_td;
+	char *ihs; // inherited cellstring
+	char *save_ihs;
+	char *ns; // new string
+	int ns_l, end_l;
+	int c1, c2; // column numbers
+	int irl, irs; // inherited row level and span
+	int ics; // inherited colspan
+	bool needstring;
+	char b[20];
 
 // start by setting rowspan and colspan, possibly from javascript.
-// These are stored in lic and js_ln, integers we don't
-// otherwise need in <td>.
-// Yeah I know, it's ugly to overload like this.
 	for(td = tr->firstchild; td; td = td->sibling) {
 		const char *v;
+		if(td->action != TAGACT_TD) continue;
 		td->lic = td->js_ln = 1;
 // from html attributes first
 			v = attribVal(td, "rowspan");
@@ -4578,5 +4665,113 @@ static void rowspan2(Tag *tr)
 		if(td->js_ln <= 0) td->js_ln = 1;
 	}
 
+	ihs = (tr->same ? tr->same->js_file : 0);
+	c1 = c2 = 1;
+	ns = initString(&ns_l);
+	last_td = 0;
+	needstring = false;
+
+	for(td = tr->firstchild; td; td = td->sibling) {
+		if(td->action != TAGACT_TD) continue;
+crack:
+		irs = irl = ics = 1;
+		if((save_ihs = ihs)) {
+			if(isdigit(*ihs)) {
+				irl = strtol(ihs, &ihs, 10);
+				++ihs; // skip past /
+				irs = strtol(ihs, &ihs, 10);
+			}
+			if(*ihs == '@') {
+				ics = strtol(ihs + 1, &ihs, 10);
+			}
+			++ihs; // skip past comma
+			if(!*ihs) ihs = 0; // end of string
+		}
+
+// c1 could be less than c2, if we just brought in a cell with a wide colspan
+		if(c1 < c2 && irl < irs) {
+// This is the error condition I talked about
+// shrink colspan so this cell fits
+			last_td->js_ln -= (c2-c1);
+			while(ns[--ns_l] != '@')  ;
+			if(last_td->js_ln == 1) strcpy(ns + ns_l, ",");
+			else
+				sprintf(ns + ns_l, "@%d,", last_td->js_ln);
+			ns_l = strlen(ns);
+			c2 = c1;
+		}
+		if(c1 < c2) {
+			c1 += ics;
+			goto crack;
+		}
+		if(c1 > c2) goto incorporate;
+		if(irl == irs) goto incorporate;
+		needstring = true;
+		sprintf(b, "%d/%d", irl + 1, irs);
+		if(ics > 1) sprintf(b + strlen(b), "@%d", ics);
+		strcat(b, ",");
+		stringAndString(&ns, &ns_l, b);
+		c1 += ics, c2 += ics;
+		goto crack;
+incorporate:
+		b[0] = 0;
+		if(td->lic > 1)
+			sprintf(b, "1/%d", td->lic), needstring = true;
+		if(td->js_ln > 1) sprintf(b + strlen(b), "@%d", td->js_ln);
+		strcat(b, ",");
+		stringAndString(&ns, &ns_l, b);
+		c2 += td->js_ln;
+		ihs = save_ihs;
+		last_td = td;
+	}
+
+	end_l = ns_l;
+	while(ihs) {
+		irs = irl = ics = 1;
+		if(isdigit(*ihs)) {
+			irl = strtol(ihs, &ihs, 10);
+			++ihs; // skip past /
+			irs = strtol(ihs, &ihs, 10);
+		}
+		if(*ihs == '@') {
+			ics = strtol(ihs + 1, &ihs, 10);
+		}
+		++ihs; // skip past comma
+		if(!*ihs) ihs = 0; // end of string
+c1c2:
+		if(c1 < c2 && irl < irs) {
+			last_td->js_ln -= (c2-c1);
+			while(ns[--ns_l] != '@')  ;
+			if(last_td->js_ln == 1) strcpy(ns + ns_l, ",");
+			else
+				sprintf(ns + ns_l, "@%d,", last_td->js_ln);
+			end_l = ns_l = strlen(ns);
+			c2 = c1;
+		}
+		if(c1 < c2) {
+			c1 += ics;
+			continue;
+		}
+		if(c1 > c2) goto addcomma;
+		if(irl == irs) goto addcomma;
+		needstring = true;
+		sprintf(b, "%d/%d", irl + 1, irs);
+		if(ics > 1) sprintf(b + strlen(b), "@%d", ics);
+		strcat(b, ",");
+		stringAndString(&ns, &ns_l, b);
+		end_l = ns_l;
+		c1 += ics, c2 += ics;
+		continue;
+addcomma:
+		stringAndChar(&ns, &ns_l, ',');
+		++c2;
+		goto c1c2;
+	}
+
+	if(needstring) {
+		ns[end_l] = 0;
+		tr->js_file = ns;
+		debugPrint(3, "row %d %s", ri, ns);
+		} else nzFree(ns);
 }
 
