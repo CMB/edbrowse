@@ -4584,11 +4584,12 @@ It is a comma separated list of cells, or merged cells, or inherited cells,
 on that row.
 If the cell is a simple <td></td>, then we don't need anything,
 and we can just append a comma.
-If rowspan = 7, append 1/7, the first row of 7.
-The next row will inherit this in position, and will show 2/7.
-The next row 3/7 and so on.
+If rowspan = 7, append 1/7/seqno, the first row of 7,
+and the sequence number of this tag.
+The next row will inherit this, in position, and will show 2/7/seqno.
+The next row 3/7/seqno and so on.
 If colspan=3, we append @3.
-Both rowspan and colspan are possible, but very unlikely.   1/7@3
+Both rowspan and colspan are possible, but very unlikely.   1/7/seqno@3
 Each cellstring is constructed from the cells on that row
 and the cellstring from the row above.
 When you run into the first <td>, if the inherited string starts with
@@ -4654,8 +4655,9 @@ static void rowspan2(Tag *tr, int ri)
 	int c1, c2; // column numbers
 	int irl, irs; // inherited row level and span
 	int ics; // inherited colspan
+	int seqno;
 	bool needstring;
-	char b[20];
+	char b[32];
 
 // start by setting rowspan and colspan, possibly from javascript.
 	for(td = tr->firstchild; td; td = td->sibling) {
@@ -4691,10 +4693,10 @@ crack:
 			if(isdigit(*ihs)) {
 				irl = strtol(ihs, &ihs, 10);
 				irs = strtol(ihs + 1, &ihs, 10);
+				seqno = strtol(ihs + 1, &ihs, 10);
 			}
-			if(*ihs == '@') {
+			if(*ihs == '@')
 				ics = strtol(ihs + 1, &ihs, 10);
-			}
 			++ihs; // skip past comma
 			if(!*ihs) ihs = 0; // end of string
 		}
@@ -4718,7 +4720,7 @@ crack:
 		if(c1 > c2) goto incorporate;
 		if(irl == irs) goto incorporate;
 		needstring = true;
-		sprintf(b, "%d/%d", irl + 1, irs);
+		sprintf(b, "%d/%d/%d", irl + 1, irs, seqno);
 		if(ics > 1) sprintf(b + strlen(b), "@%d", ics);
 		strcat(b, ",");
 		stringAndString(&ns, &ns_l, b);
@@ -4726,8 +4728,10 @@ crack:
 		goto crack;
 incorporate:
 		b[0] = 0;
-		if(td->lic > 1)
-			sprintf(b, "1/%d", td->lic), needstring = true;
+		if(td->lic > 1) {
+			sprintf(b, "1/%d/%d", td->lic, td->seqno);
+			needstring = true;
+		}
 		if(td->js_ln > 1) sprintf(b + strlen(b), "@%d", td->js_ln);
 		strcat(b, ",");
 		stringAndString(&ns, &ns_l, b);
@@ -4737,15 +4741,16 @@ incorporate:
 	}
 
 	end_l = ns_l;
+// rowspans hanging down after this row is done
 	while(ihs) {
 		irs = irl = ics = 1;
 		if(isdigit(*ihs)) {
 			irl = strtol(ihs, &ihs, 10);
 			irs = strtol(ihs + 1, &ihs, 10);
+			seqno = strtol(ihs + 1, &ihs, 10);
 		}
-		if(*ihs == '@') {
+		if(*ihs == '@')
 			ics = strtol(ihs + 1, &ihs, 10);
-		}
 		++ihs; // skip past comma
 		if(!*ihs) ihs = 0; // end of string
 c1c2:
@@ -4765,7 +4770,7 @@ c1c2:
 		if(c1 > c2) goto addcomma;
 		if(irl == irs) goto addcomma;
 		needstring = true;
-		sprintf(b, "%d/%d", irl + 1, irs);
+		sprintf(b, "%d/%d/%d", irl + 1, irs, seqno);
 		if(ics > 1) sprintf(b + strlen(b), "@%d", ics);
 		strcat(b, ",");
 		stringAndString(&ns, &ns_l, b);
@@ -4790,6 +4795,7 @@ static void rowspan3(Tag *tr, int ri)
 {
 	char *ihs; // inherited cellstring
 	int irl, irs; // inherited row level and span
+	int seqno, ics;
 	char *s, *t;
 	bool needstring = false;
 
@@ -4800,10 +4806,22 @@ static void rowspan3(Tag *tr, int ri)
 		if(isdigit(*s)) {
 			irl = strtol(s, &s, 10);
 			irs = strtol(s + 1, &s, 10);
+			seqno = strtol(s + 1, &s, 10);
+			ics = 1;
+			if(*s == '@')
+				ics = strtol(s + 1, &s, 10);
 			if(!--irl) continue; // don't need it
-			sprintf(t, "%d", irl);
+			sprintf(t, "%d", seqno);
 			t += strlen(t);
+			if(ics > 1) {
+				sprintf(t, "@%d", ics);
+				t += strlen(t);
+			}
 			needstring = true;
+			continue;
+		}
+		if(*s == '@') {
+			s = strchr(s, ',');
 			continue;
 		}
 		*t++ = *s++;
