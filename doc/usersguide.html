@@ -75,6 +75,7 @@ p.cen { text-align: center; }
 <UL>
 <LI><A HREF=#url> Accessing A URL </A>
 <LI><A HREF=#browse> Browse Mode </A>
+<LI><A HREF=#htab> HTML Tables </A>
 <LI><A HREF=#math> Technical, Math </A>
 <LI><A HREF=#title> Title, Description, Keywords </A>
 <LI><A HREF=#rf> The Refresh Command </A>
@@ -1997,8 +1998,8 @@ If you want to view the entire text as text, write it to a file, or to another s
 
 <P>
 The dno (directory names only) suppresses the supplementary information about file type, name, time, etc.
-This is useful when the directory is on a remote filesystem, and you don't want to issue a stat() call on every file.
-You just get the names of the files.
+This is useful when the directory is on a remote file server, and you don't want to issue a stat() call on every file.
+The names of the files are sufficient.
 The various ls commands still work, along with g to go to that file, even if that file is a directory.
 
 <P>
@@ -2236,19 +2237,10 @@ whatever.html.browse,
 without disturbing the original html.
 This protects you if you are developing your own web pages.
 
-<P>
-When the browse conversion is executed, the system checks for
-common syntax errors, such as a numbered list that is never closed.
-If the file name is a URL, these syntax errors are not reported.
-After all, it's not your web page, and there's nothing you can do about it.
-However, if the web page is yours, as indicated by a local filename,
-the first syntax error is displayed,
-whence you can return to the html source and fix it.
+<p>
 Type `ub' to undo the browse conversion.
-This takes you back to the raw html text under its original filename.
-Now you can correct the error and try the `b' command again.
-For your convenience, the label 'e is set to the line containing the error.
-Repeat this process until `b' runs without errors.
+This is the unbrowse command.
+It takes you back to the raw html text under its original filename.
 
 <P>
 If you try to quit, and the editor says "expecting `w'",
@@ -2256,15 +2248,9 @@ remember that you should be back in raw html before you issue the write command.
 You could write the browsed text into file.browse,
 and that will satisfy the "write" criteria,
 but this isn't really what you want.
-You've corrected errors in the html source, and that's what you need to save,
-so remember to undo the browse reformatting before you write the file.
 
 <P>
-Note that you can issue the unbrowse command even if there were no errors.
-If, for instance, you are looking at a well-constructed page
-on some other website,
-and you'd like to read or save the raw html, just type ub.
-As an exercise, invoke `e www.space.com',
+As an exercise, invoke `e www.edbrowse.org',
 and use the `b' and `ub' commands to switch between
 the raw html and the browsable text.
 
@@ -2295,6 +2281,34 @@ poems,
 and other preformatted blocks.
 
 <P>
+Note that the browsable text is readonly.
+After all, it's not the "source" -- why should you edit it?
+There are ways to enter and edit the input fields of an on-line form,
+but that will be discussed later.
+For now, you can think of the text as readonly.
+Issue a copy or insert or substitute command,
+and you'll get an error.
+
+<P>
+If you want to edit the text as pure text,
+enter the `et' command (edit as text).
+You will not be able to return to the html that produced this page,
+nor can you follow a hyperlink or submit a fill-out form.
+The browsable text has become plain text, with no Internet semantics.
+
+<P>
+The command `b file.html' is shorthand for `e file.html', followed by `b'.
+Remember that the ub command reverses the browse conversion, and reproduces the original html,
+as though you had entered `e file.html' alone.
+
+<P>
+If a url is opened from the command line,
+as in `e www.google.com', it is automatically browsed.
+Type `ub' to revert back to the raw html.
+
+<h2> <A NAME=htab> HTML Tables </A> </h2>
+
+<P>
 Tables are formatted like an ascii unload from a spreadsheet or sql database.
 Pipes separate the fields on each row.
 There is no whitespace around the pipes,
@@ -2315,9 +2329,17 @@ Here is a sample table.
 Empty fields at the end of a row are dropped.
 These are almost always images -- sometimes an entire row of images --
 sometimes an entire table of images.
+Tables are used for presentation, more often than they are used for data.
+For instance, a table with two rows, and two cells in each row, can be used to partition the screen into four quadrants,
+wherein images or text can be placed in each quadrant, and updated insitu.
+It would be awkward for edbrowse to insert pipes here, as the cells do not form a spreadsheet of data.
+Html tables can be ambiguous,
+which causes many headaches for edbrowse.
+We do our best to determine whether a table contains data, e.g. looking for a caption, or column headings, or a specific head section within the table.
+Data tables are sometimes treated differently from presentation tables.
 
 <P>
-The shc (show columns) command prints the headers of the columns.
+The shc (show columns) command prints the column headings, if they can be determined.
 In this example you would get:
 
 <P>
@@ -2328,7 +2350,7 @@ In this example you would get:
 3 price
 
 <P>
-The ur command unfolds a row, presenting it one line per column.
+The ur command unfolds a row, presenting it one line per cell.
 This is useful when a row is long, and creates a very long line, or wraps in unpredictable ways.
 Apply this command to the second line of the previous table and get this.
 <P>
@@ -2347,35 +2369,9 @@ As with other toggle commands, ur+ unfolds the row, or leaves it unfolded, and u
 <P>
 You can apply this command to a range, 17,29ur, but don't apply it to an entire web page,
 since html tables are often used for screen layout, rather than an actual table.
-The result could be very ugly.
+The result could be confusing.
 Make sure ur is only applied to rows of an actual table,
-presenting traditional rows and columns.
-
-<P>
-Note that the browsable text is readonly.
-After all, it's not the "source" -- why should you edit it?
-There are ways to enter and edit the input fields of an on-line form,
-but this will be discussed later.
-For now, you can think of the text as readonly.
-Issue a copy or insert or substitute command,
-and you'll get an error.
-
-<P>
-If you do want to edit the text, as pure text,
-enter the `et' command (edit as text).
-You will not be able to return to the html that produced this page,
-nor can you follow a hyperlink or submit a fill-out form.
-The browsable text has become plain text, with no Internet semantics.
-
-<P>
-The command `b file.html' is shorthand for `e file.html', followed by `b'.
-Remember that the ub command reverses the browse conversion, and reproduces the original html,
-as though you had entered `e file.html' alone.
-
-<P>
-If a url is opened from the command line,
-as in `e www.google.com', it is automatically browsed.
-Type `ub' to revert back to the raw html.
+presenting traditional rows and columns of data.
 
 <h2> <A NAME=math> Technical, Math </A> </h2>
 
