@@ -3721,13 +3721,14 @@ static void swapArrow(void)
 
 // Is this table a matrix of data, or just for layout purposes?
 // 0 means we can't tell, 1 is data, 2 is presentation
-// t is the cell.
+// t is a cell or a row.
 static int tableType(const Tag *t)
 {
 	const char *role;
 	if(stringEqual(t->info->name, "th"))
 		return 1;
-	t = t->parent;
+	if(t->action == TAGACT_TD)
+		t = t->parent;
 // no containing row; don't know
 	if(!t || t->action != TAGACT_TR)
 		return 0;
@@ -3744,10 +3745,19 @@ static int tableType(const Tag *t)
 	if(role && stringEqual(role, "presentation"))
 		return 2;
 // descend and look for caption or thead
-	for(t = t->firstchild; t; t = t->sibling)
+	for(t = t->firstchild; t; t = t->sibling) {
 		if(t->action == TAGACT_THEAD ||
 		stringEqual(t->info->name, "caption"))
 			return 1;
+		if(t->action == TAGACT_TBODY) break;
+	}
+	if(!t) return 0;
+// a table of data can be entirely in the body,
+// check and see if first row starts with <th>.
+	if((t = t->firstchild) && t->action == TAGACT_TR
+	&& (t = t->firstchild) && t->action == TAGACT_TD
+	&& t->info->name[1] == 'h')
+		return 1;
 	return 0;
 }
 
@@ -3762,7 +3772,7 @@ static void td_textUnder(const Tag *u)
 }
 
 // return a column heading by number.
-// This function and the next are used to display an unfolded row.
+// This function and the next two are used to display an unfolded row.
 static void findHeading(const Tag *t, int colno)
 {
 	int j = 1;
@@ -3820,12 +3830,37 @@ static void findHeading(const Tag *t, int colno)
 	return;
 }
 
+static void headingAndData(int j, const Tag *tr, int td_n, int ttype)
+{
+	const Tag *td;
+	findHeading(tr, j);
+	if(td_text_l) {
+		stringAndString(&ns, &ns_l, td_text);
+		nzFree(td_text);
+	} else stringAndNum(&ns, &ns_l, j);
+	stringAndString(&ns, &ns_l, ": ");
+	if(!td_n) return;
+	if(ttype != 1) {
+		stringAndString(&ns, &ns_l, "↑\n");
+		return;
+	}
+	td = tagList[td_n];
+	td_text = initString(&td_text_l);
+	td_textUnder(td);
+	if(td_text_l) {
+		stringAndString(&ns, &ns_l, td_text);
+		nzFree(td_text);
+	}
+	stringAndChar(&ns, &ns_l, '\n');
+}
+
 static void td2columnHeading(const Tag *tr, const Tag *td)
 {
 	const Tag *v;
 	int j = 1, seqno, ics;
 	char *prior_p, *last_p;
 	int prior_j;
+	uchar ttype = tableType(tr);
 	char *cs = tr->js_file; // the cellstring
 	if(!cs) cs = emptyString;
 	last_p = cs;
@@ -3870,12 +3905,7 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 			ics = 1;
 			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
 			++cs; // skip past comma
-			findHeading(tr, j);
-			if(td_text_l) {
-				stringAndString(&ns, &ns_l, td_text);
-				nzFree(td_text);
-			} else stringAndNum(&ns, &ns_l, j);
-			stringAndString(&ns, &ns_l, ": ↑\n");
+			headingAndData(j, tr, seqno, ttype);
 			j += ics;
 		}
 		return;
@@ -3890,25 +3920,15 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 			ics = 1;
 			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
 			++cs; // skip past comma
-			findHeading(tr, prior_j);
-			if(td_text_l) {
-				stringAndString(&ns, &ns_l, td_text);
-				nzFree(td_text);
-			} else stringAndNum(&ns, &ns_l, prior_j);
-			stringAndString(&ns, &ns_l, ": ↑\n");
+			headingAndData(prior_j, tr, seqno, ttype);
 			prior_j += ics;
 		}
 	}
 
-	findHeading(tr, j);
-	if(td_text_l) {
-		stringAndString(&ns, &ns_l, td_text);
-		nzFree(td_text);
-	} else stringAndNum(&ns, &ns_l, j);
-	stringAndString(&ns, &ns_l, ": ");
+	headingAndData(j, tr, 0, 0);
 }
 
-// return allocated string, as may come from js
+// return allocated string, as it may come from js
 static char *arialabel(const Tag *t)
 {
 	const char *a;
