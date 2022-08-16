@@ -2373,6 +2373,153 @@ The result could be confusing.
 Make sure ur is only applied to rows of an actual table,
 presenting traditional rows and columns of data.
 
+<p>
+Presentation tables will often merge cells together, horizontally, using the colspan directive, or vertically, using the rowspan directive.
+Imagine a wide image running all the way across the screen.
+This is housed in the first row of a table, with colspan=3. In other words, the image covers three cells.
+Below it, the second row has three cells, housing three separate sections of the website.
+This is how web developers set up side panels of controls, etc.
+If left to its own devices, edbrowse displays this as
+
+<p>
+[image]
+<br>
+Section 1
+<br>
+Section 2
+<br>
+Section 3
+
+That is the simplest possible presentation for a line-oriented program.
+We don't want to change a thing.
+
+<P>
+However, colspan can be confusing in a data table.
+Fortunately, colspan is rarely used in a spreadsheet,
+so you might run edbrowse for ten years and never run into it.
+In case you do, here is an example.
+
+<p>
+Name|Birthdate|Deathdate|Gender
+
+<P>
+this is a simple spreadsheet with four columns.
+The web developer wants to call attention to anyone who is still-born, that is, the birthdate and deathdate are the same.
+He can do that by setting colspan=2 on the second cell.
+Thus the second cell actually covers the second and third cells on the screen.
+The date appears in the middle of this longer cell, straddling birthdate and deathdate.
+It stands out, visually, especially if cells are bordered - but it is confusing under edbrowse.
+
+<p>
+Name|Birthdate|Deathdate|Gender
+<br>
+Sally|01/27/1977|F
+
+<p>
+It looks like F is Sally's date of death - after all, F is in the third column.
+Actually F stands for female.
+She died at birth, but that isn't clear from this inline format.
+
+<P>
+For data tables only, edbrowse uses a right arrow and a number to indicate a colspan.
+This tells you that the date covers both birthdate and deathdate.
+
+<p>
+Name|Birthdate|Deathdate|Gender
+<br>
+Sally|01/27/1977 →2|F
+
+<p>
+Edbrowse honors colspan when it unfolds the row, and assigns values to the correct headings.
+
+<p>
+row 1
+<br>
+Name: Sally
+<br>
+Birthdate: 01/27/1977
+<br>
+Gender: F
+
+<p>
+This looks different, inline and unfolded, when Sally is alive.
+
+<P>
+Name|Birthdate|Deathdate|Gender
+<br>
+Sally|01/27/1977||F
+
+<p>
+Name: Sally
+<br>
+Birthdate: 01/27/1977
+<br>
+Deathdate: 
+<br>
+Gender: F
+
+<P>
+Cells can also merge vertically, often for layout purposes.
+Imagine a tall picture on the left side of the screen, and three paragraphs on the right.
+The first cell in the first row of the table has rowspan=3, and extends down for three rows.
+The next cell of the first row contains the first paragraph.
+The second row contains just one cell, housing the second paragraph,
+and The third row contains just one cell, housing the third paragraph.
+Edbrowse displays the picture as [image], or a description of the image if one is provided,
+and then the three paragraphs in sequence.
+This is ideal, ahnd should not be changed.
+
+<P>
+However, rarely, rowspan is used in a data table.
+Consider this example.
+The webmaster has decided to write one cell, with Stephen King, and a link to his biography.
+This cell extends down through five rows, for the five books in the table.
+That's easier than typing in his information five times over.
+
+<p>
+Author|book
+<br>
+{Stephen King} ↓5|The Stand
+<br>
+Stephen King|The Shining
+<br>
+Stephen King|It
+<br>
+Stephen King|Under the Dome
+<br>
+Stephen King|Nightshift
+
+<p>
+Because it is a data table,
+edbrowse indicates the rowspan with ↓5,
+and then replicates the data in the subsequent rows.
+Only the text is copied; the html tags are not.
+The first row, with the original html, has a link to a biography on Stephen King; subsequent rows do not.
+Once again, values are assigned to their correct column headings when rows are unfolded.
+
+<p>
+row 1
+<br>
+Author: {Stephen King}
+<br>
+Book: The Stand
+<br>
+row 2
+<br>
+Author: Stephen King
+<br>
+Book: The Shining
+
+<P>
+We realize, as developers and as blind users,
+that these display conventions are imperfect.
+Turning a table into a stream of lines, while preserving the underlying semantics, is quite a challenge.
+We feel the edbrowse conventions are a good compromise,
+supporting the various html tables that exist in the wild.
+You will see these concepts again, including unfolded rows, when accessing an sql database.
+Of course, there are no colspan or rowspan issues in an sql table.
+If there are rowspan considerations, then your database is probably not in normal form.
+
 <h2> <A NAME=math> Technical, Math </A> </h2>
 
 <P>
