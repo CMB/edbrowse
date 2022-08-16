@@ -2973,7 +2973,7 @@ static JSValue nat_cssText(JSContext * cx, JSValueConst this, int argc, JSValueC
 	return JS_UNDEFINED;
 }
 
-extern int JSRuntimeJobIndex;
+static int JSRuntimeJobIndex;
 
 /*********************************************************************
 Ok, I have some splainin to do.
@@ -3018,16 +3018,17 @@ But the real problem is the JSRuntime. The API leaves it opaque,
 struct JSRuntime, with no mention of the members.
 I have to know where, in this structure, to find the list of jobs.
 And that could change version to version.
-So, gross as it is, I dip into quickjs.c and set a global variable,
-that tells me where job_list is in the structure.
-You must run ../tools/quickjobfixup before you compile quickjs,
-or JSRuntimeJobIndex will be undefined, and edbrowse will not link.
-That means quickjs.c has to be there.
-You have to build it from source, just like edbrowse.
-It is then not unreasonable for me to modify that source if I need to,
-and apparently I need to,
-and I assume that source is in a directory parallel to edbrowse.
-(You can override this location with the environment variable QUICKJS_DIR).
+So, gross as it is, I enqueue a job, and look for a change in this structure.
+I assume the change occurs somewhere between struct+64 and struct+256.
+If nothing changes, I can't run any promise code, and many websites won't work.
+You will be alerted, at debug level 1 or higher.
+If I find the member that has changed, you will be alerted, at debug level 3.
+As I write this, the list is at 152.
+It shouldn't stray too far from this position, the runtime structure
+is well established by now.
+The real risk here is, I could glom onto a change that isn't the jobs queue.
+Wild pointers that go off to other structures.
+At that point the program will blow up bigtime.
 This is all a lot more involved than it should be.
 Ok, here is some stuffe from quickjs/list.h.
 *********************************************************************/
@@ -3253,6 +3254,13 @@ static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueCons
 	return JS_UNDEFINED;
 }
 
+// push pending job onto the queue, just to find the queue.
+// This job never runs, because it isn't in a proper frame.
+static JSValue firstPending(JSContext *ctx, int argc, JSValueConst *argv)
+{
+	return JS_TRUE;
+}
+
 /*********************************************************************
 There is a serious stackoverflow bug,
 that I don't have time or space to describe here.
@@ -3268,9 +3276,11 @@ void js_main(void)
 {
 JSValue mwo; // master window object
 	JSValue r;
+	long *lp;
+	uchar save_jsrt[256];
+
 	if(js_running)
 		return;
-	debugPrint(3, "JSRuntimeJobIndex is %d", JSRuntimeJobIndex);
 	jsrt = JS_NewRuntime();
 	if (!jsrt) {
 		fprintf(stderr, "Cannot create javascript runtime environment\n");
@@ -3354,7 +3364,6 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 // shared functions and classes
 	jsSourceFile = "shared.js";
 	jsLineno = 1;
-
 	if (strstr(sharedJS, "bp@(")) {
 		const char *s, *u, *v1, *v2;
 		bool commapresent;
@@ -3395,23 +3404,41 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 		jsSourceFile, JS_EVAL_TYPE_GLOBAL);
 	}
 
-// If you want to see the errors, you have to run 3dbrowse -db3
+// If you want to see the errors, you have to run edbrowse -d3
 // cause this stuff starts from main().
 	if(JS_IsException(r))
 		processError(mwc);
 	JS_FreeValue(mwc, r);
+
 	jsSourceFile = "demin.js";
 	r = JS_Eval(mwc, deminJS, strlen(deminJS),
 	jsSourceFile, JS_EVAL_TYPE_GLOBAL);
 	if(JS_IsException(r))
 		processError(mwc);
 	JS_FreeValue(mwc, r);
+
 	jsSourceFile = 0;
 	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, SHARECLASS), JS_PROP_ENUMERABLE);
 
 	JS_FreeValue(mwc, mwo);
+
+	memcpy(save_jsrt, jsrt, 256);
+		JS_EnqueueJob(mwc, firstPending, 0, NULL);
+// Early variables change, related to memory allocation, so start at 64.
+	for(lp = (long*)((char*)jsrt + 64); lp < (long*)((char*)jsrt+256); ++lp) {
+		if(*lp != *((long*)save_jsrt + (lp-(long*)jsrt))) {
+			JSRuntimeJobIndex = (char*)lp - (char*)jsrt;
+			break;
+		}
+	}
+
 // start the jobs pending timer
-	domSetsTimeout(350, "@@pending", 0, true);
+	if(JSRuntimeJobIndex) {
+			debugPrint(3, "pending jobs queue found at location %d", JSRuntimeJobIndex);
+		domSetsTimeout(350, "@@pending", 0, true);
+	} else {
+		debugPrint(1, "pending jobs queue could not be found, promise jobs and post messages will not run!");
+	}
 	js_running = true;
 }
 
