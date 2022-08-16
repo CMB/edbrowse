@@ -3830,28 +3830,33 @@ static void findHeading(const Tag *t, int colno)
 	return;
 }
 
-static void headingAndData(int j, const Tag *tr, int td_n, int ttype)
+static void headingAndData(int j, const Tag *tr, int td_n, int ttype, bool closerow)
 {
-	const Tag *td;
-	findHeading(tr, j);
-	if(td_text_l) {
-		stringAndString(&ns, &ns_l, td_text);
-		nzFree(td_text);
-	} else stringAndNum(&ns, &ns_l, j);
-	stringAndString(&ns, &ns_l, ": ");
+	if(tr->ur) {
+		findHeading(tr, j);
+		if(td_text_l) {
+			stringAndString(&ns, &ns_l, td_text);
+			nzFree(td_text);
+		} else stringAndNum(&ns, &ns_l, j);
+		stringAndString(&ns, &ns_l, ": ");
+	}
 	if(!td_n) return;
 	if(ttype != 1) {
 		stringAndString(&ns, &ns_l, "↑\n");
 		return;
 	}
-	td = tagList[td_n];
+	if(closerow && !tr->ur)
+		stringAndChar(&ns, &ns_l, DataCellChar);
 	td_text = initString(&td_text_l);
-	td_textUnder(td);
+	td_textUnder(tagList[td_n]);
 	if(td_text_l) {
 		stringAndString(&ns, &ns_l, td_text);
 		nzFree(td_text);
 	}
-	stringAndChar(&ns, &ns_l, '\n');
+	if(tr->ur)
+		stringAndChar(&ns, &ns_l, '\n');
+	if(!closerow && !tr->ur)
+		stringAndChar(&ns, &ns_l, DataCellChar);
 }
 
 static void td2columnHeading(const Tag *tr, const Tag *td)
@@ -3865,8 +3870,8 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 	if(!cs) cs = emptyString;
 	last_p = cs;
 
-	if (tdfirst) tdfirst = false;
-	else stringAndChar(&ns, &ns_l, '\n');
+// don't do anything for an inline table that is not data.
+	if(!tr->ur && ttype != 1) return;
 
 	for(v = tr->firstchild; v; v = v->sibling) {
 		if(v->action != TAGACT_TD) continue;
@@ -3905,7 +3910,7 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 			ics = 1;
 			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
 			++cs; // skip past comma
-			headingAndData(j, tr, seqno, ttype);
+			headingAndData(j, tr, seqno, ttype, true);
 			j += ics;
 		}
 		return;
@@ -3920,12 +3925,13 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 			ics = 1;
 			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
 			++cs; // skip past comma
-			headingAndData(prior_j, tr, seqno, ttype);
+			headingAndData(prior_j, tr, seqno, ttype, false);
 			prior_j += ics;
 		}
 	}
 
-	headingAndData(j, tr, 0, 0);
+	if(tr->ur)
+		headingAndData(j, tr, 0, 0, false);
 }
 
 // return allocated string, as it may come from js
@@ -4580,8 +4586,12 @@ nop:
 				stringAndString(&ns, &ns_l, rowbuf);
 			}
 		}
-		if(t->ur && !opentag && (ltag = t->parent)
+		if(!opentag && (ltag = t->parent)
 		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY)) {
+			if(t->ur) {
+				if (tdfirst) tdfirst = false;
+				else stringAndChar(&ns, &ns_l, '\n');
+			}
 			td2columnHeading(t, 0);
 		}
 	case TAGACT_TABLE:
@@ -4606,8 +4616,11 @@ nop:
 				j = tableType(t);
 				stringAndChar(&ns, &ns_l, "\3\4 "[j]);
 			}
+			td2columnHeading(ltag, t);
 		} else {
 // unfolded row, generate the column heading
+			if (tdfirst) tdfirst = false;
+			else stringAndChar(&ns, &ns_l, '\n');
 			td2columnHeading(ltag, t);
 		}
 		tagInStream(tagno);
