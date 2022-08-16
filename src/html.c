@@ -4600,6 +4600,19 @@ nop:
 	case TAGACT_TD:
 		if (!retainTag)
 			break;
+		if(!opentag) {
+			if((t->lic > 1 || t->js_ln > 1) && tableType(t) == 1 && !t->parent->ur) {
+				char arrows[20];
+				stringAndChar(&ns, &ns_l, ' ');
+				arrows[0] = 0;
+				if(t->lic > 1)
+					sprintf(arrows, "↓%d", t->lic);
+				if(t->js_ln > 1)
+					sprintf(arrows + strlen(arrows), "→%d", t->js_ln);
+				stringAndString(&ns, &ns_l, arrows);
+			}
+			break;
+		}
 		if(!(ltag = t->parent)
 		|| ltag->action != TAGACT_TR || !ltag->ur) {
 // Traditional table format, pipe separated,
