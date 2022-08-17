@@ -3276,7 +3276,7 @@ void js_main(void)
 {
 JSValue mwo; // master window object
 	JSValue r;
-	long *lp;
+	void **lp;
 #define MAX_JSRT 400
 	uchar save_jsrt[MAX_JSRT];
 
@@ -3426,10 +3426,18 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 	memcpy(save_jsrt, jsrt, MAX_JSRT);
 		JS_EnqueueJob(mwc, firstPending, 0, NULL);
 // Early variables change, related to memory allocation, so start at 64.
-	for(lp = (long*)((char*)jsrt + 64); lp < (long*)((char*)jsrt+MAX_JSRT); ++lp) {
-		if(*lp != *((long*)save_jsrt + (lp-(long*)jsrt))) {
-			JSRuntimeJobIndex = (char*)lp - (char*)jsrt;
-			break;
+	for(lp = (void**)((char*)jsrt + 64); lp < (void**)((char*)jsrt+MAX_JSRT); ++lp) {
+		if(*lp != *((void**)save_jsrt + (lp-(void**)jsrt))) {
+// validate that the list has just this one entry,
+// and that the context and function are correct.
+// If all these tests pass, it is a virtual guarantee we have found the queue,
+// and, we have the right structures for the list container and the job entry.
+			JSJobEntry *je = *lp;
+			if(je && je == lp[1] && je->ctx == mwc &&
+			je->job_func == firstPending) {
+				JSRuntimeJobIndex = (char*)lp - (char*)jsrt;
+				break;
+			}
 		}
 	}
 
