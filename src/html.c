@@ -3733,7 +3733,7 @@ static int tableType(const Tag *t)
 	if(!t || t->action != TAGACT_TR)
 		return 0;
 // row header = data
-	if(stringEqual(t->firstchild->info->name, "th"))
+	if(t->firstchild && stringEqual(t->firstchild->info->name, "th"))
 		return 1;
 	while((t = t->parent)) {
 		if(t->action == TAGACT_TABLE)
