@@ -3255,9 +3255,9 @@ static JSValue nat_jobs(JSContext * cx, JSValueConst this, int argc, JSValueCons
 }
 
 // push pending job onto the queue, just to find the queue.
-// This job never runs, because it isn't in a proper frame.
 static JSValue firstPending(JSContext *ctx, int argc, JSValueConst *argv)
 {
+	debugPrint(3, "pending queue active");
 	return JS_TRUE;
 }
 
@@ -3443,7 +3443,11 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 
 // start the jobs pending timer
 	if(JSRuntimeJobIndex) {
+		JSContext *job_cx;
 			debugPrint(3, "pending jobs queue found at location %d", JSRuntimeJobIndex);
+// We can't run this job, because it isn't in a proper frame or window.
+// The error message mjight confuse, so let quick run the job.
+		JS_ExecutePendingJob(jsrt, &job_cx);
 		domSetsTimeout(350, "@@pending", 0, true);
 	} else {
 		debugPrint(1, "pending jobs queue could not be found, promise jobs and post messages will not run!");
