@@ -3019,7 +3019,7 @@ struct JSRuntime, with no mention of the members.
 I have to know where, in this structure, to find the list of jobs.
 And that could change version to version.
 So, gross as it is, I enqueue a job, and look for a change in this structure.
-I assume the change occurs somewhere between struct+64 and struct+400.
+I assume the change occurs somewhere between struct+64 and struct+512.
 If nothing changes, I can't run any promise code, and many websites won't work.
 You will be alerted, at debug level 1 or higher.
 If I find the member that has changed, you will be alerted, at debug level 3.
@@ -3277,7 +3277,7 @@ void js_main(void)
 JSValue mwo; // master window object
 	JSValue r;
 	void **lp;
-#define MAX_JSRT 400
+#define MAX_JSRT 512
 	uchar save_jsrt[MAX_JSRT];
 
 	if(js_running)

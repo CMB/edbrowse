@@ -2426,6 +2426,8 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 	w = allocZeroMem(sizeof(struct MHINFO));
 	initList(&w->components);
 	w->ct = CT_OTHER;
+// email sometimes has no content-type and no components - treat it as text.
+	if(top) w->ct = CT_TEXT;
 	w->ce = CE_8BIT;
 	w->andOthers = false;
 	w->tolist = initString(&w->tolen);
