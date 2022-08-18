@@ -302,20 +302,31 @@ static void anchorSwap(char *buf)
 				continue;
 			}
 
-/* end of white space, should we swap it with prior tag? */
+// end of white space, should we swap it with prior tag?
 			if (w && a) {
-				memmove(a, w, s - w);
-				memmove(a + (s - w), tag, n);
-				change = true;
-				w = NULL;
+				const Tag *t = tagList[tagno];
+				const char *q;
+// don't move td past newline; it screws things up.
+				if(t->action != TAGACT_TD) {
+tagforward:
+					memmove(a, w, s - w);
+					memmove(a + (s - w), tag, n);
+					change = true;
+					w = NULL;
+					goto afterforward;
+				}
+				for(q = w; q < s; ++q)
+					if(*q != ' ') goto afterforward;
+				goto tagforward;
 			}
+afterforward:
 
-/* prior anchor has no significance */
+// prior anchor has no significance
 			a = NULL;
 
 			if (c != InternalCodeChar)
 				goto normalChar;
-/* some conditions that should never happen */
+// some conditions that should never happen
 			if (!isdigitByte(s[1]))
 				goto normalChar;
 			tagno = strtol(s + 1, &ss, 10);
@@ -353,7 +364,6 @@ static void anchorSwap(char *buf)
 normalChar:
 			w = 0;	/* no more whitespace */
 		}
-/* end of loop making changes */
 	}
 	debugPrint(4, "anchorSwap %d", cnt);
 }
