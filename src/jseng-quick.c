@@ -3426,6 +3426,11 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 	memcpy(save_jsrt, jsrt, MAX_JSRT);
 		JS_EnqueueJob(mwc, firstPending, 0, NULL);
 // Early variables change, related to memory allocation, so start at 64.
+// Even if I started at 0, I would determine that they don't point to the jobs
+// queue, and move on, and find the queue later.
+// A false positive is virtually impossible.
+// False negative only if the struct is larger than 512,
+// or if the 64-bit pointers aren't 8 byte aligned.
 	for(lp = (void**)((char*)jsrt + 64); lp < (void**)((char*)jsrt+MAX_JSRT); ++lp) {
 		if(*lp != *((void**)save_jsrt + (lp-(void**)jsrt))) {
 // validate that the list has just this one entry,

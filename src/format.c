@@ -315,6 +315,8 @@ tagforward:
 					w = NULL;
 					goto afterforward;
 				}
+// It's ok to move things around, unless it's a data table.
+				if(tableType(t) != 1) goto tagforward;
 				for(q = w; q < s; ++q)
 					if(*q != ' ') goto afterforward;
 				goto tagforward;

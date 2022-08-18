@@ -3722,7 +3722,7 @@ static void swapArrow(void)
 // Is this table a matrix of data, or just for layout purposes?
 // 0 means we can't tell, 1 is data, 2 is presentation
 // t is a cell or a row.
-static int tableType(const Tag *t)
+int tableType(const Tag *t)
 {
 	const char *role;
 	if(stringEqual(t->info->name, "th"))

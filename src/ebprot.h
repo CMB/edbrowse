@@ -135,6 +135,7 @@ void delTimers(const Frame *f);
 void runTimer(void);
 void showTimers(void);
 void domOpensWindow(const char *href, const char *name);
+int tableType(const Tag *t);
 char *render(void);
 bool itext(int d);
 struct htmlTag *line2tr(int ln);
