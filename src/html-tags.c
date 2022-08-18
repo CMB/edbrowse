@@ -4649,7 +4649,7 @@ static void rowspan2(Tag *tr, int ri);
 static void rowspan3(Tag *tr, int ri);
 void rowspan(void)
 {
-	const Tag *table, *tbody;
+	const Tag *table, *section;
 	Tag *tr, *last_tr = 0;
 	int i, ri;
 
@@ -4659,10 +4659,12 @@ void rowspan(void)
 			continue;
 
 		ri = 0;
-		for(tbody = table->firstchild; tbody; tbody = tbody->sibling) {
-			if(tbody->action != TAGACT_THEAD && tbody->action != TAGACT_TBODY)
+		for(section = table->firstchild; section; section = section->sibling) {
+			if(section->action != TAGACT_THEAD && 
+			section->action != TAGACT_TBODY &&
+			section->action != TAGACT_TFOOT)
 				continue;
-			for(tr = tbody->firstchild; tr; tr = tr->sibling) {
+			for(tr = section->firstchild; tr; tr = tr->sibling) {
 				if(tr->action != TAGACT_TR) continue;
 // link to previous row
 				tr->same = last_tr;
@@ -4675,10 +4677,12 @@ void rowspan(void)
 		}
 
 		ri = 0;
-		for(tbody = table->firstchild; tbody; tbody = tbody->sibling) {
-			if(tbody->action != TAGACT_THEAD && tbody->action != TAGACT_TBODY)
+		for(section = table->firstchild; section; section = section->sibling) {
+			if(section->action != TAGACT_THEAD && 
+			section->action != TAGACT_TBODY &&
+			section->action != TAGACT_TFOOT)
 				continue;
-			for(tr = tbody->firstchild; tr; tr = tr->sibling) {
+			for(tr = section->firstchild; tr; tr = tr->sibling) {
 				if(tr->action == TAGACT_TR)
 					rowspan3(tr, ++ri);
 			}

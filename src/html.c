@@ -3782,11 +3782,12 @@ static void findHeading(const Tag *t, int colno)
 	if(!t->parent ||
 	((t = t->parent)->action != TAGACT_TABLE &&
 	t->action != TAGACT_THEAD &&
-	t->action != TAGACT_TBODY))
+	t->action != TAGACT_TBODY &&
+	t->action != TAGACT_TFOOT))
 		return;
 // can't unfold the header row
 	if(t->action == TAGACT_THEAD) return;
-	if(t->action == TAGACT_TBODY) {
+	if(t->action == TAGACT_TBODY || t->action == TAGACT_TFOOT) {
 		t = t->parent;
 		if(!t || t->action != TAGACT_TABLE)
 			return;
@@ -4568,7 +4569,8 @@ nop:
 		if (opentag)
 			tdfirst = true;
 		if(t->ur && opentag && (ltag = t->parent)
-		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY)) {
+		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY
+		|| ltag->action == TAGACT_TFOOT)) {
 // print the row number
 			const Tag *v = ltag->firstchild;
 			j = 1;
@@ -4594,7 +4596,8 @@ nop:
 			}
 		}
 		if(!opentag && (ltag = t->parent)
-		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY)) {
+		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY
+		|| ltag->action == TAGACT_TFOOT)) {
 			if(t->ur) {
 				if (tdfirst) tdfirst = false;
 				else stringAndChar(&ns, &ns_l, '\n');
@@ -4933,7 +4936,8 @@ static struct htmlTag *line2table(int ln)
 	if(!t || !t->parent ||
 	((t = t->parent)->action != TAGACT_TABLE &&
 	t->action != TAGACT_THEAD &&
-	t->action != TAGACT_TBODY)) {
+	t->action != TAGACT_TBODY &&
+	t->action != TAGACT_TFOOT)) {
 		setError(MSG_NoTable);
 		return 0;
 	}
