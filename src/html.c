@@ -4646,6 +4646,7 @@ nop:
 			else stringAndChar(&ns, &ns_l, '\n');
 			td2columnHeading(ltag, t);
 		}
+// Always retain the <td> tag, for the ur command.
 		tagInStream(tagno);
 		break;
 

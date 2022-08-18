@@ -921,13 +921,21 @@ char *htmlReformat(char *buf)
 	char *new;
 	int l, tagno, extra;
 	char *fmark;		/* mark the start of a frame */
+	const int debugPhases = 0;
 
+	if(debugPhases) printf("rendered<%s>\n", buf);
 	cellDelimiters(buf);
+	if(debugPhases) printf("cells<%s>\n", buf);
 	html_tr(buf);
+	if(debugPhases) printf("translate<%s>\n", buf);
 	h3div(buf);
+	if(debugPhases) printf("h3div<%s>\n", buf);
 	anchorSwap(buf);
+	if(debugPhases) printf("swap<%s>\n", buf);
 	anchorUnframe(buf);
+	if(debugPhases) printf("unframe<%s>\n", buf);
 	html_ws(buf);
+	if(debugPhases) printf("whitespace<%s>\n", buf);
 
 	longcut = lperiod = lcomma = lright = lany = 0;
 	colno = 1;
