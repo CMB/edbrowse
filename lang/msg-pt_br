@@ -242,7 +242,7 @@ várias opções contêm a cadeia %s
 botão; use i* para pressioná-lo
 botão de submeter; use i* para pressioná-lo
 botão de limpar; use i* para pressioná-lo
-0
+arquivo é maior que dois giga
 somente leitura
 campo de entrada não pode ter caracteres de nova linha
 entrada comprida demais; o limite é de %d caracteres
@@ -286,7 +286,7 @@ não consegui ler os dados do servidor
 %s não é uma URL
 transferência completa
 impossível identificar %s na rede
-0
+Não há texto raso disponível
 aviso: não foi possível precarregar o <buffer %d> com o texto inicial do mesmo\n
 transferência em progresso
 não é possível conectar a %s
@@ -681,18 +681,18 @@ diversas opções começam com %s
 campo não pode terminar em barra invertida
 não posso atualizar o nome da coluna
 alerta: somente as primeiras %d colunas serão selecionadas
-0
-0
+mover quebra a estrutura da linha desdobrada
+não posso apagar uma linha desdobrada
 wyrażenie regularne perl
 wyrażenie regularne edbrowse
 a sessão + está fora do limite %d
 a sessão - está fora do limite %d
-0
-0
-0
-0
-0
-0
+%s: arquivo de chave pública %s não é um arquivo regular
+%s: arquivo de chave pública %s não existe ou não é legível.
+listagem de diretório, dados suplementares
+listagem de diretório, somente nomes
+desabilitada varredura de depuração de html
+habilitada varredura de depuração de html
 0
 0
 0

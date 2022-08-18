@@ -429,26 +429,29 @@ putc:
 // Now compress the implied linebreaks into one.
 static void html_ws(char *buf)
 {
-	char c, d, *s, *w, *a;
+	char c, d, *s, *w, *w2, *a;
 	int n;
 	bool premode = false, pretag, strong, slash;
 	char *ss = 0;
 
 	for (s = buf; (c = *s); ++s) {
+
+// look for <pre>
 		if (c == InternalCodeChar && isdigitByte(s[1])) {
 			n = strtol(s + 1, &s, 10);
 			if (*s == '*') {
 				preFormatCheck(n, &pretag, &slash);
-				if (pretag)
-					premode = !slash;
+				if (pretag) premode = !slash;
 			}
 		}
-		if (!isspaceByte(c))
-			continue;
+
+		if (!isspaceByte(c)) continue;
 
 // whitespace region starts here.
-// Look for pipes inside whitespace, these are usually cell delimiters.
+// strong is anything harder than space, like <br> or <p> or <div>
 		strong = false;
+// watch for pipes inside whitespace, these are usually cell delimiters.
+// pipe ends a whitespace region if only spaces come before
 		for (w = s; isspaceByte(*w) || *w == '|'; ++w) {
 			if(*w == '|') {
 				if(strong) continue;
@@ -456,11 +459,20 @@ static void html_ws(char *buf)
 			}
 			if(*w != ' ') strong = true;
 		}
+
+// whitespace region from s up to w
 // pipes have to be internal to whitespace to be moved;
 // pipes at the end are left alone.
-		if(*w && *w != InternalCodeChar)
+// Look ahead past anchors
+		w2 = w;
+		while(*w2 == InternalCodeChar) {
+			n = strtol(w2 + 1, &w2, 10);
+			++w2;
+		}
+		if(*w2)
 			while(w[-1] == '|') --w;
-// move pipes to the front
+
+// move internal pipes to the front
 		for(ss = --w; w >= s; --w)
 			if(*w != '|') *ss-- = *w;
 		while(ss >= s) *ss-- = '|';

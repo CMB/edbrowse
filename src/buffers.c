@@ -6843,7 +6843,7 @@ range2:
 					const Tag *x;
 					for(x = w->firstchild->sibling; x; x = x->sibling)
 						if(x->action == TAGACT_TD) break;
-					if(!x || x->info->name[1] == 'h')
+					if(x && x->info->name[1] == 'h')
 						continue;
 				}
 				if(c == 0)

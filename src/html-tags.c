@@ -146,6 +146,18 @@ static int isCrossclose2(const char *name)
 	return stringInListCI(list, name) >= 0;
 }
 
+static int isTableSection(const char *name)
+{
+	static const char * const list[] = {"thead","tbody","tfoot",0};
+	return stringInListCI(list, name) >= 0;
+}
+
+static int isCell(const char *name)
+{
+	static const char * const list[] = {"th","td",0};
+	return stringInListCI(list, name) >= 0;
+}
+
 // space after these tags isn't significant
 static int isWall(const char *name)
 {
@@ -771,6 +783,7 @@ so also break out at >< like a new tag is starting.
 			goto tag_ok;
 		}
 		if(headbody == 3) pushState(lt, false);
+
 tag_ok:
 //  see if we need to close a prior instance of this tag
 		k = balance(tagname);
@@ -778,10 +791,12 @@ tag_ok:
 			if(dhs) puts("not nestable");
 			makeTag(tagname, true, lt);
 		}
+
 		if(stack && isNextclose(stack->name)) {
 			if(dhs) printf("prior close %s\n", stack->name);
 			makeTag(stack->name, true, lt);
 		}
+
 		if(stack && isCrossclose2(tagname)) {
 			const struct opentag *hold;
 			for(k = stack; k; k = hold) {
@@ -792,6 +807,31 @@ tag_ok:
 				}
 			}
 		}
+
+// This one doesn't fit into our simple table-driven crossclose pattern.
+// Any of thead tbody tfoot closes the prior, unless in a lower table.
+		if(stack && isTableSection(tagname)) {
+			for(k = stack; k; k = k->next) {
+				if(stringEqualCI(k->name, "table")) break;
+				if(isTableSection(k->name)) {
+					if(dhs) printf("cross close %s\n", k->name);
+					makeTag(k->name, true, lt);
+					break;
+				}
+			}
+		}
+
+		if(stack && isCell(tagname)) {
+			for(k = stack; k; k = k->next) {
+				if(stringEqualCI(k->name, "table")) break;
+				if(isCell(k->name)) {
+					if(dhs) printf("cross close %s\n", k->name);
+					makeTag(k->name, true, lt);
+					break;
+				}
+			}
+		}
+
 		makeTag(tagname, false, seek);
 		if(isWall(tagname)) {
 			atWall = true;

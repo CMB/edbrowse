@@ -90,32 +90,21 @@ unixODBC version 2.2.14 seems to satisfy edbrowse with odbc.
 
 quickjs:
 This is the javascript engine for edbrowse.
-It is probably not packaged.
-Even if it is, you have to build it from source to mesh with edbrowse.
+If it is not packaged, you will have to build it from source.
 git clone https://github.com/bellard/quickjs
 It is best to clone this tree in a directory adjacent to edbrowse.
 That is, edbrowse and quickjs are in the same directory.
 If you are unable to do this, set QUICKJS_DIR to the quickjs directory
-tree before you run make.
-WARNING, (robot waving his arms about in the air), WARNING.
-You must run edbrowse/tools/quickjobfixup before you build quickjs.
-This utility takes an argument, or it responds to QUICKJS_DIR,
-or it looks in the default location next to edbrowse.
-If you don't do this, JSRuntimeJob Index will be undefined, and edbrowse won't link.
-Now, back to building quick.
+tree before you build edbrowse.
 cd quickjs
 make
-You can make install if you want this to be the official version on your system,
-but if you already have quick installed then don't install this one.
-It is just for edbrowse.
+If you get a lot of atomic undefines:
+make EXTRA_LIBS=-latomic
+You can sudo make install if you want this to be the official version on your system.
 This builds a static library- libquickjs.a.
 By default, edbrowse links to this library, and thus the
 quickjs code is part of edbrowse, and a quickjs package,
 or a dependency thereto, is not necessary.
-
-An already-patched version of quickjs is available via
-git clone https://github.com/n0ot/quickjs-edbrowse
-Clone this in a parallel directory, type make, and then return to edbrowse.
 
 ------------------------------------------------------------
 
