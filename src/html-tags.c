@@ -3402,8 +3402,7 @@ static void insert_tbody(void)
 
 	for (i = 0; i < end; ++i) {
 		tbl = tagList[i];
-		if (tbl->action != TAGACT_TABLE)
-			continue;
+		if (tbl->action != TAGACT_TABLE) continue;
 		s1 = 0;
 		do {
 			s2 = (s1 ? s1->sibling : tbl->firstchild);
@@ -3428,7 +3427,8 @@ static void insert_tbody1(Tag *s1, Tag *s2, Tag *tbl)
 // Look for the direct html <table><tr><th>.
 // If th is anywhere else down the path, we won't find it.
 	if (!s1 && s1a->action == TAGACT_TR &&
-	    (u = s1a->firstchild) && stringEqual(u->info->name, "th")) {
+	    (u = s1a->firstchild) && stringEqual(u->info->name, "th") &&
+	    (u = u->sibling) && stringEqual(u->info->name, "th")) {
 		ns = newTag(cf, "thead");
 		tbl->firstchild = ns;
 		ns->parent = tbl;
