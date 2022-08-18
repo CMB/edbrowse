@@ -3930,8 +3930,15 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 		}
 	}
 
-	if(tr->ur)
-		headingAndData(j, tr, 0, 0, false);
+	if(!tr->ur) return;
+
+	headingAndData(j, tr, 0, 0, false);
+	if(td->js_ln > 1) {
+// replace : with double arrow
+		ns[ns_l -= 2] = 0;
+		stringAndString(&ns, &ns_l, " ⇔ ");
+		headingAndData(j + td->js_ln - 1, tr, 0, 0, false);
+	}
 }
 
 // return allocated string, as it may come from js
