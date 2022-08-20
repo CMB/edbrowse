@@ -2,7 +2,9 @@
 
 #  add a line to quickjs.c, at the end,
 #  to tell edbrowse where the pending jobs are in struct JSRuntime.
-#  You need to do this before you build and install quickjs.
+#  This is not necessary as of 3.8.4, but I'm keeping it around for a while,
+#  in case we need to resurrect this strategy.
+
 #  The optional argument is the directory of the quickjs tree,
 #  otherwise I use QUICKJS_DIR if defined, an absolute path please,
 #  otherwise I assume quickjs is adjacent to your edbrowse working tree.

@@ -242,7 +242,7 @@ de multiples options contiennent la chaîne %s
 c'est un bouton; tapez i* pour le déclencher
 c'est un bouton de validation; tapez i* pour le déclencher
 c'est un bouton d'annulation; tapez i* pour le déclencher
-0
+le fichier dépasse 2 Go
 champ en lecture seule
 une zone de saisie ne peut contenir un saut de ligne
 saisie trop long, la limite est de %d caractères
@@ -286,7 +286,7 @@ impossible de lire les données sur le serveur
 %s n'est pas une url
 téléchargement terminé
 impossible d'identifier %s sur le réseau
-0
+pas de texte brut disponible
 attention : impossible de précharger le texte initial dans le <tampon %d>\n
 télachargement en cours
 connexion impossible à %s
@@ -681,18 +681,18 @@ les options multiples commencent avec %s
 un champ ne peut se terminer par un backslash
 impossible de mettre à jour le nom de colonne
 attention, seules les %d premières colonnes seront sélectionnées
-0
-0
+le déplacement détruit la structure de la ligne développée
+impossible d'effacer une ligne développée
 expression régulière perl
 expression régulière edbrowse
 débordement de la session +, la limite est de %d
 débordement de la session -, la limite est de %d
-0
-0
-0
-0
-0
-0
+%s: fichier de clé publique %s n'est pas un fichier régulier
+%s: fichier de clé publique %s n'existe pas ou n'est pas lisible
+liste répertoire, données supplémentaires
+liste répertoire, noms seulement
+scanner de debug html désactivé
+scanner de debug html activé
 0
 0
 0

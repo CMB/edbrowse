@@ -242,7 +242,7 @@ multiple opzioni contengono la stringa %s
 questo è un bottone; usa i* per premere il bottone
 questo è un bottone submit; usa i* per premere il bottone
 questo è un bottone reset; usa i* per premere il bottone
-0
+il file è più grande di 2 gb
 campo di sola lettura
 il campo di input non può contenere un carattere newline
 campo di input troppo lungo, il limite è di %d caratteri
@@ -286,7 +286,7 @@ impossibile leggere dati dal server
 %s non è un url
 download completato
 impossibile identificare %s nella rete
-0
+plain text non disponibile
 attenzione: impossibile precaricare il <buffer %d> con il relativo testo iniziale\n
 download in corso
 impossibile connettersi ad %s
@@ -678,21 +678,21 @@ il file emoji contiene un unicode non valido alla riga %d\n
 file emoji, errore di sintassi alla riga %d\n
 nessuna opzione inizia con %s
 multiple opzioni iniziano con %s
-0
-0
-0
-0
-0
+il campo non può terminare con un backslash
+impossibile aggiornare il nome della colonna
+attenzione, solo le prime %d colonne saranno selezionate
+l'operazione move rompe la struttura di una riga \"unfolded\"
+impossibile eliminare una riga \"unfolded\"
 perl regular expressions
 edbrowse regular expressions
 la sessione + è fuori dai limiti, limite %d
 la sessione - è fuori dai limiti, limite %d
-0
-0
-0
-0
-0
-0
+%s: il file chiave pubblica %s non è un file regolare
+%s: il file di chiave pubblica %s non esiste o non è leggibile
+directory listing, dati aggiuntivi
+directory listing, solo nomi
+debug scanner html disabilitato
+debug scanner html abilitato
 0
 0
 0

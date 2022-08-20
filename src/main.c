@@ -13,7 +13,7 @@ Frame *cf;
 int gfsn; // global frame sequence number
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.8.3+";
+const char *version = "3.8.4";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
@@ -44,7 +44,7 @@ bool ismc, isimap, passMail;
 // next two variables work around curl bug 7284
 bool inInput, inInitFunction, listNA;
 int fileSize;
-char *dbarea, *dblogin, *dbpw;	/* to log into the database */
+char *dbarea, *dblogin, *dbpw;	// to log into the database
 bool fetchBlobColumns;
 bool caseInsensitive, searchStringsAll, searchWrap = true, ebre = true;
 bool binaryDetect = true;
@@ -304,7 +304,7 @@ const char *findProxyForURL(const char *url)
 	char prot[MAXPROTLEN], host[MAXHOSTLEN];
 
 	if (!getProtHostURL(url, prot, host)) {
-/* this should never happen */
+// this should never happen
 		return 0;
 	}
 

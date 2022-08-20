@@ -2749,6 +2749,16 @@ bool readFileArgv(const char *filename, int fromframe, const char *orig_head)
 			(newwin ? 0 : cw->f0.fileName), orig_head);
 }
 
+// Skip the file: protocol, if present.
+static char *skipFileProtocol(const char *name)
+{
+	if (memEqualCI(name, "file://", 7))
+		name += 7;
+	else if (memEqualCI(name, "file:", 5))
+		name += 5;
+return (char *) name;
+}
+
 /* Write a range to a file. */
 bool writeFile(const char *name, int mode)
 {
@@ -2759,10 +2769,7 @@ bool writeFile(const char *name, int mode)
 
 	fileSize = -1;
 
-	if (memEqualCI(name, "file://", 7))
-		name += 7;
-	else if (memEqualCI(name, "file:", 5))
-		name += 5;
+	name = skipFileProtocol(name);
 
 	if (!*name) {
 		setError(MSG_MissingFileName);
@@ -3197,10 +3204,7 @@ static void eb_variables()
 	char *s = s0;
 
 	if(!s) s = emptyString;
-	if(!strncmp(s, "file://", 7))
-		s += 7;
-	else if(!strncmp(s, "file:", 5))
-		s += 5;
+	s = skipFileProtocol(s);
 
 	strcpy(var, "EB_FILE");
 	setenv(var, s, 1);
@@ -5208,17 +5212,12 @@ static int twoLetter(const char *line, const char **runThis)
 			setmode = true;
 			++s;
 			skipWhite(&s);
-		} else {
+		} else if (stringEqual(s, "X")) {
 			if (!cw->dirMode) {
 				setError(MSG_NoDir);
 				return false;
-			}
-			if (stringEqual(s, "X"))
+			} else
 				return true;
-			if (cw->dot == 0) {
-				setError(MSG_AtLine0);
-				return false;
-			}
 		}
 		if (!lsattrChars(s, lsmode)) {
 			setError(MSG_LSBadChar);
@@ -5228,19 +5227,33 @@ static int twoLetter(const char *line, const char **runThis)
 			strcpy(lsformat, lsmode);
 			return true;
 		}
-/* default ls mode is size time */
+// default ls mode is size time
 		if (!lsmode[0])
 			strcpy(lsmode, "st");
-		file = (char *)fetchLine(cw->dot, -1);
-		t = strchr(file, '\n');
-		if (!t)
-			i_printfExit(MSG_NoNlOnDir, file);
-		*t = 0;
-		path = makeAbsPath(file);
-		*t = '\n';	// put it back
-		t = emptyString;
+		if (cw->dirMode) {
+			if (cw->dot == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+			file = (char *)fetchLine(cw->dot, -1);
+			t = strchr(file, '\n');
+			if (!t) i_printfExit(MSG_NoNlOnDir, file);
+			*t = 0;
+			path = makeAbsPath(file);
+			*t = '\n';	// put it back
+		} else {
+			path = cloneString(cf->fileName);
+			if(cw->browseMode) debrowseSuffix(path);
+			path = skipFileProtocol(path);
+			if(!path || !*path) {
+				setError(MSG_MissingFileName);
+				return false;
+			}
+		}
 		if (path && fileTypeByName(path, 1))
 			t = lsattr(path, lsmode);
+		else
+			t = emptyString;
 		if (*t)
 			eb_puts(t);
 		else

@@ -1300,7 +1300,7 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		memcpy(new + strlen(new), t, plen - (t - p1));
 		free(cw->map[ln1].text);
 		cw->map[ln1].text = (pst) new;
-		if (notify && debugLevel> 0)
+		if (notify && debugLevel > 0)
 			displayLine(ln1);
 		return;
 	}
@@ -3966,7 +3966,7 @@ static void tagInStream(int tagno)
 /* see if a number or star is pending, waiting to be printed */
 static void liCheck(Tag *t)
 {
-	Tag *ltag;	/* the start list tag */
+	Tag *ltag; // <ol> or <ul>
 	if (listnest && (ltag = findOpenList(t)) && ltag->post) {
 		char olbuf[32];
 		if (ltag->ninp)
@@ -3995,19 +3995,19 @@ static void renderNode(Tag *t, bool opentag)
 {
 	int tagno = t->seqno;
 	Frame *f = t->f0;
-	char hnum[40];		/* hidden number */
+	char hnum[40];		// hidden number
 #define ns_hnum() stringAndString(&ns, &ns_l, hnum)
 #define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
 	int j, l;
-	int itype;		/* input type */
+	int itype;		// input type
 	const struct tagInfo *ti = t->info;
 	int action = t->action;
 	char c;
 	bool endcolor;
 	bool retainTag;
-	const char *a;		/* usually an attribute */
+	const char *a;		// usually an attribute
 	char *u;
-	Tag *ltag;	/* list tag */
+	Tag *ltag;
 
 	debugPrint(6, "rend %c%s", (opentag ? ' ' : '/'), t->info->name);
 
@@ -4428,7 +4428,8 @@ nop:
 			}
 		}
 
-/* tags with id= have to be part of the screen, so you can jump to them */
+// tags with id= have to be part of the screen, so you can jump to them.
+// <li> is introduced by liCheck().
 		if (t->id && opentag && action != TAGACT_LI)
 			tagInStream(tagno);
 		break;
@@ -4888,7 +4889,8 @@ bool itext(int d)
 	}
 
 	if (change) {
-		displayLine(ln);
+		if(debugLevel > 0)
+			displayLine(ln);
 		return true;
 	}
 		setError(inp ? MSG_NoChange : MSG_NoInputFields);

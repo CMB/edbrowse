@@ -1,12 +1,12 @@
 Here are some changes introduced by recent versions of edbrowse.
 
-3.8.3.1
+3.8.4
 dno (names only) command.
 
 Manage merged cells via colspan and rowspan in data tables.
 
-Search for the quickjs job queue ourselves, so we don't have to patch the
-quickjs source.
+Search for the quickjs pending jobs queue ourselves,
+so we don't have to patch the quickjs source.
 We could link to a distributed quickjs shared library if one was available.
 
 3.8.3
