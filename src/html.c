@@ -4592,8 +4592,10 @@ nop:
 			}
 			if(v) { // should always happen
 				char rowbuf[20];
+				tagInStream(tagno);
 				sprintf(rowbuf, "row %d\n", j);
 				stringAndString(&ns, &ns_l, rowbuf);
+				break;
 			}
 		}
 		if(!opentag && (ltag = t->parent)
@@ -4909,15 +4911,13 @@ struct htmlTag *t;
 	}
 	p = (char *)fetchLine(ln, -1);
 	while(*p != '\n') {
-		if (*p != InternalCodeChar) {
-			++p;
-			continue;
-		}
+		if (*p != InternalCodeChar) { ++p; continue; }
 		tagno = strtol((char *)p + 1, (char **)&p, 10);
-/* could be 0, but should never be negative */
-		if (tagno <= 0)
-			continue;
+// could be 0, but should never be negative
+		if (tagno <= 0) continue;
 		t = tagList[tagno];
+		if(t->action == TAGACT_TR)
+			return t;
 		if(t->action != TAGACT_TD)
 			continue;
 		t = t->parent;
