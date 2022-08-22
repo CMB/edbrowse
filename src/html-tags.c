@@ -1263,9 +1263,8 @@ putuni:
 		for(++s; isalnum(*s); ++s)  ;
 		u = andLookup(entity, s);
 		if(u) goto putuni;
-// word not recognized, just skip it
-		if(*s != ';') --s;
-		continue;
+// word not recognized, leave & in place.
+		s = entity - 1;
 putc:
 		*t++ = *s;
 	}
