@@ -102,6 +102,7 @@ static const struct specialtag {
 {"tbody",0,0, 0, "table"},
 {"tfoot",0,0, 0, "table"},
 {"div",0,1, 0, 0},
+{"center",0,1, 0, 0},
 {"font",0,1, 0, 0},
 {"span",0,1, 0, 0},
 {"p",0,0, 0, "blockquote"},
