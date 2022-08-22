@@ -2,8 +2,7 @@
 html-tags.c: parse the html tags and attributes.
 This was originally handled by the tidy library, but tidy is no longer maintained.
 Bugs are accumulating, and we continue to work around those bugs,
-in html-tidy.c and in decorate.c, but we can't continue along this path.
-Thus I wrote this html tag scanner.
+but we can't continue along this path. Thus I wrote this html tag scanner.
 I believe it is easier, in the long run, to roll our own, rather than using
 tidy, or any other library.
 Note that we can paste the tags directly into the edbrowse tree;
@@ -357,6 +356,23 @@ Tag *newTag(const Frame *f, const char *name)
 	return t;
 }
 
+// Back up over dead tags, and reuse the slots in the array.
+static void freeTag(Tag *t);
+void backupTags(void)
+{
+	Tag *t;
+	while(cw->numTags &&
+	(t = tagList[cw->numTags-1]) &&
+	t->dead) {
+// unlikely case where html ends in </pre>, which is always a dead tag.
+		if(t->action == TAGACT_PRE && t->slash
+		&&cw->numTags >= 2 && !tagList[cw->numTags-2]->dead)
+			break;
+		freeTag(t);
+		--cw->numTags;
+	}
+}
+
 static void pushTag(Tag *t)
 {
 	int a = cw->allocTags;
@@ -587,12 +603,15 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	char tagname[MAXTAGNAME];
 	const struct opentag *k;
 
+	backupTags();
+
 	seek = s = htmltext, ln = 1, premode = false;
 	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
 	atWall = false;
 	lasttext = 0;
 	start_idx = cw->numTags;
+  printf("start %d\n", start_idx);
 	overnode = above;
 	htmlGenerated = isgen;
 
