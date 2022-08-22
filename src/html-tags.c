@@ -611,7 +611,6 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	atWall = false;
 	lasttext = 0;
 	start_idx = cw->numTags;
-  printf("start %d\n", start_idx);
 	overnode = above;
 	htmlGenerated = isgen;
 
