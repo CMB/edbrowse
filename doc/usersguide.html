@@ -537,9 +537,9 @@ s/x/y/ : replace x with y on the current line
 <br>s/x/%/ : use the last replacement string, in this case y
 <br>s/x : replace x with nothing and print the result
 <br>s : repeat the previous substitute command
-<br>s/x/y/2 : replace the second instance of x with y on the current line
+<br>s/x/y/2p : replace the second instance of x with y on the current line
 <br>s2 : same as above
-<br>s3p : s//%/3p
+<br>s$ : s//%/$p
 <br>4,7s/x/y/g : replace all instances of x with y on lines 4 through 7
 <br>s/dog/cat/gfip : replace dog or DOG with cat throughout this line,
 forget dog and cat as search and replacement strings,
@@ -548,6 +548,7 @@ and print the result
 <br>s, : replace comma space with newline, break line in two
 <br>s. : replace period space with newline, break line in two
 <br>s?2 : break line at the second question mark
+<br>s.$ : break line at the last period
 <br>bl : break very long line into sentences and phrases
 <br>fll 80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
 <br>fll 80+ : cut lines to 80 chars but allow some overflow so the next line isn't just one or two words
@@ -1077,6 +1078,7 @@ You can also use s. to split a line after the first period -- at a sentence boun
 s; s: s) and s" can also be used.
 s,3 splits the line after the third comma.
 You might need to use s.2 if the sentence begins with Mr. Flintstone.
+Use s.$ for the last period.
 
 <LI><P>
 Type s by itself for s//%.
@@ -1095,7 +1097,9 @@ This is perl compatible.
 The f suffix means forget; these strings are not stored for the purposes of search and replace.
 If you are searching through the buffer for the word foo, and you have typed /foo/ once, you can keep typing / to find the next instance of foo.
 By entering /bar/f, you search for bar but bar is forgotten, so that the next / searches for foo once again.
-In summary, the possible suffixes for a substitute command are i f g number p, in any order, although g and a number cannot both appear, e.g. s/x/y/g3.
+The $ suffix makes the last substitution on the line.
+In summary, the possible suffixes for a substitute command are i f g $ number p, in any order, although g and a number cannot both appear, e.g. s/x/y/g3.
+Nor can g and $, nor $ and a number.
 
 <LI><P>
 The sg command makes searches and substitutions global across editing sessions.

@@ -4111,11 +4111,10 @@ static char *replaceString;
 static int replaceStringLength;
 static char *replaceStringEnd;
 
-static int
-replaceText(const char *line, int len, const char *rhs,
-	    int nth, bool global, int ln)
+static int replaceText(const char *line, int len, const char *rhs,
+	    int nth, bool global, bool last, int ln)
 {
-	int offset = 0, lastoffset, instance = 0;
+	int offset = 0, lastoffset = -1, instance = 0;
 	int span;
 	char *r;
 	int rlen;
@@ -4125,7 +4124,7 @@ replaceText(const char *line, int len, const char *rhs,
 	r = initString(&rlen);
 
 	while (true) {
-/* find the next match */
+// find the next match
 		re_count =
 		    pcre2_match(re_cc, (uchar*)line, len, offset, 0, match_data, NULL);
 		re_vector = pcre2_get_ovector_pointer(match_data);
@@ -4136,12 +4135,18 @@ replaceText(const char *line, int len, const char *rhs,
 			return -1;
 		}
 
-		if (re_count < 0)
-			break;
-		++instance;	/* found another match */
+		if (re_count < 0) {
+			if(!last) break;
+			if(lastoffset < 0) break;
+			nth = instance + 1;
+			offset = lastoffset;
+			continue;
+		}
+
+		++instance;	// found another match
 		lastoffset = offset;
 		offset = re_vector[1];	/* ready for next iteration */
-		if (offset == lastoffset && (nth > 1 || global)) {
+		if (offset == lastoffset && (nth > 1 || (global|last))) {
 			setError(MSG_ManyEmptyStrings);
 			nzFree(r);
 			return -1;
@@ -4150,14 +4155,14 @@ replaceText(const char *line, int len, const char *rhs,
 		if (!global &&instance != nth)
 			continue;
 
-/* copy up to the match point */
+// copy up to the match point
 		s_end = line + re_vector[0];
 		span = s_end - s;
 		stringAndBytes(&r, &rlen, s, span);
 		s = line + offset;
 
-/* Now copy over the rhs */
-/* Special case lc mc uc */
+// Now copy over the rhs
+// Special case lc mc uc
 		if (ebre && (rhs[0] == 'l' || rhs[0] == 'm' || rhs[0] == 'u')
 		    && rhs[1] == 'c' && rhs[2] == 0) {
 			int savelen = rlen;
@@ -4169,7 +4174,7 @@ replaceText(const char *line, int len, const char *rhs,
 			continue;
 		}
 
-		/* copy rhs, watching for $n */
+		// copy rhs, watching for $n
 		t = rhs;
 		while ((c = *t)) {
 			d = t[1];
@@ -4549,6 +4554,7 @@ static int substituteText(const char *line)
 	int whichField = 0;
 	bool bl_mode = false;	// running the bl command
 	bool g_mode = false;	// s/x/y/g
+	bool last_mode = false;	// s/x/y/$
 	bool ci = caseInsensitive;
 	bool forget = false;
 	bool ok = true; // substitutions ok so far
@@ -4599,6 +4605,10 @@ static int substituteText(const char *line)
 					g_mode = true, ++line;
 					continue;
 				}
+				if (c == '$') {
+					last_mode = true, ++line;
+					continue;
+				}
 				if (c == 'i') {
 					ci = true, ++line;
 					continue;
@@ -4622,13 +4632,14 @@ static int substituteText(const char *line)
 				setError(MSG_SubSuffixBad);
 				return -1;
 			}	// loop gathering suffix flags
-			if (g_mode && nth) {
+			if ((g_mode && (nth || last_mode)) ||
+			(nth && last_mode)) {
 				setError(MSG_SubNumberG);
 				return -1;
 			}
 		}		// closing delimiter
 
-		if (nth == 0 && !g_mode)
+		if (nth == 0 && !(g_mode|last_mode))
 			nth = 1;
 
 		if(!forget) {
@@ -4714,10 +4725,10 @@ static int substituteText(const char *line)
 				if (!t)
 					continue;
 				j = replaceText(s, t - s, rhs, nth,
-						g_mode, ln);
+						g_mode, last_mode, ln);
 			} else {
 				j = replaceText(p, len - 1, rhs, nth,
-						g_mode, ln);
+						g_mode, last_mode, ln);
 			}
 			if (j < 0)
 				goto abort;
@@ -7794,22 +7805,22 @@ past_g_file:
 		if (!first) {
 			strcpy(newline, "//%");
 			line = newline;
+		} else if (first == '$' && !line[1]) {
+			strcpy(newline, "//%/$p");
+			line = newline;
 		} else if(isdigitByte(first) && !line[1]) {
-			sprintf(newline, "//%%/%c", first);
+			sprintf(newline, "//%%/%cp", first);
 			line = newline;
 // cx was set, like a context, like w2, but it shouldn't be
 			cx = 0;
-		} else if(isdigitByte(first) && line[1] == 'p' && !line[2]) {
-			sprintf(newline, "//%%/%cp", first);
-			line = newline;
 		} else if (strchr(",.;:!?)-\"", first) &&
-			   (!line[1] || (isdigitByte(line[1]) && !line[2]))) {
+			   (!line[1] || ((isdigitByte(line[1]) || line[1] == '$') && !line[2]))) {
 			char esc[2];
 			esc[0] = esc[1] = 0;
 			if (first == '.' || first == '?')
 				esc[0] = '\\';
 			sprintf(newline, "/%s%c +/%c\\n%s%s",
-				esc, first, first, (line[1] ? "/" : ""),
+				esc, first, first, (line[1] ? "/p" : ""),
 				line + 1);
 			debugPrint(6, "shorthand regexp %s", newline);
 			line = newline;
