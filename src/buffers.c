@@ -6682,6 +6682,7 @@ bool runCommand(const char *line)
 	int writeMode = O_TRUNC; // could change to append
 	int writeLine = -1; // write text into a session
 	int readLine1 = -1, readLine2 = -1;
+	char *atsave = 0;
 	Window *w = NULL;
 	const Tag *tag = 0, *jumptag = 0;
 	bool nogo = true, rc = true;
@@ -7020,7 +7021,7 @@ replaceframe:
 // Clobber @, so it looks like writing to a session,
 // and we'll set cx and go down that path,
 // then writeLine will send us down another path at the last minute.
-			*p = 0;
+			*p = 0, atsave = p;
 		}
 	}
 
@@ -7034,7 +7035,7 @@ replaceframe:
 // Clobber @, so it looks like reading from a session,
 // and we'll set cx and go down that path,
 // then readLine will send us down another path at the last minute.
-			*p = 0;
+			*p = 0, atsave = p;
 		}
 	}
 
@@ -7377,6 +7378,7 @@ replaceframe:
 				setError(MSG_BufferAppend);
 				return false;
 			}
+			if(atsave) *atsave = '@';
 			return writeContext(cx, writeLine);
 		}
 		selfFrame();
@@ -8243,8 +8245,10 @@ afterdelete:
 	}
 
 	if (cmd == 'r') {
-		if (cx)
+		if (cx) {
+			if(atsave) *atsave = '@';
 			return readContext(cx, readLine1, readLine2);
+		}
 
 		if(first == '!') { // read from a command, like ed
 			char *outdata;
