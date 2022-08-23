@@ -2388,9 +2388,9 @@ static bool readFile(const char *filename, bool newwin,
 
 		if (newwin) {
 			cw->referrer = g.referrer;	// allocated
-			if (g.cfn) {
+			if (changeFileName) {
 				nzFree(cw->saveURL);
-				cw->saveURL = cloneString(g.cfn);
+				cw->saveURL = cloneString(changeFileName);
 			}
 		} else
 			nzFree(g.referrer);
