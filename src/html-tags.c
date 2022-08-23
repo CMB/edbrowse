@@ -3003,7 +3003,7 @@ static const struct entity { unsigned int u; const char *word; } andlist[] = {
 {1096, "shcy"},
 {8739, "shortmid"},
 {8741, "shortparallel"},
-{371, "shy"},
+{173, "shy"},
 {963, "sigma"},
 {962, "sigmaf"},
 {962, "sigmav"},
