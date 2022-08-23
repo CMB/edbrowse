@@ -57,7 +57,7 @@ static char *undoSpecial;
 int undo1line;
 static int undoField;
 void undoSpecialClear(void) { nzFree(undoSpecial), undoSpecial = 0, undo1line = 0; }
-static bool noStack;		/* don't stack up edit sessions */
+static uchar noStack;		// don't stack up edit sessions
 static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
@@ -5371,7 +5371,7 @@ pwd:
 		}
 		if (cw->browseMode)
 			cmd = 'b';
-		noStack = true;
+		noStack = 2;
 		allocatedLine = allocMem(strlen(cf->fileName) + 3);
 		sprintf(allocatedLine, "%c %s", cmd, cf->fileName);
 		debrowseSuffix(allocatedLine);
@@ -6704,11 +6704,11 @@ bool runCommand(const char *line)
 	uriEncoded = false;
 	skipWhite(&line);
 	first = *line;
-	noStack = false;
+	noStack = 0;
 
 	if (!strncmp(line, "ReF@b", 5)) {
 		line += 4;
-		noStack = true;
+		noStack = 1;
 		if (cf != newloc_f) {
 /* replace a frame, not the whole window */
 			newlocation = cloneString(line + 2);
@@ -6727,9 +6727,9 @@ bool runCommand(const char *line)
 
 // force a noStack
 		if (!strncmp(line, "nostack ", 8))
-			noStack = true, line += 8, first = *line;
+			noStack = 2, line += 8, first = *line;
 		if (!strncmp(line, "^ ", 2))
-			noStack = true, line += 2, first = *line;
+			noStack = 2, line += 2, first = *line;
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);
@@ -7937,7 +7937,7 @@ rebrowse:
 // If we got here from typing g in directory mode, and directory had /
 // at the end, and if the file starts with #, then the sameURL test passes,
 // and we go down a completely unintended path.
-		if (!noStack && sameURL(line, cf->fileName) && !cw->dirMode) {
+		if (noStack < 2 && sameURL(line, cf->fileName) && !cw->dirMode) {
 			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
 				return false;
@@ -7962,8 +7962,8 @@ rebrowse:
 			goto browse;
 		}
 
-/* Different URL, go get it. */
-/* did you make changes that you didn't write? */
+// Different URL, go get it.
+// did you make changes that you didn't write?
 		if (!cxQuit(context, 0))
 			return false;
 		undoCompare();
