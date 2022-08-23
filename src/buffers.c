@@ -3169,8 +3169,7 @@ static bool writeContext(int cx, int writeLine)
 	addToMap(fardol, (writeLine >= 0 ? writeLine : 0));
 	if(writeLine < 0)
 		cw->binMode = save_cw->binMode;
-	else
-		cw->changeMode = true;
+	cw->changeMode = true;
 	if(at_the_end)
 		cw->nlMode = lost_nl;
 	cw->browseMode = false;
