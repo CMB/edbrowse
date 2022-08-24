@@ -1962,9 +1962,10 @@ static bool moveCopy(void)
 }
 
 /* Join lines from startRange to endRange. */
-static bool joinText(void)
+static bool joinText(const char *fs)
 {
 	int j, size;
+	int fslen; // length of field separater
 	pst newline, t;
 
 	if (startRange == endRange) {
@@ -1972,20 +1973,24 @@ static bool joinText(void)
 		return false;
 	}
 
+	if(!fs || !*fs) fs = " ";
+	fslen = strlen(fs);
+	if(cmd == 'j') fslen = 1;
 	size = 0;
+
 	for (j = startRange; j <= endRange; ++j)
-		size += pstLength(fetchLine(j, -1));
+		size += pstLength(fetchLine(j, -1)) + fslen - 1;
+
 	t = newline = allocMem(size);
 	for (j = startRange; j <= endRange; ++j) {
 		pst p = fetchLine(j, -1);
 		size = pstLength(p);
 		memcpy(t, p, size);
 		t += size;
-		if (j < endRange) {
-			t[-1] = ' ';
-			if (cmd == 'j')
-				--t;
-		}
+		if (j == endRange) break;
+		--t;
+		if(cmd == 'J')
+			memcpy(t, fs, fslen), t += fslen;
 	}
 
 	delText(startRange, endRange);
@@ -2001,9 +2006,10 @@ static bool joinText(void)
 // for g/re/j or J
 // Algorithm is linear not quadratic.
 // n+1 is number of lines to join.
-static bool joinTextG(char action, int n, int back)
+static bool joinTextG(char action, int n, int back, const char *fs)
 {
 	int i, j, k, size;
+	int fslen; // length of field separater
 	int *label;
 	struct lineMap *t;
 	pst p1, p2, newline;
@@ -2015,6 +2021,10 @@ static bool joinTextG(char action, int n, int back)
 		setError(MSG_Join1);
 		return false;
 	}
+
+	if(!fs || !*fs) fs = " ";
+	fslen = strlen(fs);
+	if(action == 'j') fslen = 1;
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
@@ -2044,26 +2054,28 @@ static bool joinTextG(char action, int n, int back)
 					*label = 0;
 			undoPush();
 			for(k = size = 0; k <= n; ++k)
-				size += pstLength(fetchLine(i + k, -1));
+				size += pstLength(fetchLine(i + k, -1)) + fslen - 1;
 			for(k = 1; k <= back; ++k)
-				size += pstLength(fetchLine(j - k, -1));
+				size += pstLength(fetchLine(j - k, -1)) + fslen - 1;
 			newline = p2 = allocMem(size);
 			for(k = back; k > 0; --k) {
 				p1 = fetchLine(j - k, -1);
 				size = pstLength(p1);
 				memcpy(p2, p1, size);
 				p2 += size;
-				p2[-1] = ' ';
-				if (action == 'j') --p2;
+				--p2;
+				if(action == 'J')
+					memcpy(p2, fs, fslen), p2 += fslen;
 			}
 			for(k = 0; k <= n; ++k) {
 				p1 = fetchLine(i + k, -1);
 				size = pstLength(p1);
 				memcpy(p2, p1, size);
-				if(k == n) break;
 				p2 += size;
-				p2[-1] = ' ';
-				if (action == 'j') --p2;
+				if(k == n) break;
+				--p2;
+				if(action == 'J')
+					memcpy(p2, fs, fslen), p2 += fslen;
 			}
 			j -= back;
 			cw->map[j].text = newline;
@@ -4019,16 +4031,21 @@ massnumber:
 	if(isdigitByte(*p))
 		block = strtol(p, &p, 10) + (block-1);
 masscommand:
-	if(p[0] && p[1]) goto nomass;
 	if(*p == 'd' || *p == 'D') {
+		if(p[1]) goto nomass;
 		if(block < 0) block = 0;
 		if(cw->dirMode && (block > 1 || back > 0)) goto nomass;
 		return delTextG(*p, block, back);
 }
 	if(cw->dirMode) goto nomass;
+	if(*p == 'j') {
+		const char *q = p + 1;
+		while(isspaceByte(*q)) ++q;
+		if(*q) goto nomass;
+	}
 	if(*p == 'j' || *p == 'J') {
 		if(block < 0) block = 1;
-		return joinTextG(*p, block, back);
+		return joinTextG(*p, block, back, p+1);
 }
 nomass:
 
@@ -7122,8 +7139,11 @@ replaceframe:
 		return (globSub = false);
 	}
 
-	while (isspaceByte(first))
-		postSpace = true, first = *++line;
+// eat spaces after the command, but not after J
+	if(cmd != 'J') {
+		while (isspaceByte(first))
+			postSpace = true, first = *++line;
+	}
 
 	if (strchr(spaceplus_cmd, cmd) && !postSpace && first) {
 		s = line;
@@ -7448,7 +7468,7 @@ replaceframe:
 		return writeFile(line, writeMode);
 	}
 
-	if (cmd == '&') {	/* jump back key */
+	if (cmd == '&') {	// jump back key
 		if (first && !cx) {
 			setError(MSG_ArrowAfter);
 			return false;
@@ -7472,7 +7492,7 @@ replaceframe:
 
 	}
 
-	if (cmd == '^') {	/* back key, pop the stack */
+	if (cmd == '^') {	// back key, pop the stack
 		if (first && !cx) {
 			setError(MSG_ArrowAfter);
 			return false;
@@ -7499,7 +7519,7 @@ replaceframe:
 		return true;
 	}
 
-	if (cmd == 'M') {	/* move this to another session */
+	if (cmd == 'M') {	// move this to another session
 		int scx = cx; // remember
 		if (first && !cx) {
 			setError(MSG_MAfter);
@@ -8240,7 +8260,7 @@ afterdelete:
 	}
 
 	if (cmd == 'j' || cmd == 'J') {
-		return joinText();
+		return joinText(line);
 	}
 
 	if (cmd == 'r') {

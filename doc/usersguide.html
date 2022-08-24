@@ -621,14 +621,16 @@ u : undo the last command
 <br>d : delete the current line
 <br>1,$d : delete all the lines, 1 through eof
 <br>D : delete the current line and print the next line
+<br>j : join this line with the next one
+<br>2,5j : join lines 2 through 5
+<br>2,5J : join lines 2 through 5 with space separator
+<br>2,5Jhello : join lines 2 through 5 with hello separator
 <br>i : insert text before the current line, end with a period
 <br>c : change the current line, enter a new block of text, end with period
 <br>a : add text after the current line, end with a period
 <br>a+ : include the line you just typed in, when you thought you were in append mode
 <br>4,7m11 : move lines 4 through 7 to line 11
 <br>4,7t11 : copy lines 4 through 7 to line 11
-<br>3,4j : join lines 3 and 4 together
-<br>3,4J : join lines 3 and 4 together with a space between
 <P>
 Directory Scan
 <P>
@@ -1019,6 +1021,8 @@ Type qt to quit absolute.
 
 <LI><P>
 Capital J joins lines together with spaces between them.
+J: joins lines using a colon separater.
+Any string can be used here.
 
 <LI><P>
 P (prompt) is not implemented.
