@@ -239,9 +239,19 @@ case "number": case "boolean": return x.toString();
 case "function": return x.name;
 case "string":
 l = x.length;
-return l > 60 ? "longstring" : x;
+if(l > 60) x = x.substr(0,60) + "...";
+return x.replace(/\n/g, "\\n");
 case "object":
-if(Array.isArray(x)) return "array[" + x.length + "]";
+if(Array.isArray(x)) {
+l = x.length;
+var i, r = "array[" + x.length + "]{";
+if(l > 20) l = 20;
+for(i=0; i<l; ++i)
+r += showarg(x[i]) + ',';
+if(l < x.length) r += "...";
+r += '}';
+return r;
+}
 if(x instanceof w.URL || x.dom$class === "URL") return "URL(" + x.toString() + ")";
 if(x.nodeType == 1 && x.childNodes && x.nodeName) { // html element
 var s = "<" + x.nodeName + ">";
@@ -250,6 +260,11 @@ if(y) s += " id=" + y;
 y = x.getAttribute("class");
 if(y) s += " class=" + y;
 return s;
+}
+if(typeof x.HTMLDivElement == "function" && typeof x.HTMLTableElement == "function") {
+var r = "window";
+if(x.location && x.location.href) r += " " + x.location.href;
+return r;
 }
 return "object";
 default: return "?";
