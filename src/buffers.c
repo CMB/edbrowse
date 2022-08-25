@@ -2387,7 +2387,8 @@ static bool readFile(const char *filename, bool newwin,
 		serverDataLen = g.length;
 		if (!rc)
 			return false;
-		changeFileName = g.cfn;	// allocated
+// pass responsibility for the allocated string to changeFileName
+		changeFileName = g.cfn;
 
 		if(changeFileName &&
 		(hash = findHash(filename)) &&
@@ -2399,7 +2400,8 @@ static bool readFile(const char *filename, bool newwin,
 		}
 
 		if (newwin) {
-			cw->referrer = g.referrer;	// allocated
+// pass responsibility for the allocated string to cw->referrer
+			cw->referrer = g.referrer;
 			if (changeFileName) {
 				nzFree(cw->saveURL);
 				cw->saveURL = cloneString(changeFileName);
@@ -4170,6 +4172,8 @@ static int replaceText(const char *line, int len, const char *rhs,
 
 		if (!global &&instance != nth)
 			continue;
+		if (global && nth &&instance != nth)
+			continue;
 
 // copy up to the match point
 		s_end = line + re_vector[0];
@@ -4185,8 +4189,8 @@ static int replaceText(const char *line, int len, const char *rhs,
 			span = re_vector[1] - re_vector[0];
 			stringAndBytes(&r, &rlen, line + re_vector[0], span);
 			caseShift(r + savelen, rhs[0]);
-			if (!global)
-				break;
+			if (!global) break;
+			nth = 0;
 			continue;
 		}
 
@@ -4274,9 +4278,9 @@ static int replaceText(const char *line, int len, const char *rhs,
 			++t;
 		}
 
-		if (!global)
-			break;
-	}			/* loop matching the regular expression */
+		if (!global) break;
+		nth = 0;
+	}			// loop matching the regular expression
 
 	if (!instance) {
 		nzFree(r);
@@ -4648,7 +4652,7 @@ static int substituteText(const char *line)
 				setError(MSG_SubSuffixBad);
 				return -1;
 			}	// loop gathering suffix flags
-			if ((g_mode && (nth || last_mode)) ||
+			if ((g_mode & last_mode) ||
 			(nth && last_mode)) {
 				setError(MSG_SubNumberG);
 				return -1;

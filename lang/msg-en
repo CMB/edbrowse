@@ -267,7 +267,7 @@ download aborted.
 cannot write to the directory
 multiple numbers after the third delimiter
 unexpected substitution suffix after the third delimiter
-cannot use more than one of g, $, or a number
+cannot combine $ with g or a number
 sorry, cannot apply the bl command to lines longer than %d bytes
 replacement data contains newlines
 replacement data contains null characters
