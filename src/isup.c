@@ -163,7 +163,7 @@ char *percentURL(const char *start, const char *end)
 	out_pointer = NULL;
 
 	for (in_pointer = start; in_pointer < end; in_pointer++)
-		if (*in_pointer <= ' ' || strchr(percentable, *in_pointer))
+		if (*(signed char *)in_pointer <= ' ' || strchr(percentable, *in_pointer))
 			bytes_to_alloc += (ESCAPED_CHAR_LENGTH - 1);
 
 	new_copy = allocMem(bytes_to_alloc);
@@ -171,7 +171,7 @@ char *percentURL(const char *start, const char *end)
 	for (in_pointer = start; in_pointer < end; in_pointer++) {
 		if (*in_pointer == '\\')
 			*out_pointer++ = '/';
-		else if (*in_pointer <= ' ' || strchr(percentable, *in_pointer)) {
+		else if (*(signed char *)in_pointer <= ' ' || strchr(percentable, *in_pointer)) {
 			*out_pointer++ = '%';
 			*out_pointer++ =
 			    hexdigits[(uchar) (*in_pointer & 0xf0) >> 4];
@@ -195,7 +195,7 @@ bool looksPercented(const char *start, const char *end)
 	if (!end)
 		end = start + strlen(start);
 	for (s = start; s < end; ++s)
-		if (*s < ' ' || strchr(percentable, *s))
+		if (*(signed char *)s <= ' ' || strchr(percentable, *s))
 			return false;
 	return true;
 }
