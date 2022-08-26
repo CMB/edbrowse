@@ -2472,6 +2472,7 @@ File = mw$.File
 FileReader = mw$.FileReader
 URL.createObjectURL = mw$.URL.createObjectURL
 URL.revokeObjectURL = mw$.URL.revokeObjectURL
+FormData = mw$.FormData
 MessagePort = mw$.MessagePort;
 MessageChannel = mw$.MessageChannel;
 mp$registry = []; // MessagePort registry

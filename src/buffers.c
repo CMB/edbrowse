@@ -1965,7 +1965,7 @@ static bool moveCopy(void)
 static bool joinText(const char *fs)
 {
 	int j, size;
-	int fslen; // length of field separater
+	int fslen; // length of field separator
 	pst newline, t;
 
 	if (startRange == endRange) {
@@ -2009,7 +2009,7 @@ static bool joinText(const char *fs)
 static bool joinTextG(char action, int n, int back, const char *fs)
 {
 	int i, j, k, size;
-	int fslen; // length of field separater
+	int fslen; // length of field separator
 	int *label;
 	struct lineMap *t;
 	pst p1, p2, newline;
