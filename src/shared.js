@@ -3148,11 +3148,11 @@ this.statusText = "network error";
     }
 
     Blob.prototype.arrayBuffer = function () {
-      return Promise.resolve(this._buffer)
+      return my$win().Promise.resolve(this._buffer)
     }
 
     Blob.prototype.text = function () {
-      return Promise.resolve(textDecode(this._buffer))
+      return my$win().Promise.resolve(textDecode(this._buffer))
     }
 
     Blob.prototype.slice = function (start, end, type) {
@@ -3363,7 +3363,7 @@ this.statusText = "network error";
   var stream
 
   function promisify(obj) {
-    return new Promise(function(resolve, reject) {
+    return new my$win().Promise(function(resolve, reject) {
       obj.onload =
       obj.onerror = function(evt) {
         obj.onload =
