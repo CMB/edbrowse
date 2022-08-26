@@ -12,10 +12,12 @@ If you wish to release a version of edbrowse with these shared
 libraries included,
 or a statically linked executable, you will need to specify both GPL and curl.
 
-Some aspects of the DOM, e.g. Blob,
+Some aspects of the DOM, e.g. Blob, FormData,
 are third party software, released under the MIT public license.
 See shared.js for this code.
 Also, we employ the quick js engine, which is released under the MIT public license.
 
-In summary: GPL + MIT public license,
+TextEncoder and TextDecoder are provided under CC0 1.0 Universal.
+
+In summary: GPL + MIT public license + CC0 1.0,
 + curl license if edbrowse is packaged with curl.
