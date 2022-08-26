@@ -227,7 +227,7 @@ enum {
 	MSG_DomainEmpty,
 	MSG_NoWriteURL,
 	MSG_WriteDB,
-	MSG_WriteEmpty,
+	MSG_notused130,
 	MSG_NoCreate2,
 	MSG_NoWrite2,
 	MSG_SessionBackground,

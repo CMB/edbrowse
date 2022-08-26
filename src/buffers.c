@@ -2795,11 +2795,6 @@ bool writeFile(const char *name, int mode)
 		return false;
 	}
 
-	if (!cw->dol) {
-		setError(MSG_WriteEmpty);
-		return false;
-	}
-
 	if (isURL(name)) {
 		if (mode & O_APPEND) {
 			setError(MSG_NoAppendURL);
@@ -2863,7 +2858,14 @@ badwrite:
 			i_puts(MSG_ConvDos);
 	}
 
+// special code for empty file
 	fileSize = 0;
+	if(startRange == 0) {
+		fclose(fh);
+		cw->changeMode = false;
+		return true;
+	}
+
 	for (i = startRange; i <= endRange; ++i) {
 		pst p = fetchLine(i, (cw->browseMode ? 1 : -1));
 		int len = pstLength(p);

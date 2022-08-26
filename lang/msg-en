@@ -127,7 +127,7 @@ missing file name
 empty domain in url
 cannot write to a url
 cannot write to a database table
-cannot write an empty file
+0
 cannot create %s
 cannot write to %s
 session is not interactive
