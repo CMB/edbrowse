@@ -274,7 +274,7 @@ bool *long_p)
 {
 	char *buf;
 	char c;
-	bool longline;
+	bool longline, flowed;
 	char *s, *t, *v;
 	char *ct, *ce;		/* content type, content encoding */
 	int buflen, i, cx;
@@ -449,7 +449,7 @@ empty:
 
 /* Count the nonascii characters */
 	nacount = nullcount = linelength = 0;
-	longline = false;
+	longline = flowed = false;
 	for (t = buf, i = 0; i < buflen; ++i, ++t) {
 		c = *t;
 		if (c == '\0')
@@ -495,77 +495,98 @@ empty:
 		goto success;
 	}
 
-	if (!webform) {
-// Use qp for long lines, it doesn't hurt,
-// and when I send I copy lines into a static buffer of a fixed length.
-		if (longline) {
-			char *newbuf;
-			int l, colno = 0, space = 0;
-
-			newbuf = initString(&l);
-			v = buf + buflen;
-			for (s = buf; s < v; ++s) {
-				c = *s;
-/* do we have to =expand this character? */
-				if ((c < '\n' && c != '\t') ||
-				    c == '=' ||
-				    c == '\xff' ||
-				    ((c == ' ' || c == '\t') &&
-				     s < v - 1 && (s[1] == '\n' || s[1] == '\r'))) {
-					char expand[4];
-					sprintf(expand, "=%02X", (uchar) c);
-					stringAndString(&newbuf, &l, expand);
-					colno += 3;
-				} else {
-					stringAndChar(&newbuf, &l, c);
-					++colno;
-				}
-				if (c == '\n' || c == '\r') {
-					colno = space = 0;
-					continue;
-				}
-				if (c == ' ' || c == '\t')
-					space = l;
-				if (colno < 72)
-					continue;
-				if (s == v - 1)
-					continue;
-/* If newline's coming up anyways, don't force another one. */
-				if (s[1] == '\n' || s[1] == '\r')
-					continue;
-				i = l;
-				if (!space || space == i) {
-					stringAndString(&newbuf, &l, "=\n");
-					colno = space = 0;
-					continue;
-				}
-				colno = i - space;
-				stringAndString(&newbuf, &l, "**");	/* make room */
-				while (i > space) {
-					newbuf[i + 1] = newbuf[i - 1];
-					--i;
-				}
-				newbuf[space] = '=';
-				newbuf[space + 1] = '\n';
-				space = 0;
-			}	/* loop over characters */
-
-			nzFree(buf);
-			buf = newbuf;
-			ce = "quoted-printable";
-			goto success;
-		}
+	ce = (nacount ? "8bit" : "7bit");
+	if (webform || !longline) {
+		buf[buflen] = 0;
+		goto success;
 	}
 
-	buf[buflen] = 0;
-	ce = (nacount ? "8bit" : "7bit");
+// Use qp for long lines, it doesn't hurt,
+// and when I send I copy lines into a static buffer of a fixed length.
+
+	char *newbuf;
+	int l, colno = 0, space = 0;
+	if (ismail && flow) flowed = true;
+	else ce = "quoted-printable";
+	newbuf = initString(&l);
+	v = buf + buflen;
+	for (s = buf; s < v; ++s) {
+		c = *s;
+// With format=flowed, skip the space characters at the end of a paragraph
+// and double an = at the end of a line.
+		if (flowed && c == '=') {
+// skip past spaces
+			for (t = s + 1; t < v && *t == ' '; ++t)  ;
+			if(t == v || *t == '\r' || *t == '\n') {
+				stringAndString(&newbuf, &l, "==");
+				s = t - 1;
+				continue;
+			}
+		}
+		if (flowed && c == ' ') {
+// skip past spaces
+			for (t = s + 1; t < v && *t == ' '; ++t)  ;
+			if(t == v ||
+			((t[0] == '\r' || t[0] == '\n') && (t + 1 == v || t[1] == t[0] || (t[0] == '\n' && t[1] == '\r'))) ||
+			(t[0] == '\r' && (t + 1 == v || (t[1] == '\n' && (t + 2 == v || t[2] == '\r' || t[2] == '\n'))))) {
+				s = t - 1;
+				continue;
+			}
+		}
+// do we have to =expand this character?
+		if (!flowed &&
+		((((uchar)c < '\n' && c != '\t') ||
+		    c == '=' ||
+		    (uchar)c == '\xff' ||
+		    ((c == ' ' || c == '\t') &&
+		     s < v - 1 && (s[1] == '\n' || s[1] == '\r'))))) {
+			char expand[4];
+			sprintf(expand, "=%02X", (uchar) c);
+			stringAndString(&newbuf, &l, expand);
+			colno += 3;
+		} else {
+			stringAndChar(&newbuf, &l, c);
+			++colno;
+		}
+		if (c == '\n' || c == '\r') {
+			colno = space = 0;
+			continue;
+		}
+		if (c == ' ' || c == '\t')
+			space = l;
+		if (colno < 72)
+			continue;
+		if (s == v - 1)
+			continue;
+/* If newline's coming up anyways, don't force another one. */
+		if (s[1] == '\n' || s[1] == '\r')
+			continue;
+		i = l;
+		if (!space || space == i) {
+			stringAndString(&newbuf, &l, "=\n");
+			colno = space = 0;
+			continue;
+		}
+		colno = i - space;
+		stringAndString(&newbuf, &l, "**");	/* make room */
+		while (i > space) {
+			newbuf[i + 1] = newbuf[i - 1];
+			--i;
+		}
+		newbuf[space] = '=';
+		newbuf[space + 1] = '\n';
+		space = 0;
+	}	// loop over characters
+
+	nzFree(buf);
+	buf = newbuf;
 
 success:
 	debugPrint(5, "encoded %s %s length %d", ct, ce, strlen(buf));
 	*enc_p = ce;
 	*type_p = ct;
 	*data_p = buf;
-if(long_p) *long_p = longline;
+if(long_p) *long_p = flowed;
 	debugPrint(6, "%s", buf);
 	return true;
 
@@ -617,7 +638,7 @@ static char *messageTimeID(void)
 	return buf;
 }
 
-static void appendAttachment(const char *s, char **out, int *l, bool longline)
+static void appendAttachment(const char *s, char **out, int *l, bool flowed)
 {
 	const char *t;
 	int n;
@@ -632,7 +653,7 @@ static void appendAttachment(const char *s, char **out, int *l, bool longline)
 		if(!n) {
 			paraplus = -1;
 		} else {
-			if(longline && paraplus < 0) {
+			if(flowed && paraplus < 0) {
 				paraplus = 0;
 // does this paragraph have any long lines; should we append +
 				const char *u, *v, *x;
@@ -646,14 +667,17 @@ static void appendAttachment(const char *s, char **out, int *l, bool longline)
 				if(u && (!v || v > u)) paraplus = 1;
 			}
 			memcpy(serverLine, s, n);
-// if format=flowed, put spaces on the end of lines. Experimental!
-			if(longline && paraplus > 0 && serverLine[n-1] != '=' &&
-			serverLine[n-1] != ' ' &&
-			t[0] && t[1] &&
-			t[1] != '\n' && t[1] != '\r')
-				serverLine[n++] = ' ';
-// We might be able to remove = from a line that ends in space =
-// format=flowed will fix everything up anyways.
+/* With format=flowed, put spaces on the end of lines in paragraphs containing a long line and remove = at the end of lines. */
+			if(flowed && paraplus > 0) {
+				if (serverLine[n-1] == '=') {
+					serverLine[n-1] = serverLine[n];
+					n--;
+				}
+				if (serverLine[n-1] != ' ' &&
+				t[0] && t[1] &&
+				t[1] != '\n' && t[1] != '\r')
+					serverLine[n++] = ' ';
+			}
 		}
 		serverLine[n] = 0;
 		strcat(serverLine, eol);
@@ -876,7 +900,7 @@ sendMail(int account, const char **recipients, const char *body,
 	char *out = 0;
 	bool sendmail_success = false;
 	bool mustmime = false;
-	bool firstrec, longline;
+	bool firstrec, flowed;
 	const char *ct, *ce;
 	char *encoded = 0;
 
@@ -995,7 +1019,7 @@ sendMail(int account, const char **recipients, const char *body,
 		}
 	}			// loop over attachments
 
-	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded, &longline))
+	if (!encodeAttachment(body, subjat, false, &ct, &ce, &encoded, &flowed))
 		return false;
 	if (ce[0] == 'q')
 		mustmime = true;
@@ -1070,7 +1094,7 @@ sendMail(int account, const char **recipients, const char *body,
 		sprintf(serverLine,
 			"Content-Type: %s%s%s%sContent-Transfer-Encoding: %s%s%s",
 			ct, charsetString(ct, ce),
-			(longline ? "; format=flowed" : ""), eol,
+			(flowed ? "; format=flowed" : ""), eol,
 			ce, eol, eol);
 		stringAndString(&out, &j, serverLine);
 	} else {
@@ -1086,13 +1110,13 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 		sprintf(serverLine,
 			"%sContent-Type: %s%s%s%sContent-Transfer-Encoding: %s%s%s",
 			eol, ct, charsetString(ct, ce),
-			(longline ? "; format=flowed" : ""), eol,
+			(flowed ? "; format=flowed" : ""), eol,
 			ce, eol, eol);
 		stringAndString(&out, &j, serverLine);
 	}
 
 /* Now send the body, line by line. */
-	appendAttachment(encoded, &out, &j, longline);
+	appendAttachment(encoded, &out, &j, flowed);
 	nzFree(encoded);
 	encoded = 0;
 

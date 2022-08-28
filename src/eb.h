@@ -339,6 +339,7 @@ extern bool fetchBlobColumns, ls_reverse;
 extern uchar ls_sort, dirWrite;
 extern char lsformat[12];
 extern bool dno; // directory names only
+extern bool flow; // send mail with format=flowed
 extern bool caseInsensitive, searchStringsAll, searchWrap, ebre;
 extern bool allowRedirection;	/* from http code 301, or http refresh */
 extern bool sendReferrer;	/* in the http header */

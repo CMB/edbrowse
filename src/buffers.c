@@ -5713,6 +5713,20 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "flow")) {
+		flow ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(flow + MSG_FormatFlowedOff);
+		return true;
+	}
+
+	if (stringEqual(line, "flow+") || stringEqual(line, "flow-")) {
+		flow = (line[4] == '+');
+		if (helpMessagesOn)
+			i_puts(flow + MSG_FormatFlowedOff);
+		return true;
+	}
+
 	if (stringEqual(line, "hr")) {
 		allowRedirection ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

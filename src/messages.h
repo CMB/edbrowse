@@ -793,4 +793,6 @@ enum {
 	MSG_DirNamesOnlyOn,
 	MSG_DebugTagsOff,
 	MSG_DebugTagsOn,
+	MSG_FormatFlowedOff,
+	MSG_FormatFlowedOn,
 };

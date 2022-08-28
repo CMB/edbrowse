@@ -3,7 +3,9 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.5
 s/x/y/$ command, and s$ shorthand.
 
-J: command to inject other separaters between joined lines.
+J: command to inject other separators between joined lines.
+
+flow command to use format=flowed in outgoing mail.
 
 FormData, from a third party.
 TextDecoder, from a third party.

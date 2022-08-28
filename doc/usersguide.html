@@ -747,6 +747,7 @@ Mail Client
 sm : send mail [account number]
 <br>re : reply to a mail message
 <br>rea : reply to all
+<br>flow : send mail with format=flowed (toggle)
 <P>
 Plugins
 <P>
@@ -4643,6 +4644,9 @@ This overrides the account: line if there is one.
 It is often easier to type sm5 than to insert an account:5 line.
 Note, sm-5 is the same as sm5, but the .signature file is not included.
 Sometimes you want a different ending on your email for a particular situation.
+
+<p>
+When the body of your message contains lines longer than 76 characters, edbrowse either uses the quoted-printable transfer encoding or wraps the lines and sends the message using format=flowed so that the receiving email client can unwrap the wrapped lines. You can choose between these options with the flow command.
 
 <P>
 sub: is an acceptable shorthand for subject:

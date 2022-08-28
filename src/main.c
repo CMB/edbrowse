@@ -13,7 +13,7 @@ Frame *cf;
 int gfsn; // global frame sequence number
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.8.4";
+const char *version = "3.8.5";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
@@ -34,6 +34,7 @@ int verifyCertificates = 1;
 char *sslCerts, *pubKey;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
+bool flow = true; // send mail with format=flowed
 int maxMime;
 struct MIMETYPE mimetypes[MAXMIME];
 static struct DBTABLE dbtables[MAXDBT];
@@ -942,7 +943,7 @@ int runEbFunction(const char *line)
 
 // local copies of settings, to restore after function runs.
 	struct {
-		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno;
+		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, flow;
 		uchar dw, ls_sort;
 		char lsformat[12], showProgress;
 		char *currentAgent;
@@ -990,6 +991,7 @@ int runEbFunction(const char *line)
 		save.timerspeed = timerspeed;
 		save.dw = dirWrite;
 		save.dno = dno;
+		save.flow = flow;
 		save.ls_sort = ls_sort;
 		strcpy(save.lsformat, lsformat);
 		save.showProgress = showProgress;
@@ -1172,6 +1174,7 @@ done:
 		timerspeed = save.timerspeed;
 		dirWrite = save.dw;
 		dno = save.dno;
+		flow = save.flow;
 		ls_sort = save.ls_sort;
 		strcpy(lsformat, save.lsformat);
 		showProgress = save.showProgress;
