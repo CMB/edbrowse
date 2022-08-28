@@ -1350,7 +1350,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 }
 
 /* Protect a filename from expansion by the shell */
-static const char shellmeta[] = "\\\n\t |&;<>(){}#'\"~$*?";
+static const char shellmeta[] = "\\\n\t |&;<>(){}#'\"~$*?`";
 int shellProtectLength(const char *s)
 {
 	int l = 0;
