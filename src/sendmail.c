@@ -640,18 +640,24 @@ static char *messageTimeID(void)
 	return buf;
 }
 
-static void appendAttachment(const char *s, char **out, int *l, bool flowed)
+static void appendAttachment(const char *s, char **out, int *l, bool flowed,
+const char *ct)
 {
 	const char *t;
 	int n;
 	int paraplus = -1;
+	bool ta; // text attachment
+	bool cr; // cr was at the end
+// check to see it's not a base64 attachment
+	ta = (ct && *ct != 'b');
 	while (*s) {		/* another line */
 		t = strchr(s, '\n');
 		if (!t)
 			t = s + strlen(s);
 		n = t - s;
+		cr = false;
 		if (n && t[-1] == '\r')
-			--n;
+			--n, cr = true;
 		if(!n) {
 			paraplus = -1;
 		} else {
@@ -669,20 +675,19 @@ static void appendAttachment(const char *s, char **out, int *l, bool flowed)
 				if(u && (!v || v > u)) paraplus = 1;
 			}
 			memcpy(serverLine, s, n);
-/* With format=flowed, put spaces on the end of lines in paragraphs containing a long line and remove = at the end of lines. */
+// With format=flowed, put spaces on the end of lines in paragraphs containing
+// a long line and remove = at the end of lines. */
 			if(flowed && paraplus > 0) {
-				if (serverLine[n-1] == '=') {
-					serverLine[n-1] = serverLine[n];
-					n--;
-				}
-				if (serverLine[n-1] != ' ' &&
+				if (serverLine[n-1] == '=')
+					--n;
+				if ((!n || serverLine[n-1] != ' ') &&
 				t[0] && t[1] &&
 				t[1] != '\n' && t[1] != '\r')
 					serverLine[n++] = ' ';
 			}
 		}
 		serverLine[n] = 0;
-		strcat(serverLine, eol);
+		strcat(serverLine, ((ta && !cr) ? "\n" : eol));
 		stringAndString(out, l, serverLine);
 		if (*t)
 			++t;
@@ -1118,7 +1123,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 	}
 
 /* Now send the body, line by line. */
-	appendAttachment(encoded, &out, &j, flowed);
+	appendAttachment(encoded, &out, &j, flowed, NULL);
 	nzFree(encoded);
 	encoded = 0;
 
@@ -1158,7 +1163,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 				"%sContent-Transfer-Encoding: %s%s%s", eol, ce,
 				eol, eol);
 			stringAndString(&out, &j, serverLine);
-			appendAttachment(encoded, &out, &j, false);
+			appendAttachment(encoded, &out, &j, false, ct);
 			nzFree(encoded);
 			encoded = 0;
 		}		/* loop over attachments */
