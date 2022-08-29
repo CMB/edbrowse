@@ -336,7 +336,7 @@ subject line too long, limit %d characters
 progress dots
 .signature is not a regular file
 cannot access .signature file
-cannot mail the binary file %s, perhaps this should be an attachment?
+0
 either none or all of the attachments must be declared \"alternative\"
 too many recipients, limit %d
 No address book specified, please check your configuration file

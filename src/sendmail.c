@@ -484,10 +484,6 @@ empty:
 
 	if ((!webform && buflen > 20 && nacount * 4 > buflen) ||
 	    nullcount) {
-		if (ismail) {
-			setError(MSG_MailBinary, file);
-			goto freefail;
-		}
 		s = base64Encode(buf, buflen, true);
 		nzFree(buf);
 		buf = s;

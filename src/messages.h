@@ -436,7 +436,7 @@ enum {
 	MSG_ProgressDots,
 	MSG_SigRegular,
 	MSG_SigAccess,
-	MSG_MailBinary,
+	MSG_notused339,
 	MSG_AttAlternate,
 	MSG_RecipMany,
 	MSG_ABMissing,
