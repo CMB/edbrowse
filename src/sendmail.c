@@ -478,12 +478,13 @@ empty:
 	if (!ct)
 		ct = "text/plain";
 
-/* Criteria for base64 encode.
- * files uploaded from a web form need not be encoded, unless they contain
- * nulls, which is a quirk of my slapped together software. */
+// base64 is almost obsolete, with networks and clients able to handle 8bit,
+// but I still have to use it if the data contains even a single null,
+// because edbrowse treats data as a string after this point.
+// I'll still use 64 if it looks binary, perhaps a vital executable,
+// rather than simple utf8 text.
 
-	if ((!webform && buflen > 20 && nacount * 4 > buflen) ||
-	    nullcount) {
+	if (nullcount || looksBinary((uchar*)buf, buflen)) {
 		s = base64Encode(buf, buflen, true);
 		nzFree(buf);
 		buf = s;
