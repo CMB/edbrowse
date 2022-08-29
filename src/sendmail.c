@@ -547,26 +547,32 @@ empty:
 		} else {
 			stringAndChar(&newbuf, &l, c);
 			++colno;
+			if (flowed && c == ' ' && (s[1] == '\n' || s[1] == '\r')) {
+// With format=flowed, when a space ends a line within a paragraph, add = so that we can flow the whole paragraph later.
+				stringAndChar(&newbuf, &l, '=');
+			}
 		}
-		if (c == '\n' || c == '\r') {
+		if (c == '\n') {
 			colno = space = 0;
 			continue;
 		}
-		if (c == ' ' || c == '\t')
+		if (isspaceByte(c))
 			space = l;
 		if (colno < 72)
 			continue;
 		if (s == v - 1)
 			continue;
-/* If newline's coming up anyways, don't force another one. */
-		if (s[1] == '\n' || s[1] == '\r')
+// If newline's coming up anyways, don't force another one.
+		if (s[1] == '\n')
 			continue;
 		i = l;
-		if (!space || space == i) {
+		if (!flowed && (!space || space == i)) {
 			stringAndString(&newbuf, &l, "=\n");
 			colno = space = 0;
 			continue;
 		}
+// a long line without spaces, like a long url
+		if(!space) continue;
 		colno = i - space;
 		stringAndString(&newbuf, &l, "**");	/* make room */
 		while (i > space) {
@@ -1094,7 +1100,7 @@ sendMail(int account, const char **recipients, const char *body,
 		sprintf(serverLine,
 			"Content-Type: %s%s%s%sContent-Transfer-Encoding: %s%s%s",
 			ct, charsetString(ct, ce),
-			(flowed ? "; format=flowed" : ""), eol,
+			(flowed ? "; format=flowed; delsp=no" : ""), eol,
 			ce, eol, eol);
 		stringAndString(&out, &j, serverLine);
 	} else {
@@ -1110,7 +1116,7 @@ this format, some or all of this message may not be legible.\r\n\r\n--");
 		sprintf(serverLine,
 			"%sContent-Type: %s%s%s%sContent-Transfer-Encoding: %s%s%s",
 			eol, ct, charsetString(ct, ce),
-			(flowed ? "; format=flowed" : ""), eol,
+			(flowed ? "; format=flowed; delsp=no" : ""), eol,
 			ce, eol, eol);
 		stringAndString(&out, &j, serverLine);
 	}
