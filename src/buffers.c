@@ -3498,7 +3498,7 @@ regexpCheck(const char *line, bool isleft,
 
 	if (ebre && isleft) {
 // Interpret lead * or lone [ as literal
-		if (strchr("*?+", c) || (c == '[' && !line[1])) {
+		if (strchr("*?+{", c) || (c == '[' && !line[1])) {
 			*e++ = '\\';
 			*e++ = c;
 			++line;
@@ -3506,7 +3506,7 @@ regexpCheck(const char *line, bool isleft,
 		}
 // and similarly for /^* and /^[
 		if (c == '^' && (c = line[1]) &&
-		(strchr("*?+", c) || (c == '[' && !line[2]))) {
+		(strchr("*?+{", c) || (c == '[' && !line[2]))) {
 			*e++ = '^';
 			*e++ = '\\';
 			*e++ = c;
