@@ -10,6 +10,7 @@
 #define MAXRECAT 100		// max number of recipients or attachments
 #define MAXMSLINE 1024		// max mail server line
 #define LONGLINELIMIT 76
+#define LONGWORDLIMIT 998
 
 static char serverLine[MAXMSLINE];
 static bool doSignature;
@@ -274,11 +275,11 @@ bool *long_p)
 {
 	char *buf;
 	char c;
-	bool longline, flowed;
+	bool longline, longword, flowed;
 	char *s, *t, *v;
 	char *ct, *ce;		/* content type, content encoding */
 	int buflen, i, cx;
-	int nacount, nullcount, linelength;
+	int nacount, nullcount, linelength, wordlength;
 
 	debugPrint(5, "subject at line %d", ismail);
 	if (ismail < 0) {
@@ -448,8 +449,8 @@ empty:
 	}
 
 /* Count the nonascii characters */
-	nacount = nullcount = linelength = 0;
-	longline = flowed = false;
+	nacount = nullcount = linelength = wordlength = 0;
+	longline = longword = flowed = false;
 	for (t = buf, i = 0; i < buflen; ++i, ++t) {
 		c = *t;
 		if (c == '\0')
@@ -459,13 +460,18 @@ empty:
 		if (c == '\n') {
 			if(linelength > LONGLINELIMIT) longline = true;
 			linelength = 0;
-			continue;
-		}
+		} else {
 // measure length of line by utf8 characters
-		if(((uchar)c & 0xc0) != 0x80)
-			++linelength;
+			if(((uchar)c & 0xc0) != 0x80)
+				++linelength;
+		}
+		if (c == '\n' || c == '\r' || c == '\t' || c == ' ') {
+			if (wordlength > LONGWORDLIMIT) longword = true;
+			wordlength = 0;
+		} else ++wordlength;
 	}
 	if(linelength > LONGLINELIMIT) longline = true;
+	if (wordlength > LONGWORDLIMIT) longword = true;
 	debugPrint(5, "attaching %s length %d nonascii %d nulls %d longline %d",
 		   file, buflen, nacount, nullcount, longline);
 	nacount += nullcount;
@@ -503,7 +509,7 @@ empty:
 
 	char *newbuf;
 	int l, colno = 0, space = 0;
-	if (ismail && flow) flowed = true;
+	if (ismail && flow && !longword) flowed = true;
 	else ce = "quoted-printable";
 	newbuf = initString(&l);
 	v = buf + buflen;
