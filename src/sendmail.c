@@ -549,7 +549,8 @@ empty:
 			colno += 3;
 		} else {
 			stringAndChar(&newbuf, &l, c);
-			++colno;
+// make a utf8 char look like 1
+			if((c&0x80) == 0 || (c&0xc0) == 0xc0) ++colno;
 			if (flowed && c == ' ' && (s[1] == '\n' || s[1] == '\r')) {
 // With format=flowed, when a space ends a line within a paragraph, add = so that we can flow the whole paragraph later.
 				stringAndChar(&newbuf, &l, '=');
