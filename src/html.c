@@ -3441,18 +3441,18 @@ void delTimers(const Frame *f)
 	delPendings(f);
 }
 
+static void runTimer0(struct jsTimer *jt, const Frame *save_cf);
 void runTimer(void)
 {
 	struct jsTimer *jt;
 	Window *save_cw = cw;
 	Frame *save_cf = cf;
-	Tag *t;
 
 	currentTime();
 
 	if (!(jt = soonest()) ||
 	    (jt->sec > now_sec || (jt->sec == now_sec && jt->ms > now_ms)))
-		goto done;
+		return;
 
 	if(jt->pending) { // pending jobs
 		my_ExecutePendingJobs();
@@ -3467,8 +3467,19 @@ void runTimer(void)
 		goto done;
 	}
 
-	if (!gotimers)
-		goto skip_execution;
+	runTimer0(jt, save_cf);
+	if (gotimers)
+		jSideEffects();
+
+done:
+	cw = save_cw, cf = save_cf;
+}
+
+static void runTimer0(struct jsTimer *jt, const Frame *save_cf)
+{
+	Tag *t;
+
+	if (!gotimers) goto skip_execution;
 
 	cf = jt->f;
 	cw = cf->owner;
@@ -3587,12 +3598,6 @@ skip_execution:
 		if (jt->ms >= 1000)
 			jt->ms -= 1000, ++jt->sec;
 	}
-
-	if (gotimers)
-		jSideEffects();
-
-done:
-	cw = save_cw, cf = save_cf;
 }
 
 void showTimers(void)
