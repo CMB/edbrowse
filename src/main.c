@@ -1490,7 +1490,7 @@ bool readConfigFile(void)
 
 	unreadConfigFile();
 
-	if (!fileIntoMemory(configFile, &buf, &buflen)) {
+	if (!fileIntoMemory(configFile, &buf, &buflen, 0)) {
 		i_printf(MSG_NoConfig, configFile);
 		return 0;
 	}
@@ -1896,7 +1896,7 @@ inside:
 		case 44: // include
 			v = envFileAlloc(v);
 			if(!v) continue;
-			if(!fileIntoMemory(v, &incbuf, &inclen)) {
+			if(!fileIntoMemory(v, &incbuf, &inclen, 0)) {
 				showError();
 				setError(-1);
 				nzFree(v);

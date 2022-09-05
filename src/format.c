@@ -2346,7 +2346,7 @@ void loadEmojis(void)
 		return;
 	if(ejgroup0) // should never happen
 		clearEmojis();
-	if(!fileIntoMemory(emojiFile, &ejbase, &len)) {
+	if(!fileIntoMemory(emojiFile, &ejbase, &len, 0)) {
 		showError();
 		setError(-1);
 		return;

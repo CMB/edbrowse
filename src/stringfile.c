@@ -708,11 +708,13 @@ void copyPstring(pst s, const pst t)
  * This solves an outstanding issue, and it is needed for forthcoming
  * functionality, such as edpager.
  */
-bool fdIntoMemory(int fd, char **data, int *len)
+int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 {
 	int length, n;
 	const int blocksize = 8192;
 	char *chunk, *buf;
+	static char *leftover;
+	static int lolen; // leftover length
 
 	chunk = allocZeroString(blocksize);
 	buf = initString(&length);
@@ -725,7 +727,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 			*data = emptyString;
 			*len = 0;
 			setError(MSG_BigFile);
-			return false;
+			return 0;
 		}
 		n = read(fd, chunk, blocksize);
 		if (n < 0) {
@@ -734,7 +736,7 @@ bool fdIntoMemory(int fd, char **data, int *len)
 			*data = emptyString;
 			*len = 0;
 			setError(MSG_NoRead, "file descriptor");
-			return false;
+			return 0;
 		}
 
 		if (n > 0)
@@ -745,31 +747,30 @@ bool fdIntoMemory(int fd, char **data, int *len)
 	buf = reallocString(buf, length + 2);
 	*data = buf;
 	*len = length;
-	return true;
-}				/* fdIntoMemory */
+	return 1;
+}
 
-bool fileIntoMemory(const char *filename, char **data, int *len)
+int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 {
-	int fh;
+	static int fh;
 	char ftype = fileTypeByName(filename, 0);
-	bool ret;
+	int ret;
 	if (ftype && ftype != 'f' && ftype != 'p') {
 		setError(MSG_RegularFile, filename);
-		return false;
+		return 0;
 	}
 	fh = open(filename, O_RDONLY | O_BINARY);
 	if (fh < 0) {
 		setError(MSG_NoOpen, filename);
-		return false;
+		return 0;
 	}
 
-	ret = fdIntoMemory(fh, data, len);
-	if (ret == false)
+	ret = fdIntoMemory(fh, data, len, inparts);
+	if (ret == 0)
 		setError(MSG_NoRead2, filename);
-
 	close(fh);
 	return ret;
-}				/* fileIntoMemory */
+}
 
 /* inverse of the above */
 bool memoryOutToFile(const char *filename, const char *data, int len,

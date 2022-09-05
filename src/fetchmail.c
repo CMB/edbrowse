@@ -1771,7 +1771,7 @@ void scanMail(void)
 /* Now grab the entire message */
 		unreadStats();
 		sprintf(umf_end, "%d", unreadMin);
-		if (!fileIntoMemory(umf, &mailstring, &mailstring_l))
+		if (!fileIntoMemory(umf, &mailstring, &mailstring_l, 0))
 			showErrorAbort();
 		unreadBase = unreadMin;
 
@@ -3384,7 +3384,7 @@ found:
 	rfh = open(mailReply, O_RDONLY);
 	if (rfh < 0)
 		return;
-	if (!fdIntoMemory(rfh, &buf, &buflen))
+	if (!fdIntoMemory(rfh, &buf, &buflen, 0))
 		return;
 	close(rfh);
 

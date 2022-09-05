@@ -4108,7 +4108,7 @@ static void link_css(Tag *t)
 	realsource = (altsource ? altsource : t->href);
 	if ((browseLocal || altsource) && !isURL(realsource)) {
 		debugPrint(3, "css source %s", realsource);
-		if (!fileIntoMemory(realsource, &b, &blen)) {
+		if (!fileIntoMemory(realsource, &b, &blen, 0)) {
 			if (debugLevel >= 1)
 				i_printf(MSG_GetLocalCSS);
 		} else {

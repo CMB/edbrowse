@@ -217,7 +217,7 @@ continue;
 if(line[0] == '<') { // from a file
 char *data;
 int datalen;
-if(!fileIntoMemory(line+1, &data, &datalen)) {
+if(!fileIntoMemory(line+1, &data, &datalen, 0)) {
 showError();
 continue;
 }

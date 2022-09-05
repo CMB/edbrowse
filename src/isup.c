@@ -1656,7 +1656,7 @@ void cookiesFromJar(void)
 
 	if (!cookieFile)
 		return;
-	if (!fileIntoMemory(cookieFile, &cbuf, &n))
+	if (!fileIntoMemory(cookieFile, &cbuf, &n, 0))
 		showErrorAbort();
 	cbuf[n] = 0;
 	cbuf_end = cbuf + n;
@@ -2071,7 +2071,7 @@ static bool readControl(void)
 	int ln = 1;
 
 	lseek(control_fh, 0L, 0);
-	if (!fdIntoMemory(control_fh, &data, &datalen))
+	if (!fdIntoMemory(control_fh, &data, &datalen, 0))
 		return false;
 
 	numentries = 0;
@@ -2319,7 +2319,7 @@ nomatch:
 match:
 	sprintf(cacheFile, "%s/%05d", cacheDir, e->filenumber);
 	if (data_len) {
-		if (!fileIntoMemory(cacheFile, data, data_len))
+		if (!fileIntoMemory(cacheFile, data, data_len, 0))
 			goto nomatch;
 	} else {
 		char *a = allocMem(strlen(cacheFile) + 5 + 1);
@@ -3078,7 +3078,7 @@ fragment to use popen, which can be more efficient.
 			setError(MSG_NoSpawn, cmd, errno);
 			goto fail;
 		}
-		rc = fdIntoMemory(fileno(p), outdata, outlength);
+		rc = fdIntoMemory(fileno(p), outdata, outlength, 0);
 		pclose(p);
 		if (!rc)
 			goto fail;
@@ -3099,7 +3099,7 @@ fragment to use popen, which can be more efficient.
 
 	if (!outdata)		// not capturing output
 		goto success;
-	if (!fileIntoMemory(outfile, outdata, outlength))
+	if (!fileIntoMemory(outfile, outdata, outlength, 0))
 		goto fail;
 // fall through
 

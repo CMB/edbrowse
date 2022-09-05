@@ -571,7 +571,7 @@ void prepareScript(Tag *t)
 		} else if ((browseLocal || altsource) && !isURL(realsource)) {
 			char *h = cloneString(realsource);
 			unpercentString(h);
-			if (!fileIntoMemory(h, &b, &blen)) {
+			if (!fileIntoMemory(h, &b, &blen, 0)) {
 				if (debugLevel >= 1)
 					i_printf(MSG_GetLocalJS);
 				nzFree(h);

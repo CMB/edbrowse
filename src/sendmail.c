@@ -42,7 +42,7 @@ bool loadAddressBook(void)
 	nzFree(addressList);
 	addressList = 0;
 	nads = 0;
-	if (!fileIntoMemory(addressFile, &buf, &buflen))
+	if (!fileIntoMemory(addressFile, &buf, &buflen, 0))
 		return false;
 	bufend = buf + buflen;
 
@@ -309,7 +309,7 @@ empty:
 			if (sessionList[cx].lw->f0.fileName)
 				file = sessionList[cx].lw->f0.fileName;
 		} else {
-			if (!fileIntoMemory(file, &buf, &buflen))
+			if (!fileIntoMemory(file, &buf, &buflen, 0))
 				return false;
 			if (!buflen) {
 				if (webform)

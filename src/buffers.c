@@ -1709,8 +1709,7 @@ unlink:
 							goto abort;
 						}
 					}
-					if (!fileIntoMemory
-					    (path, &rmbuf, &rmlen))
+					if (!fileIntoMemory    (path, &rmbuf, &rmlen, 0))
 						goto abort;
 					if (!memoryOutToFile(bin, rmbuf, rmlen,
 							     MSG_TempNoCreate2,
@@ -1824,7 +1823,7 @@ static bool moveFiles(void)
 					goto moved;
 				}
 // A small file, copy it ourselves.
-				if (!fileIntoMemory(path1, &rmbuf, &rmlen)) {
+				if (!fileIntoMemory(path1, &rmbuf, &rmlen, 0)) {
 					free(file);
 					free(path1);
 					return false;
@@ -2571,7 +2570,7 @@ badfile:
 		rbuf = findHash(nopound);
 		if (rbuf && !filetype)
 			*rbuf = 0;
-		rc = fileIntoMemory(nopound, &rbuf, &fileSize);
+		rc = fileIntoMemory(nopound, &rbuf, &fileSize, 0);
 		nzFree(nopound);
 	}
 
@@ -5038,7 +5037,7 @@ static char *lessFile(const char *line, bool tamode)
 	} else {
 		if (!envFile(line, &line))
 			return 0;
-		if (!fileIntoMemory(line, &line2, &n))
+		if (!fileIntoMemory(line, &line2, &n, 0))
 			return 0;
 		fromfile = true;
 	}
@@ -8300,7 +8299,7 @@ afterdelete:
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
 			}
-			rc = fdIntoMemory(fileno(p), &outdata, &outlen);
+			rc = fdIntoMemory(fileno(p), &outdata, &outlen, 0);
 			pclose(p);
 			if (!rc)
 				return false;
