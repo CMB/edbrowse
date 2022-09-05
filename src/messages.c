@@ -92,7 +92,10 @@ void selectLanguage(void)
 		return;
 	}
 
-	if (!strncmp(eb_language, "pt_br", 5)) {
+	if (!strncmp(eb_language, "pt", 2)) {
+// This is Brazillian Portuguese. We use to key on pt_br.
+// It is close to pt_pt but not identical. I assume it is close enough.
+// Someone from Portugal can write msg_pt_pt if they wish.
 		eb_lang = 3;
 		messageArray = msg_pt_br;
 		ebrc_string = ebrc_pt_br;
