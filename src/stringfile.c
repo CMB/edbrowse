@@ -603,7 +603,7 @@ void errorPrint(const char *msg, ...)
 
 	if (bailflag)
 		exit(bailflag);
-}				/* errorPrint */
+}
 
 void debugPrint(int lev, const char *msg, ...)
 {
@@ -629,7 +629,7 @@ void debugPrint(int lev, const char *msg, ...)
 	}
 	if (lev == 0 && !memcmp(msg, "warning", 7))
 		eeCheck();
-}				/* debugPrint */
+}
 
 void setDebugFile(const char *name)
 {
@@ -655,7 +655,7 @@ void setDebugFile(const char *name)
 void nl(void)
 {
 	eb_puts("");
-}				/* nl */
+}
 
 /* Turn perl string into C string, and complain about nulls. */
 int perl2c(char *t)
@@ -668,7 +668,7 @@ int perl2c(char *t)
 	}
 	*t = 0;			/* now it's a C string */
 	return n;		/* number of nulls */
-}				/* perl2c */
+}
 
 /* The length of a perl string includes its terminating newline */
 unsigned pstLength(const pst s)
@@ -699,7 +699,7 @@ void copyPstring(pst s, const pst t)
 {
 	int len = pstLength(t);
 	memcpy(s, t, len);
-}				/* copyPstring */
+}
 
 /*
  * fdIntoMemory reads data from a file descriptor, until EOF is reached.
@@ -707,20 +707,25 @@ void copyPstring(pst s, const pst t)
  * We can now use it to read /proc files, pipes, and stdin.
  * This solves an outstanding issue, and it is needed for forthcoming
  * functionality, such as edpager.
+inpart = 0: read the whole file
+inpart = 1: read the first part
+inpart = 2: read the next part
  */
 int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 {
-	int length, n;
+	int length, n, j;
 	const int blocksize = 8192;
 	char *chunk, *buf;
 	static char *leftover;
 	static int lolen; // leftover length
 
 	chunk = allocZeroString(blocksize);
-	buf = initString(&length);
+	if(inparts <= 1)
+		buf = initString(&length);
+	else
+		buf = leftover, length = lolen;
 
-	n = 0;
-	do {
+	while(true) {
 		if(length >= 0x7fffff00 - blocksize) {
 			nzFree(buf);
 			nzFree(chunk);
@@ -739,9 +744,28 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 			return 0;
 		}
 
-		if (n > 0)
-			stringAndBytes(&buf, &length, chunk, n);
-	} while (n != 0);
+		if (!n) break;
+		stringAndBytes(&buf, &length, chunk, n);
+		if(!inparts || length < 10000000) continue;
+// Can't read in parts if chars are 16 bit or 32 bit wide
+		if(inparts == 1 && byteOrderMark((uchar *) buf, length)) {
+			inparts = 0; // back to default read
+			continue;
+		}
+// we have to have some leftover
+		for(j = length - 2; j > 0 && buf[j] != '\n'; --j)  ;
+		if(!j) continue;
+		++j;
+		leftover = allocMem((lolen = length - j));
+		memcpy(leftover, buf + j, lolen);
+		nzFree(chunk);
+// do we need room for the extra \n\0 on the end for a piece of the file?
+// I don't think so.
+		*data = buf;
+		*len = j;
+// success, but more to read
+		return 2;
+	}
 
 	nzFree(chunk);
 	buf = reallocString(buf, length + 2);
@@ -753,8 +777,11 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 {
 	static int fh;
-	char ftype = fileTypeByName(filename, 0);
+	char ftype;
 	int ret;
+
+	if(inparts == 2) goto fh_set;
+	ftype = fileTypeByName(filename, 0);
 	if (ftype && ftype != 'f' && ftype != 'p') {
 		setError(MSG_RegularFile, filename);
 		return 0;
@@ -765,14 +792,15 @@ int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 		return 0;
 	}
 
+fh_set:
 	ret = fdIntoMemory(fh, data, len, inparts);
-	if (ret == 0)
+	if (ret == 0 && filename)
 		setError(MSG_NoRead2, filename);
-	close(fh);
+	if(ret <= 1) close(fh);
 	return ret;
 }
 
-/* inverse of the above */
+// inverse of the above
 bool memoryOutToFile(const char *filename, const char *data, int len,
 /* specify the error messages */
 		     int msgcreate, int msgwrite)
@@ -790,7 +818,7 @@ bool memoryOutToFile(const char *filename, const char *data, int len,
 	}
 	close(fh);
 	return true;
-}				/* memoryOutToFile */
+}
 
 // portable function to truncate to 0
 void truncate0(const char *filename, int fh)
@@ -851,7 +879,7 @@ void caseShift(char *s, char action)
 		}
 		ws = true, mc = 0;
 	}			/* loop */
-}				/* caseShift */
+}
 
 // foo-bar has to become fooBar
 void camelCase(char *s)
@@ -956,7 +984,7 @@ off_t fileSizeByName(const char *name)
 		return -1;
 	}
 	return buf.st_size;
-}				/* fileSizeByName */
+}
 
 off_t fileSizeByHandle(int fd)
 {
@@ -966,7 +994,7 @@ off_t fileSizeByHandle(int fd)
 		return -1;
 	}
 	return buf.st_size;
-}				/* fileSizeByHandle */
+}
 
 time_t fileTimeByName(const char *name)
 {
@@ -976,7 +1004,7 @@ time_t fileTimeByName(const char *name)
 		return -1;
 	}
 	return buf.st_mtime;
-}				/* fileTimeByName */
+}
 
 char *conciseSize(size_t n)
 {
@@ -1008,7 +1036,7 @@ char *conciseSize(size_t n)
 		sprintf(buf, "%lu", u);
 	}
 	return buf;
-}				/* conciseSize */
+}
 
 char *conciseTime(time_t t)
 {
@@ -1049,7 +1077,7 @@ char *conciseTime(time_t t)
 		allMonths[eb_lang][tm->tm_mon], tm->tm_mday, tm->tm_year + 1900,
 		tm->tm_hour, tm->tm_min);
 	return buffer;
-}				/* conciseTime */
+}
 
 /* retain only characters l s t i k p m, for ls attributes */
 bool lsattrChars(const char *buf, char *dest)
@@ -1079,7 +1107,7 @@ bool lsattrChars(const char *buf, char *dest)
 	}
 	*t = 0;
 	return rc;
-}				/* lsattrChars */
+}
 
 // expand the ls attributes for a file into a static string.
 // This assumes user/group names will not be too long.
@@ -1361,7 +1389,7 @@ int shellProtectLength(const char *s)
 		++l, ++s;
 	}
 	return l;
-}				/* shellProtectLength */
+}
 
 void shellProtect(char *t, const char *s)
 {
@@ -1370,7 +1398,7 @@ void shellProtect(char *t, const char *s)
 			*t++ = '\\';
 		*t++ = *s++;
 	}
-}				/* shellProtect */
+}
 
 /* loop through the files in a directory */
 const char *nextScanFile(const char *base)
@@ -1404,7 +1432,7 @@ const char *nextScanFile(const char *base)
 	closedir(df);
 	df = 0;
 	return 0;
-}				/* nextScanFile */
+}
 
 /* compare routine for quicksort directory scan */
 static bool dir_reverse;
@@ -1415,7 +1443,7 @@ static int dircmp(const void *s, const void *t)
 	if (dir_reverse)
 		rc = -rc;
 	return rc;
-}				/* dircmp */
+}
 
 bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p,
 		   int othersort, bool reverse)
@@ -1573,7 +1601,7 @@ appendchar:
 
 	*expanded = varline;
 	return true;
-}				/* envExpand */
+}
 
 bool envFile(const char *line, const char **expanded)
 {
