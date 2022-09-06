@@ -716,7 +716,7 @@ action:
 		preferPlain = false;
 		printf("? ");
 		fflush(stdout);
-		key = getLetter("h?qvbefdslmnp gtwWuUa/");
+		key = getLetter("h?qvbefdsmnp gtwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if (key == '?' || key == 'h') {
