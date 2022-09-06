@@ -756,8 +756,8 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 		for(j = length - 2; j > 0 && buf[j] != '\n'; --j)  ;
 		if(!j) continue;
 		++j;
-		leftover = allocMem((lolen = length - j));
-		memcpy(leftover, buf + j, lolen);
+		leftover = initString(&lolen);
+		stringAndBytes(&leftover, &lolen, buf + j, length - j);
 		nzFree(chunk);
 // do we need room for the extra \n\0 on the end for a piece of the file?
 // I don't think so.
