@@ -44,7 +44,7 @@ time_t intStart;
 bool ismc, isimap, passMail;
 // next two variables work around curl bug 7284
 bool inInput, inInitFunction, listNA;
-int fileSize;
+long long fileSize;
 char *dbarea, *dblogin, *dbpw;	// to log into the database
 bool fetchBlobColumns;
 bool caseInsensitive, searchStringsAll, searchWrap = true, ebre = true;
@@ -801,7 +801,7 @@ int main(int argc, char **argv)
 				file2[0] = 'b';
 				file2[1] = ' ';
 				if (runCommand(file2))
-					debugPrint(1, "%d", fileSize);
+					debugPrint(1, "%lld", fileSize);
 				else
 					showError();
 			}
@@ -817,7 +817,7 @@ int main(int argc, char **argv)
 				cw->sqlMode = true;
 			rc = readFileArgv(file, 0, 0);
 			if (fileSize >= 0)
-				debugPrint(1, "%d", fileSize);
+				debugPrint(1, "%lld", fileSize);
 			fileSize = -1;
 			if (!rc) {
 				showError();
@@ -840,7 +840,7 @@ int main(int argc, char **argv)
 			    && ((cf->mt && cf->mt->outtype)
 				|| isBrowseableURL(cf->fileName))) {
 				if (runCommand("b")) {
-					debugPrint(1, "%d", fileSize);
+					debugPrint(1, "%lld", fileSize);
 					if(newhash) {
 						set_location_hash(newhash);
 						if(!jump2anchor(0, newhash))

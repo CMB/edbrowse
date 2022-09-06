@@ -3161,7 +3161,7 @@ int frameExpandLine(int ln, Tag *t)
 		if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
 /* We just need to pop the frame and return. */
-			fileSize = -1;	/* don't print 0 */
+			fileSize = -1;	// don't print 0
 			nzFree(cf->fileName);
 			free(cf);
 			last_f->next = 0;
@@ -3310,7 +3310,7 @@ bool reexpandFrame(void)
 	rc = readFileArgv(cf->fileName, 2, 0);
 	if (!rc) {
 /* serverData was never set, or was freed do to some other error. */
-		fileSize = -1;	/* don't print 0 */
+		fileSize = -1;	// don't print 0
 		cf = save_cf;
 		return false;
 	}

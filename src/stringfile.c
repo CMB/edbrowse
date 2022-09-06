@@ -701,16 +701,18 @@ void copyPstring(pst s, const pst t)
 	memcpy(s, t, len);
 }
 
-/*
- * fdIntoMemory reads data from a file descriptor, until EOF is reached.
- * It works even if we don't know the size beforehand.
- * We can now use it to read /proc files, pipes, and stdin.
- * This solves an outstanding issue, and it is needed for forthcoming
- * functionality, such as edpager.
+/*********************************************************************
+fdIntoMemory reads data from a file descriptor, until EOF is reached.
+It works even if we don't know the size beforehand.
+We can now use it to read /proc files, pipes, and stdin.
+This solves an outstanding issue, and it is needed for forthcoming
+functionality, such as edpager.
 inpart = 0: read the whole file
 inpart = 1: read the first part
 inpart = 2: read the next part
- */
+*********************************************************************/
+#define FILEPARTSIZE 10000000
+
 int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 {
 	int length, n, j;
@@ -746,7 +748,7 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 
 		if (!n) break;
 		stringAndBytes(&buf, &length, chunk, n);
-		if(!inparts || length < 10000000) continue;
+		if(!inparts || length < FILEPARTSIZE) continue;
 // Can't read in parts if chars are 16 bit or 32 bit wide
 		if(inparts == 1 && byteOrderMark((uchar *) buf, length)) {
 			inparts = 0; // back to default read
@@ -764,6 +766,7 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 		*data = buf;
 		*len = j;
 // success, but more to read
+		debugPrint(4, "part");
 		return 2;
 	}
 

@@ -321,7 +321,7 @@ extern bool curlAuthNegotiate;  /* try curl negotiate (SPNEGO) auth */
 extern bool listNA;		/* list nonascii chars */
 extern bool inInput;		/* reading line from standard in */
 extern bool inInitFunction; // executing the init function
-extern int fileSize;		/* when reading/writing files */
+extern long long fileSize;		/* when reading/writing files */
 extern int timer_sn; // timer sequence numbers
 extern char errorMsg[];		/* generated error message */
 extern int localAccount;	/* this is the smtp server for outgoing mail */

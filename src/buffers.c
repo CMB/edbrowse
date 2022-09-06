@@ -190,9 +190,10 @@ pst fetchLine(int n, int show)
 	return fetchLineContext(n, show, context);
 }
 
-static int apparentSizeW(const Window *w, bool browsing)
+static long long apparentSizeW(const Window *w, bool browsing)
 {
-	int ln, size = 0;
+	int ln;
+	long long size = 0;
 	pst p;
 	if (!w)
 		return -1;
@@ -201,23 +202,21 @@ static int apparentSizeW(const Window *w, bool browsing)
 		while (*p != '\n') {
 			if (*p == InternalCodeChar && browsing && w->browseMode) {
 				++p;
-				while (isdigitByte(*p))
-					++p;
-				if (strchr("<>{}", *p))
-					++size;
+				while (isdigitByte(*p)) ++p;
+				if (strchr("<>{}", *p)) ++size;
 				++p;
 				continue;
 			}
 			++p, ++size;
 		}
 		++size;
-	}			/* loop over lines */
+	}			// loop over lines
 	if (w->nlMode)
 		--size;
 	return size;
 }
 
-static int apparentSize(int cx, bool browsing)
+static long long apparentSize(int cx, bool browsing)
 {
 	const Window *w;
 	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
@@ -2307,7 +2306,7 @@ static bool readDirectory(const char *filename)
 
 success:
 	if (cmd == 'r')
-		debugPrint(1, "%d", fileSize);
+		debugPrint(1, "%lld", fileSize);
 	return true;
 }
 
@@ -2316,13 +2315,16 @@ success:
 static bool readFile(const char *filename, bool newwin,
 		     int fromframe, const char *fromthis, const char *orig_head)
 {
-	char *rbuf;		/* read buffer */
-	int readSize;		/* should agree with fileSize */
-	bool rc;		/* return code */
+	char *rbuf;		// the read buffer
+	int readSize;		// should agree with fileSize
+	bool rc;		// return code
 	bool fileprot = false;
-	char *nopound;
+	char *nopound; // url without the hash
 	const char *hash;
 	char filetype;
+	int inparts = 0;
+	int partSize = 0;
+	bool firstPart;
 
 	serverData = 0;
 	serverDataLen = 0;
@@ -2420,7 +2422,7 @@ static bool readFile(const char *filename, bool newwin,
 		if (memEqualCI(g.content, "text/plain", 10) && cmd == 'b')
 			cmd = 'e';
 
-		if (fileSize == 0) {	/* empty file */
+		if (fileSize == 0) {	// empty file
 			nzFree(rbuf);
 			if (!fromframe)
 				cw->dot = endRange;
@@ -2558,7 +2560,8 @@ badfile:
 	if (cf->mt && cf->mt->outtype && pluginsOn && !access(filename, 4)
 	    && !fileprot && cmd == 'b' && newwin) {
 		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
-				      &fileSize);
+				      &readSize);
+		fileSize = readSize;
 		cf->render1 = cf->render2 = true;
 // browse command ran the plugin, but if it generates text,
 // then there's no need to browse the result.
@@ -2570,15 +2573,21 @@ badfile:
 		rbuf = findHash(nopound);
 		if (rbuf && !filetype)
 			*rbuf = 0;
-		rc = fileIntoMemory(nopound, &rbuf, &fileSize, 0);
-		nzFree(nopound);
+		inparts = 1, fileSize = 0;
+// set inparts to 0 if you don't want this feature or if it causes trouble
+nextpart:
+		rc = fileIntoMemory(nopound, &rbuf, &partSize, inparts);
+		if(inparts == 1) nzFree(nopound);
+		inparts = (rc == 2 ? 2 : 0);
+		if(rc) fileSize += partSize;
 	}
 
 	if (!rc)
 		goto badfile;
+// anyone using serverData will not be reading in parts
 	serverData = rbuf;
 	serverDataLen = fileSize;
-	if (fileSize == 0) {	/* empty file */
+	if (fileSize == 0) {	// empty file
 		if (!fromframe) {
 			cw->dot = endRange;
 			nzFree(rbuf);
@@ -2587,67 +2596,46 @@ badfile:
 	}
 
 gotdata:
+// if we came here from another path, not reading from disk...
+	if(!partSize) partSize = fileSize;
+	firstPart = (partSize == fileSize);
 
-	if (!looksBinary((uchar *) rbuf, fileSize)) {
+	if (!looksBinary((uchar *) rbuf, partSize)) {
 		char *tbuf;
 		int i, j;
 		bool crlf_yes = false, crlf_no = false, dosmode = false;
-
-/* looks like text.  In DOS, we should compress crlf.
- * Let's do that now. */
-#ifdef DOSLIKE
-		for (i = j = 0; i < fileSize; ++i) {
-			char c = rbuf[i];
-			if (c == '\r' && rbuf[i + 1] == '\n')
-				continue;
-			rbuf[j++] = c;
-		}
-		rbuf[j] = 0;
-		fileSize = j;
-		serverDataLen = fileSize;
-
-// if a utf32 file has unicode 2572, or 2572*256+x, it looks like \r\n,
-// and removing \r mungs the file from this point on.
-// This is a corner case that somebody needs to fix some day!
-
-#else
-
-// convert in unix, only if each \n has \r preceeding.
+// convert, only if each \n has \r preceeding.
 		if (iuConvert) {
-			for (i = 0; i < fileSize; ++i) {
-				char c = rbuf[i];
-				if (c != '\n')
-					continue;
-				if (i && rbuf[i - 1] == '\r')
-					crlf_yes = true;
-				else
-					crlf_no = true;
+			for (i = 0; i < partSize; ++i) {
+				if (rbuf[i] != '\n') continue;
+				if (i && rbuf[i - 1] == '\r') crlf_yes = true;
+				else crlf_no = true;
 			}
-			if (crlf_yes && !crlf_no)
-				dosmode = true;
-		}
-
+			if (crlf_yes && !crlf_no) dosmode = true;
+		} // iuConvert
 		if (dosmode) {
-			if (debugLevel >= 2 || (debugLevel == 1
-						&& !isURL(filename)))
+			if ((debugLevel >= 2 || (debugLevel == 1
+			&& !isURL(filename)))
+			&& firstPart)
 				i_puts(MSG_ConvUnix);
-			for (i = j = 0; i < fileSize; ++i) {
+			for (i = j = 0; i < partSize; ++i) {
 				char c = rbuf[i];
 				if (c == '\r' && rbuf[i + 1] == '\n')
 					continue;
 				rbuf[j++] = c;
 			}
 			rbuf[j] = 0;
-			fileSize = j;
+			fileSize -= (partSize - j);
+			partSize = j;
 			serverDataLen = fileSize;
 		}
-#endif
-
 		if (iuConvert) {
-			bool is8859 = false, isutf8 = false;
 /* Classify this incoming text as ascii or 8859 or utf-x */
-			int bom = byteOrderMark((uchar *) rbuf, fileSize);
+			bool is8859 = false, isutf8 = false;
+			int bom = 0;
+			if(firstPart) bom = byteOrderMark((uchar *) rbuf, (int)fileSize);
 			if (bom) {
+// bom implies not reading by parts, so don't worry about that any more.
 				debugPrint(3, "text type is %s%s",
 					   ((bom & 4) ? "big " : ""),
 					   ((bom & 2) ? "utf32" : "utf16"));
@@ -2655,51 +2643,52 @@ gotdata:
 							&& !isURL(filename)))
 					i_puts(cons_utf8 ? MSG_ConvUtf8 :
 					       MSG_Conv8859);
-				utfLow(rbuf, fileSize, &tbuf, &fileSize, bom);
+				utfLow(rbuf, partSize, &tbuf, &partSize, bom);
 				nzFree(rbuf);
 				rbuf = tbuf;
 				serverData = rbuf;
-				serverDataLen = fileSize;
+				serverDataLen = fileSize = partSize;
 			} else {
-				looks_8859_utf8((uchar *) rbuf, fileSize,
+				int oldSize = partSize;
+				looks_8859_utf8((uchar *) rbuf, partSize,
 						&is8859, &isutf8);
+				if(firstPart)
 				debugPrint(3, "text type is %s",
 					   (isutf8 ? "utf8"
 					    : (is8859 ? "8859" : "ascii")));
 				if (cons_utf8 && is8859) {
-					if (debugLevel >= 2 || (debugLevel == 1
-								&&
-								!isURL
-								(filename)))
+					if ((debugLevel >= 2 || (debugLevel == 1
+					&& !isURL(filename)))
+					&& firstPart)
 						i_puts(MSG_ConvUtf8);
-					iso2utf((uchar *) rbuf, fileSize,
-						(uchar **) & tbuf, &fileSize);
+					iso2utf((uchar *) rbuf, partSize,
+						(uchar **) & tbuf, &partSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
+					fileSize += (partSize - oldSize);
 					serverData = rbuf;
 					serverDataLen = fileSize;
 				}
 				if (!cons_utf8 && isutf8) {
-					if (debugLevel >= 2 || (debugLevel == 1
-								&&
-								!isURL
-								(filename)))
+					if ((debugLevel >= 2 || (debugLevel == 1
+					&& !isURL(filename)))
+					&& firstPart)
 						i_puts(MSG_Conv8859);
-					utf2iso((uchar *) rbuf, fileSize,
-						(uchar **) & tbuf, &fileSize);
+					utf2iso((uchar *) rbuf, partSize,
+						(uchar **) & tbuf, &partSize);
 					nzFree(rbuf);
 					rbuf = tbuf;
+					fileSize += (partSize - oldSize);
 					serverData = rbuf;
 					serverDataLen = fileSize;
 				}
-				if (cons_utf8 && isutf8) {
+				if (cons_utf8 && isutf8 && firstPart) {
 // Strip off the leading bom, if any, and no we're not going to put it back.
 					if (fileSize >= 3 &&
 					    !memcmp(rbuf, "\xef\xbb\xbf", 3)) {
-						fileSize -= 3;
-						memmove(rbuf, rbuf + 3,
-							fileSize);
-						serverDataLen = fileSize - 3;
+						fileSize -= 3, partSize -= 3;
+						memmove(rbuf, rbuf + 3, partSize);
+						serverDataLen = partSize;
 					}
 				}
 			}
@@ -2729,8 +2718,7 @@ gotdata:
 					debugPrint(3, "setting dos mode");
 				}
 			}
-
-		}
+		} // iuConvert
 	} else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
@@ -2747,9 +2735,11 @@ gotdata:
 	}
 
 intext:
-	rc = addTextToBuffer((const pst)rbuf, fileSize, endRange,
+	rc = addTextToBuffer((const pst)rbuf, partSize, endRange,
 			     !isURL(filename));
 	nzFree(rbuf);
+	endRange = cw->dot;
+	if(rc && inparts == 2) goto nextpart;
 	return rc;
 }
 
@@ -6462,9 +6452,13 @@ bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
 {
 	char *buf;
 	int l, ln;
-	int size = apparentSizeW(w, false);
+	long long size = apparentSizeW(w, false);
 	if (size < 0)
 		return false;
+	if (size >= 2000000000) {
+		setError(MSG_BigFile);
+		return false;
+	}
 	if (w->dirMode) {
 		setError(MSG_SessionDir, context);
 		return false;
@@ -6487,7 +6481,7 @@ bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
 				--buf, --size;
 		}
 		*buf++ = '\n';
-	}			/* loop over lines */
+	}			// loop over lines
 	if (w->dol && w->nlMode) {
 		if (cr)
 			--size;
@@ -8139,7 +8133,7 @@ browse:
 				return false;
 			}
 			if (fileSize >= 0) {
-				debugPrint(1, "%d", fileSize);
+				debugPrint(1, "%lld", fileSize);
 				fileSize = -1;
 			}
 			if (!browseCurrentBuffer()) {
@@ -8198,7 +8192,7 @@ redirect:
 
 /* Print the file size before we print the line. */
 		if (fileSize >= 0) {
-			debugPrint(1, "%d", fileSize);
+			debugPrint(1, "%lld", fileSize);
 			fileSize = -1;
 		}
 		unpercentString(newhash);
@@ -8356,7 +8350,7 @@ bool edbrowseCommand(const char *line, bool script)
 	skipWhite(&line);
 	rc = runCommand(line);
 	if (fileSize >= 0)
-		debugPrint(1, "%d", fileSize);
+		debugPrint(1, "%lld", fileSize);
 	fileSize = -1;
 	if (!rc) {
 		if (!script)
