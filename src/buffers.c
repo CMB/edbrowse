@@ -236,8 +236,8 @@ static char *dirSuffixContext(int n, int cx)
 
 	suffix[0] = 0;
 	if (lw->dirMode) {
-		suffix[0] = lw->dmap[4*n];
-		suffix[1] = lw->dmap[4*n + 1];
+		suffix[0] = lw->dmap[DTSIZE*n];
+		suffix[1] = lw->dmap[DTSIZE*n + 1];
 		suffix[2] = 0;
 	}
 	return suffix;
@@ -1505,8 +1505,8 @@ void delText(int start, int end)
 	}
 
 	if (cw->dirMode && cw->dmap && end < cw->dol) {
-		memmove(cw->dmap + 4*start, cw->dmap + 4*(end + 1),
-			(cw->dol - end) * 4);
+		memmove(cw->dmap + DTSIZE*start, cw->dmap + DTSIZE*(end + 1),
+			(cw->dol - end) * DTSIZE);
 	}
 
 	if(gflag && end < cw->dol) {
@@ -1878,11 +1878,11 @@ moved:
 		addTextToBuffer((pst)file, t-file, dol, false);
 		free(file);
 		cw->dot = ++dol;
-		cw->dmap = reallocMem(cw->dmap, 4 * (dol + 1));
-		memset(cw->dmap + 4*dol, 0, 4);
-		cw->dmap[4*dol] = ftype[0];
+		cw->dmap = reallocMem(cw->dmap, DTSIZE * (dol + 1));
+		memset(cw->dmap + DTSIZE*dol, 0, DTSIZE);
+		cw->dmap[DTSIZE*dol] = ftype[0];
 		if(ftype[0])
-		cw->dmap[4*dol + 1] = ftype[1];
+		cw->dmap[DTSIZE*dol + 1] = ftype[1];
 // if attributes were displayed in that directory - more work to do.
 // I just leave a space for them; I don't try to derive them.
 		if(cw->r_map) {
@@ -2211,7 +2211,7 @@ static bool readDirectory(const char *filename)
 	if (!cw->dol) {
 		cw->dirMode = true;
 		cw->dnoMode = dno;
-		dmap = allocZeroMem(linecount * 4);
+		dmap = allocZeroMem(linecount * DTSIZE);
 		if(debugLevel >= 1)
 			i_puts(MSG_DirMode);
 		if (lsformat[0])
@@ -2263,7 +2263,7 @@ static bool readDirectory(const char *filename)
 			if (!cw->dirMode)
 				*t = '@', *++t = '\n';
 			else
-				dmap[j*4] = '@';
+				dmap[j*DTSIZE] = '@';
 			++fileSize;
 		}
 		ftype = tolower(ftype);
@@ -2276,10 +2276,10 @@ static bool readDirectory(const char *filename)
 		if (c) {
 			if (!cw->dirMode)
 				*t = c, *++t = '\n';
-			else if (dmap[j*4])
-				dmap[4*j + 1] = c;
+			else if (dmap[j*DTSIZE])
+				dmap[DTSIZE*j + 1] = c;
 			else
-				dmap[4*j] = c;
+				dmap[DTSIZE*j] = c;
 			++fileSize;
 		}
 // If sorting a different way, get the attribute.
@@ -2326,12 +2326,12 @@ static bool readDirectory(const char *filename)
 		qsort(dsr_list, linecount, sizeof(struct DSR), dircmp);
 // Now I have to remap everything.
 		tmp = allocMem(LMSIZE * linecount);
-		if(dmap) dmap2 = allocZeroMem(4 * linecount);
+		if(dmap) dmap2 = allocZeroMem(DTSIZE * linecount);
 		for (j = 0; j < linecount; ++j) {
 			tmp[j] = newpiece[dsr_list[j].idx];
 			if(!dmap) continue;
-			dmap2[4*j] = dmap[4*dsr_list[j].idx];
-			dmap2[4*j + 1] = dmap[4*dsr_list[j].idx + 1];
+			dmap2[DTSIZE*j] = dmap[DTSIZE*dsr_list[j].idx];
+			dmap2[DTSIZE*j + 1] = dmap[DTSIZE*dsr_list[j].idx + 1];
 		}
 		free(newpiece);
 		newpiece = tmp;
@@ -2351,8 +2351,8 @@ static bool readDirectory(const char *filename)
 	addToMap(linecount, endRange);
 	cw->r_map = backpiece;
 	if(dmap) {
-		cw->dmap = allocMem((linecount + 1) * 4);
-		memcpy(cw->dmap + 4, dmap, linecount*4);
+		cw->dmap = allocMem((linecount + 1) * DTSIZE);
+		memcpy(cw->dmap + DTSIZE, dmap, linecount*DTSIZE);
 	}
 
 success:

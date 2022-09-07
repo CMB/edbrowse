@@ -386,6 +386,7 @@ struct lineMap {
 	pst text;
 };
 #define LMSIZE sizeof(struct lineMap)
+#define DTSIZE 2 // size of directory type
 
 /* an edbrowse frame, as when there are many frames in an html page.
  * There could be several frames in an edbrowse window or buffer, chained
