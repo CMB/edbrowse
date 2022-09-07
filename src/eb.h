@@ -385,8 +385,7 @@ struct listHead {
 struct lineMap {
 	pst text;
 	char ds1, ds2;		/* directory suffix */
-	bool gflag;		/* for g// */
-	char filler;
+	char filler1, filler2;
 };
 #define LMSIZE sizeof(struct lineMap)
 

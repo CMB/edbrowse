@@ -47,6 +47,7 @@ static const char spaceplus_cmd[] = "befrw";
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
 static const char global_cmd[] = "<!dDijJlmnprstwX=";
+static bool *gflag;
 
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
@@ -1245,6 +1246,7 @@ static int *nextLabel(int *label);
 static void addToMap(int nlines, int destl)
 {
 	struct lineMap *newmap;
+	bool *newg;
 	int svdol = cw->dol;
 	int *label = NULL;
 
@@ -1273,9 +1275,9 @@ static void addToMap(int nlines, int destl)
 		memcpy(newmap, cw->map, (destl + 1) * LMSIZE);
 	else
 		memset(newmap, 0, LMSIZE);
-/* insert new piece here */
+// insert new piece here
 	memcpy(newmap + destl + 1, newpiece, nlines * LMSIZE);
-/* put on the last piece */
+// put on the last piece
 	if (destl < svdol)
 		memcpy(newmap + destl + nlines + 1, cw->map + destl + 1,
 		       (svdol - destl + 1) * LMSIZE);
@@ -1286,6 +1288,16 @@ static void addToMap(int nlines, int destl)
 	cw->map = newmap;
 	free(newpiece);
 	newpiece = 0;
+
+	if(!gflag) return;
+	newg = allocMem(cw->dol + 1);
+	if (destl)
+		memcpy(newg, gflag, destl + 1);
+	memset(newg + destl + 1, 0, nlines);
+	if (destl < svdol)
+		memcpy(newg + destl + nlines + 1, gflag + destl + 1,
+		       (svdol - destl));
+	free(gflag), gflag = newg;
 }
 
 static int text2linemap(const pst inbuf, int length, bool *nlflag)
@@ -1497,6 +1509,10 @@ void delText(int start, int end)
 			(cw->dol - end + 1) * LMSIZE);
 	}
 
+	if(gflag && end < cw->dol) {
+	memmove(gflag + start, gflag + end + 1, cw->dol - end);
+	}
+
 /* move the labels */
 	while ((label = nextLabel(label))) {
 		if ((ln = *label) < start)
@@ -1540,17 +1556,17 @@ static bool delTextG(char action, int n, int back)
 
 	 t = cw->map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t) {
-		if(t->gflag && rc && j - back <= 0) {
+		if(gflag[i] && rc && j - back <= 0) {
 			cw->dot = j;
 			setError(j - back < 0 ? MSG_LineLow : MSG_AtLine0);
 			rc = false;
 		}
-		if(t->gflag && rc && i + n > cw->dol) {
+		if(gflag[i] && rc && i + n > cw->dol) {
 			cw->dot = j;
 			setError(MSG_LineHigh);
 			rc = false;
 		}
-		if(t->gflag && rc && i + n <= cw->dol) { // goodbye
+		if(gflag[i] && rc && i + n <= cw->dol) { // goodbye
 		if(cw->dirMode) {
 // mass delete in directory mode is only deleting a single line.
 // Honestly what other kind of global delete would you ever do
@@ -1560,7 +1576,7 @@ static bool delTextG(char action, int n, int back)
 			cw->dot = j;
 		}
 	}
-		if(t->gflag && rc && i + n <= cw->dol) {
+		if(gflag[i] && rc && i + n <= cw->dol) {
 // did these lines have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
@@ -1887,6 +1903,7 @@ static bool moveCopy(void)
 	int n_lines = er - sr;
 	struct lineMap *map = cw->map;
 	struct lineMap *newmap, *t;
+	bool *newg;
 	int lowcut, highcut, diff, i, ln;
 	int *label = NULL;
 
@@ -1917,7 +1934,7 @@ static bool moveCopy(void)
 	if (destLine == cw->dol || endRange == cw->dol)
 		cw->nlMode = false;
 
-/* All we really need do is rearrange the map. */
+// All we really need do is rearrange the map.
 	newmap = allocMem((cw->dol + 2) * LMSIZE);
 	memcpy(newmap, map, (cw->dol + 2) * LMSIZE);
 	if (dl < sr) {
@@ -1930,6 +1947,20 @@ static bool moveCopy(void)
 	free(cw->map);
 	cw->map = newmap;
 
+	if(gflag) {
+		newg = allocMem(cw->dol + 1);
+		memcpy(newg, gflag, cw->dol + 1);
+		if (dl < sr) {
+			memcpy(newg + dl, gflag + sr, er - sr);
+			memcpy(newg + dl + er - sr, gflag + dl, sr - dl);
+		} else {
+			memcpy(newg + sr, gflag + er, dl - er);
+			memcpy(newg + sr + dl - er, gflag + sr, er - sr);
+		}
+		free(gflag);
+		gflag = newg;
+	}
+	
 /* now for the labels */
 	if (dl < sr) {
 		lowcut = dl;
@@ -2033,17 +2064,17 @@ static bool joinTextG(char action, int n, int back, const char *fs)
 				if(*label == i)
 					*label = j;
 		}
-		if(t->gflag && rc && j - back <= 0) {
+		if(gflag[i] && rc && j - back <= 0) {
 			cw->dot = j;
 			setError(j - back < 0 ? MSG_LineLow : MSG_AtLine0);
 			rc = false;
 		}
-		if(t->gflag && rc && i + n > cw->dol) {
+		if(gflag[i] && rc && i + n > cw->dol) {
 			cw->dot = j;
 			setError(MSG_EndJoin);
 			rc = false;
 		}
-		if(t->gflag && rc && i + n <= cw->dol) { // join
+		if(gflag[i] && rc && i + n <= cw->dol) { // join
 // did the next lines have a label?
 			label = NULL;
 			while ((label = nextLabel(label)))
@@ -3065,7 +3096,7 @@ static void readContextG(int cx, int readLine1, int readLine2)
 	g_count = g_last = 0;
 	 t = cw->map + 1;
 	for(i = 1; i <= cw->dol; ++i, ++t)
-		if(t->gflag) ++g_count, g_last = i;
+		if(gflag[i]) ++g_count, g_last = i;
 
 // reading from an empty buffer changes nothing
 	if(!fardol) {
@@ -3089,7 +3120,7 @@ static void readContextG(int cx, int readLine1, int readLine2)
 				if(*label == i)
 					*label = j;
 		}
-		if(t->gflag) { // read
+		if(gflag[i]) { // read
 			undoPush();
 			readContext0(i, cx, readLine1, readLine2);
 			memcpy(newmap + j + 1, newpiece, LMSIZE*lines);
@@ -3888,7 +3919,6 @@ static bool doGlobal(const char *line)
 	bool forget = false;
 	bool change;
 	char delim = *line;
-	struct lineMap *t;
 	char *re;		/* regular expression */
 	int i, origdot, yesdot, nodot;
 
@@ -3920,16 +3950,11 @@ static bool doGlobal(const char *line)
 		strcpy(cw->lhs, globalSubs.temp_lhs);
 	}
 
-/* clean up any previous global flags.
- * Also get ready for javascript, as in g/<->/ i=+
- * which I use in web based gmail to clear out spam etc. */
-	for (t = cw->map + 1; t->text; ++t)
-		t->gflag = false;
-
-/* Find the lines that match the pattern. */
+// Find the lines that match the pattern
 	regexpCompile(re, ci);
 	if (!re_cc)
 		return false;
+	gflag = allocZeroMem(sizeof(char*) * (cw->dol+1));
 	for (i = startRange; i <= endRange; ++i) {
 		char *subject = (char *)fetchLine(i, 1);
 		re_count =
@@ -3945,11 +3970,9 @@ static bool doGlobal(const char *line)
 			return false;
 		}
 		if ((re_count < 0 && cmd == 'v')
-		    || (re_count >= 0 && cmd == 'g')) {
-			++gcnt;
-			cw->map[i].gflag = true;
-		}
-	}			/* loop over line */
+		    || (re_count >= 0 && cmd == 'g'))
+			gflag[i] = true, ++gcnt;
+	}
 	pcre2_match_data_free(match_data);
 	pcre2_code_free(re_cc);
 
@@ -4053,13 +4076,11 @@ nomass:
 		change = false;	/* kinda like bubble sort */
 		for (i = 1; i <= cw->dol; ++i) {
 			int i2 = i;
-			t = cw->map + i;
-			if (!t->gflag)
-				continue;
+			if (!gflag[i]) continue;
 			if (intFlag)
 				goto done;
 			change = true, --gcnt;
-			t->gflag = false;
+			gflag[i] = false;
 			cw->dot = i;	/* so we can run the command at this line */
 			if (runCommand(line)) {
 				yesdot = cw->dot;
@@ -4071,8 +4092,8 @@ nomass:
 				nodot = i2, yesdot = 0;
 				goto done;
 			}
-		}		/* loop over lines */
-	}			/* loop making changes */
+		}		// loop over lines
+	}			// loop making changes
 
 done:
 	globSub = false;
@@ -4578,6 +4599,7 @@ static int substituteText(const char *line)
 	int j, linecount, slashcount, nullcount, tagno, total, realtotal;
 	char lhs[MAXRE], rhs[MAXRE];
 	struct lineMap *mptr, *newmap = 0;
+	bool *newg = 0;
 	bool hasMoved[MARKLETTERS];
 
 	replaceString = 0;
@@ -4677,6 +4699,7 @@ static int substituteText(const char *line)
 
 		if(newmap) {
 			newmap[ln2] = cw->map[ln];
+			if(newg) newg[ln2] = gflag[ln];
 			for(j = 0; j < MARKLETTERS; ++j)
 				if(cw->labels[j] == ln && !hasMoved[j])
 					cw->labels[j] = ln2, hasMoved[j] = true;
@@ -4855,15 +4878,21 @@ static int substituteText(const char *line)
 					alloc2 = dol2 / 9 * 10 + 60;
 					newmap = allocMem(LMSIZE * alloc2);
 					memcpy(newmap, cw->map,LMSIZE*(ln2 = ln));
+					if(gflag) {
+						newg = allocMem(alloc2);
+						memcpy(newg, gflag, ln);
+					}
 				}
 				dol2 += linecount;
 				if(dol2 + 2 > alloc2) {
 					alloc2 = dol2 / 9 * 10 + 20;
 					newmap = realloc(newmap, LMSIZE*alloc2);
+					if(newg) newg = realloc(newg, alloc2);
 				}
 				++linecount;
 				memcpy(newmap + ln2, newpiece, linecount*LMSIZE);
 				free(newpiece), newpiece = 0;
+				if(newg) memset(newg + ln2, 0, linecount);
 				ln2 += linecount;
 // There's a quirk when adding newline to the end of a buffer
 // that had no newline at the end before.
@@ -4905,12 +4934,14 @@ abort:
 	if(newmap) { // close it out
 		for(; ln <= cw->dol; ++ln, ++ln2) {
 			newmap[ln2] = cw->map[ln];
+			if(newg) newg[ln2] = gflag[ln];
 			for(j = 0; j < MARKLETTERS; ++j)
 				if(cw->labels[j] == ln && !hasMoved[j])
 					cw->labels[j] = ln2, hasMoved[j] = true;
 		}
 		newmap[ln2] = cw->map[ln]; // null terminate
 		free(cw->map), cw->map = newmap;
+		if(newg) free(gflag), gflag = newg;
 cw->dol = ln2 - 1;
 	}
 
@@ -8205,7 +8236,9 @@ redirect:
 
 	if (cmd == 'g' || cmd == 'v') {
 		undoSpecialClear();
-		return doGlobal(line);
+		rc =  doGlobal(line);
+		nzFree(gflag), gflag = 0;
+		return rc;
 	}
 
 	if ((cmd == 'm' || cmd == 't') && cw->dirMode) {
