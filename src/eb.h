@@ -384,8 +384,6 @@ struct listHead {
 /* A pointer to the text of a line, and other line attributes */
 struct lineMap {
 	pst text;
-	char ds1, ds2;		/* directory suffix */
-	char filler1, filler2;
 };
 #define LMSIZE sizeof(struct lineMap)
 
@@ -456,6 +454,7 @@ struct ebWindow {
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
+	char *dmap;
 /* The labels that you set with the k command, and access via 'x.
  * Basically, that's 26 line numbers.
  * Number 0 means the label is not set.
@@ -518,7 +517,7 @@ the latter is at most 12 on a 64-bit machine.
 If ints are larger then I don't even use this constant.
 *********************************************************************/
 
-#define MAXLINES 170000000
+#define MAXLINES 250000000
 
 /* An edit session */
 struct ebSession {

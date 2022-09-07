@@ -112,7 +112,7 @@ Sitzung %d ist außerhalb des Bereichs, %d Sitzungen
 Sie sind bereits in Sitzung %d
 `w' erwartet
 `w' in Sitzung %d erwartet
-Die Obergrenze von 170 Millionen Zeilen wurde erreicht.\nSpeichern Sie Ihre Dateien und starten Sie das Programm erneut.
+Die Obergrenze von 250 Millionen Zeilen wurde erreicht.\nSpeichern Sie Ihre Dateien und starten Sie das Programm erneut.
 absoluter Pfadname zu lang, maximal %d Zeichen
 Verzeichnisse sind nur lesbar, tippen Sie dw um schreibbare Verzeichnisse zu aktivieren
 Konnte .Trash im persönlichen Ordner nicht anlegen, um gelöschte Dateien dort abzulegen.

@@ -387,10 +387,8 @@ static void pushTag(Tag *t)
 	}
 	tagList[cw->numTags++] = t;
 // paranoia check on the number of tags
-	if (sizeof(int) == 4) {
-		if (cw->numTags > MAXLINES)
-			i_printfExit(MSG_LineLimit);
-	}
+	if (cw->numTags > MAXLINES)
+		i_printfExit(MSG_LineLimit);
 }
 
 // first one has to be the unknown.

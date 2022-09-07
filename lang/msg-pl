@@ -112,7 +112,7 @@ sesja %d jest poza dozwoloną granicą: %d
 już jesteś w sesji %d
 oczekiwano `w'
 oczekiwano `w' w sesji %d
-Twój limit 170 milionów wierszy został osiągnięty.\nZapisz swoje pliki, po czym wyjdź z programu i uruchom go ponownie.
+Twój limit 250 milionów wierszy został osiągnięty.\nZapisz swoje pliki, po czym wyjdź z programu i uruchom go ponownie.
 długość ścieżki bezwzględnej zbyt duża, limit: %d znaków
 katalogi są tylko do odczytu, wpisz 'dw' by uaktywnić zapis
 nie można utworzyć katalogu '.Trash' w Twoim katalogu domowym

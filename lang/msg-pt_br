@@ -112,7 +112,7 @@ a sessão %d está fora do limite %d
 já está na sessão %d
 esperando `w'
 esperando `w' na sessão %d
-limite de 170 milhão de linhas alcansado.\nSalve os arquivos, saia e reinicie o programa.
+limite de 250 milhão de linhas alcansado.\nSalve os arquivos, saia e reinicie o programa.
 caminho absoluto comprido demais; o limite é de %d caracteres
 os diretórios são somente leitura; digite dw para ativar a escrita em diretórios
 não foi possível criar o .Trash no seu diretório home para armazenar arquivos apagados

@@ -112,7 +112,7 @@ la sessione %d è fuori dai limiti, limite %d
 sei già nella sessione %d
 `w' atteso
 `w' atteso nella sessione %d
-Il tuo limite di 170 millioni di righe è stato raggiunto.\nSalva il tuo file, quindi esci e riavvia il programma.
+Il tuo limite di 250 millioni di righe è stato raggiunto.\nSalva il tuo file, quindi esci e riavvia il programma.
 nome di percorso assoluto troppo lungo, limite di %d caratteri
 le cartelle sono in sola lettura, digita dw per abilitare le scritture sulle cartelle
 impossibile creare la cartella .Trash nella tua cartella home, per contenere i files eliminati

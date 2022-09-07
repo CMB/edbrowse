@@ -1467,7 +1467,6 @@ bool sortedDirList(const char *dir, struct lineMap ** map_p, int *count_p,
 /* leave room for @ / newline */
 		t->text = (pst) allocMem(strlen(f) + 3);
 		strcpy((char *)t->text, f);
-		t->ds1 = t->ds2 = 0;
 		++t, ++linecount;
 	}
 

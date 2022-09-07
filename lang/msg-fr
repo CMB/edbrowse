@@ -112,7 +112,7 @@ débordement de la session %d, la limite est de %d
 vous êtes déjà dans la session %d
 `w' attendu
 `w' attendu en session %d
-Vous avez atteint la limite d'170 million de lignes.\nSauvegardez vos fichiers, puis sortez et redémarrez le programme.
+Vous avez atteint la limite d'250 million de lignes.\nSauvegardez vos fichiers, puis sortez et redémarrez le programme.
 chemin du répertoire trop long, la limite est de %d caractères
 répertoires en lecture seule, tapez dw pour autoriser l'écriture
 impossible de créer le fichier corbeille .Trash, pour contenir vos fichiers effacés

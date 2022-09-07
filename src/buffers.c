@@ -236,9 +236,8 @@ static char *dirSuffixContext(int n, int cx)
 
 	suffix[0] = 0;
 	if (lw->dirMode) {
-		struct lineMap *s = lw->map + n;
-		suffix[0] = s->ds1;
-		suffix[1] = s->ds2;
+		suffix[0] = lw->dmap[4*n];
+		suffix[1] = lw->dmap[4*n + 1];
 		suffix[2] = 0;
 	}
 	return suffix;
@@ -1081,6 +1080,7 @@ static void freeWindow(Window *w)
 	}
 	freeWindowLines(w->map);
 	freeWindowLines(w->r_map);
+	nzFree(w->dmap);
 	nzFree(w->htmltitle);
 	nzFree(w->htmldesc);
 	nzFree(w->htmlkey);
@@ -1253,10 +1253,8 @@ static void addToMap(int nlines, int destl)
 	if (nlines == 0)
 		i_printfExit(MSG_EmptyPiece);
 
-	if (sizeof(int) == 4) {
-		if (nlines > MAXLINES - cw->dol)
-			i_printfExit(MSG_LineLimit);
-	}
+	if (nlines > MAXLINES - cw->dol)
+		i_printfExit(MSG_LineLimit);
 
 /* browse has no undo command */
 	if (!(cw->browseMode | cw->dirMode))
@@ -1312,10 +1310,8 @@ static int text2linemap(const pst inbuf, int length, bool *nlflag)
 	for (i = 0; i < length; ++i)
 		if (inbuf[i] == '\n') {
 			++lines;
-			if (sizeof(int) == 4) {
-				if (lines + cw->dol > MAXLINES)
-					i_printfExit(MSG_LineLimit);
-			}
+			if (lines + cw->dol > MAXLINES)
+				i_printfExit(MSG_LineLimit);
 		}
 
 	if (inbuf[length - 1] != '\n') {
@@ -1389,7 +1385,6 @@ static bool inputLinesIntoBuffer(void)
 			t = np + linecount;
 		}
 		t->text = clonePstring(line);
-		t->ds1 = t->ds2 = 0;
 		++t, ++linecount;
 		line = inputLine();
 	}
@@ -1509,6 +1504,11 @@ void delText(int start, int end)
 			(cw->dol - end + 1) * LMSIZE);
 	}
 
+	if (cw->dirMode && cw->dmap && end < cw->dol) {
+		memmove(cw->dmap + 4*start, cw->dmap + 4*(end + 1),
+			(cw->dol - end) * 4);
+	}
+
 	if(gflag && end < cw->dol) {
 	memmove(gflag + start, gflag + end + 1, cw->dol - end);
 	}
@@ -1535,6 +1535,10 @@ void delText(int start, int end)
 		if (cw->dirMode && cw->r_map) {
 			free(cw->r_map);
 			cw->r_map = 0;
+		}
+		if (cw->dirMode && cw->dmap) {
+			free(cw->dmap);
+			cw->dmap = 0;
 		}
 	}
 }
@@ -1874,9 +1878,11 @@ moved:
 		addTextToBuffer((pst)file, t-file, dol, false);
 		free(file);
 		cw->dot = ++dol;
-		cw->map[dol].ds1 = ftype[0];
+		cw->dmap = reallocMem(cw->dmap, 4 * (dol + 1));
+		memset(cw->dmap + 4*dol, 0, 4);
+		cw->dmap[4*dol] = ftype[0];
 		if(ftype[0])
-			cw->map[dol].ds2 = ftype[1];
+		cw->dmap[4*dol + 1] = ftype[1];
 // if attributes were displayed in that directory - more work to do.
 // I just leave a space for them; I don't try to derive them.
 		if(cw->r_map) {
@@ -2185,6 +2191,7 @@ static bool readDirectory(const char *filename)
 {
 	int len, j, linecount;
 	char *v;
+	char *dmap = 0;
 	struct lineMap *mptr;
 	struct lineMap *backpiece = 0;
 	uchar innersort = (dno ? 0 : ls_sort);
@@ -2204,6 +2211,7 @@ static bool readDirectory(const char *filename)
 	if (!cw->dol) {
 		cw->dirMode = true;
 		cw->dnoMode = dno;
+		dmap = allocZeroMem(linecount * 4);
 		if(debugLevel >= 1)
 			i_puts(MSG_DirMode);
 		if (lsformat[0])
@@ -2216,6 +2224,7 @@ static bool readDirectory(const char *filename)
 		free(newpiece);
 		newpiece = 0;
 		nzFree(backpiece);
+		nzFree(dmap);
 		goto success;
 	}
 
@@ -2254,7 +2263,7 @@ static bool readDirectory(const char *filename)
 			if (!cw->dirMode)
 				*t = '@', *++t = '\n';
 			else
-				mptr->ds1 = '@';
+				dmap[j*4] = '@';
 			++fileSize;
 		}
 		ftype = tolower(ftype);
@@ -2267,10 +2276,10 @@ static bool readDirectory(const char *filename)
 		if (c) {
 			if (!cw->dirMode)
 				*t = c, *++t = '\n';
-			else if (mptr->ds1)
-				mptr->ds2 = c;
+			else if (dmap[j*4])
+				dmap[4*j + 1] = c;
 			else
-				mptr->ds1 = c;
+				dmap[4*j] = c;
 			++fileSize;
 		}
 // If sorting a different way, get the attribute.
@@ -2309,17 +2318,24 @@ static bool readDirectory(const char *filename)
 			*t++ = '\n';
 			*t = 0;
 		}
-	}			/* loop fixing files in the directory scan */
+	}			// loop fixing files in the directory scan
 
 	if (innersort) {
 		struct lineMap *tmp;
+		char *dmap2;
 		qsort(dsr_list, linecount, sizeof(struct DSR), dircmp);
 // Now I have to remap everything.
 		tmp = allocMem(LMSIZE * linecount);
-		for (j = 0; j < linecount; ++j)
+		if(dmap) dmap2 = allocZeroMem(4 * linecount);
+		for (j = 0; j < linecount; ++j) {
 			tmp[j] = newpiece[dsr_list[j].idx];
+			if(!dmap) continue;
+			dmap2[4*j] = dmap[4*dsr_list[j].idx];
+			dmap2[4*j + 1] = dmap[4*dsr_list[j].idx + 1];
+		}
 		free(newpiece);
 		newpiece = tmp;
+		if(dmap) free(dmap), dmap = dmap2;
 		if (backpiece) {
 			tmp = allocMem(LMSIZE * (linecount + 2));
 			for (j = 0; j < linecount; ++j)
@@ -2334,6 +2350,10 @@ static bool readDirectory(const char *filename)
 
 	addToMap(linecount, endRange);
 	cw->r_map = backpiece;
+	if(dmap) {
+		cw->dmap = allocMem((linecount + 1) * 4);
+		memcpy(cw->dmap + 4, dmap, linecount*4);
+	}
 
 success:
 	if (cmd == 'r')
