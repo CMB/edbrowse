@@ -285,6 +285,7 @@ int perl2c(char *t) ;
 unsigned pstLength(const pst s) ;
 pst clonePstring(const pst s) ;
 void copyPstring(pst s, const pst t) ;
+int comparePstring(const uchar * s, const uchar * t);
 int fdIntoMemory(int fd, char **data, int *len, bool inparts);
 int fileIntoMemory(const char *filename, char **data, int *len, bool inparts);
 bool memoryOutToFile(const char *filename, const char *data, int len, int msgcreate, int msgwrite) ;

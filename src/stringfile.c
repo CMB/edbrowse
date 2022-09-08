@@ -701,6 +701,22 @@ void copyPstring(pst s, const pst t)
 	memcpy(s, t, len);
 }
 
+int comparePstring(const uchar * s, const uchar * t)
+{
+	uchar c, d;
+	while(true) {
+		c = *s, d = *t;
+		if(c == d) {
+			if(c == '\n') return 0;
+			 ++s, ++t;
+			continue;
+		}
+		if(c == '\n') return -1;
+		if(d == '\n') return 1;
+		return c < d ? -1 : 1;
+	}
+}
+
 /*********************************************************************
 fdIntoMemory reads data from a file descriptor, until EOF is reached.
 It works even if we don't know the size beforehand.

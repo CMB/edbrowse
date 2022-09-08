@@ -456,7 +456,9 @@ struct ebWindow {
 	int sno; // session number
 // dot and dollar
 	int dot, dol;
-	Aline *dotloc;
+	Aline *dotline;
+	int lastf_n;
+	Aline *lastf_l;
 // remember dot and dol for the raw text, when in browse mode
 	int r_dot, r_dol;
 	Aline *r_dotloc;
