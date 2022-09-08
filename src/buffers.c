@@ -877,6 +877,8 @@ static Window *createWindow(void)
 {
 	Window *nw;	/* the new window */
 	nw = allocZeroMem(sizeof(Window));
+	initList(&nw->lines);
+	initList(&nw->r_lines);
 	saveSubstitutionStrings();
 	restoreSubstitutionStrings(nw);
 	nw->f0.gsn = ++gfsn;

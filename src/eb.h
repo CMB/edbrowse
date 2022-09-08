@@ -368,6 +368,8 @@ extern char *cacheDir;	/* directory for a persistent cache of http pages */
 extern int cacheSize; // in megabytes
 extern int cacheCount; // number of cache files
 
+// General link list. This is, interestingly, the same design
+// that Fabrice came up with for his quickjs project.
 struct listHead {
 	void *next;
 	void *prev;
@@ -381,12 +383,23 @@ struct listHead {
 (e) != (void*)&(l); \
 (e) = ((struct listHead *)e)->prev)
 
-/* A pointer to the text of a line, and other line attributes */
+// Point to the text of a line.
 struct lineMap {
 	pst text;
 };
 #define LMSIZE sizeof(struct lineMap)
 #define DTSIZE 2 // size of directory type
+
+// Keep the lines in your buffer in a linked list, for easy insert, delete, etc.
+// Not yet implemented.
+struct aline {
+	struct aline *next, *prev;
+	uchar text[8]; // the actual line
+};
+typedef struct aline Aline;
+#define ALSIZE sizeof(struct listHead)
+// If a line is 83 bytes long, including nl, allocate ALSIZE + 83 bytes.
+// Use pointers to link in, then copy the line into text.
 
 /* an edbrowse frame, as when there are many frames in an html page.
  * There could be several frames in an edbrowse window or buffer, chained
@@ -400,7 +413,7 @@ struct ebFrame {
 	int gsn; // global sequence number
 	char *fileName;		// name of file or url
 	char *firstURL;		// before http redirection
-	char *hbase; /* base for href references */
+	char *hbase; // base for href references
 	const char *charset;		// charset for this page
 	bool render1; // rendered via protocol or urlmatch
 	bool render2; // rendered via suffix
@@ -410,8 +423,8 @@ struct ebFrame {
 	bool jslink; // linke to javascript
 	bool browseMode;
 	short jtmin;
-	char *dw;		/* document.write string */
-	int dw_l;		/* length of the above */
+	char *dw;		// document.write string
+	int dw_l;		// length of the above
 // document.writes go under the body.
 	struct htmlTag *htmltag, *headtag, *bodytag;
 /* The javascript context and window corresponding to this url or frame.
@@ -441,21 +454,24 @@ struct ebWindow {
  * The back command follows this link, which is 0 if you are at the top. */
 	struct ebWindow *prev;
 	int sno; // session number
-/* This is right out of the source for ed.  Current and last line numbers. */
+// dot and dollar
 	int dot, dol;
-/* remember dot and dol for the raw text, when in browse mode */
+	Aline *dotloc;
+// remember dot and dol for the raw text, when in browse mode
 	int r_dot, r_dol;
+	Aline *r_dotloc;
 	int f_dot; // foreward dot, in case we browse again
 	struct ebFrame f0; /* first frame */
 	struct ebFrame *jdb_frame; // if in jdb mode
 	char *referrer; // another web page that brought this one to life
-	char *baseDirName;	/* when scanning a directory */
-	char *htmltitle, *htmldesc, *htmlkey;	/* title, description, keywords */
+	char *baseDirName;	// when scanning a directory
+	char *htmltitle, *htmldesc, *htmlkey;	// title, description, keywords
 	char *saveURL;		// for the fu command
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
-	char *dmap;
+	struct listHead lines, r_lines;
+	char *dmap; // for directory listing
 /* The labels that you set with the k command, and access via 'x.
  * Basically, that's 26 line numbers.
  * Number 0 means the label is not set.
