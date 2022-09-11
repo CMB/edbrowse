@@ -4650,6 +4650,8 @@ Sometimes you want a different ending on your email for a particular situation.
 
 <p>
 When the body of your message contains lines longer than 76 characters, edbrowse either uses the quoted-printable transfer encoding or wraps the lines and sends the message using format=flowed so that the receiving email client can unwrap the wrapped lines. You can choose between these options with the flow command.
+When using format=flowed, you might wrap the lines in a paragraph manually. End at least one wrapped line with a space to show that you want the receiving email client to unwrap that paragraph.
+edbrowse assumes that you want the receiving email client to unwrap lines that you have wrapped manually if one of the wrapped lines in a paragraph ends with a space.
 When the body of your message includes a word longer than 998 bytes, edbrowse uses the quoted-printable transfer encoding.
 
 <P>

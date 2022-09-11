@@ -275,9 +275,9 @@ bool *long_p)
 {
 	char *buf;
 	char c;
-	bool longline, longword, flowed;
+	bool longline, longword, cr, endlinespace, flowed;
 	char *s, *t, *v;
-	char *ct, *ce;		/* content type, content encoding */
+	char *ct, *ce;		// content type, content encoding
 	int buflen, i, cx;
 	int nacount, nullcount, linelength, wordlength;
 
@@ -450,7 +450,7 @@ empty:
 
 /* Count the nonascii characters */
 	nacount = nullcount = linelength = wordlength = 0;
-	longline = longword = flowed = false;
+	longline = longword = cr = endlinespace = flowed = false;
 	for (t = buf, i = 0; i < buflen; ++i, ++t) {
 		c = *t;
 		if (c == '\0')
@@ -468,6 +468,13 @@ empty:
 		if (c == '\n' || c == '\r' || c == '\t' || c == ' ') {
 			if (wordlength > LONGWORDLIMIT) longword = true;
 			wordlength = 0;
+			if (c == '\r' && i < buflen - 1 && t[1] != '\n') cr = true;
+// If a line not at the end of a paragraph ends with a space,
+// consider using format=flowed.
+			if (c == ' ' && i + 2 < buflen &&
+			((t[1] == '\n' && t[2] != '\n') ||
+			(t[1] == '\r' && t[2] != '\r' && (t[2] != '\n' || (i + 3 < buflen && t[3] != '\r')))))
+				endlinespace = true;
 		} else ++wordlength;
 	}
 	if(linelength > LONGLINELIMIT) longline = true;
@@ -489,8 +496,10 @@ empty:
 // because edbrowse treats data as a string after this point.
 // I'll still use 64 if it looks binary, perhaps a vital executable,
 // rather than simple utf8 text.
+// Also use base64 for text attachments that include a carriage return
+// when not using format=flowed.
 
-	if (nullcount || looksBinary((uchar*)buf, buflen)) {
+	if ((!ismail && cr) || nullcount || looksBinary((uchar*)buf, buflen)) {
 		s = base64Encode(buf, buflen, true);
 		nzFree(buf);
 		buf = s;
@@ -499,7 +508,7 @@ empty:
 	}
 
 	ce = (nacount ? "8bit" : "7bit");
-	if (webform || !longline) {
+	if (webform || !(longline || (ismail && flow && endlinespace))) {
 		buf[buflen] = 0;
 		goto success;
 	}
