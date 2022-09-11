@@ -196,8 +196,7 @@ static void setLimit(const char *t)
 	}
 	imapfetch = atoi(t);
 	earliest = early;
-	if (imapfetch < 10)
-		imapfetch = 10;
+	if (imapfetch < 5) imapfetch = 5;
 	i_printf(MSG_FetchN, imapfetch);
 }
 
@@ -751,7 +750,7 @@ imap_done:
 dispmail:
 		if (key == ' ' || key == 'g' || key == 't') {
 			if(key == 't') preferPlain = true;
-/* download the email from the imap server */
+// download the email from the imap server
 			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 					 cust_cmd);
@@ -810,6 +809,7 @@ You'll see this after the perform function runs.
 /* presentMail has already freed mailstring */
 			postkey = 0;
 			if(key == 'g') goto dispmail;
+			if(strchr("wua", key)) goto reaction;
 		}
 
 		if (key == 'p') {
@@ -1941,9 +1941,9 @@ key_command:
 	default:
 		i_puts(MSG_NYI);
 		goto key_command;
-	}			/* switch */
+	}			// switch
 
-/* At this point we're saving the mail somewhere. */
+// At this point we're saving the mail somewhere.
 writeMail:
 	if (!isimap || isupper(key))
 		delflag = true;
@@ -2074,7 +2074,7 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	return strchr("smvbfpg", key) ? key : 'n';
+	return strchr("smvbfpguwa", key) ? key : 'n';
 }
 
 /* Here are the common keywords for mail header lines.

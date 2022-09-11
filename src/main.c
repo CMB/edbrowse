@@ -1844,8 +1844,7 @@ inside:
 
 		case 37:	/* imap fetch limit */
 			imapfetch = atoi(v);
-			if (imapfetch <= 10)
-				imapfetch = 10;
+			if (imapfetch < 5) imapfetch = 5;
 // there isn't an upper limit when set interactively, so idk
 			if (imapfetch >= 1000)
 				imapfetch = 1000;
