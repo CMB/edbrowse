@@ -3976,6 +3976,7 @@ static void liCheck(Tag *t)
 		char olbuf[32];
 		if (ltag->ninp)
 			tagInStream(ltag->ninp);
+		olbuf[0] = 0;
 		if (ltag->action == TAGACT_OL) {
 			int j = ++ltag->lic, k;
 			Tag *tli = tagList[ltag->ninp];
@@ -3985,7 +3986,7 @@ static void liCheck(Tag *t)
 			if(tli->value && (k = stringIsNum(tli->value)) >= 0)
 				ltag->lic = j = k;
 			sprintf(olbuf, "%d. ", j);
-		} else {
+		} else if(ltag->lic == 0) {
 			strcpy(olbuf, "* ");
 		}
 		if (!invisible)
@@ -4382,6 +4383,15 @@ nocolor:
 			++listnest;
 		else
 			--listnest;
+// If this is <ul> with one item or no items below,
+// indicate with lic = -1. We will suppresss it.
+		j = 0;
+		for(ltag = t->firstchild; ltag; ltag = ltag->sibling)
+			if(ltag->action == TAGACT_LI) ++j;
+	if(j <= 1 && action == TAGACT_UL) {
+		t->lic = -1;
+		break;
+	}
 
 	case TAGACT_DL:
 	case TAGACT_DT:
@@ -4402,10 +4412,19 @@ nop:
 			j >>= 2;
 
 // defense against <td><p>stuff</p></td>
+// or even <td><i><font size=-1><p>stuff</p></font></i></td>
 // Supress linebreak if this is first or last child of a cell.
-		if(j && t->parent && t->parent->action == TAGACT_TD &&
-		((opentag && t->parent->firstchild == t) || (!opentag && !t->sibling)))
-			j = 0;
+		if(j) {
+			const Tag *y = t, *z;
+			while((z = y->parent)) {
+				if(opentag && z->firstchild != y) goto past_cell_paragraph;
+				if(!opentag && y->sibling) goto past_cell_paragraph;
+				if(z->action == TAGACT_TD) break;
+				y = z;
+			}
+			if(z) j = 0;
+		}
+past_cell_paragraph:
 
 		if (j) {
 			c = '\f';
@@ -4557,6 +4576,7 @@ nop:
 
 	case TAGACT_LI:
 		if ((ltag = findOpenList(t))) {
+			if(ltag->lic < 0) break; // suppressed
 			ltag->post = true;
 /* borrow ninp to store the tag number of <li> */
 			ltag->ninp = t->seqno;
