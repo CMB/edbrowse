@@ -4417,12 +4417,16 @@ nop:
 		if(j) {
 			const Tag *y = t, *z;
 			while((z = y->parent)) {
+// h3 inside a cell, table is almost certainly for presentation
+// We see this on facebook.
+// Let's hope the tableType() catches it.
+//				if(y->action == TAGACT_H) goto past_cell_paragraph;
 				if(opentag && z->firstchild != y) goto past_cell_paragraph;
 				if(!opentag && y->sibling) goto past_cell_paragraph;
 				if(z->action == TAGACT_TD) break;
 				y = z;
 			}
-			if(z) j = 0;
+			if(z && tableType(z) == 1) j = 0;
 		}
 past_cell_paragraph:
 
