@@ -11,7 +11,9 @@ flow command to use format=flowed in outgoing mail.
 FormData, from a third party.
 TextDecoder, from a third party.
 
-Read files larger than 2 gig.
+Read files in chunks, saves memory while reading, and could support
+large files, although those are rather impractical in a text editor.
+That's why they invented sed, awk, perl, etc.
 
 3.8.4
 dno (names only) command.

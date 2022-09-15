@@ -4384,11 +4384,14 @@ nocolor:
 		else
 			--listnest;
 // If this is <ul> with one item or no items below,
+// and in the cell of a data table,
 // indicate with lic = -1. We will suppresss it.
 		j = 0;
 		for(ltag = t->firstchild; ltag; ltag = ltag->sibling)
 			if(ltag->action == TAGACT_LI) ++j;
-	if(j <= 1 && action == TAGACT_UL) {
+	if(j <= 1 && action == TAGACT_UL &&
+	t->parent && t->parent->action == TAGACT_TD &&
+		tableType(t->parent) == 1) {
 		t->lic = -1;
 		break;
 	}
