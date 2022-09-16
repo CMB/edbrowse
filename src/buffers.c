@@ -48,6 +48,7 @@ static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 /* Commands that can be done after a g// global directive. */
 static const char global_cmd[] = "<!dDijJlmnprstwX=";
 static bool *gflag;
+static Window *gflag_w;
 
 static int startRange, endRange;	/* as in 57,89p */
 static int destLine;		/* as in 57,89m226 */
@@ -1290,6 +1291,11 @@ static void addToMap(int nlines, int destl)
 	newpiece = 0;
 
 	if(!gflag) return;
+// Next line is for g/pattern/ .w2@.
+// We have switched to session 2 to write the line. Now in addToMap, session 2.
+// gflag is still there, but it is for session 1.
+	if(gflag_w != cw) return;
+
 	newg = allocMem(cw->dol + 1);
 	if (destl)
 		memcpy(newg, gflag, destl + 1);
@@ -3977,6 +3983,7 @@ static bool doGlobal(const char *line)
 	if (!re_cc)
 		return false;
 	gflag = allocZeroMem(sizeof(char*) * (cw->dol+1));
+	gflag_w = cw;
 	for (i = startRange; i <= endRange; ++i) {
 		char *subject = (char *)fetchLine(i, 1);
 		re_count =
