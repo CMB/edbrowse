@@ -6951,15 +6951,7 @@ range2:
 			if((w = line2tr(i)) && !w->inur) {
 				w->inur = true;
 // could be a <th> row
-				if(w->firstchild &&
-				w->firstchild->action == TAGACT_TD &&
-				w->firstchild->info->name[1] == 'h') {
-					const Tag *x;
-					for(x = w->firstchild->sibling; x; x = x->sibling)
-						if(x->action == TAGACT_TD) break;
-					if(x && x->info->name[1] == 'h')
-						continue;
-				}
+				if(all_th(w)) continue;
 				if(c == 0)
 					w->ur ^= 1;
 				if(c == '+')

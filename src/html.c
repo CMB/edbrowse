@@ -3776,6 +3776,19 @@ static void td_textUnder(const Tag *u)
 		td_textUnder(u);
 }
 
+// the whole row is <th>, and there's more than one.
+bool all_th(const Tag *tr)
+{
+	const Tag *th;
+	int j = 0;
+	for(th = tr->firstchild; th; th = th->sibling) {
+		if(th->action != TAGACT_TD) continue;
+		if(th->info->name[1] == 'd') return false;
+		++j;
+	}
+	return j > 1;
+}
+
 // return a column heading by number.
 // This function and the next two are used to display an unfolded row.
 static void findHeading(const Tag *t, int colno)
@@ -3809,6 +3822,7 @@ static void findHeading(const Tag *t, int colno)
 	}
 	if(!t || t->action != TAGACT_TR || !t->firstchild)
 		return;
+// it's a row with stuff under it
 	t = t->firstchild;
 	if(t->action != TAGACT_TD ||
 	(!ishead && t->info->name[1] != 'h'))
@@ -3816,11 +3830,9 @@ static void findHeading(const Tag *t, int colno)
 
 // t is first cell in row, and is <th> or is inside <thead>
 // Make sure it's not a row header in <tbody>
-	if(!ishead) {
-		for(u = t->sibling; u; u = u->sibling)
-			if(u->action == TAGACT_TD) break;
-		if(!u || u->info->name[1] != 'h') return;
-	}
+// continue if the whole row is <th>
+	if(!ishead && !all_th(t->parent))
+		return;
 
 	while(t) {
 		if(t->action == TAGACT_TD) {
@@ -4610,12 +4622,7 @@ past_cell_paragraph:
 			while(v && v != t) {
 				if(v->action == TAGACT_TR) {
 // sometimes the headers are in the tbody and not in thead.
-					if(j == 1 && v->firstchild &&
-					v->firstchild->action == TAGACT_TD &&
-					v->firstchild->info->name[1] == 'h' &&
-					v->firstchild->sibling &&
-					v->firstchild->sibling->action == TAGACT_TD &&
-					v->firstchild->sibling->info->name[1] == 'h')
+					if(j == 1 && all_th(v))
 						; // skip <th> row
 					else
 						++j;
@@ -5011,13 +5018,8 @@ bool showHeaders(int ln)
 	if(t->action != TAGACT_TD ||
 	t->info->name[1] != 'h')
 		goto fail;
-// if this is tbody, one <th> isn't enough, could be a row header, we need two.
-	if(!ishead) {
-		const Tag *u;
-		for(u = t->sibling; u; u = u->sibling)
-			if(u->action == TAGACT_TD) break;
-		if(!u || u->info->name[1] == 'd') goto fail;
-	}
+// if this is tbody, one <th> isn't enough, could be a row header, we need a line of th.
+	if(!ishead && !all_th(t->parent)) goto fail;
 	colno = 1;
 	while(t) {
 		if(t->action == TAGACT_TD) {
