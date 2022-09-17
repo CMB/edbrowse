@@ -497,9 +497,10 @@ empty:
 // I'll still use 64 if it looks binary, perhaps a vital executable,
 // rather than simple utf8 text.
 // Also use base64 for text attachments that include a carriage return
-// when not using format=flowed.
+// when using format=flowed and for all attachments when not using
+// format=flowed.
 
-	if ((!ismail && cr) || nullcount || looksBinary((uchar*)buf, buflen)) {
+	if ((!ismail && (cr || !flow)) || nullcount || looksBinary((uchar*)buf, buflen)) {
 		s = base64Encode(buf, buflen, true);
 		nzFree(buf);
 		buf = s;

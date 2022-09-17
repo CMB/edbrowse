@@ -4649,10 +4649,26 @@ Note, sm-5 is the same as sm5, but the .signature file is not included.
 Sometimes you want a different ending on your email for a particular situation.
 
 <p>
-When the body of your message contains lines longer than 76 characters, edbrowse either uses the quoted-printable transfer encoding or wraps the lines and sends the message using format=flowed so that the receiving email client can unwrap the wrapped lines. You can choose between these options with the flow command.
-When using format=flowed, you might wrap the lines in a paragraph manually. End at least one wrapped line with a space to show that you want the receiving email client to unwrap that paragraph.
-edbrowse assumes that you want the receiving email client to unwrap lines that you have wrapped manually if one of the wrapped lines in a paragraph ends with a space.
+When the body of your message contains lines longer than 76 characters,
+edbrowse either uses the quoted-printable transfer encoding,
+to preserve the text exactly as you wrote it,
+or it wraps the lines and sends the message using format=flowed,
+whence the receiving email client can unwrap the paragraphs in a manner that makes sense on the user's device.
+You can choose between these options with the flow command.
+With flow+, paragraphs with long lines, or with a line that ends in a space, will be reformatted.
+If a paragraph contains all short lines, like a poem, with no trailing spaces, it is preserved, even under flow+.
+flow+ is the default; you probably won't have cause to turn it off.
+
+<P>
 When the body of your message includes a word longer than 998 bytes, edbrowse uses the quoted-printable transfer encoding.
+This is an internet requirement.
+It will probably never happen in the real world.
+
+<p>
+Different operating systems traditionally use different characters to mark the end of a line.
+Usually, edbrowse sends text attachments with neutral line endings. The receiving email client will save the file with the line endings that are usual on  that operating system.
+Use flow- if you want edbrowse to send text files with the line endings exactly as they are.
+You won't need to do this very often.
 
 <P>
 sub: is an acceptable shorthand for subject:
