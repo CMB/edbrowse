@@ -3403,20 +3403,11 @@ static bool shellEscape(const char *line)
 
 // parse portion syntax as in 7@'a,'b. ASsume context has been cracked,
 // and line begins with @.
-// There is a w+2 mode, append to session 2, not yet implemented.
 static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 {
 	int lno1, lno2 = -1; // line numbers
 	const Window *w2; // far window
-	char *q;
-	if(*p == '+') {
-		if(!cxCompare(cx) || !cxActive(cx, true))
-			return globSub = false;
-		w2 = sessionList[cx].lw;
-		*lp1 = *lp2 = w2->dol;
-		return true;
-	}
-	q = strchr(p, ',');
+	char *q = strchr(p, ',');
 	if(q) *q = 0;
 // check syntax first, then validate session number
 	if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
@@ -5150,9 +5141,9 @@ Tag *line2frame(int ln)
 	return 0;
 }
 
+static char shortline[60];
 static int twoLetter(const char *line, const char **runThis)
 {
-	static char shortline[60];
 	char c;
 	bool rc, ub;
 	int i, n;
@@ -7087,6 +7078,17 @@ replaceframe:
 	}
 
 	first = *line;
+
+// w+5 becomes w5@$     a simple translation
+// then we go on and parse that in the usual way.
+	if (cmd == 'w' && first == '+' &&
+	isdigit(line[1]) &&
+	(j = strtol(line + 1, &p, 10)) >= 0 && !*p) {
+		sprintf(shortline, "%d@$", j);
+		line = shortline;
+		first = *line;
+	}
+
 	if (cmd == 'w' && first == '+')
 		writeMode = O_APPEND, first = *++line;
 	else if(cmd == 'w' && isdigit(first)) {
