@@ -3403,11 +3403,20 @@ static bool shellEscape(const char *line)
 
 // parse portion syntax as in 7@'a,'b. ASsume context has been cracked,
 // and line begins with @.
+// There is a w+2 mode, append to session 2, not yet implemented.
 static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 {
 	int lno1, lno2 = -1; // line numbers
 	const Window *w2; // far window
-	char *q = strchr(p, ',');
+	char *q;
+	if(*p == '+') {
+		if(!cxCompare(cx) || !cxActive(cx, true))
+			return globSub = false;
+		w2 = sessionList[cx].lw;
+		*lp1 = *lp2 = w2->dol;
+		return true;
+	}
+	q = strchr(p, ',');
 	if(q) *q = 0;
 // check syntax first, then validate session number
 	if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
@@ -5043,18 +5052,17 @@ static char *lessFile(const char *line, bool tamode)
 	int j, k, n;
 	int lno1, lno2;
 	const Window *w2; // far window
-	char *line2;
+	char *line2, *p;
 	int line2len;
 	skipWhite(&line);
 	if (!*line) {
 		setError(MSG_NoFileSpecified);
 		return 0;
 	}
-	if(isdigitByte(line[0]) && (n = strtol(line, (char**)&line, 10)) >= 0 &&
-	(*line == 0 || *line == '@')) {
-		char *p = (char*)line; // shorthand
+	if(isdigitByte(line[0]) && (n = strtol(line, (char**)&p, 10)) >= 0 &&
+	(*p == 0 || *p == '@')) {
 		int plen, dol;
-		if(!*line) {
+		if(!*p) {
 			if (!cxCompare(n) || !cxActive(n, true))
 				return 0;
 			dol = sessionList[n].lw->dol;
