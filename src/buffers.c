@@ -67,46 +67,45 @@ static char icmd;		/* input command, usually the same as cmd */
 static bool uriEncoded;
 
 /*********************************************************************
- * If a rendered line contains a hyperlink, the link is indicated
- * by a code that is stored inline.
- * If the hyperlink is number 17 on the list of hyperlinks for this window,
- * it is indicated by InternalCodeChar 17 { text }.
- * The "text" is what you see on the page, what you click on.
- * {Click here for more information}.
- * And the braces tell you it's a hyperlink.
- * That's just my convention.
- * The prior chars are for internal use only.
- * I'm assuming these chars don't/won't appear on the rendered page.
- * Yeah, sometimes nonascii chars appear, especially if the page is in
- * a European language, but I just assume a rendered page will not contain
- * the sequence: InternalCodeChar number {
- * In fact I assume the rendered text won't contain InternalCodeChar at all.
- * So I use this char to demark encoded constructs within the lines.
- * And why do I encode things right in the text?
- * Well it took me a few versions to reach this point.
- * But it makes so much sense!
- * If I move a line, the referenced hyperlink moves with it.
- * I don't have to update some other structure that says,
- * "At line 73, characters 29 through 47, that's hyperlink 17."
- * I use to do it that way, and wow, what a lot of overhead
- * when you move lines about, or delete them, or make substitutions.
- * Yes, you really need to change rendered html text,
- * because that's how you fill out forms.
- * Add just one letter to the first name in your fill out form,
- * and the hyperlink that comes later on in the line shifts down.
- * I use to go back and update the pointers,
- * so that the hyperlink started at offset 30, rather than 29.
- * That was a lot of work, and very error prone.
- * Finally I got smart, and coded the html tags inline.
- * They can't get lost as text is modified.  They move with the text.
- *
- * So now, certain sequences in the text are for internal use only.
- * This routine strips out these sequences, for display.
- * After all, you don't want to see those code characters.
- * You just want to see {Click here for more information}.
- *
- * This also checks for special input fields that are masked and
- * displays stars instead, whenever we would display formated text */
+If a rendered line contains a hyperlink, the link is indicated
+by a code that is stored inline.
+If the hyperlink is number 17 on the list of hyperlinks for this window,
+it is indicated by InternalCodeChar 17 { text }.
+The "text" is what you see on the page, what you click on.
+{Click here for more information}.
+And the braces tell you it's a hyperlink.
+That's just my convention.
+The prior chars are for internal use only.
+I'm assuming these chars don't/won't appear on the rendered page.
+Yeah, sometimes nonascii chars appear, especially if the page is in
+a European language, but I just assume a rendered page will not contain
+the sequence: InternalCodeChar number {
+In fact I assume the rendered text won't contain InternalCodeChar at all.
+So I use this char to demark encoded constructs within the lines.
+And why do I encode things right in the text?
+Well it took me a few versions to reach this point.
+But it makes so much sense!
+If I move a line, the referenced hyperlink moves with it.
+I don't have to update some other structure that says,
+"At line 73, characters 29 through 47, that's hyperlink 17."
+I use to do it that way, and wow, what a lot of overhead
+when you move lines about, or delete them, or make substitutions.
+Yes, you really need to change rendered html text,
+because that's how you fill out forms.
+Add just one letter to the first name in your fill out form,
+and the hyperlink that comes later on in the line shifts down.
+I use to go back and update the pointers,
+so that the hyperlink started at offset 30, rather than 29.
+That was a lot of work, and very error prone.
+Finally I got smart, and coded the html tags inline.
+They can't get lost as text is modified.  They move with the text.
+So now, certain sequences in the text are for internal use only.
+This routine strips out these sequences for display.
+After all, you don't want to see those code characters.
+You just want to see {Click here for more information}.
+This also checks for special input fields that are masked and
+displays stars instead, whenever we would display formatted text.
+*********************************************************************/
 
 void removeHiddenNumbers(pst p, uchar terminate)
 {
@@ -3563,6 +3562,9 @@ regexpCheck(const char *line, bool isleft,
 		}
 	}
 
+	bool named_cc = false;
+	bool first_character_in_cc = false;
+	bool complemented_cc = false;
 	while ((c = *line)) {
 		if (e >= re + MAXRE - 3) {
 			setError(MSG_RexpLong);
@@ -3616,7 +3618,7 @@ regexpCheck(const char *line, bool isleft,
 		}
 
 // Break out if we hit the delimiter.
-		if (c == delim)
+		if (c == delim && !cc)
 			break;
 
 /* Remember, I reverse the sense of ()| */
@@ -3664,12 +3666,28 @@ regexpCheck(const char *line, bool isleft,
 			continue;
 
 		if (cc) {	/* character class */
-			if (c == ']')
-				cc = false;
+			if (c == '[' && *line == ':') {
+				const char *next = line + 1;
+				if (!strncmp(next, "ascii:]", 7) || !strncmp(next, "alnum:]", 7)
+				|| !strncmp(next, "alpha:]", 7) || !strncmp(next, "blank:]", 7)
+				|| !strncmp(next, "cntrl:]", 7) || !strncmp(next, "digit:]", 7)
+				|| !strncmp(next, "graph:]", 7) || !strncmp(next, "lower:]", 7)
+				|| !strncmp(next, "print:]", 7) || !strncmp(next, "punct:]", 7)
+				|| !strncmp(next, "space:]", 7) || !strncmp(next, "upper:]", 7)
+				|| !strncmp(next, "xdigit:]", 8) || !strncmp(next, "word:]", 6))
+					named_cc = true;
+			}
+			if (c == ']') {
+				if (named_cc) named_cc = false;
+				else if (!first_character_in_cc) cc = complemented_cc = false;
+			}
+			if (c == '^' && !complemented_cc && first_character_in_cc)
+				complemented_cc = true;
+			else first_character_in_cc = false;
 			continue;
 		}
 		if (c == '[')
-			cc = true;
+			cc = first_character_in_cc = true;
 
 /* Modifiers must have a preceding character.
  * Except ? which can reduce the greediness of the others. */
