@@ -12,7 +12,7 @@ blank spaces for messages no longer used.
 Each file lang/msg-* must have exactly this many lines.
 *********************************************************************/
 
-#define EdbrowseMessageCount 700
+#define EdbrowseMessageCount 800
 
 // English
 extern const char *msg_en[], ebrc_en[], qrg_en[];
@@ -227,7 +227,7 @@ enum {
 	MSG_DomainEmpty,
 	MSG_NoWriteURL,
 	MSG_WriteDB,
-	MSG_notused130,
+	MSG_IrcCommand,
 	MSG_NoCreate2,
 	MSG_NoWrite2,
 	MSG_SessionBackground,
@@ -436,14 +436,14 @@ enum {
 	MSG_ProgressDots,
 	MSG_SigRegular,
 	MSG_SigAccess,
-	MSG_notused339,
+	MSG_MailIrc,
 	MSG_AttAlternate,
 	MSG_RecipMany,
 	MSG_ABMissing,
 	MSG_ABNoAlias2,
 	MSG_RecipNone,
 	MSG_AttSessionEmpty,
-	MSG_notused346,
+	MSG_ReIrc,
 	MSG_AttRegular,
 	MSG_AttEmpty2,
 	MSG_LineDelete1,
@@ -795,4 +795,7 @@ enum {
 	MSG_DebugTagsOn,
 	MSG_FormatFlowedOff,
 	MSG_FormatFlowedOn,
+	MSG_AudioIrc,
+	MSG_BreakIrc,
+	MSG_IrcRename,
 };

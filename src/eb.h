@@ -501,7 +501,8 @@ int ehsn;
 	bool sqlMode:1;		// accessing a table
 	bool irciMode:1;		// input irc
 	bool ircoMode:1;		// output irc
-	struct DBTABLE *table;	/* if in sqlMode */
+	FILE *ircF;
+	struct DBTABLE *table;	// if in sqlMode
 	time_t nextrender;
 };
 typedef struct ebWindow Window;

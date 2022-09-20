@@ -30,22 +30,24 @@ static bool pcre_utf8_error_stop = false;
 
 uchar dirWrite;		// directories read write
 bool dno; // directory names only
-bool endMarks;		/* ^ $ on listed lines */
-/* The valid edbrowse commands. */
+bool endMarks;		// ^ $ on listed lines
+// The valid edbrowse commands
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
-/* Commands that can be done in browse mode. */
+// Commands that can be done in browse mode
 static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
-/* Commands for sql mode. */
+// Commands for sql mode
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
-/* Commands for directory mode. */
+// Commands for directory mode
 static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
-/* Commands that work at line number 0, in an empty file. */
+// Commands for irc output mode
+static const char irco_cmd[] = "BfghHklnpqvwXz=<";
+// Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHMqruwz=^<";
-/* Commands that expect a space afterward. */
+// Commands that expect a space afterward
 static const char spaceplus_cmd[] = "befrw";
-/* Commands that should have no text after them. */
+// Commands that should have no text after them
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
-/* Commands that can be done after a g// global directive. */
+// Commands that can be done after a g// global directive
 static const char global_cmd[] = "<!dDijJlmnprstwX=";
 static bool *gflag;
 static Window *gflag_w;
@@ -1029,10 +1031,10 @@ static void undoPush(void)
 {
 	Window *uw;
 
-/* if in browse mode, we really shouldn't be here at all!
- * But we could if substituting on an input field, since substitute is also
- * a regular ed command. */
-	if (cw->browseMode | cw->sqlMode | cw->dirMode)
+// if in browse mode, we really shouldn't be here at all!
+// But we could if substituting on an input field, since substitute is also
+// a regular ed command.
+	if (cw->browseMode | cw->sqlMode | cw->dirMode | cw->ircoMode)
 		return;
 	if (madeChanges)
 		return;
@@ -1090,6 +1092,7 @@ static void freeWindow(Window *w)
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
+	if(w->ircF) fclose(w->ircF);
 	free(w);
 }
 
@@ -1146,22 +1149,15 @@ bool cxQuit(int cx, int action)
 		i_printfExit(MSG_QuitNoActive, cx);
 
 // action = 3 means we can trash data
-	if (action == 3) {
-		w->changeMode = false;
-		action = 2;
-	}
+	if (action == 3)
+		w->changeMode = false, action = 2;
 
-/* We might be trashing data, make sure that's ok. */
-	if (w->changeMode &&
-/* something in the buffer has changed */
-	    lastq != cx &&
-/* last command was not q */
-	    !ismc &&
-// not in fetchmail mode, which uses the same buffer over and over again
-	    !(w->dirMode | w->sqlMode) &&
-// not directory or sql mode
-	    (!w->f0.fileName || !isURL(w->f0.fileName))) {
-// not changing a url
+// We might be trashing data, make sure that's ok.
+	if (w->changeMode && // something has changed
+	    lastq != cx && // last command was not q
+	    !ismc && // not in fetch mail mode, which reuses the same buffer
+	    !(w->dirMode | w->sqlMode | w->ircoMode) &&
+	    (!w->f0.fileName || !isURL(w->f0.fileName))) { // not a URL
 		lastqq = cx;
 		setError(MSG_ExpectW);
 		if (cx != context)
@@ -1170,7 +1166,7 @@ bool cxQuit(int cx, int action)
 	}
 
 	if (!action)
-		return true;	/* just a test */
+		return true;	// just a test
 
 	if (cx == context) {
 /* Don't need to retain the undo lines. */
@@ -1490,8 +1486,9 @@ void delText(int start, int end)
 	int i, ln;
 	int *label = NULL;
 
-/* browse has no undo command */
-	if (cw->browseMode | cw->sqlMode) {
+// browse / sql has no undo command.
+// We shouldn't even be here in irc output mode, but just in case.
+	if (cw->browseMode | cw->sqlMode | cw->ircoMode) {
 		for (ln = start; ln <= end; ++ln)
 			nzFree(cw->map[ln].text);
 	} else {
@@ -4031,7 +4028,7 @@ static bool doGlobal(const char *line)
 	setError(-1);
 
 // check for mass delete or mass join
-	if(cw->browseMode | cw->sqlMode) goto nomass;
+	if(cw->browseMode | cw->sqlMode | cw->ircoMode) goto nomass;
 	int block = -1, back = 0; // range for mass delete
 // atPartCracker() might overwrite comma with null, so p has to be char*
 	char *p = (char*)line;
@@ -6980,7 +6977,7 @@ range2:
 		return true;
 	}
 
-/* Breakline is actually a substitution of lines. */
+// Breakline is actually a substitution of lines
 	if (stringEqual(line, "bl")) {
 		if (cw->dirMode) {
 			setError(MSG_BreakDir);
@@ -6988,6 +6985,10 @@ range2:
 		}
 		if (cw->sqlMode) {
 			setError(MSG_BreakDB);
+			return false;
+		}
+		if (cw->ircoMode) {
+			setError(MSG_BreakIrc);
 			return false;
 		}
 		if (cw->browseMode) {
@@ -7095,6 +7096,11 @@ replaceframe:
 		return (globSub = false);
 	}
 
+	if (cw->ircoMode && !strchr(irco_cmd, cmd)) {
+		setError(MSG_IrcCommand, cmd);
+		return (globSub = false);
+	}
+
 	first = *line;
 
 // w+5 becomes w5@$     a simple translation
@@ -7121,7 +7127,7 @@ replaceframe:
 				return globSub = false;
 			}
 			const Window *w2 = sessionList[sno].lw;
-			if(w2->dirMode | w2->binMode | w2->browseMode | w2->sqlMode) {
+			if(w2->dirMode | w2->binMode | w2->browseMode | w2->sqlMode | w2->ircoMode) {
 				setError(MSG_TextRec, sno);
 				return globSub = false;
 			}
@@ -7280,7 +7286,7 @@ replaceframe:
 	if ((cmd == 'b' || cmd == 'e') && stringEqual(line, "-c"))
 		line = configFile;
 
-/* env variable and wild card expansion */
+// env variable and wild card expansion
 	if (strchr("brewf", cmd) && // command looks right
 	first && // reading or writing or editing something
 	!isURL(line) && // not a url
@@ -7468,6 +7474,10 @@ replaceframe:
 				setError(MSG_TableRename);
 				return false;
 			}
+			if (cw->ircoMode) {
+				setError(MSG_IrcRename);
+				return false;
+			}
 			nzFree(cf->fileName);
 			cf->fileName = cloneString(line);
 		}
@@ -7543,6 +7553,8 @@ replaceframe:
 				i_puts(MSG_OK);
 			return true;
 		}
+
+// special code for writing in irciMode here, not yet implemented
 
 		if (!first)
 			line = cf->fileName;
@@ -7765,8 +7777,8 @@ past_g_file:
 /* more e to come */
 	}
 
-	/* see if it's a go command */
-	if (cmd == 'g' && !(cw->sqlMode | cw->binMode)) {
+	// see if it's a go command
+	if (cmd == 'g' && !(cw->sqlMode | cw->binMode | cw->ircoMode)) {
 		char *h;
 		int tagno;
 		bool click, dclick;

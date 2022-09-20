@@ -3171,6 +3171,11 @@ bool setupReply(bool all)
 		return false;
 	}
 
+	if (cw->irciMode | cw->ircoMode) {
+		setError(MSG_ReIrc);
+		return false;
+	}
+
 	if (!cw->dol) {
 		setError(MSG_ReEmpty);
 		return false;

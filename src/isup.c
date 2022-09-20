@@ -3167,6 +3167,10 @@ int playBuffer(const char *line, const char *playfile)
 		setError(MSG_AudioDB);
 		return 0;
 	}
+	if (cw->irciMode | cw->ircoMode) {
+		setError(MSG_AudioIrc);
+		return 0;
+	}
 	if (cw->dirMode) {
 		setError(MSG_AudioDir);
 		return 0;

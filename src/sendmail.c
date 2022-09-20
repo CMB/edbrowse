@@ -1235,6 +1235,10 @@ bool sendMailCurrent(int sm_account, bool dosig)
 		setError(MSG_MailDB);
 		return false;
 	}
+	if (cw->irciMode | cw->ircoMode) {
+		setError(MSG_MailIrc);
+		return false;
+	}
 	if (cw->dirMode) {
 		setError(MSG_MailDir);
 		return false;

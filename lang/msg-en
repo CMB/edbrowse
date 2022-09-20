@@ -127,7 +127,7 @@ missing file name
 empty domain in url
 cannot write to a url
 cannot write to a database table
-0
+%c not available in irc mode
 cannot create %s
 cannot write to %s
 session is not interactive
@@ -336,14 +336,14 @@ subject line too long, limit %d characters
 progress dots
 .signature is not a regular file
 cannot access .signature file
-0
+cannot send mail in irc mode
 either none or all of the attachments must be declared \"alternative\"
 too many recipients, limit %d
 No address book specified, please check your configuration file
 alias %s not found in your address book
 no recipients specified
 session %d is empty, cannot attach
-0
+cannot reply in irc mode
 file %s is not a regular file, cannot attach
 file %s is empty, cannot attach
 line after %d has been deleted\n
@@ -353,9 +353,9 @@ lines %d through %d have been added\n
 progress count
 no mail accounts specified, plese check your config file
 invalid account number %d, please use 1 through %d
-cannot send mail while in browse mode
-cannot send mail while in database mode
-cannot send mail from directory mode
+cannot send mail in browse mode
+cannot send mail in database mode
+cannot send mail in directory mode
 cannot mail binary data, should this be an attachment?
 cannot mail an empty file
 no recipient at line %d
@@ -695,6 +695,106 @@ debug html scanner disabled
 debug html scanner enabled
 do not use format=flowed
 use format=flowed
+cannot play audio in irc mode
+cannot break lines in irc mode
+cannot change the name of an irc server
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
 0
 0
 0
