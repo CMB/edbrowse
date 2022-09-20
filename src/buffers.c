@@ -39,6 +39,8 @@ static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 // Commands for directory mode
 static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
+// Commands for irc input mode
+static const char irci_cmd[] = "aBcdDefghHijJklmnpqrstuvwXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BfghHklnpqvwXz=<";
 // Commands that work at line number 0, in an empty file
@@ -1092,7 +1094,13 @@ static void freeWindow(Window *w)
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
-	if(w->ircF) fclose(w->ircF);
+	if(w->ircF) {
+		fclose(w->ircF);
+		Window *w2 = sessionList[w->ircOther].lw;
+// w2 should always be there, but just in case
+		if(w2)
+			w2->irciMode = w2->ircoMode = false, w2->ircF = 0;
+	}
 	free(w);
 }
 
@@ -1255,7 +1263,7 @@ static void addToMap(int nlines, int destl)
 		i_printfExit(MSG_LineLimit);
 
 /* browse has no undo command */
-	if (!(cw->browseMode | cw->dirMode))
+	if (!(cw->browseMode | cw->dirMode | cw->ircoMode))
 		undoPush();
 
 /* move the labels */
@@ -1263,8 +1271,9 @@ static void addToMap(int nlines, int destl)
 		if (*label > destl)
 			*label += nlines;
 	}
-	cw->dot = destl + nlines;
 	cw->dol += nlines;
+	if(!cw->ircoMode)
+		cw->dot = destl + nlines;
 
 	newmap = allocMem((cw->dol + 2) * LMSIZE);
 	if (destl)
@@ -7093,6 +7102,11 @@ replaceframe:
 
 	if (!strchr(valid_cmd, cmd)) {
 		setError(MSG_UnknownCommand, cmd);
+		return (globSub = false);
+	}
+
+	if (cw->irciMode && !strchr(irci_cmd, cmd)) {
+		setError(MSG_IrcCommand, cmd);
 		return (globSub = false);
 	}
 

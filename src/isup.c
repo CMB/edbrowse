@@ -16,7 +16,7 @@ This is a login password mechanism that is specified in the http protocol.
 It isn't fields in a form.
 I don't think it is used very often, but sometimes it is,
 and we should support it, at least at a basic level.
-Finally, there is support for plugins, programs to run based on
+Then support for plugins, programs to run based on
 protocol, content-type, or suffix.
 Add a plugin descriptor to your config file for each plugin you wish to support.
 The edbrowse wiki has many examples.
@@ -3225,3 +3225,82 @@ int playBuffer(const char *line, const char *playfile)
 		rc = runPluginCommand(mt, 0, cf->fileName, 0, 0, 0, 0);
 	return rc;
 }
+
+/*********************************************************************
+native irc. Code taken from https://dl.suckless.org/tools/sic-1.2.tar.gz
+under the MIT license.
+*********************************************************************/
+
+static char irc_in[4096];
+static char irc_out[4096];
+
+static void ircSend(char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(irc_out, sizeof irc_out, fmt, ap);
+	va_end(ap);
+// he doesn't check that fprintf works, that the socket is still there,
+// I guess I won't check either, a broken ssocket will be obvious
+// the next time we try to read.
+// Note that crlf is the standard.
+	fprintf(cw->ircF, "%s\r\n", irc_out);
+}
+
+// skip ahead to c
+static char*ircSkip(char *s, char c)
+{
+	while(*s != c && *s != '\0')
+		s++;
+	if(*s != '\0')
+		*s++ = '\0';
+	return s;
+}
+
+static void ircSafeCopy(char *to, const char *from, int l)
+{
+	memccpy(to, from, '\0', l);
+	to[l-1] = '\0';
+}
+
+static void ircAddLine(char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(irc_out, sizeof irc_out, fmt, ap);
+	va_end(ap);
+	strcat(irc_out, "\n");
+	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
+}
+
+static void ircPrepLine(char *line)
+{
+	char *usr, *par, *txt;
+	usr = cf->fileName;
+	if(!line || !*line)
+		return;
+	if(line[0] == ':') {
+		usr = line + 1;
+		line = ircSkip(usr, ' ');
+		if(line[0] == '\0')
+			return;
+		ircSkip(usr, '!');
+	}
+// lines come in from irc ending in crlf
+	ircSkip(line, '\r');
+	par = ircSkip(line, ' ');
+	txt = ircSkip(par, ':');
+	trimWhite(par);
+	if(stringEqual("PONG", line))
+		return;
+	if(stringEqual("PRIVMSG", line))
+		ircAddLine("<%s> %s", usr, txt);
+	else if(stringEqual("PING", line))
+		ircSend("PONG %s", txt);
+	else {
+		ircAddLine(">< %s (%s): %s", line, par, txt);
+		if(stringEqual("NICK", line) && stringEqual(usr, cw->ircNick))
+			ircSafeCopy(cw->ircNick, txt, sizeof cw->ircNick);
+	}
+}
+
