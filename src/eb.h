@@ -390,17 +390,6 @@ struct lineMap {
 #define LMSIZE sizeof(struct lineMap)
 #define DTSIZE 2 // size of directory type
 
-// Keep the lines in your buffer in a linked list, for easy insert, delete, etc.
-// Not yet implemented.
-struct aline {
-	struct aline *next, *prev;
-	uchar text[8]; // the actual line
-};
-typedef struct aline Aline;
-#define ALSIZE sizeof(struct listHead)
-// If a line is 83 bytes long, including nl, allocate ALSIZE + 83 bytes.
-// Use pointers to link in, then copy the line into text.
-
 /* an edbrowse frame, as when there are many frames in an html page.
  * There could be several frames in an edbrowse window or buffer, chained
  * together in a linked list, but usually there is just one, as when editing
@@ -456,12 +445,8 @@ struct ebWindow {
 	int sno; // session number
 // dot and dollar
 	int dot, dol;
-	Aline *dotline;
-	int lastf_n;
-	Aline *lastf_l;
 // remember dot and dol for the raw text, when in browse mode
 	int r_dot, r_dol;
-	Aline *r_dotloc;
 	int f_dot; // foreward dot, in case we browse again
 	struct ebFrame f0; /* first frame */
 	struct ebFrame *jdb_frame; // if in jdb mode
@@ -514,6 +499,8 @@ int ehsn;
 	bool dnoMode:1;		// directory names only
 	bool undoable:1;	/* undo is possible */
 	bool sqlMode:1;		// accessing a table
+	bool irciMode:1;		// input irc
+	bool ircoMode:1;		// output irc
 	struct DBTABLE *table;	/* if in sqlMode */
 	time_t nextrender;
 };
