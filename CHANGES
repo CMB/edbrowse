@@ -15,6 +15,8 @@ Read files in chunks, saves memory while reading, and could support
 large files, although those are rather impractical in a text editor.
 That's why they invented sed, awk, perl, etc.
 
+Edbrowse as an irc client.
+
 3.8.4
 dno (names only) command.
 

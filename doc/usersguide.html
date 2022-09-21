@@ -136,7 +136,13 @@ p.cen { text-align: center; }
 <LI><A HREF=#imap> Imap Client </A>
 </UL>
 
-<h2> Chapter 8, Database Access </h2>
+<h2> Chapter 8, IRC Client </h2>
+
+<ul>
+<li><a href=#irc>Using IRC</a>
+</ul>
+
+<h2> Chapter 9, Database Access </h2>
 
 <UL>
 <LI><A HREF=#sqlb> Building edbrowse with Database Access </A>
@@ -753,6 +759,12 @@ sm : send mail [account number]
 <br>rea : reply to all
 <br>flow : send mail with format=flowed (toggle)
 <P>
+IRC Client
+<P>
+irc m n domain nickname : set up irc chat using sessions m and n with the specified domain and nickname
+<br>irc m n domain nickname group : set up irc chat and join the specified group
+<br>irc m n domain:port nickname:password group : specify a port and a password
+<p>
 Plugins
 <P>
 pb : play buffer (typically audio)
@@ -5259,7 +5271,61 @@ You can rename a folder via `rename foo bar'.
 This command assumes there is no whitespace in a folder's name.
 
 <hr>
-<h1> Chapter 8, Database Access </h1>
+<h1> Chapter 8, IRC Client </h1>
+
+<h2> <A NAME=irc> Using IRC </A> </h2>
+
+<p>
+Edbrowse can participate in irc chat sessions, on multiple servers in parallel.
+An example is perhaps the best form of documentation.
+Issue this command to join the edbrowse developers on irc.
+
+<P>
+irc 8 9 irc.libera.chat nickname #edbrowse
+
+<p>
+Use your nickname here; whatever nickname you want for your irc session.
+If you have established a password, use nickname:password. This is consistent with ftp and other protocols.
+Use domain:port for a different port; default is 6667.
+The group is optional.
+If you don't specify a group on the irc line,
+You will have to send :j group to the server.
+
+<P>
+Sessions 8 and 9 are created or commandeered for this irc chat.
+Session 9 is readonly; although you can delete lines if you wish.
+IRC comments are appended to this buffer as they arrive.
+If you are at the end of buffer, just hit return to see if anything new has come in.
+Switch to other sessions, do some work, then go back to session 9 and hit return.
+You may want an instance of edbrowse in its own console, to run all your irc sessions.
+
+<P>
+Session 8 is for your input.
+Create some text, then type w to send.
+The text will go away as it is sent to the server.
+Switch to session 9 and you will see your comments, and then any replies from your friends.
+Switch to session 8 to send more text. etc.
+
+<P>
+If you quit either session, the socket is closed, and the other session is no longer in irc mode. It is simply text.
+However, q is not allowed in session 8.
+It is too easy to send some text and then quit by accident, typing w and then q out of habit.
+
+<P>
+This capability uses sockets directly, and does not go through curl.
+Thus cookies are not involved, nor proxies, nor ssl, nor other features of curl.
+
+<P>
+Edbrowse recognizes some shorthand colon commands when sending to the server.
+We already mentioned :j group, which joins a group.
+The file names of sessions 8 and 9 will change when you join a group.
+:l is a lock command, which I don't understand. (This is open source software that I borrowed.)
+:m nickname text, sends a private message to a person on your chat session.
+:s group, switches to a different group.
+It is possible to join multiple groups in the same irc session.
+
+<hr>
+<h1> Chapter 9, Database Access </h1>
 
 <h2> <A NAME=sqlb> Building edbrowse with Database Access </A> </h2>
 
