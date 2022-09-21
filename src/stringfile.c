@@ -3,15 +3,11 @@
 #include "eb.h"
 
 #include <dirent.h>
-#ifdef DOSLIKE
-#include <dos.h>
-#else
 #include <termios.h>
 #include <unistd.h>
 #include <glob.h>
 #include <pwd.h>
 #include <grp.h>
-#endif
 
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
@@ -842,20 +838,10 @@ bool memoryOutToFile(const char *filename, const char *data, int len,
 // portable function to truncate to 0
 void truncate0(const char *filename, int fh)
 {
-#ifndef DOSLIKE
-// unix is easy
 	if (fh < 0)
 		truncate(filename, 0l);
 	else
 		ftruncate(fh, 0l);
-#else
-	int fh2;
-	if (fh >= 0)
-		lseek(fh, 0L, 0);
-	fh2 = open(filename, O_WRONLY | O_TRUNC);
-	if (fh2 >= 0)		// it should be
-		close(fh2);
-#endif
 }
 
 /* shift string to upper, lower, or mixed case */
@@ -1104,11 +1090,7 @@ bool lsattrChars(const char *buf, char *dest)
 	bool rc = true;
 	const char *s;
 	char c, *t;
-#ifdef DOSLIKE
-	static const char ok_chars[] = "lst";
-#else
 	static const char ok_chars[] = "lstikpmy";
-#endif
 	char used[26];
 	memset(used, 0, sizeof(used));
 	t = dest;
@@ -1161,17 +1143,12 @@ char *lsattr(const char *path, const char *flags)
 			break;
 		case 'l':
 			sprintf(p, "%lld", (long long)this_stat.st_size);
-#ifndef DOSLIKE
 p:
-#endif // #ifndef DOSLIKE
 			strcat(buf, p);
 			break;
 		case 's':
 			strcat(buf, conciseSize(this_stat.st_size));
 			break;
-#ifndef DOSLIKE
-/* not sure any of these work under windows */
-
 		case 'i':
 			sprintf(p, "%lu", (unsigned long)this_stat.st_ino);
 			goto p;
@@ -1237,9 +1214,6 @@ p:
 				s[l] = 0;
 			}
 			break;
-
-#endif
-
 		}
 
 		++flags;
@@ -1248,13 +1222,6 @@ p:
 	return buf;
 }
 
-#ifdef DOSLIKE
-void ttySaveSettings(void)
-{
-	// TODO: Anything needed here for WIN32?
-	isInteractive = _isatty(0);
-}
-#else // !#ifdef DOSLIKE
 static struct termios savettybuf;
 void ttySaveSettings(void)
 {
@@ -1288,11 +1255,9 @@ void ttyRaw(int charcount, int timeout, bool isecho)
 		buf.c_lflag |= ECHO;
 	tcsetattr(0, TCSANOW, &buf);
 }
-#endif // #ifdef DOSLIKE y/n
 
 void ttySetEcho(bool enable_echo)
 {
-#ifndef DOSLIKE
 	struct termios termios;
 
 	if (!isInteractive)
@@ -1307,10 +1272,8 @@ void ttySetEcho(bool enable_echo)
 		termios.c_lflag |= ECHONL;
 	}
 	tcsetattr(0, TCSANOW, &termios);
-#endif // #ifndef DOSLIKE
 }
 
-#ifndef DOSLIKE
 /* simulate MSDOS getche() system call */
 int getche(void)
 {
@@ -1332,7 +1295,6 @@ int getch(void)
 	return c;
 }
 
-#endif // #ifndef DOSLIKE
 
 char getLetter(const char *s)
 {
@@ -1545,7 +1507,6 @@ static bool envExpand(const char *line, const char **expanded)
 	udir = 0;
 	strncpy(var1, line + 1, l);
 	var1[l] = 0;
-#ifndef DOSLIKE
 	if (l) {
 		pw = getpwnam(var1);
 		if (!pw) {
@@ -1555,7 +1516,6 @@ static bool envExpand(const char *line, const char **expanded)
 		if (pw->pw_dir && *pw->pw_dir)
 			udir = pw->pw_dir;
 	} else
-#endif
 		udir = home;
 	if (!udir) {
 		s = line;
@@ -1627,9 +1587,7 @@ bool envFile(const char *line, const char **expanded)
 	const char *varline;
 	const char *s;
 	char *t;
-#ifndef DOSLIKE
 	glob_t g;
-#endif // #ifndef DOSLIKE
 	int rc, flags;
 
 /* ` disables this stuff */
@@ -1644,11 +1602,6 @@ bool envFile(const char *line, const char **expanded)
 
 	if (!envExpand(line, &varline))
 		return false;
-
-#ifdef DOSLIKE
-	*expanded = varline;
-	return true;		// TODO: WIN32: Expand like glob...
-#else // !#ifdef DOSLIKE
 
 /* expanded the environment variables, if any, now time to glob */
 	flags = GLOB_NOSORT;
@@ -1692,8 +1645,6 @@ bool envFile(const char *line, const char **expanded)
 	globfree(&g);
 	*expanded = line2;
 	return true;
-#endif // #ifdef DOSLIKE y/n
-
 }
 
 // Like the above, but string is allocated, and errors are printed

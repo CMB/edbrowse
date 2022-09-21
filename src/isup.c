@@ -3331,22 +3331,19 @@ static void ircMessage(Window *wout, const char *channel, const char *msg)
 	ircSend(f, "PRIVMSG %s :%s", channel, msg);
 }
 
-// We set the channel on both sides, but some day it may just be on the input side
+// Set the channel on the input side, but it affects the file name on the output side
 // parameter is input window
 static void ircSetChannel(Window *w, const char *channel)
 {
 	Window *w2;
 	char *p;
-	nzFree(w->ircChannel);
-	w->ircChannel = cloneString(channel);
+	nzFree(w->ircChannel), w->ircChannel = cloneString(channel);
 	nzFree(w->f0.fileName);
 	p = allocMem(strlen(channel) + 6);
 	sprintf(p, "%s send", channel);
 	w->f0.fileName = p;
 	w2 = sessionList[w->ircOther].lw;
 	if(!w2 || !w2->ircoMode) return;
-	nzFree(w2->ircChannel);
-	w2->ircChannel = cloneString(channel);
 	nzFree(w2->f0.fileName);
 	p = allocMem(strlen(channel) + 9);
 	sprintf(p, "%s receive", channel);
@@ -3480,7 +3477,6 @@ teardown:
 		w2->ircoMode = false;
 		w2->ircF = 0;
 		w2->ircOther = 0;
-		nzFree(w2->ircChannel), w2->ircChannel = 0;
 		nzFree(w2->f0.fileName), w2->f0.fileName = 0;
 	}
 }
