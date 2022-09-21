@@ -40,7 +40,7 @@ static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 // Commands for directory mode
 static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
 // Commands for irc input mode
-static const char irci_cmd[] = "aBcdDefghHijJklmnpqrstuvwXz=&<";
+static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BefghHklnpqvwXz=<";
 // Commands that work at line number 0, in an empty file
