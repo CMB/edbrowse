@@ -127,7 +127,7 @@ fehlender Dateiname
 leere Domain in URL
 kann eine URL nicht schreiben
 kann in eine Datenbanktabelle nicht schreiben
-kann eine leere Datei nicht schreiben
+%c im irc Modes nicht verfügbar
 kann %s nicht anlegen
 kann %s nicht schreiben
 Sitzung ist nicht interaktiv
@@ -336,14 +336,14 @@ Betreffzeile zu lang, %d Zeichen
 Fortschrittsanzeige mit Punkten
 .signature ist keine reguläre Datei
 kann Signaturdatei nicht öffnen
-kann Binärdatei %s nicht versenden, vielleicht sollte dies ein Anhang sein?
+kann Email im irc Modus nicht verschicken
 entweder keiner oder alle Anhänge müssen als \"alternative\" gekennzeichnet werden
 zu viele Empfänger, maximal %d
 Kein Adressbuch angegeben, überprüfen Sie ihre Konfigurationsdatei
 Pseudonym %s nicht im Adressbuch gefunden
 keine Empfänger angegeben
 Sitzung %d ist leer, kann nicht angehängt werden
-kann Anhang %s nicht abrufen
+Antworten im irc Modes unmöglich
 Datei %s ist keine reguläre Datei und kann nicht angehängt werden
 Datei %s ist leer und kann nicht angehängt werden
 die auf %d folgende Zeile wurde entfernt\n
@@ -695,9 +695,9 @@ Sitzung - ist außerhalb des Bereichs, %d Sitzungen
 0
 0
 0
-0
-0
-0
+Audiowiedergabe im irc Modes unmöglich
+Umbrechen von Zeilen im irc Modes nicht möglich
+kann den Namen irc nicht ändern
 0
 0
 0

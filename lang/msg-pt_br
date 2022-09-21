@@ -127,7 +127,7 @@ nome do arquivo faltando
 domínio vazio na URL
 impossível adicionar numa URL
 impossível escrever numa tabela do banco de dados
-impossível escrever um arquivo vazio
+%c não disponível em modo irc
 impossível criar %s
 impossível escrever em %s
 sessão não interativa
@@ -336,14 +336,14 @@ assunto comprido demais; o limite é de %d caracteres
 progresso em pontos
 .signature não é um arquivo regular
 impossível acessar o arquivo .signature
-não é possível enviar o arquivo binário %s; quem sabe ele devesse ser um anexo ?
+não posso enviar cartas em modo irc
 ou nenhum ou todos os anexos têm de ser declarados como \"alternative\"
 destinatários demais; limite é %d
 sem catálogo de endereço; confira por favor seu arquivo de configuração
 apelido %s não achado no catálogo de endereços
 nenhum destinatário especificado
 sessão %d vazia; impossível anexar
-impossível acessar o anexo %s
+não é possível replicar em modo irc
 o arquivo %s não é regular; impossível anexar
 arquivo %s vazio; impossível anexar
 linha após a %d foi apagada\n
@@ -695,9 +695,9 @@ desabilitada varredura de depuração de html
 habilitada varredura de depuração de html
 0
 0
-0
-0
-0
+impossível reproduzir áudio em modo de irc
+impossível quebrar linhas em modo irc
+impossível trocar o nome de irc
 0
 0
 0

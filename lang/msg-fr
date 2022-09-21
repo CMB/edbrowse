@@ -127,7 +127,7 @@ nom de fichier absent
 nom de domaine vide dans l'url
 impossible d'écrire sur une url
 impossible d'écrire dans une table de base de données
-impossible de sauvegarder un fichier vide
+%c impossible en mode irc
 impossible de créer %s
 ne peut écrire dans %s
 session non interactive
@@ -336,14 +336,14 @@ ligne sujet trop longue, la limite est de %d caractères
 indicateur de progression par points
 .signature n'est pas un fichier régulier
 impossible d'accéder au fichier .signature
-impossible d'envoyer le fichier binaire %s, serait-ce une pièce jointe ?
+impossible d'envoyer du courrier en mode irc
 aucune ou bien toutes les pièces jointes doivent être spécifiées \"alternative\"
 trop de destinataires, la limite est de %d
 Pas de carnet d'adresses défini, contrôlez votre fichier de configuration
 impossible de trouver l'alias %s dans votre carnet d'adresses
 aucun destinataire spécifié
 la session %d est vide, impossible de joindre quelque chose
-impossible d'accéder à la pièce jointe %s
+impossible de répondre en mode irc
 impossible de joindre le fichier %s, ce n'est pas un fichier régulier
 le fichier %s est vide, impossible de le joindre
 la ligne après %d a été effacée\n
@@ -695,9 +695,9 @@ scanner de debug html désactivé
 scanner de debug html activé
 0
 0
-0
-0
-0
+lecture audio impossible en mode irc
+impossible de découper les lignes en mode irc
+impossible de renommer irc
 0
 0
 0

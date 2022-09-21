@@ -127,7 +127,7 @@ manca il nome del file
 dominio vuoto nell'url
 non posso scrivere su un url
 non posso scrivere su una tavola del database
-impossibile scrivere su un file vuoto
+%c non disponibile in modalità irc
 impossibile creare %s
 impossibile scrivere su %s
 la sessione non è interattiva
@@ -336,14 +336,14 @@ la riga del soggetto è troppo lunga, il limite è di %d caratteri
 progress dots
 .signature non è un normale file
 impossibile accedere al file .signature
-non posso inviare mediante mail il file binario %s, magari deve essere un allegato?
+impossibile inviare mail in modalità irc
 nessuno o tutti gli allegati devono essere dichiarati \"alternativamente\"
 troppi recipients, il limite è %d
 Nessuna rubrica specificata, per favore controlla il tuo file di configurazione
 alias %s non trovato nella tua rubrica
 recipients non specificati
 sessione %d vuota, impossibile allegare
-impossibile accedere all'allegato %s
+impossibile rispondere in modalità irc
 %s non è un file normale, impossibile allegare
 il file è vuoto, impossibile allegare
 la riga dopo %d è stata eliminata\n
@@ -695,9 +695,9 @@ debug scanner html disabilitato
 debug scanner html abilitato
 0
 0
-0
-0
-0
+impossibile attivare il playing dell'audio in modalità irc
+impossibile rompere righe in modalità irc
+impossibile cambiare il nome di irc
 0
 0
 0

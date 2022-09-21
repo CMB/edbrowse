@@ -127,7 +127,7 @@ brak nazwy pliku
 pusta domena w adresie URL
 nie można zapisać pod adresem URL
 nie można zapisać do tabeli bazy danych
-nie można zapisać pustego pliku
+%c niedostępne w trybie irc
 nie można utworzyć %s
 nie można zapisać %s
 sesja nie jest interaktywna
@@ -336,14 +336,14 @@ wiersz tematu zbyt długi, limit %d znaków
 wizualizacja postępu za pomocą kropek
 '.signature' nie jest regularnym plikiem
 nie można odczytać pliku '.signature'
-nie można wysłać pliku binarnego %s, być może powinien być załącznikiem?
+nie można wysyłać wiadomości w trybie irc
 albo żaden albo wszystkie załączniki powinny być zadeklarowane jako \"alternative\"
 zbyt wielu odbiorców, limit %d
 Nie podano książki adresowej, sprawdź swój plik konfiguracyjny
 alias %s nie znaleziony w Twojej książce adresowej
 nie podano odbiorców
 sesja %d jest pusta, nie można załączyć
-nie można otworzyć załącznika %s
+nie można odpowiadać w trybie irc
 plik %s nie jest regularnym plikiem, nie można załączyć
 plik %s jest pusty, nie można załączyć
 wiersz następujący po %d został usunięty\n
@@ -695,9 +695,9 @@ sesja - jest poza dozwoloną granicą: %d
 0
 0
 0
-0
-0
-0
+nie można odtworzyć dźwięku w trybie irc
+nie można łamać linii w trybie irc
+nie można zmienić nazwy irc
 0
 0
 0

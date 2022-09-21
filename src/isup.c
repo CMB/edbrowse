@@ -3513,7 +3513,7 @@ bool ircSetup(char *line)
 {
 	int cxin, cxout, fd;
 	Window *win, *wout, *save_cw;
-	char *domain, *nick, *password, *p;
+	char *domain, *nick, *password, *join, *p;
 	int port = 6667;
 	line += 3;
 	if(!*line) goto usage;
@@ -3558,7 +3558,9 @@ bool ircSetup(char *line)
 	domain = line;
 	nick = ircSkip(line, ' ');
 	if(!*nick) goto usage;
-	password = ircSkip(nick, ' ');
+	join = ircSkip(nick, ' ');
+	if(!*join) join = 0;
+	password = ircSkip(nick, ':');
 	if(!*password) password = 0;
 	p = ircSkip(domain, ':');
 	if(*p) {
@@ -3583,11 +3585,15 @@ bool ircSetup(char *line)
 	wout->f0.fileName = cloneString("irc receive");
 
 	// login
-	save_cw = cw, cw = win;
+	save_cw = cw, cw = wout;
 	if(password)
 		ircSend("PASS %s", password);
 	ircSend("NICK %s", nick);
 	ircSend("USER %s localhost %s :%s", nick, domain, nick);
+	if(join) {
+		ircSend("JOIN %s", join);
+			ircSetChannel(join);
+	}
 	fflush(win->ircF);
 	setbuf(win->ircF, NULL);
 	cw = save_cw;

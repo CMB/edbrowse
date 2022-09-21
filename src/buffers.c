@@ -42,7 +42,7 @@ static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
 // Commands for irc input mode
 static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwXz=&<";
 // Commands for irc output mode
-static const char irco_cmd[] = "BefghHklnpqvwXz=<";
+static const char irco_cmd[] = "BdDefghHklnpqvwXz=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHMqruwz=^<";
 // Commands that expect a space afterward
@@ -1503,8 +1503,7 @@ void delText(int start, int end)
 	int i, ln;
 	int *label = NULL;
 
-// browse / sql has no undo command.
-// We shouldn't even be here in irc output mode, but just in case.
+// browse / sql / irc has no undo command.
 	if (cw->browseMode | cw->sqlMode | cw->ircoMode) {
 		for (ln = start; ln <= end; ++ln)
 			nzFree(cw->map[ln].text);
@@ -6366,6 +6365,7 @@ et_go:
 	}
 
 	if(!strncmp(line, "irc", 3) && (isspace(line[3]) || line[3] == 0)) {
+		cmd = 'e';
 		char *p = cloneString(line);
 		rc = ircSetup(p);
 		nzFree(p);
@@ -8420,6 +8420,7 @@ afterdelete:
 			globSub = false;
 		else if (cmd == 'D')
 			printDot();
+		if(cw->ircoMode) cw->undoable = true;
 		return j;
 	}
 
