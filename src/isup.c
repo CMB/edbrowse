@@ -3265,12 +3265,8 @@ static char * ircEat(char *s, int (*p)(int), int r)
 	return s;
 }
 
-static void ircSafeCopy(char *to, const char *from, int l)
-{
-	memccpy(to, from, '\0', l);
-	to[l-1] = '\0';
-}
-
+// This uses addTextToBuffer to place the line, and so,
+// cw has to be set to the receiving window.
 static void ircAddLine(const char *fmt, ...)
 {
 	va_list ap;
@@ -3281,10 +3277,12 @@ static void ircAddLine(const char *fmt, ...)
 	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
 }
 
-static void ircPrepLine(FILE *f, char *line)
+static void ircPrepLine(Window *win, Window *wout, char *line)
 {
+	Window *save_cw;
+	FILE *f = win->ircF;
 	char *usr, *par, *txt;
-	usr = cf->fileName;
+	usr = win->f0.hbase;
 	if(!line || !*line)
 		return;
 	if(line[0] == ':') {
@@ -3299,19 +3297,22 @@ static void ircPrepLine(FILE *f, char *line)
 	par = ircSkip(line, ' ');
 	txt = ircSkip(par, ':');
 	trimWhite(par);
-	if(stringEqual("PONG", line))
-		return;
+	if(stringEqual("PONG", line)) return;
+	if(!wout) return; // should never happen
+// going to call ircAddLine below
+	save_cw = cw, cw = wout;
 	if(stringEqual("PRIVMSG", line))
 		ircAddLine("<%s> %s", usr, txt);
 	else if(stringEqual("PING", line))
 		ircSend(f, "PONG %s", txt);
 	else {
 		ircAddLine(">< %s (%s): %s", line, par, txt);
-		if(stringEqual("NICK", line) && stringEqual(usr, cw->ircNick)) {
-			nzFree(cw->ircNick);
-			cw->ircNick = cloneString(txt);
+		if(stringEqual("NICK", line) && stringEqual(usr, wout->ircNick)) {
+			nzFree(wout->ircNick);
+			wout->ircNick = cloneString(txt);
 		}
 	}
+	cw = save_cw;
 }
 
 static void ircMessage(FILE *f, char *channel, char *msg)
@@ -3419,7 +3420,7 @@ static void ircRead0(Window *w)
 
 // find output window; should always be there
 	 w2 = sessionList[w->ircOther].lw;
-	if(!w2->ircoMode) w2 = 0;
+	if(w2 && !w2->ircoMode) w2 = 0;
 
 // use select to see if data is available
 	fd_set rd;
@@ -3446,12 +3447,7 @@ top:
 			emsg = "irc connection lost";
 			goto teardown;
 		}
-		if(w2) {
-			Window *save_cw = cw;
-			cw = w2;
-			ircPrepLine(f, irc_in);
-			cw = save_cw;
-		}
+		ircPrepLine(w, w2, irc_in);
 // is there more data to get?
 		goto top;
 	}
@@ -3600,6 +3596,8 @@ bool ircSetup(char *line)
 	win->f0.fileName = cloneString("irc send");
 	nzFree(wout->f0.fileName);
 	wout->f0.fileName = cloneString("irc receive");
+	nzFree(win->f0.hbase);
+	win->f0.hbase = cloneString(domain);
 
 	// login
 	if(password)
