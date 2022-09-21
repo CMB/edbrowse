@@ -1072,10 +1072,10 @@ static void freeWindow(Window *w)
 		fnext = f->next;
 		delTimers(f);
 		freeJSContext(f);
-		nzFree(f->dw);
-		nzFree(f->hbase);
-		nzFree(f->fileName);
-		nzFree(f->firstURL);
+		nzFree(f->dw), f->dw = 0;
+		nzFree(f->hbase), f->hbase = 0;
+		nzFree(f->fileName), f->fileName = 0;
+		nzFree(f->firstURL), f->firstURL = 0;
 		if (f != &w->f0)
 			free(f);
 	}
@@ -7607,7 +7607,7 @@ if((cmd == 'e' || cmd == 'b') && cw->ircoMode && postSpace) {
 				setError(MSG_IrcEntire);
 				return false;
 			}
-			ircWrite();
+			if(!ircWrite()) return false;
 			delText(startRange, endRange);
 			cw->changeMode = cw->undoable = false;
 			return true;

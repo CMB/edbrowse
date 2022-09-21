@@ -3307,26 +3307,32 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 		ircSend(f, "PONG %s", txt);
 	else {
 		ircAddLine(">< %s (%s): %s", line, par, txt);
-		if(stringEqual("NICK", line) && stringEqual(usr, wout->ircNick)) {
-			nzFree(wout->ircNick);
-			wout->ircNick = cloneString(txt);
+		if(stringEqual("NICK", line) && stringEqual(usr, win->ircNick)) {
+			nzFree(win->ircNick);
+			win->ircNick = cloneString(txt);
 		}
 	}
 	cw = save_cw;
 }
 
-static void ircMessage(FILE *f, char *channel, char *msg)
+// cw is input window
+static void ircMessage(Window *wout, const char *channel, const char *msg)
 {
+	Window *win = cw;
+	FILE *f = win->ircF;
 	if(!channel) {
 		debugPrint(1, "No channel to send to");
 		return;
 	}
+	cw = wout;
 	ircAddLine("<%s> %s",
-	(cw->ircNick ? cw->ircNick : emptyString), msg);
+	(win->ircNick ? win->ircNick : emptyString), msg);
+	cw = win;
 	ircSend(f, "PRIVMSG %s :%s", channel, msg);
 }
 
 // We set the channel on both sides, but some day it may just be on the input side
+// parameter is input window
 static void ircSetChannel(Window *w, const char *channel)
 {
 	Window *w2;
@@ -3334,27 +3340,29 @@ static void ircSetChannel(Window *w, const char *channel)
 	nzFree(w->ircChannel);
 	w->ircChannel = cloneString(channel);
 	nzFree(w->f0.fileName);
-	p = allocMem(strlen(channel) + 9);
-	sprintf(p, (w->ircoMode ? "%s receive" : "%s send"), channel);
+	p = allocMem(strlen(channel) + 6);
+	sprintf(p, "%s send", channel);
 	w->f0.fileName = p;
 	w2 = sessionList[w->ircOther].lw;
-	if(!w2 || !(w2->irciMode | w2->ircoMode)) return;
+	if(!w2 || !w2->ircoMode) return;
 	nzFree(w2->ircChannel);
 	w2->ircChannel = cloneString(channel);
 	nzFree(w2->f0.fileName);
 	p = allocMem(strlen(channel) + 9);
-	sprintf(p, (w2->ircoMode ? "%s receive" : "%s send"), channel);
+	sprintf(p, "%s receive", channel);
 	w2->f0.fileName = p;
 }
 
-static void ircPrepSend(FILE *f, char *s)
+// win is the same as cw
+static void ircPrepSend(Window *win, Window *wout, char *s)
 {
 	char c, *p;
+	FILE *f = win->ircF;
 	if(s[0] == '\0')
 		return;
 	ircSkip(s, '\n');
 	if(s[0] != ':') {
-		ircMessage(f, cw->ircChannel, s);
+		ircMessage(wout, win->ircChannel, s);
 		return;
 	}
 	c = *++s;
@@ -3364,13 +3372,13 @@ static void ircPrepSend(FILE *f, char *s)
 		case 'j':
 			ircSend(f, "JOIN %s", p);
 // I'm just assuming it works
-				ircSetChannel(cw, p);
+				ircSetChannel(win, p);
 			return;
 		case 'l':
 			s = ircEat(p, isspace, 1);
 			p = ircEat(s, isspace, 0);
 			if(!*s)
-				s = (cw->ircChannel ? cw->ircChannel : emptyString);
+				s = (win->ircChannel ? win->ircChannel : emptyString);
 			if(*p)
 				*p++ = '\0';
 			if(!*p)
@@ -3382,31 +3390,34 @@ static void ircPrepSend(FILE *f, char *s)
 			p = ircEat(s, isspace, 0);
 			if(*p)
 				*p++ = '\0';
-			ircMessage(f, s, p);
+			ircMessage(wout, s, p);
 			return;
 		case 's':
-			ircSetChannel(cw, p);
+			ircSetChannel(win, p);
 			return;
 		}
 	}
 	ircSend(f, "%s", s);
 }
 
-void ircWrite(void)
+bool ircWrite(void)
 {
-	Window *save_cw = cw;
 	Window *nw = sessionList[cw->ircOther].lw;
 	int i;
-	FILE *f = cw->ircF;
 	pst s;
+	if(nw && !nw->ircoMode) nw = 0;
+	if(!nw) { // should never happen
+		setError(MSG_TextRec, cw->ircOther);
+		return false;
+	}
 	fileSize = 0;
 	for(i = 1; i <= cw->dol; ++i) {
 		s = fetchLine(i, 1);
 		fileSize += pstLength(s);
-		cw = nw;
-		ircPrepSend(f, (char*)s);
-		cw = save_cw;
+		ircPrepSend(cw, nw, (char*)s);
+		free(s);
 	}
+	return true;
 }
 
 // on the input side
@@ -3459,6 +3470,7 @@ teardown:
 	w->ircOther = 0;
 	w->irciMode = false;
 	nzFree(w->ircChannel), w->ircChannel = 0;
+	nzFree(w->ircNick), w->ircNick = 0;
 	nzFree(w->f0.fileName), w->f0.fileName = 0;
 	if(w2) {
 		Window *save_cw = cw;
@@ -3468,7 +3480,6 @@ teardown:
 		w2->ircoMode = false;
 		w2->ircF = 0;
 		w2->ircOther = 0;
-		nzFree(w2->ircNick), w2->ircNick = 0;
 		nzFree(w2->ircChannel), w2->ircChannel = 0;
 		nzFree(w2->f0.fileName), w2->f0.fileName = 0;
 	}
@@ -3550,6 +3561,10 @@ bool ircSetup(char *line)
 		setError(MSG_SessionHigh, cxout, MAXSESSION - 1);
 		return false;
 	}
+	if(cxin == cxout) {
+		setError(MSG_IrcCompat, cxout);
+		return false;
+	}
 	win = sessionList[cxin].lw;
 	if(!win) {
 		sideBuffer(cxin, emptyString, 0, 0);
@@ -3590,8 +3605,7 @@ bool ircSetup(char *line)
 	wout->ircoMode = true;
 	win->ircOther = cxout;
 	wout->ircOther = cxin;
-// nickname on the output side, though that may have to change at some point
-	wout->ircNick = cloneString(nick);
+	win->ircNick = cloneString(nick);
 	nzFree(win->f0.fileName);
 	win->f0.fileName = cloneString("irc send");
 	nzFree(wout->f0.fileName);
