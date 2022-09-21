@@ -42,7 +42,7 @@ static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
 // Commands for irc input mode
 static const char irci_cmd[] = "aBcdDefghHijJklmnpqrstuvwXz=&<";
 // Commands for irc output mode
-static const char irco_cmd[] = "BfghHklnpqvwXz=<";
+static const char irco_cmd[] = "BefghHklnpqvwXz=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHMqruwz=^<";
 // Commands that expect a space afterward
@@ -1098,9 +1098,17 @@ static void freeWindow(Window *w)
 		fclose(w->ircF);
 		Window *w2 = sessionList[w->ircOther].lw;
 // w2 should always be there, but just in case
-		if(w2)
-			w2->irciMode = w2->ircoMode = false, w2->ircF = 0;
+		if(w2) {
+			w2->irciMode = w2->ircoMode = false;
+			w2->ircF = 0;
+			w2->ircOther = 0;
+			nzFree(w2->ircNick), w2->ircNick = 0;
+			nzFree(w2->ircChannel), w2->ircChannel = 0;
+			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+		}
 	}
+	nzFree(w->ircNick);
+	nzFree(w->ircChannel);
 	free(w);
 }
 
@@ -6337,6 +6345,11 @@ et_go:
 
 	if (stringEqual(line, "enew")) {
 		Window *w;
+		if(cw->irciMode | cw->ircoMode) {
+			cmd = 'e';
+			setError(MSG_IrcCommand, 'e');
+			return false;
+		}
 		if (!cxQuit(context, 0))
 			return false;
 		undoCompare();
@@ -6350,6 +6363,17 @@ et_go:
 		cs->lw = w;
 		debugPrint(1, "0");
 		return true;
+	}
+
+	if(!strncmp(line, "irc", 3) && (isspace(line[3]) || line[3] == 0)) {
+		char *p = cloneString(line);
+		rc = ircSetup(p);
+		nzFree(p);
+		if(rc && cw->ircoMode) {
+			undoCompare();
+			cw->undoable = cw->changeMode = false;
+		}
+		return rc;
 	}
 
 no_action:
@@ -7296,6 +7320,11 @@ replaceframe:
 		}		/* was there something after m or t */
 	}
 
+if((cmd == 'e' || cmd == 'b') && cw->ircoMode && postSpace) {
+		setError(MSG_IrcCommand, cmd);
+		return false;
+	}
+
 /* -c is the config file */
 	if ((cmd == 'b' || cmd == 'e') && stringEqual(line, "-c"))
 		line = configFile;
@@ -7488,7 +7517,7 @@ replaceframe:
 				setError(MSG_TableRename);
 				return false;
 			}
-			if (cw->ircoMode) {
+			if (cw->irciMode | cw->ircoMode) {
 				setError(MSG_IrcRename);
 				return false;
 			}
@@ -7568,7 +7597,21 @@ replaceframe:
 			return true;
 		}
 
-// special code for writing in irciMode here, not yet implemented
+		if(!first && cw->irciMode) {
+// write the buffer to the irc server
+			if(!startRange) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+			if(startRange != 1 || endRange != cw->dol || globSub) {
+				setError(MSG_IrcEntire);
+				return false;
+			}
+			ircWrite();
+			delText(startRange, endRange);
+			cw->changeMode = cw->undoable = false;
+			return true;
+		}
 
 		if (!first)
 			line = cf->fileName;

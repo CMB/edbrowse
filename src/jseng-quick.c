@@ -3453,7 +3453,7 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 // We can't run this job, because it isn't in a proper frame or window.
 // The error message mjight confuse, so let quick run the job.
 		JS_ExecutePendingJob(jsrt, &job_cx);
-		domSetsTimeout(350, "@@pending", 0, true);
+		domSetsTimeout(650, "@@pending", 0, true);
 	} else {
 		debugPrint(1, "pending jobs queue could not be found, promise jobs and post messages will not run!");
 	}

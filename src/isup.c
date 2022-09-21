@@ -3257,17 +3257,25 @@ static char*ircSkip(char *s, char c)
 	return s;
 }
 
+static char * ircEat(char *s, int (*p)(int), int r)
+{
+// this use to be s, I think it's a bug, I changed it to *s
+	while(*s != '\0' && p(*s) == r)
+		s++;
+	return s;
+}
+
 static void ircSafeCopy(char *to, const char *from, int l)
 {
 	memccpy(to, from, '\0', l);
 	to[l-1] = '\0';
 }
 
-static void ircAddLine(char *fmt, ...)
+static void ircAddLine(const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(irc_out, sizeof irc_out, fmt, ap);
+	vsnprintf(irc_out, sizeof irc_out - 1, fmt, ap);
 	va_end(ap);
 	strcat(irc_out, "\n");
 	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
@@ -3299,8 +3307,276 @@ static void ircPrepLine(char *line)
 		ircSend("PONG %s", txt);
 	else {
 		ircAddLine(">< %s (%s): %s", line, par, txt);
-		if(stringEqual("NICK", line) && stringEqual(usr, cw->ircNick))
-			ircSafeCopy(cw->ircNick, txt, sizeof cw->ircNick);
+		if(stringEqual("NICK", line) && stringEqual(usr, cw->ircNick)) {
+			nzFree(cw->ircNick);
+			cw->ircNick = cloneString(txt);
+		}
 	}
+}
+
+static void ircMessage(char *channel, char *msg)
+{
+	if(!channel) {
+		debugPrint(1, "No channel to send to");
+		return;
+	}
+	ircAddLine("<%s> %s",
+	(cw->ircNick ? cw->ircNick : emptyString), msg);
+	ircSend("PRIVMSG %s :%s", channel, msg);
+}
+
+static void ircPrepSend(char *s)
+{
+	char c, *p;
+	if(s[0] == '\0')
+		return;
+	ircSkip(s, '\n');
+	if(s[0] != ':') {
+		ircMessage(cw->ircChannel, s);
+		return;
+	}
+	c = *++s;
+	if(c != '\0' && isspace(s[1])) {
+		p = s + 2;
+		switch(c) {
+		case 'j':
+			ircSend("JOIN %s", p);
+			if(!cw->ircChannel)
+				cw->ircChannel = cloneString(p);
+			return;
+		case 'l':
+			s = ircEat(p, isspace, 1);
+			p = ircEat(s, isspace, 0);
+			if(!*s)
+				s = (cw->ircChannel ? cw->ircChannel : emptyString);
+			if(*p)
+				*p++ = '\0';
+			if(!*p)
+				p = "sic - 250 LOC are too much!";
+			ircSend("PART %s :%s", s, p);
+			return;
+		case 'm':
+			s = ircEat(p, isspace, 1);
+			p = ircEat(s, isspace, 0);
+			if(*p)
+				*p++ = '\0';
+			ircMessage(s, p);
+			return;
+		case 's':
+			nzFree(cw->ircChannel);
+			cw->ircChannel = cloneString(p);
+			return;
+		}
+	}
+	ircSend("%s", s);
+}
+
+void ircWrite(void)
+{
+	Window *save_cw = cw;
+	Window *nw = sessionList[cw->ircOther].lw;
+	int i;
+	pst s;
+	fileSize = 0;
+	for(i = 1; i <= cw->dol; ++i) {
+		s = fetchLine(i, 1);
+		fileSize += pstLength(s);
+		cw = nw;
+		ircPrepSend((char*)s);
+		cw = save_cw;
+	}
+}
+
+static void ircRead0(Window *w)
+{
+	Window *w2;
+	const char *emsg;
+	int fd = fileno(w->ircF);
+	int rc;
+// use select to see if data is available
+	fd_set rd;
+	struct timeval tv;
+top:
+	FD_ZERO(&rd);
+	FD_SET(fd, &rd);
+	tv.tv_sec = 0; // nonblocking
+	tv.tv_usec = 0;
+	rc = select(fd + 1, &rd, 0, 0, &tv);
+	if(rc < 0) {
+// did somebody hit ^c and precisely the wrong time?
+		if(errno == EINTR)
+			return;
+// some other inexplicable error
+		emsg = "irc select error";
+		goto teardown;
+	}
+	if(rc == 0)
+		return;
+	if(FD_ISSET(fd, &rd)) {
+// this should always happen
+		if(fgets(irc_in, sizeof irc_in, w->ircF) == NULL) {
+			emsg = "irc connection lost";
+			goto teardown;
+		}
+		cw = w;
+		ircPrepLine(irc_in);
+// is there more data to get?
+		goto top;
+	}
+	return;
+
+teardown:
+	debugPrint(1, emsg);
+	cw = w;
+	ircAddLine(emsg);
+	fclose(w->ircF), w->ircF = 0;
+	w->ircOther = 0;
+	w->ircoMode = false;
+	nzFree(w->ircNick), w->ircNick = 0;
+	nzFree(w->ircChannel), w->ircChannel = 0;
+	nzFree(w->f0.fileName), w->f0.fileName = 0;
+	if((w2 = sessionList[w->ircOther].lw)) {
+		w2->irciMode = false;
+		w2->ircF = 0;
+		w2->ircOther = 0;
+		nzFree(w2->ircNick), w2->ircNick = 0;
+		nzFree(w2->ircChannel), w2->ircChannel = 0;
+		nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+	}
+}
+
+void ircRead(void)
+{
+	int i;
+	for(i = 1; i < MAXSESSION; ++i) {
+		Window *lw = sessionList[i].lw;
+		if(lw && lw->ircoMode)
+			ircRead0(lw);
+	}
+}
+
+// And now for the socket stuff, which I pretty much copied without understanding.
+
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+static int ircDial(char *host, int port)
+{
+	static struct addrinfo hints;
+	int srv;
+	struct addrinfo *res, *r;
+	char portbuf[12];
+	sprintf(portbuf, "%d", port);
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	if(getaddrinfo(host, portbuf, &hints, &res) != 0) {
+		setError(MSG_IdentifyHost, host);
+		return -1;
+	}
+	for(r = res; r; r = r->ai_next) {
+		if((srv = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) == -1)
+			continue;
+		if(connect(srv, r->ai_addr, r->ai_addrlen) == 0)
+			break;
+		close(srv);
+	}
+	freeaddrinfo(res);
+	if(!r) {
+		setError(MSG_WebConnect, host);
+		return -1;
+	}
+	return srv;
+}
+
+bool ircSetup(char *line)
+{
+	int cxin, cxout, fd;
+	Window *win, *wout, *save_cw;
+	char *domain, *nick, *password, *p;
+	int port = 6667;
+	line += 3;
+	if(!*line) goto usage;
+	spaceCrunch(line, true, false);
+	if(!isdigit(*line)) goto usage;
+	cxin = strtol(line, &line, 10);
+	if(cxin < 0 || *line != ' ') goto usage;
+	++line;
+	if(!isdigit(*line)) goto usage;
+	cxout = strtol(line, &line, 10);
+	if(cxout < 0 || *line != ' ') goto usage;
+	++line;
+	if(!cxin || !cxout) {
+		setError(MSG_Session0);
+		return false;
+	}
+	if(cxin >= MAXSESSION) {
+		setError(MSG_SessionHigh, cxin, MAXSESSION - 1);
+		return false;
+	}
+	if(cxout >= MAXSESSION) {
+		setError(MSG_SessionHigh, cxout, MAXSESSION - 1);
+		return false;
+	}
+	win = sessionList[cxin].lw;
+	if(!win) {
+		sideBuffer(cxin, emptyString, 0, 0);
+		win = sessionList[cxin].lw;
+	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode || win->ircF) {
+		setError(MSG_IrcCompat, cxin);
+		return false;
+	}
+	wout = sessionList[cxout].lw;
+	if(!wout) {
+		sideBuffer(cxout, emptyString, 0, 0);
+		wout = sessionList[cxout].lw;
+	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode || wout->ircF) {
+		setError(MSG_IrcCompat, cxout);
+		return false;
+	}
+	if(!isalpha(*line)) goto usage;
+	domain = line;
+	nick = ircSkip(line, ' ');
+	if(!*nick) goto usage;
+	password = ircSkip(nick, ' ');
+	if(!*password) password = 0;
+	p = ircSkip(domain, ':');
+	if(*p) {
+		port = stringIsNum(p);
+		if(port < 0) {
+			setError(MSG_BadPort);
+			return false;
+		}
+	}
+
+	fd = ircDial(domain, port);
+	if(fd < 0) return false;
+	win->ircF = wout->ircF = fdopen(fd, "r+");
+	win->irciMode = true;
+	wout->ircoMode = true;
+	win->ircOther = cxout;
+	wout->ircOther = cxin;
+	wout->ircNick = cloneString(nick);
+	nzFree(win->f0.fileName);
+	win->f0.fileName = cloneString(domain);
+	nzFree(wout->f0.fileName);
+	wout->f0.fileName = cloneString(domain);
+
+	// login
+	save_cw = cw, cw = win;
+	if(password)
+		ircSend("PASS %s", password);
+	ircSend("NICK %s", nick);
+	ircSend("USER %s localhost %s :%s", nick, domain, nick);
+	fflush(win->ircF);
+	setbuf(win->ircF, NULL);
+	cw = save_cw;
+// And hopefully that worked.
+	return true;
+
+usage:
+	setError(MSG_IrcUsage);
+	return false;
 }
 

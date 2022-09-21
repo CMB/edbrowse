@@ -3458,6 +3458,7 @@ void runTimer(void)
 		my_ExecutePendingJobs();
 		my_ExecutePendingMessages();
 		my_ExecutePendingMessagePorts();
+		ircRead();
 // promise jobs not throttled by timerspeed
 		int n = jt->jump_sec * 1000 + jt->jump_ms;
 		jt->sec = now_sec + n / 1000;

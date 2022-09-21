@@ -798,4 +798,7 @@ enum {
 	MSG_AudioIrc,
 	MSG_BreakIrc,
 	MSG_IrcRename,
+	MSG_IrcEntire,
+	MSG_IrcUsage,
+	MSG_IrcCompat,
 };
