@@ -3325,6 +3325,26 @@ static void ircMessage(char *channel, char *msg)
 	ircSend("PRIVMSG %s :%s", channel, msg);
 }
 
+static void ircSetChannel(const char *channel)
+{
+	Window *w2;
+	char *p;
+	nzFree(cw->ircChannel);
+	cw->ircChannel = cloneString(channel);
+	nzFree(cw->f0.fileName);
+	p = allocMem(strlen(channel) + 9);
+	sprintf(p, "%s receive", channel);
+	cw->f0.fileName = p;
+	w2 = sessionList[cw->ircOther].lw;
+	if(!w2 || !w2->irciMode) return;
+	nzFree(w2->ircChannel);
+	w2->ircChannel = cloneString(channel);
+	nzFree(w2->f0.fileName);
+	p = allocMem(strlen(channel) + 6);
+	sprintf(p, "%s send", channel);
+	w2->f0.fileName = p;
+}
+
 static void ircPrepSend(char *s)
 {
 	char c, *p;
@@ -3341,8 +3361,8 @@ static void ircPrepSend(char *s)
 		switch(c) {
 		case 'j':
 			ircSend("JOIN %s", p);
-			if(!cw->ircChannel)
-				cw->ircChannel = cloneString(p);
+// I'm just assuming it works
+				ircSetChannel(p);
 			return;
 		case 'l':
 			s = ircEat(p, isspace, 1);
@@ -3363,8 +3383,7 @@ static void ircPrepSend(char *s)
 			ircMessage(s, p);
 			return;
 		case 's':
-			nzFree(cw->ircChannel);
-			cw->ircChannel = cloneString(p);
+			ircSetChannel(p);
 			return;
 		}
 	}
@@ -3559,9 +3578,9 @@ bool ircSetup(char *line)
 	wout->ircOther = cxin;
 	wout->ircNick = cloneString(nick);
 	nzFree(win->f0.fileName);
-	win->f0.fileName = cloneString(domain);
+	win->f0.fileName = cloneString("irc send");
 	nzFree(wout->f0.fileName);
-	wout->f0.fileName = cloneString(domain);
+	wout->f0.fileName = cloneString("irc receive");
 
 	// login
 	save_cw = cw, cw = win;
