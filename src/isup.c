@@ -3475,9 +3475,10 @@ teardown:
 		cw = w2;
 		ircAddLine(emsg);
 		cw = save_cw;
-		w2->ircoMode = false;
-		w2->ircOther = 0;
-		nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+		if(--w2->ircCount == 0) {
+			w2->ircoMode = false;
+			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+		}
 	}
 }
 
@@ -3599,8 +3600,8 @@ bool ircSetup(char *line)
 	win->ircF = f = fdopen(fd, "r+");
 	win->irciMode = true;
 	wout->ircoMode = true;
+	wout->ircCount = 1;
 	win->ircOther = cxout;
-	wout->ircOther = cxin;
 	win->ircNick = cloneString(nick);
 	nzFree(win->f0.fileName);
 	win->f0.fileName = cloneString("irc send");
