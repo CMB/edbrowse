@@ -193,6 +193,7 @@ const char *findProxyForURL(const char *url);
 const char *findAgentForURL(const char *url);
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 int runEbFunction(const char *line);
+const char *getInputLineFromScript(void);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
 bool readConfigFile(void);
@@ -283,8 +284,8 @@ void debugPrint(int lev, const char *msg, ...) ;
 void setDebugFile(const char *name); //@
 void nl(void) ;
 int perl2c(char *t) ;
-unsigned pstLength(const pst s) ;
-pst clonePstring(const pst s) ;
+unsigned pstLength(const uchar *s) ;
+pst clonePstring(const uchar *s) ;
 void copyPstring(pst s, const pst t) ;
 int comparePstring(const uchar * s, const uchar * t);
 int fdIntoMemory(int fd, char **data, int *len, bool inparts);

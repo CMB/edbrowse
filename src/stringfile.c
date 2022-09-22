@@ -667,7 +667,7 @@ int perl2c(char *t)
 }
 
 /* The length of a perl string includes its terminating newline */
-unsigned pstLength(const pst s)
+unsigned pstLength(const uchar *s)
 {
 	const uchar *t;
 	if (!s)
@@ -678,12 +678,11 @@ unsigned pstLength(const pst s)
 	return t + 1 - s;
 }
 
-pst clonePstring(const pst s)
+pst clonePstring(const uchar *s)
 {
 	pst t;
 	unsigned len;
-	if (!s)
-		return s;
+	if (!s) return 0;
 	len = pstLength(s);
 	t = (pst) allocMem(len);
 	memcpy(t, s, len);

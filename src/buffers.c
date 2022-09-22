@@ -1402,7 +1402,7 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 
 static bool inputLinesIntoBuffer(void)
 {
-	pst line;
+	const uchar *line;
 	int linecount = 0, cap;
 	struct lineMap *t;
 /* I would use the static variable newpiece to build the new map of lines,
@@ -1414,10 +1414,10 @@ static bool inputLinesIntoBuffer(void)
 	cap = 128;
 	np = t = allocZeroMem(cap * LMSIZE);
 
-	if (linePending)
-		line = linePending;
-	else
-		line = inputLine();
+	if(!inscript) {
+		if (linePending) line = linePending;
+		else line = inputLine();
+	} else line = (const uchar *)getInputLineFromScript();
 
 	while (line[0] != '.' || line[1] != '\n') {
 		if (linecount == cap) {
@@ -1427,7 +1427,8 @@ static bool inputLinesIntoBuffer(void)
 		}
 		t->text = clonePstring(line);
 		++t, ++linecount;
-		line = inputLine();
+		if(!inscript) line = inputLine();
+		else line = (const uchar *)getInputLineFromScript();
 	}
 
 	nzFree(linePending);
@@ -8407,7 +8408,7 @@ redirect:
 	}
 
 	if (cmd == 'a') {
-		if (inscript) {
+		if (inscript && cw->sqlMode) {
 			setError(MSG_InsertFunction);
 			return false;
 		}

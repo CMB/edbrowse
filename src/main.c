@@ -920,8 +920,9 @@ static const char *balance(const char *ip, int direction)
 }
 
 #define MAXNEST 20		// nested blocks
-/* Run an edbrowse function, as defined in the config file. */
-/* This function must be reentrant. */
+// Run an edbrowse function, as defined in the config file.
+// This function must be reentrant, as a script can call another script.
+static const char **endl_ptr;
 int runEbFunction(const char *line)
 {
 	char *linecopy = cloneString(line);
@@ -1143,7 +1144,7 @@ ahead:
 		}
 		*t = 0;
 
-/* Here we go! */
+// Here we go!
 		debugPrint(3, "< %s", new);
 		if (cw->mustrender) {
 			time_t now;
@@ -1152,6 +1153,7 @@ ahead:
 				rerender(-1);
 		}
 		jClearSync();
+		endl_ptr = &endl;
 		ok = edbrowseCommand(new, true);
 		free(new);
 
@@ -1210,6 +1212,18 @@ done:
 soft_fail:
 	rc = 0;
 	goto done;
+}
+
+// so we can append text from within a script, like a here document
+const char *getInputLineFromScript(void)
+{
+	const char *endl = *endl_ptr;
+	const char *ip = endl + 1;
+// the script could run out before . terminates the input
+	if(!*ip) return ".\n";
+	endl = strchr(ip, '\n');
+	*endl_ptr = endl;
+	return ip;
 }
 
 struct DBTABLE *findTableDescriptor(const char *sn)
