@@ -3,9 +3,7 @@
 #include "eb.h"
 
 #include <libgen.h>
-#ifndef DOSLIKE
 #include <sys/select.h>
-#endif
 
 /* If this include file is missing, you need the pcre package,
  * and the pcre-devel package. */
@@ -15,12 +13,6 @@ static bool pcre_utf8_error_stop = false;
 
 #include <readline/readline.h>
 #include <readline/history.h>
-
-// rename() in linux is all inclusive, moving either files or directories.
-// The comparable function in windows is MoveFile.
-#ifdef DOSLIKE
-#define rename(a, b) MoveFile(a, b)
-#endif
 
 /* temporary, set the frame whenever you set the window. */
 /* We're one frame per window for now. */
@@ -401,37 +393,6 @@ void initializeReadline(void)
 	rl_completion_entry_function = edbrowse_completion;
 }
 
-#ifdef DOSLIKE
-/* unix can use the select function on a file descriptor, like stdin
-   this function provides a work around for windows */
-int select_stdin(struct timeval *ptv)
-{
-	int ms_delay = 55;
-	int delay_secs = ptv->tv_sec;
-	int delay_ms = ptv->tv_usec / 1000;
-	int res = _kbhit();
-	while (!res && (delay_secs || delay_ms)) {
-		if (!delay_secs && (delay_ms < ms_delay))
-			ms_delay = delay_ms;	// reduce this last sleep
-		Sleep(ms_delay);
-		if (delay_ms >= ms_delay)
-			delay_ms -= ms_delay;
-		else {
-			if (delay_secs) {
-				delay_ms += 1000;
-				delay_secs--;
-			}
-			if (delay_ms >= ms_delay)
-				delay_ms -= ms_delay;
-			else
-				delay_ms = 0;
-		}
-		res = _kbhit();
-	}
-	return res;
-}
-#endif
-
 static uchar histcontrol;
 void setHistcontrol(void)
 {
@@ -520,9 +481,6 @@ top:
 
 		tv.tv_sec = delay_sec;
 		tv.tv_usec = delay_ms * 1000;
-#ifdef DOSLIKE
-		rc = select_stdin(&tv);
-#else
 
 /*********************************************************************
 This will take some explaining.
@@ -584,7 +542,6 @@ There - 50 lines of comments to explain 2 lines of code.
 		if(inputReadLine) ttyRaw(1, 0, false);
 		rc = select(1, &channels, 0, 0, &tv);
 		if(inputReadLine) ttyRestoreSettings();
-#endif
 
 		if (rc < 0)
 			goto interrupt;
@@ -3369,13 +3326,9 @@ static void eb_variables()
 static char *get_interactive_shell(const char *sh)
 {
 	char *ishell = NULL;
-#ifdef DOSLIKE
-	return cloneString(sh);
-#else
 	if (asprintf(&ishell, "exec %s -i", sh) == -1)
 		i_printfExit(MSG_NoMem);
 	return ishell;
-#endif
 }
 
 static char *ascmd = emptyString; // allocated shell command
@@ -3402,15 +3355,10 @@ static bool shellEscape(const char *line)
 	char *sh, *newline;
 	char *interactive_shell_cmd = NULL;
 
-#ifdef DOSLIKE
-/* cmd.exe is the windows shell */
-	sh = "cmd";
-#else
 /* preferred shell */
 	sh = getenv("SHELL");
 	if (!sh || !*sh)
 		sh = "/bin/sh";
-#endif
 
 	if (!line[0]) {
 /* interactive shell */
@@ -5205,6 +5153,36 @@ static int twoLetter(const char *line, const char **runThis)
 
 	if (stringEqual(line, "qt"))
 		ebClose(0);
+
+	if(!strncmp(line, "sleep", 5) && (line[5] == 0 || line[5] == ' ')) {
+		int pause, rc;
+		time_t start, now;
+		int delay_sec, delay_ms;
+		fd_set channels;
+		struct timeval tv;
+		const char *p = line + 5;
+		while(*p == ' ') ++p;
+		pause = stringIsNum(p);
+		if(pause <= 0) return true;
+// This is a stripped down version of the input loop that runs timers,
+// I hope not too stripped down.
+		time(&start);
+		while (timerWait(&delay_sec, &delay_ms)) {
+			time(&now);
+			if(now + delay_sec >= start + pause) break;
+// timers are pending, use select to pause
+			memset(&channels, 0, sizeof(channels));
+			tv.tv_sec = delay_sec;
+			tv.tv_usec = delay_ms * 1000;
+			rc = select(0, &channels, 0, 0, &tv);
+			if (rc < 0) return true; // interrupt
+			runTimer();
+		}
+		time(&now);
+		pause = now - (start + pause);
+		if(pause > 0) sleep(pause);
+		return true;
+	}
 
 	if(stringEqual(line, "e+")) {
 		for(n = context + 1; n < MAXSESSION; ++n)
