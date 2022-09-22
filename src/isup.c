@@ -3435,6 +3435,9 @@ bool ircWrite(void)
 	for(i = 1; i <= cw->dol; ++i) {
 		s = fetchLine(i, 1);
 		fileSize += pstLength(s);
+//	*** Message to #edbrowse throttled due to flooding
+// Hopefully one second between each line is enough.
+		if(i > 1) sleep(1);
 		ircPrepSend(cw, nw, (char*)s);
 		free(s);
 	}
