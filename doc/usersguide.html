@@ -5289,7 +5289,8 @@ If you have established a password, use nickname:password. This is consistent wi
 Use domain:port for a different port; default is 6667.
 The group is optional.
 If you don't specify a group on the irc line,
-You will have to send :j group to the server.
+You will have to send :j group to the server to join a group.
+Note, these groups are also called channels in the irc world. I may use these terms interchangeably.
 
 <P>
 Sessions 8 and 9 are created or commandeered for this irc chat.
@@ -5297,7 +5298,7 @@ Session 9 is readonly; although you can delete lines if you wish.
 IRC comments are appended to this buffer as they arrive.
 If you are at the end of buffer, just hit return to see if anything new has come in.
 Switch to other sessions, do some work, then go back to session 9 and hit return.
-You may want an instance of edbrowse in its own console, to run all your irc sessions.
+You may want an instance of edbrowse running in its own console, to manage all your irc sessions.
 
 <P>
 Session 8 is for your input.
@@ -5310,7 +5311,7 @@ Switch to session 8 to send more text. etc.
 If you quit either session, the socket is closed, and the other session is no longer in irc mode. It is simply text.
 However, q is not allowed in session 8.
 It is too easy to send some text and then quit by accident, typing w and then q out of habit.
-If you wish to quit session 8, and keep session 9, holding a log of the irc chat, type q8 from any session other than 8.
+If you wish to quit session 8, and keep session 9, retaining a log of the irc chat, type q8 from any session other than 8.
 
 <P>
 This capability uses sockets directly, and does not go through curl.
@@ -5320,10 +5321,42 @@ Thus cookies are not involved, nor proxies, nor ssl, nor other features of curl.
 Edbrowse recognizes some shorthand colon commands when sending to the server.
 We already mentioned :j group, which joins a group.
 The file names of sessions 8 and 9 will change when you join a group.
+
+<P>
 :l is a lock command, which I don't understand. (This is open source software that I borrowed.)
+
+<P>
 :m nickname text, sends a private message to a person on your chat session.
+Others will not see this message.
+
+<P>
 :s group, switches to a different group.
-It is possible to join multiple groups in the same irc session.
+It is possible to join multiple groups through the same irc session, assuming they are on the same irc server.
+Use :s to switch between these groups, so that your messages go out on the correct channels.
+The filename will reflect the active group.
+Type f to remember which group you are sending to.
+
+<P>
+It is possible to multiplex some or all of the output from different irc servers into one window.
+This has the advantage of watching for irc responses in one place.
+Just hit return and see if anyone has commented, from any of your groups.
+However, you have to determine the origin of each comment, and move to the correct send buffer, to respond on the corresponding server.
+Commands like this will multiplex the output in buffer 9.
+
+<P>
+irc 7 9 foo.bar.org nickname group1
+<br>
+irc 8 9 hork.snork.net nickname group2
+
+<P>
+The bflist command will include:
+
+<P>
+7: group1 send
+<br>
+8: group2 send
+<br>
+9: group1 group2 receive
 
 <hr>
 <h1> Chapter 9, Database Access </h1>

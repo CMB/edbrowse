@@ -3337,17 +3337,41 @@ static void ircSetChannel(Window *w, const char *channel)
 {
 	Window *w2;
 	char *p;
+	const char *channel0 = (channel ? channel : "irc");
 	nzFree(w->ircChannel), w->ircChannel = cloneString(channel);
 	nzFree(w->f0.fileName);
-	p = allocMem(strlen(channel) + 6);
-	sprintf(p, "%s send", channel);
+	p = allocMem(strlen(channel0) + 6);
+	sprintf(p, "%s send", channel0);
 	w->f0.fileName = p;
 	w2 = sessionList[w->ircOther].lw;
-	if(!w2 || !w2->ircoMode) return;
-	nzFree(w2->f0.fileName);
-	p = allocMem(strlen(channel) + 9);
-	sprintf(p, "%s receive", channel);
-	w2->f0.fileName = p;
+	if(w2) ircSetFileName(w2);
+}
+
+// parameter is output window
+void ircSetFileName(Window *w)
+{
+	int i, len;
+	char *p;
+	Window *w2;
+	if(!w->ircoMode) return;
+	for(i = 1, len = 0; i < MAXSESSION; ++i) {
+		w2 = sessionList[i].lw;
+		if(!w2 || !w2->irciMode || w2->ircOther != w->sno) continue;
+		if(w2->ircChannel) len += strlen(w2->ircChannel) + 1;
+	}
+	nzFree(w->f0.fileName);
+	if(!len) { w->f0.fileName = cloneString("irc receive"); return; }
+	p = allocMem(len + 8);
+	for(i = 1, *p = 0; i < MAXSESSION; ++i) {
+		w2 = sessionList[i].lw;
+		if(!w2 || !w2->irciMode || w2->ircOther != w->sno) continue;
+		if(w2->ircChannel) {
+			strcat(p, w2->ircChannel);
+			strcat(p, " ");
+		}
+	}
+	strcat(p, "receive");
+	w->f0.fileName = p;
 }
 
 // win is the same as cw
@@ -3574,7 +3598,7 @@ bool ircSetup(char *line)
 	if(!wout) {
 		sideBuffer(cxout, emptyString, 0, 0);
 		wout = sessionList[cxout].lw;
-	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode | wout->ircoMode) {
+	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode) {
 		setError(MSG_IrcCompat, cxout);
 		return false;
 	}
@@ -3600,15 +3624,12 @@ bool ircSetup(char *line)
 	win->ircF = f = fdopen(fd, "r+");
 	win->irciMode = true;
 	wout->ircoMode = true;
-	wout->ircCount = 1;
+	wout->ircCount++;
 	win->ircOther = cxout;
 	win->ircNick = cloneString(nick);
-	nzFree(win->f0.fileName);
-	win->f0.fileName = cloneString("irc send");
-	nzFree(wout->f0.fileName);
-	wout->f0.fileName = cloneString("irc receive");
 	nzFree(win->f0.hbase);
 	win->f0.hbase = cloneString(domain);
+	ircSetChannel(win, 0);
 
 	// login
 	if(password)

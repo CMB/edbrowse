@@ -1099,12 +1099,18 @@ static void freeWindow(Window *w)
 		if(w->ircF) fclose(w->ircF);
 		nzFree(w->ircNick);
 		nzFree(w->ircChannel);
+// fileName was already freed in its frame
 		Window *w2 = sessionList[w->ircOther].lw;
+		w->ircOther = 0;
 // w2 should always be there
-		if(w2 && w2->ircoMode && --w2->ircCount == 0) {
-			w2->ircoMode = false;
-			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
-			nzFree(w2->f0.hbase), w2->f0.hbase = 0;
+		if(w2 && w2->ircoMode) {
+			if(--w2->ircCount == 0) {
+				w2->ircoMode = false;
+				nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+				nzFree(w2->f0.hbase), w2->f0.hbase = 0;
+			} else {
+				ircSetFileName(w2);
+			}
 		}
 	}
 	if(w->ircoMode) {
@@ -7335,7 +7341,7 @@ replaceframe:
 		}		/* was there something after m or t */
 	}
 
-if((cmd == 'e' || cmd == 'b') && cw->ircoMode && postSpace) {
+if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		setError(MSG_IrcCommand, cmd);
 		return false;
 	}
