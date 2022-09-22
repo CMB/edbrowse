@@ -3451,7 +3451,7 @@ top:
 		return;
 	if(FD_ISSET(fd, &rd)) {
 // this should always happen
-		if(fgets(irc_in, sizeof irc_in, w->ircF) == NULL) {
+		if(fgets(irc_in, sizeof irc_in, f) == NULL) {
 			emsg = "irc connection lost";
 			goto teardown;
 		}
@@ -3469,13 +3469,13 @@ teardown:
 	nzFree(w->ircChannel), w->ircChannel = 0;
 	nzFree(w->ircNick), w->ircNick = 0;
 	nzFree(w->f0.fileName), w->f0.fileName = 0;
+	nzFree(w->f0.hbase), w->f0.hbase = 0;
 	if(w2) {
 		Window *save_cw = cw;
 		cw = w2;
 		ircAddLine(emsg);
 		cw = save_cw;
 		w2->ircoMode = false;
-		w2->ircF = 0;
 		w2->ircOther = 0;
 		nzFree(w2->f0.fileName), w2->f0.fileName = 0;
 	}
@@ -3565,7 +3565,7 @@ bool ircSetup(char *line)
 	if(!win) {
 		sideBuffer(cxin, emptyString, 0, 0);
 		win = sessionList[cxin].lw;
-	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode || win->ircF) {
+	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode | win->irciMode | win->ircoMode) {
 		setError(MSG_IrcCompat, cxin);
 		return false;
 	}
@@ -3573,7 +3573,7 @@ bool ircSetup(char *line)
 	if(!wout) {
 		sideBuffer(cxout, emptyString, 0, 0);
 		wout = sessionList[cxout].lw;
-	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode || wout->ircF) {
+	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode | wout->ircoMode) {
 		setError(MSG_IrcCompat, cxout);
 		return false;
 	}
@@ -3596,7 +3596,7 @@ bool ircSetup(char *line)
 
 	fd = ircDial(domain, port);
 	if(fd < 0) return false;
-	win->ircF = wout->ircF = f = fdopen(fd, "r+");
+	win->ircF = f = fdopen(fd, "r+");
 	win->irciMode = true;
 	wout->ircoMode = true;
 	win->ircOther = cxout;

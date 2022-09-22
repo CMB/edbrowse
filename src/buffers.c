@@ -1094,21 +1094,23 @@ static void freeWindow(Window *w)
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
-	if(w->ircF) {
-		fclose(w->ircF);
+	if(w->irciMode | w->ircoMode) {
+		if(w->ircF) fclose(w->ircF);
 		Window *w2 = sessionList[w->ircOther].lw;
 // w2 should always be there, but just in case
 		if(w2) {
 			w2->irciMode = w2->ircoMode = false;
-			w2->ircF = 0;
 			w2->ircOther = 0;
+			if(w2->ircF) fclose(w2->ircF);
+			w2->ircF = 0;
 			nzFree(w2->ircNick), w2->ircNick = 0;
 			nzFree(w2->ircChannel), w2->ircChannel = 0;
 			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+			nzFree(w2->f0.hbase), w2->f0.hbase = 0;
 		}
+		nzFree(w->ircNick);
+		nzFree(w->ircChannel);
 	}
-	nzFree(w->ircNick);
-	nzFree(w->ircChannel);
 	free(w);
 }
 

@@ -502,7 +502,8 @@ int ehsn;
 	bool irciMode:1;		// input irc
 	bool ircoMode:1;		// output irc
 	FILE *ircF;
-	int ircOther;
+	ushort ircOther;
+	ushort ircCount;
 	char *ircNick, *ircChannel;
 	struct DBTABLE *table;	// if in sqlMode
 	time_t nextrender;

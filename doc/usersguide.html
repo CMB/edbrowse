@@ -590,7 +590,7 @@ Files and Sessions
 <P>
 f : print the name of the current file
 <br>f foo : set the file name to foo
-<br>f/ : retain only the lass component of the filename
+<br>f/ : retain only the last component of the filename
 <br>e : print the number of the current session
 <br>e3 : move to session 3
 <br>e+ : move to the next editing session
@@ -609,7 +609,7 @@ f : print the name of the current file
 <br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
-<br>w/ : write to the lass component of the filename
+<br>w/ : write to the last component of the filename
 <br>8,20w7 : write lines 8 through 20 to session 7, overwriting whatever was there before
 <br>'a,'bw7@'c : write this block of text into session 7, at the line with label c
 <br>.w7@0 : write this line at the start of session 7
@@ -5310,6 +5310,7 @@ Switch to session 8 to send more text. etc.
 If you quit either session, the socket is closed, and the other session is no longer in irc mode. It is simply text.
 However, q is not allowed in session 8.
 It is too easy to send some text and then quit by accident, typing w and then q out of habit.
+If you wish to quit session 8, and keep session 9, holding a log of the irc chat, type q8 from any session other than 8.
 
 <P>
 This capability uses sockets directly, and does not go through curl.
