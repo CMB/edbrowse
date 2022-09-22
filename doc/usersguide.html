@@ -5,6 +5,7 @@
 <meta name=keywords content="
 text based, command line, interactive,
 editor, browser, mail client,
+irc client,
 portable, C,
 Javascript,
 secure, ssl,
@@ -5286,7 +5287,11 @@ irc 8 9 irc.libera.chat nickname #edbrowse
 <p>
 Use your nickname here; whatever nickname you want for your irc session.
 If you have established a password, use nickname:password. This is consistent with ftp and other protocols.
+
+<p>
 Use domain:port for a different port; default is 6667.
+
+<P>
 The group is optional.
 If you don't specify a group on the irc line,
 You will have to send :j group to the server to join a group.
@@ -5311,6 +5316,7 @@ Switch to session 8 to send more text. etc.
 If you quit either session, the socket is closed, and the other session is no longer in irc mode. It is simply text.
 However, q is not allowed in session 8.
 It is too easy to send some text and then quit by accident, typing w and then q out of habit.
+I've done it many times.
 If you wish to quit session 8, and keep session 9, retaining a log of the irc chat, type q8 from any session other than 8.
 
 <P>
@@ -5334,7 +5340,7 @@ Others will not see this message.
 It is possible to join multiple groups through the same irc session, assuming they are on the same irc server.
 Use :s to switch between these groups, so that your messages go out on the correct channels.
 The filename will reflect the active group.
-Type f to remember which group you are sending to.
+Type f to see which group you are sending to.
 
 <P>
 It is possible to multiplex some or all of the output from different irc servers into one window.

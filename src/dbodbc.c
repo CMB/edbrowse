@@ -866,7 +866,7 @@ static void retsFromOdbc(void)
 			} else
 				q = rv_data + i;
 		}
-		if ((int)q < 1000 && (int)q > -1000)
+		if ((intptr_t)q < 1000 && (intptr_t)q > -1000)
 			errorPrint("2retsFromOdbc, pointer too close to 0");
 		q1 = q;
 		tbuf[0] = 0;

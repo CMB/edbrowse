@@ -896,7 +896,7 @@ With this understanding, we can, and should, scan for </script
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspace(*seek)) ++seek;
-			   if(dhs) printf("script length %d\n", lt - seek);
+			   if(dhs) printf("script length %d\n", (int)(lt - seek));
 			working_t->doorway = true;
 			working_t->scriptgen = htmlGenerated;
 			if(lt > seek) {
@@ -926,7 +926,7 @@ With this understanding, we can, and should, scan for </script
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspace(*seek)) ++seek;
-			   if(dhs) printf("style length %d\n", lt - seek);
+			   if(dhs) printf("style length %d\n", (int)(lt - seek));
 			if(lt > seek) {
 // pull out the style, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
@@ -961,7 +961,7 @@ With this understanding, we can, and should, scan for </textarea
 			if(lt > seek) {
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
-				   if(dhs) printf("textarea length %d\n", strlen(w));
+				   if(dhs) printf("textarea length %zd\n", strlen(w));
 				makeTag("text", false, 0);
 				working_t->textval = w;
 				makeTag("text", true, 0);

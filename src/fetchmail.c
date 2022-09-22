@@ -2701,7 +2701,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		printf("message: %s\n", w->mid);
 		printf("boundary: %d|%s\n", w->boundlen, w->boundary);
 		printf("filename: %s\n", w->cfn);
-		printf("length %d\n", w->end - w->start);
+		printf("length %d\n", (int)(w->end - w->start));
 		printf("content %d/%d\n", w->ct, w->ce);
 	}
 

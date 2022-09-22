@@ -4402,12 +4402,14 @@ nocolor:
 		j = 0;
 		for(ltag = t->firstchild; ltag; ltag = ltag->sibling)
 			if(ltag->action == TAGACT_LI) ++j;
-	if(j <= 1 && action == TAGACT_UL &&
-	t->parent && t->parent->action == TAGACT_TD &&
+		if(j <= 1 && action == TAGACT_UL &&
+		t->parent && t->parent->action == TAGACT_TD &&
 		tableType(t->parent) == 1) {
-		t->lic = -1;
-		break;
-	}
+			t->lic = -1;
+			break;
+		}
+// falling through is just fine, but sometimes generates a cc warning, so...
+		goto nop;
 
 	case TAGACT_DL:
 	case TAGACT_DT:
