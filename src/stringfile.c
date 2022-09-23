@@ -639,11 +639,7 @@ void setDebugFile(const char *name)
 	debugFileName = cloneString(name);
 	debugFile = fopen(name, "w");
 	if (debugFile) {
-#ifndef _MSC_VER		// port setlinebuf(debugFile);, if required...
 		setlinebuf(debugFile);
-#else
-		;
-#endif // !_MSC_VER
 	} else
 		printf("cannot create %s\n", name);
 }

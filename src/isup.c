@@ -1964,11 +1964,7 @@ We don't even query the cache if we don't have at least one of etag or mod time.
 
 #define CACHECONTROLVERSION 1
 
-#ifdef DOSLIKE
-#define USLEEP(a) Sleep(a / 1000)	// sleep millisecs
-#else
 #define USLEEP(a) usleep(a)	// sleep microsecs
-#endif
 
 static int control_fh = -1;	/* file handle for cacheControl */
 static char *cache_data;
@@ -1998,23 +1994,6 @@ void setupEdbrowseCache(void)
 		close(control_fh);
 		control_fh = -1;
 	}
-#ifdef DOSLIKE
-	if (!cacheDir) {
-		if (!ebUserDir)
-			return;
-		cacheDir = allocMem(strlen(ebUserDir) + 7);
-		sprintf(cacheDir, "%s/cache", ebUserDir);
-	}
-	if (fileTypeByName(cacheDir, 0) != 'd') {
-		if (mkdir(cacheDir, 0700)) {
-/* Don't want to abort here; we might be on a readonly filesystem.
- * Don't have a cache directory and can't creat one; yet we should move on. */
-			free(cacheDir);
-			cacheDir = 0;
-			return;
-		}
-	}
-#else
 	if (!cacheDir) {
 		cacheDir = allocMem(strlen(home) + 10);
 		sprintf(cacheDir, "%s/.ebcache", home);
@@ -2028,7 +2007,6 @@ void setupEdbrowseCache(void)
 			return;
 		}
 	}
-#endif
 
 /* the cache control file, which urls go to which files, and when fetched? */
 	nzFree(cacheControl);
@@ -3069,7 +3047,6 @@ There's no popen on windows, so here is a unix only
 fragment to use popen, which can be more efficient.
 *********************************************************************/
 
-#ifndef DOSLIKE
 	if (m->outtype && !has_o) {
 		FILE *p;
 		bool rc;
@@ -3085,7 +3062,6 @@ fragment to use popen, which can be more efficient.
 			goto fail;
 		goto success;
 	}
-#endif
 
 	if (m->outtype && !has_o) {
 		strcat(cmd, " > ");
@@ -3435,10 +3411,12 @@ bool ircWrite(void)
 	for(i = 1; i <= cw->dol; ++i) {
 		s = fetchLine(i, 1);
 		fileSize += pstLength(s);
+		if(*s != '\n') { // cull empty lines
 //	*** Message to #edbrowse throttled due to flooding
 // Hopefully one second between each line is enough.
-		if(i > 1) sleep(1);
-		ircPrepSend(cw, nw, (char*)s);
+			if(i > 1) sleep(1);
+			ircPrepSend(cw, nw, (char*)s);
+		}
 		free(s);
 	}
 	return true;

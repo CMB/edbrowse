@@ -419,28 +419,11 @@ const char *mailRedirect(const char *to, const char *from,
 static void setupEdbrowseTempDirectory(void)
 {
 	int userid;
-#ifdef DOSLIKE
-	int l;
-	char *a;
-	ebTempDir = getenv("TEMP");
-	if (!ebTempDir) {
-		i_printf(MSG_NoEnvVar, "TEMP");
-		nl();
-		exit(1);
-	}
-// put /edbrowse on the end
-	l = strlen(ebTempDir);
-	a = allocString(l + 10);
-	sprintf(a, "%s/edbrowse", ebTempDir);
-	ebTempDir = a;
-	userid = 0;
-#else
 	ebTempDir = getenv("TMPDIR");
 	if (!ebTempDir) {
 		ebTempDir="/tmp/.edbrowse";
 	}
 	userid = geteuid();
-#endif
 
 // On a multiuser system, mkdir /tmp/.edbrowse at startup,
 // by root, and then chmod 1777
@@ -453,10 +436,8 @@ static void setupEdbrowseTempDirectory(void)
 			ebTempDir = 0;
 			return;
 		}
-#ifndef DOSLIKE
 // yes, we called mkdir with 777 above, but that was cut by umask.
 		chmod(ebTempDir, MODE_rwx);
-#endif
 	}
 // make room for user ID on the end
 	ebUserDir = allocMem(strlen(ebTempDir) + 30);
@@ -492,11 +473,9 @@ int main(int argc, char **argv)
 	bool dofetch = false, domail = false, setDebugOpt = false;
 	static char agent0[64] = "edbrowse/";
 
-#ifndef _MSC_VER		// port setlinebuf(stdout);, if required...
 // In case this is being piped over to a synthesizer, or whatever.
 	if (fileTypeByHandle(fileno(stdout)) != 'f')
 		setlinebuf(stdout);
-#endif // !_MSC_VER
 
 	selectLanguage();
 	setHTTPLanguage(eb_language);
@@ -504,40 +483,12 @@ int main(int argc, char **argv)
 // bring HISTCONTROL down to edbrowse
 	setHistcontrol();
 
-/* Establish the home directory, and standard edbrowse files thereunder. */
+// Establish the home directory, and standard edbrowse files thereunder.
 	home = getenv("HOME");
-#ifdef _MSC_VER
-	if (!home) {
-		home = getenv("APPDATA");
-		if (home) {
-			char *ebdata = (char *)allocMem(ABSPATH);
-			sprintf(ebdata, "%s\\edbrowse", home);
-			if (fileTypeByName(ebdata, 0) != 'd') {
-				FILE *fp;
-				char *cfgfil;
-				if (mkdir(ebdata, 0700)) {
-					i_printfExit(MSG_NotHome);	// TODO: more appropriate exit message...
-				}
-				cfgfil = (char *)allocMem(ABSPATH);
-				sprintf(cfgfil, "%s\\.ebrc", ebdata);
-				fp = fopen(cfgfil, "w");
-				if (fp) {
-					fwrite(ebrc_string, 1,
-					       strlen(ebrc_string), fp);
-					fclose(fp);
-				}
-				i_printfExit(MSG_Personalize, cfgfil);
 
-			}
-			home = ebdata;
-		}
-	}
-#endif // !_MSC_VER
-
-/* Empty is the same as missing. */
+// Empty is the same as missing
 	if (home && !*home)
 		home = 0;
-/* I require this, though I'm not sure what this means for non-Unix OS's */
 	if (!home)
 		i_printfExit(MSG_NotHome);
 	if (fileTypeByName(home, 0) != 'd')

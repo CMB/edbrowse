@@ -2,11 +2,7 @@
 
 #include "eb.h"
 
-#ifdef _MSC_VER
-#include <fcntl.h>
-#else
 #include <signal.h>
-#endif
 #include <time.h>
 
 bool curlActive;
@@ -529,9 +525,7 @@ time_t parseHeaderDate(const char *date)
 	temptm = localtime(&now);
 	if (temptm == NULL)
 		goto fail;
-#ifndef _MSC_VER
 	utcoffset = temptm->tm_gmtoff;
-#endif
 
 	if (isdigitByte(date[0]) && isdigitByte(date[1]) &&
 	    date[2] == '-' && isalphaByte(date[3])) {
@@ -2381,16 +2375,12 @@ void setHTTPLanguage(const char *lang)
 static int
 my_curl_safeSocket(void *clientp, curl_socket_t socketfd, curlsocktype purpose)
 {
-#ifdef _MSC_VER
-	return 0;
-#else // !_MSC_VER for success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
 	int success = fcntl(socketfd, F_SETFD, FD_CLOEXEC);
 	if (success == -1)
 		success = 1;
 	else
 		success = 0;
 	return success;
-#endif // _MSC_VER y/n
 }
 
 static CURL *http_curl_init(struct i_get *g)
