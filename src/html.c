@@ -3363,7 +3363,7 @@ static struct jsTimer *soonest(void)
 	foreach(t, timerList) {
 		if(!t->pending) {
 // regular timer, not the pending jobs timer
-			if(!gotimers)
+			if(!allowJS || !gotimers)
 				continue;
 // Browsing a new web page in the current session pushes the old one, like ^z
 // in Linux. The prior page suspends, and the timers suspend.
@@ -3385,11 +3385,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	time_t now;
 	int remaining;
 
-// if js is not active then we don't need any timers; even if they are there.
-	if(!allowJS)
-		return false;
-
-	if (cw->mustrender) {
+	if (allowJS && cw->mustrender) {
 		time(&now);
 		remaining = 0;
 		if (now < cw->nextrender)
@@ -3397,7 +3393,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 	}
 
 	if (!(jt = soonest())) {
-		if (!cw->mustrender)
+		if (!allowJS || !cw->mustrender)
 			return false;
 		*delay_sec = remaining;
 		*delay_ms = 0;
@@ -3414,7 +3410,7 @@ bool timerWait(int *delay_sec, int *delay_ms)
 			*delay_ms += 1000, --*delay_sec;
 	}
 
-	if (cw->mustrender && remaining <= *delay_sec) {
+	if (allowJS && cw->mustrender && remaining <= *delay_sec) {
 		*delay_sec = remaining;
 		*delay_ms = 0;
 	}
@@ -3455,9 +3451,11 @@ void runTimer(void)
 		return;
 
 	if(jt->pending) { // pending jobs
-		my_ExecutePendingJobs();
-		my_ExecutePendingMessages();
-		my_ExecutePendingMessagePorts();
+		if(allowJS) {
+			my_ExecutePendingJobs();
+			my_ExecutePendingMessages();
+			my_ExecutePendingMessagePorts();
+		}
 		ircRead();
 // promise jobs not throttled by timerspeed
 		int n = jt->jump_sec * 1000 + jt->jump_ms;
