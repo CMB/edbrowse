@@ -501,6 +501,7 @@ int ehsn;
 	bool sqlMode:1;		// accessing a table
 	bool irciMode:1;		// input irc
 	bool ircoMode:1;		// output irc
+	bool ircChannels; // show channel when displaying messages
 	FILE *ircF;
 	ushort ircOther;
 	ushort ircCount;

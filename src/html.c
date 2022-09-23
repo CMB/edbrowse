@@ -4053,7 +4053,6 @@ li_hide:
 		inv3 = NULL;
 // I tried to remove an empty invisible section,
 // but it's never really empty due to tag markers.
-		stringAndString(&ns, &ns_l, "\r]]\r");
 		return;
 	}
 
@@ -4142,15 +4141,7 @@ nocolorend:
 				inv2 = t;
 				return;
 			}
-			if (!inv3) {
-				inv3 = t;
-// merge adjacent invisible sections together
-				if (ns_l >= 4
-				    && stringEqual(ns + ns_l - 4, "\r]]\r"))
-					ns_l -= 4;
-				else
-					stringAndString(&ns, &ns_l, "\r[[\r");
-			}
+			if (!inv3) inv3 = t;
 		}
 		if (!showHover && v_now == DIS_COLOR && !activeBelow(t)) {
 			inv2 = t;
