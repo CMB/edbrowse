@@ -3243,13 +3243,26 @@ static char * ircEat(char *s, int (*p)(int), int r)
 
 // This uses addTextToBuffer to place the line, and so,
 // cw has to be set to the receiving window.
-static void ircAddLine(const char *fmt, ...)
+static void ircAddLine(const char *channel, bool show, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(irc_out, sizeof irc_out - 1, fmt, ap);
 	va_end(ap);
 	strcat(irc_out, "\n");
+// If leading > I will assume it's a system message,
+// and damn annoying to see the system name before each one of these.
+// If you happen to send out a message that starts with >, well then, false positive.
+	if(channel && show && irc_out[0] != '>') {
+// only if there's room, which there should be!
+		unsigned l1 = strlen(channel), l2 = strlen(irc_out);
+		if(l1 + l2 < sizeof irc_out) {
+// This is quick and dirty, just paste them together.
+// We may do something more nuanced later.
+			strmove(irc_out + l1, irc_out);
+			memcpy(irc_out, channel, l1);
+		}
+	}
 	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
 }
 
@@ -3278,11 +3291,11 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 // going to call ircAddLine below
 	save_cw = cw, cw = wout;
 	if(stringEqual("PRIVMSG", line))
-		ircAddLine("<%s> %s", usr, txt);
+		ircAddLine(par, win->ircChannels, "<%s> %s", usr, txt);
 	else if(stringEqual("PING", line))
 		ircSend(f, "PONG %s", txt);
 	else {
-		ircAddLine(">< %s (%s): %s", line, par, txt);
+		ircAddLine(usr, win->ircChannels, ">< %s (%s): %s", line, par, txt);
 		if(stringEqual("NICK", line) && stringEqual(usr, win->ircNick)) {
 			nzFree(win->ircNick);
 			win->ircNick = cloneString(txt);
@@ -3301,7 +3314,7 @@ static void ircMessage(Window *wout, const char *channel, const char *msg)
 		return;
 	}
 	cw = wout;
-	ircAddLine("<%s> %s",
+	ircAddLine(channel, win->ircChannels, "<%s> %s",
 	(win->ircNick ? win->ircNick : emptyString), msg);
 	cw = win;
 	ircSend(f, "PRIVMSG %s :%s", channel, msg);
@@ -3478,7 +3491,7 @@ teardown:
 	if(w2) {
 		Window *save_cw = cw;
 		cw = w2;
-		ircAddLine(emsg);
+		ircAddLine("internal, ", true, emsg);
 		cw = save_cw;
 		if(--w2->ircCount == 0) {
 			w2->ircoMode = false;
@@ -3539,6 +3552,7 @@ bool ircSetup(char *line)
 	char *domain, *nick, *password, *join, *p;
 	int port = 6667;
 	FILE *f;
+	int l;
 
 	line += 3;
 	if(!*line) goto usage;
@@ -3599,6 +3613,11 @@ bool ircSetup(char *line)
 			return false;
 		}
 	}
+
+	win->ircChannels = false;
+	l = strlen(domain);
+	if(domain[l-1] == '+')
+		domain[--l] = 0, win->ircChannels = true;
 
 	fd = ircDial(domain, port);
 	if(fd < 0) return false;
