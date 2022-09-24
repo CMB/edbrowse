@@ -6,10 +6,6 @@
 
 #include "eb.h"
 
-#ifdef _MSC_VER
-#include "vsprtf.h"
-#endif
-
 #define MHLINE 512		// length of a mail header line
 // headers and other information about an email
 struct MHINFO {

@@ -90,7 +90,7 @@ void unpercentURL(char *url)
 			u += 2;
 		}
 		if (!c)
-			c = ' ';	/* should never happen */
+			c = ' ';	// should never happen
 		*w++ = c;
 		if (strchr("?#\1", c))
 			break;
@@ -105,7 +105,7 @@ void unpercentURL(char *url)
 	strmove(w, u);
 }
 
-/* Unpercent an entire string. */
+// Unpercent an entire string
 void unpercentString(char *s)
 {
 	char c, *u, *w;
@@ -3292,8 +3292,10 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 	save_cw = cw, cw = wout;
 	if(stringEqual("PRIVMSG", line))
 		ircAddLine(par, win->ircChannels, "<%s> %s", usr, txt);
-	else if(stringEqual("PING", line))
+	else if(stringEqual("PING", line)) {
 		ircSend(f, "PONG %s", txt);
+		debugPrint(4, "PONG %s", txt);
+	}
 	else {
 		ircAddLine(usr, win->ircChannels, ">< %s (%s): %s", line, par, txt);
 		if(stringEqual("NICK", line) && stringEqual(usr, win->ircNick)) {
@@ -3462,7 +3464,7 @@ top:
 		if(errno == EINTR)
 			return;
 // some other inexplicable error
-		emsg = "irc select error";
+		emsg = " irc select error";
 		goto teardown;
 	}
 	if(rc == 0)
@@ -3470,7 +3472,7 @@ top:
 	if(FD_ISSET(fd, &rd)) {
 // this should always happen
 		if(fgets(irc_in, sizeof irc_in, f) == NULL) {
-			emsg = "irc connection lost";
+			emsg = " irc connection lost";
 			goto teardown;
 		}
 		ircPrepLine(w, w2, irc_in);
@@ -3480,24 +3482,24 @@ top:
 	return;
 
 teardown:
-	debugPrint(1, emsg);
+	debugPrint(1, "%s%s", (w->ircChannel ? w->ircChannel : "?"), emsg);
 	fclose(f), w->ircF = 0;
 	w->ircOther = 0;
 	w->irciMode = false;
-	nzFree(w->ircChannel), w->ircChannel = 0;
 	nzFree(w->ircNick), w->ircNick = 0;
 	nzFree(w->f0.fileName), w->f0.fileName = 0;
 	nzFree(w->f0.hbase), w->f0.hbase = 0;
 	if(w2) {
 		Window *save_cw = cw;
 		cw = w2;
-		ircAddLine("internal, ", true, emsg);
+		ircAddLine(w->ircChannel, true, emsg);
 		cw = save_cw;
 		if(--w2->ircCount == 0) {
 			w2->ircoMode = false;
 			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
 		}
 	}
+	nzFree(w->ircChannel), w->ircChannel = 0;
 }
 
 void ircRead(void)
@@ -3632,13 +3634,18 @@ bool ircSetup(char *line)
 	ircSetChannel(win, 0);
 
 	// login
-	if(password)
+	if(password) {
 		ircSend(f, "PASS %s", password);
+		debugPrint(4, "PASS %s", password);
+	}
 	ircSend(f, "NICK %s", nick);
+	debugPrint(4, "NICK %s", nick);
 	ircSend(f, "USER %s localhost %s :%s", nick, domain, nick);
+	debugPrint(4, "USER %s localhost %s :%s", nick, domain, nick);
 	if(join) {
 		ircSend(f, "JOIN %s", join);
-			ircSetChannel(win, join);
+		debugPrint(4, "JOIN %s", join);
+		ircSetChannel(win, join);
 	}
 	fflush(f);
 	setbuf(f, NULL);

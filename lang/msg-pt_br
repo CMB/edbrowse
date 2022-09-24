@@ -699,7 +699,7 @@ impossível reproduzir áudio em modo de irc
 impossível quebrar linhas em modo irc
 impossível trocar o nome de irc
 por favor salve o exibidor inteiro em irc
-irc m n domain[:port] nickname[:password] [group]
+irc m n domain[+][:port] nickname[:password] [group]
 sessão %d não é compatível com irc
 0
 0

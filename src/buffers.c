@@ -1260,6 +1260,7 @@ static void addToMap(int nlines, int destl)
 	cw->dol += nlines;
 	if(!cw->ircoMode)
 		cw->dot = destl + nlines;
+	else if(!cw->dot) cw->dot = 1;
 
 	newmap = allocMem((cw->dol + 2) * LMSIZE);
 	if (destl)
