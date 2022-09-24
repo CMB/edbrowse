@@ -3294,7 +3294,7 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 		ircAddLine(par, win->ircChannels, "<%s> %s", usr, txt);
 	else if(stringEqual("PING", line)) {
 		ircSend(f, "PONG %s", txt);
-		debugPrint(4, "PONG %s", txt);
+		debugPrint(4, "PING PONG %s", txt);
 	}
 	else {
 		ircAddLine(usr, win->ircChannels, ">< %s (%s): %s", line, par, txt);

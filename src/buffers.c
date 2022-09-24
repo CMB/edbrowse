@@ -3558,6 +3558,7 @@ regexpCheck(const char *line, bool isleft,
 
 		if (c == '\\') {
 			line += 2;
+			first_character_in_cc = false;
 			if (d == 0) {
 				setError(MSG_LineBackslash);
 				return false;
@@ -3570,9 +3571,9 @@ regexpCheck(const char *line, bool isleft,
 			    && strchr("()|", d)) {
 				if (d == '|')
 					ondeck = false, was_ques = true;
-				if (d == '(')
+				else if (d == '(')
 					++paren, ondeck = false, was_ques = false;
-				if (d == ')')
+				else if (d == ')')
 				if (--paren < 0) {
 					setError(MSG_UnexpectedRight);
 					return false;
@@ -3665,9 +3666,11 @@ regexpCheck(const char *line, bool isleft,
 				if (named_cc) named_cc = false;
 				else if (!first_character_in_cc) cc = complemented_cc = false;
 			}
-			if (c == '^' && !complemented_cc && first_character_in_cc)
-				complemented_cc = true;
-			else first_character_in_cc = false;
+			if (first_character_in_cc) {
+				if (c == '^' && !complemented_cc)
+					complemented_cc = true;
+				else first_character_in_cc = false;
+			}
 			continue;
 		}
 		if (c == '[')
