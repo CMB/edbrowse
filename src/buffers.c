@@ -1360,7 +1360,7 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 
 static bool inputLinesIntoBuffer(void)
 {
-	const uchar *line;
+	uchar *line;
 	int linecount = 0, cap;
 	struct lineMap *t;
 /* I would use the static variable newpiece to build the new map of lines,
@@ -1375,7 +1375,10 @@ static bool inputLinesIntoBuffer(void)
 	if(!inscript) {
 		if (linePending) line = linePending;
 		else line = inputLine();
-	} else line = (const uchar *)getInputLineFromScript();
+	} else {
+		line = (uchar *)getInputLineFromScript();
+		if(!line) goto fail;
+	}
 
 	while (line[0] != '.' || line[1] != '\n') {
 		if (linecount == cap) {
@@ -1383,10 +1386,15 @@ static bool inputLinesIntoBuffer(void)
 			np = reallocMem(np, cap * LMSIZE);
 			t = np + linecount;
 		}
-		t->text = clonePstring(line);
+		if(inscript) {
+			if(!memcmp(line, "*.@sub~$`corner", 15))
+				line = (uchar*)cloneString(".\n");
+		} else line = (uchar*)cloneString((char*)line);
+		t->text = line;
 		++t, ++linecount;
 		if(!inscript) line = inputLine();
-		else line = (const uchar *)getInputLineFromScript();
+		else line = (uchar *)getInputLineFromScript();
+		if(!line) goto fail;
 	}
 
 	nzFree(linePending);
@@ -1405,6 +1413,14 @@ static bool inputLinesIntoBuffer(void)
 	newpiece = np;
 	addToMap(linecount, endRange);
 	return true;
+
+fail:
+	for(t = np; t < np + linecount; ++t)
+		free(t->text);
+	free(np);
+	nzFree(linePending);
+	linePending = 0;
+	return false;
 }
 
 /* create the full pathname for a file that you are viewing in directory mode. */

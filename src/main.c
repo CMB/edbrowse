@@ -870,10 +870,46 @@ static const char *balance(const char *ip, int direction)
 	return ip;
 }
 
+static const char *ip_ptr;
+static const char **endl_ptr;
+static const char **args_ptr;
+static int *argl_ptr;
+
+static char *substituteArgs(void)
+{
+	const char *ip = ip_ptr;
+	const char *endl = *endl_ptr;
+	const char **args = args_ptr;
+	int *argl = argl_ptr;
+		int j, l = endl - ip;
+	const char *s;
+	char *new, *t;
+// compute length of line, then build the line
+	for (s = ip; s < endl; ++s)
+		if (*s == '~' && isdigitByte(s[1]))
+			l += argl[s[1] - '0'];
+	t = new = allocMem(l + 1);
+	for (s = ip; s < endl; ++s) {
+		if (*s == '~' && isdigitByte(s[1])) {
+			j = *++s - '0';
+			if (!args[j]) {
+				setError(MSG_NoArgument, j);
+				nzFree(new);
+				return 0;
+			}
+			strcpy(t, args[j]);
+			t += argl[j];
+			continue;
+		}
+		*t++ = *s;
+	}
+	*t = 0;
+	return new;
+}
+
 #define MAXNEST 20		// nested blocks
 // Run an edbrowse function, as defined in the config file.
 // This function must be reentrant, as a script can call another script.
-static const char **endl_ptr;
 int runEbFunction(const char *line)
 {
 	char *linecopy = cloneString(line);
@@ -883,7 +919,7 @@ int runEbFunction(const char *line)
 	int argl[10];		/* lengths of args */
 	const char *s;
 	char *t, *new;
-	int l, nest;
+	int nest;
 	unsigned j;
 	const char *ip;		// think instruction pointer
 	const char *endl;	// end of line to be processed
@@ -1073,27 +1109,12 @@ ahead:
 		if (!ok && nofail)
 			goto soft_fail;
 
-/* compute length of line, then build the line */
-		l = endl - ip;
-		for (s = ip; s < endl; ++s)
-			if (*s == '~' && isdigitByte(s[1]))
-				l += argl[s[1] - '0'];
-		t = new = allocMem(l + 1);
-		for (s = ip; s < endl; ++s) {
-			if (*s == '~' && isdigitByte(s[1])) {
-				j = *++s - '0';
-				if (!args[j]) {
-					setError(MSG_NoArgument, j);
-					nzFree(new);
-					goto done;
-				}
-				strcpy(t, args[j]);
-				t += argl[j];
-				continue;
-			}
-			*t++ = *s;
-		}
-		*t = 0;
+		ip_ptr = ip;
+		endl_ptr = &endl;
+		args_ptr = args;
+		argl_ptr = argl;
+		new = substituteArgs();
+		if(!new) goto done; // substitution failed
 
 // Here we go!
 		debugPrint(3, "< %s", new);
@@ -1104,7 +1125,6 @@ ahead:
 				rerender(-1);
 		}
 		jClearSync();
-		endl_ptr = &endl;
 		ok = edbrowseCommand(new, true);
 		free(new);
 
@@ -1170,11 +1190,23 @@ const char *getInputLineFromScript(void)
 {
 	const char *endl = *endl_ptr;
 	const char *ip = endl + 1;
+	char *new;
 // the script could run out before . terminates the input
 	if(!*ip) return ".\n";
 	endl = strchr(ip, '\n');
 	*endl_ptr = endl;
-	return ip;
+	ip_ptr = ip;
+	if(ip[0] == '.' && ip[1] == '\n') return ip;
+	new =  substituteArgs();
+	if(!new) return 0; // error
+// corner case, becomes . after substitution
+	if(new[0] == '.' && new[1] == 0) {
+		free(new);
+		return "*.@sub~$`corner";
+	}
+// switch from c string to perl string
+	new[strlen(new)] = '\n';
+	return new;
 }
 
 struct DBTABLE *findTableDescriptor(const char *sn)
