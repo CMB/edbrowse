@@ -2536,7 +2536,7 @@ bool getUserPass(const char *url, char *creds, bool find_proxy)
 				if (memcmp(a->directory, dir, d1len))
 					continue;
 				found = a;
-			} else	/* not proxy */
+			} else	// not proxy
 				found = a;
 		}
 	}
@@ -2601,7 +2601,7 @@ addWebAuthorization(const char *url,
 		dl = dirend - dir;
 	}
 
-/* See if we've done this one before. */
+// See if we've done this one before
 	foreach(a, authlist) {
 		if (a->proxy == proxy &&
 		    a->port == port &&
@@ -3693,11 +3693,14 @@ Only one "thread" is managing buffers at a time. We hope.
 
 #include <signal.h>
 
+static volatile bool ircAlarming;
 static void ircAlarm(int n)
 {
+	ircAlarming = true;
 	ircRead();
 	signal(SIGALRM, ircAlarm);
 	alarm(3);
+	ircAlarming = false;
 }
 
 void ircReadlineControl(void)
@@ -3708,6 +3711,9 @@ void ircReadlineControl(void)
 
 void ircReadlineRelease(void)
 {
+// This code downgrades a dangerous race condition from pretty darn unlikely
+// to nearly impossible - though it it is still possible.
+	while(ircAlarming)   ;
 // order is important here
 	alarm(0);
 	signal(SIGALRM, SIG_DFL);
