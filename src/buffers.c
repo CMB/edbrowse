@@ -2668,7 +2668,7 @@ gotdata:
 	firstPart = (partSize == fileSize);
 
 	if (!looksBinary((uchar *) rbuf, partSize))
-		diagnoseAndConvert(rbuf, &partSize, firstPart, !fromURL);
+		diagnoseAndConvert(&rbuf, &partSize, firstPart, !fromURL);
 	else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);

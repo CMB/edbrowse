@@ -1798,10 +1798,13 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 // Convert text and display messages if appropriate.
 // Size is passed by reference so that the new size is available
 // to the calling routine.
+// rbuf is passed by reference because some of the conversion routines
+// create a new allocated array which must be passed back.
 // This is called by readFile in buffers.c, so has some
 // confusing legacy interactions with the global variable serverData.
-void diagnoseAndConvert (char *rbuf, int *partSize_p, const bool firstPart, const bool showMessage)
+void diagnoseAndConvert (char **rbuf_p, int *partSize_p, const bool firstPart, const bool showMessage)
 {
+	char *rbuf = *rbuf_p;
 	char *tbuf;
 	int i, j;
 	bool crlf_yes = false, crlf_no = false, dosmode = false;
@@ -1847,8 +1850,7 @@ void diagnoseAndConvert (char *rbuf, int *partSize_p, const bool firstPart, cons
 			i_puts(cons_utf8 ? MSG_ConvUtf8 :        MSG_Conv8859);
 		utfLow(rbuf, *partSize_p, &tbuf, &*partSize_p, bom);
 		nzFree(rbuf);
-		rbuf = tbuf;
-		serverData = rbuf;
+		serverData = *rbuf_p = rbuf = tbuf;
 		serverDataLen = fileSize = *partSize_p;
 	} else {
 		int oldSize = *partSize_p;
@@ -1865,9 +1867,8 @@ void diagnoseAndConvert (char *rbuf, int *partSize_p, const bool firstPart, cons
 			iso2utf((uchar *) rbuf, *partSize_p,
 				(uchar **) & tbuf, &*partSize_p);
 			nzFree(rbuf);
-			rbuf = tbuf;
+			serverData = *rbuf_p = rbuf = tbuf;
 			fileSize += (*partSize_p - oldSize);
-			serverData = rbuf;
 			serverDataLen = fileSize;
 		}
 		if (!cons_utf8 && isutf8) {
@@ -1877,9 +1878,8 @@ void diagnoseAndConvert (char *rbuf, int *partSize_p, const bool firstPart, cons
 			utf2iso((uchar *) rbuf, *partSize_p,
 				(uchar **) & tbuf, &*partSize_p);
 			nzFree(rbuf);
-			rbuf = tbuf;
+			serverData = *rbuf_p = rbuf = tbuf;
 			fileSize += (*partSize_p - oldSize);
-			serverData = rbuf;
 			serverDataLen = fileSize;
 		}
 		if (cons_utf8 && isutf8 && firstPart) {
