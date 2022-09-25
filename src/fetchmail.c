@@ -32,6 +32,7 @@ struct MHINFO {
 	bool pgp;
 	bool dispat;
 	uchar error64;
+	bool startAllocated;
 };
 
 static int nattach;		// number of attachments
@@ -54,6 +55,7 @@ static void freeMailInfo(struct MHINFO *w)
 	}
 	nzFree(w->tolist);
 	nzFree(w->cclist);
+	if(w->startAllocated) nzFree(w->start);
 	nzFree(w);
 }
 
@@ -94,11 +96,24 @@ static void writeAttachment(struct MHINFO *w)
 		} else {
 			cxSwitch(cx, false);
 			i_printf(MSG_SessionX, cx);
+			int length = w->end - w-> start;
+			if (!looksBinary((uchar *) w->start, length)) {
+				diagnoseAndConvert(&w->start, &w->startAllocated, &length, true, true);
+				w->end = w->start + length; // in case of realloc
+	} else if (binaryDetect & !cw->binMode) {
+		if(debugLevel >= 1)
+			i_puts(MSG_BinaryData);
+		cw->binMode = true;
+	}
 			if (!addTextToBuffer
-			    ((pst) w->start, w->end - w->start, 0, false))
+			    ((pst) w->start, length, 0, false))
 				i_printf(MSG_AttNoCopy, cx);
-			else if (w->cfn[0])
-				cf->fileName = cloneString(w->cfn);
+			else {
+				if (debugLevel >= 1)
+					printf("%d\n", length);
+				if (w->cfn[0])
+					cf->fileName = cloneString(w->cfn);
+			}
 			cxSwitch(svcx, false);	/* back to where we were */
 		}
 	} else if (!stringEqual(atname, "x")) {
