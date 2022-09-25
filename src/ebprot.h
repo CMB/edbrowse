@@ -86,6 +86,7 @@ char *iso12utf(const char *t1, const char *t2, int *lenp);
 void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, bool inutf8, bool out32, bool outbig);
 char *uni2utf8(unsigned int unichar);
 void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p, int bom);
+void diagnoseAndConvert (char *rbuf, int *partSize_p, const bool firstPart, const bool showMessage);
 char *force_utf8( char *buf, int buflen);
 char *base64Encode(const char *inbuf, int inlen, bool lines);
 uchar base64Bits(char c);

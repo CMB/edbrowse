@@ -2378,7 +2378,6 @@ success:
 }
 
 // Read a file, or url, into the current buffer.
-// Post/get data is passed, via the second parameter, if it's a URL.
 static bool readFile(const char *filename, bool newwin,
 		     int fromframe, const char *fromthis, const char *orig_head)
 {
@@ -2420,7 +2419,8 @@ static bool readFile(const char *filename, bool newwin,
 		goto fromdisk;
 	}
 
-	if (isURL(filename)) {
+	const bool fromURL = isURL(filename);
+	if (fromURL) {
 		const char *newfile;
 		const struct MIMETYPE *mt;
 		uchar sxfirst;
@@ -2667,126 +2667,9 @@ gotdata:
 	if(!partSize) partSize = fileSize;
 	firstPart = (partSize == fileSize);
 
-	if (!looksBinary((uchar *) rbuf, partSize)) {
-		char *tbuf;
-		int i, j;
-		bool crlf_yes = false, crlf_no = false, dosmode = false;
-// convert, only if each \n has \r preceeding.
-		if (iuConvert) {
-			for (i = 0; i < partSize; ++i) {
-				if (rbuf[i] != '\n') continue;
-				if (i && rbuf[i - 1] == '\r') crlf_yes = true;
-				else crlf_no = true;
-			}
-			if (crlf_yes && !crlf_no) dosmode = true;
-		} // iuConvert
-		if (dosmode) {
-			if ((debugLevel >= 2 || (debugLevel == 1
-			&& !isURL(filename)))
-			&& firstPart)
-				i_puts(MSG_ConvUnix);
-			for (i = j = 0; i < partSize; ++i) {
-				char c = rbuf[i];
-				if (c == '\r' && rbuf[i + 1] == '\n')
-					continue;
-				rbuf[j++] = c;
-			}
-			rbuf[j] = 0;
-			fileSize -= (partSize - j);
-			partSize = j;
-			serverDataLen = fileSize;
-		}
-		if (iuConvert) {
-/* Classify this incoming text as ascii or 8859 or utf-x */
-			bool is8859 = false, isutf8 = false;
-			int bom = 0;
-			if(firstPart) bom = byteOrderMark((uchar *) rbuf, (int)fileSize);
-			if (bom) {
-// bom implies not reading by parts, so don't worry about that any more.
-				debugPrint(3, "text type is %s%s",
-					   ((bom & 4) ? "big " : ""),
-					   ((bom & 2) ? "utf32" : "utf16"));
-				if (debugLevel >= 2 || (debugLevel == 1
-							&& !isURL(filename)))
-					i_puts(cons_utf8 ? MSG_ConvUtf8 :
-					       MSG_Conv8859);
-				utfLow(rbuf, partSize, &tbuf, &partSize, bom);
-				nzFree(rbuf);
-				rbuf = tbuf;
-				serverData = rbuf;
-				serverDataLen = fileSize = partSize;
-			} else {
-				int oldSize = partSize;
-				looks_8859_utf8((uchar *) rbuf, partSize,
-						&is8859, &isutf8);
-				if(firstPart)
-				debugPrint(3, "text type is %s",
-					   (isutf8 ? "utf8"
-					    : (is8859 ? "8859" : "ascii")));
-				if (cons_utf8 && is8859) {
-					if ((debugLevel >= 2 || (debugLevel == 1
-					&& !isURL(filename)))
-					&& firstPart)
-						i_puts(MSG_ConvUtf8);
-					iso2utf((uchar *) rbuf, partSize,
-						(uchar **) & tbuf, &partSize);
-					nzFree(rbuf);
-					rbuf = tbuf;
-					fileSize += (partSize - oldSize);
-					serverData = rbuf;
-					serverDataLen = fileSize;
-				}
-				if (!cons_utf8 && isutf8) {
-					if ((debugLevel >= 2 || (debugLevel == 1
-					&& !isURL(filename)))
-					&& firstPart)
-						i_puts(MSG_Conv8859);
-					utf2iso((uchar *) rbuf, partSize,
-						(uchar **) & tbuf, &partSize);
-					nzFree(rbuf);
-					rbuf = tbuf;
-					fileSize += (partSize - oldSize);
-					serverData = rbuf;
-					serverDataLen = fileSize;
-				}
-				if (cons_utf8 && isutf8 && firstPart) {
-// Strip off the leading bom, if any, and no we're not going to put it back.
-					if (fileSize >= 3 &&
-					    !memcmp(rbuf, "\xef\xbb\xbf", 3)) {
-						fileSize -= 3, partSize -= 3;
-						memmove(rbuf, rbuf + 3, partSize);
-						serverDataLen = partSize;
-					}
-				}
-			}
-
-// if reading into an empty buffer, set the mode and print message
-			if (!cw->dol) {
-				if (bom & 2) {
-					cw->utf32Mode = true;
-					debugPrint(3, "setting utf32 mode");
-				}
-				if (bom & 1) {
-					cw->utf16Mode = true;
-					debugPrint(3, "setting utf16 mode");
-				}
-				if (bom & 4)
-					cw->bigMode = true;
-				if (isutf8) {
-					cw->utf8Mode = true;
-					debugPrint(3, "setting utf8 mode");
-				}
-				if (is8859) {
-					cw->iso8859Mode = true;
-					debugPrint(3, "setting 8859 mode");
-				}
-				if (dosmode) {
-					cw->dosMode = true;
-					debugPrint(3, "setting dos mode");
-				}
-			}
-		} // iuConvert
-	} else if (fromframe) {
+	if (!looksBinary((uchar *) rbuf, partSize))
+		diagnoseAndConvert(rbuf, &partSize, firstPart, !fromURL);
+	else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
 		goto badfile;
@@ -2802,8 +2685,7 @@ gotdata:
 	}
 
 intext:
-	rc = addTextToBuffer((const pst)rbuf, partSize, endRange,
-			     !isURL(filename));
+	rc = addTextToBuffer((const pst)rbuf, partSize, endRange, !fromURL);
 	nzFree(rbuf);
 	endRange = cw->dot;
 	if(rc && inparts == 2) goto nextpart;

@@ -1792,6 +1792,134 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 	*outbuflen_p = obuf_l - 2;
 }
 
+// Determine type of file, utf 8 or 16 or 32, or dos mode, then convert to utf8,
+// or perhaps iso8859 for as long as we choose to support that obsolete format.
+// Show messages if appropriate.
+// Convert text and display messages if appropriate.
+// Size is passed by reference so that the new size is available
+// to the calling routine.
+// This is called by readFile in buffers.c, so has some
+// confusing legacy interactions with the global variable serverData.
+void diagnoseAndConvert (char *rbuf, int *partSize_p, const bool firstPart, const bool showMessage)
+{
+	char *tbuf;
+	int i, j;
+	bool crlf_yes = false, crlf_no = false, dosmode = false;
+
+// undos, only if each \n has \r preceeding.
+	if (iuConvert) {
+		for (i = 0; i < *partSize_p; ++i) {
+			if (rbuf[i] != '\n') continue;
+			if (i && rbuf[i - 1] == '\r') crlf_yes = true;
+			else crlf_no = true;
+		}
+		if (crlf_yes && !crlf_no) dosmode = true;
+	} // iuConvert
+
+	if (dosmode) {
+		if ((debugLevel >= 2 || (debugLevel == 1 && showMessage))
+		&& firstPart)
+			i_puts(MSG_ConvUnix);
+		for (i = j = 0; i < *partSize_p; ++i) {
+			char c = rbuf[i];
+			if (c == '\r' && rbuf[i + 1] == '\n')
+				continue;
+			rbuf[j++] = c;
+		}
+		rbuf[j] = 0;
+		fileSize -= (*partSize_p - j);
+		*partSize_p = j;
+		serverDataLen = fileSize;
+	}
+
+	if (!iuConvert) return;
+
+/* Classify this incoming text as ascii or 8859 or utf-x */
+	bool is8859 = false, isutf8 = false;
+	int bom = 0;
+	if(firstPart) bom = byteOrderMark((uchar *) rbuf, (int)fileSize);
+	if (bom) {
+// bom implies not reading by parts, so don't worry about that any more.
+		debugPrint(3, "text type is %s%s",
+			   ((bom & 4) ? "big " : ""),
+			   ((bom & 2) ? "utf32" : "utf16"));
+		if (debugLevel >= 2 || (debugLevel == 1 && showMessage))
+			i_puts(cons_utf8 ? MSG_ConvUtf8 :        MSG_Conv8859);
+		utfLow(rbuf, *partSize_p, &tbuf, &*partSize_p, bom);
+		nzFree(rbuf);
+		rbuf = tbuf;
+		serverData = rbuf;
+		serverDataLen = fileSize = *partSize_p;
+	} else {
+		int oldSize = *partSize_p;
+		looks_8859_utf8((uchar *) rbuf, *partSize_p,
+				&is8859, &isutf8);
+		if(firstPart)
+		debugPrint(3, "text type is %s",
+			   (isutf8 ? "utf8"
+			    : (is8859 ? "8859" : "ascii")));
+		if (cons_utf8 && is8859) {
+			if ((debugLevel >= 2 || (debugLevel == 1 && showMessage))
+			&& firstPart)
+				i_puts(MSG_ConvUtf8);
+			iso2utf((uchar *) rbuf, *partSize_p,
+				(uchar **) & tbuf, &*partSize_p);
+			nzFree(rbuf);
+			rbuf = tbuf;
+			fileSize += (*partSize_p - oldSize);
+			serverData = rbuf;
+			serverDataLen = fileSize;
+		}
+		if (!cons_utf8 && isutf8) {
+			if ((debugLevel >= 2 || (debugLevel == 1 && showMessage))
+			&& firstPart)
+				i_puts(MSG_Conv8859);
+			utf2iso((uchar *) rbuf, *partSize_p,
+				(uchar **) & tbuf, &*partSize_p);
+			nzFree(rbuf);
+			rbuf = tbuf;
+			fileSize += (*partSize_p - oldSize);
+			serverData = rbuf;
+			serverDataLen = fileSize;
+		}
+		if (cons_utf8 && isutf8 && firstPart) {
+// Strip off the leading bom, if any, and no we're not going to put it back.
+			if (fileSize >= 3 &&
+			    !memcmp(rbuf, "\xef\xbb\xbf", 3)) {
+				fileSize -= 3, *partSize_p -= 3;
+				memmove(rbuf, rbuf + 3, *partSize_p);
+				serverDataLen = *partSize_p;
+			}
+		}
+	}
+
+// if reading into an empty buffer, set the mode and print message
+	if (!cw->dol) {
+		if (bom & 2) {
+			cw->utf32Mode = true;
+			debugPrint(3, "setting utf32 mode");
+		}
+		if (bom & 1) {
+			cw->utf16Mode = true;
+			debugPrint(3, "setting utf16 mode");
+		}
+		if (bom & 4)
+			cw->bigMode = true;
+		if (isutf8) {
+			cw->utf8Mode = true;
+			debugPrint(3, "setting utf8 mode");
+		}
+		if (is8859) {
+			cw->iso8859Mode = true;
+			debugPrint(3, "setting 8859 mode");
+		}
+		if (dosmode) {
+			cw->dosMode = true;
+			debugPrint(3, "setting dos mode");
+		}
+	}
+}
+
 // Convert from whatever it is to utf8, for javascript and css.
 // Result parameter is the new string, or null if no conversion.
 // But, if the original string is utf8, I remove the bom.
