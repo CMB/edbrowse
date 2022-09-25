@@ -1802,7 +1802,7 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 // create a new allocated array which must be passed back.
 // This is called by readFile in buffers.c, so has some
 // confusing legacy interactions with the global variable serverData.
-void diagnoseAndConvert (char **rbuf_p, int *partSize_p, const bool firstPart, const bool showMessage)
+void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, const bool firstPart, const bool showMessage)
 {
 	char *rbuf = *rbuf_p;
 	char *tbuf;
@@ -1849,7 +1849,8 @@ void diagnoseAndConvert (char **rbuf_p, int *partSize_p, const bool firstPart, c
 		if (debugLevel >= 2 || (debugLevel == 1 && showMessage))
 			i_puts(cons_utf8 ? MSG_ConvUtf8 :        MSG_Conv8859);
 		utfLow(rbuf, *partSize_p, &tbuf, &*partSize_p, bom);
-		nzFree(rbuf);
+		if(*isAllocated_p) nzFree(rbuf);
+		*isAllocated_p = true;
 		serverData = *rbuf_p = rbuf = tbuf;
 		serverDataLen = fileSize = *partSize_p;
 	} else {
@@ -1866,7 +1867,8 @@ void diagnoseAndConvert (char **rbuf_p, int *partSize_p, const bool firstPart, c
 				i_puts(MSG_ConvUtf8);
 			iso2utf((uchar *) rbuf, *partSize_p,
 				(uchar **) & tbuf, &*partSize_p);
-			nzFree(rbuf);
+			if(*isAllocated_p) nzFree(rbuf);
+			*isAllocated_p = true;
 			serverData = *rbuf_p = rbuf = tbuf;
 			fileSize += (*partSize_p - oldSize);
 			serverDataLen = fileSize;
@@ -1877,7 +1879,8 @@ void diagnoseAndConvert (char **rbuf_p, int *partSize_p, const bool firstPart, c
 				i_puts(MSG_Conv8859);
 			utf2iso((uchar *) rbuf, *partSize_p,
 				(uchar **) & tbuf, &*partSize_p);
-			nzFree(rbuf);
+			if(*isAllocated_p) nzFree(rbuf);
+			*isAllocated_p = true;
 			serverData = *rbuf_p = rbuf = tbuf;
 			fileSize += (*partSize_p - oldSize);
 			serverDataLen = fileSize;

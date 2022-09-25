@@ -506,6 +506,7 @@ int ehsn;
 	ushort ircOther;
 	ushort ircCount;
 	char *ircNick, *ircChannel;
+	time_t ircRespond;
 	struct DBTABLE *table;	// if in sqlMode
 	time_t nextrender;
 };

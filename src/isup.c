@@ -3286,7 +3286,10 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 	par = ircSkip(line, ' ');
 	txt = ircSkip(par, ':');
 	trimWhite(par);
-	if(stringEqual("PONG", line)) return;
+	if(stringEqual("PONG", line)) {
+		debugPrint(4, "pong back");
+		return;
+	}
 	if(!wout) return; // should never happen
 // going to call ircAddLine below
 	save_cw = cw, cw = wout;
@@ -3438,6 +3441,7 @@ bool ircWrite(void)
 }
 
 // on the input side
+static time_t ircNow;
 static void ircRead0(Window *w)
 {
 	Window *w2;
@@ -3505,6 +3509,7 @@ teardown:
 void ircRead(void)
 {
 	int i;
+	time(&ircNow);
 	for(i = 1; i < MAXSESSION; ++i) {
 		Window *lw = sessionList[i].lw;
 		if(lw && lw->irciMode)
@@ -3655,5 +3660,56 @@ bool ircSetup(char *line)
 usage:
 	setError(MSG_IrcUsage);
 	return false;
+}
+
+/*********************************************************************
+irc is based on polling, just another interval timer, like javascript timers.
+This allows us to reuse that machinery.
+Cool, but what if edbrowse is locked up, they send ping, we don't check
+right away, and don't send pong. The connection drops. Oops!
+That can't happen, can it?
+If the user browses a complicated js file, and we are lost in the js
+engine, or busy downloading many css files, it could.
+Well, does it hurt when you do that?
+Then don't do that!
+It's best to have an edbrowse process just for your irc channels.
+But, if you use readline for input, and type one character,
+control passes to readline(), and I can't change that.
+edbrowse stops until you finish typing your line.
+If ping comes in, and you are composing your sonnet, and I don't pong back
+in time, there goes the connection.
+Well, why not put this irc fetch stuff in a background thread?
+Because almost nothing in edbrowse is threadsafe.
+Downloading files yes, I wrote it that way, but not the bufferstuff.
+If you change anything in a buffer, and irc adds something to its output
+buffer at the same time, bad things happen.  BOOM!
+It would take a lot of work to go down this path, but the one I'm on
+is also a bit dangerous.
+Use the unix timer to wake up every 3 seconds and poll irc,
+but only while readline() has control.
+This should get around the threadsafe issues.
+Only one "thread" is managing buffers at a time. We hope.
+*********************************************************************/
+
+#include <signal.h>
+
+static void ircAlarm(int n)
+{
+	ircRead();
+	signal(SIGALRM, ircAlarm);
+	alarm(3);
+}
+
+void ircReadlineControl(void)
+{
+	signal(SIGALRM, ircAlarm);
+	alarm(3);
+}
+
+void ircReadlineRelease(void)
+{
+// order is important here
+	alarm(0);
+	signal(SIGALRM, SIG_DFL);
 }
 

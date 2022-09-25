@@ -593,7 +593,9 @@ There - 50 lines of comments to explain 2 lines of code.
 	}
 
 	if (inputReadLine && isInteractive) {
+		ircReadlineControl();
 		last_rl = readline("");
+		ircReadlineRelease();
 		if (last_rl != NULL && *last_rl &&
 		(!(histcontrol&1) || *last_rl != ' ')) {
 			if(!(histcontrol&2)) {
@@ -2667,9 +2669,10 @@ gotdata:
 	if(!partSize) partSize = fileSize;
 	firstPart = (partSize == fileSize);
 
-	if (!looksBinary((uchar *) rbuf, partSize))
-		diagnoseAndConvert(&rbuf, &partSize, firstPart, !fromURL);
-	else if (fromframe) {
+	if (!looksBinary((uchar *) rbuf, partSize)) {
+		bool isAllocated = true;
+		diagnoseAndConvert(&rbuf, &isAllocated, &partSize, firstPart, !fromURL);
+	} else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
 		goto badfile;
