@@ -3471,10 +3471,16 @@ top:
 		emsg = " irc select error";
 		goto teardown;
 	}
-	if(rc == 0)
+	if(rc == 0) {
+// sic would ping the host if nothing comes in for 2 minutes; we don't do that.
+// They ping us that's good enough.
+// This is where we would check ircNow against w->ircRespond + 120
+// and ping the host.
 		return;
+	}
 	if(FD_ISSET(fd, &rd)) {
-// this should always happen
+// this should always happen.
+		w->ircRespond = ircNow;
 		if(fgets(irc_in, sizeof irc_in, f) == NULL) {
 			emsg = " irc connection lost";
 			goto teardown;
