@@ -113,6 +113,7 @@ static void writeAttachment(struct MHINFO *w)
 					printf("%d\n", length);
 				if (w->cfn[0])
 					cf->fileName = cloneString(w->cfn);
+				cw->changeMode = false;
 			}
 			cxSwitch(svcx, false);	/* back to where we were */
 		}
@@ -2259,10 +2260,13 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 			if (ar - al >= MHLINE)
 				ar = al + MHLINE - 1;
 			strncpy(w->cfn, al, ar - al);
+// filename coulde be encoded
+			char *e = w->cfn + (ar - al);
+			isoDecode(w->cfn, &e);
+			*e = 0;
 // for security reasons, don't allow an absolute path, or even relative path
 // away from the current directory or the download directory.
 // tr / _    this seems to be what other clients do.
-			char *e;
 			for(e = w->cfn; *e; ++e)
 				if(*e == '/')
 					*e = '_';
