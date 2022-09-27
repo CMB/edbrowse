@@ -1,25 +1,27 @@
 /*********************************************************************
-This file contains support routines for internet access, primarily http
-and https. The first batch of functions involves url parsing,
+This file contains support routines for internet access, primarily http.
+· The first batch of functions involves url parsing,
 which seems simple enough, but is actually complicated and tedious.
 All the various url encoding and decoding, and separating the url into parts.
 This is used by any internet fetch, ftp, gopher, you name it.
-After that is cookie support, for http and https.
+· Then comes cookie support, for http and https.
 Most websites require cookies to run properly.
 Set jar = path in your .ebrc for the cookie jar.
-Then there are caching functions for web pages.
+· Then there are caching functions for web pages.
 If a web page is fetched often, or recently, it will be in your cache.
 This is suppose to improve performance.
-If you want it, you should set cachedir and cachesize in your .ebrc.
-Then there are functions for http authentication.
+Set cachedir and cachesize in your .ebrc for location and size of cache.
+Set cachesize = 0 if you don't want a cache.
+· Then there are functions for http authentication.
 This is a login password mechanism that is specified in the http protocol.
 It isn't fields in a form.
 I don't think it is used very often, but sometimes it is,
 and we should support it, at least at a basic level.
-Then support for plugins, programs to run based on
+· Then support for plugins, programs to run based on
 protocol, content-type, or suffix.
 Add a plugin descriptor to your config file for each plugin you wish to support.
 The edbrowse wiki has many examples.
+· Then support for edbrowse as an irc client.
 *********************************************************************/
 
 #include "eb.h"
@@ -119,27 +121,26 @@ void unpercentString(char *s)
 			u += 2;
 		}
 		if (!c)
-			c = ' ';	/* should never happen */
+			c = ' ';	// should never happen
 		*w++ = c;
 	}
 	*w = 0;
 }
 
-/*
- * Function: percentURL
- * Arguments:
- ** start: pointer to start of input string
-  ** end: pointer to end of input string.
- * Return value: A new string with the url encoded.
- * There is an extra byte, room for / at the end.
- * This function copies its input to a dynamically-allocated buffer,
- * while performing the following transformation.  Change backslash to slash,
- * and percent-escape some of the reserved characters as per RFC3986.
- * Some of the chars retain their reserved semantics and should not be changed.
- * This is a friggin guess!
- * All characters in the area between start and end, not including end,
- * are copied or transformed, except the hash, which is removed.
- * This function is used to sanitize user-supplied URLs.  */
+/*********************************************************************
+Function: percentURL
+start and end delimit the input string.
+Return value: A new string with the url encoded.
+There is an extra byte, room for / at the end.
+This function copies its input to a dynamically-allocated buffer,
+while performing the following transformation.  Change backslash to slash,
+and percent-escape some of the reserved characters as per RFC3986.
+Some of the chars retain their reserved semantics and should not be changed.
+This is a friggin guess!
+All characters in the area between start and end, not including end,
+are copied or transformed, except the hash, which is removed.
+This function is used to sanitize user-supplied URLs. 
+*********************************************************************/
 
 /* these punctuations are percentable, anywhere in a url.
  * Google has commas in encoded URLs, and wikipedia has parentheses,
