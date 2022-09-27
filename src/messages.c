@@ -1,14 +1,13 @@
 /* messages.c
  * Error, warning, and info messages in your host language,
  * as determined by the variable $LANG.
- * Messages can be generated in iso-8859-1, but utf8 is recommended.
- */
+ * Messages can be generated in iso-8859-1, but utf8 is recommended. */
 
 #include "eb.h"
 
 #include <locale.h>
 
-/* English by default */
+// English by default
 static const char **messageArray;
 char eb_language[8];
 int eb_lang;
@@ -16,7 +15,9 @@ const char *const supported_languages[] = { 0,
 	"english", "french", "portuguese", "polish",
 	"german", "russian", "italian",
 };
-/* startup .ebrc files in various languages */
+// don't forget allMonths in stringfile.c
+
+// startup .ebrc files in various languages
 const char *ebrc_string;
 static const char *qrg_string;
 bool cons_utf8, iuConvert = true;
@@ -36,22 +37,20 @@ void selectLanguage(void)
 	ebrc_string = ebrc_en;
 	qrg_string = qrg_en;
 
-#ifndef DOSLIKE
-	if (!s)
-		return;
-	if (!*s)
-		return;
+	if (!s || !*s) return;
 
 	if (strcasestr(s, "utf8") || strcasestr(s, "utf-8"))
 		cons_utf8 = true;
 
-/* We roll our own international messages in this file, so you wouldn't think
- * we need setlocale, but pcre needs the locale for expressions like \w,
- * and for ranges like [A-z],
- * and to convert to upper or lower case etc.
- * So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
- * By calling strcoll, the directory scan is in the same order as ls.
- * See dircmp() in stringfile.c */
+/*********************************************************************
+We roll our own international messages in this file, so you wouldn't think
+we need setlocale, but pcre needs the locale for expressions like \w,
+and for ranges like [A-z],
+and to convert to upper or lower case etc.
+So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
+By calling strcoll, the directory scan is in the same order as ls.
+See dircmp() in stringfile.c
+*********************************************************************/
 
 	setlocale(LC_ALL, "");
 
@@ -59,19 +58,6 @@ void selectLanguage(void)
  * place we do that, we need standard day/month abbreviations, not
  * localized ones.  So LC_TIME needs to be C. */
 	setlocale(LC_TIME, "C");
-#else // DOSLIKE
-
-/* I'm going to assume Windows runs utf8 */
-	cons_utf8 = true;
-
-	if (!s)
-		s = setlocale(LC_ALL, "");
-	if (!s)
-		return;
-	if (!*s)
-		return;
-	setlocale(LC_TIME, "C");
-#endif // DOSLIKE y/n
 
 	strncpy(eb_language, s, 7);
 	eb_language[7] = 0;
@@ -81,7 +67,7 @@ void selectLanguage(void)
 		*dot = 0;
 
 	if (!strncmp(eb_language, "en", 2))
-		return;		/* english is already the default */
+		return;		// english is already default
 
 	if (!strncmp(eb_language, "fr", 2)) {
 		eb_lang = 2;
@@ -138,7 +124,7 @@ void selectLanguage(void)
 /* This error is really annoying if it pops up every time you invoke edbrowse.
 	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
 */
-}				/* selectLanguage */
+}
 
 /*********************************************************************
 WARNING: this routine, which is at the heart of the international prints
@@ -170,12 +156,12 @@ const char *i_getString(int msg)
 	if (cons_utf8)
 		return s;
 
-/* We have to convert it. */
+// We have to convert
 	utf2iso((uchar *) s, strlen(s), (uchar **) & t, &t_len);
 	strcpy(utfbuf, t);
 	nzFree(t);
 	return utfbuf;
-}				/* i_getString */
+}
 
 /*********************************************************************
 Internationalize the standard puts and printf.
@@ -187,7 +173,7 @@ The i_ prefix means international.
 void i_puts(int msg)
 {
 	eb_puts(i_getString(msg));
-}				/* i_puts */
+}
 
 static void eb_vprintf(const char *fmt, va_list args);
 
@@ -203,9 +189,9 @@ void i_printf(int msg, ...)
 		vfprintf(debugFile, realmsg, p);
 		va_end(p);
 	}
-}				/* i_printf */
+}
 
-/* Print and exit.  This puts newline on, like puts. */
+// Print and exit.  This puts newline on, like puts.
 void i_printfExit(int msg, ...)
 {
 	const char *realmsg = i_getString(msg);
@@ -221,14 +207,14 @@ void i_printfExit(int msg, ...)
 		va_end(p);
 	}
 	ebClose(99);
-}				/* i_printfExit */
+}
 
-/* i_stringAndMessage: concatenate a message to an existing string. */
+// i_stringAndMessage: concatenate a message to an existing string.
 void i_stringAndMessage(char **s, int *l, int messageNum)
 {
 	const char *messageText = i_getString(messageNum);
 	stringAndString(s, l, messageText);
-}				/* i_stringAndMessage */
+}
 
 /*********************************************************************
 The following error display functions are specific to edbrowse,
@@ -238,10 +224,10 @@ Thus I don't need the i_ prefix.
 
 char errorMsg[1024];
 
-/* Show the error message, not just the question mark, after these commands. */
+// Show the error message, not just the question mark, after these commands.
 static const char showerror_cmd[] = "AbefMqrw^&";
 
-/* Set the error message.  Type h to see the message. */
+// Set the error message.  Type h to see the message.
 void setError(int msg, ...)
 {
 	va_list p;
@@ -261,7 +247,7 @@ void setError(int msg, ...)
 	l = sizeof(errorMsg) - 1;
 	strncpy(errorMsg, a, l);
 	nzFree(a);
-}				/* setError */
+}
 
 void showError(void)
 {
@@ -319,7 +305,7 @@ static bool i_isalphaByte(unsigned char c)
 	if (strchr(letterMore, c))
 		return true;
 	return false;
-}				/* i_isalphaByte */
+}
 
 /* assumes the arg is a letter */
 static unsigned char i_tolower(unsigned char c)
@@ -331,7 +317,7 @@ static unsigned char i_tolower(unsigned char c)
 	if (s)
 		c = lowerMore[s - upperMore];
 	return c;
-}				/* i_tolower */
+}
 
 static unsigned char i_toupper(unsigned char c)
 {
@@ -342,7 +328,7 @@ static unsigned char i_toupper(unsigned char c)
 	if (s)
 		c = upperMore[s - lowerMore];
 	return c;
-}				/* i_toupper */
+}
 
 /* This is a variation on the original routine, found in stringfile.c */
 void i_caseShift(unsigned char *s, char action)
@@ -387,72 +373,21 @@ void i_caseShift(unsigned char *s, char action)
 
 		ws = true, mc = 0;
 	}			/* loop */
-}				/* caseShift */
+}
 
 #endif
 
 void eb_puts(const char *s)
 {
-#ifdef DOSLIKE
-	wchar_t *chars = NULL;
-	DWORD written, mode;
-	HANDLE output_handle;
-	int needed;
-	output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (GetConsoleMode(output_handle, &mode) == 0) {
-		puts(s);
-		return;
-	}
-	needed = MultiByteToWideChar(CP_UTF8, 0, s, -1, NULL, 0);
-	if (needed == 0) {
-		return;
-	}
-	//Add space for the newline
-	chars = (wchar_t *) allocMem(sizeof(wchar_t) * (needed + 2));
-	MultiByteToWideChar(CP_UTF8, 0, s, -1, chars, needed);
-	chars[needed - 1] = L'\r';
-	chars[needed] = L'\n';
-	chars[needed + 1] = L'\0';
-	WriteConsoleW(output_handle, (void *)chars, needed + 1, &written, NULL);
-	free(chars);
-#else
 	puts(s);
-#endif
-
 	if (debugFile)
 		fprintf(debugFile, "%s\n", s);
-}				/* eb_puts */
+}
 
 static void eb_vprintf(const char *fmt, va_list args)
 {
-#ifdef DOSLIKE
-	wchar_t *chars = NULL;
-	DWORD written, mode;
-	HANDLE output_handle;
-	int needed;
-	char *a;		// result of vasprintf
-	output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (GetConsoleMode(output_handle, &mode) == 0) {
-// this is better than doing nothing.
-		vprintf(fmt, args);
-		return;
-	}
-	if (vasprintf(&a, fmt, args) < 0)
-		return;
-	needed = MultiByteToWideChar(CP_UTF8, 0, a, -1, NULL, 0);
-	if (needed == 0) {
-		free(a);
-		return;
-	}
-	chars = (wchar_t *) allocMem(sizeof(wchar_t) * needed);
-	MultiByteToWideChar(CP_UTF8, 0, a, -1, chars, needed);
-	WriteConsoleW(output_handle, (void *)chars, needed - 1, &written, NULL);
-	free(chars);
-	free(a);
-#else
 	vprintf(fmt, args);
-#endif
-}				/* eb_vprintf */
+}
 
 bool helpUtility(void)
 {
