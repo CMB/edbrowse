@@ -2231,6 +2231,7 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 	const char *q, *al, *ar;
 
 	if (w->ct < CT_MULTI) {
+// look for name= or filename=
 		quote = 0;
 		for (q = s + 1; q < t; ++q) {
 			if (isalnumByte(q[-1])) continue;
@@ -2270,6 +2271,7 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 	}
 
 	if (w->ct >= CT_MULTI) {
+// look for boundary=
 		quote = 0;
 		for (q = s + 1; q < t; ++q) {
 			if (isalnumByte(q[-1])) continue;
@@ -2296,7 +2298,7 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 			strncpy(w->boundary, al, ar - al);
 			break;
 		}
-	}			/* multi or alt */
+	}			// multi or alt
 }
 
 static void isoDecode(char *vl, char **vrp)
@@ -2634,9 +2636,10 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		}
 
 		if (memEqualCI(s, "content-disposition:", q - s)) {
-			if (memEqualCI(vl, "attachment", 10))
+			if (memEqualCI(vl, "attachment", 10)) {
 				w->dispat = true;
-//			ctExtras(w, s, t);
+				ctExtras(w, s, t);
+			}
 			continue;
 		}
 
@@ -3046,10 +3049,16 @@ static void formatMail(struct MHINFO *w, bool top)
 	int ct = w->ct;
 	int j, best;
 
-	if (w->doAttach)
-		return;
-	debugPrint(5, "format headers for content %d subject %s", ct,
-		   w->subject);
+// This use to be a test for attachment, but I got text messages
+// from a friend where the text was in an attachment.
+// So now I fold it into the display if it is plain text not encoded.
+	if (w->doAttach) {
+		if(w->ct != CT_TEXT || w->ce > CE_8BIT)
+			return;
+		stringAndString(&fm, &fm_l, mailIsHtml ? "Attachment:<br>\n" : "Attachment:\n");
+	}
+
+	debugPrint(5, "format mail content %d subject %s", ct,    w->subject);
 	stringAndString(&fm, &fm_l, headerShow(w, top));
 
 	if (ct < CT_MULTI) {
