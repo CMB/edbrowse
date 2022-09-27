@@ -33,6 +33,7 @@ eb$truefunction = function() { return true; }
 eb$falsefunction = function() { return false; }
 eb$newLocation = function (s) { print("new location " + s); }
 eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
+eb$playAudio = eb$voidfunction;
 eb$getcook = function() { return "cookies"; }
 eb$setcook = function(value) { print(" new cookie " + value); }
 eb$parent = function() { return this; }
@@ -778,7 +779,7 @@ HTMLMediaElement.prototype.textTracks = [];
 HTMLMediaElement.prototype.controls = false;
 HTMLMediaElement.prototype.controller = null;
 HTMLMediaElement.prototype.volume = 1.0;
-HTMLMediaElement.prototype.play = eb$voidfunction;
+HTMLMediaElement.prototype.play = eb$playAudio;
 HTMLMediaElement.prototype.pause = eb$voidfunction;
 Audio = HTMLAudioElement = function(){}
 HTMLAudioElement.prototype = new HTMLMediaElement;

@@ -2727,6 +2727,34 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	return u;
 }
 
+static JSValue nat_playAudio(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
+{
+	jsInterruptCheck(cx);
+	struct i_get g;
+	char *url = get_property_url(cx, this, false);
+	char *result;
+	bool rc, save_bg = down_bg;
+	memset(&g, 0, sizeof(g));
+	g.thisfile = cf->fileName;
+	g.uriEncoded = true;
+	g.pg_ok = pluginsOn, g.playonly = true;
+// in case you would rather download it and control it yourself
+	g.down_ok = true;
+// If you want to download it, it shouldn't be done in background
+	down_bg = false;
+	g.url = url;
+	debugPrint(3, "audio connect to %s", url);
+	rc = httpConnect(&g);
+	down_bg = save_bg;
+	nzFree(url);
+	result = g.buffer;
+// if result is there, then we didn't play it by plugin, and we didn't download it.
+// The sound is in our hand but what are we suppose to do with it??
+	if(result) debugPrint(3, "don't know what to do with audio result length %d", g.length);
+	nzFree(result);
+		return JS_UNDEFINED;
+}
+
 static JSValue nat_resolveURL(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
 	const char *base = JS_ToCString(cx, argv[0]);
@@ -3586,6 +3614,8 @@ JS_NewCFunction(cx, nat_qs, "qs", 2), 0);
 JS_NewCFunction(cx, nat_qs0, "qs0", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$cssText",
 JS_NewCFunction(cx, nat_cssText, "cssText", 1), 0);
+    JS_DefinePropertyValueStr(cx, g, "eb$playAudio",
+JS_NewCFunction(cx, nat_playAudio, "play_audio", 0), 0);
 
 // native document methods
     JS_DefinePropertyValueStr(cx, d, "hasFocus",
