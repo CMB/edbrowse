@@ -780,7 +780,7 @@ HTMLMediaElement.prototype.controller = null;
 HTMLMediaElement.prototype.volume = 1.0;
 HTMLMediaElement.prototype.play = eb$voidfunction;
 HTMLMediaElement.prototype.pause = eb$voidfunction;
-HTMLAudioElement = function(){}
+Audio = HTMLAudioElement = function(){}
 HTMLAudioElement.prototype = new HTMLMediaElement;
 HTMLAudioElement.prototype.dom$class = "Audio";
 

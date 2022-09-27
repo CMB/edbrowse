@@ -3315,7 +3315,7 @@ static unsigned andLookup(char *entity, char *v)
 	int n = v - entity;
 // left, right, binary search
 	l = -1;
-	r = sizeof(andlist) / sizeof(struct entity);
+	r = sizeof(andlist) / sizeof(struct entity) - 1;
 	while(r - l > 1) {
 		i = (l + r) / 2;
 		d = strncmp(entity, andlist[i].word, n);
