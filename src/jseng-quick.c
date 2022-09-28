@@ -10,13 +10,12 @@ you will need to include the MIT open source license.
 #include "eb.h"
 
 #include <stddef.h>
+#include <sys/utsname.h>
 
 // the makefile should set -I properly, based on  your environment variable
 // QUICKJS_DIR, or using a reasonable default.
 // So this basic include should work.
 #include "quickjs-libc.h"
-
-#define SHARECLASS 1
 
 // to track down memory leaks
 #define NO_LEAK
@@ -3324,7 +3323,7 @@ JSValue mwo; // master window object
 		JS_SetMaxStackSize(jsrt, 2048*1024);
 	mwc = JS_NewContext(jsrt);
 	mwo = JS_GetGlobalObject(mwc);
-#if SHARECLASS
+
 /*********************************************************************
 Why put native functions in the master window, to be shared?
 It's native, how much space can it take up?
@@ -3390,7 +3389,6 @@ JS_NewCFunction(mwc, nat_cssApply, "cssApply", 3), 0);
 JS_NewCFunction(mwc, nat_fetchHTTP, "fetchHTTP", 4), 0);
     JS_DefinePropertyValueStr(mwc, mwo, "jobsPending",
 JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
-#endif
 
 // shared functions and classes
 	jsSourceFile = "shared.js";
@@ -3449,7 +3447,7 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 	JS_FreeValue(mwc, r);
 
 	jsSourceFile = 0;
-	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, SHARECLASS), JS_PROP_ENUMERABLE);
+	JS_DefinePropertyValueStr(mwc, mwo, "share", 1, JS_PROP_ENUMERABLE);
 
 	JS_FreeValue(mwc, mwo);
 
@@ -3512,64 +3510,6 @@ static void createJSContext_0(Frame *f)
 	JS_PROP_ENUMERABLE);
 // link to the master window
 	JS_DefinePropertyValueStr(cx, g, "mw$", JS_GetGlobalObject(mwc), 0);
-
-#if !SHARECLASS
-// bind native functions here
-    JS_DefinePropertyValueStr(cx, g, "natok",
-JS_NewCFunction(cx, nat_ok, "nat_ok", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$puts",
-JS_NewCFunction(cx, nat_puts, "puts", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$wlf",
-JS_NewCFunction(cx, nat_wlf, "wlf", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "btoa",
-JS_NewCFunction(cx, nat_btoa, "btoa", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "atob",
-JS_NewCFunction(cx, nat_atob, "atob", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$voidfunction",
-JS_NewCFunction(cx, nat_void, "void", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$nullfunction",
-JS_NewCFunction(cx, nat_null, "null", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$truefunction",
-JS_NewCFunction(cx, nat_true, "true", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$falsefunction",
-JS_NewCFunction(cx, nat_false, "false", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "db$flags",
-JS_NewCFunction(cx, nat_dbf, "debug_flags", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "logputs",
-JS_NewCFunction(cx, nat_logputs, "logputs", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "prompt",
-JS_NewCFunction(cx, nat_prompt, "prompt", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "confirm",
-JS_NewCFunction(cx, nat_confirm, "confirm", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "scroll",
-JS_NewCFunction(cx, nat_void, "scroll", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "scrollTo",
-JS_NewCFunction(cx, nat_void, "scrollTo", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "scrollBy",
-JS_NewCFunction(cx, nat_void, "scrollBy", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "scrollByLines",
-JS_NewCFunction(cx, nat_void, "scrollByLines", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "scrollByPages",
-JS_NewCFunction(cx, nat_void, "scrollByPages", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "focus",
-JS_NewCFunction(cx, nat_void, "focus", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "blur",
-JS_NewCFunction(cx, nat_void, "blur", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "focus",
-JS_NewCFunction(cx, nat_void, "docfocus", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "blur",
-JS_NewCFunction(cx, nat_void, "docblur", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "close",
-JS_NewCFunction(cx, nat_void, "docclose", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "close",
-JS_NewCFunction(cx, nat_win_close, "win_close", 0), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$resolveURL",
-JS_NewCFunction(cx, nat_resolveURL, "resolveURL", 2), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$newLocation",
-JS_NewCFunction(cx, nat_new_location, "new_location", 1), 0);
-    JS_DefinePropertyValueStr(cx, g, "eb$logElement",
-JS_NewCFunction(cx, nat_log_element, "log_element", 2), 0);
-#endif
 
     JS_DefinePropertyValueStr(cx, g, "eb$media",
 JS_NewCFunction(cx, nat_media, "media", 1), 0);
@@ -3668,21 +3608,6 @@ void createJSContext(Frame *f)
 		i_puts(MSG_JavaContextError);
 	}
 }
-
-#ifdef DOSLIKE			// port of uname(p), and struct utsname
-struct utsname {
-	char sysname[32];
-	char machine[32];
-};
-int uname(struct utsname *pun)
-{
-	memset(pun, 0, sizeof(struct utsname));
-	// TODO: WIN32: maybe fill in sysname, and machine...
-	return 0;
-}
-#else // !DOSLIKE - // port of uname(p), and struct utsname
-#include <sys/utsname.h>
-#endif // DOSLIKE y/n // port of uname(p), and struct utsname
 
 static void setup_window_2(void)
 {

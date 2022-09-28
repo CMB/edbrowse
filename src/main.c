@@ -453,17 +453,6 @@ static void setupEdbrowseTempDirectory(void)
 	}
 }
 
-/*\ MSVC Debug: May need to provide path to 3rdParty DLLs, like
- *  set PATH=F:\Projects\software\bin;%PATH% ...
-\*/
-
-/* I'm not going to expand wild card arguments here.
- * I don't need to on Unix, and on Windows there is a
- * setargv.obj, or something like that, that performs the expansion.
- * I'll assume you have folded that object into libc.lib.
- * So now you can edit *.c, on any operating system,
- * and it will do the right thing, with no work on my part. */
-
 static void loadReplacements(void);
 
 int main(int argc, char **argv)
