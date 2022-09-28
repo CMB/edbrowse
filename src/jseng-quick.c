@@ -2746,6 +2746,8 @@ static JSValue nat_playAudio(JSContext * cx, JSValueConst this, int argc, JSValu
 	debugPrint(3, "audio connect to %s", url);
 	rc = httpConnect(&g);
 	down_bg = save_bg;
+	nzFree(g.cfn);
+	nzFree(g.referrer);
 	nzFree(url);
 	result = g.buffer;
 // if result is there, then we didn't play it by plugin, and we didn't download it.

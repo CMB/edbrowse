@@ -859,6 +859,8 @@ top:
 				g.uriEncoded = true;
 				g.url = newurl;
 				if (!intFlag && httpConnect(&g)) {
+					nzFree(g.cfn);
+					nzFree(g.referrer);
 					if (g.code == 200) {
 						a = force_utf8(g.buffer,
 							       g.length);

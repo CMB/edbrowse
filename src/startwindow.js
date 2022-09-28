@@ -780,6 +780,7 @@ HTMLMediaElement.prototype.controls = false;
 HTMLMediaElement.prototype.controller = null;
 HTMLMediaElement.prototype.volume = 1.0;
 HTMLMediaElement.prototype.play = eb$playAudio;
+HTMLMediaElement.prototype.load = eb$voidfunction;
 HTMLMediaElement.prototype.pause = eb$voidfunction;
 Audio = HTMLAudioElement = function(t){
 // arg to constructor is the url of the audio

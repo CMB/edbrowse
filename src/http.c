@@ -1075,7 +1075,7 @@ mimestream:
 
 	still_fetching = true;
 
-	if (!post_request && presentInCache(g->urlcopy)) {
+	if (!post_request && (g->headrequest || presentInCache(g->urlcopy))) {
 		head_request = true;
 		curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
 	}
@@ -1238,7 +1238,7 @@ they go where they go, so this doesn't come up very often.
 		}
 
 		if (curlret != CURLE_OK) {
-			if (!head_request)
+			if (!head_request || g->headrequest)
 				goto curl_fail;
 			ebcurl_setError(curlret, g->urlcopy, 1, g->error);
 			debugPrint(3, "switch from head to get");
@@ -1314,7 +1314,7 @@ they go where they go, so this doesn't come up very often.
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
-				if (!post_request && presentInCache(g->urlcopy)) {
+				if (!post_request && (g->headrequest || presentInCache(g->urlcopy))) {
 					head_request = true;
 					curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
 				}
@@ -1373,6 +1373,15 @@ they go where they go, so this doesn't come up very often.
 			}
 		} else {	/* not redirect, not 401 */
 			if (head_request) {
+				if(g->headrequest) {
+					nzFree(g->buffer);
+					g->buffer = 0;
+					g->length = 0;
+					nzFree(referrer), referrer = 0;
+					curlret = CURLE_OK;
+					transfer_status = true;
+					break;
+				}
 				if (fetchCache
 				    (g->urlcopy, g->etag, g->modtime,
 				     &cacheData, &cacheDataLen)) {
@@ -1479,6 +1488,8 @@ void *httpConnectBack1(void *ptr)
 	addToListBack(&down_jobs, job);
 	rc = httpConnect(&g);
 	job->state = (rc ? 0 : -1);
+	nzFree(g.cfn);
+	nzFree(g.referrer);
 	return NULL;
 }
 
@@ -1495,8 +1506,8 @@ void *httpConnectBack2(void *ptr)
 	g.tsn = ++tsn;
 	debugPrint(3, "jsbg thread %d", tsn);
 	rc = httpConnect(&g);
-	nzFree(g.referrer);
 	nzFree(g.cfn);
+	nzFree(g.referrer);
 	t->loadsuccess = rc;
 	t->hcode = g.code;
 	if (rc) {

@@ -19,6 +19,8 @@ Edbrowse as an irc client.
 
 a c or i commands in scripts.
 
+<audio>, and the Audio object with the play method.
+
 3.8.4
 dno (names only) command.
 

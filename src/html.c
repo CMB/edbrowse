@@ -613,6 +613,8 @@ void prepareScript(Tag *t)
 					i_printf(MSG_GetJS2);
 				goto fail;
 			}
+			nzFree(g.cfn);
+			nzFree(g.referrer);
 			if (g.code == 200) {
 				js_text = force_utf8(g.buffer, g.length);
 				if (!js_text)

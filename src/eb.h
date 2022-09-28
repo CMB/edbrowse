@@ -219,6 +219,7 @@ struct i_get {
 	bool pg_ok; // watch for plugins
 	bool playonly; // only player plugins
 	bool csp; // content supresses plugins
+	bool headrequest;
 	bool is_http;
 	bool cacheable;
 	bool last_curlin;
