@@ -1001,7 +1001,7 @@ int runEbFunction(const char *line)
 		save.H = helpMessagesOn;
 		save.pg = pluginsOn;
 		save.hf = showHiddenFiles;
-		save.showall = showHover;
+		save.showall = showall;
 		save.endm = endMarks;
 		save.sg = searchStringsAll;
 		save.ci = caseInsensitive;
@@ -1168,7 +1168,7 @@ done:
 		helpMessagesOn = save.H;
 		pluginsOn = save.pg;
 		showHiddenFiles = save.hf;
-		showHover = save.showall;
+		showall = save.showall;
 		endMarks = save.endm;
 		searchStringsAll = save.sg;
 		caseInsensitive = save.ci;

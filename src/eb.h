@@ -350,7 +350,7 @@ extern bool ftpActive;
 extern bool helpMessagesOn;	/* no need to type h */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
-extern bool showHover; // messages that appear when you hover
+extern bool showall; // show messages that are normally hidden, for various reasons
 extern bool doColors;
 extern int context;		// which session (buffer) are we in?
 extern pst linePending;

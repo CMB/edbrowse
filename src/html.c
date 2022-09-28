@@ -16,7 +16,7 @@ extern int gettimeofday(struct timeval *tp, void *tzp);
 #endif
 
 uchar browseLocal;
-bool showHover, doColors;
+bool showall, doColors;
 
 static Tag *js_reset, *js_submit;
 static const int asyncTimer = 700;
@@ -3689,7 +3689,7 @@ void domOpensWindow(const char *href, const char *name)
 static char *ns;
 static int ns_l;
 static bool invisible, tdfirst;
-static Tag *inv2, *inv3;	// invisible via css
+static Tag *inv2;	// invisible via css
 static int listnest;		/* count nested lists */
 /* None of these tags nest, so it is reasonable to talk about
  * the current open tag. */
@@ -4051,13 +4051,6 @@ li_hide:
 		return;
 	}
 
-	if (inv3 == t) {
-		inv3 = NULL;
-// I tried to remove an empty invisible section,
-// but it's never really empty due to tag markers.
-		return;
-	}
-
 	endcolor = false;
 	if (doColors && !opentag && t->iscolor) {
 		char *u0, *u1, *u3;
@@ -4138,21 +4131,18 @@ nocolorend:
 			++invcount;
 		if (v_now == DIS_COLOR)
 			++hovcount;
-		if (v_now == DIS_INVISIBLE) {
-			if (!showHover) {
-				inv2 = t;
-				return;
-			}
-			if (!inv3) inv3 = t;
+		if (v_now == DIS_INVISIBLE && !showall) {
+			inv2 = t;
+			return;
 		}
-		if (!showHover && v_now == DIS_COLOR && !activeBelow(t)) {
+		if (!showall && v_now == DIS_COLOR && !activeBelow(t)) {
 			inv2 = t;
 			return;
 		}
 		if (action == TAGACT_TEXT && t->jslink &&
 		    get_property_bool_t(t, "inj$css")) {
 			++injcount;
-			if (!showHover) {
+			if (!showall) {
 				inv2 = t;
 				return;
 			}
@@ -4291,7 +4281,7 @@ nocolor:
 					get_property_string_t(t, "title"))) {
 // <a title=x>   x appears on hover
 					++hovcount;
-					if (showHover) {
+					if (showall) {
 						stringAndString(&ns, &ns_l, a);
 						stringAndChar(&ns, &ns_l, ' ');
 					}
@@ -4873,7 +4863,7 @@ char *render(void)
 			set_property_bool_win(f, "rr$start", true);
 	ns = initString(&ns_l);
 	invisible = false;
-	inv2 = inv3 = NULL;
+	inv2 = NULL;
 	listnest = 0;
 	currentForm = currentA = NULL;
 	traverse_callback = renderNode;

@@ -6151,18 +6151,18 @@ et_go:
 	}
 
 	if (stringEqual(line, "showall")) {
-		showHover ^= 1;
+		showall ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(showHover + MSG_HoverOff);
+			i_puts(showall + MSG_HoverOff);
 		if (cw->browseMode)
 			rerender(0);
 		return true;
 	}
 
 	if (stringEqual(line, "showall+") || stringEqual(line, "showall-")) {
-		showHover = (line[7] == '+');
+		showall = (line[7] == '+');
 		if (helpMessagesOn)
-			i_puts(showHover + MSG_HoverOff);
+			i_puts(showall + MSG_HoverOff);
 		if (cw->browseMode && isJSAlive)
 			rerender(0);
 		return true;
