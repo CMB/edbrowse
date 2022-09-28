@@ -78,6 +78,7 @@ static const struct specialtag {
 {"innerbody",0,1, 0, 0},
 {"script", 0, 0, 1, 0},
 {"style", 0, 0, 1, 0},
+{"source", 1, 0, 0, 0},
 {"meta", 1, 0, 1, 0},
 {"bgsound", 1, 0, 1, 0},
 {"title", 0, 0, 1, 0},
@@ -421,9 +422,10 @@ const struct tagInfo availableTags[] = {
 	{"head", "the html header information", TAGACT_HEAD, 10, 5},
 	{"body", "the html body", TAGACT_BODY, 10, 5},
 	{"text", "a text section", TAGACT_TEXT, 0, 4},
-	{"bgsound", "background music", TAGACT_MUSIC, 0, 4},
-	{"audio", "audio passage", TAGACT_MUSIC, 0, 4},
-	{"video", "video passage", TAGACT_MUSIC, 0, 4},
+	{"bgsound", "background music", TAGACT_MUSIC, 0, 0},
+	{"audio", "audio passage", TAGACT_MUSIC, 0, 0},
+	{"video", "video passage", TAGACT_MUSIC, 0, 0},
+	{"source", "source of audio or video", TAGACT_SOURCE, 0, 4},
 	{"meta", "a meta tag", TAGACT_META, 0, 4},
 	{"style", "a style tag", TAGACT_STYLE, 0, 2},
 	{"link", "a link tag", TAGACT_LINK, 0, 4},
@@ -482,7 +484,7 @@ const struct tagInfo availableTags[] = {
 	{"script", "a script", TAGACT_SCRIPT, 0, 1},
 	{"noscript", "no script section", TAGACT_NOSCRIPT, 0, 2},
 	{"noframes", "no frames section", TAGACT_NOP, 0, 2},
-	{"embed", "embedded html", TAGACT_MUSIC, 0, 4},
+	{"embed", "embedded html", TAGACT_MUSIC, 0, 0},
 	{"noembed", "no embed section", TAGACT_NOP, 0, 2},
 	{"em", "emphasized text", TAGACT_JS, 0, 0},
 	{"label", "a label", TAGACT_LABEL, 0, 0},
@@ -3497,7 +3499,7 @@ static int nopt;		/* number of options */
 static Tag *currentForm, *currentSel, *currentOpt, *currentStyle;
 static const char *optg; // option group
 static Tag *currentTitle, *currentScript, *currentTA;
-static Tag *currentA;
+static Tag *currentA, *currentAudio;
 static char *radioCheck;
 static int radio_l;
 
@@ -3646,6 +3648,8 @@ static void prerenderNode(Tag *t, bool opentag)
 		t->step = 1;
 
 	switch (action) {
+		char *v;
+
 	case TAGACT_NOSCRIPT:
 // If javascript is enabled kill everything under noscript
 		if (isJSAlive && !opentag)
@@ -3951,14 +3955,28 @@ Are there other situations where we need to supress meta processing?
 		break;
 
 	case TAGACT_MUSIC:
-		if (opentag)
+		if (opentag) {
+			currentAudio = t;
 			break;
+		}
 // If somebody wrote <audio><p>foo</audio>, those tags should be excised.
 // However <source> tags should be kept and/or expanded. Not yet implemented.
 		underKill(t);
+		currentAudio = 0;
 		break;
 
-	}			/* switch */
+	case TAGACT_SOURCE:
+		if(!currentAudio || !opentag) break;
+		a = attribVal(t, "src");
+		if(!a || !*a) break;
+		if(attribVal(currentAudio, "src")) break; // first source wins
+		v = resolveURL(cf->hbase, a);
+		nzFree(currentAudio->href);
+		currentAudio->href = v;
+		setTagAttr(currentAudio, "src", cloneString(v));
+		break;
+
+	}			// switch
 }
 
 void prerender(void)
@@ -3968,6 +3986,7 @@ void prerender(void)
 
 	currentForm = currentSel = currentOpt = NULL;
 	currentTitle = currentScript = currentTA = NULL;
+currentAudio = NULL;
 	currentStyle = NULL;
 	optg = NULL;
 	nzFree(radioCheck);
@@ -4408,6 +4427,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_MUSIC:
+		if(!opentag) break;
 		domLink(t, "HTMLAudioElement", "src", 0, 0, 4);
 		break;
 

@@ -781,7 +781,11 @@ HTMLMediaElement.prototype.controller = null;
 HTMLMediaElement.prototype.volume = 1.0;
 HTMLMediaElement.prototype.play = eb$playAudio;
 HTMLMediaElement.prototype.pause = eb$voidfunction;
-Audio = HTMLAudioElement = function(){}
+Audio = HTMLAudioElement = function(t){
+// arg to constructor is the url of the audio
+if(typeof t == "string") this.src = t;
+if(typeof t == "object") this.src = t.toString();
+}
 HTMLAudioElement.prototype = new HTMLMediaElement;
 HTMLAudioElement.prototype.dom$class = "Audio";
 

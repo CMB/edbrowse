@@ -4798,11 +4798,10 @@ unparen:
 		break;
 
 	case TAGACT_MUSIC:
+		if(!opentag) break;
 		liCheck(t);
-		if (!retainTag)
-			break;
-		if (!t->href)
-			break;
+		if (!retainTag) break;
+		if (!t->href) break;
 		sprintf(hnum, "\r%c%d{", InternalCodeChar, tagno);
 		ns_hnum();
 		stringAndString(&ns, &ns_l,
