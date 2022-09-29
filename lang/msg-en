@@ -276,12 +276,12 @@ destination file already exists
 cannot rename file to %s
 cannot embed null in an input field
 cannot embed newline in an input field
-no input fields present
-no links present
-no buttons present
-multiple input fields present, please use %s1 through %s%d
-multiple links present, please use %s1 through %s%d
-multiple buttons present, please use %s1 through %s%d
+0
+0
+0
+0
+0
+0
 could not read the data from the server
 %s is not a url
 download complete
@@ -703,15 +703,15 @@ irc m n domain[+][:port] nickname[:password] [group]
 session %d is not compatible with irc
 debug layout disabled
 debug layout enabled
+no input fields present
+no links present
+no buttons present
+no images present
 0
-0
-0
-0
-0
-0
-0
-0
-0
+multiple input fields present, please use %s1 through %s%d
+multiple links present, please use %s1 through %s%d
+multiple buttons present, please use %s1 through %s%d
+multiple images present, please use %s1 through %s%d
 0
 0
 0

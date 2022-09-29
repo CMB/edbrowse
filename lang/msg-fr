@@ -276,12 +276,12 @@ le fichier destination existe déjà
 impossible de renommer le fichier à %s
 une zone de saisie ne peut contenir des caractères nuls
 une zone de saisie ne peut contenir des sauts de ligne
-aucune zone de saisie présente
-aucun lien présent
-aucun bouton présent
-il y a plusieurs zones de saisie, utilisez svp %s1 à %s%d
-il y a plusieurs liens, utilisez svp %s1 à %s%d
-il y a plusieurs boutons, utilisez svp %s1 à %s%d
+0
+0
+0
+0
+0
+0
 impossible de lire les données sur le serveur
 %s n'est pas une url
 téléchargement terminé
@@ -703,14 +703,14 @@ irc m n domaine|:port] nickname]:mot de passe] [groupe]
 la session %d est incompatible avec l'irc
 0
 0
+aucune zone de saisie présente
+aucun lien présent
+aucun bouton présent
 0
 0
-0
-0
-0
-0
-0
-0
+il y a plusieurs zones de saisie, utilisez svp %s1 à %s%d
+il y a plusieurs liens, utilisez svp %s1 à %s%d
+il y a plusieurs boutons, utilisez svp %s1 à %s%d
 0
 0
 0

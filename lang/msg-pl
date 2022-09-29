@@ -276,12 +276,12 @@ plik docelowy już istnieje
 nie można zmienić nazwy pliku na %s
 pole wprowadzania nie może zawierać znaków zerowych
 pole wprowadzania nie może zawierać znaków końca linii
-brak pól wprowadzania
-brak odnośników
-brak przycisków
-wiele pól wprowadzania obecnych, użyj %s1 do %s%d
-wiele odnośników obecnych, użyj %s1 do %s%d
-wiele przycisków obecnych, użyj %s1 do %s%d
+0
+0
+0
+0
+0
+0
 nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.
@@ -703,14 +703,14 @@ nie można zmienić nazwy irc
 0
 0
 0
+brak pól wprowadzania
+brak odnośników
+brak przycisków
 0
 0
-0
-0
-0
-0
-0
-0
+wiele pól wprowadzania obecnych, użyj %s1 do %s%d
+wiele odnośników obecnych, użyj %s1 do %s%d
+wiele przycisków obecnych, użyj %s1 do %s%d
 0
 0
 0

@@ -3447,7 +3447,7 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 	JS_FreeValue(mwc, r);
 
 	jsSourceFile = 0;
-	JS_DefinePropertyValueStr(mwc, mwo, "share", 1, JS_PROP_ENUMERABLE);
+	JS_DefinePropertyValueStr(mwc, mwo, "share", JS_NewInt32(mwc, 1), JS_PROP_ENUMERABLE);
 
 	JS_FreeValue(mwc, mwo);
 

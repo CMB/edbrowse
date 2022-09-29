@@ -276,12 +276,12 @@ Zieldatei existiert bereits
 kann Datei nicht in %s umbenennen
 kann Nullbytes nicht in ein Eingabefeld einfügen
 kann Zeilenumbrüche nicht in ein Eingabefeld einfügen
-keine eingabefelder vorhanden
-keine Links vorhanden
-keine Schalter vorhanden
-mehrere Eingabefelder vorhanden, nutzen Sie %s1 bis %s%d
-mehrere Links vorhanden, nutzen Sie %s1 bis %s%d
-mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
+0
+0
+0
+0
+0
+0
 konnte Daten nicht vom Server lesen
 %s ist keine URL
 Download abgeschlossen
@@ -703,14 +703,14 @@ kann den Namen irc nicht ändern
 0
 0
 0
+keine eingabefelder vorhanden
+keine Links vorhanden
+keine Schalter vorhanden
 0
 0
-0
-0
-0
-0
-0
-0
+mehrere Eingabefelder vorhanden, nutzen Sie %s1 bis %s%d
+mehrere Links vorhanden, nutzen Sie %s1 bis %s%d
+mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
 0
 0
 0

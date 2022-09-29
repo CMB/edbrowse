@@ -276,12 +276,12 @@ arquivo destino já existe
 impossível renomear o arquivo para %s
 impossível embutir caracteres nulos num campo de entrada
 impossível embutir novas linhas num campo de entrada
-sem campos de entrada presentes
-sem linques presentes
-sem botões presentes
-presentes vários campos de entrada; por favor use %s1 até %s%d
-presentes vários linques; por favor use %s1 até %s%d
-presentes; por favor use %s1 até %s%d
+0
+0
+0
+0
+0
+0
 não consegui ler os dados do servidor
 %s não é uma URL
 transferência completa
@@ -703,14 +703,14 @@ irc m n domain[+][:port] nickname[:password] [group]
 sessão %d não é compatível com irc
 0
 0
+sem campos de entrada presentes
+sem linques presentes
+sem botões presentes
 0
 0
-0
-0
-0
-0
-0
-0
+presentes vários campos de entrada; por favor use %s1 até %s%d
+presentes vários linques; por favor use %s1 até %s%d
+presentes; por favor use %s1 até %s%d
 0
 0
 0

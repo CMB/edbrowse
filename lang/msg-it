@@ -276,12 +276,12 @@ il file di destinazione esiste già
 impossibile rinominare il file come %s
 impossibile inserire valori nulli in un campo di input
 impossibile inserire newlines in un campo di input
-non sono presenti campi di input
-non ci sono links
-non ci sono bottoni
-multipli campi di input sono presenti, usa %s1 fino a %s%d
-multipli links sono presenti, per favore usa da %s1 fino a %s%d
-multipli bottoni sono presenti, per favore usa da %s1 a %s%d
+0
+0
+0
+0
+0
+0
 impossibile leggere dati dal server
 %s non è un url
 download completato
@@ -703,14 +703,14 @@ impossibile cambiare il nome di irc
 0
 0
 0
+non sono presenti campi di input
+non ci sono links
+non ci sono bottoni
 0
 0
-0
-0
-0
-0
-0
-0
+multipli campi di input sono presenti, usa %s1 fino a %s%d
+multipli links sono presenti, per favore usa da %s1 fino a %s%d
+multipli bottoni sono presenti, per favore usa da %s1 a %s%d
 0
 0
 0
