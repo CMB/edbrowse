@@ -4335,7 +4335,7 @@ findField(const char *line, int ftype, int n,
 						nm = -1;
 				}
 			} else if (ftype == 4) {
-				if (*s != '[')
+				if (*s != '*' || s[1] != '[')
 					continue;
 				++nt, ++nrt;
 				if (n == nt || n < 0)
@@ -5402,6 +5402,48 @@ pwd:
 		debrowseSuffix(allocatedLine);
 		*runThis = allocatedLine;
 		uriEncoded = cf->uriEncoded;
+		return 2;
+	}
+
+	if(!strncmp(line, "img", 3) &&
+	(line[3] == 0 || strchr("0123456789$?", line[3]))) {
+	char *h, *p;
+	const char *s;
+	int tagno, n, j;
+	bool lookmode = false;
+	s = line + 3;
+	j = 0;
+	if (isdigitByte(*s))
+		j = strtol(s, (char **)&s, 10);
+	else if (*s == '$')
+		j = -1, ++s;
+	if(*s == '?') lookmode = true, ++s;
+	if(*s) goto no_action;
+	cmd = 'e'; // show errors
+	if(cw->dot == 0) {
+		setError(MSG_AtLine0);
+		return false;
+	}
+	p = (char *)fetchLine(cw->dot, -1);
+	findField(p, 4, j, &n, 0, &tagno, &h, 0);
+	debugPrint(5, "findField returns %d, %s", tagno, h);
+	if (!h) {
+		fieldNumProblem(3, "img", j, n, n);
+		return false;
+	}
+	if(lookmode) {
+		puts(h);
+		return true;
+	}
+	uriEncoded = true;
+	if(!*h) { // why would this ever happen?
+		*runThis = "?";
+		return 2;
+	}
+	allocatedLine = allocMem(strlen(h) + 3);
+	sprintf(allocatedLine, "e %s", h);
+	*runThis = allocatedLine;
+	nzFree(h);
 		return 2;
 	}
 
