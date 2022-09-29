@@ -4291,7 +4291,7 @@ static int findOpenTA(int ln)
 // ftype = 1 look for buttons, from the i* command
 // ftype = 2 look for entry fields, from the i= command
 // ftype = 3 look for input fields, from the i? command
-// ftype = 4 look for images, not yet implemented
+// ftype = 4 look for images, from the img command
 
 static void
 findField(const char *line, int ftype, int n,
@@ -4336,6 +4336,9 @@ findField(const char *line, int ftype, int n,
 				}
 			} else if (ftype == 4) {
 				if (*s != '*' || s[1] != '[')
+					continue;
+// don't know why tag might be other than image, but it might be.
+				if(tagList[j]->action != TAGACT_IMAGE)
 					continue;
 				++nt, ++nrt;
 				if (n == nt || n < 0)

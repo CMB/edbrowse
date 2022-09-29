@@ -720,11 +720,15 @@ g : go to the link on the current line
 <br>g$? : print the url for the last link
 <br>A : create a buffer of <a> tags for the hyperlinks on the current line
 <br>4,7A : create a buffer of <a> tags for the hyperlinks on lines 4 through 7
-<br>exp : expand a frame
+<br>exp : expand a frame, g also works
 <br>,exp : expand all frames
 <br>ctr : contract a frame
 <br>^ : the back key, go back to the web page you were looking at before
-<br>&amp; : internal link back key, go back to line before following internal link
+<br>&amp; : internal link back key, go back to the source of an internal link
+<br>img : download the image on the current line
+<br>img2 : download the second image on the current line
+<br>img$ : download the last image on the current line
+<br>img? : print the url of the image on the current line
 <br>i=xyz : set the input field on the current line to xyz
 <br>i=red,green,blue : select the options red, green, and blue from a multiple select list
 <br>s/$/,oran : add the option orange to the select list
