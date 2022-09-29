@@ -342,7 +342,6 @@ static bool jdb_passthrough(const char *s)
 		"dbcn", "dbcn+", "dbcn-",
 		"dbev", "dbev+", "dbev-",
 		"dbcss", "dbcss+", "dbcss-", "db",
-		"dbtags", "dbtags+", "dbtags-",
 		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
 		"e+", "e-", "eret",
@@ -4288,6 +4287,12 @@ static int findOpenTA(int ln)
 	return 0;
 }
 
+// ftype = 0 look for hyperlinks, from the g command
+// ftype = 1 look for buttons, from the i* command
+// ftype = 2 look for entry fields, from the i= command
+// ftype = 3 look for input fields, from the i? command
+// ftype = 4 look for images, not yet implemented
+
 static void
 findField(const char *line, int ftype, int n,
 	  int *total, int *realtotal, int *tagno, char **href,
@@ -4317,7 +4322,7 @@ findField(const char *line, int ftype, int n,
 			if (c != InternalCodeChar)
 				continue;
 			j = strtol(s, (char **)&s, 10);
-			if (!ftype) {
+			if (ftype == 0) {
 				if (*s != '{')
 					continue;
 				++nt, ++nrt;
@@ -4329,7 +4334,19 @@ findField(const char *line, int ftype, int n,
 					else
 						nm = -1;
 				}
-			} else {
+			} else if (ftype == 4) {
+				if (*s != '[')
+					continue;
+				++nt, ++nrt;
+				if (n == nt || n < 0)
+					nm = j;
+				if (!n) {
+					if (!nm)
+						nm = j;
+					else
+						nm = -1;
+				}
+			} else { // 1 2 or 3
 				if (*s != '<')
 					continue;
 				if (n > 0) {
@@ -4376,16 +4393,17 @@ findField(const char *line, int ftype, int n,
 	if (total) *total = nrt;
 	if (realtotal) *realtotal = nt;
 	if (tagno) *tagno = nm;
-	if (!ftype && nm) {
+	if ((ftype == 0 || ftype == 4) && nm) {
 		t = tagList[nm];
 		if (tagp)
 			*tagp = t;
 		if (t->action == TAGACT_A || t->action == TAGACT_FRAME ||
+		t->action == TAGACT_IMAGE ||
 		    t->action == TAGACT_MUSIC || t->action == TAGACT_AREA) {
 			if (href)
 				*href = cloneString(t->href);
 			if (href) {
-/* defer to the js variable for the reference */
+// defer to the js variable for the reference
 				char *jh = get_property_url_t(t, false);
 				if (jh) {
 					if (!*href || !stringEqual(*href, jh)) {
@@ -4405,7 +4423,7 @@ findField(const char *line, int ftype, int n,
 	if (nt || ftype)
 		return;
 
-/* Second time through, maybe the url is in plain text. */
+// Second time through, maybe the url is in plain text.
 	nmh = 0;
 	s = line;
 	while (true) {
@@ -6050,6 +6068,20 @@ et_go:
 		dhs = (line[6] == '+');
 		if (helpMessagesOn)
 			i_puts(dhs + MSG_DebugTagsOff);
+		return true;
+	}
+
+	if (stringEqual(line, "dblay")) {
+		debugLayout ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(debugLayout + MSG_DebugLayOff);
+		return true;
+	}
+
+	if (stringEqual(line, "dblay+") || stringEqual(line, "dblay-")) {
+		debugLayout = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(debugLayout + MSG_DebugLayOff);
 		return true;
 	}
 

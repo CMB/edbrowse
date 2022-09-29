@@ -801,4 +801,6 @@ enum {
 	MSG_IrcEntire,
 	MSG_IrcUsage,
 	MSG_IrcCompat,
+	MSG_DebugLayOff,
+	MSG_DebugLayOn,
 };

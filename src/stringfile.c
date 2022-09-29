@@ -12,9 +12,10 @@
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
 int debugLevel = 1;
-bool debugClone, debugEvent, debugThrow, debugCSS;
 FILE *debugFile = NULL;
 char *debugFileName;
+bool debugClone, debugEvent, debugThrow, debugCSS;
+bool debugLayout;
 bool demin = false;
 bool gotimers = true;
 bool uvw;

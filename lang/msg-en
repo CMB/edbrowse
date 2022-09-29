@@ -701,8 +701,8 @@ cannot change the name of an irc server
 please write the entire buffer to irc
 irc m n domain[+][:port] nickname[:password] [group]
 session %d is not compatible with irc
-0
-0
+debug layout disabled
+debug layout enabled
 0
 0
 0
