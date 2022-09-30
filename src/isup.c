@@ -3527,8 +3527,100 @@ void ircRead(void)
 // And now for the socket stuff, which I pretty much copied without understanding.
 
 #include <netdb.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+       #include <arpa/inet.h>
+
+typedef unsigned int IP32bit;
+#define NULL_IP (IP32bit)(-1)
+
+static int tcp_isDots(const char *s)
+{
+	const char *t;
+	char c;
+	int nd = 0;		// number of dots
+	if (!s)
+		return 0;
+	for (t = s; (c = *t); ++t) {
+		if (c == '.') {
+			++nd;
+			if (t == s || !t[1])
+				return 0;
+			if (t[-1] == '.' || t[1] == '.')
+				return 0;
+			continue;
+		}
+		if (!isdigit(c))
+			return 0;
+	}
+	return (nd == 3);
+}
+
+static IP32bit tcp_name_ip(const char *name)
+{
+	struct hostent *hp;
+	IP32bit *ip;
+	if(!name) return NULL_IP;
+	hp = gethostbyname(name);
+	if (!hp)
+#if 0
+		printf("%s\n", hstrerror(h_errno));
+#endif
+		return NULL_IP;
+#if 0
+	puts("found it");
+	if (hp->h_aliases) {
+		puts("aliases");
+		char **a = hp->h_aliases;
+		while (*a) {
+			printf("alias %s\n", *a);
+			++a;
+		}
+	}
+#endif
+	ip = (IP32bit *) * (hp->h_addr_list);
+		return !ip ? NULL_IP : *ip;
+}
+
+static char *tcp_ip_dots(IP32bit ip)
+{
+	if(ip == NULL_IP) return 0;
+	return inet_ntoa(*(struct in_addr *)&ip);
+}
+
+static char *tcp_name_dots(const char *name)
+{
+	IP32bit ip = tcp_name_ip(name);
+	if (ip == NULL_IP)
+		return 0;
+	return tcp_ip_dots(ip);
+}
+
+static IP32bit tcp_dots_ip(const char *s)
+{
+	struct in_addr a;
+	if(!s) return NULL_IP;
+// Why can't SCO Unix be like everybody else?
+#ifdef SCO
+	inet_aton(s, &a);
+#else
+	*(IP32bit *) & a = inet_addr(s);
+#endif
+	return *(IP32bit *) & a;
+}
+
+static char *tcp_ip_name(IP32bit ip)
+{
+	if(ip == NULL_IP) return 0;
+	struct hostent *hp = gethostbyaddr((char *)&ip, 4, AF_INET);
+	if (!hp) return 0;
+	return hp->h_name;
+}
+
+static char *tcp_dots_name(const char *s)
+{
+	return tcp_ip_name(tcp_dots_ip(s));
+}
 
 static int ircDial(char *host, int port)
 {
