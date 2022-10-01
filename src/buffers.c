@@ -6407,8 +6407,8 @@ static int twoLetterG(const char *line, const char **runThis)
 	return 2;		/* no change */
 }
 
-/* Return the number of unbalanced punctuation marks.
- * This is used by the next routine. */
+// Return the number of unbalanced punctuation marks.
+// This is used by the next routine.
 static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 {
 	char *t, *open;
@@ -6425,7 +6425,16 @@ static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 			*t = ' ';
 			continue;
 		}
-		if(*t == '"' || *t == '\'') qc = *t;
+		if(*t == '"' || *t == '\'') {
+			qc = *t;
+// If we don't have a closing quote then forget it.
+			const char *u = t + 1;
+			for(; *u != '\n'; ++u) {
+				if(*u == qc) break; // found closing quote
+				if(*u == '\\' && u[1] != '\n') ++u;
+			}
+			if(*u != qc) qc = 0;
+		}
 	}
 
 	change = true;
@@ -6457,8 +6466,8 @@ static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
 	*for_p = forward;
 }
 
-/* Find the line that balances the unbalanced punctuation. */
-static bool balanceLine(const char *line)
+// Find the line that balances the unbalanced punctuation.
+bool balanceLine(const char *line)
 {
 	char c, d;		/* open and close */
 	char selected;
@@ -6496,7 +6505,7 @@ static bool balanceLine(const char *line)
 		}
 	} else {
 
-/* Look for anything unbalanced, probably a brace. */
+// Look for anything unbalanced, probably a brace.
 		for (i = 0; i <= 2; ++i) {
 			c = openlist[i];
 			d = closelist[i];
