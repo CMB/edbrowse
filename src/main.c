@@ -460,6 +460,8 @@ int main(int argc, char **argv)
 	int cx, account;
 	bool rc, doConfig = true, autobrowse = false;
 	bool dofetch = false, domail = false, setDebugOpt = false;
+	char *firstFile = 0;
+	int firstFilePosition = 0, k;
 	static char agent0[64] = "edbrowse/";
 
 // In case this is being piped over to a synthesizer, or whatever.
@@ -533,7 +535,7 @@ int main(int argc, char **argv)
 	ttySaveSettings();
 	initializeReadline();
 
-	loadReplacements();
+	loadReplacements(); // for debugging a snapshot
 
 	if (argc && stringEqual(argv[0], "-c")) {
 		if (argc == 1) {
@@ -611,7 +613,7 @@ int main(int argc, char **argv)
 		}
 
 		i_printfExit(MSG_Usage);
-	}			/* options */
+	}			// options
 
 	srand(time(0));
 
@@ -694,11 +696,26 @@ int main(int argc, char **argv)
 	js_main();
 
 // This sanity check on number of files assumes they are all files,
-// not functions to execute.
+// not commands to execute.
 	if(argc >= MAXSESSION)
 		i_printfExit(MSG_ManyOpen, MAXSESSION - 1);
 
 	cx = 0;
+// where is the first file?
+	for(k = 0; k < argc; ++k) {
+		if(argv[k][0] != '+') {
+			firstFile = argv[k];
+			firstFilePosition = k;
+			break;
+		}
+	}
+
+	if(firstFile && firstFilePosition) {
+// move +commands to after the first file
+		memmove(argv + 1, argv, firstFilePosition * sizeof(char*));
+		argv[0] = firstFile;
+	}
+
 	while (argc) {
 		char *file = *argv;
 		char *file2 = 0;	// will be allocated
@@ -706,7 +723,7 @@ int main(int argc, char **argv)
 // function on the command line
 		if (file[0] == '+') {
 			debugPrint(3, "+ %s", file + 1);
-			if(!cx) { puts("+comand first argument - not yet implemented!"); exit(0); }
+			if(!cx) { puts("+comand with no file - not yet implemented!"); exit(0); }
 			edbrowseCommand(file + 1, false);
 			++argv, --argc;
 			continue;
