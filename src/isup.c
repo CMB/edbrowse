@@ -3320,7 +3320,7 @@ static void ircMessage(Window *wout, const char *receiver, const char *msg)
 		return;
 	}
 	cw = wout;
-	ircAddLine(receiver, true, "<%s> %s",
+	ircAddLine(receiver, win->ircChannels, "<%s> %s",
 	(win->ircNick ? win->ircNick : emptyString), msg);
 	cw = win;
 	ircSend(f, "PRIVMSG %s :%s", receiver, msg);
