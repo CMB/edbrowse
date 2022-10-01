@@ -749,6 +749,12 @@ int main(int argc, char **argv)
 			inInitFunction = false;
 		}
 
+		if(!*file) { // empty string, empty buffer
+			debugPrint(1, "0");
+			++argv, --argc;
+			continue;
+		}
+
 		changeFileName = 0;
 		file2 = allocMem(strlen(file) + 10);
 // Every URL needs a protocol.

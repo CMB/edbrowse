@@ -1528,12 +1528,13 @@ Edbrowse reads these files into corresponding sessions
 and starts in session 1.
 If there are no arguments, edbrowse starts in session 1
 with no text and no associated file.
-If the file is a url, then that web page is fetched from the Internet and browsed.
+If the file is an empty string, "", edbrowse creates an empty buffer for that session.
+If the file is a url, that web page is fetched from the Internet and browsed.
 Finally, if the argument begins with a plus sign,
 such as edbrowse file "+37",
 then that comand is run on the current file.
 This example prints line 37.
-Use '+<func' to run an edbrowse function inline.
+Use '+&lt;func' to run an edbrowse function inline.
 Files, urls, and +commands can be intermixed on the command line.
 They are processed in order.
 Leading +commands are applied to the first file, rather than the previous file, since there is no previous file.
