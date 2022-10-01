@@ -702,6 +702,16 @@ int main(int argc, char **argv)
 	while (argc) {
 		char *file = *argv;
 		char *file2 = 0;	// will be allocated
+
+// function on the command line
+		if (file[0] == '+') {
+			debugPrint(3, "+ %s", file + 1);
+			if(!cx) { puts("+comand first argument - not yet implemented!"); exit(0); }
+			edbrowseCommand(file + 1, false);
+			++argv, --argc;
+			continue;
+		}
+
 		++cx;
 		if (cx == MAXSESSION)
 			i_printfExit(MSG_ManyOpen, MAXSESSION - 1);
@@ -710,13 +720,6 @@ int main(int argc, char **argv)
 			inInitFunction = setDebugOpt;
 			runEbFunction("init");
 			inInitFunction = false;
-		}
-
-// function on the command line
-		if (file[0] == '<') {
-			runEbFunction(file + 1);
-			++argv, --argc;
-			continue;
 		}
 
 		changeFileName = 0;
