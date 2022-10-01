@@ -3311,19 +3311,19 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 }
 
 // cw is input window
-static void ircMessage(Window *wout, const char *channel, const char *msg)
+static void ircMessage(Window *wout, const char *receiver, const char *msg)
 {
 	Window *win = cw;
 	FILE *f = win->ircF;
-	if(!channel) {
-		debugPrint(1, "No channel to send to");
+	if(!receiver) {
+		debugPrint(1, "No receiver to send to");
 		return;
 	}
 	cw = wout;
-	ircAddLine(channel, win->ircChannels, "<%s> %s",
+	ircAddLine(receiver, true, "<%s> %s",
 	(win->ircNick ? win->ircNick : emptyString), msg);
 	cw = win;
-	ircSend(f, "PRIVMSG %s :%s", channel, msg);
+	ircSend(f, "PRIVMSG %s :%s", receiver, msg);
 }
 
 // Set the channel on the input side, but it affects the file name on the output side
