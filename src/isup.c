@@ -3400,6 +3400,11 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 			if(!*p)
 				p = "sic - 250 LOC are too much!";
 			ircSend(f, "PART %s :%s", s, p);
+			if(stringEqual(s, win->ircChannel)) {
+// leaving the channel we are currently sending on,
+// what are we suppose to do?
+				ircSetChannel(win, 0);
+			}
 			return;
 		case 'm':
 			s = ircEat(p, isspace, 1);

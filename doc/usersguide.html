@@ -1529,10 +1529,11 @@ and starts in session 1.
 If there are no arguments, edbrowse starts in session 1
 with no text and no associated file.
 If the file is a url, then that web page is fetched from the Internet and browsed.
-Finally, if the file begins with a plus sign,
-edbrowse "+37",
+Finally, if the argument begins with a plus sign,
+such as edbrowse file "+37",
 then that comand is run on the current file.
 This example prints line 37.
+Use '+<func' to run an edbrowse function inline.
 Files, urls, and +commands can be intermixed on the command line.
 They are processed in order.
 Leading +commands are applied to the first file, rather than the previous file, since there is no previous file.
@@ -5334,11 +5335,7 @@ We already mentioned :j group, which joins a group.
 The file names of sessions 8 and 9 will change when you join a group.
 
 <P>
-:l is a lock command, which I don't understand. (This is open source software that I happily reused.)
-
-<P>
-:m nickname text, sends a private message to a person on your chat session.
-Others will not see this message.
+:l leaves a group. This is the opposite of :j.
 
 <P>
 :s group, switches to a different group.
@@ -5346,6 +5343,10 @@ It is possible to join multiple groups through the same irc session, assuming th
 Use :s to switch between these groups, so that your messages go out on the correct channels.
 The filename will reflect the active group.
 Type f to see which group you are sending to.
+
+<P>
+:m nickname text, sends a private message to a person on your chat session.
+Others will not see this message.
 
 <P>
 It is possible to multiplex some or all of the output from different irc servers into one window.

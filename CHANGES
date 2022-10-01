@@ -23,6 +23,9 @@ a c or i commands in scripts.
 
 img comand to download images.
 
++commands on the arg list, to run edbrowse commands from the shell command line.
+Other editors do this.
+
 3.8.4
 dno (names only) command.
 
