@@ -3642,6 +3642,7 @@ static int ircDial(char *host, int port)
 		if(connect(srv, r->ai_addr, r->ai_addrlen) == 0)
 			break;
 		close(srv);
+		if(intFlag) r = 0;
 	}
 	freeaddrinfo(res);
 	if(!r) {

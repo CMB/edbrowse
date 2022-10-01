@@ -1529,14 +1529,13 @@ and starts in session 1.
 If there are no arguments, edbrowse starts in session 1
 with no text and no associated file.
 If the file is a url, then that web page is fetched from the Internet and browsed.
-Finally, if the file begins with a less than sign,
-edbrowse "&lt;func arg1 arg2",
-then the named edbrowse function is run with its arguments.
-These functions are part of your config file and will be described later.
-The function runs in its own session, as though it were a file or a url.
-Often the function will load a file or url on your behalf, so that is usually what you want.
-Files, urls, and functions can be intermixed on the command line.
+Finally, if the file begins with a plus sign,
+edbrowse "+37",
+then that comand is run on the current file.
+This example prints line 37.
+Files, urls, and +commands can be intermixed on the command line.
 They are processed in order.
+Leading +commands are applied to the first file, rather than the previous file, since there is no previous file.
 
 <P>
 If you like this program, and you want it to be your primary editor,

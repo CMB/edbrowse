@@ -716,14 +716,24 @@ int main(int argc, char **argv)
 		argv[0] = firstFile;
 	}
 
+	if (!cx && !firstFile) {		// no files
+// create an empty buffer
+		++cx;
+		cxSwitch(cx, false);
+		inInitFunction = setDebugOpt;
+		runEbFunction("init");
+		inInitFunction = false;
+		if(debugLevel >= 1)
+			i_puts(MSG_Ready);
+	}
+
 	while (argc) {
 		char *file = *argv;
 		char *file2 = 0;	// will be allocated
 
-// function on the command line
+// edbrowse command as argument
 		if (file[0] == '+') {
 			debugPrint(3, "+ %s", file + 1);
-			if(!cx) { puts("+comand with no file - not yet implemented!"); exit(0); }
 			edbrowseCommand(file + 1, false);
 			++argv, --argc;
 			continue;
@@ -814,16 +824,8 @@ int main(int argc, char **argv)
 
 		nzFree(file2);
 		++argv, --argc;
-	}			/* loop over files */
-	if (!cx) {		/* no files */
-		++cx;
-		cxSwitch(cx, false);
-		inInitFunction = setDebugOpt;
-		runEbFunction("init");
-		inInitFunction = false;
-		if(debugLevel >= 1)
-			i_puts(MSG_Ready);
-	}
+	}			// loop over files
+
 	if (cx > 1)
 		cxSwitch(1, false);
 
