@@ -187,42 +187,6 @@ pst fetchLine(int n, int show)
 	return fetchLineContext(n, show, context);
 }
 
-static long long apparentSizeW(const Window *w, bool browsing)
-{
-	int ln;
-	long long size = 0;
-	pst p;
-	if (!w)
-		return -1;
-	for (ln = 1; ln <= w->dol; ++ln) {
-		p = w->map[ln].text;
-		while (*p != '\n') {
-			if (*p == InternalCodeChar && browsing && w->browseMode) {
-				++p;
-				while (isdigitByte(*p)) ++p;
-				if (strchr("<>{}", *p)) ++size;
-				++p;
-				continue;
-			}
-			++p, ++size;
-		}
-		++size;
-	}			// loop over lines
-	if (w->nlMode)
-		--size;
-	return size;
-}
-
-static long long apparentSize(int cx, bool browsing)
-{
-	const Window *w;
-	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
-		setError(MSG_SessionInactive, cx);
-		return -1;
-	}
-	return apparentSizeW(w, browsing);
-}
-
 /* Display a line to the screen, with a limit on output length. */
 void displayLine(int n)
 {
@@ -284,7 +248,7 @@ void displayLine(int n)
 	nzFree(output);
 }
 
-static void printDot(void)
+void printDot(void)
 {
 	if (cw->dot)
 		displayLine(cw->dot);
@@ -5021,7 +4985,7 @@ et_go:
 		nzFree(cw->mailInfo);
 		cw->mailInfo = 0;
 		if (ub)
-			fileSize = apparentSize(context, false);
+			fileSize = bufferSize(context, false);
 		return true;
 	}
 
@@ -5843,194 +5807,6 @@ static int twoLetterG(const char *line, const char **runThis)
 	return 2;		/* no change */
 }
 
-// Return the number of unbalanced punctuation marks.
-// This is used by the next routine.
-static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
-{
-	char *t, *open;
-	char *p = (char *)fetchLine(ln, 1);
-	bool change;
-	char qc;
-	int backward, forward;
-
-// line is allocated, so blank out anything that looks like a string.
-	for(qc = 0, t = p; *t != '\n'; ++t) {
-		if(qc) { // in a string
-			if(*t == '\\' && t[1] != '\n') t[1] = ' ';
-			if(*t == qc) qc = 0;
-			*t = ' ';
-			continue;
-		}
-		if(*t == '"' || *t == '\'') {
-			qc = *t;
-// If we don't have a closing quote then forget it.
-			const char *u = t + 1;
-			for(; *u != '\n'; ++u) {
-				if(*u == qc) break; // found closing quote
-				if(*u == '\\' && u[1] != '\n') ++u;
-			}
-			if(*u != qc) qc = 0;
-		}
-	}
-
-	change = true;
-	while (change) {
-		change = false;
-		open = 0;
-		for (t = p; *t != '\n'; ++t) {
-			if (*t == c)
-				open = t;
-			if (*t == d && open) {
-				*open = 0;
-				*t = 0;
-				change = true;
-				open = 0;
-			}
-		}
-	}
-
-	backward = forward = 0;
-	for (t = p; *t != '\n'; ++t) {
-		if (*t == c)
-			++forward;
-		if (*t == d)
-			++backward;
-	}
-
-	free(p);
-	*back_p = backward;
-	*for_p = forward;
-}
-
-// Find the line that balances the unbalanced punctuation.
-bool balanceLine(const char *line)
-{
-	char c, d;		/* open and close */
-	char selected;
-	static char openlist[] = "{([<";
-	static char closelist[] = "})]>";
-	static const char alllist[] = "{}()[]<>`'";
-	char *t;
-	int level = 0;
-	int i, direction, forward, backward;
-
-	if ((c = *line)) {
-		const int cx = stringIsNum(line + 1);
-		if (!strchr(alllist, c) || (line[1] && cx == -1)) {
-			setError(MSG_BalanceChar, alllist);
-			return false;
-		}
-		if (!cx)
-			return true;
-		if ((t = strchr(openlist, c))) {
-			d = closelist[t - openlist];
-			direction = 1;
-		} else {
-			d = c;
-			t = strchr(closelist, d);
-			c = openlist[t - closelist];
-			direction = -1;
-		}
-		if (line[1])
-			level = cx;
-		else {
-			unbalanced(c, d, endRange, &backward, &forward);
-			level = direction > 0 ? forward : backward;
-			if (!level)
-				level = 1;
-		}
-	} else {
-
-// Look for anything unbalanced, probably a brace.
-		for (i = 0; i <= 2; ++i) {
-			c = openlist[i];
-			d = closelist[i];
-			unbalanced(c, d, endRange, &backward, &forward);
-			if (backward && forward) {
-				setError(MSG_BalanceAmbig, c, d, c, d);
-				return false;
-			}
-			level = backward + forward;
-			if (!level)
-				continue;
-			direction = backward ? -1 : 1;
-			break;
-		}
-		if (!level) {
-			setError(MSG_BalanceNothing);
-			return false;
-		}
-	}			/* explicit character passed in, or look for one */
-
-	selected = (direction > 0 ? c : d);
-
-/* search for the balancing line */
-	i = endRange;
-	while ((i += direction) > 0 && i <= cw->dol) {
-		unbalanced(c, d, i, &backward, &forward);
-		if ((direction > 0 && backward >= level) ||
-		    (direction < 0 && forward >= level)) {
-			cw->dot = i;
-			printDot();
-			return true;
-		}
-		level += (forward - backward) * direction;
-	}			/* loop over lines */
-
-	setError(MSG_Unbalanced, selected);
-	return false;
-}
-
-/* Unfold the buffer into one long, allocated string. */
-bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
-{
-	char *buf;
-	int l, ln;
-	long long size = apparentSizeW(w, false);
-	if (size < 0)
-		return false;
-	if (size >= 2000000000) {
-		setError(MSG_BigFile);
-		return false;
-	}
-	if (w->dirMode) {
-		setError(MSG_SessionDir, context);
-		return false;
-	}
-	if (cr)
-		size += w->dol;
-/* a few bytes more, just for safety */
-	buf = allocMem(size + 4);
-	*data = buf;
-	for (ln = 1; ln <= w->dol; ++ln) {
-		pst line = w->map[ln].text;
-		l = pstLength(line) - 1;
-		if (l) {
-			memcpy(buf, line, l);
-			buf += l;
-		}
-		if (cr) {
-			*buf++ = '\r';
-			if (l && buf[-2] == '\r')
-				--buf, --size;
-		}
-		*buf++ = '\n';
-	}			// loop over lines
-	if (w->dol && w->nlMode) {
-		if (cr)
-			--size;
-	}
-	*len = size;
-	(*data)[size] = 0;
-	return true;
-}
-
-bool unfoldBuffer(int cx, bool cr, char **data, int *len)
-{
-	const Window *w = sessionList[cx].lw;
-	return unfoldBufferW(w, cr, data, len);
-}
-
 static char *showLinks(void)
 {
 	int a_l;
@@ -6835,7 +6611,7 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 	}
 
 	if (cmd == 'B') {
-		return balanceLine(line);
+		return balanceLine(line, endRange);
 	}
 
 	if (cmd == 'u') {
@@ -7164,7 +6940,7 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		rc = addTextToBuffer((pst) a, strlen(a), 0, false);
 		nzFree(a);
 		cw->changeMode = false;
-		fileSize = apparentSize(context, false);
+		fileSize = bufferSize(context, false);
 		return rc;
 	}
 
@@ -8152,7 +7928,7 @@ bool browseCurrentBuffer(void)
 	if (bmode == 2)
 		cw->dot = cw->dol;
 	cw->browseMode = cf->browseMode = true;
-	fileSize = apparentSize(context, true);
+	fileSize = bufferSize(context, true);
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += 2;

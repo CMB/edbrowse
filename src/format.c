@@ -1,4 +1,5 @@
-/* format.c, Format text, establish line breaks, manage whitespace. */
+/* format.c, Format text, establish line breaks, manage whitespace,
+iso8859, utf8, utf16, utf32, base64, color codes, emojis. */
 
 #include "eb.h"
 
@@ -922,6 +923,144 @@ bool breakLine(const char *line, int len, int *newlen)
 void breakLineSetup(void)
 {
 	lspace = 3;
+}
+
+// Return the number of unbalanced punctuation marks.
+// This is used by the next routine.
+static void unbalanced(char c, char d, int ln, int *back_p, int *for_p)
+{
+	char *t, *open;
+	char *p = (char *)fetchLine(ln, 1);
+	bool change;
+	char qc;
+	int backward, forward;
+
+// line is allocated, so blank out anything that looks like a string.
+	for(qc = 0, t = p; *t != '\n'; ++t) {
+		if(qc) { // in a string
+			if(*t == '\\' && t[1] != '\n') t[1] = ' ';
+			if(*t == qc) qc = 0;
+			*t = ' ';
+			continue;
+		}
+		if(*t == '"' || *t == '\'') {
+			qc = *t;
+// If we don't have a closing quote then forget it.
+			const char *u = t + 1;
+			for(; *u != '\n'; ++u) {
+				if(*u == qc) break; // found closing quote
+				if(*u == '\\' && u[1] != '\n') ++u;
+			}
+			if(*u != qc) qc = 0;
+		}
+	}
+
+	change = true;
+	while (change) {
+		change = false;
+		open = 0;
+		for (t = p; *t != '\n'; ++t) {
+			if (*t == c)
+				open = t;
+			if (*t == d && open) {
+				*open = 0;
+				*t = 0;
+				change = true;
+				open = 0;
+			}
+		}
+	}
+
+	backward = forward = 0;
+	for (t = p; *t != '\n'; ++t) {
+		if (*t == c)
+			++forward;
+		if (*t == d)
+			++backward;
+	}
+
+	free(p);
+	*back_p = backward;
+	*for_p = forward;
+}
+
+// Find the line that balances the unbalanced punctuation.
+bool balanceLine(const char *line, int mark)
+{
+	char c, d;		/* open and close */
+	char selected;
+	static char openlist[] = "{([<";
+	static char closelist[] = "})]>";
+	static const char alllist[] = "{}()[]<>`'";
+	char *t;
+	int level = 0;
+	int i, direction, forward, backward;
+
+	if ((c = *line)) {
+		const int cx = stringIsNum(line + 1);
+		if (!strchr(alllist, c) || (line[1] && cx == -1)) {
+			setError(MSG_BalanceChar, alllist);
+			return false;
+		}
+		if (!cx)
+			return true;
+		if ((t = strchr(openlist, c))) {
+			d = closelist[t - openlist];
+			direction = 1;
+		} else {
+			d = c;
+			t = strchr(closelist, d);
+			c = openlist[t - closelist];
+			direction = -1;
+		}
+		if (line[1])
+			level = cx;
+		else {
+			unbalanced(c, d, mark, &backward, &forward);
+			level = direction > 0 ? forward : backward;
+			if (!level)
+				level = 1;
+		}
+	} else {
+
+// Look for anything unbalanced, probably a brace.
+		for (i = 0; i <= 2; ++i) {
+			c = openlist[i];
+			d = closelist[i];
+			unbalanced(c, d, mark, &backward, &forward);
+			if (backward && forward) {
+				setError(MSG_BalanceAmbig, c, d, c, d);
+				return false;
+			}
+			level = backward + forward;
+			if (!level)
+				continue;
+			direction = backward ? -1 : 1;
+			break;
+		}
+		if (!level) {
+			setError(MSG_BalanceNothing);
+			return false;
+		}
+	}			/* explicit character passed in, or look for one */
+
+	selected = (direction > 0 ? c : d);
+
+/* search for the balancing line */
+	i = mark;
+	while ((i += direction) > 0 && i <= cw->dol) {
+		unbalanced(c, d, i, &backward, &forward);
+		if ((direction > 0 && backward >= level) ||
+		    (direction < 0 && forward >= level)) {
+			cw->dot = i;
+			printDot();
+			return true;
+		}
+		level += (forward - backward) * direction;
+	}			/* loop over lines */
+
+	setError(MSG_Unbalanced, selected);
+	return false;
 }
 
 char *htmlReformat(char *buf)

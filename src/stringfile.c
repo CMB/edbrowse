@@ -840,6 +840,92 @@ void truncate0(const char *filename, int fh)
 		ftruncate(fh, 0l);
 }
 
+long long bufferSizeW(const Window *w, bool browsing)
+{
+	int ln;
+	long long size = 0;
+	pst p;
+	if (!w)
+		return -1;
+	for (ln = 1; ln <= w->dol; ++ln) {
+		p = w->map[ln].text;
+		while (*p != '\n') {
+			if (*p == InternalCodeChar && browsing && w->browseMode) {
+				++p;
+				while (isdigitByte(*p)) ++p;
+				if (strchr("<>{}", *p)) ++size;
+				++p;
+				continue;
+			}
+			++p, ++size;
+		}
+		++size;
+	}			// loop over lines
+	if (w->nlMode)
+		--size;
+	return size;
+}
+
+long long bufferSize(int cx, bool browsing)
+{
+	const Window *w;
+	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
+		setError(MSG_SessionInactive, cx);
+		return -1;
+	}
+	return bufferSizeW(w, browsing);
+}
+
+// Unfold the buffer into one long, allocated string
+bool unfoldBufferW(const Window *w, bool cr, char **data, int *len)
+{
+	char *buf;
+	int l, ln;
+	long long size = bufferSizeW(w, false);
+	if (size < 0)
+		return false;
+	if (size >= 2000000000) {
+		setError(MSG_BigFile);
+		return false;
+	}
+	if (w->dirMode) {
+		setError(MSG_SessionDir, context);
+		return false;
+	}
+	if (cr)
+		size += w->dol;
+/* a few bytes more, just for safety */
+	buf = allocMem(size + 4);
+	*data = buf;
+	for (ln = 1; ln <= w->dol; ++ln) {
+		pst line = w->map[ln].text;
+		l = pstLength(line) - 1;
+		if (l) {
+			memcpy(buf, line, l);
+			buf += l;
+		}
+		if (cr) {
+			*buf++ = '\r';
+			if (l && buf[-2] == '\r')
+				--buf, --size;
+		}
+		*buf++ = '\n';
+	}			// loop over lines
+	if (w->dol && w->nlMode) {
+		if (cr)
+			--size;
+	}
+	*len = size;
+	(*data)[size] = 0;
+	return true;
+}
+
+bool unfoldBuffer(int cx, bool cr, char **data, int *len)
+{
+	const Window *w = sessionList[cx].lw;
+	return unfoldBufferW(w, cr, data, len);
+}
+
 /* shift string to upper, lower, or mixed case */
 /* action is u, l, or m. */
 void caseShift(char *s, char action)
