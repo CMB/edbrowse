@@ -3,15 +3,6 @@
 #ifndef EB_H
 #define EB_H 1
 
-/* the symbol DOSLIKE is used to conditionally compile those constructs
- * that are common to DOS and NT, but not typical of Unix. */
-#ifdef MSDOS
-#define DOSLIKE 1
-#endif
-#ifdef _WIN32
-#define DOSLIKE 1
-#endif
-
 /* Define _GNU_SOURCE on Linux, so we don't have an implicit declaration
  * of asprintf, but only if we are not compiling C++.
  * Turns out that when compiling C++ on LInux, _GNU_SOURCE is helpfully
@@ -33,16 +24,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <curl/curl.h>
-#ifdef DOSLIKE
-#include <io.h>
-#include <direct.h> // for _mkdir, ...
-#include <conio.h>  // for _kbhit, getch, getche
-#include <stdint.h> // for UINT32_MAX
-#include "vsprtf.h" // for WIN32 asprintf, vasprintf, ...
-#else
 #include <unistd.h>
-#endif
+#include <curl/curl.h>
 #include <pthread.h>
 
 #ifndef O_BINARY
@@ -59,7 +42,7 @@
  * Some systems will define ushort in sys/types.h, others will not.
  * Unfortunately there is no #define symbol to key on;
  * no way to conditionally compile the following statement. */
-#if defined(DOSLIKE) || defined(__ANDROID__)
+#if defined(__ANDROID__)
 typedef unsigned short ushort;
 #endif
 /* sys/types.h defines unsigned char as unchar.  I prefer uchar.
@@ -691,18 +674,9 @@ extern nodeFunction traverse_callback;
 #define BAD_BASE64_DECODE 1
 #define EXTRA_CHARS_BASE64_DECODE 2
 
-#ifdef DOSLIKE
-/* windows mkdir takes only one argument */
-#define mkdir(a,b) _mkdir(a)
-// give the above we probably don't need rwx mode but here we go
-#define MODE_rw 0600
-#define MODE_rwx 0700
-#define MODE_private 0600
-#else
 #define MODE_rw 0666
 #define MODE_rwx 0777
 #define MODE_private 0600
-#endif
 
 /* function prototypes */
 #include "ebprot.h"

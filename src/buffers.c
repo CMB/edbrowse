@@ -223,48 +223,6 @@ static long long apparentSize(int cx, bool browsing)
 	return apparentSizeW(w, browsing);
 }
 
-/* get the directory suffix for a file.
- * This only makes sense in directory mode. */
-static char *dirSuffixContext(int n, int cx)
-{
-	static char suffix[4];
-	Window *lw = sessionList[cx].lw;
-
-	suffix[0] = 0;
-	if (lw->dirMode) {
-		suffix[0] = lw->dmap[DTSIZE*n];
-		suffix[1] = lw->dmap[DTSIZE*n + 1];
-		suffix[2] = 0;
-	}
-	return suffix;
-}
-
-static char *dirSuffix(int n)
-{
-	return dirSuffixContext(n, context);
-}
-
-static char *dirSuffix2(int n, const char *path)
-{
-	static char suffix[4], *t;
-	char ftype, c;
-	if(!cw->dnoMode)
-		return dirSuffixContext(n, context);
-// names only, don't have file type information, have to go get it
-	t = suffix;
-	ftype = fileTypeByName(path, 1);
-	if(isupper(ftype)) *t++ = '@', ftype = tolower(ftype);
-	c = 0;
-	if (ftype == 'd') c = '/';
-	if (ftype == 's') c = '^';
-	if (ftype == 'c') c = '<';
-	if (ftype == 'b') c = '*';
-	if (ftype == 'p') c = '|';
-	*t++ = c;
-	*t = 0;
-	return suffix;
-}
-
 /* Display a line to the screen, with a limit on output length. */
 void displayLine(int n)
 {
@@ -1236,7 +1194,7 @@ static struct lineMap *newpiece;
  * Also shift the downstream labels.
  * Pass the string containing the new line numbers, and the dest line number. */
 static int *nextLabel(int *label);
-static void addToMap(int nlines, int destl)
+void addToMap(int nlines, int destl)
 {
 	struct lineMap *newmap;
 	bool *newg;
@@ -1424,23 +1382,6 @@ fail:
 	return false;
 }
 
-/* create the full pathname for a file that you are viewing in directory mode. */
-/* This is static, with a limit on path length. */
-static char *makeAbsPath(const char *f)
-{
-	static char path[ABSPATH + 200];
-	const char *b = cw->baseDirName ? cw->baseDirName : emptyString;
-	if (strlen(b) + strlen(f) > ABSPATH - 2) {
-		setError(MSG_PathNameLong, ABSPATH);
-		return 0;
-	}
-	if(cw->baseDirName)
-		sprintf(path, "%s/%s", b, f);
-	else
-		strcpy(path, f);
-	return path;
-}
-
 // Compress a/b/.. back to a, when going to a parent directory
 static void stripDotDot(char *path)
 {
@@ -1565,7 +1506,6 @@ void delText(int start, int end)
 // n+1 is number of lines to delete.
 // It is a challenge to make this function behave exactly as edbrowse would,
 // if we were running d on each marked line.
-static bool delFiles(int start, int end, bool withtext);
 static bool delTextG(char action, int n, int back)
 {
 	int i, j, k;
@@ -1592,7 +1532,7 @@ static bool delTextG(char action, int n, int back)
 // mass delete in directory mode is only deleting a single line.
 // Honestly what other kind of global delete would you ever do
 // in directory mode?
-			rc = delFiles(i, i, false);
+			rc = delFiles(i, i, false, icmd, &cmd);
 // in case this fails, set dot to where we are
 			cw->dot = j;
 		}
@@ -1644,131 +1584,6 @@ static bool delTextG(char action, int n, int back)
 /* Delete files from a directory as you delete lines.
  * Set dw to move them to your recycle bin.
  * Set dx to delete them outright. */
-
-static bool delFiles(int start, int end, bool withtext)
-{
-	int ln, j;
-
-	if (!dirWrite) {
-		setError(MSG_DirNoWrite);
-		return false;
-	}
-
-	if (dirWrite == 1 && !recycleBin) {
-		setError(MSG_NoRecycle);
-		return false;
-	}
-
-	if(end < start) return true;
-	cmd = 'e';		// show errors
-
-	for (ln = start; ln <= end; ++ln) {
-		char *file, *t, *path, *ftype, *a;
-		char qc = '\''; // quote character
-		file = (char *)fetchLine(ln, 0);
-		t = strchr(file, '\n');
-		if (!t)
-			i_printfExit(MSG_NoNlOnDir, file);
-		*t = 0;
-		path = makeAbsPath(file);
-		if (!path) {
-abort:
-			free(file);
-			if (ln != start && withtext)
-				delText(start, ln - 1);
-			return false;
-		}
-
-// check formeta chars in path
-		if(strchr(path, qc)) {
-			qc = '"';
-			if(strpbrk(path, "\"$"))
-// I can't easily turn this into a shell command, so just hang it.
-				qc = 0;
-		}
-		if(strstr(path, "\\\\"))
-			qc = 0;
-
-		ftype = dirSuffix2(ln, path);
-		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype)))
-			debugPrint(1, "%s%s ↓", file, ftype);
-		else
-			debugPrint(1, "%s%s → 🗑", file, ftype);
-
-		if (dirWrite == 2 && *ftype == '/') {
-			if(!qc) {
-				setError(MSG_MetaChar);
-				goto abort;
-			}
-			asprintf(&a, "rm -rf %c%s%c",
-			qc, path, qc);
-			j = system(a);
-			free(a);
-			if(!j) {
-				free(file);
-				continue;
-			} else {
-				setError(MSG_NoDirDelete);
-				goto abort;
-			}
-		}
-
-		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
-unlink:
-			if (unlink(path)) {
-				setError(MSG_NoRemove, file);
-				goto abort;
-			}
-		} else {
-			char bin[ABSPATH];
-			sprintf(bin, "%s/%s", recycleBin, file);
-			if (rename(path, bin)) {
-				if (errno == EXDEV) {
-					char *rmbuf;
-					int rmlen;
-					if (*ftype == '/' ||
-					fileSizeByName(path) > 200000000) {
-// let mv do the work
-						if(!qc) {
-							setError(MSG_MetaChar);
-							goto abort;
-						}
-						asprintf(&a, "mv -n %c%s%c",
-						qc, path, qc);
-						j = system(a);
-						free(a);
-						if(!j) {
-							free(file);
-							continue;
-						} else {
-							setError(MSG_MoveFileSystem , path);
-							goto abort;
-						}
-					}
-					if (!fileIntoMemory    (path, &rmbuf, &rmlen, 0))
-						goto abort;
-					if (!memoryOutToFile(bin, rmbuf, rmlen,
-							     MSG_TempNoCreate2,
-							     MSG_NoWrite2)) {
-						nzFree(rmbuf);
-						goto abort;
-					}
-					nzFree(rmbuf);
-					goto unlink;
-				}
-
-// some other rename error
-				setError(MSG_NoMoveToTrash, file);
-				goto abort;
-			}
-		}
-	}
-	if(withtext) delText(start, end);
-
-// if you type D instead of d, I don't want to lose that.
-	cmd = icmd;
-	return true;
-}
 
 // Move or copy files from one directory to another
 static bool moveFiles(void)
@@ -2146,238 +1961,6 @@ static bool joinTextG(char action, int n, int back, const char *fs)
 	return rc;
 }
 
-// directory sort record, for nonalphabetical sorts.
-struct DSR {
-	int idx;
-	union {
-#ifdef linux
-		struct timespec spec;
-#else
-		time_t t;
-#endif
-		off_t z;
-	} u;
-};
-static struct DSR *dsr_list;
-extern struct stat this_stat;
-uchar ls_sort;		// sort method for directory listing
-bool ls_reverse;		// reverse sort
-char lsformat[12];	/* size date etc on a directory listing */
-
-/* compare routine for quicksort directory scan */
-static int dircmp(const void *s, const void *t)
-{
-	const struct DSR *q = s;
-	const struct DSR *r = t;
-	int rc;
-	if (ls_sort == 1) {
-		rc = 0;
-		if (q->u.z < r->u.z)
-			rc = -1;
-		if (q->u.z > r->u.z)
-			rc = 1;
-	}
-	if (ls_sort == 2) {
-		rc = 0;
-#ifdef linux
-		if (q->u.spec.tv_sec < r->u.spec.tv_sec)
-			rc = -1;
-		if (q->u.spec.tv_sec > r->u.spec.tv_sec)
-			rc = 1;
-		if(!rc) {
-// Honor sub-second timestamp precision if the operating system supports it.
-		if (q->u.spec.tv_nsec < r->u.spec.tv_nsec)
-			rc = -1;
-		if (q->u.spec.tv_nsec > r->u.spec.tv_nsec)
-			rc = 1;
-		}
-#else
-		if (q->u.t < r->u.t)
-			rc = -1;
-		if (q->u.t > r->u.t)
-			rc = 1;
-#endif
-	}
-	if (ls_reverse)
-		rc = -rc;
-	return rc;
-}
-
-// Read the contents of a directory into the current buffer
-static bool readDirectory(const char *filename)
-{
-	int len, j, linecount;
-	char *v;
-	char *dmap = 0;
-	struct lineMap *mptr;
-	struct lineMap *backpiece = 0;
-	uchar innersort = (dno ? 0 : ls_sort);
-	bool innerrev = (dno ? false : ls_reverse);
-
-	cw->baseDirName = cloneString(filename);
-/* get rid of trailing slash */
-	len = strlen(cw->baseDirName);
-	if (len && cw->baseDirName[len - 1] == '/')
-		cw->baseDirName[len - 1] = 0;
-/* Understand that the empty string now means / */
-
-/* get the files, or fail if there is a problem */
-	if (!sortedDirList
-	    (filename, &newpiece, &linecount, innersort, innerrev))
-		return false;
-	if (!cw->dol) {
-		cw->dirMode = true;
-		cw->dnoMode = dno;
-		dmap = allocZeroMem(linecount * DTSIZE);
-		if(debugLevel >= 1)
-			i_puts(MSG_DirMode);
-		if (lsformat[0])
-			backpiece = allocZeroMem(LMSIZE * (linecount + 2));
-	}
-
-	if (!linecount) {	/* empty directory */
-		cw->dot = endRange;
-		fileSize = 0;
-		free(newpiece);
-		newpiece = 0;
-		nzFree(backpiece);
-		nzFree(dmap);
-		goto success;
-	}
-
-	if (innersort)
-		dsr_list = allocZeroMem(sizeof(struct DSR) * linecount);
-
-/* change 0 to nl and count bytes */
-	fileSize = 0;
-	mptr = newpiece;
-	for (j = 0; j < linecount; ++j, ++mptr) {
-		char c, ftype;
-		pst t = mptr->text;
-		char *abspath = makeAbsPath((char *)t);
-
-// make sure this gets done.
-		if (backpiece)
-			backpiece[j + 1].text = (uchar *) emptyString;
-
-		while (*t) {
-			if (*t == '\n')
-				*t = '\t';
-			++t;
-		}
-		*t = '\n';
-		len = t - mptr->text;
-		fileSize += len + 1;
-		if (innersort)
-			dsr_list[j].idx = j;
-		if (!abspath)
-			continue;	/* should never happen */
-
-		ftype = fileTypeByName(abspath, 2);
-		if (!ftype)
-			continue;
-		if (isupperByte(ftype)) {	/* symbolic link */
-			if (!cw->dirMode)
-				*t = '@', *++t = '\n';
-			else
-				dmap[j*DTSIZE] = '@';
-			++fileSize;
-		}
-		ftype = tolower(ftype);
-		c = 0;
-		if (ftype == 'd') c = '/';
-		if (ftype == 's') c = '^';
-		if (ftype == 'c') c = '<';
-		if (ftype == 'b') c = '*';
-		if (ftype == 'p') c = '|';
-		if (c) {
-			if (!cw->dirMode)
-				*t = c, *++t = '\n';
-			else if (dmap[j*DTSIZE])
-				dmap[DTSIZE*j + 1] = c;
-			else
-				dmap[DTSIZE*j] = c;
-			++fileSize;
-		}
-// If sorting a different way, get the attribute.
-		if (innersort) {
-			if (innersort == 1)
-				dsr_list[j].u.z = this_stat.st_size;
-			if (innersort == 2) {
-// Honor sub-second timestamp precision if the operating system supports it.
-// Currently only linux - other systems?
-#ifdef linux
-				dsr_list[j].u.spec = this_stat.st_mtim;
-#else
-				dsr_list[j].u.t = this_stat.st_mtime;
-#endif
-			}
-		}
-
-/* extra stat entries on the line */
-		if (!lsformat[0] || dno)
-			continue;
-		v = lsattr(abspath, lsformat);
-		if (!*v)
-			continue;
-		len = strlen(v);
-		fileSize += len + 1;
-		if (cw->dirMode) {
-			backpiece[j + 1].text = (uchar *) cloneString(v);
-		} else {
-/* have to realloc at this point */
-			int l1 = t - mptr->text;
-			mptr->text = reallocMem(mptr->text, l1 + len + 3);
-			t = mptr->text + l1;
-			*t++ = ' ';
-			strcpy((char *)t, v);
-			t += len;
-			*t++ = '\n';
-			*t = 0;
-		}
-	}			// loop fixing files in the directory scan
-
-	if (innersort) {
-		struct lineMap *tmp;
-		char *dmap2;
-		qsort(dsr_list, linecount, sizeof(struct DSR), dircmp);
-// Now I have to remap everything.
-		tmp = allocMem(LMSIZE * linecount);
-		if(dmap) dmap2 = allocZeroMem(DTSIZE * linecount);
-		for (j = 0; j < linecount; ++j) {
-			tmp[j] = newpiece[dsr_list[j].idx];
-			if(!dmap) continue;
-			dmap2[DTSIZE*j] = dmap[DTSIZE*dsr_list[j].idx];
-			dmap2[DTSIZE*j + 1] = dmap[DTSIZE*dsr_list[j].idx + 1];
-		}
-		free(newpiece);
-		newpiece = tmp;
-		if(dmap) free(dmap), dmap = dmap2;
-		if (backpiece) {
-			tmp = allocMem(LMSIZE * (linecount + 2));
-			for (j = 0; j < linecount; ++j)
-				tmp[j + 1] = backpiece[dsr_list[j].idx + 1];
-			memset(tmp, 0, LMSIZE);
-			memset(tmp + linecount + 1, 0, LMSIZE);
-			free(backpiece);
-			backpiece = tmp;
-		}
-		free(dsr_list);
-	}
-
-	addToMap(linecount, endRange);
-	cw->r_map = backpiece;
-	if(dmap) {
-		cw->dmap = allocMem((linecount + 1) * DTSIZE);
-		memcpy(cw->dmap + DTSIZE, dmap, linecount*DTSIZE);
-	}
-
-success:
-	if (cmd == 'r')
-		debugPrint(1, "%lld", fileSize);
-	return true;
-}
-
 // Read a file, or url, into the current buffer.
 static bool readFile(const char *filename, bool newwin,
 		     int fromframe, const char *fromthis, const char *orig_head)
@@ -2615,7 +2198,7 @@ badfile:
 	filetype = fileTypeByName(filename, 0);
 	if (filetype == 'd') {
 		if (!fromframe)
-			return readDirectory(filename);
+			return readDirectory(filename, endRange, cmd, &newpiece);
 		setError(MSG_FrameNotHTML);
 		goto badfile;
 	}
@@ -8388,7 +7971,7 @@ redirect:
 
 	if (cmd == 'd' || cmd == 'D') {
 		if (cw->dirMode) {
-			j = delFiles(startRange, endRange, true);
+			j = delFiles(startRange, endRange, true, icmd, &cmd);
 			undoCompare();
 			cw->undoable = false;
 			undoSpecialClear();

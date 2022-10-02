@@ -22,6 +22,7 @@ bool cxCompare(int cx) ;
 bool cxActive(int cx, bool error);
 bool cxQuit(int cx, int action) ;
 void cxSwitch(int cx, bool interactive) ;
+void addToMap(int nlines, int destl);
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) ;
 void delText(int start, int end) ;
 bool readFileArgv(const char *filename, int fromframe, const char *orig_head);
@@ -316,8 +317,13 @@ char getLetter(const char *s) ;
 char *getFileName(int msg, const char *defname, bool isnew, bool ws);
 int shellProtectLength(const char *s);
 void shellProtect(char *t, const char *s);
-const char *nextScanFile(const char *base); //@
-bool sortedDirList(const char *dir, struct lineMap **map_p, int *count_p, int othersort, bool reverse) ; //@
+char *dirSuffixContext(int n, int cx);
+char *dirSuffix(int n);
+char *dirSuffix2(int n, const char *path);
+char *makeAbsPath(const char *f);
+const char *nextScanFile(const char *base);
+bool readDirectory(const char *filename, int endline, char cmd, struct lineMap **map_p);
+bool delFiles(int start, int end, bool withtext, char origcmd, char *cmd_p);
 bool envFile(const char *line, const char **expanded); //@
 char *envFileAlloc(const char *line); //@
 bool envFileDown(const char *line, const char **expanded) ; //@
