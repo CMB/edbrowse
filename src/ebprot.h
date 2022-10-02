@@ -324,6 +324,7 @@ char *makeAbsPath(const char *f);
 const char *nextScanFile(const char *base);
 bool readDirectory(const char *filename, int endline, char cmd, struct lineMap **map_p);
 bool delFiles(int start, int end, bool withtext, char origcmd, char *cmd_p);
+bool moveFiles(int start, int end, int dest, char origcmd);
 bool envFile(const char *line, const char **expanded); //@
 char *envFileAlloc(const char *line); //@
 bool envFileDown(const char *line, const char **expanded) ; //@

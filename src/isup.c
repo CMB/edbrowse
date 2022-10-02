@@ -3539,6 +3539,8 @@ void ircRead(void)
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
 
+// Some of this tcp code resurrected from c18cf432e2ca8dca97c80aae59c710f3230cc434
+
 static int tcp_isDots(const char *s)
 {
 	const char *t;

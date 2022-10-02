@@ -1750,6 +1750,9 @@ success:
 	return true;
 }
 
+// Delete files from a directory as you delete lines.
+// Set dw to move them to your recycle bin.
+// Set dx to delete them outright.
 bool delFiles(int start, int end, bool withtext, char origcmd, char *cmd_p)
 {
 	int ln, j;
@@ -1872,6 +1875,148 @@ unlink:
 
 // if you type D instead of d, I don't want to lose that.
 	*cmd_p = origcmd;
+	return true;
+}
+
+// Move or copy files from one directory to another
+bool moveFiles(int start, int end, int dest, char origcmd)
+{
+	Window *cw1 = cw;
+	Window *cw2 = sessionList[dest].lw;
+	char *path1, *path2;
+	int ln, cnt, dol;
+
+	if (!dirWrite) {
+		setError(MSG_DirNoWrite);
+		return false;
+	}
+
+	ln = start;
+	cnt = end - start + 1;
+	while (cnt--) {
+		char *file, *t, *ftype;
+		file = (char *)fetchLine(ln, 0);
+		t = strchr(file, '\n');
+		if (!t)
+			i_printfExit(MSG_NoNlOnDir, file);
+		*t = 0;
+		path1 = makeAbsPath(file);
+		if (!path1) {
+			free(file);
+			return false;
+		}
+		path1 = cloneString(path1);
+		ftype = dirSuffix2(ln, path1);
+
+		debugPrint(1, "%s%s %s %s",
+		file, ftype, (origcmd == 'm' ? "→" : "≡"), cw2->baseDirName);
+
+
+		cw = cw2;
+		path2 = makeAbsPath(file);
+		cw = cw1;
+		if (!path2) {
+			free(file);
+			free(path1);
+			return false;
+		}
+
+		if (!access(path2, 0)) {
+			setError(MSG_DestFileExists);
+			free(file);
+			free(path1);
+			return false;
+		}
+
+		errno = EXDEV;
+		if (origcmd == 't' || rename(path1, path2)) {
+			if (errno == EXDEV) {
+				char *rmbuf;
+				int rmlen, j;
+				if (*ftype || fileSizeByName(path1) > 200000000) {
+// let mv or cp do the work
+					char *a, qc = '\'';
+					if(strchr(path1, qc) || strchr(path2, qc)) {
+						qc = '"';
+						if(strpbrk(path1, "\"$") || strpbrk(path2, "\"$"))
+// I can't easily turn this into a shell command, so just hang it.
+							qc = 0;
+					}
+					if(strstr(path1, "\\\\") || strstr(path2, "\\\\"))
+						qc = 0;
+					if(!qc) {
+						setError(MSG_MetaChar);
+						free(file);
+						free(path1);
+						return false;
+					}
+					asprintf(&a, "%s %c%s%c %c%s%c",
+					(origcmd == 'm' ? "mv -n" : "cp -an"),
+					qc, path1, qc, qc, cw2->baseDirName, qc);
+					j = system(a);
+					free(a);
+					if(j) {
+						setError((origcmd == 'm' ? MSG_MoveFileSystem : MSG_CopyFail), file);
+						free(file);
+						free(path1);
+						return false;
+					}
+					if(origcmd == 'm')
+						unlink(path1);
+					goto moved;
+				}
+// A small file, copy it ourselves.
+				if (!fileIntoMemory(path1, &rmbuf, &rmlen, 0)) {
+					free(file);
+					free(path1);
+					return false;
+				}
+				if (!memoryOutToFile(path2, rmbuf, rmlen,
+						     MSG_TempNoCreate2,
+						     MSG_NoWrite2)) {
+					free(file);
+					free(path1);
+					nzFree(rmbuf);
+					return false;
+				}
+				nzFree(rmbuf);
+				if(origcmd == 'm')
+					unlink(path1);
+				goto moved;
+			}
+
+			setError(MSG_MoveError, file, errno);
+			free(file);
+			free(path1);
+			return false;
+		}
+
+moved:
+		free(path1);
+		if(origcmd == 'm')
+			delText(ln, ln);
+// add it to the other directory
+		*t++ = '\n';
+		cw = cw2;
+		dol = cw->dol;
+		addTextToBuffer((pst)file, t-file, dol, false);
+		free(file);
+		cw->dot = ++dol;
+		cw->dmap = reallocMem(cw->dmap, DTSIZE * (dol + 1));
+		memset(cw->dmap + DTSIZE*dol, 0, DTSIZE);
+		cw->dmap[DTSIZE*dol] = ftype[0];
+		if(ftype[0])
+		cw->dmap[DTSIZE*dol + 1] = ftype[1];
+// if attributes were displayed in that directory - more work to do.
+// I just leave a space for them; I don't try to derive them.
+		if(cw->r_map) {
+			cw->r_map = reallocMem(cw->r_map, LMSIZE * (dol + 2));
+			memset(cw->r_map + dol, 0, LMSIZE*2);
+			cw->r_map[dol].text = (uchar*)emptyString;
+		}
+		cw = cw1; // put it back
+	}
+
 	return true;
 }
 
