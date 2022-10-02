@@ -3631,6 +3631,10 @@ static int ircDial(char *host, int port)
 {
 	static struct addrinfo hints;
 	int srv;
+	struct timeval tv;
+	struct linger ling;
+	static int yes = 1;
+	static int no = 0;
 	struct addrinfo *res, *r;
 	char portbuf[12];
 	sprintf(portbuf, "%d", port);
@@ -3644,16 +3648,56 @@ static int ircDial(char *host, int port)
 	for(r = res; r; r = r->ai_next) {
 		if((srv = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) == -1)
 			continue;
+
+// set some socket options.
+// Timer is intended to restrict connect, and shouldn't affect anything else.
+// In case you type in a bad domain or the server is down.
+// My reads are nonblocking, and I do the actual read
+// when I know there is something there.
+// Writes should go out quickly, I don't know why they wouldn't.
+// This code, from sic, tries all ip addresses for the domain, so time adds up.
+// I'll make the timeout relatively short.
+// Note you can hit ^c and it will not continue to the next ip address.
+		tv.tv_sec = 4;
+		tv.tv_usec = 0;
+		setsockopt(srv, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(srv, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
+// we shouldn't be closing a socket unless we've finished the session.
+// If we are closing it for any other reason, if must be a failure leg.
+// May as well discard any pending data and close it quickly.
+		ling.l_onoff = 0;
+		ling.l_linger = 0;
+		fcntl(srv, F_SETFD, FD_CLOEXEC);
+		setsockopt(srv, SOL_SOCKET, SO_LINGER, (char *)&ling, sizeof(ling));
+
+		setsockopt(srv, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
+// I feel better setting REUSEPORT, but this option isn't available
+// on every system.  I hope it is the default.
+#ifdef SO_REUSEPORT
+		setsockopt(srv, SOL_SOCKET, SO_REUSEPORT, (char *)&yes, sizeof(yes));
+#endif
+// for now I don't see any advantage in keeping sockets warm.
+		setsockopt(srv, SOL_SOCKET, SO_KEEPALIVE, (char *)&no, sizeof(no));
+
 		if(connect(srv, r->ai_addr, r->ai_addrlen) == 0)
 			break;
 		close(srv);
-		if(intFlag) r = 0;
+		if(intFlag) { r = 0; break; }
 	}
 	freeaddrinfo(res);
+
 	if(!r) {
 		setError(MSG_WebConnect, host);
 		return -1;
 	}
+
+// now that we're connected, up the timout to 10 seconds.
+	tv.tv_sec = 10;
+	tv.tv_usec = 0;
+	setsockopt(srv, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	setsockopt(srv, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
 	return srv;
 }
 

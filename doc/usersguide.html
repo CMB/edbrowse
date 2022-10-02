@@ -2204,9 +2204,12 @@ or another editing session `w3'.
 <P>
 Many common protocols are supported.
 You can fetch a file from an ftp server via `e ftp://this.that.com/file'.
-Since ftp supports uploads, the w (write) command might work - assuming you have permission to upload onto that server.
-Download the file, make changes, and write the file back to the server,
-and it has the same look and feel as editing a local file on your computer.
+edbrowse always gives you the option to download, since ftp was originally developed for that purpose, and the file may be too large for memory or for edbrowse to handle.
+You can use the current file name, enter a new file name, enter space to read it into memory, or enter x to abort.
+These are the options whenever edbrowse offers to download a file.
+If you have pulled the file into memory, you can edit it, then write it back to the server, affecting an ftp upload,
+assuming you have permission to upload onto that server.
+It has the same look and feel as editing a local file on your computer.
 This also works with scp, although paths are absolute, rather than relative to your home directory, as is the case with ftp.
 ftps, sftp, and tftp are also supported.
 Of course, edbrowse is primarily used as a browser, so let's return to http and https.
