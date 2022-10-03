@@ -988,6 +988,8 @@ static void freeWindow(Window *w)
 				w2->ircoMode = false;
 				nzFree(w2->f0.fileName), w2->f0.fileName = 0;
 			} else {
+// I have to clear the channel here so the file name comes out right.
+				nzFree(w->ircChannel), w->ircChannel = 0;
 				ircSetFileName(w2);
 			}
 		}

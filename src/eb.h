@@ -485,7 +485,8 @@ int ehsn;
 	bool sqlMode:1;		// accessing a table
 	bool irciMode:1;		// input irc
 	bool ircoMode:1;		// output irc
-	bool ircChannels; // show channel when displaying messages
+	bool ircChannels:1; // show channel when displaying messages
+	bool ircSecure:1; // ssl connection
 	int irc_fd; // file descriptor for socket
 	void *irc_ssl; // stream for a secure socket
 	ushort ircOther; // point to the output side

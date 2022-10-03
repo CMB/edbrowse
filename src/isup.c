@@ -3208,8 +3208,108 @@ native irc. Code taken from https://dl.suckless.org/tools/sic-1.2.tar.gz
 under the MIT license.
 *********************************************************************/
 
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+       #include <arpa/inet.h>
+#include <openssl/ssl.h>
+
+typedef unsigned int IP32bit;
+#define NULL_IP (IP32bit)(-1)
+
+// Some of this tcp code resurrected from c18cf432e2ca8dca97c80aae59c710f3230cc434
+
+static int tcp_isDots(const char *s)
+{
+	const char *t;
+	char c;
+	int nd = 0;		// number of dots
+	if (!s)
+		return 0;
+	for (t = s; (c = *t); ++t) {
+		if (c == '.') {
+			++nd;
+			if (t == s || !t[1])
+				return 0;
+			if (t[-1] == '.' || t[1] == '.')
+				return 0;
+			continue;
+		}
+		if (!isdigit(c))
+			return 0;
+	}
+	return (nd == 3);
+}
+
+static IP32bit tcp_name_ip(const char *name)
+{
+	struct hostent *hp;
+	IP32bit *ip;
+	if(!name) return NULL_IP;
+	hp = gethostbyname(name);
+	if (!hp)
+#if 0
+		printf("%s\n", hstrerror(h_errno));
+#endif
+		return NULL_IP;
+#if 0
+	puts("found it");
+	if (hp->h_aliases) {
+		puts("aliases");
+		char **a = hp->h_aliases;
+		while (*a) {
+			printf("alias %s\n", *a);
+			++a;
+		}
+	}
+#endif
+	ip = (IP32bit *) * (hp->h_addr_list);
+		return !ip ? NULL_IP : *ip;
+}
+
+static char *tcp_ip_dots(IP32bit ip)
+{
+	if(ip == NULL_IP) return 0;
+	return inet_ntoa(*(struct in_addr *)&ip);
+}
+
+static char *tcp_name_dots(const char *name)
+{
+	IP32bit ip = tcp_name_ip(name);
+	if (ip == NULL_IP)
+		return 0;
+	return tcp_ip_dots(ip);
+}
+
+static IP32bit tcp_dots_ip(const char *s)
+{
+	struct in_addr a;
+	if(!s) return NULL_IP;
+// Why can't SCO Unix be like everybody else?
+#ifdef SCO
+	inet_aton(s, &a);
+#else
+	*(IP32bit *) & a = inet_addr(s);
+#endif
+	return *(IP32bit *) & a;
+}
+
+static char *tcp_ip_name(IP32bit ip)
+{
+	if(ip == NULL_IP) return 0;
+	struct hostent *hp = gethostbyaddr((char *)&ip, 4, AF_INET);
+	if (!hp) return 0;
+	return hp->h_name;
+}
+
+static char *tcp_dots_name(const char *s)
+{
+	return tcp_ip_name(tcp_dots_ip(s));
+}
+
 static char irc_in[4096];
 static char irc_out[4096];
+static SSL_CTX *sslcx;		// the overall ssl context for irc sockets
 
 static void ircSend(int fd, char *fmt, ...)
 {
@@ -3546,106 +3646,6 @@ void ircRead(void)
 	}
 }
 
-// And now for the socket stuff, which I pretty much copied without understanding.
-
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-       #include <arpa/inet.h>
-
-typedef unsigned int IP32bit;
-#define NULL_IP (IP32bit)(-1)
-
-// Some of this tcp code resurrected from c18cf432e2ca8dca97c80aae59c710f3230cc434
-
-static int tcp_isDots(const char *s)
-{
-	const char *t;
-	char c;
-	int nd = 0;		// number of dots
-	if (!s)
-		return 0;
-	for (t = s; (c = *t); ++t) {
-		if (c == '.') {
-			++nd;
-			if (t == s || !t[1])
-				return 0;
-			if (t[-1] == '.' || t[1] == '.')
-				return 0;
-			continue;
-		}
-		if (!isdigit(c))
-			return 0;
-	}
-	return (nd == 3);
-}
-
-static IP32bit tcp_name_ip(const char *name)
-{
-	struct hostent *hp;
-	IP32bit *ip;
-	if(!name) return NULL_IP;
-	hp = gethostbyname(name);
-	if (!hp)
-#if 0
-		printf("%s\n", hstrerror(h_errno));
-#endif
-		return NULL_IP;
-#if 0
-	puts("found it");
-	if (hp->h_aliases) {
-		puts("aliases");
-		char **a = hp->h_aliases;
-		while (*a) {
-			printf("alias %s\n", *a);
-			++a;
-		}
-	}
-#endif
-	ip = (IP32bit *) * (hp->h_addr_list);
-		return !ip ? NULL_IP : *ip;
-}
-
-static char *tcp_ip_dots(IP32bit ip)
-{
-	if(ip == NULL_IP) return 0;
-	return inet_ntoa(*(struct in_addr *)&ip);
-}
-
-static char *tcp_name_dots(const char *name)
-{
-	IP32bit ip = tcp_name_ip(name);
-	if (ip == NULL_IP)
-		return 0;
-	return tcp_ip_dots(ip);
-}
-
-static IP32bit tcp_dots_ip(const char *s)
-{
-	struct in_addr a;
-	if(!s) return NULL_IP;
-// Why can't SCO Unix be like everybody else?
-#ifdef SCO
-	inet_aton(s, &a);
-#else
-	*(IP32bit *) & a = inet_addr(s);
-#endif
-	return *(IP32bit *) & a;
-}
-
-static char *tcp_ip_name(IP32bit ip)
-{
-	if(ip == NULL_IP) return 0;
-	struct hostent *hp = gethostbyaddr((char *)&ip, 4, AF_INET);
-	if (!hp) return 0;
-	return hp->h_name;
-}
-
-static char *tcp_dots_name(const char *s)
-{
-	return tcp_ip_name(tcp_dots_ip(s));
-}
-
 static int ircDial(char *host, int port)
 {
 	static struct addrinfo hints;
@@ -3781,11 +3781,17 @@ bool ircSetup(char *line)
 	password = ircSkip(nick, ':');
 	if(!*password) password = 0;
 	p = ircSkip(domain, ':');
+	win->ircSecure = false;
 	if(*p) {
-		port = stringIsNum(p);
-		if(port < 0) {
-			setError(MSG_BadPort);
-			return false;
+		if(*p == '*' && p[1] == 0) {
+			port = 6697, win->ircSecure = true;
+		} else {
+			port = strtol(p, &p, 10);
+			if(*p == '*') ++p, win->ircSecure = true;
+			if(port <= 0 || port > 65535 || *p) {
+				setError(MSG_BadPort);
+				return false;
+			}
 		}
 	}
 
@@ -3796,6 +3802,25 @@ bool ircSetup(char *line)
 
 	fd = ircDial(domain, port);
 	if(fd < 0) return false;
+	if(win->ircSecure) {
+		static bool first = true;
+		if(first) {
+			first = false;
+/*********************************************************************
+I am concerned about initializing and using openssl, for these raw irc sockets,
+while curl initializes and uses openssl for its secure protocols.
+Will there be collisions? Inconsistencies?
+Will this induce bugs that are very difficult to reproduce?
+*********************************************************************/
+			SSLeay_add_ssl_algorithms();
+			sslcx = SSL_CTX_new(SSLv23_client_method());
+			SSL_CTX_set_options(sslcx, SSL_OP_ALL);
+			SSL_CTX_load_verify_locations(sslcx, sslCerts, NULL);
+			SSL_CTX_set_default_verify_paths(sslcx);
+			SSL_CTX_set_mode(sslcx, SSL_MODE_AUTO_RETRY);
+		}
+	}
+
 	win->irc_fd = fd;
 	win->irciMode = true;
 	wout->ircoMode = true;
@@ -3830,7 +3855,7 @@ usage:
 
 void ircClose(Window *w)
 {
-	w->irciMode = false;
+	w->irciMode = w->ircChannels = w->ircSecure = false;
 	w->ircOther = 0;
 	if(w->irc_fd) close(w->irc_fd);
 	w->irc_fd = 0;
