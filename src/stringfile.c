@@ -20,7 +20,15 @@ bool demin = false;
 bool gotimers = true;
 bool uvw;
 int timerspeed = 1;
+long long fileSize;
 char *downDir, *home;
+bool endMarks;		// ^ $ on listed lines
+uchar dirWrite;		// directories read write
+bool dno; // directory names only
+char *recycleBin;
+uchar ls_sort;		// sort method for directory listing
+bool ls_reverse;		// reverse sort
+char lsformat[12];	// size date etc on a directory listing
 
 /*********************************************************************
 Allocate and manage memory.
@@ -1618,9 +1626,6 @@ struct DSR {
 	} u;
 };
 static struct DSR *dsr_list;
-uchar ls_sort;		// sort method for directory listing
-bool ls_reverse;		// reverse sort
-char lsformat[12];	// size date etc on a directory listing
 
 // compare routine for quicksort directory scan, size or time
 static int dircmp_st(const void *s, const void *t)

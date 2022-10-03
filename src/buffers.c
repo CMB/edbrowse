@@ -20,9 +20,6 @@ static bool pcre_utf8_error_stop = false;
 
 /* Static variables for this file. */
 
-uchar dirWrite;		// directories read write
-bool dno; // directory names only
-bool endMarks;		// ^ $ on listed lines
 // The valid edbrowse commands
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
 // Commands that can be done in browse mode

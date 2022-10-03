@@ -18,6 +18,12 @@ void cxSwitch(int cx, bool interactive) {}
 bool browseCurrentBuffer(void) { return false; }
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname){ return 0; }
 void undoSpecialClear(void){}
+pst fetchLine(int n, int show){ return (uchar*)emptyString; }
+void delText(int start, int end) {}
+void addToMap(int nlines, int destl){}
+bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) { return true; }
+void printDot(void){}
+int tableType(const Tag *t) { return 0; }
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxAccount;		/* how many email accounts specified */
 char *emojiFile;

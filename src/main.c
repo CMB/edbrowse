@@ -17,7 +17,7 @@ const char *version = "3.8.5+";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;
-char *recycleBin, *sigFile, *sigFileEnd;
+char *sigFile, *sigFileEnd;
 char *cacheDir;
 int cacheSize = 1000, cacheCount = 10000;
 char *ebTempDir, *ebUserDir;
@@ -44,7 +44,6 @@ time_t intStart;
 bool ismc, isimap, passMail;
 // next two variables work around curl bug 7284
 bool inInput, inInitFunction, listNA;
-long long fileSize;
 char *dbarea, *dblogin, *dbpw;	// to log into the database
 bool fetchBlobColumns;
 bool caseInsensitive, searchStringsAll, searchWrap = true, ebre = true;
