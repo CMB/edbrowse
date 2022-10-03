@@ -456,6 +456,15 @@ At this point, timers and pending jobs resume.
 Back around to top, tty back into raw mode, wait for the next timer
 or the first keystroke, and repeat.
 There - 50 lines of comments to explain 2 lines of code.
+-
+Now, here is a followup from the future.
+I said it was no problem if all the javascript timers stopped while we were
+in readline, but then I implemented the irc client, which receives pings from
+the server, and must pong back in a timely fashion.
+If you are stuck in readline for 2 minutes composing your thoughts,
+pong does not go back, and the irc connection drops.
+There is a work around for this, which is documented in isup.c.
+thus the call to ircReadlineControl().
 *********************************************************************/
 
 		memset(&channels, 0, sizeof(channels));
@@ -975,23 +984,17 @@ static void freeWindow(Window *w)
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
 	if(w->irciMode) {
-// These variables should always be nonzero
-		if(w->ircF) fclose(w->ircF);
-		nzFree(w->ircNick);
-		nzFree(w->ircChannel);
-// fileName was already freed in its frame
 		Window *w2 = sessionList[w->ircOther].lw;
-		w->ircOther = 0;
 // w2 should always be there
 		if(w2 && w2->ircoMode) {
 			if(--w2->ircCount == 0) {
 				w2->ircoMode = false;
 				nzFree(w2->f0.fileName), w2->f0.fileName = 0;
-				nzFree(w2->f0.hbase), w2->f0.hbase = 0;
 			} else {
 				ircSetFileName(w2);
 			}
 		}
+		ircClose(w);
 	}
 	if(w->ircoMode) {
 		int i;
@@ -999,15 +1002,7 @@ static void freeWindow(Window *w)
 		for(i = 1; i < MAXSESSION; ++i) {
 			w2 = sessionList[i].lw;
 			if(!w2 || !w2->irciMode || w2->ircOther != w->sno) continue;
-			w2->irciMode = false;
-			w2->ircOther = 0;
-// These variables should always be nonzero
-			if(w2->ircF) fclose(w2->ircF);
-			w2->ircF = 0;
-			nzFree(w2->ircNick), w2->ircNick = 0;
-			nzFree(w2->ircChannel), w2->ircChannel = 0;
-			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
-			nzFree(w2->f0.hbase), w2->f0.hbase = 0;
+			ircClose(w2);
 		}
 	}
 	free(w);

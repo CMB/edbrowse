@@ -394,6 +394,7 @@ void ircSetFileName(Window *w);
 bool ircWrite(void);
 void ircRead(void);
 bool ircSetup(char *line);
+void ircClose(Window *w);
 void ircReadlineControl(void);
 void ircReadlineRelease(void);
 
