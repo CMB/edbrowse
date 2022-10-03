@@ -3220,7 +3220,7 @@ const char **split)
 			return false;
 		}
 		if (!sessionList[ln].lw || !sessionList[ln].lw->dirMode) {
-			char numstring[8];
+			char numstring[12];
 			sprintf(numstring, "%d", ln);
 			setError(MSG_NotDir, numstring);
 			return false;
