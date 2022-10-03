@@ -1312,7 +1312,7 @@ static bool inputLinesIntoBuffer(void)
 		if(inscript) {
 			if(!memcmp(line, "*.@sub~$`corner", 15))
 				line = (uchar*)cloneString(".\n");
-		} else line = (uchar*)cloneString((char*)line);
+		} else line = clonePstring(line);
 		t->text = line;
 		++t, ++linecount;
 		if(!inscript) line = inputLine();
