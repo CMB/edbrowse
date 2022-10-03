@@ -1939,7 +1939,6 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 // rbuf is passed by reference because some of the conversion routines
 // create a new allocated array which must be passed back.
 // This is called by readFile in buffers.c, so has some
-// confusing legacy interactions with the global variable serverData.
 void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, const bool firstPart, const bool showMessage)
 {
 	char *rbuf = *rbuf_p;
@@ -1970,7 +1969,6 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 		rbuf[j] = 0;
 		fileSize -= (*partSize_p - j);
 		*partSize_p = j;
-		serverDataLen = fileSize;
 	}
 
 	if (!iuConvert) return;
@@ -1989,8 +1987,8 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 		utfLow(rbuf, *partSize_p, &tbuf, &*partSize_p, bom);
 		if(*isAllocated_p) nzFree(rbuf);
 		*isAllocated_p = true;
-		serverData = *rbuf_p = rbuf = tbuf;
-		serverDataLen = fileSize = *partSize_p;
+		*rbuf_p = rbuf = tbuf;
+		fileSize = *partSize_p;
 	} else {
 		int oldSize = *partSize_p;
 		looks_8859_utf8((uchar *) rbuf, *partSize_p,
@@ -2007,9 +2005,8 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 				(uchar **) & tbuf, &*partSize_p);
 			if(*isAllocated_p) nzFree(rbuf);
 			*isAllocated_p = true;
-			serverData = *rbuf_p = rbuf = tbuf;
+			*rbuf_p = rbuf = tbuf;
 			fileSize += (*partSize_p - oldSize);
-			serverDataLen = fileSize;
 		}
 		if (!cons_utf8 && isutf8) {
 			if ((debugLevel >= 2 || (debugLevel == 1 && showMessage))
@@ -2019,9 +2016,8 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 				(uchar **) & tbuf, &*partSize_p);
 			if(*isAllocated_p) nzFree(rbuf);
 			*isAllocated_p = true;
-			serverData = *rbuf_p = rbuf = tbuf;
+			*rbuf_p = rbuf = tbuf;
 			fileSize += (*partSize_p - oldSize);
-			serverDataLen = fileSize;
 		}
 		if (cons_utf8 && isutf8 && firstPart) {
 // Strip off the leading bom, if any, and no we're not going to put it back.
@@ -2029,7 +2025,6 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 			    !memcmp(rbuf, "\xef\xbb\xbf", 3)) {
 				fileSize -= 3, *partSize_p -= 3;
 				memmove(rbuf, rbuf + 3, *partSize_p);
-				serverDataLen = *partSize_p;
 			}
 		}
 	}

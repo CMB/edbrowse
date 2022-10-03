@@ -2071,6 +2071,8 @@ gotdata:
 	if (!looksBinary((uchar *) rbuf, partSize)) {
 		bool isAllocated = true;
 		diagnoseAndConvert(&rbuf, &isAllocated, &partSize, firstPart, !fromURL);
+// in case the conversion changed the read buffer
+		serverData = rbuf, serverDataLen = fileSize;
 	} else if (fromframe) {
 		nzFree(rbuf);
 		setError(MSG_FrameNotHTML);
