@@ -3398,7 +3398,7 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 			if(*p)
 				*p++ = '\0';
 			if(!*p)
-				p = "sic - 250 LOC are too much!";
+				p = "edbrowse irc";
 			ircSend(f, "PART %s :%s", s, p);
 			if(stringEqual(s, win->ircChannel)) {
 // leaving the channel we are currently sending on,

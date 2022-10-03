@@ -2094,7 +2094,7 @@ intext:
 	return rc;
 }
 
-/* from the command line */
+// from the command line or from a frame
 bool readFileArgv(const char *filename, int fromframe, const char *orig_head)
 {
 	bool newwin = !fromframe;
