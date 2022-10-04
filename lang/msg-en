@@ -699,7 +699,7 @@ cannot play audio in irc mode
 cannot break lines in irc mode
 cannot change the name of an irc server
 please write the entire buffer to irc
-irc m n domain[+][:port] nickname[:password] [group]
+irc m n domain[+][:[*]port] nickname[:password] [group]
 session %d is not compatible with irc
 debug layout disabled
 debug layout enabled

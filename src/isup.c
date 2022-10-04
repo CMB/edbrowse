@@ -3790,8 +3790,8 @@ bool ircSetup(char *line)
 		if(*p == '*' && p[1] == 0) {
 			port = 6697, win->ircSecure = true;
 		} else {
-			port = strtol(p, &p, 10);
 			if(*p == '*') ++p, win->ircSecure = true;
+			port = strtol(p, &p, 10);
 			if(port <= 0 || port > 65535 || *p) {
 				setError(MSG_BadPort);
 				return false;
