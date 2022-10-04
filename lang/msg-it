@@ -276,7 +276,7 @@ il file di destinazione esiste già
 impossibile rinominare il file come %s
 impossibile inserire valori nulli in un campo di input
 impossibile inserire newlines in un campo di input
-0
+errore durante la connessione SSL %d
 0
 0
 0

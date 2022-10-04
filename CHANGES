@@ -1,5 +1,8 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.8.6
+Support tls sockets for irc.
+
 3.8.5
 s/x/y/$ command, and s$ shorthand.
 s/x/y/3g, from 3 on, like sed.

@@ -276,7 +276,7 @@ le fichier destination existe déjà
 impossible de renommer le fichier à %s
 une zone de saisie ne peut contenir des caractères nuls
 une zone de saisie ne peut contenir des sauts de ligne
-0
+Erreur de connexion SSL %d
 0
 0
 0

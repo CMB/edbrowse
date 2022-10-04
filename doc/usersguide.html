@@ -769,6 +769,7 @@ IRC Client
 irc m n domain nickname : set up irc chat using sessions m and n with the specified domain and nickname
 <br>irc m n domain nickname group : set up irc chat and join the specified group
 <br>irc m n domain:port nickname:password group : specify a port and a password
+<br>irc m n domain+:port* nickname:password group : show this channel in the output buffer, and use secure sockets
 <p>
 Plugins
 <P>
@@ -5300,6 +5301,8 @@ If you have established a password, use nickname:password. This is consistent wi
 
 <p>
 Use domain:port for a different port; default is 6667.
+Place * after port for secure sockets, e.g. :3000*.
+:* alone uses the default port for secure irc, 6697.
 
 <P>
 The group is optional.
@@ -5331,7 +5334,8 @@ If you wish to quit session 8, and keep session 9, retaining a log of the irc ch
 
 <P>
 This capability uses sockets directly, and does not go through curl.
-Thus cookies are not involved, nor proxies, nor ssl, nor other features of curl.
+Secure sockets use openssl, which is also used by some instances of curl, though others use gnutls.
+We hope that irc and curl will not collide in any way, as they both use openssl.
 
 <P>
 Edbrowse recognizes some shorthand colon commands when sending to the server.

@@ -3213,6 +3213,7 @@ under the MIT license.
 #include <netinet/in.h>
        #include <arpa/inet.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>	// for error-retrieval
 
 typedef unsigned int IP32bit;
 #define NULL_IP (IP32bit)(-1)
@@ -3311,7 +3312,7 @@ static char irc_in[4096];
 static char irc_out[4096];
 static SSL_CTX *sslcx;		// the overall ssl context for irc sockets
 
-static void ircSend(int fd, char *fmt, ...)
+static void ircSend(const Window *win, char *fmt, ...)
 {
 	int l;
 	va_list ap;
@@ -3325,7 +3326,10 @@ static void ircSend(int fd, char *fmt, ...)
 // If the socket drops we'll see it on our next select or read.
 // We also assume it won't do a  partial write, and then expect us to write
 // the rest - i.e. the entire write will work if the socket is valid.
-	write(fd, irc_out, l);
+	if(win->ircSecure)
+		SSL_write(win->irc_ssl, irc_out, l);
+	else
+		write(win->irc_fd, irc_out, l);
 }
 
 // skip ahead to c
@@ -3374,7 +3378,6 @@ static void ircAddLine(const char *channel, bool show, const char *fmt, ...)
 static void ircPrepLine(Window *win, Window *wout, char *line)
 {
 	Window *save_cw;
-	int fd = win->irc_fd;
 	char *usr, *par, *txt;
 	usr = win->f0.hbase;
 	if(!line || !*line)
@@ -3401,7 +3404,7 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 	if(stringEqual("PRIVMSG", line))
 		ircAddLine(par, win->ircChannels, "<%s> %s", usr, txt);
 	else if(stringEqual("PING", line)) {
-		ircSend(fd, "PONG %s", txt);
+		ircSend(win, "PONG %s", txt);
 		debugPrint(4, "PING PONG %s", txt);
 	}
 	else {
@@ -3418,7 +3421,6 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 static void ircMessage(Window *wout, const char *receiver, const char *msg)
 {
 	Window *win = cw;
-	int fd = win->irc_fd;
 	if(!receiver) {
 		debugPrint(1, "No receiver to send to");
 		return;
@@ -3427,7 +3429,7 @@ static void ircMessage(Window *wout, const char *receiver, const char *msg)
 	ircAddLine(receiver, win->ircChannels, "<%s> %s",
 	(win->ircNick ? win->ircNick : emptyString), msg);
 	cw = win;
-	ircSend(fd, "PRIVMSG %s :%s", receiver, msg);
+	ircSend(win, "PRIVMSG %s :%s", receiver, msg);
 }
 
 // Set the channel on the input side, but it affects the file name on the output side
@@ -3477,7 +3479,6 @@ void ircSetFileName(Window *w)
 static void ircPrepSend(Window *win, Window *wout, char *s)
 {
 	char c, *p;
-	int fd = win->irc_fd;
 	if(s[0] == '\0')
 		return;
 	ircSkip(s, '\n');
@@ -3490,7 +3491,7 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 		p = s + 2;
 		switch(c) {
 		case 'j':
-			ircSend(fd, "JOIN %s", p);
+			ircSend(win, "JOIN %s", p);
 // I'm just assuming it works
 				ircSetChannel(win, p);
 			return;
@@ -3503,7 +3504,7 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 				*p++ = '\0';
 			if(!*p)
 				p = "edbrowse irc";
-			ircSend(fd, "PART %s :%s", s, p);
+			ircSend(win, "PART %s :%s", s, p);
 			if(stringEqual(s, win->ircChannel)) {
 // leaving the channel we are currently sending on,
 // what are we suppose to do?
@@ -3522,7 +3523,7 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 			return;
 		}
 	}
-	ircSend(fd, "%s", s);
+	ircSend(win, "%s", s);
 }
 
 bool ircWrite(void)
@@ -3593,7 +3594,10 @@ top:
 		int n;
 		char *linebreak;
 nextread:
-		n = read(fd, irc_in + pos, sizeof(irc_in) - pos - 1);
+		if(w->ircSecure)
+			n = SSL_read(w->irc_ssl, irc_in + pos, sizeof(irc_in) - pos - 1);
+		else
+			n = read(fd, irc_in + pos, sizeof(irc_in) - pos - 1);
 		if(n <= 0) {
 			emsg = " irc connection lost";
 			goto teardown;
@@ -3819,6 +3823,30 @@ Will this induce bugs that are very difficult to reproduce?
 			SSL_CTX_set_default_verify_paths(sslcx);
 			SSL_CTX_set_mode(sslcx, SSL_MODE_AUTO_RETRY);
 		}
+// should we verify the certificate?
+		if(mustVerifyHost(domain))
+			SSL_CTX_set_verify(sslcx, SSL_VERIFY_PEER, NULL);
+		else
+			SSL_CTX_set_verify(sslcx, SSL_VERIFY_NONE, NULL);
+// create the secure stream
+		SSL* secstream = SSL_new(sslcx);
+		SSL_set_fd(secstream, fd);
+/* Do we need this?
+		secstream->options |= SSL_OP_NO_TLSv1;
+*/
+		int err = SSL_connect(secstream);
+		if (err != 1) {
+			err = ERR_peek_last_error();
+			ERR_clear_error();
+			SSL_free(secstream);
+			close(fd);
+			if (ERR_GET_REASON(err) == SSL_R_CERTIFICATE_VERIFY_FAILED)
+				setError(MSG_NoCertify, domain);
+			else
+				setError(MSG_SSLConnectError, err);
+			return false;
+		}
+		win->irc_ssl = secstream;
 	}
 
 	win->irc_fd = fd;
@@ -3833,15 +3861,15 @@ Will this induce bugs that are very difficult to reproduce?
 
 	// login
 	if(password) {
-		ircSend(fd, "PASS %s", password);
+		ircSend(win, "PASS %s", password);
 		debugPrint(4, "PASS %s", password);
 	}
-	ircSend(fd, "NICK %s", nick);
+	ircSend(win, "NICK %s", nick);
 	debugPrint(4, "NICK %s", nick);
-	ircSend(fd, "USER %s localhost %s :%s", nick, domain, nick);
+	ircSend(win, "USER %s localhost %s :%s", nick, domain, nick);
 	debugPrint(4, "USER %s localhost %s :%s", nick, domain, nick);
 	if(join) {
-		ircSend(fd, "JOIN %s", join);
+		ircSend(win, "JOIN %s", join);
 		debugPrint(4, "JOIN %s", join);
 		ircSetChannel(win, join);
 	}
@@ -3859,10 +3887,8 @@ void ircClose(Window *w)
 	w->ircOther = 0;
 	if(w->irc_fd) close(w->irc_fd);
 	w->irc_fd = 0;
-#if 0
 	if(w->irc_ssl) SSL_free(w->irc_ssl);
 	w->irc_ssl = 0;
-#endif
 	nzFree(w->ircNick), w->ircNick = 0;
 	nzFree(w->ircChannel), w->ircChannel = 0;
 	nzFree(w->f0.fileName), w->f0.fileName = 0;

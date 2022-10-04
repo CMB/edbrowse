@@ -31,7 +31,7 @@ endif
 CFLAGS += $(DEBUGFLAGS)
 
 #  Libraries and linker flags for edbrowse.
-LDFLAGS = $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl
+LDFLAGS = $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
 
 # LDFLAGS for quickjs loading.
 QUICKJS_LDFLAGS = $(QUICKJS_DIR)/libquickjs.a -ldl

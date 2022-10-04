@@ -276,7 +276,7 @@ arquivo destino já existe
 impossível renomear o arquivo para %s
 impossível embutir caracteres nulos num campo de entrada
 impossível embutir novas linhas num campo de entrada
-0
+Erro de conexão SSL %d
 0
 0
 0

@@ -1937,7 +1937,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 		break;
 
 	case CURLE_SSL_CONNECT_ERROR:
-		(*fn) (MSG_SSLConnectError, curl_error);
+		(*fn) (MSG_SSLCurlError, curl_error);
 		break;
 
 	case CURLE_LOGIN_DENIED:
