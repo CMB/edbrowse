@@ -820,8 +820,7 @@ top:
 			continue;
 
 // don't execute a script until it is linked into the tree.
-		if(!isRooted(t))
-			continue;
+		if(!isRooted(t)) continue;
 
 		cf = t->f0;
 		prepareScript(t);
@@ -834,6 +833,7 @@ passes:
 	for (t = cw->scriptlist; t; t = t->same) {
 		if (t->dead || !t->jslink || t->step >= 5 || t->step <= 2 || t->async != async)
 			continue;
+		if(!isRooted(t)) continue;
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))
 			continue;

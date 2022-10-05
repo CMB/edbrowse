@@ -3662,10 +3662,13 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 
 		if (currentTitle) {
-			if (!cw->htmltitle) {
-				cw->htmltitle = cloneString(t->textval);
+			if (!cw->htmltitle && t->textval) {
+				cw->htmltitle = t->textval;
 				spaceCrunch(cw->htmltitle, true, false);
+			} else {
+				nzFree(t->textval);
 			}
+			t->textval = 0;
 			t->deleted = true;
 			break;
 		}
@@ -3683,15 +3686,17 @@ static void prerenderNode(Tag *t, bool opentag)
 		}
 
 		if (currentScript) {
-			currentScript->textval = cloneString(t->textval);
+			currentScript->textval = t->textval;
+			t->textval = 0;
 			t->deleted = true;
 			break;
 		}
 
 		if (currentTA) {
-			currentTA->value = cloneString(t->textval);
+			currentTA->value = t->textval;
 			leftClipString(currentTA->value);
 			currentTA->rvalue = cloneString(currentTA->value);
+			t->textval = 0;
 			t->deleted = true;
 			break;
 		}
@@ -4260,19 +4265,12 @@ Needless to say that's not good!
 		if (a)
 			set_property_string_t(t, "type", a);
 		a = attribVal(t, "text");
-		if (a) {
-			set_property_string_t(t, "text", a);
-		} else {
-			set_property_string_t(t, "text", "");
-		}
+		if (a) set_property_string_t(t, "text", a);
+		else set_property_string_t(t, "text", "");
 		a = attribVal(t, "src");
-		if (a) {
-			set_property_string_t(t, "src", a);
-			if (down_jsbg && a[0])	// from another source, let's get it started
-				prepareScript(t);
-		} else {
-			set_property_string_t(t, "src", "");
-		}
+		if (a) set_property_string_t(t, "src", a);
+		else set_property_string_t(t, "src", "");
+		prepareScript(t);
 		break;
 
 	case TAGACT_FORM:
