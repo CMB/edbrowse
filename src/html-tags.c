@@ -446,6 +446,7 @@ const struct tagInfo availableTags[] = {
 	{"document", "a document", TAGACT_DOC, 5, 1},
 	{"fragment", "a document fragment", TAGACT_FRAG, 5, 1},
 	{"comment", "a comment", TAGACT_COMMENT, 0, 2},
+	{"template", "a template", TAGACT_TEMPLATE, 0, 2},
 	{"h1", "a level 1 header", TAGACT_H, 10, 1},
 	{"h2", "a level 2 header", TAGACT_H, 10, 1},
 	{"h3", "a level 3 header", TAGACT_H, 10, 1},
@@ -4429,6 +4430,11 @@ Needless to say that's not good!
 	case TAGACT_MUSIC:
 		if(!opentag) break;
 		domLink(t, "HTMLAudioElement", "src", 0, 0, 4);
+		break;
+
+	case TAGACT_TEMPLATE:
+		if(!opentag) break;
+		domLink(t, "HTMLTemplateElement", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_BASE:

@@ -9,7 +9,7 @@ endif
 CFLAGS += $(PLATFORM_CFLAGS)
 
 # determine includes and linker flags
-DEPENDENCIES = libcurl:curl odbc libpcre2-8:pcre2-8 readline
+DEPENDENCIES = libcurl:curl odbc libpcre2-8:pcre2-8 readline openssl
 INCLUDES = $(shell ./make-helper.sh pkg-config-includes $(DEPENDENCIES))
 LINKER_LIBS = $(shell ./make-helper.sh pkg-config-libs $(DEPENDENCIES))
 CFLAGS += $(INCLUDES)

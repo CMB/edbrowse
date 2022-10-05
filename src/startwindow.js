@@ -790,6 +790,19 @@ if(typeof t == "object") this.src = t.toString();
 HTMLAudioElement.prototype = new HTMLMediaElement;
 HTMLAudioElement.prototype.dom$class = "Audio";
 
+HTMLTemplateElement = function(){}
+HTMLTemplateElement.prototype = new HTMLElement;
+HTMLTemplateElement.prototype.dom$class = "Template";
+// I'm doing the content fudging here, on demand; it's easier than in C.
+Object.defineProperty(HTMLTemplateElement.prototype, "content", {
+get: function() {
+if(this.content$2) return this.content$2;
+var c, frag = document.createDocumentFragment();
+while(c = this.firstChild) frag.appendChild(c);
+this.content$2 = frag;
+return frag;
+}});
+
 // the performance registry
 pf$registry = {mark:{},measure:{},measure0:{},resourceTiming:{}};
 Object.defineProperty(pf$registry, "measure0", {enumerable:false});
@@ -1094,7 +1107,7 @@ Document.prototype.dom$class = "Document";
 
 DocumentFragment = function(){};
 DocumentFragment.prototype = new HTMLElement;
-DocumentFragment.prototype.dom$class = "DocumentFragment";
+DocumentFragment.prototype.dom$class = "Fragment";
 
 CSSRule = function(){this.cssText=""}
 CSSRule.prototype.toString = function(){return this.cssText}

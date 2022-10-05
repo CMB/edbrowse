@@ -770,9 +770,12 @@ That is easiest, and it's what I do.
 bool isRooted(const Tag *t)
 {
 	const Tag *up;
-	for(up = t; up; up = up->parent)
+	for(up = t; up; up = up->parent) {
 		if(up->action == TAGACT_HEAD || up->action == TAGACT_BODY)
 			return true;
+		if(up->action == TAGACT_TEMPLATE)
+			return false;
+	}
 	return false;
 }
 

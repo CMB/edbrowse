@@ -199,12 +199,14 @@ Only the basic method is implemented at this time.
 Determine the mime type of a file or web page and the corresponding plugin,
 if any. Launch the plugin automatically or on command.
 A plugin can play the file, like music, or render the file, like pdf.
+Run as an irc client.
 
 src/format.c:
 Arrange text into lines and paragraphs.
 base64 encode and decode for email.
 Convert utf8, iso8859-1, unicode 16, unicode 32, etc.
 Process an html page for final display.
+Manage emojis.
 
 src/http.c:
 Send the http request, and read the data from the web server.
