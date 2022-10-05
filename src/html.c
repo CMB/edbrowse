@@ -544,6 +544,10 @@ void prepareScript(Tag *t)
 			run_function_onearg_t(t, "removeChild", t->firstchild);
 	}
 
+// If <script> is under <template>, and we clone it again and again,
+// we could be asked to prepare it again and again.
+	if(get_property_bool_t(t, "eb$prep")) goto success;
+
 	if (t->href) {		/* fetch the javascript page */
 		const char *altsource = 0, *realsource = 0;
 		bool from_data;
@@ -585,6 +589,8 @@ void prepareScript(Tag *t)
 			nzFree(h);
 		} else {
 			struct i_get g;
+			bool jsbg = down_jsbg;
+			const Tag *u;
 
 // this has to happen before threads spin off
 			if (!curlActive) {
@@ -593,7 +599,18 @@ void prepareScript(Tag *t)
 				setupEdbrowseCache();
 			}
 
-			if (down_jsbg && !demin && !uvw
+			if(jsbg) {
+// We can't background fetch if this is under <template>
+				for(u = t; u; u = u->parent)
+					if(u->action == TAGACT_TEMPLATE ||
+					u->action == TAGACT_HTML ||
+					u->action == TAGACT_FRAME)
+						break;
+				if(u && u->action == TAGACT_TEMPLATE)
+					jsbg = false;
+			}
+
+			if (jsbg && !demin && !uvw
 			    && !pthread_create(&t->loadthread, NULL,
 					       httpConnectBack2, (void *)t)) {
 				t->js_ln = 1;
@@ -655,6 +672,7 @@ void prepareScript(Tag *t)
 
 success:
 	t->step = 4;
+	set_property_bool_t(t, "eb$prep", true);
 	return;
 
 fail:
