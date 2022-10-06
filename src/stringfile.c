@@ -266,19 +266,6 @@ void stringAndNum(char **s, int *l, int n)
 	stringAndString(s, l, a);
 }
 
-/* 64M 16K etc */
-void stringAndKnum(char **s, int *l, int n)
-{
-	char a[16];
-	if (n && n / (1024 * 1024) * (1024 * 1024) == n)
-		sprintf(a, "%dM", n / (1024 * 1024));
-	else if (n && n / 1024 * 1024 == n)
-		sprintf(a, "%dK", n / 1024);
-	else
-		sprintf(a, "%d", n);
-	stringAndString(s, l, a);
-}
-
 char *cloneString(const char *s)
 {
 	char *t;

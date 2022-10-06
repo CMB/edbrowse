@@ -20,17 +20,13 @@ const char *const supported_languages[] = { 0,
 // startup .ebrc files in various languages
 const char *ebrc_string;
 static const char *qrg_string;
-bool cons_utf8, iuConvert = true;
-char type8859 = 1;
-bool helpMessagesOn;
-bool errorExit;
 
 void selectLanguage(void)
 {
-	char *s = getenv("LANG");	// This is likely to fail in windows
+	char *s = getenv("LANG");
 	char *dot;
 
-// default English
+// default is English
 	strcpy(eb_language, "en");
 	eb_lang = 1;
 	messageArray = msg_en;
@@ -49,9 +45,8 @@ and for ranges like [A-z],
 and to convert to upper or lower case etc.
 So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
 By calling strcoll, the directory scan is in the same order as ls.
-See dircmp() in stringfile.c
+See dircmp_alph() in stringfile.c
 *********************************************************************/
-
 	setlocale(LC_ALL, "");
 
 /* But LC_TIME controls time/date formatting, I.E., strftime.  The one
@@ -136,7 +131,7 @@ If you try to turn it on via the bg (background) command, I won't let you.
 I really don't think this will come up, everybody is utf8 by now.
 *********************************************************************/
 
-const char *i_getString(int msg)
+const char *i_message(int msg)
 {
 	const char **a = messageArray;
 	const char *s;
@@ -152,9 +147,7 @@ const char *i_getString(int msg)
 		s = msg_en[msg];
 	if (!s)
 		s = "spurious message";
-
-	if (cons_utf8)
-		return s;
+	if (cons_utf8) return s;
 
 // We have to convert
 	utf2iso((uchar *) s, strlen(s), (uchar **) & t, &t_len);
@@ -172,14 +165,14 @@ The i_ prefix means international.
 
 void i_puts(int msg)
 {
-	eb_puts(i_getString(msg));
+	eb_puts(i_message(msg));
 }
 
 static void eb_vprintf(const char *fmt, va_list args);
 
 void i_printf(int msg, ...)
 {
-	const char *realmsg = i_getString(msg);
+	const char *realmsg = i_message(msg);
 	va_list p;
 	va_start(p, msg);
 	eb_vprintf(realmsg, p);
@@ -194,7 +187,7 @@ void i_printf(int msg, ...)
 // Print and exit.  This puts newline on, like puts.
 void i_printfExit(int msg, ...)
 {
-	const char *realmsg = i_getString(msg);
+	const char *realmsg = i_message(msg);
 	va_list p;
 	va_start(p, msg);
 	eb_vprintf(realmsg, p);
@@ -207,13 +200,6 @@ void i_printfExit(int msg, ...)
 		va_end(p);
 	}
 	ebClose(99);
-}
-
-// i_stringAndMessage: concatenate a message to an existing string.
-void i_stringAndMessage(char **s, int *l, int messageNum)
-{
-	const char *messageText = i_getString(messageNum);
-	stringAndString(s, l, messageText);
 }
 
 /*********************************************************************
@@ -240,7 +226,7 @@ void setError(int msg, ...)
 	}
 
 	va_start(p, msg);
-	if (vasprintf(&a, i_getString(msg), p) < 0)
+	if (vasprintf(&a, i_message(msg), p) < 0)
 		i_printfExit(MSG_MemAllocError, 4096);
 	va_end(p);
 // If the error message is crazy long, truncate it.
@@ -271,112 +257,6 @@ void showErrorAbort(void)
 	ebClose(99);
 }
 
-/* error exit check function */
-void eeCheck(void)
-{
-	if (errorExit)
-		ebClose(1);
-}
-
-/*********************************************************************
-Now for the international version of caseShift.
-This converts anything that might reasonably be a letter in your locale.
-But it isn't ready for prime time.
-I'd have to handle utf8 or not,
-and then understand upper and lower case letters per language.
-So this is commented out.
-It was just a preliminary effort anyways, based on iso8859-1.
-*********************************************************************/
-
-#if 0
-
-static const char upperMore[] = "";
-
-static const char lowerMore[] = "";
-
-static const char letterMore[] = "";
-
-static bool i_isalphaByte(unsigned char c)
-{
-	if (isalphaByte(c))
-		return true;
-	if (c == false)
-		return 0;
-	if (strchr(letterMore, c))
-		return true;
-	return false;
-}
-
-/* assumes the arg is a letter */
-static unsigned char i_tolower(unsigned char c)
-{
-	char *s;
-	if (isalphaByte(c))
-		return tolower(c);
-	s = strchr(upperMore, c);
-	if (s)
-		c = lowerMore[s - upperMore];
-	return c;
-}
-
-static unsigned char i_toupper(unsigned char c)
-{
-	char *s;
-	if (isalphaByte(c))
-		return toupper(c);
-	s = strchr(lowerMore, c);
-	if (s)
-		c = upperMore[s - lowerMore];
-	return c;
-}
-
-/* This is a variation on the original routine, found in stringfile.c */
-void i_caseShift(unsigned char *s, char action)
-{
-	unsigned char c;
-/* The McDonalds conversion is very English - should we do it in all languages? */
-	int mc = 0;
-	bool ws = true;
-
-	for (; c = *s; ++s) {
-		if (action == 'u') {
-			if (i_isalphaByte(c))
-				*s = i_toupper(c);
-			continue;
-		}
-
-		if (action == 'l') {
-			if (i_isalphaByte(c))
-				*s = i_tolower(c);
-			continue;
-		}
-
-/* mixed case left */
-		if (i_isalphaByte(c)) {
-			if (ws)
-				c = i_toupper(c);
-			else
-				c = i_tolower(c);
-			if (ws && c == 'M')
-				mc = 1;
-			else if (mc == 1 && c == 'c')
-				mc = 2;
-			else if (mc == 2) {
-				c = i_toupper(c);
-				mc = 0;
-			} else
-				mc = 0;
-			*s = c;
-			ws = false;
-			continue;
-		}
-
-		ws = true, mc = 0;
-	}			/* loop */
-}
-
-#endif
-
 void eb_puts(const char *s)
 {
 	puts(s);
@@ -389,6 +269,7 @@ static void eb_vprintf(const char *fmt, va_list args)
 	vprintf(fmt, args);
 }
 
+// the help command
 bool helpUtility(void)
 {
 	int cx;
@@ -421,3 +302,4 @@ bool helpUtility(void)
 	cw->dot = 1;
 	return true;
 }
+

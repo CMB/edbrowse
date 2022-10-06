@@ -2587,7 +2587,7 @@ void runningError(int msg, ...)
 	if (debugLevel <= 2)
 		return;
 	va_start(p, msg);
-	vprintf(i_getString(msg), p);
+	vprintf(i_message(msg), p);
 	va_end(p);
 	nl();
 }
@@ -3691,7 +3691,7 @@ void domOpensWindow(const char *href, const char *name)
 	dwStart();
 	stringAndString(&cf->dw, &cf->dw_l, "<P>");
 	stringAndString(&cf->dw, &cf->dw_l,
-			i_getString(replace ? MSG_Redirect : MSG_NewWindow));
+			i_message(replace ? MSG_Redirect : MSG_NewWindow));
 	stringAndString(&cf->dw, &cf->dw_l, ": <A href=");
 	stringAndString(&cf->dw, &cf->dw_l, r);
 	stringAndChar(&cf->dw, &cf->dw_l, '>');
@@ -4518,7 +4518,7 @@ past_cell_paragraph:
 			if (ns_l >= 3 && ns[ns_l - 1] == '<'
 			    && isdigit(ns[ns_l - 2]))
 				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Push));
+						i_message(MSG_Push));
 			ns_ic();
 			stringAndString(&ns, &ns_l, "0>");
 			if(j) stringAndChar(&ns, &ns_l, ' ');
@@ -4559,7 +4559,7 @@ past_cell_paragraph:
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
 			else if (itype == INP_SUBMIT || itype == INP_IMAGE) {
-				u = (char *)i_getString(MSG_Submit);
+				u = (char *)i_message(MSG_Submit);
 				if ((a = attribVal(t, "alt"))) {
 					u = altText(a);
 					a = NULL;
@@ -4575,10 +4575,10 @@ past_cell_paragraph:
 				stringAndString(&ns, &ns_l, u);
 			} else if (itype == INP_RESET)
 				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Reset));
+						i_message(MSG_Reset));
 			else if (itype == INP_BUTTON)
 				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Push));
+						i_message(MSG_Push));
 		} else {
 // in case js checked or unchecked
 			if (allowJS && t->jslink)
@@ -4589,10 +4589,10 @@ past_cell_paragraph:
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
 			if (currentForm->secure)
 				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Secure));
+						i_message(MSG_Secure));
 			if (currentForm->bymail)
 				stringAndString(&ns, &ns_l,
-						i_getString(MSG_Bymail));
+						i_message(MSG_Bymail));
 		}
 		ns_ic();
 		stringAndString(&ns, &ns_l, "0>");

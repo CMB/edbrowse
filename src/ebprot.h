@@ -188,6 +188,7 @@ bool reexpandFrame(void);
 
 // sourcefile=main.c
 void ebClose(int n);
+void eeCheck(void);
 void setDataSource(char *v);
 bool javaOK(const char *url);
 bool mustVerifyHost(const char *url);
@@ -211,10 +212,9 @@ bool validAccount(int n);
 bool sendMailCurrent(int sm_account, bool dosig);
 
 // sourcefile=messages.c
-void eeCheck(void);
 void eb_puts(const char *s);
-void selectLanguage(void); //@ called once at startup
-const char *i_getString(int msg); //@ the i_ functions are ok in utf8 mode
+void selectLanguage(void);
+const char *i_message(int msg);
 void i_puts(int msg);
 void i_printf(int msg, ...);
 void i_printfExit(int msg, ...);
@@ -254,7 +254,7 @@ void stringAndString(char **s, int *l, const char *t) ;
 void stringAndBytes(char **s, int *l, const char *t, int cnt) ;
 void stringAndChar(char **s, int *l, char c) ;
 void stringAndNum(char **s, int *l, int n) ;
-void stringAndKnum(char **s, int *l, int n) ;
+#define stringAndMessage(s, l, m) stringAndString(s, l, i_message(m))
 char *cloneString(const char *s) ;
 char *cloneMemory(const char *s, int n) ;
 void leftClipString(char *s) ;

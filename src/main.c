@@ -28,6 +28,7 @@ char selsep = ',';
 bool allowRedirection = true, allowJS = true, sendReferrer = true;
 bool blockJS;
 bool ftpActive;
+bool errorExit;
 int webTimeout = 20, mailTimeout = 0;
 int displayLength = 500;
 int verifyCertificates = 1;
@@ -186,6 +187,13 @@ void ebClose(int n)
 		eb_curl_global_cleanup();
 	}
 	exit(n);
+}
+
+// error exit check function
+void eeCheck(void)
+{
+	if (errorExit)
+		ebClose(1);
 }
 
 static struct ebhost {

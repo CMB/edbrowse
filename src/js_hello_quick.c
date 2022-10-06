@@ -24,6 +24,7 @@ void addToMap(int nlines, int destl){}
 bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) { return true; }
 void printDot(void){}
 int tableType(const Tag *t) { return 0; }
+void eeCheck(void){}
 struct MACCOUNT accounts[MAXACCOUNT];
 int maxAccount;		/* how many email accounts specified */
 char *emojiFile;

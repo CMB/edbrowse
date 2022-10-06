@@ -1687,7 +1687,7 @@ static void ftp_listing(struct i_get *g)
 	stringAndString(&g->buffer, &g->length, "<html>\n<body>\n");
 
 	if (!incomingLen) {
-		i_stringAndMessage(&g->buffer, &g->length, MSG_FTPEmptyDir);
+		stringAndMessage(&g->buffer, &g->length, MSG_FTPEmptyDir);
 	} else {
 
 		s = incomingData;
@@ -1829,7 +1829,7 @@ static void gopher_listing(struct i_get *g)
 	stringAndString(&g->buffer, &g->length, "<html>\n<body>\n");
 
 	if (!incomingLen) {
-		i_stringAndMessage(&g->buffer, &g->length, MSG_GopherEmptyDir);
+		stringAndMessage(&g->buffer, &g->length, MSG_GopherEmptyDir);
 	} else {
 
 		s = incomingData;
