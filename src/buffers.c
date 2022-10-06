@@ -264,7 +264,7 @@ static bool jdb_passthrough(const char *s)
 		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
 		"e+", "e-", "eret",
-		"bflist", "bglist", "sklist", "help", 0
+		"bflist", "bglist", "stack", "help", 0
 	};
 	int i;
 	if (s[0] == '!')
@@ -1091,6 +1091,13 @@ bool cxQuit(int cx, int action)
 			w = p;
 		}
 		sessionList[cx].fw = sessionList[cx].lw = 0;
+		w = sessionList[context].lw2;
+		while (w) {
+			Window *p = w->prev;
+			freeWindow(w);
+			w = p;
+		}
+		sessionList[cx].fw2 = sessionList[cx].lw2 = 0;
 	} else
 		freeWindow(w);
 
@@ -5245,10 +5252,19 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "sklist")) {
+	if (stringEqual(line, "stack")) {
 // count the buffers in this session
 		const Window *w = cw;
 		for(n = 0, w = cw; w; w = w->prev, ++n)  ;
+		for(w = sessionList[context].lw2; w; w = w->prev, ++n)  ;
+		for(w = sessionList[context].lw2; w; w = w->prev, --n) {
+			printf("%d: ", n);
+			if (w->htmltitle)
+				printf("%s", w->htmltitle);
+			else if (w->f0.fileName)
+				printf("%s", w->f0.fileName);
+			nl();
+		}
 		for(w = cw; w; w = w->prev, --n) {
 			printf("%d: ", n);
 			if (w->htmltitle)

@@ -248,7 +248,7 @@ through an application that is compatible with the linear nature of speech or br
 Edbrowse presents the following features:
 
 <UL>
-<LI><P> Edbrowse can edit multiple files or browse multiple websites simultaneously, and transfer blocks of text between them in a manner similar to cut&amp;paste.
+<LI><P> Edbrowse can edit multiple files or browse multiple websites simultaneously, and transfer blocks of text between them in a manner similar to cut &amp; paste.
 For instance, <code>edbrowse *.c</code> accesses all the C sourcefiles in the current directory.
 <LI><P> The regular expressions of ed have been replaced with Perl Compatible Regular Expressions, which have more power and flexibility. This simplifies the task of finding or modifying text in a large document. You can, for instance, replace each instance of the word foo, not foot or food, but foo by itself, in upper or lower case, with the word bar, as long as foo is not followed by an exclamation point or a question mark. The change in regular expressions means edbrowse is not 100% backward compatible with ed, though it is close.
 <LI><P> Edbrowse can fetch a web page from the Internet as easily as it opens a file on the current computer, using http, https, ftp, or gopher.
@@ -624,7 +624,7 @@ f : print the name of the current file
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
-<br>sklist : stack list, list the buffers stacked up on the current session
+<br>hist : show the history of buffers for the current session
 <br>bd : binary detection on files (toggle)
 <br>iu : automatically convert between iso8859 and utf8 (toggle)
 <P>
@@ -1320,11 +1320,12 @@ Use the bflist (buffer list) command to see a list of all the editing sessions t
 Edbrowse presents the session number, and the title if the session's buffer holds a web page, else it prints the file name.
 
 <P>
-Use the sklist (stack list) command to see a list of the buffers that are stacked up on the current session.
-This is more common when browsing, where each new web page pushes the previous page onto a session stack.
+Use the hist command to see a history of files or web pages that are open on the current session.
+This is more common when browsing, where each new web page pushes the previous page onto a stack, and the back command pops the stack.
+It is less common when editing local files.
 
 <P>
-Let's run through a cut&amp;paste example.
+Let's run through a cut &amp; paste example.
 You are editing file foo in session 1, and you realize
 that a paragraph from file bar would fit perfectly right here.
 Here is how it might look.
@@ -1698,7 +1699,7 @@ and one emoji in that group that starts with gre, that is, green apple.
 If the group string does not produce a unique match, edbrowse prints out all the emoji groups in your library, and then prints the word stop.
 The emoji string is replaced with @@, and input continues.
 If you are entering text, you will have to go back later and replace @@ with the emoji you want, or something else.
-You may have typed a very long line, hundreds of characters, or inserted a long line by cut&amp;paste, and I don't want to throw it all away just because the emoji didn't match.
+You may have typed a very long line, hundreds of characters, or inserted a long line by cut &amp; paste, and I don't want to throw it all away just because the emoji didn't match.
 
 <P>
 The approach is different if a group is selected, but the emoji string doesn't produce a unique match.
@@ -2795,7 +2796,7 @@ The stack should not be confused with parallel edits,
 as described in an earlier section.
 In fact each editing session, e1 e2 e3 &#8230;, has its own stack.
 Parallel sessions are appropriate when you need to move back and forth between two files,
-or cut&amp;paste between them.
+or cut &amp; paste between them.
 However, one session, with its internal stack,
 is usually sufficient to surf the net.
 

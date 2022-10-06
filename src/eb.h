@@ -519,7 +519,8 @@ If ints are larger then I don't even use this constant.
 
 /* An edit session */
 struct ebSession {
-	Window *fw, *lw;	/* first window, last window */
+	Window *fw, *lw;	// first window, last window
+	Window *fw2, *lw2;	// second chunk of the stack
 };
 extern struct ebSession sessionList[];
 extern struct ebSession *cs;	/* current session */
