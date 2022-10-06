@@ -100,6 +100,18 @@ char *closeColor(const char *s);
 void clearEmojis(void);
 void loadEmojis(void);
 char *selectEmoji(const char *p, int len);
+void selectLanguage(void);
+const char *i_message(int msg);
+void i_puts(int msg);
+void i_printf(int msg, ...);
+void i_printfExit(int msg, ...);
+void i_stringAndMessage(char **s, int *l, int messageNum);
+void setError(int msg, ...); //? use these only in the foreground!
+void showError(void);
+void showErrorConditional(char cmd);
+void showErrorAbort(void);
+void eb_puts(const char *s);
+bool helpUtility(void);
 
 // sourcefile=html.c
 void dwStart(void);
@@ -210,23 +222,6 @@ char *makeBoundary(void);
 bool sendMail(int account, const char **recipients, const char *body, int subjat, const char **attachments, const char *refline, int nalt, bool dosig);
 bool validAccount(int n);
 bool sendMailCurrent(int sm_account, bool dosig);
-
-// sourcefile=messages.c
-void eb_puts(const char *s);
-void selectLanguage(void);
-const char *i_message(int msg);
-void i_puts(int msg);
-void i_printf(int msg, ...);
-void i_printfExit(int msg, ...);
-void i_stringAndMessage(char **s, int *l, int messageNum);
-void setError(int msg, ...); //? use these only in the foreground!
-void showError(void);
-void showErrorConditional(char cmd);
-void showErrorAbort(void);
-#if 0
-void i_caseShift(unsigned char *s, char action);
-#endif
-bool helpUtility(void);
 
 // sourcefile=stringfile.c
 // Everything in this file is threadsafe except those marked with @,

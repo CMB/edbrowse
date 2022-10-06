@@ -207,6 +207,7 @@ base64 encode and decode for email.
 Convert utf8, iso8859-1, unicode 16, unicode 32, etc.
 Process an html page for final display.
 Manage emojis.
+International print routines to display messages according to your locale.
 
 src/http.c:
 Send the http request, and read the data from the web server.
@@ -238,9 +239,6 @@ Delete emails, move emails to other imap folders, search on the imap server.
 
 src/messages.h:
 Symbolic constants for the warning/error messages of edbrowse.
-
-src/messages.c:
-International print routines to display the message according to your locale.
 
 lang/msg-*:
 Edbrowse status and error messages in various languages.

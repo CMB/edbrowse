@@ -49,8 +49,7 @@ all: edbrowse
 
 #  edbrowse objects
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
-	html.o html-tags.o format.o ebrc.o \
-	messages.o stringfile.o \
+	html.o html-tags.o format.o stringfile.o ebrc.o \
 	msg-strings.o http.o isup.o css.o startwindow.o dbops.o dbodbc.o
 
 #  Header file dependencies.
@@ -102,8 +101,8 @@ clean:
 js_hello_v8 : js_hello_v8.cpp
 	g++ -I/usr/include/v8 js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
-js_hello_quick : js_hello_quick.c
-	$(CC) -I$(QUICKJS_DIR) $(CFLAGS) js_hello_quick.c stringfile.o messages.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
+js_hello_quick : js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o
+	$(CC) -I$(QUICKJS_DIR) $(CFLAGS) js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
 
 hello: js_hello_quick
 

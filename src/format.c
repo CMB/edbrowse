@@ -1,5 +1,6 @@
-/* format.c, Format text, establish line breaks, manage whitespace,
-iso8859, utf8, utf16, utf32, base64, color codes, emojis. */
+// format.c, Format text, establish line breaks, manage whitespace,
+// iso8859, utf8, utf16, utf32, base64, color codes,
+// emojis, messages in your local language.
 
 #include "eb.h"
 
@@ -2955,5 +2956,289 @@ top:
 // all good
 	free(ejline);
 	return ejresponse;
+}
+
+// Messages in your host language.
+static const char **messageArray;
+char eb_language[8];
+int eb_lang;
+const char *const supported_languages[] = { 0,
+	"english", "french", "portuguese", "polish",
+	"german", "russian", "italian",
+};
+// don't forget allMonths in stringfile.c
+
+// startup .ebrc files in various languages
+const char *ebrc_string;
+static const char *qrg_string;
+
+#include <locale.h>
+
+void selectLanguage(void)
+{
+	char *s = getenv("LANG");
+	char *dot;
+
+// default is English
+	strcpy(eb_language, "en");
+	eb_lang = 1;
+	messageArray = msg_en;
+	ebrc_string = ebrc_en;
+	qrg_string = qrg_en;
+
+	if (!s || !*s) return;
+
+	if (strcasestr(s, "utf8") || strcasestr(s, "utf-8"))
+		cons_utf8 = true;
+
+/*********************************************************************
+We roll our own international messages in this file, so you wouldn't think
+we need setlocale, but pcre needs the locale for expressions like \w,
+and for ranges like [A-z],
+and to convert to upper or lower case etc.
+So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
+By calling strcoll, the directory scan is in the same order as ls.
+See dircmp_alph() in stringfile.c
+*********************************************************************/
+	setlocale(LC_ALL, "");
+
+/* But LC_TIME controls time/date formatting, I.E., strftime.  The one
+ * place we do that, we need standard day/month abbreviations, not
+ * localized ones.  So LC_TIME needs to be C. */
+	setlocale(LC_TIME, "C");
+
+	strncpy(eb_language, s, 7);
+	eb_language[7] = 0;
+	caseShift(eb_language, 'l');
+	dot = strchr(eb_language, '.');
+	if (dot)
+		*dot = 0;
+
+	if (!strncmp(eb_language, "en", 2))
+		return;		// english is already default
+
+	if (!strncmp(eb_language, "fr", 2)) {
+		eb_lang = 2;
+		messageArray = msg_fr;
+		ebrc_string = ebrc_fr;
+		qrg_string = qrg_fr;
+		type8859 = 1;
+		return;
+	}
+
+	if (!strncmp(eb_language, "pt", 2)) {
+// This is Brazillian Portuguese. We use to key on pt_br.
+// It is close to pt_pt but not identical. I assume it is close enough.
+// Someone from Portugal can write msg_pt_pt if they wish.
+		eb_lang = 3;
+		messageArray = msg_pt_br;
+		ebrc_string = ebrc_pt_br;
+		qrg_string = qrg_pt_br;
+		type8859 = 1;
+		return;
+	}
+
+	if (!strncmp(eb_language, "pl", 2)) {
+		eb_lang = 4;
+		messageArray = msg_pl;
+		ebrc_string = ebrc_pl;
+		type8859 = 2;
+		return;
+	}
+
+	if (!strncmp(eb_language, "de", 2)) {
+		eb_lang = 5;
+		messageArray = msg_de;
+		ebrc_string = ebrc_de;
+		type8859 = 1;
+		return;
+	}
+
+	if (!strncmp(eb_language, "ru", 2)) {
+		eb_lang = 6;
+		messageArray = msg_ru;
+		ebrc_string = ebrc_ru;
+		type8859 = 5;
+		return;
+	}
+
+	if (!strncmp(eb_language, "it", 2)) {
+		eb_lang = 7;
+		messageArray = msg_it;
+		type8859 = 1;
+		return;
+	}
+
+/* This error is really annoying if it pops up every time you invoke edbrowse.
+	fprintf(stderr, "Sorry, language %s is not implemented\n", buf);
+*/
+}
+
+/*********************************************************************
+WARNING: this routine, which is at the heart of the international prints
+i_puts i_printf, is not threadsafe in iso8859 mode.
+Well utf8 has been the default console standard since er um 2000,
+and I'm almost ready to chuck iso8859 console support altogether.
+*********************************************************************/
+
+const char *i_message(int msg)
+{
+	const char **a = messageArray;
+	const char *s;
+	char *t;
+	int t_len;
+// large enough for any edbrowse message
+	static char utfbuf[1000];
+	if (msg >= EdbrowseMessageCount) s = emptyString;
+	else s = a[msg];
+	if (!s) s = msg_en[msg];
+	if (!s) s = "spurious message";
+	if (cons_utf8) return s;
+
+// Oops, we have to convert
+	utf2iso((uchar *) s, strlen(s), (uchar **) & t, &t_len);
+	strcpy(utfbuf, t);
+	nzFree(t);
+	return utfbuf;
+}
+
+/*********************************************************************
+Internationalize the standard puts and printf.
+These are simple informational messages, where you don't need to error out,
+or check the debug level, or store the error in a buffer.
+The i_ prefix means international.
+*********************************************************************/
+
+void i_puts(int msg)
+{
+	eb_puts(i_message(msg));
+}
+
+void i_printf(int msg, ...)
+{
+	const char *realmsg = i_message(msg);
+	va_list p;
+	va_start(p, msg);
+	vprintf(realmsg, p);
+	va_end(p);
+	if (debugFile) {
+		va_start(p, msg);
+		vfprintf(debugFile, realmsg, p);
+		va_end(p);
+	}
+}
+
+// Print and exit.  This puts newline on, like puts.
+void i_printfExit(int msg, ...)
+{
+	const char *realmsg = i_message(msg);
+	va_list p;
+	va_start(p, msg);
+	vprintf(realmsg, p);
+	nl();
+	va_end(p);
+	if (debugFile) {
+		va_start(p, msg);
+		vfprintf(debugFile, realmsg, p);
+		fprintf(debugFile, "\n");
+		va_end(p);
+	}
+	ebClose(99);
+}
+
+/*********************************************************************
+The following error display functions are specific to edbrowse,
+rather than extended versions of the standard unix print functions.
+Thus I don't need the i_ prefix.
+*********************************************************************/
+
+char errorMsg[1024];
+
+// Show the error message, not just the question mark, after these commands.
+static const char showerror_cmd[] = "AbefMqrw^&";
+
+// Set the error message.  Type h to see the message.
+void setError(int msg, ...)
+{
+	va_list p;
+	char *a;		// result of vasprintf
+	int l;
+
+	if (msg < 0) {
+		errorMsg[0] = 0;
+		return;
+	}
+
+	va_start(p, msg);
+	if (vasprintf(&a, i_message(msg), p) < 0)
+		i_printfExit(MSG_MemAllocError, 4096);
+	va_end(p);
+// If the error message is crazy long, truncate it.
+	l = sizeof(errorMsg) - 1;
+	strncpy(errorMsg, a, l);
+	nzFree(a);
+}
+
+void showError(void)
+{
+	if (errorMsg[0])
+		eb_puts(errorMsg);
+	else
+		i_puts(MSG_NoErrors);
+}
+
+void showErrorConditional(char cmd)
+{
+	if (helpMessagesOn || strchr(showerror_cmd, cmd))
+		showError();
+	else
+		eb_puts("?");
+}
+
+void showErrorAbort(void)
+{
+	showError();
+	ebClose(99);
+}
+
+void eb_puts(const char *s)
+{
+	puts(s);
+	if (debugFile)
+		fprintf(debugFile, "%s\n", s);
+}
+
+// the help command
+bool helpUtility(void)
+{
+	int cx;
+
+	if (!cxQuit(context, 0))
+		return false;
+
+	undoSpecialClear();
+
+// maybe we already have a buffer with the help guide in it
+	for (cx = 1; cx < MAXSESSION; ++cx) {
+		Window *w = sessionList[cx].lw;
+		if (!w)
+			continue;
+		if (!w->f0.fileName)
+			continue;
+		if (!stringEqual(w->f0.fileName, "qrg.browse"))
+			continue;
+		cxSwitch(cx, false);
+		i_printf(MSG_MovedSession, cx);
+		return true;
+	}
+
+	cx = sideBuffer(0, qrg_string, -1, "qrg");
+	if (cx == 0)
+		return false;
+	cxSwitch(cx, false);
+	i_printf(MSG_MovedSession, cx);
+	browseCurrentBuffer();
+	cw->dot = 1;
+	return true;
 }
 
