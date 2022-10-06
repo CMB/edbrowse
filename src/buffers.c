@@ -264,7 +264,7 @@ static bool jdb_passthrough(const char *s)
 		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
 		"e+", "e-", "eret",
-		"bflist", "bglist", "help", 0
+		"bflist", "bglist", "sklist", "help", 0
 	};
 	int i;
 	if (s[0] == '!')
@@ -5240,6 +5240,21 @@ et_go:
 				printf("%s", lw->htmltitle);
 			else if (lw->f0.fileName)
 				printf("%s", lw->f0.fileName);
+			nl();
+		}
+		return true;
+	}
+
+	if (stringEqual(line, "sklist")) {
+// count the buffers in this session
+		const Window *w = cw;
+		for(n = 0, w = cw; w; w = w->prev, ++n)  ;
+		for(w = cw; w; w = w->prev, --n) {
+			printf("%d: ", n);
+			if (w->htmltitle)
+				printf("%s", w->htmltitle);
+			else if (w->f0.fileName)
+				printf("%s", w->f0.fileName);
 			nl();
 		}
 		return true;
