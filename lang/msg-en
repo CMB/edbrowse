@@ -232,7 +232,7 @@ cannot browse an empty file
 this doesn't look like browsable text
 already browsing
 label %s not found
-i not available in browse mode
+0
 cannot run an insert command from an edbrowse function
 several lines from %d to %d have been updated\n
 command %c not yet implemented
@@ -279,7 +279,7 @@ cannot embed newline in an input field
 SSL connect error %d
 top of history
 bottom of history
-0
+%s not available in irc mode
 0
 0
 could not read the data from the server

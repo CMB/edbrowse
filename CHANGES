@@ -5,6 +5,8 @@ Support tls sockets for irc.
 
 html template element.
 
+Go up and down in the history of the current edbrowse session.
+
 3.8.5
 s/x/y/$ command, and s$ shorthand.
 s/x/y/3g, from 3 on, like sed.

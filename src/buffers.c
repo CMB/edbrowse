@@ -4524,6 +4524,11 @@ static int twoLetter(const char *line, const char **runThis)
 	if(stringEqual(line, "up") ||
 	stringEqual(line, "down")) {
 		struct ebSession *s = &sessionList[context];
+		if(cw->irciMode | cw->ircoMode) {
+			cmd = 'e';
+			setError(MSG_IrcCommandS, line);
+			return false;
+		}
 		if (!cxQuit(context, 0))
 			return false;
 		undoCompare();
@@ -4560,6 +4565,7 @@ static int twoLetter(const char *line, const char **runThis)
 			}
 		}
 		cw = s->lw;
+		selfFrame();
 		if (cw->htmltitle)
 			printf("%s", cw->htmltitle);
 		else if (cw->f0.fileName)
@@ -7661,7 +7667,7 @@ redirect:
 
 	if (cmd == 'i') {
 		if (cw->browseMode) {
-			setError(MSG_BrowseI);
+			setError(MSG_BrowseCommand, 'i');
 			return false;
 		}
 		cmd = 'a';

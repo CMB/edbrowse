@@ -232,7 +232,7 @@ kann leere Datei nicht im Browsermodus anzeigen
 Dies sieht nicht wie Text zum Browsen aus.
 bereits am Browsen
 Marke %s nicht gefunden
-i im Browsermodus nicht verfügbar
+0
 kann Einfügekommando nicht aus einer Edbrowse-Funktion heraus starten
 Zeilen von %d auf %d aktualisiert\n
 Kommando %c noch nicht implementiert
@@ -279,7 +279,7 @@ kann Zeilenumbrüche nicht in ein Eingabefeld einfügen
 SSL-Verbindungsfehler %d
 0
 0
-0
+%s im irc Modes nicht verfügbar
 0
 0
 konnte Daten nicht vom Server lesen

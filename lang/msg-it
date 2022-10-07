@@ -232,7 +232,7 @@ impossibile svolgere il browsing di un file vuoto
 questo non sembra testo di cui si possa fare il browsing
 già svolgendo il browsing
 etichetta %s non trovata
-i non disponibile in modalità browser
+0
 impossibile eseguire un comando insert da una funzione edbrowse
 varie righe da %d a %d sono state aggiornate\n
 comando %c non ancora implementato
@@ -279,7 +279,7 @@ impossibile inserire newlines in un campo di input
 errore durante la connessione SSL %d
 0
 0
-0
+%s non disponibile in modalità irc
 0
 0
 impossibile leggere dati dal server

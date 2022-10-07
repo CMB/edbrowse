@@ -232,7 +232,7 @@ impossível navegar num arquivo vazio
 isto não parece um texto navegável
 já está navegando
 rótulo %s não achado
-i não disponível em modo navegação
+0
 impossível executar um comando insert a partir de uma função do edbrowse
 linhas de %d para %d foram atualizadas\n
 comando %c ainda não implementado
@@ -279,7 +279,7 @@ impossível embutir novas linhas num campo de entrada
 Erro de conexão SSL %d
 0
 0
-0
+%s não disponível em modo irc
 0
 0
 não consegui ler os dados do servidor

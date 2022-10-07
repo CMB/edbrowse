@@ -232,7 +232,7 @@ navigation impossible dans un fichier vide
 ce contenu ne semble pas navigable
 en cours de navigation
 label %s non trouvé
-i impossible en mode navigation
+0
 impossible de lancer une commande d'insertion à partir d'une fonction d'edbrowse
 les lignes du %d au %d ont été mises à jour\n
 commande %c non implémentée
@@ -279,7 +279,7 @@ une zone de saisie ne peut contenir des sauts de ligne
 Erreur de connexion SSL %d
 0
 0
-0
+%s impossible en mode irc
 0
 0
 impossible de lire les données sur le serveur

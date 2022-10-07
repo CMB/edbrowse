@@ -84,6 +84,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#ilink> Internal Links </A>
 <LI><A HREF=#back> The Back Key </A>
 <LI><A HREF=#move> The M Command </A>
+<LI><A HREF=#hist> Browsing History </A>
 <LI><A HREF=#music> Background Music </A>
 <LI><A HREF=#heading> Headings </A>
 <LI><A HREF=#input> Input Fields </A>
@@ -625,6 +626,8 @@ f : print the name of the current file
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
 <br>hist : show the history of buffers for the current session
+<br>up : go up in the history of files and/or web pages
+<br>down : go down in the history of files and/or web pages
 <br>bd : binary detection on files (toggle)
 <br>iu : automatically convert between iso8859 and utf8 (toggle)
 <P>
@@ -1321,7 +1324,7 @@ Edbrowse presents the session number, and the title if the session's buffer hold
 
 <P>
 Use the hist command to see a history of files or web pages that are open on the current session.
-This is more common when browsing, where each new web page pushes the previous page onto a stack, and the back command pops the stack.
+This is more common when browsing, where each new web page pushes the previous page onto a stack, and the ^ command pops the stack.
 It is less common when editing local files.
 
 <P>
@@ -2894,6 +2897,48 @@ You can issue the M command without a destination if you are not sure which sess
 Edbrowse will pick an empty session for you
 and print something like "moved to session 15".
 
+<h2> <A NAME=hist> Browsing History </A> </h2>
+
+<P>
+Edbrowse maintains a stack of buffers for each session.
+Whenever you edit a new file, or go to a hyperlink on a web page, the existing buffer is pushed onto the stack and a new buffer is allocated, to hold the new file or web page.
+Type hist to see a history of your files and/or web pages.
+This is similar to a browser history, however, this is transient, reflecting only the web pages you have visited since you launched edbrowse.
+Edbrowse does not maintain a permanent file of the sites you have visited.
+With this in mind, it is important to maintain a bookmark file with your favorites,
+so you can call up those websites quickly.
+
+<P>
+The hist command prints the buffers on the stack, counting down from the last file you accessed, to the first.
+It prints the title if it is a web page, or the file name, or nothing if there is no file name.
+A star indicates the buffer that you are currently viewing.
+This is usually the last buffer on the stack, and the first buffer printed by the hist command.
+
+<P>
+hist
+<br>
+3* file I just called up
+<br>
+2: file I was looking at earlier
+<br>
+1: first file of this session
+
+<P>
+The up and down commands move up and down in the history.
+This is similar to gdb, where up and down traverse the stack frames.
+
+<P>
+If you follow a hyperlink, then go up, then follow another hyperlink, the page fetched by the first hyperlink is freed.
+Edbrowse retains a line of fetched pages, not a tree.
+This is how other browsers behave.
+If you want to keep both pages, pointed to by the two hyperlinks, follow the first link, use the M command (described in the previous section), then go to the second link.
+
+<P>
+Do not confuse up with ^.
+^ discards the page you are on and goes back to the previous page.
+You can't go down after that.
+However, up simply moves up the stack; the page you were on is still there, and accessible by down.
+
 <h2> <A NAME=music> Background Music </A> </h2>
 
 <P>
@@ -4287,10 +4332,8 @@ agentsite = google.com 2
 <P>
 Pretend to be user agent 2, that is, Internet Explorer version 7,
 when talking to google.com or any of its subdomains.
-I chose this example because it became necessary as of 05/25/2019.
-google.com will not present the h3 headings on the search results unless you look like Internet Explorer.
-I don't know why, I'm just trying to go with the flow.
-Other sites are also particular about the type of browser, and none of them are looking for edbrowse.
+This was necessary for a time, but is, fortunately, no longer needed.
+Still, some sites are particular about the type of browser, and none of them are looking for edbrowse.
 
 <h2> <A NAME=script> Edbrowse Functions </A> </h2>
 

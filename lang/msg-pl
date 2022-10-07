@@ -232,7 +232,7 @@ nie można przeglądać pustego pliku
 to nie wygląda jak przeglądalny tekst
 już przeglądasz
 etykieta %s nie znaleziona
-'i' nie znalezione w trybie przeglądania
+0
 nie można wywołać polecenia wstawienia z funkcji edbrowse
 wiersze od z %d na %d zostały zaktualizowane\n
 polecenie %c nie zaimplementowane
@@ -279,7 +279,7 @@ pole wprowadzania nie może zawierać znaków końca linii
 błąd połączenia SSL %d
 0
 0
-0
+%s niedostępne w trybie irc
 0
 0
 nie udało się wczytać danych z serwera
