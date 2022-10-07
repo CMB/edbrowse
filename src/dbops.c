@@ -552,7 +552,7 @@ char *timeString(interval seconds, int flags)
 {
 	short h, m, s;
 	char c = 'A';
-	static char buf[12];
+	static char buf[22];
 	if (seconds < 0 || seconds >= 86400)
 		strcpy(buf, "  :  :   AM");
 	else {
