@@ -481,6 +481,7 @@ if(!f.elements[n]) f.elements[n] = this;
 }
 this.name$2 = n;
 }});
+HTMLElement.prototype.ownerDocument = document;
 
 z$HTML = function(){};
 z$HTML.prototype = new HTMLElement;
@@ -1142,7 +1143,6 @@ list.splice(idx, 0, r);
 CSSStyleDeclaration = function(){
         this.element = null;
         this.style = this;
-this.ownerDocument = my$doc();
 };
 CSSStyleDeclaration.prototype = new HTMLElement;
 CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
@@ -1374,12 +1374,12 @@ if(arguments.length > 0) {
 // data always has to be a string
 this.data$2 += arguments[0];
 }
-this.nodeName = this.tagName = "#text";
-this.nodeType = 3;
 this.class = "";
 }
 TextNode.prototype = new HTMLElement;
 TextNode.prototype.dom$class = "TextNode";
+TextNode.prototype.nodeName = TextNode.prototype.tagName = "#text";
+TextNode.prototype.nodeType = 3;
 
 // setter insures data is always a string, because roving javascript might
 // node.data = 7;  ...  if(node.data.match(/x/) ...
@@ -1391,7 +1391,6 @@ set: function(s) { this.data$2 = s + ""; }});
 document.createTextNode = function(t) {
 if(t == undefined) t = "";
 var c = new TextNode(t);
-c.ownerDocument = this;
 /* A text node chould never have children, and does not need childNodes array,
  * but there is improper html out there <text> <stuff> </text>
  * which has to put stuff under the text node, so against this
@@ -1405,17 +1404,16 @@ return c;
 
 Comment = function(t) {
 this.data = t;
-this.nodeName = this.tagName = "#comment";
-this.nodeType = 8;
 this.class = "";
 }
 Comment.prototype = new HTMLElement;
 Comment.prototype.dom$class = "Comment";
+Comment.prototype.nodeName = Comment.prototype.tagName = "#comment";
+Comment.prototype.nodeType = 8;
 
 document.createComment = function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);
-c.ownerDocument = this;
 c.childNodes = [];
 c.parentNode = null;
 eb$logElement(c, "comment");
@@ -2072,7 +2070,6 @@ case "option":
 c = new Option;
 c.childNodes = [];
 c.parentNode = null;
-c.ownerDocument = this;
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
@@ -2105,7 +2102,6 @@ c.nodeType = 1;
 if(t == "document")
 c.nodeType = 9, c.tagName = "document";
 c.class = "";
-c.ownerDocument = this;
 eb$logElement(c, t);
 if(c.nodeType == 1) c.id = c.name = "";
 

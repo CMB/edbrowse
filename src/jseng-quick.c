@@ -3963,7 +3963,6 @@ Don't do any of this if the tag is itself <style>. */
 			tcn = emptyString;
 		set_property_string(cx, io, "class", tcn);
 		set_property_string(cx, io, "last$class", tcn);
-		set_property_object(cx, io, "ownerDocument", *((JSValue*)cf->docobj));
 
 // only anchors with href go into links[]
 		if (list && stringEqual(list, "links") &&
