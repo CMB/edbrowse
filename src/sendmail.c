@@ -290,7 +290,7 @@ bool *long_p)
 	} else {
 
 		if (!ismc && (cx = stringIsNum(file)) >= 0) {
-			static char newfilename[16];
+			static char newfilename[21];
 			if (!unfoldBuffer(cx, false, &buf, &buflen))
 				return false;
 			if (!buflen) {
@@ -550,7 +550,7 @@ empty:
 		if (!flowed &&
 		((((uchar)c < '\n' && c != '\t') ||
 		    c == '=' ||
-		    (uchar)c == '\xff' ||
+		    (uchar)c == 0xff ||
 		    ((c == ' ' || c == '\t') &&
 		     s < v - 1 && (s[1] == '\n' || s[1] == '\r'))))) {
 			char expand[4];
