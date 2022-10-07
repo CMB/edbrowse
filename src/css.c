@@ -3070,8 +3070,10 @@ the before after rules straight up.
 
 	if(t)
 		delete_property_win(cf, "soj$");
-	if (!sl)
+	if (!sl) {
+		nzFree(s);
 		return;
+	}
 
 // At this point matchtype is nonzero.
 // put a space between the injected text and the original text
