@@ -1450,6 +1450,7 @@ curl_fail:
 	}
 
 	if (g->headers_p) {
+		nzFree(*g->headers_p);
 		*g->headers_p = g->headers;
 // The string is your responsibility now.
 		g->headers = 0;
