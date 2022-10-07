@@ -3765,7 +3765,7 @@ void establish_js_option(Tag *t, Tag *sel)
 		return;
 	}
 	oo = instantiate_array_element(cx, oa, idx, "Option");
-	set_property_object(cx, oo, "parentNode", oa);
+	set_property_object(cx, oo, "parentNode", selobj);
 /* option.form = select.form */
 	fo = get_property_object(cx, selobj, "form");
 	if(!JS_IsUndefined(fo)) {

@@ -622,7 +622,8 @@ alert3("textarea.innerHTML is too complicated for me to render");
 
 HTMLSelectElement = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
 HTMLSelectElement.prototype = new HTMLElement;
-HTMLSelectElement.prototype.dom$class = "HTMLSelectElement";
+HTMLSelectElement.prototype.dom$class = "Select";
+HTMLSelectElement.prototype.disabled = false;
 Object.defineProperty(HTMLSelectElement.prototype, "value", {
 get: function() {
 var a = this.options;
@@ -1423,18 +1424,19 @@ return c;
 
 // The Option class, these are choices in a dropdown list.
 Option = HTMLOptionElement = function() {
-this.nodeName = this.tagName = "OPTION";
-this.nodeType = 1;
-this.text = this.value = "";
 if(arguments.length > 0)
 this.text = arguments[0];
 if(arguments.length > 1)
 this.value = arguments[1];
-this.selected = false;
-this.defaultSelected = false;
 }
 Option.prototype = new HTMLElement;
 Option.prototype.dom$class = "Option";
+Option.prototype.selected = false;
+Option.prototype.defaultSelected = false;
+Option.prototype.disabled = false;
+Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
+Option.prototype.nodeType = 1;
+Option.prototype.text = Option.prototype.value = "";
 
 document.getBoundingClientRect = function(){
 return {
@@ -2069,6 +2071,8 @@ case "select": c = new HTMLSelectElement; break;
 case "option":
 c = new Option;
 c.childNodes = [];
+c.parentNode = null;
+c.ownerDocument = this;
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
@@ -2083,7 +2087,7 @@ c = new HTMLElement;
 }
 
 c.childNodes = [];
-if(c.dom$class == "HTMLSelectElement") c.options = c.childNodes;
+if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");

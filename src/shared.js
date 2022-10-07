@@ -1335,7 +1335,7 @@ var t = this;
 var nrows = t.rows.length;
 if(idx < 0) idx = nrows;
 if(idx > nrows) return null;
-// Should this be ownerDocument, the context that crated the table,
+// Should this be ownerDocument, the context that created the table,
 // or my$doc(), the running context. I think the latter is safer.
 var r = my$doc().createElement("tr");
 if(t.dom$class != "HTMLTableElement") {
@@ -1399,7 +1399,7 @@ name === "className" ||
 // no clue what getAttribute("style") is suppose to do
 name === "style" ||
 name === "htmlFor" && o.dom$class == "HTMLLabelElement" ||
-name === "options" && o.dom$class == "HTMLSelectElement";
+name === "options" && o.dom$class == "Select";
 }
 
 /*********************************************************************

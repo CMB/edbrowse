@@ -648,33 +648,33 @@ return confirm("All that hard work, are you sure you want to reset?");
 function newSelect(e) {
 alert(e.name + " in " + e.form.name + " has become " +
 e.options[e.selectedIndex].value + " or " + e.value);
-var olist = document.forms.questionnaire.colors.options;
-olist.length = 0;
+var olist = document.forms.questionnaire.colors;
+olist.options.length = 0;
 var oo; // option object
 if(e.value.match(/^[!-M]/)) {
 oo = new Option("red", "r");
-olist[0] = oo;
+olist.add(oo);
 oo = new Option("orange", "o");
-olist[1] = oo;
+olist.add(oo);
 oo = new Option("yellow", "y");
-olist[2] = oo;
+olist.add(oo);
 oo = new Option("green", "g");
 oo.selected = true;
-olist[3] = oo;
+olist.add(oo);
 oo = new Option("white", "w");
 oo.selected = true;
-olist[4] = oo;
+olist.add(oo);
 } else {
 oo = new Option("pink", "p");
-olist[0] = oo;
+olist.add(oo);
 oo = new Option("tan", "t");
-olist[1] = oo;
+olist.add(oo);
 oo = new Option("silver", "s");
 oo.selected = true;
-olist[2] = oo;
+olist.add(oo);
 oo = new Option("copper", "c");
 oo.selected = true;
-olist[3] = oo;
+olist.add(oo);
 }
 }
 
