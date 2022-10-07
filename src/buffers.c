@@ -1007,6 +1007,26 @@ static void freeWindow(Window *w)
 	free(w);
 }
 
+static void freeWindows(int cx, bool all)
+{
+	struct ebSession *s = &sessionList[cx];
+	Window *w = s->lw2;
+while (w) {
+		Window *p = w->prev;
+		freeWindow(w);
+		w = p;
+	}
+	s->fw2 = s->lw2 = 0;
+	if(!all) return;
+	w = s->lw;
+	while (w) {
+		Window *p = w->prev;
+		freeWindow(w);
+		w = p;
+	}
+	s->fw = s->lw = 0;
+}
+
 /*********************************************************************
 Here are a few routines to switch contexts from one session to another.
 This is how the user edits multiple sessions, or browses multiple
@@ -1084,21 +1104,9 @@ bool cxQuit(int cx, int action)
 		undoCompare();
 	}
 
-	if (action == 2) {
-		while (w) {
-			Window *p = w->prev;
-			freeWindow(w);
-			w = p;
-		}
-		sessionList[cx].fw = sessionList[cx].lw = 0;
-		w = sessionList[context].lw2;
-		while (w) {
-			Window *p = w->prev;
-			freeWindow(w);
-			w = p;
-		}
-		sessionList[cx].fw2 = sessionList[cx].lw2 = 0;
-	} else
+	if (action == 2)
+		freeWindows(cx, true);
+	else
 		freeWindow(w);
 
 	if (cx == context) {
@@ -4513,6 +4521,54 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if(stringEqual(line, "up") ||
+	stringEqual(line, "down")) {
+		struct ebSession *s = &sessionList[context];
+		if (!cxQuit(context, 0))
+			return false;
+		undoCompare();
+		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
+		cmd = 'e';
+		if(line[0] == 'u') { // up
+			if(!cw->prev) {
+				setError(MSG_NoUp);
+				return false;
+			}
+		s->lw = cw->prev;
+			cw->prev = 0;
+			if(!s->lw2) {
+				s->fw2 = s->lw2 = cw;
+			} else {
+				s->fw2->prev = cw;
+				s->fw2 = cw;
+			}
+		} else { // down
+			if(!s->lw2) {
+				setError(MSG_NoDown);
+				return false;
+			}
+			s->lw = s->fw2;
+			s->fw2->prev = cw;
+			if(s->fw2 == s->lw2) {
+				s->fw2 = s->lw2 = 0;
+			} else {
+				Window *w = s->lw2;
+				while(w->prev != s->fw2) w = w->prev;
+				w->prev = 0;
+				s->fw2 = w;
+			}
+		}
+		cw = s->lw;
+		if (cw->htmltitle)
+			printf("%s", cw->htmltitle);
+		else if (cw->f0.fileName)
+			printf("%s", cw->f0.fileName);
+		else i_printf(MSG_NoFile);
+		nl();
+		return true;
+	}
+
 	if(stringEqual(line, "e+")) {
 		for(n = context + 1; n < MAXSESSION; ++n)
 			if(sessionList[n].lw) {
@@ -5242,7 +5298,7 @@ et_go:
 			Window *lw = sessionList[n].lw;
 			if (!lw)
 				continue;
-			printf("%d: ", n);
+			printf("%d%c ", n, n == context ? '*' : ':');
 			if (lw->htmltitle)
 				printf("%s", lw->htmltitle);
 			else if (lw->f0.fileName)
@@ -5266,7 +5322,7 @@ et_go:
 			nl();
 		}
 		for(w = cw; w; w = w->prev, --n) {
-			printf("%d: ", n);
+			printf("%d%c ", n, w == cw ? '*' : ':');
 			if (w->htmltitle)
 				printf("%s", w->htmltitle);
 			else if (w->f0.fileName)
@@ -5763,6 +5819,7 @@ et_go:
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		undoSpecialClear();
+		freeWindows(context, false);
 		w = createWindow();
 		w->sno = context;
 		w->prev = cw;
@@ -7382,7 +7439,8 @@ rebrowse:
 		cw->undoable = cw->changeMode = false;
 		undoSpecialClear();
 		startRange = endRange = 0;
-		changeFileName = 0;	/* should already be zero */
+		freeWindows(context, false);
+		changeFileName = 0;	// should already be zero
 		thisfile = cf->fileName;
 		jumptag = 0;
 		w = createWindow();
