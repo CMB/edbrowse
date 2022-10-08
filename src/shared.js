@@ -1399,7 +1399,8 @@ name === "className" ||
 // no clue what getAttribute("style") is suppose to do
 name === "style" ||
 name === "htmlFor" && o.dom$class == "HTMLLabelElement" ||
-name === "options" && o.dom$class == "Select";
+name === "options" && o.dom$class == "Select" ||
+name === "selectedOptions" && o.dom$class == "Select";
 }
 
 /*********************************************************************
@@ -1614,6 +1615,9 @@ if(Array.isArray(node1[item])) {
 
 // event handlers shouldn't carry across.
 if(item.match(/^on[a-zA-Z]+\$\$array$/)) continue;
+
+// live arrays
+if((item == "options" || item == "selectedOptions") && node1.dom$class == "Select") continue;
 
 /*********************************************************************
 Ok we need some special code here for form.elements,

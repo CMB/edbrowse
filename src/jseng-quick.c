@@ -3765,30 +3765,25 @@ void establish_js_option(Tag *t, Tag *sel)
 
 	selobj = *((JSValue*)sel->jv);
 	oa = get_property_object(cx, selobj, "options");
-	if(JS_IsUndefined(oa)) return;
-	if(!JS_IsArray(cx, oa)) {
-		JS_Release(cx, oa);
-		return;
-	}
-	oo = instantiate_array_element(cx, oa, idx, "Option");
+	cn = get_property_object(cx, selobj, "childNodes");
+	oo = instantiate_array_element(cx, cn, idx, "Option");
 	set_property_object(cx, oo, "parentNode", selobj);
+	set_array_element_object(cx, oa, idx, oo);
+	if(t->checked) {
+		soa = get_property_object(cx, selobj, "selectedOptions");
+		set_array_element_object(cx, soa, idx, oo);
+		JS_Release(cx, soa);
+	}
 // option.form = select.form
 	fo = get_property_object(cx, selobj, "form");
 	if(!JS_IsUndefined(fo)) {
 		set_property_object(cx, oo, "form", fo);
 		JS_Release(cx, fo);
 	}
-	cn = instantiate_array(cx, oo, "childNodes");
-	if(t->checked) {
-		int l;
-		soa = get_property_object(cx, selobj, "selectedOptions");
-// soa should be there it is created by the constructor
-		l = get_arraylength(cx, soa);
-		set_array_element_object(cx, soa, l, oo);
-		JS_Release(cx, soa);
-	}
 
 connectTagObject(t, oo);
+	JS_Release(cx, cn);
+	cn = instantiate_array(cx, oo, "childNodes");
 	JS_Release(cx, cn);
 	JS_Release(cx, oa);
 }
@@ -3948,10 +3943,6 @@ That's how it was for a long time, but I think we only do this on form.
 				return;
 // Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array(cx, io, "childNodes");
-// childNodes and options are the same for Select and datalist
-			if (stringEqual(classname, "HTMLSelectElement") ||
-			stringEqual(classname, "Datalist"))
-				set_property_object(cx, io, "options", ca);
 			JS_Release(cx, ca);
 		}
 

@@ -649,8 +649,8 @@ function newSelect(e) {
 alert(e.name + " in " + e.form.name + " has become " +
 e.options[e.selectedIndex].value + " or " + e.value);
 var olist = document.forms.questionnaire.colors;
-olist.options.length = 0;
 var oo; // option object
+while(olist.options.length) olist.remove(0);
 if(e.value.match(/^[!-M]/)) {
 oo = new Option("red", "r");
 olist.add(oo);

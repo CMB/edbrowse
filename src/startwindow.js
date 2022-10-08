@@ -622,7 +622,7 @@ return;
 alert3("textarea.innerHTML is too complicated for me to render");
 }
 
-HTMLSelectElement = function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[];this.validity = new Validity, this.validity.owner = this};
+HTMLSelectElement = function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[]; this.options=[];this.validity = new Validity, this.validity.owner = this};
 HTMLSelectElement.prototype = new HTMLElement;
 HTMLSelectElement.prototype.dom$class = "Select";
 HTMLSelectElement.prototype.disabled = false;
@@ -637,8 +637,14 @@ HTMLSelectElement.prototype.eb$bso = function() { // build selected options arra
 // do not replace the array with a new one, this is suppose to be a live array
 var a = this.selectedOptions;
 var o = this.options;
-a.length = 0;
-for(var i=0; i<o.length; ++i) if(o[i].selected) a.push(o[i]);
+a.length = o.length = 0;
+var cn = this.childNodes;
+// does not account vfor optgroups, all options at top level
+for(var i=0; i<cn.length; ++i) {
+if(cn[i].nodeName != "OPTION") continue;
+o.push(cn[i]);
+if(cn[i].selected) a.push(cn[i]);
+}
 }
 
 HTMLInputElement = function(){this.validity = new Validity, this.validity.owner = this};
@@ -1446,6 +1452,12 @@ Option.prototype.disabled = false;
 Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
 Option.prototype.text = Option.prototype.value = "";
 
+HTMLOptGroupElement = function() {}
+HTMLOptGroupElement.prototype = new HTMLElement;
+HTMLOptGroupElement.prototype.dom$class = "OptGroup";
+HTMLOptGroupElement.prototype.disabled = false;
+HTMLOptGroupElement.prototype.nodeName = HTMLOptGroupElement.prototype.tagName = "OPTGROUP";
+
 document.getBoundingClientRect = function(){
 return {
 top: 0, bottom: 0, left: 0, right: 0,
@@ -1754,6 +1766,8 @@ So we don't want to synchronize by side-effects.
 In other words, we don't want to pass the actions back to edbrowse,
 as appendChild does. So I kinda have to reproduce what they do
 here, with just js, and no action in C.
+Actually we shouldn't be calling this routine at all; should be calling add(),
+so I don't even know if this makes sense.
 *********************************************************************/
 
 HTMLSelectElement.prototype.appendChild = function(newobj) {
@@ -1765,6 +1779,7 @@ if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 var l = this.childNodes.length;
 if(newobj.defaultSelected) newobj.selected = true, this.selectedIndex = l;
 this.childNodes.push(newobj); newobj.parentNode = this;
+this.eb$bso();
 mutFixup(this, false, newobj, null);
 return newobj;
 }
@@ -1785,6 +1800,7 @@ if(i == this.childNodes.length) {
 // side effect, object is freeed from wherever it was.
 return null;
 }
+this.eb$bso();
 mutFixup(this, false, newobj, null);
 return newobj;
 }
@@ -1792,21 +1808,21 @@ HTMLSelectElement.prototype.removeChild = function(item) {
 var i;
 if(!item) return null;
 for(i=0; i<this.childNodes.length; ++i)
-if(this.childNodes[i] == item) {
+if(this.childNodes[i] == item) break;
+if(i == this.childNodes.length) return null;
 this.childNodes.splice(i, 1);
 item.parentNode = null;
-break;
-}
-if(i == this.childNodes.length) return null;
+this.eb$bso();
 mutFixup(this, false, i, item);
 return item;
 }
 
+// these routines do not account for optgroups
 HTMLSelectElement.prototype.add = function(o, idx) {
 var n = this.options.length;
 if(typeof idx != "number" || idx < 0 || idx > n) idx = n;
 if(idx == n) this.appendChild(o);
-else this.insertBefore(o, this.options[idx]);
+else this.insertBefore(o, this.childNodes[idx]);
 }
 HTMLSelectElement.prototype.remove = function(idx) {
 var n = this.options.length;
@@ -2093,7 +2109,6 @@ c = new HTMLElement;
 }
 
 c.childNodes = [];
-if(c.dom$class == "Select") c.options = c.childNodes;
 c.parentNode = null;
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.setAttribute("name", "");
