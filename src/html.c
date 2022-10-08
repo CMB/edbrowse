@@ -4029,6 +4029,18 @@ static void liCheck(Tag *t)
 	}
 }
 
+// this routine guards against <td onclick=blah><a href=#>stuff</a></td>
+// showing up as {{stuff}}
+// For now we look immediately below, but we might need to look deeper.
+static bool ahref_under(const Tag *t)
+{
+	Tag *u;
+	for(u = t->firstchild; u; u = u->sibling)
+		if(u->action == TAGACT_A && u->href)
+			return true;
+	return false;
+}
+
 static Tag *deltag;
 
 static void renderNode(Tag *t, bool opentag)
@@ -4338,7 +4350,7 @@ nocolor:
 // This rerender function is getting more and more js intensive!
 		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
-		if (!(t->onclick & allowJS)) {
+		if (!(t->onclick & allowJS) || ahref_under(t)) {
 // regular span
 			if((u || a) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
@@ -4677,7 +4689,7 @@ past_cell_paragraph:
 		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
 		if(!opentag) {
-			if(t->onclick) {
+			if(t->onclick && !ahref_under(t)) {
 				sprintf(hnum, "%c0}", InternalCodeChar);
 				ns_hnum();
 			}
@@ -4717,7 +4729,7 @@ past_cell_paragraph:
 			td2columnHeading(ltag, t);
 		}
 // Always retain the <td> tag, for the ur command.
-		if(t->onclick) {
+		if(t->onclick && !ahref_under(t)) {
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 				ns_hnum();
 		} else {

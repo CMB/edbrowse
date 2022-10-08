@@ -7132,6 +7132,9 @@ past_g_file:
 		char *h;
 		int tagno;
 		bool click, dclick;
+// jsdead javascript is not running
+// jsh the href is javascript:
+// jsgo going to this link definitely entails javascript, e.g. onclick
 		bool jsh, jsgo, jsdead;
 		bool lookmode = false;
 
@@ -7248,17 +7251,18 @@ past_g_file:
 // No mouseEnter, mouseOver, mouseExit, etc.
 			if (!jsdead)
 				set_property_string_win(cf, "status", h);
-			if (jsgo) {
-				jSyncup(false, tag);
-				rc = bubble_event_t(tag, "onclick");
-				jSideEffects();
-				if (newlocation)
-					goto redirect;
-				if (!rc)
-					return true;
-			}
+// jsgo means running javascript or at least some onclick code,
+// but we should generate the click event whether jsgo is set or not.
+// A containing object could have an event handler capturing click.
+			jSyncup(false, tag);
+			rc = bubble_event_t(tag, "onclick");
+			jSideEffects();
+		if (newlocation)
+				goto redirect;
+			if (!rc)
+				return true;
+
 			if (jsh) {
-				jSyncup(false, tag);
 /* actually running the url, not passing it to http etc, need to unescape */
 				unpercentString(h);
 				cf = tag->f0;
