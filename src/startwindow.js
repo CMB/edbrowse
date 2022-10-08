@@ -622,7 +622,7 @@ return;
 alert3("textarea.innerHTML is too complicated for me to render");
 }
 
-HTMLSelectElement = function() { this.selectedIndex = -1; this.value = "";this.validity = new Validity, this.validity.owner = this};
+HTMLSelectElement = function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[];this.validity = new Validity, this.validity.owner = this};
 HTMLSelectElement.prototype = new HTMLElement;
 HTMLSelectElement.prototype.dom$class = "Select";
 HTMLSelectElement.prototype.disabled = false;
@@ -632,6 +632,14 @@ var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
+
+function eb$bso(sel) { // build selected options array
+// do not replace the array with a new one, this is suppose to be a live array
+var a = sel.selectedOptions;
+var o = sel.options;
+a.length = 0;
+for(var i=0; i<o.length; ++i) if(o[i].selected) a.push(o[i]);
+}
 
 HTMLInputElement = function(){this.validity = new Validity, this.validity.owner = this};
 HTMLInputElement.prototype = new HTMLElement;

@@ -4336,7 +4336,7 @@ nocolor:
 // But only at the start, so maybe we only need to check on the first render.
 // But maybe some other site adds onclick later. Do we have to check every time?
 // This rerender function is getting more and more js intensive!
-		if (!t->onclick && t->jslink && handlerPresent(t, "onclick"))
+		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
 		if (!(t->onclick & allowJS)) {
 // regular span
@@ -4616,6 +4616,8 @@ past_cell_paragraph:
 		break;
 
 	case TAGACT_TR:
+		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
+			t->onclick = true;
 		if (opentag)
 			tdfirst = true;
 		if(t->ur && opentag && (ltag = t->parent)
@@ -4635,12 +4637,26 @@ past_cell_paragraph:
 				v = v->sibling;
 			}
 			if(v) { // should always happen
-				char rowbuf[20];
-				tagInStream(tagno);
-				sprintf(rowbuf, "row %d\n", j);
-				stringAndString(&ns, &ns_l, rowbuf);
+				char rowbuf[24];
+				if(t->onclick) {
+					sprintf(rowbuf, "%c%d{row %d%c0}\n",
+					InternalCodeChar, tagno, j, InternalCodeChar);
+					stringAndString(&ns, &ns_l, rowbuf);
+				} else {
+					tagInStream(tagno);
+					sprintf(rowbuf, "row %d\n", j);
+					stringAndString(&ns, &ns_l, rowbuf);
+				}
 				break;
 			}
+		}
+		if(opentag && t->onclick) {
+// put {row} in front
+			char rowbuf[24];
+			sprintf(rowbuf, "%c%d{row%c0}:",
+			InternalCodeChar, tagno, InternalCodeChar);
+			stringAndString(&ns, &ns_l, rowbuf);
+			break;
 		}
 		if(!opentag && (ltag = t->parent)
 		&& (ltag->action == TAGACT_TABLE || ltag->action == TAGACT_TBODY
@@ -4651,12 +4667,15 @@ past_cell_paragraph:
 			}
 			td2columnHeading(t, 0);
 		}
+
 	case TAGACT_TABLE:
 		goto nop;
 
 	case TAGACT_TD:
 		if (!retainTag)
 			break;
+		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
+			t->onclick = true;
 		if(!opentag) {
 			if((t->lic > 1 || t->js_ln > 1) && tableType(t) == 1 && !t->parent->ur) {
 				char arrows[20];
