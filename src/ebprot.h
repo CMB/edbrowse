@@ -453,7 +453,7 @@ void set_property_string_doc(const Frame *f, const char *name, const char *v);
 void jsRunScriptWin(const char *str, const char *filename, 		 int lineno);
 void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int lineno);
 char *jsRunScriptWinResult(const char *str, const char *filename, int lineno) ;
-void establish_js_option(Tag *t, Tag *sel);
+void establish_js_option(Tag *t, Tag *sel, Tag *og);
 void establish_js_textnode(Tag *t, const char *fpn);
 void domLink(Tag *t, const char *classname, const char *href, const char *list, const Tag *owntag, int extra);
 void rebuildSelectors(void);

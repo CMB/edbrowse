@@ -4090,7 +4090,7 @@ static void optionJS(Tag *t)
 /* no point if the controlling select doesn't have a js object */
 	if (!sel->jslink)
 		return;
-establish_js_option(t, sel);
+establish_js_option(t, sel, 0);
 // nodeName and nodeType set in constructor
 	set_property_string_t(t, "text", t->textval);
 	set_property_string_t(t, "value", t->value);

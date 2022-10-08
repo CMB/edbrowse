@@ -3750,13 +3750,14 @@ bool has_property_win(const Frame *f, const char *name)
 
 // Functions that help decorate the DOM tree, called from decorate.c.
 
-void establish_js_option(Tag *t, Tag *sel)
+void establish_js_option(Tag *t, Tag *sel, Tag *og)
 {
 	JSContext *cx = cf->cx; // context
 	int idx = t->lic;
 	JSValue oa;		// option array
 	JSValue oo;		// option object
 	JSValue selobj; // select object
+	JSValue ogobj; // optgroup object
 	JSValue soa; // selectedOptions array
 	JSValue fo;		// form object
 	JSValue cn; // childNodes
@@ -3764,11 +3765,10 @@ void establish_js_option(Tag *t, Tag *sel)
 	if(!sel->jslink) return;
 
 	selobj = *((JSValue*)sel->jv);
+	if(og) ogobj = *((JSValue*)og->jv);
 	oa = get_property_object(cx, selobj, "options");
-	cn = get_property_object(cx, selobj, "childNodes");
-	oo = instantiate_array_element(cx, cn, idx, "Option");
+	oo = instantiate_array_element(cx, oa, idx, "Option");
 	set_property_object(cx, oo, "parentNode", selobj);
-	set_array_element_object(cx, oa, idx, oo);
 	if(t->checked) {
 		soa = get_property_object(cx, selobj, "selectedOptions");
 		set_array_element_object(cx, soa, idx, oo);
@@ -3780,6 +3780,10 @@ void establish_js_option(Tag *t, Tag *sel)
 		set_property_object(cx, oo, "form", fo);
 		JS_Release(cx, fo);
 	}
+// add option under select or under optgroup
+	cn = get_property_object(cx, (og ? ogobj : selobj), "childNodes");
+idx = get_arraylength(cx, cn);
+	set_array_element_object(cx, cn, idx, oo);
 
 connectTagObject(t, oo);
 	JS_Release(cx, cn);

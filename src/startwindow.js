@@ -639,11 +639,19 @@ var a = this.selectedOptions;
 var o = this.options;
 a.length = o.length = 0;
 var cn = this.childNodes;
-// does not account vfor optgroups, all options at top level
 for(var i=0; i<cn.length; ++i) {
-if(cn[i].nodeName != "OPTION") continue;
+if(cn[i].nodeName == "OPTION") {
 o.push(cn[i]);
 if(cn[i].selected) a.push(cn[i]);
+}
+if(cn[i].nodeName != "OPTGROUP") continue;
+var og = cn[i];
+var cn2 = og.childNodes;
+for(var j=0; j<cn2.length; ++j)
+if(cn2[j].nodeName == "OPTION") {
+o.push(cn2[j]);
+if(cn2[j].selected) a.push(cn2[j]);
+}
 }
 }
 
