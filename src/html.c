@@ -4677,6 +4677,10 @@ past_cell_paragraph:
 		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
 		if(!opentag) {
+			if(t->onclick) {
+				sprintf(hnum, "%c0}", InternalCodeChar);
+				ns_hnum();
+			}
 			if((t->lic > 1 || t->js_ln > 1) && tableType(t) == 1 && !t->parent->ur) {
 				char arrows[20];
 				stringAndChar(&ns, &ns_l, ' ');
@@ -4713,7 +4717,12 @@ past_cell_paragraph:
 			td2columnHeading(ltag, t);
 		}
 // Always retain the <td> tag, for the ur command.
-		tagInStream(tagno);
+		if(t->onclick) {
+			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
+				ns_hnum();
+		} else {
+			tagInStream(tagno);
+		}
 		break;
 
 /* This is strictly for rendering math pages written with my particular css.
