@@ -7187,6 +7187,8 @@ past_g_file:
 			}
 			jsh = jsgo = nogo = false;
 			jsdead = !isJSAlive;
+// remember we can go to a file or url from a text file
+			if(!cw->browseMode) jsdead = true;
 			click = dclick = false;
 			cmd = (emode ? 'e' : 'b');
 			uriEncoded = true;
@@ -7245,7 +7247,8 @@ past_g_file:
 			line = allocatedLine = h;
 			first = *line;
 			setError(-1);
-			rc = false;
+			if(!cw->browseMode) goto past_js;
+
 // The website should not depend on the mouseover code running first.
 // edbrowse is more like a touchscreen, and there are such devices, so just go.
 // No mouseEnter, mouseOver, mouseExit, etc.
@@ -7272,6 +7275,8 @@ past_g_file:
 					goto redirect;
 				return true;
 			}
+
+past_js:
 			if (nogo)
 				return true;
 // to access local files

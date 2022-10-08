@@ -1206,7 +1206,7 @@ bool bubble_event_t(const Tag *t, const char *name)
 	JSContext *cx;
 	JSValue e;		// the event object
 	bool rc;
-	if (!allowJS || !t->jslink)
+	if (!allowJS || !t || !t->jslink)
 		return true;
 	cx = t->f0->cx;
 	e = create_event(cx, *((JSValue*)t->jv), name);
