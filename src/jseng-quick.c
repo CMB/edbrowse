@@ -4018,7 +4018,6 @@ Don't do any of this if the tag is itself <style>. */
 	if(t->action != TAGACT_DOCTYPE) {
 		set_property_string(cx, io, "nodeName", upname);
 		set_property_string(cx, io, "tagName", upname);
-		set_property_number(cx, io, "nodeType", 1);
 	}
 	connectTagObject(t, io);
 }

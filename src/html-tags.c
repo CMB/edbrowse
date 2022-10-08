@@ -4287,6 +4287,7 @@ Needless to say that's not good!
 		optionJS(t);
 // The parent child relationship has already been established,
 // don't break, just return;
+		pushAttributes(t);
 		return;
 
 	case TAGACT_DATAL:
@@ -4504,7 +4505,7 @@ static void pushAttributes(const Tag *t)
 // these are handled in domLink()
 		static const char *const excdom[] = {
 			"name", "id", "class", "classname",
-			"checked", "value", "type",
+			"selected", "checked", "value", "type",
 			"href", "src", "action",
 			0
 		};

@@ -482,6 +482,7 @@ if(!f.elements[n]) f.elements[n] = this;
 this.name$2 = n;
 }});
 HTMLElement.prototype.ownerDocument = document;
+HTMLElement.prototype.nodeType = 1;
 
 z$HTML = function(){};
 z$HTML.prototype = new HTMLElement;
@@ -1110,6 +1111,8 @@ Document.prototype.dom$class = "Document";
 DocumentFragment = function(){};
 DocumentFragment.prototype = new HTMLElement;
 DocumentFragment.prototype.dom$class = "Fragment";
+DocumentFragment.prototype.nodeType = 11;
+DocumentFragment.prototype.nodeName = DocumentFragment.prototype.tagName = "#document-fragment";
 
 CSSRule = function(){this.cssText=""}
 CSSRule.prototype.toString = function(){return this.cssText}
@@ -1433,7 +1436,6 @@ Option.prototype.selected = false;
 Option.prototype.defaultSelected = false;
 Option.prototype.disabled = false;
 Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
-Option.prototype.nodeType = 1;
 Option.prototype.text = Option.prototype.value = "";
 
 document.getBoundingClientRect = function(){
@@ -2013,7 +2015,6 @@ if(c instanceof HTMLElement) {
 c.childNodes = [];
 c.parentNode = null;
 c.nodeName = c.tagName = t.toUpperCase();
-c.nodeType = 1;
 }
 eb$logElement(c, t);
 return c;
@@ -2098,7 +2099,6 @@ c.prefix = colon[0], c.localName = colon[1];
 } else {
 c.nodeName = c.tagName = t.toUpperCase();
 }
-c.nodeType = 1;
 if(t == "document")
 c.nodeType = 9, c.tagName = "document";
 c.class = "";
@@ -2110,8 +2110,6 @@ return c;
 
 document.createDocumentFragment = function() {
 var c = this.createElement("fragment");
-c.nodeType = 11;
-c.nodeName = c.tagName = "#document-fragment";
 return c;
 }
 
