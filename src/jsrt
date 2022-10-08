@@ -473,7 +473,7 @@ Colors will change with the state, A through M or N through Z.
 <select name=colors multiple>
 <option value=r> red
 <option value=o> orange
-<option value=y> yellow
+<option value=y disabled> yellow
 <option selected value=g> green
 <option selected value=w> white
 </select>
@@ -657,6 +657,7 @@ olist.add(oo);
 oo = new Option("orange", "o");
 olist.add(oo);
 oo = new Option("yellow", "y");
+oo.disabled = true;
 olist.add(oo);
 oo = new Option("green", "g");
 oo.selected = true;

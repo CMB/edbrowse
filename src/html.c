@@ -143,6 +143,7 @@ static Tag *locateOptionByNum(const Tag *sel, int n)
 	return 0;
 }
 
+static bool inputDisabled(const Tag *t);
 static bool
 locateOptions(const Tag *sel, const char *input,
 	      char **disp_p, char **val_p, bool setcheck)
@@ -204,6 +205,12 @@ locateOptions(const Tag *sel, const char *input,
 				runningError(MSG_OptionSync, iopt);
 				continue;
 			}
+			goto fail;
+		}
+
+		if(inputDisabled(t) ||
+		(t->parent && t->parent->action == TAGACT_OPTG && inputDisabled(t->parent))) {
+			setError(MSG_Disabled);
 			goto fail;
 		}
 
