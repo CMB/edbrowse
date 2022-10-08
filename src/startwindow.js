@@ -633,10 +633,10 @@ var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
 
-function eb$bso(sel) { // build selected options array
+HTMLSelectElement.prototype.eb$bso = function() { // build selected options array
 // do not replace the array with a new one, this is suppose to be a live array
-var a = sel.selectedOptions;
-var o = sel.options;
+var a = this.selectedOptions;
+var o = this.options;
 a.length = 0;
 for(var i=0; i<o.length; ++i) if(o[i].selected) a.push(o[i]);
 }

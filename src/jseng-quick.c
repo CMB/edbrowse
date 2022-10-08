@@ -616,6 +616,7 @@ void set_property_object_t(const Tag *t, const char *name, const Tag *t2)
 
 static void set_array_element_object(JSContext *cx, JSValueConst parent, int idx, JSValueConst child)
 {
+// do we even need the atom, I don't know what an atom is
 	JSAtom a = JS_NewAtomUInt32(cx, idx);
 	JS_SetProperty(cx, parent, a, JS_DupValue(cx, child));
 	JS_FreeAtom(cx, a);
@@ -3755,32 +3756,39 @@ void establish_js_option(Tag *t, Tag *sel)
 	int idx = t->lic;
 	JSValue oa;		// option array
 	JSValue oo;		// option object
+	JSValue selobj; // select object
+	JSValue soa; // selectedOptions array
 	JSValue fo;		// form object
 	JSValue cn; // childNodes
-	JSValue selobj = *((JSValue*)sel->jv); // select object
 
-	if(!sel->jslink)
-		return;
+	if(!sel->jslink) return;
 
+	selobj = *((JSValue*)sel->jv);
 	oa = get_property_object(cx, selobj, "options");
-	if(JS_IsUndefined(oa))
-		return;
+	if(JS_IsUndefined(oa)) return;
 	if(!JS_IsArray(cx, oa)) {
 		JS_Release(cx, oa);
 		return;
 	}
 	oo = instantiate_array_element(cx, oa, idx, "Option");
 	set_property_object(cx, oo, "parentNode", selobj);
-/* option.form = select.form */
+// option.form = select.form
 	fo = get_property_object(cx, selobj, "form");
 	if(!JS_IsUndefined(fo)) {
 		set_property_object(cx, oo, "form", fo);
 		JS_Release(cx, fo);
 	}
 	cn = instantiate_array(cx, oo, "childNodes");
+	if(t->checked) {
+		int l;
+		soa = get_property_object(cx, selobj, "selectedOptions");
+// soa should be there it is created by the constructor
+		l = get_arraylength(cx, soa);
+		set_array_element_object(cx, soa, l, oo);
+		JS_Release(cx, soa);
+	}
 
 connectTagObject(t, oo);
-
 	JS_Release(cx, cn);
 	JS_Release(cx, oa);
 }
@@ -4165,6 +4173,8 @@ I'm bringing the tags back to life.
 
 	if (!sel->multiple)
 		set_property_number(cx, *((JSValue*)sel->jv), "selectedIndex", sel->lic);
+// rebuild the live selectedOptions array
+	run_function_bool(cx, *((JSValue*)sel->jv), "eb$bso");
 }
 
 void rebuildSelectors(void)
