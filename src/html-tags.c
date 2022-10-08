@@ -4072,6 +4072,7 @@ static void formControlJS(Tag *t)
 	}
 }
 
+static Tag *currentOG;
 static void optionJS(Tag *t)
 {
 	Tag *sel = t->controller;
@@ -4090,7 +4091,7 @@ static void optionJS(Tag *t)
 /* no point if the controlling select doesn't have a js object */
 	if (!sel->jslink)
 		return;
-establish_js_option(t, sel, 0);
+establish_js_option(t, sel, currentOG);
 // nodeName and nodeType set in constructor
 	set_property_string_t(t, "text", t->textval);
 	set_property_string_t(t, "value", t->value);
@@ -4201,9 +4202,12 @@ static void jsNode(Tag *t, bool opentag)
 	if (action == TAGACT_TABLE && !opentag && t->jslink)
 		run_function_onearg_win(cf, "rowReindex", t);
 
-/* all the js variables are on the open tag */
-	if (!opentag)
+// all the js variables are on the open tag
+	if (!opentag) {
+// although we have to close the optgroup
+		if(action == TAGACT_OPTG) currentOG = 0;
 		return;
+	}
 	if (t->step >= 2)
 		return;
 	t->step = 2;
@@ -4289,6 +4293,11 @@ Needless to say that's not good!
 // don't break, just return;
 		pushAttributes(t);
 		return;
+
+	case TAGACT_OPTG:
+		domLink(t, "HTMLOptGroupElement", 0, 0, 0, 4);
+		currentOG = t;
+		break;
 
 	case TAGACT_DATAL:
 		domLink(t, "Datalist", 0, 0, 0, 4);
@@ -4605,6 +4614,7 @@ static void pushAttributes(const Tag *t)
 /* decorate the tree of nodes with js objects */
 void decorate(void)
 {
+	currentOG = 0;
 	traverse_callback = jsNode;
 	traverseAll();
 }

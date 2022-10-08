@@ -3768,7 +3768,6 @@ void establish_js_option(Tag *t, Tag *sel, Tag *og)
 	if(og) ogobj = *((JSValue*)og->jv);
 	oa = get_property_object(cx, selobj, "options");
 	oo = instantiate_array_element(cx, oa, idx, "Option");
-	set_property_object(cx, oo, "parentNode", selobj);
 	if(t->checked) {
 		soa = get_property_object(cx, selobj, "selectedOptions");
 		set_array_element_object(cx, soa, idx, oo);
@@ -3784,6 +3783,7 @@ void establish_js_option(Tag *t, Tag *sel, Tag *og)
 	cn = get_property_object(cx, (og ? ogobj : selobj), "childNodes");
 idx = get_arraylength(cx, cn);
 	set_array_element_object(cx, cn, idx, oo);
+	set_property_object(cx, oo, "parentNode", (og ? ogobj : selobj));
 
 connectTagObject(t, oo);
 	JS_Release(cx, cn);
