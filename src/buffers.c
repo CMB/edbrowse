@@ -4578,10 +4578,10 @@ down_again:
 			if(s->fw2 == s->lw2) {
 				s->fw2 = s->lw2 = 0;
 			} else {
-				Window *w = s->lw2;
-				while(w->prev != s->fw2) w = w->prev;
-				w->prev = 0;
-				s->fw2 = w;
+				Window *x = s->lw2;
+				while(x->prev != s->fw2) x = x->prev;
+				x->prev = 0;
+				s->fw2 = x;
 			}
 			cw = s->lw;
 			if(--n) goto down_again;

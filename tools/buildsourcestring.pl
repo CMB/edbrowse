@@ -8,6 +8,8 @@ use English;
 
 my $strip_comments = 1; # set this to strip out comments and certain whitespace
 $strip_comments = 0 if $ENV{"NOCOMPRESSSOURCE"};
+my $dohex = 0;
+$dohex = 1 if $ENV{"SOURCEASHEX"};
 
 my $in_cmt = 0; # in a block comment
 my $last_semi = 0;
@@ -92,12 +94,22 @@ $last_semi = 1 if $line =~ s/;$//;
 $line =~ s/; *}/}/g;
 }
 
+if($dohex) {
 # switch to hex bytes.
         $line =~ s/(.)/sprintf("0x%02x, ", ord($1))/ge;
 		$line .= " 0x0a,";
+} else {
+        $line =~ s/([\001-\037\\])/sprintf("\\%03o", ord($1))/ge;
+        $line =~ s/"/\\"/g;
+$line = "\"" . $line . "\\n\"";
+}
         print OUTF "$line\n";
     }
+if($dohex) {
     print OUTF "0};\n";
+} else {
+    print OUTF "};\n";
+}
     print OUTF "\n";
     prt("Content $infile written to $outfile\n");
 } else {
