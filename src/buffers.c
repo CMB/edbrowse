@@ -3224,6 +3224,10 @@ const char **split)
 			setError(MSG_SessionHigh, ln, MAXSESSION - 1);
 			return false;
 		}
+		if (ln == 0) {
+			setError(MSG_Session0);
+			return false;
+		}
 		if (ln == context) {
 			setError(MSG_SessionCurrent, ln);
 			return false;
@@ -6603,14 +6607,14 @@ replaceframe:
 				setError(MSG_BadDest);
 				return (globSub = false);
 			}
-			if (cw->dirMode && !isdigitByte(first)) {
+			if (cw->dirMode && (!isdigitByte(first) || stringIsNum(line) < 0)) {
 				setError(MSG_BadDest);
 				return (globSub = false);
 			}
 			if (!getRangePart(line, &destLine, &line))
 				return (globSub = false);
 			first = *line;
-		}		/* was there something after m or t */
+		}		// was there something after m or t
 	}
 
 if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {

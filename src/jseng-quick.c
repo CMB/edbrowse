@@ -2704,6 +2704,10 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	g.url = incoming_url;
 	g.custom_h = incoming_headers;
 	g.headers_p = &outgoing_xhrheaders;
+// xhr gets data for javascript,
+// you should never intercept it with a plugin or a download
+// These are already false because of memset above, I'm just sayin...
+	g.down_ok = g.pg_ok = false;
 	rc = httpConnect(&g);
 	outgoing_xhrbody = g.buffer;
 	cnzFree(incoming_url);
