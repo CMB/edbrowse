@@ -35,7 +35,7 @@ $s = "src/$p2 $s";
 }
 
 # Ready to go.
-system "perl -w tools/buildsourcestring.pl $s src/ebrc.c";
+system "NOCOMPRESSSOURCE=1 perl -w tools/buildsourcestring.pl $s src/ebrc.c";
 
 for(my $j = 0; $j <= $#guides; ++$j) {
 my $p2 = $guides[$j];

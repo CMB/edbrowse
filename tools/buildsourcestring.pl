@@ -6,7 +6,9 @@ use strict;
 use warnings;
 use English;
 
-my $strip_comments = 1; # set this to strip out comments
+my $strip_comments = 1; # set this to strip out comments and certain whitespace
+$strip_comments = 0 if $ENV{"NOCOMPRESSSOURCE"};
+
 my $in_cmt = 0; # in a block comment
 my $last_semi = 0;
 

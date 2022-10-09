@@ -655,7 +655,7 @@ dr : directory is readonly
 <br>dx : directory is writable, and d deletes files
 <br>hf : show hidden files in directory listing (toggle)
 <br>dno : directory listing names only (toggle)
-<br>lsl : list length of the file on the current line, directory mode only
+<br>lsl : list length of the file on the current line (directory), or the current file
 <br>lss : list the approximate size of the file, in kilobytes, megabytes, etc
 <br>lst : list the mod time of the file
 <br>lsp : list owner group permissions
@@ -1542,7 +1542,7 @@ If the file is an empty string, "", edbrowse creates an empty buffer for that se
 If the file is a url, that web page is fetched from the Internet and browsed.
 Finally, if the argument begins with a plus sign,
 such as edbrowse file "+37",
-then that comand is run on the current file.
+then that command is run on the current file.
 This example prints line 37.
 Use '+&lt;func' to run an edbrowse function inline.
 Files, urls, and +commands can be intermixed on the command line.
@@ -5432,7 +5432,7 @@ The bflist command will include:
 The + on the second domain causes "group2" to be displayed with each message from that channel.
 This disambiguates which message comes from which channel.
 Each connection can display its channels or not,
-as indicated by the presence or absense of + on the irc domains.
+as indicated by the presence or absence of + on the irc domains.
 When channels are shown, the format is channel&lt;sender&gt; message.
 In the event of a private message, channel is replaced with the receiver.
 In other words, you are having a conversation with a person, not a channel.

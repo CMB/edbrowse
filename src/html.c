@@ -144,6 +144,7 @@ static Tag *locateOptionByNum(const Tag *sel, int n)
 }
 
 static bool inputDisabled(const Tag *t);
+static bool inputReadonly(const Tag *t);
 static bool
 locateOptions(const Tag *sel, const char *input,
 	      char **disp_p, char **val_p, bool setcheck)
@@ -1251,8 +1252,10 @@ void infShow(int tagno, const char *search)
 			i_printf(MSG_Close);
 		}
 	}			/* text area */
-	if (t->rdonly)
+	if (inputReadonly(t))
 		printf(" readonly");
+	if (inputDisabled(t))
+		printf(" disabled");
 	if (t->name)
 		printf(" %s", t->name);
 	nl();
@@ -1292,6 +1295,13 @@ static bool inputDisabled(const Tag *t)
 	if (allowJS && t->jslink)
 		return get_property_bool_t(t, "disabled");
 	return t->disabled;
+}
+
+static bool inputReadonly(const Tag *t)
+{
+	if (allowJS && t->jslink)
+		return get_property_bool_t(t, "readOnly") | get_property_bool_t(t, "readonly");
+	return t->rdonly;
 }
 
 /*********************************************************************
@@ -1377,9 +1387,7 @@ bool infReplace(int tagno, char *newtext, bool notify)
 		t->lic = -1;
 	}
 
-	if(allowJS && t->jslink)
-		t->rdonly = get_property_bool_t(t, "readOnly") | get_property_bool_t(t, "readonly");
-	if (t->rdonly) {
+	if (inputReadonly(t)) {
 		setError(MSG_Readonly);
 		return false;
 	}
