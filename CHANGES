@@ -28,7 +28,7 @@ a c or i commands in scripts.
 
 <audio>, and the Audio object with the play method.
 
-img comand to download images.
+img command to download images.
 
 +commands on the arg list, to run edbrowse commands from the shell command line.
 Other editors do this.

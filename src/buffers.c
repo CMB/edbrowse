@@ -4525,9 +4525,19 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if(stringEqual(line, "up") ||
-	stringEqual(line, "down")) {
+	if(!strncmp(line, "up", 2) ||
+	!strncmp(line, "down", 4)) {
 		struct ebSession *s = &sessionList[context];
+		int k;
+		const Window *w;
+		const char *v = line + (line[0] == 'd' ? 4 : 2);
+		if(!*v) {
+			n = 1;
+		} else {
+			n = stringIsNum(v);
+			if(n < 0) goto no_action;
+			if(!n) return true;
+		}
 		if(cw->irciMode | cw->ircoMode) {
 			cmd = 'e';
 			setError(MSG_IrcCommandS, line);
@@ -4540,10 +4550,12 @@ static int twoLetter(const char *line, const char **runThis)
 		undoSpecialClear();
 		cmd = 'e';
 		if(line[0] == 'u') { // up
-			if(!cw->prev) {
+			for(k = 0, w = cw; w; w = w->prev, ++k) ;
+			if(n >= k) {
 				setError(MSG_NoUp);
 				return false;
 			}
+up_again:
 		s->lw = cw->prev;
 			cw->prev = 0;
 			if(!s->lw2) {
@@ -4552,11 +4564,15 @@ static int twoLetter(const char *line, const char **runThis)
 				s->fw2->prev = cw;
 				s->fw2 = cw;
 			}
+			cw = s->lw;
+			if(--n) goto up_again;
 		} else { // down
-			if(!s->lw2) {
+			for(k = 0, w = s->lw2; w; w = w->prev, ++k) ;
+			if(n > k) {
 				setError(MSG_NoDown);
 				return false;
 			}
+down_again:
 			s->lw = s->fw2;
 			s->fw2->prev = cw;
 			if(s->fw2 == s->lw2) {
@@ -4567,8 +4583,9 @@ static int twoLetter(const char *line, const char **runThis)
 				w->prev = 0;
 				s->fw2 = w;
 			}
+			cw = s->lw;
+			if(--n) goto down_again;
 		}
-		cw = s->lw;
 		selfFrame();
 		if (cw->htmltitle)
 			printf("%s", cw->htmltitle);
