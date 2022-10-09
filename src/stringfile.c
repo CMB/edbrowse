@@ -1989,7 +1989,6 @@ bool moveFiles(int start, int end, int dest, char origcmd)
 		debugPrint(1, "%s%s %s %s",
 		file, ftype, (origcmd == 'm' ? "→" : "≡"), cw2->baseDirName);
 
-
 		cw = cw2;
 		path2 = makeAbsPath(file);
 		cw = cw1;
@@ -2092,7 +2091,8 @@ moved:
 			memset(cw->r_map + dol, 0, LMSIZE*2);
 			cw->r_map[dol].text = (uchar*)emptyString;
 		}
-		cw = cw1; // put it back
+		cw = cw1; // go back to original window
+		if(origcmd == 't') cw->dot = ln++;
 	}
 
 	return true;
