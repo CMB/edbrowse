@@ -5319,25 +5319,35 @@ et_go:
 	}
 
 	if (stringEqual(line, "hist")) {
-// count the buffers in this session
-		const Window *w = cw;
-		for(n = 0, w = cw; w; w = w->prev, ++n)  ;
-		for(w = sessionList[context].lw2; w; w = w->prev, ++n)  ;
-		for(w = sessionList[context].lw2; w; w = w->prev, --n) {
-			printf("%d: ", n);
-			if (w->htmltitle)
-				printf("%s", w->htmltitle);
-			else if (w->f0.fileName)
-				printf("%s", w->f0.fileName);
-			nl();
-		}
-		for(w = cw; w; w = w->prev, --n) {
+		const Window *w, *x;
+		struct ebSession *s = sessionList + context;
+// This is the only place where not having a next link is a pain in the ass!
+		n = 1, w = s->fw;
+		while(true) {
 			printf("%d%c ", n, w == cw ? '*' : ':');
 			if (w->htmltitle)
 				printf("%s", w->htmltitle);
 			else if (w->f0.fileName)
 				printf("%s", w->f0.fileName);
 			nl();
+			++n;
+			if(w == cw) break;
+			for(x = s->lw; x->prev != w; x = x->prev) ;
+			w = x;
+		}
+		w = s->fw2;
+		if(!w) return true;
+		while(true) {
+			printf("%d: ", n);
+			if (w->htmltitle)
+				printf("%s", w->htmltitle);
+			else if (w->f0.fileName)
+				printf("%s", w->f0.fileName);
+			nl();
+			++n;
+			if(w == s->lw2) break;
+			for(x = s->lw2; x->prev != w; x = x->prev) ;
+			w = x;
 		}
 		return true;
 	}

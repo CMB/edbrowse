@@ -2909,22 +2909,22 @@ With this in mind, it is important to maintain a bookmark file with your favorit
 so you can call up those websites quickly.
 
 <P>
-The hist command prints the buffers on the stack, counting down from the last file you accessed, to the first.
+The hist command prints the buffers on the stack, starting with the first file you accessed, and proceding down to the last.
 It prints the title if it is a web page, or the file name, or nothing if there is no file name.
 A star indicates the buffer that you are currently viewing.
-This is usually the last buffer on the stack, and the first buffer printed by the hist command.
+This is usually the last buffer on the stack.
 
 <P>
 hist
 <br>
-3* file I just called up
-<br>
-2: file I was looking at earlier
-<br>
 1: first file of this session
+<br>
+2: intermediate file
+<br>
+3* file I just called up
 
 <P>
-The up and down commands move up and down in the history.
+The up and down commands move up and down in the history, i.e. up and down in this list.
 This is similar to gdb, where up and down traverse the stack frames.
 
 <P>
