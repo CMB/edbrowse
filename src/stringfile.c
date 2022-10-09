@@ -2079,7 +2079,10 @@ moved:
 		addTextToBuffer((pst)file, t-file, dol, false);
 		free(file);
 		cw->dot = ++dol;
-		cw->dmap = reallocMem(cw->dmap, DTSIZE * (dol + 1));
+		if(cw->dmap)
+			cw->dmap = reallocMem(cw->dmap, DTSIZE * (dol + 1));
+		else
+			cw->dmap = allocZeroMem(DTSIZE * (dol + 1));
 		memset(cw->dmap + DTSIZE*dol, 0, DTSIZE);
 		cw->dmap[DTSIZE*dol] = ftype[0];
 		if(ftype[0])
