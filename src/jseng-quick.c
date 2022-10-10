@@ -4019,7 +4019,8 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_object(cx, io, "form", owner);
 	}
 
-	strcpy(upname, t->info->name);
+	strncpy(upname, t->nodeName, MAXTAGNAME);
+	upname[MAXTAGNAME - 1] = 0;
 	caseShift(upname, 'u');
 // DocType has nodeType = 10, see startwindow.js
 	if(t->action != TAGACT_DOCTYPE) {

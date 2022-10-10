@@ -89,7 +89,7 @@ And that does happen, e.g. the react system, so $ok is an alias for this. */
 ok = $ok = Object.keys;
 
 window.nodeName = "WINDOW"; // in case you want to start at the top.
-document.nodeName = "DOCUMENT"; // in case you want to start at document.
+document.nodeName = "#document"; // in case you want to start at document.
 document.tagName = "document";
 document.nodeType = 9;
 document.ownerDocument = document;
@@ -1129,6 +1129,8 @@ AudioContext.prototype.dom$class = "AudioContext";
 Document = function(){};
 Document.prototype = new HTMLElement;
 Document.prototype.dom$class = "Document";
+Document.prototype.nodeName = Document.prototype.tagName = "#document";
+Document.prototype.nodeType = 9;
 
 DocumentFragment = function(){};
 DocumentFragment.prototype = new HTMLElement;
@@ -2127,15 +2129,11 @@ var colon = t.split(':');
 if(colon.length == 2) {
 c.nodeName = c.tagName = t;
 c.prefix = colon[0], c.localName = colon[1];
-} else {
+} else if(c.nodeType == 1)
 c.nodeName = c.tagName = t.toUpperCase();
-}
-if(t == "document")
-c.nodeType = 9, c.tagName = "document";
 c.class = "";
-eb$logElement(c, t);
 if(c.nodeType == 1) c.id = c.name = "";
-
+eb$logElement(c, t);
 return c;
 } 
 
@@ -2444,10 +2442,10 @@ return {
 parseFromString: function(t,y) {
 var d = document;
 if(y == "text/html" || y == "text/xml") {
-var v = d.implementation.createHTMLDocument("");
+var v = d.createElement("document");
 if(t) {
 if(typeof t == "string")
-v.body.innerHTML = t;
+v.innerHTML = t;
 else
 alert3("DOMParser expects a string but gets " + typeof t);
 }
