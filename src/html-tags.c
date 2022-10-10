@@ -701,7 +701,8 @@ opencomment:
 
 // at this point it is <tag or </tag
 		i = 0;
-		while(isalnum(*t)) {
+// the standard tags do not contain hyphens, but custom tags might.
+		while(isalnum(*t) || *t == '-' || *t == '_') {
 			if(i < MAXTAGNAME - 1) tagname[i++] = *t;
 			++t;
 		}

@@ -2054,7 +2054,7 @@ eb$logElement(c, t);
 return c;
 }
 
-if(!t.match(/^[a-z:\d_]+$/) || t.match(/^\d/)) {
+if(!t.match(/^[a-z:\d_-]+$/) || t.match(/^\d/)) {
 alert3("bad createElement(" + t + ')');
 // acid3 says we should throw an exception here.
 // But we get these kinds of strings from www.oranges.com all the time.

@@ -6618,27 +6618,8 @@ replaceframe:
 					setError(MSG_BadDest);
 					return (globSub = false);
 				}
-				if (j >= MAXSESSION) {
-					setError(MSG_SessionHigh, j, MAXSESSION - 1);
-					return false;
-				}
-				if (j == 0) {
-					setError(MSG_Session0);
-					return false;
-				}
-				if (j == context) {
-					setError(MSG_SessionCurrent, j);
-					return false;
-				}
-				if (!sessionList[j].lw || !sessionList[j].lw->dirMode) {
-					char numstring[12];
-					sprintf(numstring, "%d", j);
-					setError(MSG_NotDir, numstring);
-					return false;
-				}
-// Ok, move / copy the files
 				cmd = 'e';
-				j = moveFiles(startRange, endRange, j, icmd);
+				j = moveFiles(startRange, endRange, j, icmd, relative);
 				undoCompare();
 				cw->undoable = false;
 				undoSpecialClear();

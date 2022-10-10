@@ -527,7 +527,7 @@ extern struct ebSession *cs;	/* current session */
 extern int maxSession;
 
 // The information on an html tag
-#define MAXTAGNAME 20
+#define MAXTAGNAME 24
 struct tagInfo {
 	const char name[MAXTAGNAME];
 	const char *desc;

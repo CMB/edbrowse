@@ -99,7 +99,8 @@ if($dohex) {
         $line =~ s/(.)/sprintf("0x%02x, ", ord($1))/ge;
 		$line .= " 0x0a,";
 } else {
-        $line =~ s/([\001-\037\\])/sprintf("\\%03o", ord($1))/ge;
+$line =~ s/\\/\\\\/g;
+        $line =~ s/([\001-\037])/sprintf("\\%03o", ord($1))/ge;
         $line =~ s/"/\\"/g;
 $line = "\"" . $line . "\\n\"";
 }

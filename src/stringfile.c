@@ -1957,16 +1957,36 @@ unlink:
 }
 
 // Move or copy files from one directory to another
-bool moveFiles(int start, int end, int dest, char origcmd)
+bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 {
-	Window *cw1 = cw;
-	Window *cw2 = sessionList[dest].lw;
+	Window *cw1 = cw, *cw2;
 	char *path1, *path2;
 	int ln, cnt, dol;
 
 	if (!dirWrite) {
 		setError(MSG_DirNoWrite);
 		return false;
+	}
+
+	if(!relative) {
+				if (dest >= MAXSESSION) {
+					setError(MSG_SessionHigh, dest, MAXSESSION - 1);
+					return false;
+				}
+				if (dest == 0) {
+					setError(MSG_Session0);
+					return false;
+				}
+				if (dest == context) {
+					setError(MSG_SessionCurrent, dest);
+					return false;
+				}
+				if (!(cw2 = sessionList[dest].lw) || !cw2->dirMode) {
+					char numstring[12];
+					sprintf(numstring, "%d", dest);
+					setError(MSG_NotDir, numstring);
+					return false;
+				}
 	}
 
 	ln = start;
