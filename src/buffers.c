@@ -3219,30 +3219,6 @@ const char **split)
 		ln += (first == '+' ? add : -add);
 	}
 
-	if (cw->dirMode && lineno == &destLine) {
-		if (ln >= MAXSESSION) {
-			setError(MSG_SessionHigh, ln, MAXSESSION - 1);
-			return false;
-		}
-		if (ln == 0) {
-			setError(MSG_Session0);
-			return false;
-		}
-		if (ln == context) {
-			setError(MSG_SessionCurrent, ln);
-			return false;
-		}
-		if (!sessionList[ln].lw || !sessionList[ln].lw->dirMode) {
-			char numstring[12];
-			sprintf(numstring, "%d", ln);
-			setError(MSG_NotDir, numstring);
-			return false;
-		}
-		*lineno = ln;
-		*split = line;
-		return true;
-	}
-
 	if (ln > cw->dol) {
 		setError(MSG_LineHigh);
 		return false;
@@ -6634,15 +6610,47 @@ replaceframe:
 				setError(MSG_BadDest);
 				return (globSub = false);
 			}
-			if (cw->dirMode && (!isdigitByte(first) || stringIsNum(line) < 0)) {
-				setError(MSG_BadDest);
-				return (globSub = false);
+
+// destination has special meaning in directory mode
+			if (cw->dirMode) {
+				char relative = 0;
+				if(!isdigitByte(first) || (j = stringIsNum(line)) < 0) {
+					setError(MSG_BadDest);
+					return (globSub = false);
+				}
+				if (j >= MAXSESSION) {
+					setError(MSG_SessionHigh, j, MAXSESSION - 1);
+					return false;
+				}
+				if (j == 0) {
+					setError(MSG_Session0);
+					return false;
+				}
+				if (j == context) {
+					setError(MSG_SessionCurrent, j);
+					return false;
+				}
+				if (!sessionList[j].lw || !sessionList[j].lw->dirMode) {
+					char numstring[12];
+					sprintf(numstring, "%d", j);
+					setError(MSG_NotDir, numstring);
+					return false;
+				}
+// Ok, move / copy the files
+				cmd = 'e';
+				j = moveFiles(startRange, endRange, j, icmd);
+				undoCompare();
+				cw->undoable = false;
+				undoSpecialClear();
+				return j;
 			}
+
+// normal destination for move or copy, in a text file
 			if (!getRangePart(line, &destLine, &line))
 				return (globSub = false);
 			first = *line;
 		}		// was there something after m or t
-	}
+	} // m or t
 
 if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		setError(MSG_IrcCommand, cmd);
@@ -7691,15 +7699,6 @@ redirect:
 		rc =  doGlobal(line);
 		nzFree(gflag), gflag = 0;
 		return rc;
-	}
-
-	if ((cmd == 'm' || cmd == 't') && cw->dirMode) {
-		cmd = 'e';
-		j = moveFiles(startRange, endRange, destLine, icmd);
-		undoCompare();
-		cw->undoable = false;
-		undoSpecialClear();
-		return j;
 	}
 
 	if (cmd == 'm' || cmd == 't')

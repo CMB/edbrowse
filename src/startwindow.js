@@ -2204,7 +2204,7 @@ XMLHttpRequest = function(){
     this.aborted = false;//non-standard
     this.withCredentials = true;
 };
-XMLHttpRequest.prototype.dom$class = "XMLHttpRequest";
+XMLHttpRequest.prototype.dom$class = "XHR";
 // this form of XMLHttpRequest is deprecated, but still used in places.
 XDomainRequest = XMLHttpRequest;
 
@@ -2228,6 +2228,7 @@ XMLHttpRequest.prototype.async = false;
 XMLHttpRequest.prototype.readyState = 0;
 XMLHttpRequest.prototype.responseText = "";
 XMLHttpRequest.prototype.response = "";
+XMLHttpRequest.prototype.responseXML = null;
 XMLHttpRequest.prototype.status = 0;
 XMLHttpRequest.prototype.statusText = "";
 
