@@ -6,6 +6,7 @@ Support tls sockets for irc.
 html template element.
 
 Go up and down in the history of the current edbrowse session.
+Move / copy files to other directories in the history.
 
 3.8.5
 s/x/y/$ command, and s$ shorthand.

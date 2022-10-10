@@ -1959,7 +1959,7 @@ unlink:
 // Move or copy files from one directory to another
 bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 {
-	Window *cw1 = cw, *cw2;
+	Window *cw1 = cw, *cw2, *w;
 	char *path1, *path2;
 	int ln, cnt, dol;
 
@@ -1987,6 +1987,32 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 					setError(MSG_NotDir, numstring);
 					return false;
 				}
+	}
+
+	if(relative && !dest) {
+		setError(MSG_NoChange);
+		return false;
+	}
+
+	if(relative == '+') {
+		for(cnt = 0, w = cw; w; w = w->prev, ++cnt) ;
+		if(dest >= cnt) {
+			setError(MSG_NoUp);
+			return false;
+		}
+		for(w = cw; dest; w = w->prev, --dest)  ;
+		cw2 = w;
+	}
+
+	if(relative == '-') {
+		for(cnt = 0, w = cs->lw2; w; w = w->prev, ++cnt) ;
+		if(dest > cnt) {
+			setError(MSG_NoDown);
+			return false;
+		}
+		dest -= cnt;
+		for(w = cs->lw2; dest; w = w->prev, --dest)  ;
+		cw2 = w;
 	}
 
 	ln = start;

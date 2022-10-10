@@ -6614,10 +6614,15 @@ replaceframe:
 // destination has special meaning in directory mode
 			if (cw->dirMode) {
 				char relative = 0;
+				if(first == '+' || first == '-') {
+					relative = first, first = *++line;
+					if(!first) { j = 1; goto dest_ok; }
+				}
 				if(!isdigitByte(first) || (j = stringIsNum(line)) < 0) {
 					setError(MSG_BadDest);
 					return (globSub = false);
 				}
+dest_ok:
 				cmd = 'e';
 				j = moveFiles(startRange, endRange, j, icmd, relative);
 				undoCompare();
