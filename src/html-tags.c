@@ -78,6 +78,7 @@ static const struct specialtag {
 {"innerhtml",0,1, 0, 0},
 {"innerbody",0,1, 0, 0},
 {"script", 0, 0, 1, 0},
+{"comment", 0, 0, 1, 0},
 {"style", 0, 0, 1, 0},
 {"source", 1, 0, 0, 0},
 {"meta", 1, 0, 1, 0},
@@ -681,11 +682,18 @@ closecomment:
 			seek = s = u + 1;
 // see if this is doctype
 			t = lt + 2 + hyphens;
+			u -= hyphens;
+			w = pullString(t, u - t);
 			if(headbody == 0 && memEqualCI(t, "doctype", 7) &&
 			!isalnum(t[7])) {
 				if(dhs) puts("doctype");
 				makeTag("doctype", "doctype", false, 0);
+				working_t->textval = w;
 				makeTag("doctype", "doctype", true, 0);
+			} else {
+				makeTag("comment", "comment", false, 0);
+				working_t->textval = w;
+				makeTag("comment", "comment", true, 0);
 			}
 			continue;
 opencomment:
@@ -4257,6 +4265,10 @@ Needless to say that's not good!
 		if (!a)
 			a = emptyString;
 		set_property_string_t(t, "type", a);
+		break;
+
+	case TAGACT_COMMENT:
+		domLink(t, "Comment", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_SCRIPT:
