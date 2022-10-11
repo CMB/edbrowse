@@ -667,13 +667,12 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 				if(dhs) printf("open cdata at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
-			if(dhs) puts("cdata");
+			if(dhs) printf("cdata length %d\n", u - t - 8);
 // adjust line number
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
 			seek = s = u + 3;
-			t = lt + 8;
-			u -= 3;
+			t = lt + 9;
 			w = pullString(t, u - t);
 			makeTag("cdata", "cdata", false, 0);
 			working_t->textval = w;
@@ -4294,6 +4293,7 @@ Needless to say that's not good!
 
 	case TAGACT_CDATA:
 		domLink(t, "XMLCdata", 0, 0, 0, 4);
+		set_property_string_t(t, "text", t->textval);
 		break;
 
 	case TAGACT_SCRIPT:

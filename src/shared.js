@@ -2224,6 +2224,7 @@ break;
 
 function htmlString(t) {
 if(t.nodeType == 3) return t.data;
+if(t.dom$class == "Cdata") return "<![Cdata[" + t.text + "]]>";
 if(t.nodeType != 1) return "";
 var s = "<" + (t.nodeName ? t.nodeName : "x");
 /* defer to the setAttribute system
@@ -2257,20 +2258,20 @@ p.removeChild(t);
 
 // There are subtle differences between contentText and textContent, which I don't grok.
 function textUnder(top, flavor) {
-var answer = "", part;
+var answer = "", part, delim = "";
 if(top.nodeName == "#text") { // getElements won't find this one
 answer = top.data.trim();
-} else if(top.nodeName == "SCRIPT") {
+} else if(top.nodeName == "SCRIPT" || top.nodeName == "#cdata-section") {
 answer = top.text;
 }
-var t = top.getElementsByTagName("#text");
+var t = top.querySelectorAll("cdata,text");
 for(var i=0; i<t.length; ++i) {
 var u = t[i];
 if(u.parentNode && u.parentNode.nodeName == "OPTION") continue;
 // any other texts we should skip?
-part = u.data.trim();
+part = (u.nodeName == "#text" ? u.data : u.text).trim();
 if(!part) continue;
-if(answer) answer += '\n';
+if(answer) answer += delim;
 answer += part;
 }
 return answer;

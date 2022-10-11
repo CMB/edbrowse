@@ -3630,6 +3630,7 @@ teardown:
 		Window *save_cw = cw;
 		cw = w2;
 		ircAddLine(w->ircChannel, true, emsg);
+		ircSetFileName(w2);
 		cw = save_cw;
 		if(--w2->ircCount == 0) {
 			w2->ircoMode = false;
