@@ -1075,7 +1075,7 @@ copy:		++s;
 				}
 				if (asel->link) {
 					if (!asel->tag)
-						asel->tag = cloneString("a");
+						asel->tag = cloneString("A");
 					else if (!stringEqual(asel->tag, "a")) {
 						sel->error = CSS_ERROR_TAGLINK;
 					}
@@ -1416,8 +1416,8 @@ static void cssAtomic(struct asel *a)
 		nzFree(tag), tag = 0;
 	if (tag) {
 		for (t = tag; *t; ++t) {
-			if (isupper(*t))
-				*t = tolower(*t);
+			if (islower(*t))
+				*t = toupper(*t);
 			if ((isdigit(*t) && t > tag) ||
 			    isalpha(*t) || *t == '-')
 				continue;
@@ -2093,10 +2093,10 @@ if(!t) {
 	}
 
 	if (a->tag) {
-		const char *nn = t->nodeName;
+		const char *nn = t->nodeNameU;
 		if (!nn)	// should never happen
 			return false;
-		rc = stringEqualCI(nn, a->tag);
+		rc = stringEqual(nn, a->tag);
 		if (!rc)
 			return false;
 	}
@@ -3251,7 +3251,7 @@ static void hashBuild(void)
 		t = doclist[i];
 		if (!(t->nodeName && t->nodeName[0]))
 			continue;
-		h[j].key = t->nodeName;
+		h[j].key = t->nodeNameU;
 		h[j].t = t;
 		++j;
 	}

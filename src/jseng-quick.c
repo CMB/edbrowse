@@ -1966,7 +1966,7 @@ JSValueConst b_j, const char *b_name)
 	if (!cw->tags)
 		return;
 
-	if (type == 'c') {	/* create */
+	if (type == 'c') {	// create
 		parent = tagFromObject2(JS_DupValue(cx, p_j), p_name);
 		if (parent) {
 			debugPrint(4, "linkage, %s %d created",
@@ -3860,7 +3860,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
 	JSValue ca; // child array
-	char upname[MAXTAGNAME];
 	char classtweak[MAXTAGNAME + 4];
 
 	debugPrint(5, "domLink %s.%d name %s",
@@ -4019,15 +4018,11 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_object(cx, io, "form", owner);
 	}
 
-	strncpy(upname, t->nodeName, MAXTAGNAME);
-	upname[MAXTAGNAME - 1] = 0;
-// The standard html tags must be upper case.
-	if(t->action != TAGACT_UNKNOWN)
-	caseShift(upname, 'u');
 // DocType has nodeType = 10, see startwindow.js
 	if(t->action != TAGACT_DOCTYPE) {
-		set_property_string(cx, io, "nodeName", upname);
-		set_property_string(cx, io, "tagName", upname);
+		char *js_node = (t->action == TAGACT_UNKNOWN ? t->nodeName : t->nodeNameU);
+		set_property_string(cx, io, "nodeName", js_node);
+		set_property_string(cx, io, "tagName", js_node);
 	}
 	connectTagObject(t, io);
 }

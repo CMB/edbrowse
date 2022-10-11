@@ -2063,6 +2063,7 @@ alert3("bad createElement(" + t + ')');
 return null;
 }
 
+var unknown = false;
 switch(t) {
 case "body": c = new HTMLBodyElement; break;
 case "object": c = new HtmlObj; break;
@@ -2114,7 +2115,8 @@ case "textarea": c = new HTMLTextAreaElement; c.type = t; break;
 case "element": c = new HTMLElement; break;
 case "button": c = new HTMLInputElement; c.type = "submit"; break;
 default:
-/* alert("createElement default " + s); */
+unknown = true;
+// alert("createElement default " + s);
 c = new HTMLElement;
 }
 
@@ -2130,10 +2132,10 @@ if(colon.length == 2) {
 c.nodeName = c.tagName = t;
 c.prefix = colon[0], c.localName = colon[1];
 } else if(c.nodeType == 1)
-c.nodeName = c.tagName = t.toUpperCase();
+c.nodeName = c.tagName = unknown ? s : s.toUpperCase();
 c.class = "";
 if(c.nodeType == 1) c.id = c.name = "";
-eb$logElement(c, t);
+eb$logElement(c, s);
 return c;
 } 
 

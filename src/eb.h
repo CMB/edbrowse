@@ -619,8 +619,43 @@ struct htmlTag {
 #define DIS_HOVERCOLOR 5
 	uchar disval; // displayable value for the node
 	int ninp;		/* number of nonhidden inputs */
+
+/*********************************************************************
+Comments on nodeName, that is, the name of the html tag,
+or the corresponding javascript Element.
+Standard tags like p and div are case insensitive. </p> closes <P>
+p {rule} in css matches P, and so on.
+These tags become upper case in js Element.nodeName.
+nodeName holds the tag as written, nodeNameU is the upper case version.
+newTag() copies name into nodeName, then upshifts it for nodeNameU.
+These fields are not used for dynamic tags, those made by running js.
+newTag() populates them always, but they are only used when parsing html,
+and doing the first run of css, before js runs.
+domlink() carries the html tag into javascript,
+and it uses nodeNameU if it is a standard, recognized tag, or nodeName
+otherwise, guessing it is a custom tag.
+But first, step back and look at the html scanner.
+It converts tags to lower case, because it's easier for me to type
+all those tags and lists of tags in lower case, and that's what tidy does too.
+Once converted, </p> closes <P>, and there is no trouble.
+The lower case versions never leave the scanner. They are a convenience.
+Conversely, the css system is upper case.
+p {rule} becomes P {rule} as a selector.
+We crosscheck this against t->nodeNameU and there is no trouble.
+Now, there is a completely separate system, createElement().
+This is javascript making tags dynamically.
+This can also take a standard tag or a custom tag.
+I convert it to low for convenience, e.g. the switch statement.
+At the end I set nodeName to the tag name,
+or its upper case if it is a standard tag.
+The cases in switch{} duplicates the list of standard tags in html-tags.c,
+and I'm sure they don't agree, and I'm sure neither is complete.
+We need to review all this some day.
+*********************************************************************/
+
+	char *nodeName, *nodeNameU;
 // class is reserved word in c++, so use jclass for javascript class
-	char *name, *id, *jclass, *nodeName, *value, *href;
+	char *name, *id, *jclass, *value, *href;
 	const char *rvalue; /* for reset */
 	char *custom_h; // http headers for a frame or xhr tag
 	char *innerHTML; /* the html string under this tag */
