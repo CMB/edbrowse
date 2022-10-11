@@ -1442,7 +1442,7 @@ XMLCdata = function(t) {}
 XMLCdata.prototype = new HTMLElement;
 XMLCdata.prototype.dom$class = "Cdata";
 XMLCdata.prototype.nodeName = XMLCdata.prototype.tagName = "#cdata-section";
-XMLCdata.prototype.nodeType = 8;
+XMLCdata.prototype.nodeType = 4;
 
 document.createComment = function(t) {
 if(t == undefined) t = "";
@@ -1746,8 +1746,8 @@ Object.defineProperty(p, "contentText", {
 get: function() { return mw$.textUnder(this, 1); },
 set: function(s) { return mw$.newTextUnder(this, s, 1); }});
 Object.defineProperty(p, "nodeValue", {
-get: function() { return this.nodeType == 3 ? this.data : null;},
-set: function(h) { if(this.nodeType == 3) this.data = h; }});
+get: function() { return this.nodeType == 3 ? this.data : this.nodeType == 4 ? this.text : null;},
+set: function(h) { if(this.nodeType == 3) this.data = h; if (this.nodeType == 4) this.text = h }});
 p.clientHeight = 16;
 p.clientWidth = 120;
 p.scrollHeight = 16;
