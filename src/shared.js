@@ -43,7 +43,7 @@ function alert4(s) { logputs(4, s); }
 // because nothing should be below a text node.
 // You can make this more elaborate and informative if you wish.
 function dumptree(top) {
-var nn = top.nodeName.toLowerCase();
+var nn = top.nodeName;
 var extra = "";
 if(nn === "#text" && top.data) {
 extra = top.data;
@@ -52,15 +52,19 @@ var l = extra.indexOf('\n');
 if(l >= 0) extra = extra.substr(0,l);
 if(extra.length > 120) extra = extra.substr(0,120);
 }
-if(nn === "option" && top.text)
-extra = top.text;
-if(nn === "a" && top.href)
+if(nn === "OPTION" && top.value)
+extra = top.value;
+if(nn === "OPTION" && top.text) {
+if(extra.length) extra += ' ';
+extra += top.text;
+}
+if(nn === "A" && top.href)
 extra = top.href.toString();
-if(nn === "base" && top.href)
+if(nn === "BASE" && top.href)
 extra = top.href.toString();
 if(extra.length) extra = ' ' + extra;
 // some tags should never have anything below them so skip the parentheses notation for these.
-if((nn == "base" || nn == "meta" || nn == "link" ||nn == "#text" || nn == "image" || nn == "option" || nn == "input" || nn == "script") &&
+if((nn == "BASE" || nn == "META" || nn == "LINK" ||nn == "#text" || nn == "IMAGE" || nn == "OPTION" || nn == "INPUT" || nn == "SCRIPT") &&
 (!top.childNodes || top.childNodes.length == 0)) {
 alert(nn + extra);
 return;

@@ -4021,6 +4021,8 @@ Don't do any of this if the tag is itself <style>. */
 
 	strncpy(upname, t->nodeName, MAXTAGNAME);
 	upname[MAXTAGNAME - 1] = 0;
+// The standard html tags must be upper case.
+	if(t->action != TAGACT_UNKNOWN)
 	caseShift(upname, 'u');
 // DocType has nodeType = 10, see startwindow.js
 	if(t->action != TAGACT_DOCTYPE) {

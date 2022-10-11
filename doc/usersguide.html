@@ -1921,6 +1921,11 @@ As with move, this will not overwrite an existing file.
 These move copy operations cannot be undone.
 
 <P>
+Use .m+2 to move a file to a directory that is up two levels on your stack.
+Recall that the hist command prints your editting history, so you can see which directories are where on your stack.
+Similarly, .t-3 copies a file into a directory that is 3 levels down.
+
+<P>
 "What's the point of all this?" you may ask.
 "What's wrong with the shell?"
 
@@ -1930,7 +1935,7 @@ But sometimes the file names are long and cumbersome,
 and it is nearly impossible to type those names into the shell,
 character for character, upper and lower case, with no mistakes.
 Meta characters such as the * can help,
-but only when the file you want has a name radically different from the other files in the directory.
+but only when the file you want has a name substantially different from the other files in the directory.
 This isn't always the case.
 Suppose an application generates log files as follows.
 

@@ -3664,12 +3664,9 @@ static void prerenderNode(Tag *t, bool opentag)
 
 		if (currentTitle) {
 			if (!cw->htmltitle && t->textval) {
-				cw->htmltitle = t->textval;
+				cw->htmltitle = cloneString(t->textval);
 				spaceCrunch(cw->htmltitle, true, false);
-			} else {
-				nzFree(t->textval);
 			}
-			t->textval = 0;
 			t->deleted = true;
 			break;
 		}
