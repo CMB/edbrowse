@@ -626,11 +626,11 @@ or the corresponding javascript Element.
 Standard tags like p and div are case insensitive. </p> closes <P>
 p {rule} in css matches P, and so on.
 These tags become upper case in js Element.nodeName.
-nodeName holds the tag as written, nodeNameU is the upper case version.
+t->nodeName holds the tag as written, t->nodeNameU is the upper case version.
 newTag() copies name into nodeName, then upshifts it for nodeNameU.
-These fields are not used for dynamic tags, those made by running js.
-newTag() populates them always, but they are only used when parsing html,
-and doing the first run of css, before js runs.
+These fields are not used to build dynamic tags, those made by running js.
+newTag() populates them always, but they are (primarily) used when parsing html,
+and doing the bulk match of css, before js runs.
 domlink() carries the html tag into javascript,
 and it uses nodeNameU if it is a standard, recognized tag, or nodeName
 otherwise, guessing it is a custom tag.
@@ -646,7 +646,7 @@ Now, there is a completely separate system, createElement().
 This is javascript making tags dynamically.
 This can also take a standard tag or a custom tag.
 I convert it to low for convenience, e.g. the switch statement.
-At the end I set nodeName to the tag name,
+At the end I set js nodeName to the tag name,
 or its upper case if it is a standard tag.
 The cases in switch{} duplicates the list of standard tags in html-tags.c,
 and I'm sure they don't agree, and I'm sure neither is complete.

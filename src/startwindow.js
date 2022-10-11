@@ -553,7 +553,7 @@ HTMLBaseElement.prototype.dom$class = "HTMLBaseElement";
 
 HTMLFormElement = function(){this.elements = []}
 HTMLFormElement.prototype = new HTMLElement;
-HTMLFormElement.prototype.dom$class = "HTMLFormElement";
+HTMLFormElement.prototype.dom$class = "Form";
 HTMLFormElement.prototype.submit = eb$formSubmit;
 HTMLFormElement.prototype.reset = eb$formReset;
 Object.defineProperty(HTMLFormElement.prototype, "length", { get: function() { return this.elements.length;}});
@@ -657,7 +657,7 @@ if(cn2[j].selected) a.push(cn2[j]);
 
 HTMLInputElement = function(){this.validity = new Validity, this.validity.owner = this};
 HTMLInputElement.prototype = new HTMLElement;
-HTMLInputElement.prototype.dom$class = "HTMLInputElement";
+HTMLInputElement.prototype.dom$class = "Input";
 HTMLInputElement.prototype.selectionStart = 0;
 HTMLInputElement.prototype.selectionEnd = -1;
 HTMLInputElement.prototype.selectionDirection = "none";

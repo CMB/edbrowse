@@ -1636,8 +1636,8 @@ does it for us, as side effects, for these various classes.
 node2[item] = new w.Array;
 
 // special code here for an array of radio buttons within a form.
-if(node1.dom$class == "HTMLFormElement" && node1[item].length &&
-node1[item][0].dom$class == "HTMLInputElement" && node1[item][0].name == item) {
+if(node1.dom$class == "Form" && node1[item].length &&
+node1[item][0].dom$class == "Input" && node1[item][0].name == item) {
 var a1 = node1[item];
 var a2 = node2[item];
 if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
