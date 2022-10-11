@@ -3868,6 +3868,7 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 
 // HTMLElement and its derivations
 	if((!strncmp(classname, "HTML", 4) && strlen(classname) >= 11)
+	|| (!strncmp(classname, "XML", 3) && strlen(classname) >= 8)
 	|| stringEqual(classname, "Comment"))
 		strcpy(classtweak, classname);
 	else

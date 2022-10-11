@@ -1438,6 +1438,12 @@ Comment.prototype.dom$class = "Comment";
 Comment.prototype.nodeName = Comment.prototype.tagName = "#comment";
 Comment.prototype.nodeType = 8;
 
+XMLCdata = function(t) {}
+XMLCdata.prototype = new HTMLElement;
+XMLCdata.prototype.dom$class = "Cdata";
+XMLCdata.prototype.nodeName = XMLCdata.prototype.tagName = "#cdata-section";
+XMLCdata.prototype.nodeType = 8;
+
 document.createComment = function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);

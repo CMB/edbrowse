@@ -450,6 +450,7 @@ const struct tagInfo availableTags[] = {
 	{"document", "a document", TAGACT_DOC, 5, 1},
 	{"fragment", "a document fragment", TAGACT_FRAG, 5, 1},
 	{"comment", "a comment", TAGACT_COMMENT, 0, 2},
+	{"cdata", "xml cdata", TAGACT_CDATA, 0, 2},
 	{"template", "a template", TAGACT_TEMPLATE, 0, 2},
 	{"h1", "a level 1 header", TAGACT_H, 10, 1},
 	{"h2", "a level 2 header", TAGACT_H, 10, 1},
@@ -660,7 +661,27 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 			}
 		}
 
-// special code here for html comment
+// xml cdata section
+		if(memEqualCI(t, "![cdata[", 8)) {
+			if(!(u = strstr(t, "]]>"))) {
+				if(dhs) printf("open cdata at line %d, html parsing stops here\n", ln);
+				goto stop;
+			}
+			if(dhs) puts("cdata");
+// adjust line number
+			for(t = lt; t < u; ++t)
+				if(*t == '\n') ++ln;
+			seek = s = u + 3;
+			t = lt + 8;
+			u -= 3;
+			w = pullString(t, u - t);
+			makeTag("cdata", "cdata", false, 0);
+			working_t->textval = w;
+			makeTag("cdata", "cdata", true, 0);
+			continue;
+		}
+
+// standard html comment
 		if(*t == '!') {
 			int hyphens = 0;
 			++t;
@@ -4269,6 +4290,10 @@ Needless to say that's not good!
 
 	case TAGACT_COMMENT:
 		domLink(t, "Comment", 0, 0, 0, 4);
+		break;
+
+	case TAGACT_CDATA:
+		domLink(t, "XMLCdata", 0, 0, 0, 4);
 		break;
 
 	case TAGACT_SCRIPT:
