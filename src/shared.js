@@ -1302,7 +1302,7 @@ return item;
 // It's crude, but just reindex all the rows in a table
 function rowReindex(t) {
 // climb up to find Table
-while(t.dom$class != "HTMLTableElement") {
+while(t.dom$class != "Table") {
 if(t.dom$class == "Frame") return;
 t = t.parentNode;
 if(!t) return;
@@ -1327,7 +1327,7 @@ t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
 
 j = 0;
 for(s=t.firstChild; s; s=s.nextSibling)
-if(s.dom$class == "HTMLTableRowElement")
+if(s.dom$class == "Row")
 t.rows.push(s), s.rowIndex = n++, s.sectionRowIndex = j;
 }
 
@@ -1342,7 +1342,7 @@ if(idx > nrows) return null;
 // Should this be ownerDocument, the context that created the table,
 // or my$doc(), the running context. I think the latter is safer.
 var r = my$doc().createElement("tr");
-if(t.dom$class != "HTMLTableElement") {
+if(t.dom$class != "Table") {
 if(idx == nrows) t.appendChild(r);
 else t.insertBefore(r, t.rows[idx]);
 } else {
@@ -1361,7 +1361,7 @@ return r;
 }
 
 function deleteRow(r) {
-if(r.dom$class != "HTMLTableRowElement") return;
+if(r.dom$class != "Row") return;
 this.removeChild(r);
 }
 
@@ -1396,9 +1396,9 @@ I call these implicit members, we shouldn't mess with them.
 
 function implicitMember(o, name) {
 return name === "elements" && o.dom$class == "Form" ||
-name === "rows" && (o.dom$class == "HTMLTableElement" || o.dom$class == "tBody" || o.dom$class == "tHead" || o.dom$class == "tFoot") ||
-name === "tBodies" && o.dom$class == "HTMLTableElement" ||
-(name === "cells" || name === "rowIndex" || name === "sectionRowIndex") && o.dom$class == "HTMLTableRowElement" ||
+name === "rows" && (o.dom$class == "Table" || o.dom$class == "tBody" || o.dom$class == "tHead" || o.dom$class == "tFoot") ||
+name === "tBodies" && o.dom$class == "Table" ||
+(name === "cells" || name === "rowIndex" || name === "sectionRowIndex") && o.dom$class == "Row" ||
 name === "className" ||
 // no clue what getAttribute("style") is suppose to do
 name === "style" ||

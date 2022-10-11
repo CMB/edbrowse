@@ -536,7 +536,7 @@ void prepareScript(Tag *t)
 		js_file = f->fileName;
 
 	if (t->jslink) {
-// js might have set, or changed, the source url.
+// js might have set or changed the source url.
 		char *new_url = get_property_url_t(t, false);
 		if (new_url && *new_url) {
 			if (t->href && !stringEqual(t->href, new_url))
@@ -546,10 +546,6 @@ void prepareScript(Tag *t)
 			t->href = new_url;
 		}
 		t->async = get_property_bool_t(t, "async");
-// A side effect of my scanner is that the text of the script is a
-// childNode of script, but I don't think it should be.
-		if (t->firstchild && t->firstchild->action == TAGACT_TEXT)
-			run_function_onearg_t(t, "removeChild", t->firstchild);
 	}
 
 // If <script> is under <template>, and we clone it again and again,

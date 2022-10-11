@@ -920,9 +920,7 @@ With this understanding, we can, and should, scan for </script
 			if(lt > seek) {
 // pull out the script, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
-				makeTag(texttag, texttag, false, 0);
 				working_t->textval = w;
-				makeTag(texttag, texttag, true, 0);
 			}
 			if(dhs) puts("</script>");
 			makeTag(tagname, lowname, true, lt);
@@ -948,6 +946,7 @@ With this understanding, we can, and should, scan for </script
 			if(lt > seek) {
 // pull out the style, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
+// why doesn't this fold directly into textval, like script?
 				makeTag(texttag, texttag, false, 0);
 				working_t->textval = w;
 				makeTag(texttag, texttag, true, 0);
@@ -3512,9 +3511,9 @@ static void pushAttributes(const Tag *t);
 static int nopt;		/* number of options */
 // None of these tags nest, so it is reasonable to talk about
 // the current open tag.
-static Tag *currentForm, *currentSel, *currentOpt, *currentStyle;
+static Tag *currentForm, *currentSel, *currentOpt;
 static const char *optg; // option group
-static Tag *currentTitle, *currentScript, *currentTA;
+static Tag *currentTitle, *currentTA, *currentStyle;
 static Tag *currentA, *currentAudio;
 static char *radioCheck;
 static int radio_l;
@@ -3697,13 +3696,6 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 		}
 
-		if (currentScript) {
-			currentScript->textval = t->textval;
-			t->textval = 0;
-			t->deleted = true;
-			break;
-		}
-
 		if (currentTA) {
 			currentTA->value = t->textval;
 			leftClipString(currentTA->value);
@@ -3732,10 +3724,6 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 		}
 		currentTitle = (opentag ? t : 0);
-		break;
-
-	case TAGACT_SCRIPT:
-		currentScript = (opentag ? t : 0);
 		break;
 
 	case TAGACT_A:
@@ -3864,11 +3852,7 @@ static void prerenderNode(Tag *t, bool opentag)
 		break;
 
 	case TAGACT_STYLE:
-		if (!opentag) {
-			currentStyle = 0;
-			break;
-		}
-		currentStyle = t;
+		currentStyle = opentag ? t : 0;
 		break;
 
 	case TAGACT_SELECT:
@@ -4003,7 +3987,7 @@ void prerender(void)
 	insert_tbody();
 
 	currentForm = currentSel = currentOpt = NULL;
-	currentTitle = currentScript = currentTA = NULL;
+	currentTitle = currentTA = NULL;
 currentAudio = NULL;
 	currentStyle = NULL;
 	optg = NULL;
