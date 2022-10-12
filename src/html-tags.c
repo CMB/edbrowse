@@ -910,6 +910,17 @@ tag_ok:
 		if(isAutoclose(lowname)) {
 			if(dhs) puts("autoclose");
 			makeTag(tagname, lowname, true, seek);
+		} else if(*gt == '>' && gt[-1] == '/') {
+			if(dhs) puts("close by slash");
+			makeTag(tagname, lowname, true, seek);
+// if we have <script/> stuf and stuff </script> what are we suppose to do?
+// Well just don't do that - so I'll guard against <script src=url/> which is legit.
+// However, we still have to set doorway.
+			if(stringEqual(lowname, "script")) {
+				working_t->doorway = true;
+				working_t->scriptgen = htmlGenerated;
+			}
+			continue;
 		}
 
 		if(stringEqual(lowname, "script")) {
