@@ -259,7 +259,7 @@ skiplink:
 			if(dhs) puts("pre");
 // Need a tag for </pre>. It's weird.
 			t = newTag(cf, name);
-			t-> slash = t->dead = true, ++cw->deadTags;
+			t->slash = t->dead = true, ++cw->deadTags;
 		}
 	} else {
 		if(stringEqual(lowname, "head")) {

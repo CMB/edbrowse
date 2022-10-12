@@ -572,7 +572,10 @@ struct htmlTag {
 	long hcode;
 	bool loadsuccess;
 	uchar step; // prerender, decorate, load script, runscript
-	bool slash:1;		/* as in </A> */
+// the slash member was for the tag coresponding to <foo/>, the closing tag,
+// but we don't do that any more, just one tag for <foo> in the tree.
+// Except ... <pre> and </pre> need separate tags.
+	bool slash:1;
 	bool textin:1; /* <a> some text </a> */
 	bool deleted:1; /* deleted from the current buffer */
 	bool dead:1; // removed by garbage collection

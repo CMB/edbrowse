@@ -2772,6 +2772,16 @@ if(success) {
 this.status = code;
 // need a real statusText for the codes
 this.statusText = (code == 200 ? "OK" : "http error " + code);
+
+// Should we run the xml parser if the status was not 200?
+// And should we run it before the onreadystatechange function?
+var ct = this.getResponseHeader("^content-type$");
+if(ct) ct = ct.toLowerCase();
+if(code == 200 && ct && (ct == "text/xml" || ct == "application/xml")) {
+alert3("parsing the response as xml");
+this.responseXML = (new (my$win().DOMParser)()).parseFromString(this.responseText, "text/xml");
+}
+
 // When the major libraries are used, they overload XHR left and right.
 // Some versions use onreadystatechange.  This has been replaced by onload in,
 // for instance, newer versions of jquery.  It can cause problems to call the
