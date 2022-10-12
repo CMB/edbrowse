@@ -315,8 +315,7 @@ Tag *newTag(const Frame *f, const char *name)
 	pushTag(t);
 	if (t->action == TAGACT_SCRIPT) {
 		for (t1 = cw->scriptlist; t1; t1 = t1->same)
-			if (!t1->slash)
-				t2 = t1;
+			t2 = t1;
 		if (t2)
 			t2->same = t;
 		else
@@ -324,8 +323,7 @@ Tag *newTag(const Frame *f, const char *name)
 	}
 	if (t->action == TAGACT_LINK) {
 		for (t1 = cw->linklist; t1; t1 = t1->same)
-			if (!t1->slash)
-				t2 = t1;
+			t2 = t1;
 		if (t2)
 			t2->same = t;
 		else
@@ -333,8 +331,7 @@ Tag *newTag(const Frame *f, const char *name)
 	}
 	if (t->action == TAGACT_FRAME) {
 		for (t1 = cw->framelist; t1; t1 = t1->same)
-			if (!t1->slash)
-				t2 = t1;
+			t2 = t1;
 		if (t2)
 			t2->same = t;
 		else
@@ -343,8 +340,7 @@ Tag *newTag(const Frame *f, const char *name)
 	if (t->action == TAGACT_INPUT || t->action == TAGACT_SELECT ||
 	    t->action == TAGACT_TA) {
 		for (t1 = cw->inputlist; t1; t1 = t1->same)
-			if (!t1->slash)
-				t2 = t1;
+			t2 = t1;
 		if (t2)
 			t2->same = t;
 		else
@@ -352,8 +348,7 @@ Tag *newTag(const Frame *f, const char *name)
 	}
 	if (t->action == TAGACT_OPTION) {
 		for (t1 = cw->optlist; t1; t1 = t1->same)
-			if (!t1->slash)
-				t2 = t1;
+			t2 = t1;
 		if (t2)
 			t2->same = t;
 		else
@@ -949,6 +944,9 @@ With this understanding, we can, and should, scan for </script
 // pull out the script, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
 				working_t->textval = w;
+				makeTag(texttag, texttag, false, 0);
+				working_t->textval = cloneString(w);
+				makeTag(texttag, texttag, true, 0);
 			}
 			if(dhs) puts("</script>");
 			makeTag(tagname, lowname, true, lt);
@@ -3542,7 +3540,7 @@ static int nopt;		/* number of options */
 static Tag *currentForm, *currentSel, *currentOpt;
 static const char *optg; // option group
 static Tag *currentTitle, *currentTA, *currentStyle;
-static Tag *currentA, *currentAudio;
+static Tag *currentA, *currentAudio, *currentScript;
 static char *radioCheck;
 static int radio_l;
 
@@ -3703,6 +3701,11 @@ static void prerenderNode(Tag *t, bool opentag)
 		if (!opentag || !t->textval)
 			break;
 
+		if (currentScript) {
+			t->deleted = true;
+			break;
+		}
+
 		if (currentTitle) {
 			if (!cw->htmltitle && t->textval) {
 				cw->htmltitle = cloneString(t->textval);
@@ -3752,6 +3755,10 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 		}
 		currentTitle = (opentag ? t : 0);
+		break;
+
+	case TAGACT_SCRIPT:
+		currentScript = (opentag ? t : 0);
 		break;
 
 	case TAGACT_A:
@@ -4015,7 +4022,7 @@ void prerender(void)
 	insert_tbody();
 
 	currentForm = currentSel = currentOpt = NULL;
-	currentTitle = currentTA = NULL;
+	currentTitle = currentScript = currentTA = NULL;
 currentAudio = NULL;
 	currentStyle = NULL;
 	optg = NULL;
@@ -4256,12 +4263,11 @@ Needless to say that's not good!
 // nodeName and nodeType set in constructor
 		if (t->jslink) {
 			const char *w = t->textval;
-			if (!w)
-				w = emptyString;
 			set_property_string_t(t, "data", w);
-			w = (t->jclass ? t->jclass : emptyString);
-			set_property_string_t(t, "class", w);
-			set_property_string_t(t, "last$class", w);
+			set_property_string_t(t, "class", t->jclass);
+			set_property_string_t(t, "last$class", t->jclass);
+			if(t->deleted && t->parent && t->parent->action == TAGACT_SCRIPT)
+				set_property_bool_t(t, "eb$nomove", true);
 		}
 		break;
 
@@ -4492,7 +4498,7 @@ Needless to say that's not good!
 	if (!t->jslink)
 		return;		/* nothing else to do */
 
-/* js tree mirrors the dom tree. */
+// js tree mirrors the dom tree
 	linked_in = false;
 
 	if (t->parent && t->parent->jslink) {

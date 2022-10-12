@@ -962,13 +962,13 @@ afterscript:
 // Any newly generated scripts have to run next. Move them up in the linked list.
 				Tag *t1, *t2, *u;
 				for(u = t; u; u = u->same)
-					if(!u->slash) t1 = u;
+					t1 = u;
 // t1 is now last real script in the list.
 				stringAndString(&cf->dw, &cf->dw_l, "</body>");
 				runGeneratedHtml(t, cf->dw);
 				run_function_onearg_win(cf, "eb$uplift", t);
 				for(u = t1; u; u = u->same)
-					if(!u->slash) t2 = u;
+					t2 = u;
 				if(t1 != t && t2 != t1) {
 					Tag *t3 = t->same;
 					t->same = t1->same;
@@ -3192,8 +3192,6 @@ void runOnload(void)
 		if (intFlag)
 			return;
 		t = tagList[i];
-		if (t->slash)
-			continue;
 		if (t->f0 != cf)
 			continue;
 		action = t->action;

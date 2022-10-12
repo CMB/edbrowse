@@ -6070,7 +6070,7 @@ bool jump2anchor(const Tag *jumptag, const char *newhash)
 	if(!jumptag) {
 		for(i = cw->numTags - 1; i >= 0; --i) {
 			tag = tagList[i];
-			if(tag->action == TAGACT_BODY && !tag->slash) {
+			if(tag->action == TAGACT_BODY) {
 				jumptag = tag;
 				break;
 			}

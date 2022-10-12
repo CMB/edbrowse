@@ -993,15 +993,22 @@ or at least under the parent of the script object,
 but always in position, as though they were right here in place of the script.
 This function lifts the nodes from the script object to its parent,
 in position, just after the script.
+Watch out! If the script has inline text, it is a proper child of the script,
+and should not be moved. Check for eb$nomove.
 *********************************************************************/
 
 eb$uplift = function(s) {
 var p = s.parentNode;
 if(!p) return; // should never happen
 var before = s.nextSibling;
-while(s.firstChild)
-if(before) p.insertBefore(s.firstChild, before);
-else p.appendChild(s.firstChild);
+var c = s.firstChild;
+if(c && c.nodeType == 3 && c.eb$nomove) c = c.nextSibling;
+while(c) {
+var hold = c.nextSibling;
+if(before) p.insertBefore(c, before);
+else p.appendChild(c);
+c = hold;
+}
 }
 
 // Canvas method draws a picture. That's meaningless for us,
