@@ -12,8 +12,37 @@ which we must then import into the edbrowse tree of tags.
 
 #include "eb.h"
 
-bool dhs; // debug html scanner
 // This makes a lot of output; maybe it should go to a file like debug css does
+bool debugScanner;
+bool isXML; // parse as xml
+
+// report debugging information or errors
+static void scannerInfo1(const char *msg, int n)
+{
+	if(debugScanner) printf(msg, n);
+}
+
+static void scannerInfo2(const char *msg, const char *w)
+{
+	if(debugScanner) printf(msg, w);
+}
+
+static void scannerInfo3(const char *msg, const char *w, int n)
+{
+	if(debugScanner) printf(msg, w, n);
+}
+
+static void scannerError1(const char *msg, int n)
+{
+	if(debugScanner) printf(msg, n);
+	else if(isXML) debugPrint(3, msg, n);
+}
+
+static void scannerError2(const char *msg, const char *w)
+{
+	if(debugScanner) printf(msg, w);
+	else if(isXML) debugPrint(3, msg, w);
+}
 
 static void findAttributes(const char *start, const char *end);
 static void setAttrFromHTML(const char *a1, const char *a2, const char *v1, const char *v2);
@@ -205,14 +234,14 @@ static void makeTag(const char *name, const char *lowname, bool slash, const cha
 	if(slash) {
 		if(!(k = balance(lowname))) {
 // </foo> without <foo>, may as well just throw it away.
-			if(dhs) puts("unbalanced");
+			scannerError2("%s unbalanced\n", name);
 			return;
 		}
 // now handle <i><b></i></b>
 // the balancing tag is not at the top of the stack, where it should be!
 // I think the best thing is to close out the other tags.
 		while(stack != k) {
-			if(dhs) printf("force closure of %s\n", stack->name);
+			scannerError2("force closure of %s\n", stack->name);
 			makeTag(stack->name, stack->lowname, true, mark);
 		}
 	}
@@ -242,21 +271,21 @@ skiplink:
 
 		if(stringEqual(lowname, "html")) {
 			headbody = 1;
-			if(dhs) puts("in html");
+			scannerInfo1("in html\n", 0);
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqual(lowname, "head")) {
 			headbody = 2;
-			if(dhs) puts("in head");
+			scannerInfo1("in head\n", 0);
 		}
 		if(stringEqual(lowname, "body")) {
 			headbody = 4, bodycount = htmlcount = 1;
-			if(dhs) puts("in body");
+			scannerInfo1("in body\n", 0);
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqual(lowname, "pre")) {
 			premode = true;
-			if(dhs) puts("pre");
+			scannerInfo1("pre\n", 0);
 // Need a tag for </pre>. It's weird.
 			t = newTag(cf, name);
 			t->slash = t->dead = true, ++cw->deadTags;
@@ -264,19 +293,19 @@ skiplink:
 	} else {
 		if(stringEqual(lowname, "head")) {
 			headbody = 3;
-			if(dhs) puts("post head");
+			scannerInfo1("post head\n", 0);
 		}
 		if(stringEqual(lowname, "body")) {
 			headbody = 5, bodycount = 0;
-			if(dhs) puts("post body");
+			scannerInfo1("post body\n", 0);
 		}
 		if(stringEqual(lowname, "html")) {
 			headbody = 6, htmlcount = 0;
-			if(dhs) puts("post html");
+			scannerInfo1("post html\n", 0);
 		}
 		if(stringEqual(lowname, "pre")) {
 			premode = false;
-			if(dhs) puts("not pre");
+			scannerInfo1("not pre\n", 0);
 		}
 
 		stack = k->next;
@@ -648,7 +677,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 				pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
-				  if(dhs) printf("text{%s}\n", w);
+				  scannerInfo2("text{%s}\n", w);
 				makeTag(texttag, texttag, false, 0);
 				if(!ws) atWall = false, lasttext = working_t;
 				working_t->textval = w;
@@ -659,10 +688,10 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 // xml cdata section
 		if(memEqualCI(t, "![cdata[", 8)) {
 			if(!(u = strstr(t, "]]>"))) {
-				if(dhs) printf("open cdata at line %d, html parsing stops here\n", ln);
+				scannerError1("open cdata at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
-			if(dhs) printf("cdata length %d\n", u - t - 8);
+			scannerInfo1("cdata length %d\n", u - t - 8);
 // adjust line number
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
@@ -690,7 +719,7 @@ closecomment:
 				if(u[-i] != '-') break;
 			if(i < hyphens) { ++u; goto closecomment; }
 // this is a valid comment
-			if(dhs) puts("comment");
+			scannerInfo1("comment\n", 0);
 // adjust line number
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
@@ -701,7 +730,7 @@ closecomment:
 			w = pullString(t, u - t);
 			if(headbody == 0 && memEqualCI(t, "doctype", 7) &&
 			!isalnum(t[7])) {
-				if(dhs) puts("doctype");
+				scannerInfo1("doctype\n", 0);
 				makeTag("doctype", "doctype", false, 0);
 				working_t->textval = w;
 				makeTag("doctype", "doctype", true, 0);
@@ -712,18 +741,18 @@ closecomment:
 			}
 			continue;
 opencomment:
-			if(dhs) printf("open comment at line %d, html parsing stops here\n", ln);
+			scannerError1("open comment at line %d, html parsing stops here\n", ln);
 			goto stop;
 		}
 
 // xml specifier - I don't really understand this.
 		if(memEqualCI(t, "?xml", 4)) {
 			if(!(gt = strstr(t, "?>"))) {
-				if(dhs) puts("open xml");
+				scannerError1("open xml\n", 0);
 				s = t;
 				continue;
 			}
-			if(dhs) puts("xml");
+			scannerInfo1("xml\n", 0);
 			s = seek = gt + 2;
 			continue;
 		}
@@ -791,7 +820,7 @@ so also break out at >< like a new tag is starting.
 				strcpy(lowname, "innerhtml");
 			}
 // create this tag in the edbrowse world.
-			if(dhs) printf("</%s>\n", tagname);
+			scannerInfo2("</%s>\n", tagname);
 			makeTag(tagname, lowname, true, lt);
 			if(headbody == 6) goto stop;
 			if(isWall(lowname)) {
@@ -803,11 +832,11 @@ so also break out at >< like a new tag is starting.
 		}
 
 // create this tag in the edbrowse world.
-		if(dhs) printf("<%s> line %d\n", tagname, ln);
+		scannerInfo3("<%s> line %d\n", tagname, ln);
 // has to start and end with html
 		if(stringEqual(lowname, "html")) {
 			if(headbody == 0) goto tag_ok;
-			if(headbody != 4) { if(dhs) puts("sequence"); continue; }
+			if(headbody != 4) { scannerError1("sequence\n", 0); continue; }
 			strcpy(tagname, "innerhtml"), ++htmlcount;
 			strcpy(lowname, "innerhtml");
 			goto tag_ok;
@@ -815,25 +844,25 @@ so also break out at >< like a new tag is starting.
 		if(headbody == 0)
 			makeTag("html", "html", false, lt);
 		if(stringEqual(lowname, "head")) {
-			if(headbody > 1) { if(dhs) puts("sequence"); continue; }
+			if(headbody > 1) { scannerError1("sequence\n", 0); continue; }
 			goto tag_ok;
 		}
 		if(!isInhead(lowname)) {
 			if(headbody == 1) {
 				if(htmlGenerated) {
-					if(dhs) puts("skip head section\nin head\npost head");
+					scannerInfo1("skip head section\nin head\npost head\n", 0);
 				} else {
-					if(dhs) puts("initiate and terminate head");
+					scannerInfo1("initiate and terminate head\n", 0);
 					makeTag("head", "head", false, lt);
 					makeTag("head", "head", true, lt);
 				}
 			} else if(headbody == 2) {
-				if(dhs) puts("terminate head");
+				scannerInfo1("terminate head\n", 0);
 				makeTag("head", "head", true, lt);
 			}
 		} else pushState(lt, true);
 		if(stringEqual(lowname, "body")) {
-			if(headbody > 4) { if(dhs) puts("sequence"); continue; }
+			if(headbody > 4) { scannerError1("sequence\n", 0); continue; }
 			if(headbody == 4) {
 				strcpy(tagname, "innerbody"), ++bodycount;
 				strcpy(lowname, "innerbody");
@@ -844,23 +873,23 @@ so also break out at >< like a new tag is starting.
 
 tag_ok:
 //  see if we need to close a prior instance of this tag
-		k = balance(lowname);
+		k = isXML ? 0 : balance(lowname);
 		if(k && isNonest(lowname, k)) {
-			if(dhs) puts("not nestable");
+			scannerInfo2("%s not nestable\n", tagname);
 			makeTag(tagname, lowname, true, lt);
 		}
 
-		if(stack && isNextclose(stack->lowname)) {
-			if(dhs) printf("prior close %s\n", stack->name);
+		if(!isXML && stack && isNextclose(stack->lowname)) {
+			scannerInfo2("prior close %s\n", stack->name);
 			makeTag(stack->name, stack->lowname, true, lt);
 		}
 
-		if(stack && isCrossclose2(lowname)) {
+		if(!isXML && stack && isCrossclose2(lowname)) {
 			const struct opentag *hold;
 			for(k = stack; k; k = hold) {
 				hold = k->next;
 				if(isCrossclose(k->lowname)) {
-					if(dhs) printf("cross close %s\n", k->name);
+					scannerInfo2("cross close %s\n", k->name);
 					makeTag(k->name, k->lowname, true, lt);
 				}
 			}
@@ -868,22 +897,22 @@ tag_ok:
 
 // This one doesn't fit into our simple table-driven crossclose pattern.
 // Any of thead tbody tfoot closes the prior, unless in a lower table.
-		if(stack && isTableSection(lowname)) {
+		if(!isXML && stack && isTableSection(lowname)) {
 			for(k = stack; k; k = k->next) {
 				if(stringEqual(k->lowname, "table")) break;
 				if(isTableSection(k->lowname)) {
-					if(dhs) printf("cross close %s\n", k->name);
+					scannerInfo2("cross close %s\n", k->name);
 					makeTag(k->name, k->lowname, true, lt);
 					break;
 				}
 			}
 		}
 
-		if(stack && isCell(lowname)) {
+		if(!isXML && stack && isCell(lowname)) {
 			for(k = stack; k; k = k->next) {
 				if(stringEqual(k->lowname, "table")) break;
 				if(isCell(k->lowname)) {
-					if(dhs) printf("cross close %s\n", k->name);
+					scannerInfo2("cross close %s\n", k->name);
 					makeTag(k->name, k->lowname, true, lt);
 					break;
 				}
@@ -891,7 +920,7 @@ tag_ok:
 		}
 
 		makeTag(tagname, lowname, false, seek);
-		if(isWall(lowname)) {
+		if(!isXML && isWall(lowname)) {
 			atWall = true;
 			lasttext = 0;
 		}
@@ -902,16 +931,16 @@ tag_ok:
 		}
 // The HTML5 specification says that user agents should strip the first
 // newline immediately after the <pre> tag.
-		if(i == TAGACT_PRE) {
+		if(!isXML && i == TAGACT_PRE) {
 			if(*s == '\r') ++s, ++seek;
 			if(*s == '\n') ++s, ++seek;
 		}
 		findAttributes(t, gt);
-		if(isAutoclose(lowname)) {
-			if(dhs) puts("autoclose");
+		if(!isXML && isAutoclose(lowname)) {
+			scannerInfo2("%s autoclose\n", tagname);
 			makeTag(tagname, lowname, true, seek);
 		} else if(*gt == '>' && gt[-1] == '/') {
-			if(dhs) puts("close by slash");
+			scannerInfo2("%s close by slash\n", tagname);
 			makeTag(tagname, lowname, true, seek);
 // if we have <script/> stuf and stuff </script> what are we suppose to do?
 // Well just don't do that - so I'll guard against <script src=url/> which is legit.
@@ -937,18 +966,18 @@ Such has to be written
 With this understanding, we can, and should, scan for </script
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</script"))) {
-				if(dhs) printf("open script at line %d, html parsing stops here\n", ln);
+				scannerError1("open script at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				if(dhs) printf("open script at line %d, html parsing stops here\n", ln);
+				scannerError1("open script at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspace(*seek)) ++seek;
-			   if(dhs) printf("script length %d\n", (int)(lt - seek));
+			   scannerInfo1("script length %d\n", (int)(lt - seek));
 			working_t->doorway = true;
 			working_t->scriptgen = htmlGenerated;
 			if(lt > seek) {
@@ -959,7 +988,7 @@ With this understanding, we can, and should, scan for </script
 				working_t->textval = cloneString(w);
 				makeTag(texttag, texttag, true, 0);
 			}
-			if(dhs) puts("</script>");
+			scannerInfo1("</script>\n", 0);
 			makeTag(tagname, lowname, true, lt);
 			seek = s = gt + 1;
 			continue;
@@ -968,18 +997,18 @@ With this understanding, we can, and should, scan for </script
 		if(stringEqual(lowname, "style")) {
 // this is like script; leave it alone!
 			if(!(lt = strcasestr(seek, "</style"))) {
-				if(dhs) printf("open style at line %d, html parsing stops here\n", ln);
+				scannerError1("open style at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				if(dhs) printf("open style at line %d, html parsing stops here\n", ln);
+				scannerError1("open style at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspace(*seek)) ++seek;
-			   if(dhs) printf("style length %d\n", (int)(lt - seek));
+			   scannerInfo1("style length %d\n", (int)(lt - seek));
 			if(lt > seek) {
 // pull out the style, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
@@ -988,7 +1017,7 @@ With this understanding, we can, and should, scan for </script
 				working_t->textval = w;
 				makeTag(texttag, texttag, true, 0);
 			}
-			if(dhs) puts("</style>");
+			scannerInfo1("</style>\n", 0);
 			makeTag(tagname, lowname, true, lt);
 			seek = s = gt + 1;
 			continue;
@@ -1001,11 +1030,11 @@ textarea is sometimes html code that you are suppose to embed in your web page.
 With this understanding, we can, and should, scan for </textarea
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</textarea"))) {
-				if(dhs) printf("open textarea at line %d, html parsing stops here\n", ln);
+				scannerError1("open textarea at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				if(dhs) printf("open textarea at line %d, html parsing stops here\n", ln);
+				scannerError1("open textarea at line %d, html parsing stops here\n", ln);
 				goto stop;
 			}
 // adjust line number
@@ -1015,12 +1044,12 @@ With this understanding, we can, and should, scan for </textarea
 			if(lt > seek) {
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
-				   if(dhs) printf("textarea length %zd\n", strlen(w));
+				   scannerInfo1("textarea length %d\n", strlen(w));
 				makeTag(texttag, texttag, false, 0);
 				working_t->textval = w;
 				makeTag(texttag, texttag, true, 0);
 			}
-			if(dhs) puts("</textarea>");
+			scannerInfo1("</textarea>\n", 0);
 			makeTag(tagname, lowname, true, lt);
 			seek = s = gt + 1;
 			continue;
@@ -1037,7 +1066,7 @@ With this understanding, we can, and should, scan for </textarea
 			pushState(seek, true);
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w), trimWhite(w);
-			  if(dhs) printf("text{%s}\n", w);
+			  scannerInfo2("text{%s}\n", w);
 			makeTag(texttag, texttag, false, 0);
 			working_t->textval = w;
 			makeTag(texttag, texttag, true, 0);
@@ -1082,15 +1111,15 @@ static void pushState(const char *start, bool head_ok)
 		makeTag("html", "html", false, start);
 	}
 	if(headbody == 1) {
-		if(dhs) puts("initiate head");
+		scannerInfo1("initiate head\n", 0);
 		makeTag("head","head", false, start);
 	}
 	if(headbody == 2 && !head_ok) {
-		if(dhs) puts("terminate head");
+		scannerInfo1("terminate head\n", 0);
 		makeTag("head","head", true, start);
 	}
 	if(headbody == 3) {
-		if(dhs) puts("initiate body");
+		scannerInfo1("initiate body\n", 0);
 		makeTag("body","body", false, start);
 	}
 }
@@ -1274,7 +1303,7 @@ static void setAttrFromHTML(const char *a1, const char *a2, const char *v1, cons
 	w = pullAnd(v1, v2);
 // yeah this is tacky, write on top of a const, but I'll put it back.
 	save_c = *a2, *(char*)a2 = 0;
-	if(dhs && debugLevel >= 3) printf("%s=%s\n", a1, w);
+	if(debugScanner && debugLevel >= 3) printf("%s=%s\n", a1, w);
 	setTagAttr(working_t, a1, w);
 	*(char*)a2 = save_c;
 }

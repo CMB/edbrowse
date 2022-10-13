@@ -5599,16 +5599,16 @@ et_go:
 	}
 
 	if (stringEqual(line, "dbtags")) {
-		dhs ^= 1;
+		debugScanner ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(dhs + MSG_DebugTagsOff);
+			i_puts(debugScanner + MSG_DebugTagsOff);
 		return true;
 	}
 
 	if (stringEqual(line, "dbtags+") || stringEqual(line, "dbtags-")) {
-		dhs = (line[6] == '+');
+		debugScanner = (line[6] == '+');
 		if (helpMessagesOn)
-			i_puts(dhs + MSG_DebugTagsOff);
+			i_puts(debugScanner + MSG_DebugTagsOff);
 		return true;
 	}
 

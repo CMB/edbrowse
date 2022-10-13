@@ -262,20 +262,21 @@ struct DBTABLE {
 extern CURL *global_http_handle;
 extern CURLSH *global_share_handle;
 extern int debugLevel;		/* 0 to 9 */
-extern bool debugClone, debugEvent, debugThrow, debugCSS, dhs, debugLayout;
+extern char *debugFileName;
+extern FILE *debugFile;
+extern bool debugClone, debugEvent, debugThrow, debugCSS, debugScanner, debugLayout;
 extern bool demin; // deminimize javascript
 extern bool uvw; // trace points
 extern bool gotimers; // run javascript timers
 extern int timerspeed; // slowdown factor for javascript timers
 extern int rr_interval; // rerender the screen after this many seconds
-extern FILE *debugFile;
-extern char *debugFileName;
 extern char *sslCerts;		// ssl certificates to validate the secure server
 extern char *pubKey;		// publick key file for ssh etc
 extern int verifyCertificates;	/* is a certificate required for the ssl connection? */
 extern int displayLength;	// when printing a line
 extern int formatLineLength;	// when formatting html
 extern bool formatOverflow;
+extern bool isXML;
 extern int webTimeout, mailTimeout;
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */

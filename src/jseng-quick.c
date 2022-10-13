@@ -4022,7 +4022,7 @@ Don't do any of this if the tag is itself <style>. */
 
 // DocType has nodeType = 10, see startwindow.js
 	if(t->action != TAGACT_DOCTYPE) {
-		char *js_node = (t->action == TAGACT_UNKNOWN ? t->nodeName : t->nodeNameU);
+		char *js_node = ((t->action == TAGACT_UNKNOWN || isXML) ? t->nodeName : t->nodeNameU);
 		set_property_string(cx, io, "nodeName", js_node);
 		set_property_string(cx, io, "tagName", js_node);
 	}
