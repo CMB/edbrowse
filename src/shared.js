@@ -291,7 +291,7 @@ return s;
 function getElement() {
   var e = this.lastChild;
 if(!e) { alert3("missing html node"); return null; }
-if(e.nodeName != "HTML") alert3("html node name " + e.nodeName);
+if(e.nodeName.toUpperCase() != "HTML") alert3("html node name " + e.nodeName);
 return e
 }
 
@@ -301,7 +301,7 @@ if(!e) return null;
 // In case somebody adds extra nodes under <html>, I search for head and body.
 // But it should always be head, body.
 for(var i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "HEAD") return e.childNodes[i];
+if(e.childNodes[i].nodeName.toUpperCase() == "HEAD") return e.childNodes[i];
 alert3("missing head node"); return null;
 }
 
@@ -309,10 +309,10 @@ function setHead(h) {
  var i, e = this.documentElement;
 if(!e) return;
 for(i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "HEAD") break;
+if(e.childNodes[i].nodeName.toUpperCase() == "HEAD") break;
 if(i < e.childNodes.length) e.removeChild(e.childNodes[i]); else i=0;
 if(h) {
-if(h.nodeName != "HEAD") { alert3("head replaced with node " + h.nodeName); h.nodeName = "HEAD"; }
+if(h.nodeName.toUpperCase() != "HEAD") { alert3("head replaced with node " + h.nodeName); h.nodeName = "HEAD"; }
 if(i == e.childNodes.length) e.appendChild(h);
 else e.insertBefore(h, e.childNodes[i]);
 }
@@ -322,7 +322,7 @@ function getBody() {
  var e = this.documentElement;
 if(!e) return null;
 for(var i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "BODY") return e.childNodes[i];
+if(e.childNodes[i].nodeName.toUpperCase() == "BODY") return e.childNodes[i];
 alert3("missing body node"); return null;
 }
 
@@ -330,10 +330,10 @@ function setBody(b) {
  var i, e = this.documentElement;
 if(!e) return;
 for(i=0; i<e.childNodes.length; ++i)
-if(e.childNodes[i].nodeName == "BODY") break;
+if(e.childNodes[i].nodeName.toUpperCase() == "BODY") break;
 if(i < e.childNodes.length) e.removeChild(e.childNodes[i]);
 if(b) {
-if(b.nodeName != "BODY") { alert3("body replaced with node " + b.nodeName); b.nodeName = "BODY"; }
+if(b.nodeName.toUpperCase() != "BODY") { alert3("body replaced with node " + b.nodeName); b.nodeName = "BODY"; }
 if(i == e.childNodes.length) e.appendChild(b);
 else e.insertBefore(b, e.childNodes[i]);
 }
