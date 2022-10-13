@@ -639,7 +639,6 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 
 	backupTags();
 
-	seek = s = htmltext, ln = 1, premode = false;
 	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
 	atWall = false;
@@ -647,6 +646,10 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	start_idx = cw->numTags;
 	overnode = above;
 	htmlGenerated = isgen;
+	isXML = false;
+// magic code to say this is xml
+	if(!strncmp(htmltext, "`~*xml}@;", 9)) isXML = true, htmltext += 9;
+	seek = s = htmltext, ln = 1, premode = false;
 
 // loop looking for tags
 	while(*s) {

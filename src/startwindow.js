@@ -2460,9 +2460,10 @@ var d = document;
 if(y == "text/html" || y == "text/xml") {
 var v = d.createElement("document");
 if(t) {
-if(typeof t == "string")
+if(typeof t == "string") {
+if(y.match(/xml$/)) t = "`~*xml}@;" + t;
 v.innerHTML = t;
-else
+} else
 alert3("DOMParser expects a string but gets " + typeof t);
 }
 return v;

@@ -436,12 +436,16 @@ static JSValue setter_innerHTML(JSContext * cx, JSValueConst this, int argc, JSV
 	c2 = JS_NewArray(cx);
 	grab(c2);
 	JS_SetPropertyStr(cx, this, "childNodes", JS_DupValue(cx, c2));
-	JS_SetPropertyStr(cx, this, "inner$HTML", JS_NewAtomString(cx, h));
+	const char *h1 = h;
+// secret code for xml
+	if(!strncmp(h1, "`~*xml}@;", 9)) h1 += 9;
+	JS_SetPropertyStr(cx, this, "inner$HTML", JS_NewAtomString(cx, h1));
 
 // Put some tags around the html, so we can parse it.
 	run = initString(&run_l);
+	if(h1 > h) stringAndBytes(&run, &run_l, h, 9);
 	stringAndString(&run, &run_l, "<body>");
-	stringAndString(&run, &run_l, h);
+	stringAndString(&run, &run_l, h1);
 	stringAndString(&run, &run_l, "</body>");
 
 // now turn the html into objects
