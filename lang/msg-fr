@@ -277,8 +277,8 @@ impossible de renommer le fichier à %s
 une zone de saisie ne peut contenir des caractères nuls
 une zone de saisie ne peut contenir des sauts de ligne
 Erreur de connexion SSL %d
-0
-0
+début de l'historique
+fin de l'historique
 %s impossible en mode irc
 0
 0
@@ -460,7 +460,7 @@ traitement par lots
 de %s 
 caractères inattendus après la pièce jointe encodée
 caractères invalides dans la pièce jointe encodée
-0
+%s impossible en mode navigation
 attention, javascript ne peut être invoqué par un double clic
 erreur de détermination de l'option %s pendant la synchronisation ou la soumission du formulaire
 impossible de déplacer %s sur un autre système de fichiers
@@ -693,8 +693,8 @@ liste répertoire, données supplémentaires
 liste répertoire, noms seulement
 scanner de debug html désactivé
 scanner de debug html activé
-0
-0
+n'utilisez pas format=flowed
+utilisez format=flowed
 lecture audio impossible en mode irc
 impossible de découper les lignes en mode irc
 impossible de renommer irc
@@ -706,12 +706,12 @@ la session %d est incompatible avec l'irc
 aucune zone de saisie présente
 aucun lien présent
 aucun bouton présent
-0
+aucun images présent
 0
 il y a plusieurs zones de saisie, utilisez svp %s1 à %s%d
 il y a plusieurs liens, utilisez svp %s1 à %s%d
 il y a plusieurs boutons, utilisez svp %s1 à %s%d
-0
+il y a plusieurs images présentes, veuillez utiliser %s1 à %s%d
 0
 0
 0

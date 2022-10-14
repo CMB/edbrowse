@@ -730,8 +730,9 @@ closecomment:
 // see if this is doctype
 			t = lt + 2 + hyphens;
 			u -= hyphens;
-			w = pullString(t, u - t);
-			if(headbody == 0 && memEqualCI(t, "doctype", 7) &&
+// for <!----> u could be less than t
+			w = (u <= t ? 0 : pullString(t, u - t));
+			if(w && headbody == 0 && memEqualCI(t, "doctype", 7) &&
 			!isalnum(t[7])) {
 				scannerInfo1("doctype\n", 0);
 				makeTag("doctype", "doctype", false, 0);
