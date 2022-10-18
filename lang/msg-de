@@ -317,7 +317,7 @@ Versenden
 Edbrowse wurde ohne Datenbankzugriff kompiliert
 fehlendes Pseudonym in Adressbuchzeile %d
 fehlender : in Adressbuchzeile %d
-Pseudonym in Adressbuchzeile %d ist zu lang, maximal 15 Zeichen
+Pseudonym in Adressbuchzeile %d ist zu lang, maximal %d Zeichen
 Email-Adresse in Zile %d des Adressbuches ist zu lang, maximal %d Zeichen
 Email im Adressbuch Zeile %d enthält nicht das Zeichen @
 kann mit Leerzeichen in Emailadressen nicht umgehen, Adressbuchzeile %d

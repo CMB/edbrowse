@@ -317,7 +317,7 @@ Push
 edbrowse non è stato compilato con il supporto per l'accesso ai database
 alias mancante nella rubrica, riga %d
 : mancante nella rubrica, riga %d
-l'alias nella rubrica alla riga %d è troppo lungo, il limite è di 15 caratteri
+l'alias nella rubrica alla riga %d è troppo lungo, il limite è di %d caratteri
 email nella rubrica alla riga %d è troppo lungo, limite di %d caratteri
 l'email alla riga %d non contiene il carattere @
 impossibile gestire spazio bianco in un indirizzo email in rubrica, alla riga %d

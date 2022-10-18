@@ -7,6 +7,11 @@
 
 #include <time.h>
 
+#define MAXALIASLENGTH 16
+#define MAXEMAILANDFULLNAMELENGTH 100
+#define ABDELIMITER ':'		// character between fields in address book entry
+#define FULLNAMEDELIMITER '>'		// character between email address and full name in address book entry
+#define REPLACEMENTFULLNAMEDELIMITER '\n' // character temporarily used between email address and full name
 #define MAXRECAT 100		// max number of recipients or attachments
 #define MAXMSLINE 1024		// max mail server line
 #define LONGLINELIMIT 76
@@ -18,9 +23,9 @@ static char subjectLine[400];
 static int mailAccount;
 
 static struct ALIAS {
-	char brief[16];
-	char email[100];
-	char fullname[100 + 4];
+	char brief[MAXALIASLENGTH];
+	char email[MAXEMAILANDFULLNAMELENGTH];
+	char fullname[MAXEMAILANDFULLNAMELENGTH + 4];
 } *addressList;
 static int nads;		/* number of addresses */
 static time_t adbooktime;
@@ -28,9 +33,11 @@ static time_t adbooktime;
 /* read and/or refresh the address book */
 bool loadAddressBook(void)
 {
-	char *buf, *bufend, *v, *last, *s, *t;
+	char *buf, *bufend, *v, *record_start, *email_start, *at_sign, *dot, *domain_literal_end, *full_name_start, *s, *t;
 	bool cmt = false;
-	char state = 0, c;
+	enum { alias, local_part, quoted_part, backslash_escaped, domain,
+		domain_literal, full_name, ignore } state = alias;
+	char c;
 	int j, buflen, ln = 1;
 	time_t mtime;
 
@@ -46,115 +53,199 @@ bool loadAddressBook(void)
 		return false;
 	bufend = buf + buflen;
 
-	for (s = t = last = buf; s < bufend; ++s) {
+if (buflen > 0 && bufend[-1] != '\n') {
+		setError(MSG_ABUnterminated);
+	freefail:
+					nzFree(buf);
+					nads = 0;
+					return false;
+	}
+
+/* Remove comments and unimportant spaces and tabs. Make each record into a zero-terminated string. */
+	for (record_start = email_start = at_sign = dot = domain_literal_end = full_name_start = s = t = buf; s < bufend; ++s) {
 		c = *s;
-		if (cmt) {
-			if (c != '\n')
-				continue;
-			cmt = false;
-		}
-		if (c == ':') {	/* delimiter */
-			if (state == 0) {
-				setError(MSG_ABNoAlias, ln);
-freefail:
-				nzFree(buf);
-				nads = 0;
-				return false;
-			}
-			while (t[-1] == ' ' || t[-1] == '\t')
-				--t;
-			if (state == 1) {
-				*t++ = c;
-				state = 2;
-				continue;
-			}
-			c = '#';	/* extra fields are ignored */
-		}		/* : */
-		if (c == '#') {
-			cmt = true;
+/* Ignore spaces and tabs at the start of aliases, email addresses, and full names.
+Ignore all characters other than newline when ignoring until the end of the line. */
+		if (((c == ' ' || c == '\t')
+		&& ((state == alias && record_start == t)
+		|| (state == local_part && email_start == t)
+		|| (state == full_name && full_name_start == t)))
+		|| (c != '\n' && state == ignore)) {
 			continue;
-		}
-		if (c == '\n') {
-			++ln;
-			if (state == 0)
-				continue;
-			if (state == 1) {
-				setError(MSG_ABNoColon, ln - 1);
+		} else if(c == '#' && t == record_start) {
+// # at start of line is comment
+			state = ignore;
+			continue;
+		} else if (c == ABDELIMITER && state == alias) {
+/* Ignore spaces and tabs at the end of an alias. */
+			while (t > record_start && (t[-1] == ' ' || t[-1] == '\t')) --t;
+			if (record_start == t) {
+				setError(MSG_ABNoAlias, ln);
+				goto freefail;
+			} else if (t - record_start >= MAXALIASLENGTH) {
+				setError(MSG_ABAliasLong, ln, MAXALIASLENGTH - 1);
 				goto freefail;
 			}
-			if (state == 3) {
-				bool greater = false;
+			for (v = record_start; v < t; ++v)
+				if (iscntrl((uchar) *v)) {
+					setError(MSG_ABMailUnprintable, ln);
+					goto freefail;
+				}
+			*t++ = c;
+			email_start = t;
+			state = local_part;
+			continue;
+		} else if (c == ABDELIMITER && state == local_part && email_start == t) {
+// no email address, ignore the entire line
+			t = record_start;
+			state = ignore;
+			continue;
+		} else if (c == ABDELIMITER && (state == domain || state == full_name)) {
+			state = ignore;
+			continue;
+		} else if (c == FULLNAMEDELIMITER && state == domain) {
+			while (t[-1] == ' ' || t[-1] == '\t') --t;
+			*t++ = REPLACEMENTFULLNAMEDELIMITER;
+			full_name_start = t;
+			state = full_name;
+			continue;
+		} else if (c == '\n') {
+			while (t > record_start && (t[-1] == ' ' || t[-1] == '\t')) --t;
+			if (record_start < t) {
+				char *domain_end = (full_name_start == record_start) ? t - 1 : full_name_start - 2;
+				if (state == alias) {
+					setError(MSG_ABNoColon, ln);
+					goto freefail;
+				} else if (state == domain_literal) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (at_sign <= email_start) {
+					setError(MSG_ABNoAt, ln);
+					goto freefail;
+				} else if (domain_literal_end != record_start && domain_literal_end != domain_end) {
+				setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (*domain_end == '-') {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (domain_end == dot) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (domain_end - dot > 63) {
+					setError(MSG_ABMailLong, ln, 63);
+					goto freefail;
+				} else if (t - email_start >= MAXEMAILANDFULLNAMELENGTH) {
+					setError(MSG_ABMailLong, ln, MAXEMAILANDFULLNAMELENGTH - 1);
+					goto freefail;
+				} else if (domain_literal_end == record_start) {
+					for (v = at_sign + 1; v <= domain_end; ++v)
+						if ((*v & 0x80) == 0 && !isalnum((uchar) *v) && *v != '-' && *v != '.') {
+							setError(MSG_ABMalformed, ln);
+							goto freefail;
+						}
+				}
+				if (full_name_start != record_start) {
+					for (v = full_name_start; v < t; ++v)
+						if (iscntrl((uchar) *v)) {
+							setError(MSG_ABMailUnprintable, ln);
+							goto freefail;
+						}
+				}
 				++nads;
-				while (isspaceByte(t[-1]))
-					--t;
-				*t = 0;
-				v = strchr(last, ':');
-				if (v - last >= 16) {
-					setError(MSG_ABAliasLong, ln - 1);
-					goto freefail;
-				}
-				++v;
-				if (t - v >= 100) {
-					setError(MSG_ABMailLong, ln - 1, 100 - 1);
-					goto freefail;
-				}
-				if (!strchr(v, '@')) {
-					setError(MSG_ABNoAt, ln - 1);
-					goto freefail;
-				}
-
-				while (last < t) {
-					if (!isprintByte(*last)) {
-						setError(MSG_AbMailUnprintable, ln - 1);
-						goto freefail;
-					}
-					if(*last == '>')
-						greater = true;
-					if ((*last == ' ' || *last == '\t') && !greater && last > v) {
-						setError(MSG_ABMailSpaces, ln - 1);
-						goto freefail;
-					}
-					++last;
-				}
-				*t++ = c;
-			} else
-				t = last;	/* back it up */
-			last = t;
-			state = 0;
+				*t++ = 0;
+				record_start = email_start = at_sign = dot = domain_literal_end = full_name_start = t;
+			}
+			++ln;
+			state = alias;
 			continue;
+		} else if (state == local_part) {
+			if (c == '"') {
+				if (email_start != t && t[-1] != '.') {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				}
+				state = quoted_part;
+			} else if (c == '@') {
+				if (email_start == t) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (t[-1] == '.') {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (t - email_start > 64) {
+					setError(MSG_ABMailLong, ln, 64);
+					goto freefail;
+				}
+				at_sign = dot = t;
+				state = domain;
+			} else if (c == '.') {
+				if (email_start == t) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (t[-1] == '.') {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} 
+			} else if (iscntrl((uchar) c) || strchr(" (),:;<>@[\\]", c)) {
+				setError(MSG_ABMalformed, ln);
+				goto freefail;
+			}
+		} else if (c == '\\' && state == quoted_part) {
+			state = backslash_escaped;
+		} else if (state == backslash_escaped) {
+			state = quoted_part;
+		} else if (c == '"' && state == quoted_part && s + 1 < bufend && (s[1] == '@' || s[1] == '.')) {
+			state = local_part;
+		} else if (state == domain) {
+			if (c == '.') {
+				if (t == at_sign + 1) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (t == dot + 1) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (t[-1] == '-') {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				} else if (t - dot > 64) {
+					setError(MSG_ABMailLong, ln, 64);
+					goto freefail;
+				}
+				dot = t;
+			} else if (c == '-') {
+				if (t == dot + 1) {
+					setError(MSG_ABMalformed, ln);
+					goto freefail;
+				}
+			} else if (c == '[' && t == at_sign + 1) {
+				state = domain_literal;
+			}
+		} else if (c == ']' && state == domain_literal) {
+			domain_literal_end = t;
+			state = domain;
 		}
-		/* nl */
-		if ((c == ' ' || c == '\t') && (state == 0 || state == 2))
-			continue;
-		if (state == 0)
-			state = 1;
-		if (state == 2)
-			state = 3;
 		*t++ = c;
 	}
-
 	*t = 0;
-	if (state) {
-		setError(MSG_ABUnterminated);
-		goto freefail;
-	}
 
 	if (nads) {
 		addressList = allocMem(nads * sizeof(struct ALIAS));
 		j = 0;
 		for (s = buf; *s; s = t + 1, ++j) {
-			t = strchr(s, ':');
+			t = strchr(s, ABDELIMITER);
 			memcpy(addressList[j].brief, s, t - s);
 			addressList[j].brief[t - s] = 0;
 			s = t + 1;
-			t = strchr(s, '\n');
+			t = strchr(s, 0);
 			memcpy(addressList[j].email, s, t - s);
 			addressList[j].email[t - s] = 0;
 			addressList[j].fullname[0] = 0;
-			if ((v = strchr(addressList[j].email, '>'))) {
+			if ((v = strchr(addressList[j].email, REPLACEMENTFULLNAMEDELIMITER))) {
 				*v++ = 0;
-				sprintf(addressList[j].fullname,
-				"%s <%s>", v, addressList[j].email);
+				if (strlen(v))
+					sprintf(addressList[j].fullname, "%s <%s>", v, addressList[j].email);
+					else
+					sprintf(addressList[j].fullname, "<%s>", addressList[j].email);
 			}
 		}
 	}
@@ -1058,7 +1149,7 @@ sendMail(int account, const char **recipients, const char *body,
 	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i])
 			continue;
-		stringAndString(&out, &j, firstrec ? "To:" : ",\r\n  ");
+		stringAndString(&out, &j, firstrec ? "To: " : ",\r\n  ");
 		stringAndString(&out, &j, s);
 		firstrec = false;
 	}
@@ -1069,7 +1160,7 @@ sendMail(int account, const char **recipients, const char *body,
 	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i] != '^')
 			continue;
-		stringAndString(&out, &j, firstrec ? "CC:" : ",\r\n  ");
+		stringAndString(&out, &j, firstrec ? "CC: " : ",\r\n  ");
 		stringAndString(&out, &j, s);
 		firstrec = false;
 	}
@@ -1080,7 +1171,7 @@ sendMail(int account, const char **recipients, const char *body,
 	for (i = 0; (s = recipients[i]); ++i) {
 		if (reccc[i] != '?')
 			continue;
-		stringAndString(&out, &j, firstrec ? "BCC:" : ",\r\n  ");
+		stringAndString(&out, &j, firstrec ? "BCC: " : ",\r\n  ");
 		stringAndString(&out, &j, s);
 		firstrec = false;
 	}
@@ -1092,7 +1183,7 @@ sendMail(int account, const char **recipients, const char *body,
 		fromiso = from;
 	sprintf(serverLine, "From: %s <%s>%s", fromiso, reply, eol);
 	stringAndString(&out, &j, serverLine);
-	sprintf(serverLine, "Reply-to: %s <%s>%s", fromiso, reply, eol);
+	sprintf(serverLine, "Reply-To: %s <%s>%s", fromiso, reply, eol);
 	stringAndString(&out, &j, serverLine);
 	if (fromiso != from)
 		nzFree(fromiso);
@@ -1110,7 +1201,7 @@ sendMail(int account, const char **recipients, const char *body,
 		stringAndString(&out, &j, serverLine);
 	}
 	sprintf(serverLine,
-		"Date: %s%sMessage-ID: <%s.%s>%sMime-Version: 1.0%s",
+		"Date: %s%sMessage-ID: <%s.%s>%sMIME-Version: 1.0%s",
 		mailTimeString(), eol, messageTimeID(), reply, eol, eol);
 	stringAndString(&out, &j, serverLine);
 

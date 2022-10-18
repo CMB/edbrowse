@@ -317,7 +317,7 @@ ftp : échec de la session d'initialisation
 edbrowse n'a pas été compilé avec l'accès aux bases de données
 alias manquant dans le carnet d'adresses à la ligne %d
 manquant dans le carnet d'adresses à la ligne %d
-alias trop long dans le carnet d'adresses, limite 15 caractères
+alias trop long dans le carnet d'adresses, limite %d caractères
 email trop long dans le carnet d'adresses, limite %d caractères
 pas de @ dans l'email à la ligne %d du carnet d'adresses
 espaces interdits dans un email, à la ligne %d du carnet d'adresses

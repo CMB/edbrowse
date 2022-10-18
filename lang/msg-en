@@ -232,7 +232,7 @@ cannot browse an empty file
 this doesn't look like browsable text
 already browsing
 label %s not found
-0
+malformed email in address book line %d
 cannot run an insert command from an edbrowse function
 several lines from %d to %d have been updated\n
 command %c not yet implemented
@@ -317,7 +317,7 @@ Push
 edbrowse was not compiled with database access
 missing alias in address book line %d
 missing : in address book line %d
-alias in address book line %d is too long, limit 15 characters
+alias in address book line %d is too long, limit %d characters
 email in address book line %d is too long, limit %d characters
 email in address book line %d does not have an @
 cannot handle whitespace in email, address book line %d
