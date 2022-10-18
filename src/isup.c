@@ -3581,18 +3581,24 @@ top:
 		goto teardown;
 	}
 	if(rc == 0) {
-// sic would ping the host if nothing comes in for 2 minutes; we don't do that.
-// They ping us that's good enough.
-// This is where we would check ircNow against w->ircRespond + 120
-// and ping the host.
+// ping the host if nothing has come in for 10 minutes
+		if(ircNow - w->ircRespond >= 500 && !w->ircPingOut) {
+			debugPrint(4, "pingout %s", w->f0.hbase);
+			ircSend(w, "PING %s", w->f0.hbase);
+			w->ircPingOut = true;
+		} else if(ircNow - w->ircRespond >= 550 && w->ircPingOut) {
+			emsg = "irc ping timeout";
+			goto teardown;
+		}
 		return;
 	}
 	if(FD_ISSET(fd, &rd)) {
 // this should always happen.
-		w->ircRespond = ircNow;
 		unsigned pos = 0;
 		int n;
 		char *linebreak;
+		w->ircRespond = ircNow;
+		w->ircPingOut = 0;
 nextread:
 		if(w->ircSecure)
 			n = SSL_read(w->irc_ssl, irc_in + pos, sizeof(irc_in) - pos - 1);
@@ -3862,6 +3868,8 @@ Will this induce bugs that are very difficult to reproduce?
 	nzFree(win->f0.hbase);
 	win->f0.hbase = cloneString(domain);
 	ircSetChannel(win, 0);
+	win->ircRespond = ircNow;
+	win->ircPingOut = false;
 
 	// login
 	if(password) {

@@ -488,6 +488,7 @@ int ehsn;
 	bool ircoMode:1;		// output irc
 	bool ircChannels:1; // show channel when displaying messages
 	bool ircSecure:1; // ssl connection
+	bool ircPingOut:1; // sent ping to server
 	int irc_fd; // file descriptor for socket
 	void *irc_ssl; // stream for a secure socket
 	ushort ircOther; // point to the output side
