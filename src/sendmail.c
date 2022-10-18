@@ -64,6 +64,13 @@ if (buflen > 0 && bufend[-1] != '\n') {
 /* Remove comments and unimportant spaces and tabs. Make each record into a zero-terminated string. */
 	for (record_start = email_start = at_sign = dot = domain_literal_end = full_name_start = s = t = buf; s < bufend; ++s) {
 		c = *s;
+
+// # at start of line is comment
+		if(c == '#' && t == record_start) {
+			state = ignore;
+			continue;
+		}
+
 /* Ignore spaces and tabs at the start of aliases, email addresses, and full names.
 Ignore all characters other than newline when ignoring until the end of the line. */
 		if (((c == ' ' || c == '\t')
@@ -72,17 +79,16 @@ Ignore all characters other than newline when ignoring until the end of the line
 		|| (state == full_name && full_name_start == t)))
 		|| (c != '\n' && state == ignore)) {
 			continue;
-		} else if(c == '#' && t == record_start) {
-// # at start of line is comment
-			state = ignore;
-			continue;
-		} else if (c == ABDELIMITER && state == alias) {
+		}
+
+		if (c == ABDELIMITER && state == alias) {
 /* Ignore spaces and tabs at the end of an alias. */
 			while (t > record_start && (t[-1] == ' ' || t[-1] == '\t')) --t;
 			if (record_start == t) {
 				setError(MSG_ABNoAlias, ln);
 				goto freefail;
-			} else if (t - record_start >= MAXALIASLENGTH) {
+			}
+			if (t - record_start >= MAXALIASLENGTH) {
 				setError(MSG_ABAliasLong, ln, MAXALIASLENGTH - 1);
 				goto freefail;
 			}
@@ -95,54 +101,66 @@ Ignore all characters other than newline when ignoring until the end of the line
 			email_start = t;
 			state = local_part;
 			continue;
-		} else if (c == ABDELIMITER && state == local_part && email_start == t) {
-// no email address, ignore the entire line
+		}
+
+// allow for fred::phone number: address:etc    -   don't have an email for him
+// Even :  : will work cause we ignore spaces after the first colon
+		if (c == ABDELIMITER && state == local_part && email_start == t) {
 			t = record_start;
 			state = ignore;
 			continue;
-		} else if (c == ABDELIMITER && (state == domain || state == full_name)) {
+		}
+
+// finish the email address
+		if (c == ABDELIMITER && (state == domain || state == full_name)) {
 			state = ignore;
 			continue;
-		} else if (c == FULLNAMEDELIMITER && state == domain) {
+		}
+
+// switch to full name
+		if (c == FULLNAMEDELIMITER && state == domain) {
 			while (t[-1] == ' ' || t[-1] == '\t') --t;
 			*t++ = REPLACEMENTFULLNAMEDELIMITER;
 			full_name_start = t;
 			state = full_name;
 			continue;
-		} else if (c == '\n') {
+		}
+
+		if (c == '\n') {
 			while (t > record_start && (t[-1] == ' ' || t[-1] == '\t')) --t;
 			if (record_start < t) {
 				char *domain_end = (full_name_start == record_start) ? t - 1 : full_name_start - 2;
 				if (state == alias) {
 					setError(MSG_ABNoColon, ln);
 					goto freefail;
-				} else if (state == domain_literal) {
+				}
+				if (state == domain_literal ||
+				(domain_literal_end != record_start && domain_literal_end != domain_end) ||
+				*domain_end == '-' ||
+				domain_end == dot) {
+malformed:
 					setError(MSG_ABMalformed, ln);
 					goto freefail;
-				} else if (at_sign <= email_start) {
+				}
+				if (at_sign <= email_start) {
 					setError(MSG_ABNoAt, ln);
 					goto freefail;
-				} else if (domain_literal_end != record_start && domain_literal_end != domain_end) {
-				setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (*domain_end == '-') {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (domain_end == dot) {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (domain_end - dot > 63) {
+				}
+// I think it's enough to cap email + name at 100
+#if 0
+				if (domain_end - dot > 63) {
 					setError(MSG_ABMailLong, ln, 63);
 					goto freefail;
-				} else if (t - email_start >= MAXEMAILANDFULLNAMELENGTH) {
+				}
+#endif
+				if (t - email_start >= MAXEMAILANDFULLNAMELENGTH) {
 					setError(MSG_ABMailLong, ln, MAXEMAILANDFULLNAMELENGTH - 1);
 					goto freefail;
-				} else if (domain_literal_end == record_start) {
+				}
+				if (domain_literal_end == record_start) {
 					for (v = at_sign + 1; v <= domain_end; ++v)
-						if ((*v & 0x80) == 0 && !isalnum((uchar) *v) && *v != '-' && *v != '.') {
-							setError(MSG_ABMalformed, ln);
-							goto freefail;
-						}
+						if ((*v & 0x80) == 0 && !isalnum((uchar) *v) && *v != '-' && *v != '.')
+							goto malformed;
 				}
 				if (full_name_start != record_start) {
 					for (v = full_name_start; v < t; ++v)
@@ -158,38 +176,31 @@ Ignore all characters other than newline when ignoring until the end of the line
 			++ln;
 			state = alias;
 			continue;
-		} else if (state == local_part) {
+		}
+
+		if (state == local_part) {
 			if (c == '"') {
-				if (email_start != t && t[-1] != '.') {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				}
+				if (email_start != t && t[-1] != '.')
+					goto malformed;
 				state = quoted_part;
 			} else if (c == '@') {
-				if (email_start == t) {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (t[-1] == '.') {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (t - email_start > 64) {
+				if (email_start == t ||
+				t[-1] == '.')
+					goto malformed;
+#if 0
+				if (t - email_start > 64) {
 					setError(MSG_ABMailLong, ln, 64);
 					goto freefail;
 				}
+#endif
 				at_sign = dot = t;
 				state = domain;
 			} else if (c == '.') {
-				if (email_start == t) {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (t[-1] == '.') {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} 
-			} else if (iscntrl((uchar) c) || strchr(" (),:;<>@[\\]", c)) {
-				setError(MSG_ABMalformed, ln);
-				goto freefail;
-			}
+				if (email_start == t ||
+				t[-1] == '.')
+					goto malformed;
+			} else if (iscntrl((uchar) c) || strchr(" (),:;<>@[\\]", c))
+				goto malformed;
 		} else if (c == '\\' && state == quoted_part) {
 			state = backslash_escaped;
 		} else if (state == backslash_escaped) {
@@ -198,25 +209,20 @@ Ignore all characters other than newline when ignoring until the end of the line
 			state = local_part;
 		} else if (state == domain) {
 			if (c == '.') {
-				if (t == at_sign + 1) {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (t == dot + 1) {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (t[-1] == '-') {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				} else if (t - dot > 64) {
+				if (t == at_sign + 1 ||
+				t == dot + 1 ||
+				t[-1] == '-')
+					goto malformed;
+#if 0
+				if (t - dot > 64) {
 					setError(MSG_ABMailLong, ln, 64);
 					goto freefail;
 				}
+#endif
 				dot = t;
 			} else if (c == '-') {
-				if (t == dot + 1) {
-					setError(MSG_ABMalformed, ln);
-					goto freefail;
-				}
+				if (t == dot + 1)
+					goto malformed;
 			} else if (c == '[' && t == at_sign + 1) {
 				state = domain_literal;
 			}
