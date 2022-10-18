@@ -3922,7 +3922,7 @@ If you change anything in a buffer, and irc adds something to its output
 buffer at the same time, bad things happen.  BOOM!
 It would take a lot of work to go down this path, but the one I'm on
 is also a bit dangerous.
-Use the unix timer to wake up every 3 seconds and poll irc,
+Use the unix timer to wake up every few seconds and poll irc,
 but only while readline() has control.
 This should get around the threadsafe issues.
 Only one "thread" is managing buffers at a time. We hope.
@@ -3936,7 +3936,7 @@ static void ircAlarm(int n)
 	ircAlarming = true;
 	ircRead();
 	signal(SIGALRM, ircAlarm);
-	alarm(3);
+	alarm(7);
 	ircAlarming = false;
 }
 

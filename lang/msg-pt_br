@@ -277,8 +277,8 @@ impossível renomear o arquivo para %s
 impossível embutir caracteres nulos num campo de entrada
 impossível embutir novas linhas num campo de entrada
 Erro de conexão SSL %d
-0
-0
+início do histórico
+fim do histórico
 %s não disponível em modo irc
 0
 0
@@ -693,8 +693,8 @@ listagem de diretório, dados suplementares
 listagem de diretório, somente nomes
 desabilitada varredura de depuração de html
 habilitada varredura de depuração de html
-0
-0
+não usar format=flowed
+usar format=flowed
 impossível reproduzir áudio em modo de irc
 impossível quebrar linhas em modo irc
 impossível trocar o nome de irc
@@ -706,12 +706,12 @@ sessão %d não é compatível com irc
 sem campos de entrada presentes
 sem linques presentes
 sem botões presentes
-0
+nenhuma imagem presente
 0
 presentes vários campos de entrada; por favor use %s1 até %s%d
 presentes vários linques; por favor use %s1 até %s%d
 presentes; por favor use %s1 até %s%d
-0
+várias imagens presentes, por favor use %s1 até %s%d
 0
 0
 0

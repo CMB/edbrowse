@@ -242,7 +242,7 @@ mehrere Optionen enthalten die Zeichenkette %s
 Dies ist ein Schalter, nutzen Sie i* um ihn zu drücken.
 Dies ist ein Schalter zum Absenden; nutzen Sie i* zum Versenden.
 Dies ist ein Schalter zum Zurücksetzen; nutzen Sie i* zum Versenden.
-0
+Datei ist größer als 2 GB
 nur lesbares Feld
 Eingabefeld kann keinen Zeilenumbruch enthalten
 Eingabe zu lang, Grenze %d Zeichen
@@ -277,8 +277,8 @@ kann Datei nicht in %s umbenennen
 kann Nullbytes nicht in ein Eingabefeld einfügen
 kann Zeilenumbrüche nicht in ein Eingabefeld einfügen
 SSL-Verbindungsfehler %d
-0
-0
+Anfang der Historie
+Ende der Historie
 %s im irc Modes nicht verfügbar
 0
 0
@@ -286,7 +286,7 @@ konnte Daten nicht vom Server lesen
 %s ist keine URL
 Download abgeschlossen
 kann %s nicht im Netzwerk finden
-0
+Kein Klartext verfügbar
 Warnung, konnte Puffer %d nicht mit Text füllen\n
 Download läuft
 kann keine Verbindung zu %s herstellen
@@ -678,23 +678,23 @@ Emoji-Datei enthält eine ungültige Unicode-Sequenz in Zeile %d\n
 Emoji-Datei, Syntaxfehler in Zeile %d\n
 Keine Option beginnt mit %s
 mehrere Optionen beginnen mit %s
-0
-0
-0
-0
-0
+Feld kann nicht auf Backslash enden
+Kann Spaltenname nicht aktualisieren
+Warnung, nur die ersten %d Spalten werden ausgewählt
+Verschieben zerstört die Struktur einer eingeklappten Zeile
+kann eine eingeklappte Zeile nicht löschen
 perl regulärer Ausdrucken
 edbrowse regulärer Ausdrucken
 Sitzung + ist außerhalb des Bereichs, %d Sitzungen
 Sitzung - ist außerhalb des Bereichs, %d Sitzungen
-0
-0
-0
-0
-0
-0
-0
-0
+%s: die Datei %s enthält keinen öffentlichen Schlüssel
+%s: datei mit öffentlichem Schlüssel %s existiert nicht oder ist nicht lesbar
+Dateiliste mit zusätzlichen Informationen
+Dateiliste, nur Namen
+Debug HTML Scanner deaktiviert
+Debug HTML Scanner aktiviert
+format=flowed deaktiviert
+format=flowed aktiviert
 Audiowiedergabe im irc Modes unmöglich
 Umbrechen von Zeilen im irc Modes nicht möglich
 kann den Namen irc nicht ändern
@@ -706,12 +706,12 @@ kann den Namen irc nicht ändern
 keine eingabefelder vorhanden
 keine Links vorhanden
 keine Schalter vorhanden
-0
+Keine Bilder vorhanden
 0
 mehrere Eingabefelder vorhanden, nutzen Sie %s1 bis %s%d
 mehrere Links vorhanden, nutzen Sie %s1 bis %s%d
 mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
-0
+mehrere Bilder vorhanden, nutzen Sie %s1 bis %s%d
 0
 0
 0

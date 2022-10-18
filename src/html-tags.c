@@ -637,7 +637,9 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	const struct opentag *k;
 	static const char texttag[] = "text";
 
+/* I don't think this accomplishes anything.
 	backupTags();
+*/
 
 	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
