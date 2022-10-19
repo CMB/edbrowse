@@ -4618,7 +4618,13 @@ program = mpg123 -q -C %i
 This example handles an mp3 file or an mp3 stream.
 That works because mpg123 will play a local file or an mp3 stream from the Internet.
 If mpg123 was limited to local files on your computer, we would have to add the keyword down_url, whereupon a url is downloaded to a temp file and then played.
-The autoplay feature can be disabled with the pg command that turns plugins on and off.
+The automatic play feature can be disabled with the pg command that turns plugins on and off.
+
+<P>
+The cookies that would pass to the server, if you were to download the field, are available in the environment variable PLUGINHEADERS.
+In some cases the plugin program may need those cookies as it contacts the server on your behalf.
+Example: the --http-header-fields option on the mpv command.
+In practice this is rarely needed.
 
 <P>
 If you have read an audio file into memory from your own computer,

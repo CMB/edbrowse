@@ -2981,8 +2981,23 @@ bool runPluginCommand(const struct MIMETYPE * m,
 			return false;
 		}
 		infile = tempin;
-	} else if (inurl)
+	} else if (inurl) {
 		infile = inurl;
+// gather http headers for this url
+		if(isURL(inurl) && curlActive) {
+			bool secure = false;
+			const char *proto;
+			char *cookie;
+			int cook_l;
+			cookie = initString(&cook_l);
+			proto = getProtURL(inurl);
+			if (proto && stringEqualCI(proto, "https"))
+				secure = true;
+			sendCookies(&cookie, &cook_l, inurl, secure);
+			setenv("PLUGINHEADERS", cookie, 1);
+			nzFree(cookie);
+		}
+	}
 
 // reserve an output file, whether we need it or not
 	++tempIndex;
