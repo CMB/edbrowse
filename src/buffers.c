@@ -14,11 +14,9 @@ static bool pcre_utf8_error_stop = false;
 #include <readline/readline.h>
 #include <readline/history.h>
 
-/* temporary, set the frame whenever you set the window. */
-/* We're one frame per window for now. */
 #define selfFrame() ( cf = &(cw->f0), cf->owner = cw )
 
-/* Static variables for this file. */
+// Static variables for this file
 
 // The valid edbrowse commands
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
@@ -43,8 +41,8 @@ static const char global_cmd[] = "<!dDijJlmnprstwX=";
 static bool *gflag;
 static Window *gflag_w;
 
-static int startRange, endRange;	/* as in 57,89p */
-static int destLine;		/* as in 57,89m226 */
+static int startRange, endRange;	// as in 57,89p
+static int destLine;		// as in 57,89m226
 static int last_z = 1;
 static char cmd, scmd;
 static uchar subPrint;		/* print lines after substitutions */
@@ -223,7 +221,7 @@ void displayLine(int n)
 			stringAndChar(&output, &output_l, c), ++cnt;
 		if (cnt >= displayLength)
 			break;
-	}			/* loop over line */
+	}			// loop over line
 
 	if (cnt >= displayLength)
 		stringAndString(&output, &output_l, "...");
@@ -1428,9 +1426,11 @@ void delText(int start, int end)
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
-	if (cw->dirMode && cw->r_map) {
+	if ((cw->dirMode | cw->ircoMode) && cw->r_map) {
 // if you are looking at directories with ls-s or some such,
 // we have to delete the corresponding stat information.
+		for (ln = start; ln <= end; ++ln)
+			nzFree(cw->r_map[ln].text);
 		memmove(cw->r_map + start, cw->r_map + end + 1,
 			(cw->dol - end + 1) * LMSIZE);
 	}
@@ -1463,7 +1463,7 @@ void delText(int start, int end)
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
-		if (cw->dirMode && cw->r_map) {
+		if ((cw->dirMode | cw->ircoMode) && cw->r_map) {
 			free(cw->r_map);
 			cw->r_map = 0;
 		}
