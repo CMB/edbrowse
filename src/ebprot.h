@@ -19,6 +19,7 @@ void displayLine(int n);
 void printDot(void);
 void initializeReadline(void);
 pst inputLine(void);
+void freeWindowLines(struct lineMap *map);
 bool cxCompare(int cx) ;
 bool cxActive(int cx, bool error);
 bool cxQuit(int cx, int action) ;

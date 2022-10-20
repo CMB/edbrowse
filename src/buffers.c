@@ -787,6 +787,8 @@ static void print_pst(pst p)
 static void freeLine(struct lineMap *t)
 {
 	if (debugLevel >= 8) {
+// This stuff blows up if we are freeing r_map, which contains strings, not perl strings.
+// Fix this some day!
 		if (debugFile)
 			fprintf(debugFile, "free ");
 		else
@@ -796,7 +798,7 @@ static void freeLine(struct lineMap *t)
 	nzFree(t->text);
 }
 
-static void freeWindowLines(struct lineMap *map)
+void freeWindowLines(struct lineMap *map)
 {
 	struct lineMap *t;
 	int cnt = 0;
@@ -985,6 +987,8 @@ static void freeWindow(Window *w)
 			if(--w2->ircCount == 0) {
 				w2->ircoMode = false;
 				nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+				freeWindowLines(w2->r_map);
+				w2->r_map = 0;
 			} else {
 // I have to clear the channel here so the file name comes out right.
 				nzFree(w->ircChannel), w->ircChannel = 0;
@@ -1178,7 +1182,7 @@ void addToMap(int nlines, int destl)
 	if (nlines > MAXLINES - cw->dol)
 		i_printfExit(MSG_LineLimit);
 
-/* browse has no undo command */
+// browse has no undo command
 	if (!(cw->browseMode | cw->dirMode | cw->ircoMode))
 		undoPush();
 
@@ -1210,6 +1214,26 @@ void addToMap(int nlines, int destl)
 	cw->map = newmap;
 	free(newpiece);
 	newpiece = 0;
+
+	if(cw->ircoMode) {
+// capture the time stamp of the added lines in irc mode.
+// This isn't very space efficient, but an irc buffer isn't going to get very large.
+		int i;
+		time_t t;
+		const char *timestring;
+		if(!cw->r_map) {
+			cw->r_map = allocZeroMem(LMSIZE * (cw->dol + 2));
+			for(i = 1; i <= svdol; ++i)
+				cw->r_map[i].text = (uchar*)emptyString;
+		} else {
+			cw->r_map = reallocMem(cw->r_map, LMSIZE * (cw->dol + 2));
+		}
+		time(&t);
+		timestring = conciseTime(t);
+		for(i=svdol + 1; i <= cw->dol; ++i)
+			cw->r_map[i].text = (uchar*)cloneString(timestring);
+		cw->r_map[i].text = 0;
+	}
 
 	if(!gflag) return;
 // Next line is for g/pattern/ .w2@.
@@ -2289,7 +2313,7 @@ badwrite:
 			goto endline;
 		}
 
-/* Write this line with directory suffix, and possibly attributes */
+// Write this line with directory suffix, and possibly attributes
 		--len;
 		if (fwrite(p, len, 1, fh) <= 0) {
 badline:
@@ -2335,8 +2359,8 @@ endline:
 	} // loop over lines
 
 	fclose(fh);
-/* This is not an undoable operation, nor does it change data.
- * In fact the data is "no longer modified" if we have written all of it. */
+// This is not an undoable operation, nor does it change data.
+// In fact the data is "no longer modified" if we have written all of it.
 	if (startRange == 1 && endRange == cw->dol)
 		cw->changeMode = false;
 	return true;
@@ -4730,6 +4754,15 @@ down_again:
 // default ls mode is size time
 		if (!lsmode[0])
 			strcpy(lsmode, "st");
+		if(cw->ircoMode && stringEqual(lsmode, "t")) {
+			if (cw->dot == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+			const char *timestring = (char*)cw->r_map[cw->dot].text;
+			puts(timestring == emptyString ? "-" : timestring);
+			return true;
+		}
 		if (cw->dirMode) {
 			if (cw->dot == 0) {
 				setError(MSG_AtLine0);
