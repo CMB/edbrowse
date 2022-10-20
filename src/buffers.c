@@ -5910,30 +5910,6 @@ static int twoLetterG(const char *line, const char **runThis)
 		return true;
 	}
 
-	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
-		int d = 0;
-		char *s;
-		if(isdigit(line[2])) {
-			d = strtol(line + 2, &s, 10);
-			if(*s)
-				return 2;
-		}
-		cmd = 'e';
-		if (!cw->browseMode) {
-			setError(MSG_NoBrowse);
-			return false;
-		}
-		if (!cw->dot) {	// should never happen
-			setError(MSG_EmptyBuffer);
-			return false;
-		}
-		if(d) {
-			if(!cxCompare(d) || (cxActive(d, false) && !cxQuit(d, 0)))
-				return false;
-		}
-		return itext(d);
-	}
-
 	return 2;		/* no change */
 }
 
@@ -6406,7 +6382,7 @@ replaceframe:
 		return true;
 	}
 
-	/* special command for hidden input */
+	// special command for hidden input
 	if (!strncmp(line, "ipass", 5)) {
 		char buffer[MAXUSERPASS];
 		int realtotal;
@@ -6449,7 +6425,42 @@ replaceframe:
 		return rc;
 	}
 
-/* get the command */
+// special code for textareas into sessions
+	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
+		int d = 0;
+		char *s;
+		if(isdigit(line[2])) {
+			d = strtol(line + 2, &s, 10);
+			if(*s)
+				goto after_ib;
+		}
+		cmd = 'e';
+		if (!cw->browseMode) {
+			setError(MSG_NoBrowse);
+			return false;
+		}
+		if (globSub) {
+			setError(MSG_GlobalCommand2, "ib");
+			return false;
+		}
+		if (endRange > startRange) {
+			setError(MSG_RangeCmd, "ib");
+			return false;
+		}
+		cw->dot = endRange;
+		if (!cw->dot) {	// should never happen
+			setError(MSG_EmptyBuffer);
+			return false;
+		}
+		if(d) {
+			if(!cxCompare(d) || (cxActive(d, false) && !cxQuit(d, 0)))
+				return false;
+		}
+		return itext(d);
+	}
+after_ib:
+
+// get the command
 	cmd = *line;
 	if (cmd)
 		++line;
