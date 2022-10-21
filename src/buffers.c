@@ -773,7 +773,8 @@ static Window *createWindow(void)
 	return nw;
 }
 
-/* for debugging */
+// For debugging only, print a line, could be null or nl terminated.
+// Thus a line with embedded null will be chopped.
 static void print_pst(pst p)
 {
 	do {
@@ -781,14 +782,18 @@ static void print_pst(pst p)
 			fprintf(debugFile, "%c", *p);
 		else
 			printf("%c", *p);
-	} while (*p++ != '\n');
+		if(*p == '\n') return;
+	} while (*++p);
+	if (debugFile)
+		fprintf(debugFile, "\n");
+		else
+			printf("\n");
 }
 
 static void freeLine(struct lineMap *t)
 {
+	if(!t->text || t->text == (uchar*)emptyString) return;
 	if (debugLevel >= 8) {
-// This stuff blows up if we are freeing r_map, which contains strings, not perl strings.
-// Fix this some day!
 		if (debugFile)
 			fprintf(debugFile, "free ");
 		else
