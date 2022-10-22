@@ -4456,14 +4456,28 @@ nop:
 // or even <td><i><font size=-1><p>stuff</p></font></i></td>
 // Supress linebreak if this is first or last child of a cell.
 		if(j) {
-			const Tag *y = t, *z;
+			const Tag *y = t, *z, *x;
 			while((z = y->parent)) {
 // h3 inside a cell, table is almost certainly for presentation
 // We see this on facebook.
 // Let's hope the tableType() catches it.
 //				if(y->action == TAGACT_H) goto past_cell_paragraph;
+/* I use to say, if not <p> first or </p> last, then abort
 				if(opentag && z->firstchild != y) goto past_cell_paragraph;
 				if(!opentag && y->sibling) goto past_cell_paragraph;
+But I've added some code, probably just for one website, but oh well.
+Defense against <td><span></span><p>stuff</p></td>
+Should we watch for empty-ish tags besides span, or even empty trees? */
+				if(opentag) {
+					for(x = z->firstchild; x != y; x = x->sibling)
+						if(x->action != TAGACT_SPAN)
+							goto past_cell_paragraph;
+				}
+				if(!opentag) {
+					for(x = y->sibling; x; x = x->sibling)
+						if(x->action != TAGACT_SPAN)
+							goto past_cell_paragraph;
+				}
 				if(z->action == TAGACT_TD) break;
 				y = z;
 			}

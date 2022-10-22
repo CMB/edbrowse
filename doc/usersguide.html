@@ -755,6 +755,7 @@ g : go to the link on the current line
 <br>ipass2 : prompt for the content of the second input field, disabling echo
 <br>ib : allocate an input buffer for this textarea
 <br>ib7 : use session 7 for this input textarea
+<br>/&lt;session/ ib : note the space between / and i
 <br>shc : show columns of an html table
 <br>ur : unfold a row in an html table (toggle)
 <br>M4 : move this web page to session 4 and back up to the previous page
@@ -4621,7 +4622,7 @@ If mpg123 was limited to local files on your computer, we would have to add the 
 The automatic play feature can be disabled with the pg command that turns plugins on and off.
 
 <P>
-The cookies that would pass to the server, if you were to download the field, are available in the environment variable PLUGINHEADERS.
+The cookies that would pass to the server, if you were to download the file directly, are available in the environment variable PLUGINHEADERS.
 In some cases the plugin program may need those cookies as it contacts the server on your behalf.
 Example: the --http-header-fields option on the mpv command.
 In practice this is rarely needed.
