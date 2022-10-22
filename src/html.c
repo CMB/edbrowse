@@ -4470,12 +4470,12 @@ Defense against <td><span></span><p>stuff</p></td>
 Should we watch for empty-ish tags besides span, or even empty trees? */
 				if(opentag) {
 					for(x = z->firstchild; x != y; x = x->sibling)
-						if(x->action != TAGACT_SPAN)
+						if(x->firstchild || x->action != TAGACT_SPAN)
 							goto past_cell_paragraph;
 				}
 				if(!opentag) {
 					for(x = y->sibling; x; x = x->sibling)
-						if(x->action != TAGACT_SPAN)
+						if(x->firstchild || x->action != TAGACT_SPAN)
 							goto past_cell_paragraph;
 				}
 				if(z->action == TAGACT_TD) break;
