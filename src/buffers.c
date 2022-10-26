@@ -9,7 +9,7 @@
  * and the pcre-devel package. */
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
-static bool pcre_utf8_error_stop = false;
+static bool bad_utf8_alert;
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -3218,13 +3218,10 @@ const char **split)
 //  {uchar snork[300]; pcre2_get_error_message(re_count, snork, 300); puts(snork); }
 			re_vector = pcre2_get_ovector_pointer(match_data);
 			free(subject);
-// An error in evaluation is treated like text not found.
-// This usually happens because this particular line has bad binary, not utf8.
-			if (re_count < -1 && pcre_utf8_error_stop) {
-				pcre2_match_data_free(match_data);
-				pcre2_code_free(re_cc);
-				setError(MSG_RexpError2, ln);
-				return (globSub = false);
+// An error in evaluation  usually happens because this line has invalid utf8
+			if (re_count < -1 && re_utf8 && !bad_utf8_alert) {
+				i_puts(MSG_BadUtf8);
+				bad_utf8_alert = true;
 			}
 			if ((re_count >= 0) ^ unmatch)
 				break;
@@ -3315,13 +3312,10 @@ static bool doGlobal(const char *line)
 		    pcre2_match(re_cc, (uchar*)subject, pstLength((pst) subject) - 1,
 			      0, 0, match_data, NULL);
 		re_vector = pcre2_get_ovector_pointer(match_data);
-
 		free(subject);
-		if (re_count < -1 && pcre_utf8_error_stop) {
-  			pcre2_match_data_free(match_data);
-			pcre2_code_free(re_cc);
-			setError(MSG_RexpError2, i);
-			return false;
+		if (re_count < -1 && re_utf8 && !bad_utf8_alert) {
+			i_puts(MSG_BadUtf8);
+		bad_utf8_alert = true;
 		}
 		if ((re_count < 0 && cmd == 'v')
 		    || (re_count >= 0 && cmd == 'g'))
@@ -3512,11 +3506,9 @@ static int replaceText(const char *line, int len, const char *rhs,
 		re_count =
 		    pcre2_match(re_cc, (uchar*)line, len, offset, 0, match_data, NULL);
 		re_vector = pcre2_get_ovector_pointer(match_data);
-		if (re_count < -1 &&
-		    (pcre_utf8_error_stop || startRange == endRange)) {
-			setError(MSG_RexpError2, ln);
-			nzFree(r);
-			return -1;
+		if (re_count < -1 && re_utf8 && !bad_utf8_alert) {
+			i_puts(MSG_BadUtf8);
+			bad_utf8_alert = true;
 		}
 
 		if (re_count < 0) {
@@ -6153,6 +6145,7 @@ bool runCommand(const char *line)
 	js_redirects = false;
 	cmd = icmd = 'p';
 	uriEncoded = false;
+	if(!globSub) bad_utf8_alert = false;
 	skipWhite(&line);
 	first = *line;
 	noStack = 0;

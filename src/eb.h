@@ -97,14 +97,14 @@ isspace(0xa0) returns true. That is, the breakspace.
 We never want this to be true in the context of edbrowse.
 *********************************************************************/
 
-#define isspaceByte(c) (isspace((uchar)c) && !(c&0x80))
-#define isalphaByte(c) isalpha((uchar)c)
-#define isalnumByte(c) isalnum((uchar)c)
-#define islowerByte(c) islower((uchar)c)
-#define isupperByte(c) isupper((uchar)c)
-#define isdigitByte(c) isdigit((uchar)c)
-#define ispunctByte(c) ispunct((uchar)c)
-#define isprintByte(c) isprint((uchar)c)
+#define isspaceByte(c) (isspace((uchar)(c)) && !((c)&0x80))
+#define isalphaByte(c) isalpha((uchar)(c))
+#define isalnumByte(c) isalnum((uchar)(c))
+#define islowerByte(c) islower((uchar)(c))
+#define isupperByte(c) isupper((uchar)(c))
+#define isdigitByte(c) isdigit((uchar)(c))
+#define ispunctByte(c) ispunct((uchar)(c))
+#define isprintByte(c) isprint((uchar)(c))
 
 /* http encoding, content type, content transfer encoding */
 enum { ENC_PLAIN, ENC_COMPRESS, ENC_GZIP, ENC_URL, ENC_MFD };

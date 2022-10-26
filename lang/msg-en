@@ -280,7 +280,7 @@ SSL connect error %d
 top of history
 bottom of history
 %s not available in irc mode
-0
+invalid utf8, consider setting su8-
 0
 could not read the data from the server
 %s is not a url

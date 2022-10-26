@@ -380,7 +380,7 @@ enum {
 	MSG_NoUp,
 	MSG_NoDown,
 	MSG_IrcCommandS,
-	MSG_notused283,
+	MSG_BadUtf8,
 	MSG_notused284,
 	MSG_WebRead,
 	MSG_BadURL,
