@@ -3925,7 +3925,7 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 	for(v = tr->firstchild; v; v = v->sibling) {
 		if(v->action != TAGACT_TD) continue;
 		prior_p = 0;
-		while(isdigit(*cs)) {
+		while(isdigitByte(*cs)) {
 			if(!prior_p) prior_p = cs, prior_j = j;
 			seqno = strtol(cs, &cs, 10);
 			ics = 1;
@@ -3954,7 +3954,7 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 				j += ics, ++cs;
 				continue;
 			}
-			if(!isdigit(*cs)) break; // should be a number
+			if(!isdigitByte(*cs)) break; // should be a number
 			seqno = strtol(cs, &cs, 10);
 			ics = 1;
 			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
@@ -3969,7 +3969,7 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 // just before this cell.
 	if(prior_p) {
 		cs = prior_p;
-		while(isdigit(*cs)) {
+		while(isdigitByte(*cs)) {
 			seqno = strtol(cs, &cs, 10);
 			ics = 1;
 			if(*cs == '@') ics = strtol(cs + 1, &cs, 10);
@@ -4105,18 +4105,18 @@ li_hide:
 			goto yescolorend;
 		for (u3 = u1 + 3; *u3; ++u3) {
 			if (*u3 == InternalCodeChar) {
-				for (++u3; isdigit(*u3); ++u3) ;
+				for (++u3; isdigitByte(*u3); ++u3) ;
 				if (*u3 == '*' && !*++u3)
 					break;
 			}
-			if (!isspace(*u3))
+			if (!isspaceByte(*u3))
 				goto yescolorend;
 		}
 		u0 = backColon(u1);
 		if (*u0 != ':')
 			goto yescolorend;
 		for (u3 = u0 + 1; u3 < u1; ++u3)
-			if (*u3 != ' ' && !isalpha(*u3))
+			if (*u3 != ' ' && !isalphaByte(*u3))
 				goto yescolorend;
 		u1 += 3;
 		strmove(u0, u1);
@@ -4246,8 +4246,8 @@ nocolorend:
 // merge sections if there are no words in between
 		for (u3 = u2; *u3; ++u3) {
 			if (*u3 == InternalCodeChar)
-				for (++u3; isdigit(*u3); ++u3) ;
-			if (isalnum(*u3))
+				for (++u3; isdigitByte(*u3); ++u3) ;
+			if (isalnumByte(*u3))
 				goto yescolor;
 		}
 		strmove(u2, u2 + 3);
@@ -4548,10 +4548,10 @@ past_cell_paragraph:
 				break;
 // <button></button> with no text yields "push".
 			j = 0;
-			while (ns_l && isspace(ns[ns_l - 1]))
+			while (ns_l && isspaceByte(ns[ns_l - 1]))
 				--ns_l, j = 1;
 			if (ns_l >= 3 && ns[ns_l - 1] == '<'
-			    && isdigit(ns[ns_l - 2]))
+			    && isdigitByte(ns[ns_l - 2]))
 				stringAndString(&ns, &ns_l,
 						i_message(MSG_Push));
 			ns_ic();
@@ -4796,7 +4796,7 @@ past_cell_paragraph:
 /* skip past <span> tag indicators */
 		while (*u == InternalCodeChar) {
 			++u;
-			while (isdigit(*u))
+			while (isdigitByte(*u))
 				++u;
 			++u;
 		}

@@ -90,7 +90,7 @@ respace:
 // tidy turns <td> <i> hello </i> </td> into <td><i>hello</i></td>
 // But not so with <p> or other strong tags.
 // I try to do the same.
-		if(s[1] != InternalCodeChar || !isdigit(s[2])) continue;
+		if(s[1] != InternalCodeChar || !isdigitByte(s[2])) continue;
 			n = strtol(s + 2, &u, 10);
 // leave input fields alone
 			if(*u != '*' && *u != '{') continue;
@@ -1185,7 +1185,7 @@ char *htmlReformat(char *buf)
 /* It's a little thing really, but the blank line at the top of each frame annoys me */
 	fmark = new;
 	while ((fmark = strstr(fmark + 1, "*`--\n\n"))) {
-		if (isdigit(fmark[-1]))
+		if (isdigitByte(fmark[-1]))
 			strmove(fmark + 5, fmark + 6);
 	}
 
@@ -1333,7 +1333,7 @@ bool isEmailAddress(const char *s)
 		if (c&0x80)	// nonascii
 			return false;
 		if (atfound) {
-			if (!isalnum(c) && c != '.' && c != '-')
+			if (!isalnumByte(c) && c != '.' && c != '-')
 				return false;
 			if (c == '.') {
 				if (s[1] == '.' || s[1] == 0 || s[-1] == '.'
@@ -2503,21 +2503,21 @@ char *closeColor(const char *s)
 
 	if (!strncmp(s, "rgb(", 4)) {
 		t = s + 4;
-		if (!isdigit(*t))
+		if (!isdigitByte(*t))
 			goto fail;
 		r1 = strtol(t, (char **)&t, 10);
 		if (*t == ',')
 			++t;
 		while (*t == ' ')
 			++t;
-		if (!isdigit(*t))
+		if (!isdigitByte(*t))
 			goto fail;
 		g1 = strtol(t, (char **)&t, 10);
 		if (*t == ',')
 			++t;
 		while (*t == ' ')
 			++t;
-		if (!isdigit(*t))
+		if (!isdigitByte(*t))
 			goto fail;
 		b1 = strtol(t, (char **)&t, 10);
 		if (*t == ',')
@@ -2542,7 +2542,7 @@ char *closeColor(const char *s)
 	} else {
 // not an rgb format we recognize; should be just a word.
 		for (t = s; *t; ++t)
-			if (!isalpha(*t))
+			if (!isalphaByte(*t))
 				goto fail;
 		return (char *)s;
 	}
@@ -2655,7 +2655,7 @@ void loadEmojis(void)
 			i_printf(MSG_EmojiBadControl, c, lineno);
 			goto fail;
 		}
-		if((signed char)c > ' ' && !isalnum(c) && c != '{' && c != '}') {
+		if((signed char)c > ' ' && !isalnumByte(c) && c != '{' && c != '}') {
 			i_printf(MSG_EmojiBadChar, c, lineno);
 			goto fail;
 		}
@@ -2675,7 +2675,7 @@ void loadEmojis(void)
 		}
 		if(!g) {
 // need to start a new group
-			for(u = s; isalnum(*u); ++u)  ;
+			for(u = s; isalnumByte(*u); ++u)  ;
 			if(u == s || !stringEqual(u, " {")) {
 				i_printf(MSG_EmojiSyntax, lineno);
 				s = t; continue;

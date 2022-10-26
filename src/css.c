@@ -156,7 +156,7 @@ static void uncomment(char *s)
 
 		if (urlmode) { // skip ahead to paren or brace
 			if(c == '\n' || c == '}' ||
-			(c == ')' && (s[-1] == '"' || s[1] == ';' || isspace(s[1])))) {
+			(c == ')' && (s[-1] == '"' || s[1] == ';' || isspaceByte(s[1])))) {
 				int aposcount = 0, quotecount = 0, backcount = 0;
 				char *u;
 				urlmode = 0;
@@ -610,21 +610,21 @@ static bool mediaPiece(struct desc *d, char *t)
 	if (!*t)		// nothing there
 		return false;
 
-	if (!strncmp(t, "only", 4) && !isalnum(t[4])) {
+	if (!strncmp(t, "only", 4) && !isalnumByte(t[4])) {
 // only is meaningless
 		t += 4;
 		skipWhite2(&t);
 	}
-	if (!strncmp(t, "not", 3) && !isalnum(t[3])) {
+	if (!strncmp(t, "not", 3) && !isalnumByte(t[3])) {
 		atnot = true;
 		t += 3;
 		skipWhite2(&t);
 	}
-	if (!strncmp(t, "screen", 6) && !isalnum(t[6])) {
+	if (!strncmp(t, "screen", 6) && !isalnumByte(t[6])) {
 		atsome = true;
 		t += 6;
 		skipWhite2(&t);
-	} else if (!strncmp(t, "all", 3) && !isalnum(t[3])) {
+	} else if (!strncmp(t, "all", 3) && !isalnumByte(t[3])) {
 		atsome = true;
 		t += 3;
 		skipWhite2(&t);
@@ -638,7 +638,7 @@ and:
 		return false;
 	}
 
-	if (!strncmp(t, "and", 3) && !isalnum(t[3])) {
+	if (!strncmp(t, "and", 3) && !isalnumByte(t[3])) {
 		t += 3;
 		skipWhite2(&t);
 	}
@@ -685,7 +685,7 @@ and:
 	}
 	++a;
 	skipWhite2(&a);
-	if (!isdigit(*a)) {
+	if (!isdigitByte(*a)) {
 		d->error = CSS_ERROR_BADMEDIA;
 		return false;
 	}
@@ -816,9 +816,9 @@ top:
 
 // look for import url
 	iu1 = strstr(s, "@import");
-	if (iu1 && isspace(iu1[7])) {
+	if (iu1 && isspaceByte(iu1[7])) {
 		iu2 = iu1 + 8;
-		while (isspace(*iu2))
+		while (isspaceByte(*iu2))
 			++iu2;
 		if (!strncmp(iu2, "url(", 4)) {
 			iu2 += 4;
@@ -909,7 +909,7 @@ imported_data:
 // remove @charset directives.
 top2:
 	iu1 = strstr(s, "@charset");
-	if (iu1 && isspace(iu1[8])) {
+	if (iu1 && isspaceByte(iu1[8])) {
 		t = iu1 + 9;
 		while ((c = *t)) {
 			if (c == '"' || c == '\'') {
@@ -979,7 +979,7 @@ top2:
 			d->bc = 1;
 			++t;
 			skipWhite2(&t);
-			if (strncmp(t, "media", 5) || isalnum(t[5])) {
+			if (strncmp(t, "media", 5) || isalnumByte(t[5])) {
 				d->error = CSS_ERROR_NOTMEDIA;
 				goto past_at;
 			}
@@ -1156,10 +1156,10 @@ lastrule:
 			for (t = r1; t < r2; ++t) {
 				if (*t == ':')
 					break;
-				if (isupper(*t))
+				if (isupperByte(*t))
 					*t = tolower(*t);
-				if ((isdigit(*t) && t > r1) ||
-				    isalpha(*t) || *t == '-')
+				if ((isdigitByte(*t) && t > r1) ||
+				    isalphaByte(*t) || *t == '-')
 					continue;
 				d->error = CSS_ERROR_RATTR;
 				break;
@@ -1188,7 +1188,7 @@ lastrule:
 			camelCase(a);
 			rule->atname = a;
 			++t;
-			while (isspace(*t))
+			while (isspaceByte(*t))
 				++t;
 			if (r2 > t) {
 				a = allocMem(r2 - t + 1);
@@ -1279,7 +1279,7 @@ static void cssParseLeft(struct desc *d)
 // But I still need the next one.
 // Ambiguous, + is combinator or part of "nth_child(n+3)
 // Simplistic check here, next selector should not begin with a digit
-		if ((c == '~' && s[1] == '=') || (c == '+' && isdigit(s[1]))) {
+		if ((c == '~' && s[1] == '=') || (c == '+' && isdigitByte(s[1]))) {
 			last_c = c;
 			++s;
 			continue;
@@ -1303,7 +1303,7 @@ static void cssParseLeft(struct desc *d)
 		combin = 0;	// look for combinator
 		a2 = s;
 		while (strchr(", \t\n\r>~+", c)) {
-			if (isspace(c)) {
+			if (isspaceByte(c)) {
 				if (!combin)
 					combin = ' ';
 			} else {
@@ -1416,10 +1416,10 @@ static void cssAtomic(struct asel *a)
 		nzFree(tag), tag = 0;
 	if (tag) {
 		for (t = tag; *t; ++t) {
-			if (islower(*t))
+			if (islowerByte(*t))
 				*t = toupper(*t);
-			if ((isdigit(*t) && t > tag) ||
-			    isalpha(*t) || *t == '-')
+			if ((isdigitByte(*t) && t > tag) ||
+			    isalphaByte(*t) || *t == '-')
 				continue;
 			a->error = CSS_ERROR_TAG;
 			nzFree(tag);
@@ -1633,7 +1633,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 				++w;
 				break;
 			}
-			if (isupper(c))
+			if (isupperByte(c))
 				*w = tolower(c);
 		}
 		break;
@@ -2285,7 +2285,7 @@ if(!t) {
 				++s;
 			if (!*s)
 				goto nth_bad;
-			if (isdigit(*s))
+			if (isdigitByte(*s))
 				d = strtol(s, &s, 10), d_present = true;
 			if (!*s) {
 				constant = (*p == '-' ? -d : d);
@@ -2309,7 +2309,7 @@ if(!t) {
 			constant = 1;
 			if (*s == '-')
 				constant = -1, ++s;
-			if (!isdigit(*s))
+			if (!isdigitByte(*s))
 				goto nth_bad;
 			d = strtol(s, &s, 10);
 			if (*s)
@@ -3302,7 +3302,7 @@ Just the indifidual words and the whole thing.
 
 		classcopy = cloneString(t->jclass);
 		s = classcopy;
-		while (isspace(*s))
+		while (isspaceByte(*s))
 			++s;
 		while (*s) {
 			char cutc = 0;	// cut character
@@ -3320,7 +3320,7 @@ Just the indifidual words and the whole thing.
 			if (!cutc)
 				break;
 			s = u + 1;
-			while (isspace(*s))
+			while (isspaceByte(*s))
 				++s;
 		}
 

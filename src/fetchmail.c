@@ -202,7 +202,7 @@ static void setLimit(const char *t)
 	skipWhite(&t);
 	if(*t == '-')
 		early = true, ++t;
-	if (!isdigit(*t)) {
+	if (!isdigitByte(*t)) {
 		i_puts(MSG_NumberExpected);
 		return;
 	}
@@ -473,8 +473,8 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	if (*line && line[1] == ' ' && strchr("sfb", *line)) {
 		searchtype = *line;
 		line += 2;
-	} else if (line[0] && !isspace(line[0]) &&
-		   (isspace(line[1]) || !line[1])) {
+	} else if (line[0] && !isspaceByte(line[0]) &&
+		   (isspaceByte(line[1]) || !line[1])) {
 		i_puts(MSG_ImapSearchHelp);
 		return false;
 	}
@@ -523,10 +523,10 @@ none:
 		++t;
 	u = t;
 	while (*u) {
-		if (!isdigit(*u))
+		if (!isdigitByte(*u))
 			break;
 		++cnt;
-		while (isdigit(*u))
+		while (isdigitByte(*u))
 			++u;
 		skipWhite2(&u);
 	}
@@ -1056,7 +1056,7 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 			t += 11;
 			while (*t == ' ')
 				++t;
-			if (isdigit(*t))
+			if (isdigitByte(*t))
 				mif->uid = atoi(t);
 		}
 		nzFree(mailstring);
@@ -1156,7 +1156,7 @@ We'll deal with that later.
 				++t;
 		// with number in braces, subject is on next line.
 // isspace takes us past crlf
-			while(isspace(*t))
+			while(isspaceByte(*t))
 				++t;
 		}
 
@@ -1273,7 +1273,7 @@ dosize:
 		if (!u)
 			continue;
 		t = u + 5;
-		if (!isdigit(*t))
+		if (!isdigitByte(*t))
 			continue;
 		mif->size = atoi(t);
 
@@ -1303,8 +1303,8 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	if (t) {
 		while (*t == ' ')
 			--t;
-		if (isdigit(*t)) {
-			while (isdigit(*t))
+		if (isdigitByte(*t)) {
+			while (isdigitByte(*t))
 				--t;
 			++t;
 			f->nmsgs = atoi(t);
@@ -1322,7 +1322,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		t += 8;
 		while (*t == ' ')
 			++t;
-		if (isdigit(*t))
+		if (isdigitByte(*t))
 			f->uidnext = atoi(t);
 	}
 
@@ -1534,14 +1534,14 @@ refresh:
 		}
 
 		t = inputline;
-		if (t[0] == 'd' && t[1] == 'b' && isdigit(t[2]) && !t[3]) {
+		if (t[0] == 'd' && t[1] == 'b' && isdigitByte(t[2]) && !t[3]) {
 			debugLevel = t[2] - '0';
 			curl_easy_setopt(handle, CURLOPT_VERBOSE,
 					 (debugLevel >= 4));
 			goto input;
 		}
 
-		if (*t == 'l' && isspace(t[1])) {
+		if (*t == 'l' && isspaceByte(t[1])) {
 			setLimit(t + 1);
 			goto input;
 		}
@@ -1551,7 +1551,7 @@ refresh:
 				setEnvelopeFormat("");
 				goto input;
 			}
-			if(isspace(t[1]) && setEnvelopeFormat(t + 2))
+			if(isspaceByte(t[1]) && setEnvelopeFormat(t + 2))
 				goto input;
 		}
 
@@ -1635,7 +1635,7 @@ refresh:
 			last_nl = true;
 			continue;
 		}
-		if (last_nl && isdigit(mailstring[i]))
+		if (last_nl && isdigitByte(mailstring[i]))
 			num_messages++;
 		last_nl = false;
 	}
@@ -1957,7 +1957,7 @@ key_command:
 
 // At this point we're saving the mail somewhere.
 writeMail:
-	if (!isimap || isupper(key))
+	if (!isimap || isupperByte(key))
 		delflag = true;
 	atname = 0;
 	if (!isimap)

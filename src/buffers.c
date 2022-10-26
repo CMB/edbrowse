@@ -267,23 +267,23 @@ static bool jdb_passthrough(const char *s)
 	int i;
 	if (s[0] == '!')
 		return true;
-	if (s[0] == 'd' && s[1] == 'b' && isdigit(s[2]) && s[3] == 0)
+	if (s[0] == 'd' && s[1] == 'b' && isdigitByte(s[2]) && s[3] == 0)
 		return true;
 	if (stringInList(oklist, s) >= 0)
 		return true;
 // I could pass e through, but e is often a variable.
 // Bad enough I pass e3 through; if that is a variable you want to see,
 // put a space after it.
-	if (s[0] == 'e' && isdigit(s[1])) {
+	if (s[0] == 'e' && isdigitByte(s[1])) {
 		for (i = 2; s[i]; ++i)
-			if (!isdigit(s[i]))
+			if (!isdigitByte(s[i]))
 				break;
 		if (!s[i])
 			return true;
 	}
-	if (!strncmp(s, "speed=", 6) && isdigit(s[6])) {
+	if (!strncmp(s, "speed=", 6) && isdigitByte(s[6])) {
 		for (i = 6; s[i]; ++i)
-			if (!isdigit(s[i]))
+			if (!isdigitByte(s[i]))
 				break;
 		if (!s[i])
 			return true;
@@ -621,13 +621,13 @@ addchar:
 			continue;
 		}
 
-		if (d == 'j' && isalnum(e)) { // emoji
+		if (d == 'j' && isalnumByte(e)) { // emoji
 			char *response;
 			int k = i + 1, l;
-			while(isalnum(s[k])) ++k;
-			if(s[k] == '.' && isalnum(s[k+1])) {
+			while(isalnumByte(s[k])) ++k;
+			if(s[k] == '.' && isalnumByte(s[k+1])) {
 				k += 2;
-				while(isalnum(s[k])) ++k;
+				while(isalnumByte(s[k])) ++k;
 			}
 			response = selectEmoji(s + i + 2, k - i - 2);
 			if(!response) {
@@ -694,7 +694,7 @@ addchar:
 			if (resfile) {
 				*resfile = 0;
 				resfile += 2;
-				while (isspace(*resfile))
+				while (isspaceByte(*resfile))
 					++resfile;
 			}
 			result = jsRunScriptWinResult(s, "jdb", 1);
@@ -2736,10 +2736,10 @@ static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 	if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
 	(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
 	(p[1] == ';' && p[2] == 0 && !q) ||
-	(isdigit(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
+	(isdigitByte(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
 	(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
 	(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
-	(isdigit(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
+	(isdigitByte(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
 // syntax is good
 		if(!cxCompare(cx) || !cxActive(cx, true))
 			return globSub = false;
@@ -3624,7 +3624,7 @@ static int replaceText(const char *line, int len, const char *rhs,
 			}
 
 			if (c == '%' && d == 'l' &&
-			    !strncmp(t + 2, "ine", 3) && !isalnum(t[5])) {
+			    !strncmp(t + 2, "ine", 3) && !isalnumByte(t[5])) {
 				char numstring[12];
 				sprintf(numstring, "%d", ln);
 				stringAndString(&r, &rlen, numstring);
@@ -3844,7 +3844,7 @@ findField(const char *line, int ftype, int n,
 	while (true) {
 // skip ahead to a letter, like http
 		while ((c = *s) != '\n') {
-			if (isalpha(c))
+			if (isalphaByte(c))
 				break;
 			++s;
 		}
@@ -4665,7 +4665,7 @@ down_again:
 		return true;
 	}
 
-	if (!strncmp(line, "rr=", 3) && isdigit(line[3])) {
+	if (!strncmp(line, "rr=", 3) && isdigitByte(line[3])) {
 		rr_interval = atoi(line + 3);
 		if(rr_interval < 5) // even 5 is prettty unreasonable
 			rr_interval = 5;
@@ -5873,7 +5873,7 @@ et_go:
 		return true;
 	}
 
-	if(!strncmp(line, "irc", 3) && (isspace(line[3]) || line[3] == 0)) {
+	if(!strncmp(line, "irc", 3) && (isspaceByte(line[3]) || line[3] == 0)) {
 		cmd = 'e';
 		char *p = cloneString(line);
 		rc = ircSetup(p);
@@ -6424,10 +6424,10 @@ replaceframe:
 	}
 
 // special code for textareas into sessions
-	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigit(line[2]))) {
+	if(line[0] == 'i' && line[1] == 'b' && (!line[2] || isdigitByte(line[2]))) {
 		int d = 0;
 		char *s;
-		if(isdigit(line[2])) {
+		if(isdigitByte(line[2])) {
 			d = strtol(line + 2, &s, 10);
 			if(*s)
 				goto after_ib;
@@ -6486,7 +6486,7 @@ after_ib:
 // w+5 becomes w5@$     a simple translation
 // then we go on and parse that in the usual way.
 	if (cmd == 'w' && first == '+' &&
-	isdigit(line[1]) &&
+	isdigitByte(line[1]) &&
 	(j = strtol(line + 1, &p, 10)) >= 0 && !*p) {
 		sprintf(shortline, "%d@$", j);
 		line = shortline;
@@ -6495,7 +6495,7 @@ after_ib:
 
 	if (cmd == 'w' && first == '+')
 		writeMode = O_APPEND, first = *++line;
-	else if(cmd == 'w' && isdigit(first)) {
+	else if(cmd == 'w' && isdigitByte(first)) {
 // check for at syntax
 		int sno = strtol(line, &p, 10);
 		int writeLine2;
@@ -6521,7 +6521,7 @@ after_ib:
 	}
 
 // may as well check r at syntax while we're at it.
-	if(cmd == 'r' && isdigit(first)) {
+	if(cmd == 'r' && isdigitByte(first)) {
 		int sno = strtol(line, &p, 10);
 		if(*p == '@') { // at syntax
 			if(!atPartCracker(sno, false, p, &readLine1, &readLine2))

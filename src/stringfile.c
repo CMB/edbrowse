@@ -295,7 +295,7 @@ void leftClipString(char *s)
 	if (!s)
 		return;
 	for (t = s; *t; ++t)
-		if (!isspace(*t))
+		if (!isspaceByte(*t))
 			break;
 	if (t > s)
 		strmove(s, t);
@@ -355,28 +355,28 @@ int stringIsNum(const char *s)
 
 bool stringIsDate(const char *s)
 {
-	if (!isdigit(*s))
+	if (!isdigitByte(*s))
 		return false;
 	++s;
-	if (isdigit(*s))
+	if (isdigitByte(*s))
 		++s;
 	if (*s++ != '/')
 		return false;
-	if (!isdigit(*s))
+	if (!isdigitByte(*s))
 		return false;
 	++s;
-	if (isdigit(*s))
+	if (isdigitByte(*s))
 		++s;
 	if (*s++ != '/')
 		return false;
-	if (!isdigit(*s))
+	if (!isdigitByte(*s))
 		return false;
 	++s;
-	if (isdigit(*s))
+	if (isdigitByte(*s))
 		++s;
-	if (isdigit(*s))
+	if (isdigitByte(*s))
 		++s;
-	if (isdigit(*s))
+	if (isdigitByte(*s))
 		++s;
 	if (*s)
 		return false;
@@ -968,7 +968,7 @@ void camelCase(char *s)
 {
 	char *t, *w;
 	for (t = w = s; *t; ++t)
-		if (*t == '-' && isalpha(t[1]))
+		if (*t == '-' && isalphaByte(t[1]))
 			t[1] = toupper(t[1]);
 		else
 			*w++ = *t;
@@ -1488,7 +1488,7 @@ char *dirSuffix2(int n, const char *path)
 // names only, don't have file type information, have to go get it
 	t = suffix;
 	ftype = fileTypeByName(path, 1);
-	if(isupper(ftype)) *t++ = '@', ftype = tolower(ftype);
+	if(isupperByte(ftype)) *t++ = '@', ftype = tolower(ftype);
 	c = 0;
 	if (ftype == 'd') c = '/';
 	if (ftype == 's') c = '^';
@@ -2179,9 +2179,9 @@ static bool envExpand(const char *line, const char **expanded)
 		goto dollars;
 
 	l = 0;
-	for (s = line + 1; isalnum(*s) || *s == '_'; ++s)
+	for (s = line + 1; isalnumByte(*s) || *s == '_'; ++s)
 		++l;
-	if ((unsigned)l >= sizeof(var1) || isdigit(line[1]) || (*s && *s != '/')) {
+	if ((unsigned)l >= sizeof(var1) || isdigitByte(line[1]) || (*s && *s != '/')) {
 /* invalid syntax, put things back */
 		s = line;
 		goto dollars;

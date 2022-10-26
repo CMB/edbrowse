@@ -157,7 +157,7 @@ static char *find_http_header(struct i_get *g, const char *name)
 
 /* This is a match */
 		++t;
-		while (t < v && isspace(*t))
+		while (t < v && isspaceByte(*t))
 			++t;
 		u = v;
 		while (u > t && isspaceByte(u[-1]))
@@ -683,8 +683,8 @@ f3:
 	while (*date == ' ')
 		++date;
 	if ((*date == '+' || *date == '-') &&
-	    isdigit(date[1]) && isdigit(date[2]) &&
-	    isdigit(date[3]) && isdigit(date[4])) {
+	    isdigitByte(date[1]) && isdigitByte(date[2]) &&
+	    isdigitByte(date[3]) && isdigitByte(date[4])) {
 		zone = 10 * (date[1] - '0') + date[2] - '0';
 		zone *= 60;
 		zone += 10 * (date[3] - '0') + date[4] - '0';
@@ -727,7 +727,7 @@ bool parseRefresh(char *ref, int *delay_p)
 	if (memEqualCI(u, "url=", 4)) {
 		char qc;
 		u += 4;
-		while (isspace(*u))
+		while (isspaceByte(*u))
 			++u;
 		qc = *u;
 		if (qc == '"' || qc == '\'')
@@ -795,7 +795,7 @@ static void urlSanitize(struct i_get *g, const char *post)
 
 // get rid of : in http://this.that.com:/path, curl can't handle it.
 	getPortLocURL(g->urlcopy, &portloc, 0);
-	if (portloc && !isdigit(portloc[1])) {
+	if (portloc && !isdigitByte(portloc[1])) {
 		const char *s = portloc + strcspn(portloc, "/?#\1");
 		strmove((char *)portloc, s);
 		g->urlcopy_l = strlen(g->urlcopy);
@@ -2208,7 +2208,7 @@ static bool gopherConnect(struct i_get *g)
 		g->down_state = 1;
 // 0 is tricky because "05" and "09" can mean binary
 // in doubt, treat as integer and skip leading 0s
-		while (first == '0' && isdigit(s[2])) {
+		while (first == '0' && isdigitByte(s[2])) {
 			s++;
 			first = s[1];
 		}
@@ -2754,7 +2754,7 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 		char *s;
 // data may not be null terminated; can't use strstr
 		for (s = data; s < data + size - 6; ++s)
-			if (!strncmp(s, " MOVE", 5) && isspace(s[5])) {
+			if (!strncmp(s, " MOVE", 5) && isspaceByte(s[5])) {
 				g->move_capable = true;
 				break;
 			}

@@ -1339,9 +1339,9 @@ static void processError(JSContext * cx)
 		const char *p = strchr(stack, '\n');
 		if(p) {
 			if(p > stack && p[-1] == ')') --p;
-			while(p > stack && isdigit(p[-1])) --p;
+			while(p > stack && isdigitByte(p[-1])) --p;
 			if(p > stack && p[-1] == ':') --p;
-			if(*p == ':' && isdigit(p[1]))
+			if(*p == ':' && isdigitByte(p[1]))
 				lineno = atoi(p+1);
 			if(lineno < 0) lineno = 0;
 		}
@@ -1624,7 +1624,7 @@ static JSValue nat_wlf(JSContext * cx, JSValueConst this, int argc, JSValueConst
 		safe = true;
 	if (filename[0] == 'f') {
 		int i;
-		for (i = 1; isdigit(filename[i]); ++i) ;
+		for (i = 1; isdigitByte(filename[i]); ++i) ;
 		if (i > 1 && (stringEqual(filename + i, ".js") ||
 			      stringEqual(filename + i, ".css")))
 			safe = true;
@@ -2257,9 +2257,9 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 		if (memEqualCI(s, "javascript:", 11))
 			s += 11;
 		skipWhite(&s);
-		if (isalpha(*s) || *s == '_') {
+		if (isalphaByte(*s) || *s == '_') {
 			char *j;
-			for (j = fname; isalnum(*s) || *s == '_'; ++s) {
+			for (j = fname; isalnumByte(*s) || *s == '_'; ++s) {
 				if (j < fname + sizeof(fname) - 3)
 					*j++ = *s;
 			}

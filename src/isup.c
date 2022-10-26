@@ -359,7 +359,7 @@ static bool parseURL(const char *url, const char **proto, int *prlen, const char
 				break;
 		if (q < p)
 			p = 0;
-		if (isdigit(url[0]))
+		if (isdigitByte(url[0]))
 			p = 0;
 	}
 
@@ -3251,7 +3251,7 @@ static int tcp_isDots(const char *s)
 				return 0;
 			continue;
 		}
-		if (!isdigit(c))
+		if (!isdigitByte(c))
 			return 0;
 	}
 	return (nd == 3);
@@ -3502,7 +3502,7 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 		return;
 	}
 	c = *++s;
-	if(c != '\0' && isspace(s[1])) {
+	if(c != '\0' && isspaceByte(s[1])) {
 		p = s + 2;
 		switch(c) {
 		case 'j':
@@ -3763,11 +3763,11 @@ bool ircSetup(char *line)
 	line += 3;
 	if(!*line) goto usage;
 	spaceCrunch(line, true, false);
-	if(!isdigit(*line)) goto usage;
+	if(!isdigitByte(*line)) goto usage;
 	cxin = strtol(line, &line, 10);
 	if(cxin < 0 || *line != ' ') goto usage;
 	++line;
-	if(!isdigit(*line)) goto usage;
+	if(!isdigitByte(*line)) goto usage;
 	cxout = strtol(line, &line, 10);
 	if(cxout < 0 || *line != ' ') goto usage;
 	++line;
@@ -3803,7 +3803,7 @@ bool ircSetup(char *line)
 		setError(MSG_IrcCompat, cxout);
 		return false;
 	}
-	if(!isalpha(*line)) goto usage;
+	if(!isalphaByte(*line)) goto usage;
 	domain = line;
 	nick = ircSkip(line, ' ');
 	if(!*nick) goto usage;

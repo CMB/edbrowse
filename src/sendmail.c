@@ -159,7 +159,7 @@ malformed:
 				}
 				if (domain_literal_end == record_start) {
 					for (v = at_sign + 1; v <= domain_end; ++v)
-						if ((*v & 0x80) == 0 && !isalnum((uchar) *v) && *v != '-' && *v != '.')
+						if ((*v & 0x80) == 0 && !isalnumByte((uchar) *v) && *v != '-' && *v != '.')
 							goto malformed;
 				}
 				if (full_name_start != record_start) {
@@ -539,7 +539,7 @@ empty:
 	if(!strncmp(file, "<session ", 9)) {
 		for (i = 0; i < buflen; ++i) {
 			c = buf[i];
-			if(!isspace(c)) break;
+			if(!isspaceByte(c)) break;
 		}
 		if(i < buflen && c == '<')
 			ct = "text/html";

@@ -663,8 +663,8 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 		if(*t == '/') ++t, slash = true;
 
 // bare < just passes through
-		if((!slash && *t != '!' && !isalpha(*t) && !memEqualCI(t, "?xml", 4)) ||
-		(slash && !isalpha(*t))) {
+		if((!slash && *t != '!' && !isalphaByte(*t) && !memEqualCI(t, "?xml", 4)) ||
+		(slash && !isalphaByte(*t))) {
 			s = t + 1;
 			continue;
 		}
@@ -735,7 +735,7 @@ closecomment:
 // for <!----> u could be less than t
 			w = (u <= t ? 0 : pullString(t, u - t));
 			if(w && headbody == 0 && memEqualCI(t, "doctype", 7) &&
-			!isalnum(t[7])) {
+			!isalnumByte(t[7])) {
 				scannerInfo1("doctype\n", 0);
 				makeTag("doctype", "doctype", false, 0);
 				working_t->textval = w;
@@ -766,7 +766,7 @@ opencomment:
 // at this point it is <tag or </tag
 		i = 0;
 // the standard tags do not contain hyphens, but custom tags might.
-		while(isalnum(*t) || *t == '-' || *t == '_') {
+		while(isalnumByte(*t) || *t == '-' || *t == '_') {
 			if(i < MAXTAGNAME - 1) tagname[i++] = *t;
 			++t;
 		}
@@ -982,7 +982,7 @@ With this understanding, we can, and should, scan for </script
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
-			while(isspace(*seek)) ++seek;
+			while(isspaceByte(*seek)) ++seek;
 			   scannerInfo1("script length %d\n", (int)(lt - seek));
 			working_t->doorway = true;
 			working_t->scriptgen = htmlGenerated;
@@ -1013,7 +1013,7 @@ With this understanding, we can, and should, scan for </script
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
-			while(isspace(*seek)) ++seek;
+			while(isspaceByte(*seek)) ++seek;
 			   scannerInfo1("style length %d\n", (int)(lt - seek));
 			if(lt > seek) {
 // pull out the style, do not andify or change in any way.
@@ -1046,7 +1046,7 @@ With this understanding, we can, and should, scan for </textarea
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
-			while(isspace(*seek)) ++seek; // should we be doing this?
+			while(isspaceByte(*seek)) ++seek; // should we be doing this?
 			if(lt > seek) {
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
@@ -1142,18 +1142,18 @@ static void findAttributes(const char *start, const char *end)
 
 	while(s < end) {
 // look for a C identifier, then whitespace, then =
-		if(!isalpha(*s)) { ++s; continue; }
+		if(!isalphaByte(*s)) { ++s; continue; }
 		a1 = s; // start of attribute
 		a2 = a1 + 1;
-		while(*a2 == '_' || *a2 == '-' || isalnum(*a2)) ++a2;
-		for(s = a2; isspace(*s); ++s)  ;
+		while(*a2 == '_' || *a2 == '-' || isalnumByte(*a2)) ++a2;
+		for(s = a2; isspaceByte(*s); ++s)  ;
 		if(*s != '=' || s == end) {
 // it could be an attribute with no value, but then we need whitespace
 			if(s > a2 || s == end)
 				setAttrFromHTML(a1, a2, a2, a2);
 			continue;
 		}
-		for(v1 = s + 1; isspace(*v1); ++v1)  ;
+		for(v1 = s + 1; isspaceByte(*v1); ++v1)  ;
 		qc = 0;
 		if(*v1 == '"' || *v1 == '\'') qc = *v1++;
 		for(v2 = v1; v2 < end; ++v2)
@@ -1350,8 +1350,8 @@ static char *pullAnd(const char *start, const char *end)
 
 	for(s = t = w; *s; ++s) {
 		if(*s != '&') goto putc;
-		if(s[1] == '#' && (isdigit(s[2]) || ((s[2] == 'x' || s[2] == 'X') && isxdigit(s[3])))) {
-			if(isdigit(s[2])) u = strtol(s+2, &s, 10);
+		if(s[1] == '#' && (isdigitByte(s[2]) || ((s[2] == 'x' || s[2] == 'X') && isxdigit(s[3])))) {
+			if(isdigitByte(s[2])) u = strtol(s+2, &s, 10);
 			else u = strtol(s+3, &s, 16);
 putuni:
 // tidy issues a warning if no ; but tolerates it
@@ -1363,10 +1363,10 @@ putuni:
 			t += strlen(t);
 			continue;
 		}
-		if(!isalpha(s[1])) goto putc;
+		if(!isalphaByte(s[1])) goto putc;
 // there is an identifier after &
 		entity = ++s;
-		for(++s; isalnum(*s); ++s)  ;
+		for(++s; isalnumByte(*s); ++s)  ;
 		u = andLookup(entity, s);
 		if(u) goto putuni;
 // word not recognized, leave & in place.
@@ -4847,9 +4847,9 @@ static void rowspan2(Tag *tr, int ri)
 		td->lic = td->js_ln = 1;
 // from html attributes first
 			v = attribVal(td, "rowspan");
-			if(v && isdigit(*v)) td->lic = atoi(v);
+			if(v && isdigitByte(*v)) td->lic = atoi(v);
 			v = attribVal(td, "colspan");
-			if(v && isdigit(*v)) td->js_ln = atoi(v);
+			if(v && isdigitByte(*v)) td->js_ln = atoi(v);
 		if(allowJS && td->jslink) {
 			int n = get_property_number_t(td, "rowspan");
 			if(n > 0) td->lic = n;
@@ -4871,7 +4871,7 @@ static void rowspan2(Tag *tr, int ri)
 crack:
 		irs = irl = ics = 1;
 		if((save_ihs = ihs)) {
-			if(isdigit(*ihs)) {
+			if(isdigitByte(*ihs)) {
 				irl = strtol(ihs, &ihs, 10);
 				irs = strtol(ihs + 1, &ihs, 10);
 				seqno = strtol(ihs + 1, &ihs, 10);
@@ -4925,7 +4925,7 @@ incorporate:
 // rowspans hanging down after this row is done
 	while(ihs) {
 		irs = irl = ics = 1;
-		if(isdigit(*ihs)) {
+		if(isdigitByte(*ihs)) {
 			irl = strtol(ihs, &ihs, 10);
 			irs = strtol(ihs + 1, &ihs, 10);
 			seqno = strtol(ihs + 1, &ihs, 10);
@@ -4984,7 +4984,7 @@ static void rowspan3(Tag *tr, int ri)
 
 	s = t = ihs;
 	while(*s) {
-		if(isdigit(*s)) {
+		if(isdigitByte(*s)) {
 			irl = strtol(s, &s, 10);
 			irs = strtol(s + 1, &s, 10);
 			seqno = strtol(s + 1, &s, 10);

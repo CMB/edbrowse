@@ -134,14 +134,14 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 
 		if (*t == '-')
 			++t;
-		for (; isdigit(*t); ++t) {
+		for (; isdigitByte(*t); ++t) {
 			len_given = 1;
 			len = 10 * len + *t - '0';
 		}
-		while (*t == '.' || isdigit(*t))
+		while (*t == '.' || isdigitByte(*t))
 			++t;
 		pdir = *t++;
-		if (isupper(pdir)) {
+		if (isupperByte(pdir)) {
 			pdir = tolower(pdir);
 			inquote = '"';
 		}
@@ -506,7 +506,7 @@ date stringDate(const char *s, bool yearfirst)
 		strncpy(buf + 4, swap, 4);
 	}
 	for (i = 0; i < 8; ++i)
-		if (!isdigit(buf[i]))
+		if (!isdigitByte(buf[i]))
 			return -4;
 	month = 10 * (buf[0] - '0') + buf[1] - '0';
 	day = 10 * (buf[2] - '0') + buf[3] - '0';
@@ -624,7 +624,7 @@ interval stringTime(const char *t)
 	if (!strncmp(buf, "      ", l))
 		return nullint;
 	for (i = 0; i < l; ++i)
-		if (!isdigit(buf[i]))
+		if (!isdigitByte(buf[i]))
 			return -4;
 	h = 10 * (buf[0] - '0') + buf[1] - '0';
 	m = 10 * (buf[2] - '0') + buf[3] - '0';
@@ -932,7 +932,7 @@ static bool buildWhereClause(void)
 		}
 		strcpy(wherecol, e);
 		e = w - 1;
-	} else if (isdigit(*w)) {
+	} else if (isdigitByte(*w)) {
 		colno = strtol(w, (char **)&w, 10);
 		if (w != e) {
 			setError(MSG_DBSyntax);
@@ -2100,7 +2100,7 @@ int goSelect(int *startLine, char **rbuf)
 	skipWhite2(&s);
 	for (i = 0; actionWords[i]; ++i) {
 		l = strlen(actionWords[i]);
-		if (memEqualCI(s, actionWords[i], l) && isspace(s[l])) {
+		if (memEqualCI(s, actionWords[i], l) && isspaceByte(s[l])) {
 			action = actionCodes[i];
 			break;
 		}
