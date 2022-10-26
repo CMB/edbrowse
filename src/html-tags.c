@@ -674,7 +674,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 // adjust line number
 			for(ws = true, u = seek; u < lt; ++u) {
 				if(*u == '\n') ++ln;
-				if(!isspace(*u)) ws = false;
+				if(!isspaceByte(*u)) ws = false;
 			}
 // Ignore whitespace that is not in the head or the body.
 // Ignore text after body
@@ -1066,7 +1066,7 @@ With this understanding, we can, and should, scan for </textarea
 	if(*seek) {
 		for(ws = true, u = seek; *u; ++u) {
 			if(*u == '\n') ++ln;
-			if(!isspace(*u)) ws = false;
+			if(!isspaceByte(*u)) ws = false;
 		}
 		if(headbody < 5 && !ws) {
 			pushState(seek, true);
@@ -1157,7 +1157,7 @@ static void findAttributes(const char *start, const char *end)
 		qc = 0;
 		if(*v1 == '"' || *v1 == '\'') qc = *v1++;
 		for(v2 = v1; v2 < end; ++v2)
-			if((!qc && isspace(*v2)) || (qc && *v2 == qc)) break;
+			if((!qc && isspaceByte(*v2)) || (qc && *v2 == qc)) break;
 		setAttrFromHTML(a1, a2, v1, v2);
 		if(*v2 == qc) ++v2;
 		s = v2;

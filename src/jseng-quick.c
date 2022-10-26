@@ -1689,8 +1689,8 @@ static JSValue nat_prompt(JSContext * cx, JSValueConst this, int argc, JSValueCo
 		printf("%s", msg);
 /* If it doesn't end in space or question mark, print a colon */
 		c = msg[strlen(msg) - 1];
-		if (!isspace(c)) {
-			if (!ispunct(c))
+		if (!isspaceByte(c)) {
+			if (!ispunctByte(c))
 				printf(":");
 			printf(" ");
 		}
@@ -1728,8 +1728,8 @@ static JSValue nat_confirm(JSContext * cx, JSValueConst this, int argc, JSValueC
 		while (true) {
 			printf("%s", msg);
 			c = msg[strlen(msg) - 1];
-			if (!isspace(c)) {
-				if (!ispunct(c))
+			if (!isspaceByte(c)) {
+				if (!ispunctByte(c))
 					printf(":");
 				printf(" ");
 			}

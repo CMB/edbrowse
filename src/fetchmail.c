@@ -169,7 +169,7 @@ bool setEnvelopeFormat(const char *s)
 
 // check
 	for(j=0; (c = s[j]); ++j) {
-		if(isspace(c))
+		if(isspaceByte(c))
 			continue;
 		something = true;
 		if(!strchr(envelopeFormatChars, c))
@@ -184,7 +184,7 @@ bool setEnvelopeFormat(const char *s)
 
 	memset(count, 0, sizeof(count));
 	for(i=0; (c = *s); ++s) {
-		if(isspace(c))
+		if(isspaceByte(c))
 			continue;
 		j = strchr(envelopeFormatChars, c) - envelopeFormatChars;
 		if(count[j])

@@ -248,15 +248,15 @@ static void trim(char *s)
 int l = strlen(s);
 	int n;
 	for (n = 0; s[n]; ++n)
-		if (!isspace(s[n]))
+		if (!isspaceByte(s[n]))
 			break;
 	if (n)
 		strmove(s, s + n);
 	n = strlen(s);
-	while (n && isspace(s[n - 1]))
+	while (n && isspaceByte(s[n - 1]))
 		--n;
 /* allow for space at the end of a selector or rule. #foo\   */
-	if (isspace(s[n]) && n && s[n - 1] == '\\' &&
+	if (isspaceByte(s[n]) && n && s[n - 1] == '\\' &&
 	    (n == 1 || s[n - 2] != '\\'))
 		++n;
 	s[n] = 0;
@@ -1136,9 +1136,9 @@ copy:		++s;
 			}
 			r2 = s;
 			for (++s; *s; ++s)
-				if (!isspace(*s) && *s != ';')
+				if (!isspaceByte(*s) && *s != ';')
 					break;
-			while (r2 > r1 && isspace(r2[-1]))
+			while (r2 > r1 && isspaceByte(r2[-1]))
 				--r2;
 // has to start with an identifyer, letters and hyphens, but look out,
 // I have to allow for a leading * or _
@@ -1619,7 +1619,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 				strmove(w + 1, y);
 			if (strchr("|~^$*", w[-1]))
 				--w;
-			for (y = w - 1; isspace(*y); --y) ;
+			for (y = w - 1; isspaceByte(*y); --y) ;
 			++y;
 			if (w > y)
 				strmove(y, w);
@@ -2132,9 +2132,9 @@ if(!t) {
 				v = emptyString;
 			while ((q = strstr(v, u))) {
 				v += l;
-				if (q > t->jclass && !isspace(q[-1]))
+				if (q > t->jclass && !isspaceByte(q[-1]))
 					continue;
-				if (q[l] && !isspace(q[l]))
+				if (q[l] && !isspaceByte(q[l]))
 					continue;
 				goto next_mod;
 			}
@@ -2234,9 +2234,9 @@ if(!t) {
 			v0 = v;
 			while ((q = strstr(v, value))) {
 				v += l;
-				if (q > v0 && !isspace(q[-1]))
+				if (q > v0 && !isspaceByte(q[-1]))
 					continue;
-				if (q[l] && !isspace(q[l]))
+				if (q[l] && !isspaceByte(q[l]))
 					continue;
 				if (valloc)
 					nzFree(v0);

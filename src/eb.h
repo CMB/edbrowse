@@ -87,10 +87,17 @@ enum ej_proptype {
 	EJ_PROP_NULL,
 };
 
-/* ctype macros, when you're passing a byte,
- * and you don't want to worry about whether it's char or uchar.
- * Call the regular routines when c is an int, from fgetc etc. */
-#define isspaceByte(c) isspace((uchar)c)
+/*********************************************************************
+ctype macros, when you're passing a byte, and you don't want to worry
+about whether it's char or uchar. Remember there is no standard,
+char could be signed or unsigned depending on the compiler.
+And what the hell is the 0x80 test in isspaceByte for?
+On some platforms, under setlocale(LC_ALL, ""),
+isspace(0xa0) returns true. That is, the breakspace.
+We never want this to be true in the context of edbrowse.
+*********************************************************************/
+
+#define isspaceByte(c) (isspace((uchar)c) && !(c&0x80))
 #define isalphaByte(c) isalpha((uchar)c)
 #define isalnumByte(c) isalnum((uchar)c)
 #define islowerByte(c) islower((uchar)c)

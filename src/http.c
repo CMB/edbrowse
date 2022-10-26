@@ -148,7 +148,7 @@ static char *find_http_header(struct i_get *g, const char *name)
 		if (!t || t >= v)
 			continue;
 		u = t;
-		while (u > s && isspace(u[-1]))
+		while (u > s && isspaceByte(u[-1]))
 			--u;
 		if (u - s != namelen)
 			continue;
@@ -160,7 +160,7 @@ static char *find_http_header(struct i_get *g, const char *name)
 		while (t < v && isspace(*t))
 			++t;
 		u = v;
-		while (u > t && isspace(u[-1]))
+		while (u > t && isspaceByte(u[-1]))
 			--u;
 /* remove quotes */
 		if (u - t >= 2 && *t == u[-1] && (*t == '"' || *t == '\''))
@@ -1562,7 +1562,7 @@ void *httpConnectBack3(void *ptr)
 		stringAndString(&a, &l, "\r\n\r\n");
 		stringAndString(&a, &l, outgoing_headers);
 		stringAndString(&a, &l, outgoing_body);
-		while (l && isspace(a[l - 1]))
+		while (l && isspaceByte(a[l - 1]))
 			a[--l] = 0;
 		t->value = a;
 	}

@@ -2797,7 +2797,7 @@ tty_complete:
 	inInput = false;
 	state = 2, ejcommas = 0;
 	for(i = j = 0; (c = ejline[i]); ++i) {
-		if(isspace(c)) c = ' ';
+		if(isspaceByte(c)) c = ' ';
 		if(c == ' ') {
 			if(!state) ejline[j++] = c, state = 1;
 			continue;
