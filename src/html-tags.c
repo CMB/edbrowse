@@ -49,6 +49,7 @@ static void setAttrFromHTML(const char *a1, const char *a2, const char *v1, cons
 static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 static void pushState(const char *start, bool head_ok);
+static void freeTag(Tag *t);
 
 static Tag *working_t, *lasttext;
 static int ln; // line number
@@ -290,6 +291,9 @@ skiplink:
 			t = newTag(cf, name);
 			t->slash = t->dead = true, ++cw->deadTags;
 		}
+		if(stringEqual(lowname, "include-fragment")) {
+			scannerInfo1("include\n", 0);
+		}
 	} else {
 		if(stringEqual(lowname, "head")) {
 			headbody = 3;
@@ -306,6 +310,17 @@ skiplink:
 		if(stringEqual(lowname, "pre")) {
 			premode = false;
 			scannerInfo1("not pre\n", 0);
+		}
+		if(stringEqual(lowname, "include-fragment")) {
+			int j;
+			scannerInfo1("not include\n", 0);
+// the stuff inside can all go away
+			t = k->t;
+			j = t->seqno;
+			for(++j; j < cw->numTags; ++j)
+				freeTag(tagList[j]);
+			cw->numTags = k->t->seqno + 1;
+			t->firstchild = 0;
 		}
 
 		stack = k->next;
@@ -387,7 +402,6 @@ Tag *newTag(const Frame *f, const char *name)
 }
 
 // Back up over dead tags, and reuse the slots in the array.
-static void freeTag(Tag *t);
 void backupTags(void)
 {
 	Tag *t;
