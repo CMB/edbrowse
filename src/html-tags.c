@@ -945,11 +945,12 @@ tag_ok:
 		if(!isXML && isAutoclose(lowname)) {
 			scannerInfo2("%s autoclose\n", tagname);
 			makeTag(tagname, lowname, true, seek);
-		} else if(*gt == '>' && gt[-1] == '/') {
+		} else if(*gt == '>' && gt[-1] == '/' &&
+		(gt - 1 == t || isspaceByte(gt[-2]))) {
 			scannerInfo2("%s close by slash\n", tagname);
 			makeTag(tagname, lowname, true, seek);
-// if we have <script/> stuf and stuff </script> what are we suppose to do?
-// Well just don't do that - so I'll guard against <script src=url/> which is legit.
+// if we have <script /> stuf and stuff </script> what are we suppose to do?
+// Well just don't do that - so I'll guard against <script src=url /> which is legit.
 // However, we still have to set doorway.
 			if(stringEqual(lowname, "script")) {
 				working_t->doorway = true;

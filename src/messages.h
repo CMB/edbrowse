@@ -246,7 +246,7 @@ enum {
 	MSG_NoParen,
 	MSG_EmptyBuffer,
 	MSG_RexpError,
-	MSG_RexpError2,
+	MSG_notused149,
 	MSG_NotFound,
 	MSG_LineHigh,
 	MSG_LineLow,
