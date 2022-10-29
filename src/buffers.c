@@ -5345,23 +5345,25 @@ et_go:
 		const Window *w, *x;
 		struct ebSession *s = sessionList + context;
 // This is the only place where not having a next link is a pain in the ass!
-		n = 1, w = s->fw;
+		for(n = -1, w = cw; w; w = w->prev, ++n) ;
+		w = s->fw;
 		while(true) {
-			printf("%d%c ", n, w == cw ? '*' : ':');
+			if(n) printf("+%d: ", n);
+			else printf("*0: ");
 			if (w->htmltitle)
 				printf("%s", w->htmltitle);
 			else if (w->f0.fileName)
 				printf("%s", w->f0.fileName);
 			nl();
-			++n;
 			if(w == cw) break;
+			--n;
 			for(x = s->lw; x->prev != w; x = x->prev) ;
 			w = x;
 		}
 		w = s->fw2;
 		if(!w) return true;
 		while(true) {
-			printf("%d: ", n);
+			printf("-%d: ", ++n);
 			if (w->htmltitle)
 				printf("%s", w->htmltitle);
 			else if (w->f0.fileName)
