@@ -5369,7 +5369,6 @@ et_go:
 			else if (w->f0.fileName)
 				printf("%s", w->f0.fileName);
 			nl();
-			++n;
 			if(w == s->lw2) break;
 			for(x = s->lw2; x->prev != w; x = x->prev) ;
 			w = x;
