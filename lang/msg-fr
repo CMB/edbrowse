@@ -146,7 +146,7 @@ pas de crochet fermant
 pas de parenthèse fermante
 tampon vide
 erreur dans l'expression régulière, %s
-erreur inattendue en évaluant l'expression régulière %d
+impossible de charger localement html fragment\n
 chaîne de recherche non trouvée
 numéro de ligne trop grand
 numéro de ligne négatif
@@ -281,7 +281,7 @@ début de l'historique
 fin de l'historique
 %s impossible en mode irc
 0
-0
+impossible de charger html fragment depuis %s, code %ld\n
 impossible de lire les données sur le serveur
 %s n'est pas une url
 téléchargement terminé
@@ -713,7 +713,7 @@ il y a plusieurs liens, utilisez svp %s1 à %s%d
 il y a plusieurs boutons, utilisez svp %s1 à %s%d
 il y a plusieurs images présentes, veuillez utiliser %s1 à %s%d
 0
-0
+impossible de charger html fragment\n
 0
 0
 0

@@ -146,7 +146,7 @@ il modificatore %s non è preceduto da un carattere
 ) di chiusura mancante
 buffer vuoto
 errore nella regular expression, %s
-errore inatteso mentre era in corso l'evaluation della regular expression alla riga %d, probabilmente utf8 incorretto
+impossibile acquisire html fragment locale\n
 stringa di ricerca non trovata
 numero di riga troppo grande
 numbero di riga negativo
@@ -281,7 +281,7 @@ errore durante la connessione SSL %d
 0
 %s non disponibile in modalità irc
 0
-0
+impossibile scaricare html fragment da %s, codice %ld\n
 impossibile leggere dati dal server
 %s non è un url
 download completato
@@ -713,7 +713,7 @@ multipli links sono presenti, per favore usa da %s1 fino a %s%d
 multipli bottoni sono presenti, per favore usa da %s1 a %s%d
 0
 0
-0
+impossibile acquisire html fragment\n
 0
 0
 0

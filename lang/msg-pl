@@ -146,7 +146,7 @@ brak zamykającego nawiasu kwadratowego ']'
 brak zamykającego nawiasu ')'
 pusty bufor
 błąd w wyrażeniu regularnym, %s
-nieoczekiwany błąd przy wykonywaniu wyrażenia regularnego w wierszu %d
+nie można pobrać lokalnego html fragment\n
 nie znaleziono frazy wyszukiwania
 numer wiersza zbyt duży
 ujemny numer wiersza
@@ -281,7 +281,7 @@ błąd połączenia SSL %d
 0
 %s niedostępne w trybie irc
 0
-0
+nie można pobrać html fragment z %s, kod %ld\n
 nie udało się wczytać danych z serwera
 %s nie jest URLem
 pobieranie zakończone.
@@ -713,7 +713,7 @@ wiele odnośników obecnych, użyj %s1 do %s%d
 wiele przycisków obecnych, użyj %s1 do %s%d
 0
 0
-0
+nie można pobrać html fragment\n
 0
 0
 0

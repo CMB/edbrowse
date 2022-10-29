@@ -146,7 +146,7 @@ keine schließende ]
 keine schließende )
 leerer Puffer
 Fehler im regulären Ausdruck %s
-unerwarteter Fehler beim auswerten des Regulären Ausdrucks in Zeile %d
+konnte lokales html fragment nicht abrufen\n
 gesuchte Zeichenkette nicht gefunden
 Zeilennummer zu groß
 negative Zeilennummer
@@ -281,7 +281,7 @@ Anfang der Historie
 Ende der Historie
 %s im irc Modes nicht verfügbar
 0
-0
+konnte html fragment von %s nicht abrufen, Code %ld\n
 konnte Daten nicht vom Server lesen
 %s ist keine URL
 Download abgeschlossen
@@ -713,7 +713,7 @@ mehrere Links vorhanden, nutzen Sie %s1 bis %s%d
 mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
 mehrere Bilder vorhanden, nutzen Sie %s1 bis %s%d
 0
-0
+konnte html fragment nicht abrufen\n
 0
 0
 0

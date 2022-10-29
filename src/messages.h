@@ -246,7 +246,7 @@ enum {
 	MSG_NoParen,
 	MSG_EmptyBuffer,
 	MSG_RexpError,
-	MSG_notused149,
+	MSG_GetLocalFrag,
 	MSG_NotFound,
 	MSG_LineHigh,
 	MSG_LineLow,
@@ -381,7 +381,7 @@ enum {
 	MSG_NoDown,
 	MSG_IrcCommandS,
 	MSG_BadUtf8,
-	MSG_notused284,
+	MSG_GetFrag,
 	MSG_WebRead,
 	MSG_BadURL,
 	MSG_DownSuccess,
@@ -813,4 +813,5 @@ enum {
 	MSG_ManyButtons,
 	MSG_ManyImages,
 	MSG_hold715,
+	MSG_GetFrag2,
 };

@@ -16,6 +16,14 @@ which we must then import into the edbrowse tree of tags.
 bool debugScanner;
 bool isXML; // parse as xml
 
+static const char htmltag[] = "html";
+static const char innerhtmltag[] = "innerhtml";
+static const char headtag[] = "head";
+static const char bodytag[] = "body";
+static const char innerbodytag[] = "innerbody";
+static const char iftag[] = "include-fragment";
+static const char inneriftag[] = "innerfragment";
+
 // report debugging information or errors
 static void scannerInfo1(const char *msg, int n)
 {
@@ -105,8 +113,8 @@ static const struct specialtag {
 	const char *second;
 	} specialtags[] = {
 // special code to allow nesting of <body> which should never happen
-{"innerhtml",0,1, 0, 0},
-{"innerbody",0,1, 0, 0},
+{innerhtmltag,0,1, 0, 0},
+{innerbodytag,0,1, 0, 0},
 {"script", 0, 0, 1, 0},
 {"comment", 0, 0, 1, 0},
 {"style", 0, 0, 1, 0},
@@ -270,16 +278,16 @@ skiplink:
 		k->start = mark;
 		k->next = stack, stack = k;
 
-		if(stringEqual(lowname, "html")) {
+		if(stringEqual(lowname, htmltag)) {
 			headbody = 1;
 			scannerInfo1("in html\n", 0);
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
-		if(stringEqual(lowname, "head")) {
+		if(stringEqual(lowname, headtag)) {
 			headbody = 2;
 			scannerInfo1("in head\n", 0);
 		}
-		if(stringEqual(lowname, "body")) {
+		if(stringEqual(lowname, bodytag)) {
 			headbody = 4, bodycount = htmlcount = 1;
 			scannerInfo1("in body\n", 0);
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
@@ -291,19 +299,19 @@ skiplink:
 			t = newTag(cf, name);
 			t->slash = t->dead = true, ++cw->deadTags;
 		}
-		if(stringEqual(lowname, "include-fragment")) {
+		if(stringEqual(lowname, iftag)) {
 			scannerInfo1("include\n", 0);
 		}
 	} else {
-		if(stringEqual(lowname, "head")) {
+		if(stringEqual(lowname, headtag)) {
 			headbody = 3;
 			scannerInfo1("post head\n", 0);
 		}
-		if(stringEqual(lowname, "body")) {
+		if(stringEqual(lowname, bodytag)) {
 			headbody = 5, bodycount = 0;
 			scannerInfo1("post body\n", 0);
 		}
-		if(stringEqual(lowname, "html")) {
+		if(stringEqual(lowname, htmltag)) {
 			headbody = 6, htmlcount = 0;
 			scannerInfo1("post html\n", 0);
 		}
@@ -311,7 +319,7 @@ skiplink:
 			premode = false;
 			scannerInfo1("not pre\n", 0);
 		}
-		if(stringEqual(lowname, "include-fragment")) {
+		if(stringEqual(lowname, iftag)) {
 			int j;
 			scannerInfo1("not include\n", 0);
 // the stuff inside can all go away
@@ -635,6 +643,64 @@ void initTagArray(void)
 					sizeof(Tag *));
 }
 
+static char *readIncludeFragment(const Tag *t)
+{
+	char *a, *b;
+	int blen;
+	struct i_get g;
+	if(!t->href || !*t->href) {
+		debugPrint(3, "fragment with no source");
+		return 0;
+	}
+	if (browseLocal && !isURL(t->href)) {
+		debugPrint(3, "fragment source %s", t->href);
+		if (!fileIntoMemory(t->href, &b, &blen, 0)) {
+			if (debugLevel >= 1)
+				i_printf(MSG_GetLocalFrag);
+		} else {
+			a = force_utf8(b, blen);
+			if (!a)
+				a = b;
+			else
+				nzFree(b);
+		}
+	} else {
+		debugPrint(3, "fragment source %s", t->href);
+		memset(&g, 0, sizeof(g));
+		g.thisfile = cf->fileName;
+		g.uriEncoded = true;
+		g.url = t->href;
+		if (httpConnect(&g)) {
+			nzFree(g.referrer);
+			nzFree(g.cfn);
+			if (g.code == 200) {
+				a = force_utf8(g.buffer, g.length);
+				if (!a)
+					a = g.buffer;
+				else
+					nzFree(g.buffer);
+				if (g.content[0]
+				    && !stringEqual(g.content, "text/html")
+				    && !stringEqual(g.content, "text/plain")) {
+					debugPrint(3,
+						   "fragment suppressed because content type is %s",
+						   g.content);
+					cnzFree(a);
+					a = NULL;
+				}
+			} else {
+				nzFree(g.buffer);
+				if (debugLevel >= 3)
+					i_printf(MSG_GetFrag, g.url, g.code);
+			}
+		} else {
+			if (debugLevel >= 3)
+				i_printf(MSG_GetFrag2);
+		}
+	}
+	return a;
+}
+
 // Now for the scanner, create edbrowse tags corresponding to the html tags.
 void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 {
@@ -831,13 +897,13 @@ so also break out at >< like a new tag is starting.
 		s = seek; // ready to march on
 
 		if(slash) {
-			if(stringEqual(lowname, "body") && bodycount > 1) {
-				strcpy(tagname, "innerbody"), --bodycount;
-				strcpy(lowname, "innerbody");
+			if(stringEqual(lowname, bodytag) && bodycount > 1) {
+				strcpy(tagname, innerbodytag), --bodycount;
+				strcpy(lowname, innerbodytag);
 			}
-			if(stringEqual(lowname, "html") && htmlcount > 1) {
-				strcpy(tagname, "innerhtml"), --htmlcount;
-				strcpy(lowname, "innerhtml");
+			if(stringEqual(lowname, htmltag) && htmlcount > 1) {
+				strcpy(tagname, innerhtmltag), --htmlcount;
+				strcpy(lowname, innerhtmltag);
 			}
 // create this tag in the edbrowse world.
 			scannerInfo2("</%s>\n", tagname);
@@ -854,16 +920,16 @@ so also break out at >< like a new tag is starting.
 // create this tag in the edbrowse world.
 		scannerInfo3("<%s> line %d\n", tagname, ln);
 // has to start and end with html
-		if(stringEqual(lowname, "html")) {
+		if(stringEqual(lowname, htmltag)) {
 			if(headbody == 0) goto tag_ok;
 			if(headbody != 4) { scannerError1("sequence\n", 0); continue; }
-			strcpy(tagname, "innerhtml"), ++htmlcount;
-			strcpy(lowname, "innerhtml");
+			strcpy(tagname, innerhtmltag), ++htmlcount;
+			strcpy(lowname, innerhtmltag);
 			goto tag_ok;
 		}
 		if(headbody == 0)
-			makeTag("html", "html", false, lt);
-		if(stringEqual(lowname, "head")) {
+			makeTag(htmltag, htmltag, false, lt);
+		if(stringEqual(lowname, headtag)) {
 			if(headbody > 1) { scannerError1("sequence\n", 0); continue; }
 			goto tag_ok;
 		}
@@ -873,19 +939,19 @@ so also break out at >< like a new tag is starting.
 					scannerInfo1("skip head section\nin head\npost head\n", 0);
 				} else {
 					scannerInfo1("initiate and terminate head\n", 0);
-					makeTag("head", "head", false, lt);
-					makeTag("head", "head", true, lt);
+					makeTag(headtag, headtag, false, lt);
+					makeTag(headtag, headtag, true, lt);
 				}
 			} else if(headbody == 2) {
 				scannerInfo1("terminate head\n", 0);
-				makeTag("head", "head", true, lt);
+				makeTag(headtag, headtag, true, lt);
 			}
 		} else pushState(lt, true);
-		if(stringEqual(lowname, "body")) {
+		if(stringEqual(lowname, bodytag)) {
 			if(headbody > 4) { scannerError1("sequence\n", 0); continue; }
 			if(headbody == 4) {
-				strcpy(tagname, "innerbody"), ++bodycount;
-				strcpy(lowname, "innerbody");
+				strcpy(tagname, innerbodytag), ++bodycount;
+				strcpy(lowname, innerbodytag);
 			}
 			goto tag_ok;
 		}
@@ -1100,7 +1166,7 @@ stop:
 
 // has to start and end with html
 if(headbody < 6)
-		makeTag("html", "html", true, s);
+		makeTag(htmltag, htmltag, true, s);
 
 	if(htmlGenerated) {
 		if(cw->numTags < start_idx + 2 ||
@@ -1129,19 +1195,19 @@ if(headbody < 6)
 static void pushState(const char *start, bool head_ok)
 {
 	if(headbody == 0) {
-		makeTag("html", "html", false, start);
+		makeTag(htmltag, htmltag, false, start);
 	}
 	if(headbody == 1) {
 		scannerInfo1("initiate head\n", 0);
-		makeTag("head","head", false, start);
+		makeTag(headtag,headtag, false, start);
 	}
 	if(headbody == 2 && !head_ok) {
 		scannerInfo1("terminate head\n", 0);
-		makeTag("head","head", true, start);
+		makeTag(headtag,headtag, true, start);
 	}
 	if(headbody == 3) {
 		scannerInfo1("initiate body\n", 0);
-		makeTag("body","body", false, start);
+		makeTag(bodytag,bodytag, false, start);
 	}
 }
 
