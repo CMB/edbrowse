@@ -57,6 +57,7 @@ static void setAttrFromHTML(const char *a1, const char *a2, const char *v1, cons
 static char *pullAnd(const char *start, const char *end);
 static unsigned andLookup(char *entity, char *v);
 static void pushState(const char *start, bool head_ok);
+static char *readIncludeFragment(const Tag *t);
 static void freeTag(Tag *t);
 
 static Tag *working_t, *lasttext;
@@ -234,6 +235,15 @@ static int isNonest(const char *name, const struct opentag *k)
 	return true;
 }
 
+static struct IFRAG {
+	struct IFRAG *next;
+	char *base;
+	const char *seek;
+	int ln;
+} *ifrag;
+// seek point for the html scanner
+static const char *seek;
+
 // generate a tag using newTag, which does most of the work
 static void makeTag(const char *name, const char *lowname, bool slash, const char *mark)
 {
@@ -317,18 +327,29 @@ skiplink:
 		}
 		if(stringEqual(lowname, "pre")) {
 			premode = false;
-			scannerInfo1("not pre\n", 0);
+			scannerInfo1("close pre\n", 0);
 		}
 		if(stringEqual(lowname, iftag)) {
 			int j;
-			scannerInfo1("not include\n", 0);
-// the stuff inside can all go away
+			char *a;
 			t = k->t;
+			scannerInfo2("close include %s\n", t->href ? t->href : "null");
+// the stuff inside can all go away
 			j = t->seqno;
 			for(++j; j < cw->numTags; ++j)
 				freeTag(tagList[j]);
 			cw->numTags = k->t->seqno + 1;
 			t->firstchild = 0;
+// if we have source, push the fragment onto the scanning stack
+			if((a = readIncludeFragment(t))) {
+				struct IFRAG *f = allocMem(sizeof(struct IFRAG));
+				f->next = ifrag, ifrag = f;
+				f->seek = seek, f->ln = ln;
+				seek = f->base = a, ln = 1;
+				strcpy(k->name, inneriftag);
+				strcpy(k->lowname, inneriftag);
+				return;
+			}
 		}
 
 		stack = k->next;
@@ -645,7 +666,7 @@ void initTagArray(void)
 
 static char *readIncludeFragment(const Tag *t)
 {
-	char *a, *b;
+	char *a = 0, *b;
 	int blen;
 	struct i_get g;
 	if(!t->href || !*t->href) {
@@ -707,7 +728,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	int i;
 	const char *lt; // les than sign
 	const char *gt; // greater than sign
-	const char *seek, *s, *t, *u;
+	const char *s, *t, *u;
 	char *w;
 	bool slash; // </foo>
 	bool ws; // all whitespace
@@ -723,6 +744,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 
 	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
+	ifrag = 0;
 	atWall = false;
 	lasttext = 0;
 	start_idx = cw->numTags;
@@ -733,6 +755,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	if(!strncmp(htmltext, "`~*xml}@;", 9)) isXML = true, htmltext += 9;
 	seek = s = htmltext, ln = 1, premode = false;
 
+top:
 // loop looking for tags
 	while(*s) {
 // the next literal < should begin the next tag
@@ -908,6 +931,7 @@ so also break out at >< like a new tag is starting.
 // create this tag in the edbrowse world.
 			scannerInfo2("</%s>\n", tagname);
 			makeTag(tagname, lowname, true, lt);
+			s = seek; // needed for </include-fragment>
 			if(headbody == 6) goto stop;
 			if(isWall(lowname)) {
 				atWall = true;
@@ -1029,6 +1053,7 @@ tag_ok:
 		(gt - 1 == t || isspaceByte(gt[-2]))) {
 			scannerInfo2("%s close by slash\n", tagname);
 			makeTag(tagname, lowname, true, seek);
+			s = seek; // needed for </include-fragment>
 // if we have <script /> stuf and stuff </script> what are we suppose to do?
 // Well just don't do that - so I'll guard against <script src=url /> which is legit.
 // However, we still have to set doorway.
@@ -1160,6 +1185,18 @@ With this understanding, we can, and should, scan for </textarea
 		}
 	}
 
+	if(ifrag) { // pop back from include-fragment
+		struct IFRAG *hold = ifrag->next;
+		nzFree(ifrag->base);
+		s = seek = ifrag->seek;
+		ln = ifrag->ln;
+		scannerInfo1("pop include line %d\n", ln);
+		free(ifrag);
+		ifrag = hold;
+		makeTag(inneriftag, inneriftag, true, 0);
+		goto top;
+	}
+
 stop:
 // we should have a head and a body
 	pushState(s, false);
@@ -1186,6 +1223,13 @@ if(headbody < 6)
 				u = u->sibling;
 			}
 		}
+	}
+
+	while(ifrag) {
+		struct IFRAG *hold = ifrag->next;
+		nzFree(ifrag->base);
+		free(ifrag);
+		ifrag = hold;
 	}
 
 	if(stack)
