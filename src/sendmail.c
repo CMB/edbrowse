@@ -33,10 +33,10 @@ static time_t adbooktime;
 /* read and/or refresh the address book */
 bool loadAddressBook(void)
 {
-	char *buf, *bufend, *v, *record_start, *email_start, *at_sign, *dot, *domain_literal_end, *full_name_start, *s, *t;
+	char *buf, *bufend, *v, *record_start, *email_start, *at_sign, *dot, *full_name_start, *s, *t;
 	bool cmt = false;
 	enum { alias, local_part, quoted_part, backslash_escaped, domain,
-		domain_literal, full_name, ignore } state = alias;
+		full_name, ignore } state = alias;
 	char c;
 	int j, buflen, ln = 1;
 	time_t mtime;
@@ -62,7 +62,7 @@ if (buflen > 0 && bufend[-1] != '\n') {
 	}
 
 /* Remove comments and unimportant spaces and tabs. Make each record into a zero-terminated string. */
-	for (record_start = email_start = at_sign = dot = domain_literal_end = full_name_start = s = t = buf; s < bufend; ++s) {
+	for (record_start = email_start = at_sign = dot = full_name_start = s = t = buf; s < bufend; ++s) {
 		c = *s;
 
 // # at start of line is comment
@@ -134,9 +134,7 @@ Ignore all characters other than newline when ignoring until the end of the line
 					setError(MSG_ABNoColon, ln);
 					goto freefail;
 				}
-				if (state == domain_literal ||
-				(domain_literal_end != record_start && domain_literal_end != domain_end) ||
-				*domain_end == '-' ||
+				if (*domain_end == '-' ||
 				domain_end == dot) {
 malformed:
 					setError(MSG_ABMalformed, ln);
@@ -157,11 +155,9 @@ malformed:
 					setError(MSG_ABMailLong, ln, MAXEMAILANDFULLNAMELENGTH - 1);
 					goto freefail;
 				}
-				if (domain_literal_end == record_start) {
-					for (v = at_sign + 1; v <= domain_end; ++v)
-						if ((*v & 0x80) == 0 && !isalnumByte((uchar) *v) && *v != '-' && *v != '.')
-							goto malformed;
-				}
+				for (v = at_sign + 1; v <= domain_end; ++v)
+					if ((*v & 0x80) == 0 && !isalnumByte((uchar) *v) && *v != '-' && *v != '.')
+						goto malformed;
 				if (full_name_start != record_start) {
 					for (v = full_name_start; v < t; ++v)
 						if (iscntrl((uchar) *v)) {
@@ -171,7 +167,7 @@ malformed:
 				}
 				++nads;
 				*t++ = 0;
-				record_start = email_start = at_sign = dot = domain_literal_end = full_name_start = t;
+				record_start = email_start = at_sign = dot = full_name_start = t;
 			}
 			++ln;
 			state = alias;
@@ -223,12 +219,7 @@ malformed:
 			} else if (c == '-') {
 				if (t == dot + 1)
 					goto malformed;
-			} else if (c == '[' && t == at_sign + 1) {
-				state = domain_literal;
 			}
-		} else if (c == ']' && state == domain_literal) {
-			domain_literal_end = t;
-			state = domain;
 		}
 		*t++ = c;
 	}
