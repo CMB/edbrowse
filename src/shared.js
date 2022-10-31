@@ -2288,21 +2288,21 @@ function clickfn() {
 var w = my$win();
 var nn = this.nodeName, t = this.type;
 // as though the user had clicked on this
-if(nn == "button" || (nn == "INPUT" &&
+if(nn == "BUTTON" || (nn == "INPUT" &&
 (t == "button" || t == "reset" || t == "submit" || t == "checkbox" || t == "radio"))) {
 var e = new w.Event;
 e.initEvent("click", true, true);
 if(!this.dispatchEvent(e)) return;
 // do what the tag says to do
-if(this.form) {
+if(this.form && this.form.dom$class == "Form") {
 if(t == "submit") {
 e.initEvent("submit", true, true);
-if(this.dispatchEvent(e))
+if(this.dispatchEvent(e) && this.form.submit)
 this.form.submit();
 }
 if(t == "reset") {
 e.initEvent("reset", true, true);
-if(this.dispatchEvent(e))
+if(this.dispatchEvent(e) && this.form.reset)
 this.form.reset();
 }
 }

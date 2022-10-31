@@ -4244,7 +4244,12 @@ static void formControlJS(Tag *t)
 	int isradio = (itype == INP_RADIO);
 	bool isselect = (itype == INP_SELECT);
 	bool ista = (itype == INP_TA);
-	const char *whichclass = (isselect ? "HTMLSelectElement" : (ista ? "HTMLTextAreaElement" : "HTMLInputElement"));
+/* this doesn't work because I convert button with no type to submit,
+ * in htmlInputHelper(), I don't even know why I do that.
+	bool isbutton = (itype == INP_BUTTON);
+ */
+	bool isbutton = stringEqual(t->info->name, "button");
+	const char *whichclass = (isselect ? "HTMLSelectElement" : (ista ? "HTMLTextAreaElement" : isbutton ? "HTMLButtonElement" : "HTMLInputElement"));
 	const Tag *form = t->controller;
 
 	if (form && form->jslink)

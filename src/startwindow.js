@@ -675,6 +675,11 @@ Object.defineProperty(HTMLInputElement.prototype, "checked", {
 get: function() { return this.checked$2 ? true : false; },
 set: mw$.checkset});
 
+HTMLButtonElement = function(){}
+HTMLButtonElement.prototype = new HTMLElement;
+HTMLButtonElement.prototype.dom$class = "Button";
+HTMLButtonElement.prototype.click = mw$.clickfn;
+
 HTMLTextAreaElement = function(){};
 HTMLTextAreaElement.prototype = new HTMLElement;
 HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
