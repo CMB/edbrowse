@@ -12,6 +12,8 @@ Automatically parse xml files received through xhr. Slight differences from html
 
 <include-fragment> tag
 
+Messages in Spanish.
+
 3.8.5
 s/x/y/$ command, and s$ shorthand.
 s/x/y/3g, from 3 on, like sed.

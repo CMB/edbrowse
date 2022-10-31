@@ -2960,11 +2960,11 @@ top:
 
 // Messages in your host language.
 static const char **messageArray;
-char eb_language[8];
+char eb_language[9];
 int eb_lang;
 const char *const supported_languages[] = { 0,
 	"english", "french", "portuguese", "polish",
-	"german", "russian", "italian",
+	"german", "russian", "italian", "spanish",
 };
 // don't forget allMonths in stringfile.c
 
@@ -3065,6 +3065,13 @@ See dircmp_alph() in stringfile.c
 	if (!strncmp(eb_language, "it", 2)) {
 		eb_lang = 7;
 		messageArray = msg_it;
+		type8859 = 1;
+		return;
+	}
+
+	if (!strncmp(eb_language, "es", 2)) {
+		eb_lang = 8;
+		messageArray = msg_es;
 		type8859 = 1;
 		return;
 	}

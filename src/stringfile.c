@@ -1153,6 +1153,7 @@ char *conciseTime(time_t t)
 		germanMonths,
 		englishMonths,
 		italMonths,
+		englishMonths,
 	};
 	struct tm *tm = localtime(&t);
 	sprintf(buffer, "%s %2d %d %02d:%02d",
