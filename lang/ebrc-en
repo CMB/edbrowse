@@ -1,4 +1,4 @@
-#  .ebrc: sample configuration file for edbrowse version 3.7.3
+#  .ebrc: sample configuration file for edbrowse version 3.8.5
 
 #  email account; you may have several.
 #  a gmail account, most people have one of these now adays.
@@ -123,12 +123,12 @@ agent = Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; S
 #  So   <gg elephants tigers   will call up google,
 #  looking for elephants and tigers together.
 function+gg {
+db0
 b http://www.google.com
 /<>/ i=~0
+db1
 /</ i1*
 /h3/p
-#  Search results by h3 heading only works if google recognizes your browser,
-#  so you might need to spoof to IE7.
 }
 
 #  Merriam-Webster dictionary lookup, ~1 is parameter 1, the word to look up.
@@ -151,8 +151,6 @@ ls=s
 # character limit when displaying a line; lines can be arbitrarily long inside.
 ll 700
 # other personal settings
-#  you may want ua2, so google searches have headings, and perhaps for other websites.
-#  Nobody knows who edbrowse is.
 }
 
 # and much more...
