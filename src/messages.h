@@ -35,7 +35,7 @@ extern const char *msg_ru[], ebrc_ru[], qrg_ru[];
 // Italian, Enrico Mioso, mrkiko.rs@gmail.com
 extern const char *msg_it[], ebrc_it[], qrg_it[];
 
-// Spanish, OriolPrieto, kimicaprieto@hotmail.com
+// Spanish, Oriol Prieto, kimicaprieto@hotmail.com
 extern const char *msg_es[], ebrc_es[], qrg_es[];
 
 /*********************************************************************

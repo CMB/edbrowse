@@ -146,7 +146,7 @@ falta cierre ]
 falta cierre )
 buffer vacío
 error en la expresión regular, %s
-eroor inesperado mientras se evaluava la expresión regular en la linea %d, probablemente utf8 inadecuado
+no se pudo obtener el fragmento html local\n
 cadena no encontrada
 número de linea demasiado largo
 número de linea negativo
@@ -277,11 +277,11 @@ no se puede renombrar el archivo a %s
 no se puede insertar carácter de vacío en un campo de entrada
 no se puede insertar carácter de nueva linea en un campo de entrada
 error de conexión % de SSL
-0
-0
-0
-0
-0
+inicio del historial
+final del historial
+%s no está disponible en modo irc
+utf8 inválido, considere establecer su8-
+no se pudo obtener el fragmento html de %s, código %ld\n
 no se puede leer datos del servidor
 %s no es una url
 descarga completa
@@ -713,7 +713,7 @@ múltiples links presentes, por favor usa %s1 hasta %s%d
 múltiples botones presentes, por favor usa %s1 hasta %s%d
 múltiuples imágenes presente, por favor usa %s1 hasta %s%d
 0
-0
+no se pudo obtener el fragmento de html\n
 0
 0
 0
