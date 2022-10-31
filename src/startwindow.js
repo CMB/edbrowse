@@ -217,7 +217,7 @@ document.activeElement = null;
 
 navigator = {};
 navigator.appName = "edbrowse";
-navigator["appCode Name"] = "edbrowse C/duktape";
+navigator["appCode Name"] = "edbrowse C/quickjs";
 /* not sure what product is about */
 navigator.product = "edbrowse";
 navigator.productSub = "3.7";
@@ -1766,10 +1766,6 @@ p.offsetWidth = 120;
 p.dir = "auto";
 })();
 
-// This is needed by mozilla, not by duktape, not sure how duktape
-// skates past it. See the first call to apch1 in decorate.c.
-// If this is <html> from the expanded frame, linking into an object
-// of class Document, not the window document, it still has to work.
 Document.prototype.eb$apch1 = document.eb$apch1;
 
 HTMLFormElement.prototype.appendChildNative = mw$.appendChild;
@@ -2548,5 +2544,15 @@ trustedTypes.createPolicy = function(pn,po){
 var x = {policyName: pn};
 for (var i in po) { x[i] = po[i]}
 return x;
+}
+
+function DOMException(m, n) { // constructor
+this.message = typeof m == "string" ? m : "";
+this.code = 0;
+if(typeof n == "string") {
+this.name = n;
+// we need to set code here, based on standard names, not yet implemented.
+alert3("DOMException name " + n);
+}
 }
 

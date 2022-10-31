@@ -2951,8 +2951,6 @@ regexpCheck(const char *line, bool isleft,
 			if ((ebre && strchr("()|", c))
 			    || (c == '^' && line != start && !cc))
 				*e++ = '\\';
-			if (c == '$' && d && d != delim)
-				*e++ = '\\';
 			if (!ebre && !cc
 			    && strchr("()|", c)) {
 				if (c == '|')
