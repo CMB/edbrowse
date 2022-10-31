@@ -2556,3 +2556,10 @@ alert3("DOMException name " + n);
 }
 }
 
+function EventTarget() {}
+EventTarget.prototype.eb$listen = eb$listen;
+EventTarget.prototype.eb$unlisten = eb$unlisten;
+EventTarget.prototype.addEventListener = addEventListener;
+EventTarget.prototype.removeEventListener = removeEventListener;
+EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
+
