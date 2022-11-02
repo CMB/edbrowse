@@ -2946,12 +2946,14 @@ regexpCheck(const char *line, bool isleft,
 		if (c == delim && !cc)
 			break;
 
-/* Remember, I reverse the sense of ()| */
 		if (isleft) {
-			if ((ebre && strchr("()|", c))
-			    || (c == '^' && line != start && !cc))
+// Remember, I reverse the sense of ()|
+			if (ebre && strchr("()|", c))
 				*e++ = '\\';
-/* ed and sed treat $ as a literal $ when it is not at the end of a group */
+// treat ^ as a literal ^ when it is not at the start of a group
+			if(ebre && c == '^' && !cc && ondeck)
+				*e++ = '\\';
+// treat $ as a literal $ when it is not at the end of a group
 			if (ebre && c == '$' && d && d != delim &&
 			(d != '\\' || (line[2] != ')' && line[2] != '|')))
 				*e++ = '\\';
@@ -2989,8 +2991,7 @@ regexpCheck(const char *line, bool isleft,
 		++line;
 
 /* No more checks for the rhs */
-		if (!isleft)
-			continue;
+		if (!isleft) continue;
 
 		if (cc) {	/* character class */
 			if (c == '[' && *line == ':') {
