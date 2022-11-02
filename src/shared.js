@@ -2355,6 +2355,14 @@ var o = {construct:c};
 cr[name] = o;
 }
 
+function cel_get(name) {
+var w = my$win();
+var cr = w.cel$registry;
+if(typeof name != "string" || !name.match(/.-./)) throw new Error("SyntaxError");
+var o = cr[name];
+return o ? o.construct : undefined;
+}
+
 // jtfn0 injects trace(blah) into the code.
 // It should only be applied to deminimized code.
 // jtfn1 puts a name on the anonymous function, for debugging.
@@ -4871,7 +4879,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "URL", "File", "FileReader", "Blob", "FormData",
 "TextEncoder", "TextDecoder",
 "MessagePortPolyfill", "MessageChannelPolyfill",
-"clickfn", "checkset", "cel_define",
+"clickfn", "checkset", "cel_define", "cel_get",
 "jtfn0", "jtfn1", "jtfn2", "jtfn3", "deminimize", "addTrace",
 "url_rebuild", "url_hrefset", "sortTime",
 "xml_open", "xml_srh", "xml_grh", "xml_garh", "xml_send", "xml_parse",

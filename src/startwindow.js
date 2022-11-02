@@ -891,7 +891,10 @@ includes: eb$falsefunction
 };
 
 cel$registry = {}; // custom elements registry
-Object.defineProperty(window, "customElements", {get:function(){ return {define:mw$.cel_define}}});
+Object.defineProperty(window, "customElements", {get:function(){ return {
+define:mw$.cel_define,
+get:mw$.cel_get,
+}}});
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
@@ -2056,7 +2059,7 @@ return null;
 var t = s.toLowerCase();
 
 // check for custom elements first
-var x = cel$registry[t];
+var x = cel$registry[s];
 if(x) { // here we go
 c = new x.construct;
 if(c instanceof HTMLElement) {
