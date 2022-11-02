@@ -1,4 +1,4 @@
-# .ebrc: Beispielkonfiguration für Edbrowse 3.7.3
+# .ebrc: Beispielkonfiguration für Edbrowse
 
 # Email-Konto, ggf. haben Sie mehrere
 # Ein Gmail-Konto haben, welche die meisten heutzutage haben.
@@ -117,7 +117,7 @@ outtype = T
 
 # Jedesmal wenn Sie eine Datei aus dem Internet laden, identifiziert sich Ihr
 # Browser gegenüber dem Server.
-# Hier sind einige alternative Angaben, der Standard ist edbrowse 3.7.3.
+# Hier sind einige alternative Angaben, der Standard ist edbrowse
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 
@@ -125,8 +125,10 @@ agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 # Wie wäre es mit einem Skript, um auf Google zuzugreifen.
 # <gg Elefanten Tiger ruft Google auf und sucht nach "Elefanten Tigern".
 function+gg {
+db0
 b http://www.google.com
 /<>/ i=~0
+db1
 /</ i1*
 /h3/p
 }

@@ -1,4 +1,4 @@
-# .ebrc: exemplo de arquivo de configuração para edbrowse, versão 3.7.3
+# .ebrc: exemplo de arquivo de configuração para edbrowse
 
 # conta de e-mail; você pode ter várias.
 # uma conta do GMail, muita gente possui uma dessas hoje em dia.
@@ -115,7 +115,7 @@ outtype = T
 
 # Toda vez que você baixa uma página da internet,
 # o navegador identifica-se para o servidor.
-# Heis alguns agentes alternativos, o padrão é edbrowse 3.7.3
+# Heis alguns agentes alternativos, o padrão é edbrowse
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 
@@ -124,8 +124,10 @@ agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 # Aí <gg elefantes tigres   vai chamar o Google,
 # procurando elefantes e também tigres.
 function+gg {
+db0
 b http://www.google.com
 /<>/ i=~0
+db1
 /</ i1*
 /h3/p
 }

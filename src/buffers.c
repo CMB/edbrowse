@@ -2951,6 +2951,10 @@ regexpCheck(const char *line, bool isleft,
 			if ((ebre && strchr("()|", c))
 			    || (c == '^' && line != start && !cc))
 				*e++ = '\\';
+/* ed and sed treat $ as a literal $ when it is not at the end of a group */
+			if (ebre && c == '$' && d && d != delim &&
+			(d != '\\' || (line[2] != ')' && line[2] != '|')))
+				*e++ = '\\';
 			if (!ebre && !cc
 			    && strchr("()|", c)) {
 				if (c == '|')
@@ -3520,10 +3524,18 @@ static int replaceText(const char *line, int len, const char *rhs,
 		++instance;	// found another match
 		lastoffset = offset;
 		offset = re_vector[1];	/* ready for next iteration */
+		debugPrint(7, "nth %d,%d offset %d,%d", nth, instance, offset, lastoffset);
 		if (offset == lastoffset && (nth > 1 || (global|last))) {
-			setError(MSG_ManyEmptyStrings);
-			nzFree(r);
-			return -1;
+// if offset = 0 then we are replacing nothingness at the start of the line
+// if offset > 0 then this is the second time we are replacing the same nothingness
+			if(offset < len) {
+				setError(MSG_ManyEmptyStrings);
+				nzFree(r);
+				return -1;
+			}
+// replace emptiness at the end is ok   s/f\|$/z/g
+			nth = instance, global = last = false;
+			if(offset > 0) break;
 		}
 
 		if (!global &&instance != nth)

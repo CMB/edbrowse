@@ -1,4 +1,4 @@
-#  .ebrc: przykładowy plik konfiguracyjny dla ebrowse w wersji 3.7.3
+#  .ebrc: przykładowy plik konfiguracyjny dla ebrowse
 
 #  Konto email; możesz posiadać kilka.
 #  Konto GMail, obecnie bardzo wiele osób je posiada.
@@ -114,7 +114,7 @@ outtype = T
 
 #  Za każdym razem gdy pobierasz stronę z internetu,
 #  przeglądarka identyfikuje się przed hostem.
-#  Poniżej lista kilku alternatywnych agentów, domyślna wartość to edbrowse 3.7.3
+#  Poniżej lista kilku alternatywnych agentów, domyślna wartość to edbrowse
 agent = Lynx/2.8.4rel.1 libwww-FM/2.14
 agent = Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)
 
@@ -123,12 +123,12 @@ agent = Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; S
 #  A więc   '<gg elephants tigers'   wywoła Google
 #  z wyszukiwaniem frazy 'elephants tigers'
 function+gg {
+db0
 b http://www.google.com
 /<>/ i=~0
+db1
 /</ i1*
 /h3/p
-#  Przeszukiwanie wyników po nagłówku h3 działa tylko wtedy gdy Google rozpoznaje twoją przeglądarkę,
-#  więc musisz podszyć się np. pod IE7.
 }
 
 #  wyszukiwanie w słowniku Merriam-Webster, ~1 to parametr 1, wyszukiwane słowo.
@@ -150,8 +150,6 @@ dw
 ls=s
 # Limit znaków przy wyświetlaniu wierszy; wiersze nie mają ograniczeń rzeczywistej długości.
 ll 700
-# pozostałe ustawienia osobiste
-#  możesz potrzebować ua2 by wyszukiwania w Google miały nagłówki
 #  Nikt nie zna przeglądarki edbrowse.
 }
 

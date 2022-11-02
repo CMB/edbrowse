@@ -3602,7 +3602,7 @@ top:
 			ircSend(w, "PING %s", w->f0.hbase);
 			w->ircPingOut = true;
 		} else if(ircNow - w->ircRespond >= 550 && w->ircPingOut) {
-			emsg = "irc ping timeout";
+			emsg = " irc server timeout";
 			goto teardown;
 		}
 		return;

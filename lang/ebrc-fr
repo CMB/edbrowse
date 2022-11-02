@@ -1,4 +1,4 @@
-# .ebrc: exemple de fichier de configuration pour edbrowse version 3.7.3
+# .ebrc: exemple de fichier de configuration pour edbrowse
 
 # compte mail : vous pouvez en avoir plusieurs
 # un compte gmail : la plupart des gens en ont un aujourd'hui
@@ -116,8 +116,10 @@ agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 # Ainsi, <gg éléphants tigres appellera google
 # pour chercher éléphants et tigres
 function+gg {
+db0
 b http://www.google.com
 /<>/ i=~0
+db1
 /</ i1*
 /h3/p
 }
