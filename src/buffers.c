@@ -2951,7 +2951,8 @@ regexpCheck(const char *line, bool isleft,
 			if (ebre && strchr("()|", c))
 				*e++ = '\\';
 // treat ^ as a literal ^ when it is not at the start of a group
-			if(ebre && c == '^' && !cc && ondeck)
+			if(ebre && c == '^' && !cc && (ondeck ||
+			(e > re && (e[-1] != '(' && e[-1] != '|'))))
 				*e++ = '\\';
 // treat $ as a literal $ when it is not at the end of a group
 			if (ebre && c == '$' && d && d != delim &&
