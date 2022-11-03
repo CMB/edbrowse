@@ -2571,3 +2571,20 @@ EventTarget.prototype.addEventListener = addEventListener;
 EventTarget.prototype.removeEventListener = removeEventListener;
 EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
 
+function AbortSignal(){}
+AbortSignal.prototype = new EventTarget;
+AbortSignal.prototype.aborted = false;
+AbortSignal.prototype.reason = 0;
+AbortSignal.prototype.throwIfAborted = eb$voidfunction;
+AbortSignal.aborted = function(){ var c = new AbortSignal(); c.aborted = true; return c; }
+AbortSignal.timeout = function(ms){ var c = new AbortSignal();
+// this is suppose to abort after a timeout period but I don't know how to do that
+if(typeof ms == "number") alert3("abort after " + ms + "ms not implemented");
+return c; }
+
+function AbortController(){}
+Object.defineProperty(AbortController.prototype, "signal",
+{get:function(){return new AbortSignal}});
+AbortController.prototype.abort = function(){
+alert3("abort dom request not implemented"); }
+
