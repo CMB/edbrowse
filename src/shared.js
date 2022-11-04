@@ -574,14 +574,46 @@ this[evarray] = [];
 var prev_fn = this[ev];
 if(prev_fn && handler == prev_fn) {
 if(db$flags(1)) alert3("handler duplicates orig");
-delete this[ev];
+return;
 }
 
-for(var j=0; j<this[evarray].length; ++j)
+for(var j=0; j<this[evarray].length; ++j) {
 if(this[evarray][j] == handler) {
-if(db$flags(1)) alert3("handler is duplicate, move to the end");
-this[evarray].splice(j, 1);
-break;
+if(db$flags(1)) alert3("handler is duplicate, do not add");
+return;
+}
+/*********************************************************************
+And now for a problem we found on
+https://github.com/validator/validator/releases/tag/20.6.30
+The handler is an anonymous function inside another function a().
+in other words, a() adds this handler to window.onload.
+the handler then calls a(), which adds the handler again,
+a duplicate, which I tried to check for in the previous block.
+It's the exact same code, already compiled, but a new
+object is created for this handler, so it can be a local variable in the
+running instance of a().
+It is illustrated by this code fragment, which you can run through any js engine.
+look = [];
+function a(n) { look[n] = function(){return77}}
+a(0),a(1);
+print(look[0]==look[1])
+print(look[0].toString()==look[1].toString())
+So I'm going to run a toString() test here, and hope it doesn't produce
+any false positives. When in doubt run db3 and dbev
+so you can see what is going on.
+Bad news, acid3 test 31 presents this very yfalse positive.
+Two separate handlers with exactly the same code.
+So I also check for fileName and lineNumber.
+This makes false positives less likely, but not impossible.
+Remember those minimized javascript files that are all on one line.
+fileName and lineNumber will always agree.   Ugh!
+*********************************************************************/
+if(this[evarray][j].toString() == handler.toString() &&
+this[evarray][j].fileName == handler.fileName &&
+this[evarray][j].lineNumber == handler.lineNumber) {
+if(db$flags(1)) alert3("handler is duplicate by toString(), do not add");
+return;
+}
 }
 
 this[evarray].push(handler);
