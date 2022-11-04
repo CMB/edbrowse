@@ -7509,6 +7509,17 @@ rebrowse:
 /* Same url, but a different #section */
 			s = findHash(line);
 			if (!s) {	// no section specified
+// jump to line 1, if there is a line 1
+				if(!cw->dot) {
+					if(debugLevel >= 1)
+						i_puts(MSG_Empty);
+					return true;
+				}
+				if(cw->dot == 1) {
+					if(debugLevel >= 1)
+						printDot();
+					return true;
+				}
 				struct histLabel *label =
 				    allocMem(sizeof(struct histLabel));
 				label->label = cw->dot;
