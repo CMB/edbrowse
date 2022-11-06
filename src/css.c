@@ -1897,8 +1897,7 @@ top:
 		goto up;
 
 	rc = (strncmp(v, lang, l) || !(v[l] == 0 || v[l] == '-'));
-	if (valloc)
-		nzFree(v);
+	if (valloc) nzFree(v);
 	return !rc;
 
 up:
@@ -2181,14 +2180,12 @@ if(!t) {
 			if (!v)
 				return false;
 			if (!cutc) {
-				if (valloc)
-					nzFree(v);
+				if (valloc) nzFree(v);
 				goto next_mod;
 			}
 			if (cutc == '=') {	// easy case
 				rc = (stringEqual(v, value));
-				if (valloc)
-					nzFree(v);
+				if (valloc) nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
@@ -2196,16 +2193,19 @@ if(!t) {
 			if (cutc == '|') {
 				rc = (!strncmp(v, value, l)
 				      && (v[l] == 0 || v[l] == '-'));
-				if (valloc)
-					nzFree(v);
+				if (valloc) nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
 			}
+// Nothing should be selected when empty strings follow ^= or $= or *=
+			if(!*value) {
+				if (valloc) nzFree(v);
+				return false;
+			}
 			if (cutc == '^') {
 				rc = !strncmp(v, value, l);
-				if (valloc)
-					nzFree(v);
+				if (valloc) nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
@@ -2216,16 +2216,14 @@ if(!t) {
 				rc = false;
 				if (l1 >= l2)
 					rc = !strncmp(v + l1 - l2, value, l);
-				if (valloc)
-					nzFree(v);
+				if (valloc) nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
 			}
 			if (cutc == '*') {
 				rc = (! !strstr(v, value));
-				if (valloc)
-					nzFree(v);
+				if (valloc) nzFree(v);
 				if (rc)
 					goto next_mod;
 				return false;
@@ -2238,12 +2236,10 @@ if(!t) {
 					continue;
 				if (q[l] && !isspaceByte(q[l]))
 					continue;
-				if (valloc)
-					nzFree(v0);
+				if (valloc) nzFree(v0);
 				goto next_mod;
 			}
-			if (valloc)
-				nzFree(v0);
+			if (valloc) nzFree(v0);
 			return false;
 		}
 // At this point c should be a colon.
