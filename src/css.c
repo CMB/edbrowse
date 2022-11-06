@@ -2044,10 +2044,11 @@ static bool inputLike(Tag *t, int flavor)
 		"button", "submit", "reset", "hidden", 0
 	};
 	action = t->action;
-	rc = (action == TAGACT_INPUT || action == TAGACT_SELECT);
+	rc = (action == TAGACT_INPUT || action == TAGACT_SELECT || action == TAGACT_OPTION);
 	if (!rc)
 		return false;
 	if (flavor == 1) {	// clickable
+		if(action == TAGACT_OPTION) return true;
 		v = get_property_string_t(t, "type");
 		rc = (action == TAGACT_INPUT && v &&
 						  stringInList(clicktypes, v) >= 0);
@@ -2199,7 +2200,7 @@ if(!t) {
 				return false;
 			}
 // Nothing should be selected when empty strings follow ^= or $= or *=
-			if(!*value) {
+			if(!l) {
 				if (valloc) nzFree(v);
 				return false;
 			}
@@ -2474,7 +2475,8 @@ all the div sections just below the current node.
 				if (bulkmatch)
 					rc = t->checked;
 				else
-					rc = get_property_bool_t(t, "checked");
+					rc = get_property_bool_t(t, "checked")
+					| get_property_bool_t(t, "selected");
 			}
 			if (rc)
 				goto next_mod;
