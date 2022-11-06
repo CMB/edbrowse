@@ -3756,6 +3756,7 @@ void formControl(Tag *t, bool namecheck)
 }
 
 const char *const inp_types[] = {
+	"none",
 	"reset", "button", "image", "submit",
 	"hidden", "text", "file",
 	"select", "textarea", "radio", "checkbox",

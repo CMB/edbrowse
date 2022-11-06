@@ -700,6 +700,7 @@ enum {
 
 // htmlTag.itype, The order of these is important!
 enum {
+	INP_NONE,
 	INP_RESET, INP_BUTTON, INP_IMAGE, INP_SUBMIT,
 	INP_HIDDEN, INP_TEXT, INP_FILE,
 	INP_SELECT, INP_TA, INP_RADIO, INP_CHECKBOX,

@@ -2441,10 +2441,22 @@ all the div sections just below the current node.
 		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
 			rc = false;
 			if (inputLike(t, 0)) {
-				if (bulkmatch)
+// input type hidden is considered disabled
+// assume type of input will not change
+				if(t->action == TAGACT_INPUT && t->itype == INP_HIDDEN)
+					rc = true;
+				else if (bulkmatch)
 					rc = t->disabled;
-				else
+				else {
 					rc = get_property_bool_t(t, "disabled");
+					if(!rc && t->action == TAGACT_INPUT) {
+// check type set to hidden
+						char *itype = get_property_string_t(t, "type");
+						if(stringEqualCI(itype, "hidden"))
+							rc = true;
+						nzFree(itype);
+					}
+				}
 				if (p[1] == 'e')
 					rc ^= 1;
 			}

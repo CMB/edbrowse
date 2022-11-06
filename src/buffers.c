@@ -3789,7 +3789,7 @@ findField(const char *line, int ftype, int n,
 				}
 				++nrt;
 				t = tagList[j];
-				if (ftype == 1 && t->itype <= INP_SUBMIT)
+				if (ftype == 1 && t->itype && t->itype <= INP_SUBMIT)
 					continue;
 				if (ftype == 2 && t->itype > INP_SUBMIT)
 					continue;
