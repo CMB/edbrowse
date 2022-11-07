@@ -2045,8 +2045,7 @@ static bool inputLike(Tag *t, int flavor)
 	};
 	action = t->action;
 	rc = (action == TAGACT_INPUT || action == TAGACT_SELECT || action == TAGACT_OPTION);
-	if (!rc)
-		return false;
+	if (!rc) return false;
 	if (flavor == 1) {	// clickable
 		if(action == TAGACT_OPTION) return true;
 		v = get_property_string_t(t, "type");
@@ -2081,6 +2080,20 @@ criteria in qsa2() and qsaMatchGroup(), so we need not test for those here.
 *********************************************************************/
 
 static bool qsaMatchChain(Tag *t, const struct asel *a);
+static bool upDisabled(const Tag *t)
+{
+	int action = t->action;
+	bool rc;
+	if(action == TAGACT_TEMPLATE || action == TAGACT_HTML || action == TAGACT_FRAME)
+		return false;
+	if (bulkmatch) rc = t->disabled;
+	else rc = get_property_bool_t(t, "disabled");
+	if(rc) return true;
+// option doesn't inherit disabled from above
+	if(action == TAGACT_OPTION) return false;
+	if(!t->parent) return false;
+	return upDisabled(t->parent);
+}
 
 static bool qsaMatch(Tag *t, const struct asel *a)
 {
@@ -2441,22 +2454,7 @@ all the div sections just below the current node.
 		if (stringEqual(p, ":enabled") || stringEqual(p, ":disabled")) {
 			rc = false;
 			if (inputLike(t, 0)) {
-// input type hidden is considered disabled
-// assume type of input will not change
-				if(t->action == TAGACT_INPUT && t->itype == INP_HIDDEN)
-					rc = true;
-				else if (bulkmatch)
-					rc = t->disabled;
-				else {
-					rc = get_property_bool_t(t, "disabled");
-					if(!rc && t->action == TAGACT_INPUT) {
-// check type set to hidden
-						char *itype = get_property_string_t(t, "type");
-						if(stringEqualCI(itype, "hidden"))
-							rc = true;
-						nzFree(itype);
-					}
-				}
+				rc = upDisabled(t);
 				if (p[1] == 'e')
 					rc ^= 1;
 			}
