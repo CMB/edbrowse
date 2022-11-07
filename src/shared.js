@@ -98,7 +98,7 @@ This uses document.scripts and getElementsByTagname() so you see
 all the scripts, hopefully, not just those that were in the original html.
 The list is left in $ss for convenient access.
 my$win() is used to get the window of the running context, where you are,
-as there are no scripts in the shared window, where this is compiled.
+rather than this window, which is often not what you want.
 *********************************************************************/
 
 function showscripts() {

@@ -57,7 +57,7 @@ eb$cssText = function(){}
 // Other stuff too, that can be shared.
 // The window should just be there from C, but in case it isn't.
 if(!window.mw$)
-mw$ = {compiled: false, share:false, URL:{}};
+mw$ = {share:false, URL:{}};
 
 if(mw$.share) { // point to native methods in the master window
 my$win = mw$.my$win, my$doc = mw$.my$doc;

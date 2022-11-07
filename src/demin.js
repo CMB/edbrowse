@@ -11866,5 +11866,3 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 }.call(this, this));
 
 Object.defineProperty(Object.prototype, "constructor",{enumerable:false,writable:false,configurable:false});
-// Mark the master window as irrevocably compiled.
-Object.defineProperty( this, "compiled", {value:true, writable:false, configurable:false, enumerable:true});
