@@ -343,7 +343,6 @@ else e.insertBefore(b, e.childNodes[i]);
 // wrapper to turn function blah{ my js code } into function blah{ [native code] }
 // This is required by sanity tests in jquery and other libraries.
 function wrapString() {
-// I don't understand why [.\n]* doesn't work in this regexp
 return Object.toString.bind(this)().replace(/\([\u0000-\uffff]*/, "() {\n    [native code]\n}");
 }
 
@@ -432,7 +431,6 @@ if(s === "") return new (my$win().Array);
 var sa = s.split(/\s+/);
 return eb$gebcn(this, sa, true);
 }
-getElementsByClassName.toString = wrapString;
 
 function eb$gebcn(top, sa, first) {
 var a = new (my$win().Array);
@@ -4880,11 +4878,29 @@ if (typeof Blob !== 'undefined' && (typeof FormData === 'undefined' || !FormData
 for(var k in URLSearchParams.prototype)
 Object.defineProperty(URLSearchParams.prototype, k,{writable:false,configurable:false});
 
+var flist = [
+getElementsByTagName, getElementsByClassName, getElementsByName, getElementById,nodeContains,
+dispatchEvent,
+NodeFilter,createNodeIterator,createTreeWalker,
+appendChild, prependChild, insertBefore, removeChild, replaceChild, hasChildNodes,
+insertAdjacentElement,append, prepend, before, after, replaceWith,
+getAttribute, getAttributeNames, getAttributeNS,
+hasAttribute, hasAttributeNS,
+setAttribute, markAttribute, setAttributeNS,
+removeAttribute, removeAttributeNS, getAttributeNode,
+compareDocumentPosition,
+getComputedStyle,
+insertAdjacentHTML,URL,
+TextEncoder, TextDecoder,
+];
+for(var i=0; i<flist.length; ++i)
+Object.defineProperty(flist[i], "toString",{value:wrapString});
+
 // I told you I wouldn't forget these
 Object.defineProperty(Object.prototype, "toString",{enumerable:false,writable:false,configurable:false});
 Object.defineProperty(Function.prototype, "toString",{enumerable:false,writable:false,configurable:false});
 
-var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
+flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "Error", "String", "parseInt", "Event",
 "alert","alert3","alert4","dumptree","uptrace",
 "showscripts", "showframes", "searchscripts", "snapshot", "aloop",
@@ -4897,8 +4913,7 @@ var flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
-"dispatchEvent","addEventListener","removeEventListener","attachOn",
-"attachEvent","detachEvent","eb$listen","eb$unlisten",
+"dispatchEvent","eb$listen","eb$unlisten",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
 "classList","classListAdd","classListRemove","classListReplace","classListToggle","classListContains",
@@ -4934,7 +4949,7 @@ for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 // some class prototypes
-var flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams];
+flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 
