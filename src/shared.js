@@ -2599,13 +2599,8 @@ var w = my$win(), d = my$doc(), inconstruct = true;
 if(v === null || v === undefined) v = "";
 if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
 if(typeof v != "string") return;
-if(typeof this.href$val == "string") {
-// Ok, we already had a url, and here's another one.
-// I think we're suppose to resolve it against what was already there,
-// so that /foo against www.xyz.com becomes www.xyz.com/foo
-if(v) v = eb$resolveURL(this.href$val, v);
-inconstruct = false;
-}
+// return or blow up if v is not a url; not yet implemented
+if(typeof this.href$val == "string") inconstruct = false;
 if(inconstruct) {
 Object.defineProperty(this, "href$val", {enumerable:false, writable:true, value:v});
 Object.defineProperty(this, "protocol$val", {enumerable:false, writable:true, value:""});
@@ -2711,7 +2706,7 @@ this.readyState = 1;
 this.async = (async === false)?false:true;
 this.method = method || "GET";
 alert3("xhr " + (this.async ? "async " : "") + "open " + this.method + " " + url);
-this.url = eb$resolveURL(my$win().eb$base, url);
+this.url = resolveURL(my$win().eb$base, url);
 this.status = 0;
 this.statusText = "";
 };
@@ -4907,7 +4902,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "showarg", "showarglist",
 "eb$base$snapshot", "set_location_hash",
 "eb$newLocation","eb$logElement",
-"eb$resolveURL", "eb$fetchHTTP",
+"resolveURL", "eb$fetchHTTP",
 "setTimeout", "clearTimeout", "setInterval", "clearInterval",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "wrapString",

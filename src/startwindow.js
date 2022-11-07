@@ -64,7 +64,6 @@ my$win = mw$.my$win, my$doc = mw$.my$doc;
 natok = mw$.natok, db$flags = mw$.db$flags;
 eb$voidfunction = mw$.eb$voidfunction, eb$nullfunction = mw$.eb$nullfunction, eb$truefunction = mw$.eb$truefunction, eb$falsefunction = mw$.eb$falsefunction;
 close = mw$.win$close;
-eb$resolveURL = mw$.eb$resolveURL;
 eb$visible = mw$.eb$visible;
 atob = mw$.atob, btoa = mw$.btoa;
 prompt = mw$.prompt, confirm = mw$.confirm;
@@ -344,7 +343,7 @@ I don't have any practical way to share this class. So here we go.
 z$URL = URL = function() {
 var h = "";
 if(arguments.length == 1) h= arguments[0];
-if(arguments.length == 2) h= eb$resolveURL(arguments[1], arguments[0]);
+if(arguments.length == 2) h= mw$.resolveURL(arguments[1], arguments[0]);
 this.href = h;
 }
 Object.defineProperty(URL.prototype, "dom$class", {value:"URL"})
@@ -940,9 +939,8 @@ w.hrefset$a.push(h); \
 return; } \
 /* h is a string version of the url. Dont know what to do if h is empty. */ \
 if(!h) return; \
+/* return or blow up if h is not a url, not yet emplemented */ \
 var last_href = (this.href$2 ? this.href$2.toString() : null); \
-/* resolve h against the base */ \
-h = eb$resolveURL(w.eb$base,h); \
 this.href$2 = new z$URL(h); \
 /* special code for setting frame.src, redirect to a new page. */ \
 if(this.dom$class == "Frame" && this.eb$expf && last_href != h) { \
@@ -986,8 +984,6 @@ w.hrefset$a.push(h); \
 return; } \
 if(!h) return; \
 var last_href = (this.href$2 ? this.href$2 : null); \
-/* resolve h against the base */ \
-h = eb$resolveURL(w.eb$base,h); \
 this.href$2 = h; \
  }});');
 }
