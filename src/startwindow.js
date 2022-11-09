@@ -471,14 +471,24 @@ Element = HTMLElement = function(){};
 HTMLElement.prototype = new Node;
 HTMLElement.prototype.dom$class = "HTMLElement";
 Object.defineProperty(HTMLElement.prototype, "name", {
-get: function() { return this.name$2; },
-set: function(n) { var f; if(f = this.form) {
-if(this.name$2 && f[this.name$2] == this) delete f[this.name$2];
-if(this.name$2 && f.elements[this.name$2] == this) delete f.elements[this.name$2];
+get: function() {
+var isinput = (this.dom$class == "Input" || this.dom$class == "Button" || this.dom$class == "Select");
+if(!isinput) return this.name$2 ;
+// name property is automatically in the getAttribute system, acid test 53
+var t = this.getAttribute("name");
+return typeof t == "string" ? t : undefined}, 
+set: function(n) {
+var isinput = (this.dom$class == "Input" || this.dom$class == "Button" || this.dom$class == "Select");
+if(!isinput) { this.name$2 = n; return; }
+var f = this.form;
+if(f && f.dom$class == "Form") {
+var oldname = this.getAttribute("name");
+if(oldname && f[oldname] == this) delete f[oldname];
+if(oldname && f.elements[oldname] == this) delete f.elements[oldname];
 if(!f[n]) f[n] = this;
 if(!f.elements[n]) f.elements[n] = this;
 }
-this.name$2 = n;
+this.setAttribute("name", n);
 }});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
@@ -673,11 +683,24 @@ HTMLInputElement.prototype.click = mw$.clickfn;
 Object.defineProperty(HTMLInputElement.prototype, "checked", {
 get: function() { return this.checked$2 ? true : false; },
 set: mw$.checkset});
+// type property is automatically in the getAttribute system, acid test 53
+Object.defineProperty(HTMLInputElement.prototype, "type", {
+get:function(){ var t = this.getAttribute("type");
+// input type is special, tidy converts it to lower case, so I will too.
+// Also acid test 54 requires it.
+return typeof t == "string" ? t.toLowerCase() : undefined; },
+set:function(v) { this.setAttribute("type", v);}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
 HTMLButtonElement.prototype.dom$class = "Button";
 HTMLButtonElement.prototype.click = mw$.clickfn;
+// type property is automatically in the getAttribute system, acid test 59
+Object.defineProperty(HTMLButtonElement.prototype, "type", {
+get:function(){ var t = this.getAttribute("type");
+// default is submit, acid test 59
+return typeof t == "string" ? t.toLowerCase() : "submit"; },
+set:function(v) { this.setAttribute("type", v);}});
 
 HTMLTextAreaElement = function(){};
 HTMLTextAreaElement.prototype = new HTMLElement;
@@ -1494,16 +1517,8 @@ width: 0, height: 0
 }
 
 // The Attr class and getAttributeNode().
-Attr = function(){ this.specified = false; this.owner = null; this.name = ""};
+Attr = function(){ this.owner = null; this.name = ""};
 Attr.prototype.dom$class = "Attr";
-Object.defineProperty(Attr.prototype, "value", {
-get: function() { var n = this.name;
-return n.substr(0,5) == "data-" ? (this.owner.dataset$2 ? this.owner.dataset$2[mw$.dataCamel(n)] :  null)  : this.owner[n]; },
-set: function(v) {
-this.owner.setAttribute(this.name, v);
-this.specified = true;
-return;
-}});
 Attr.prototype.isId = function() { return this.name === "id"; }
 
 // this is sort of an array and sort of not.
@@ -1522,7 +1537,6 @@ document.getAttributeNames = mw$.getAttributeNames;
 document.getAttributeNS = mw$.getAttributeNS;
 document.hasAttributeNS = mw$.hasAttributeNS;
 document.setAttribute = mw$.setAttribute;
-document.markAttribute = mw$.markAttribute;
 document.setAttributeNS = mw$.setAttributeNS;
 document.removeAttribute = mw$.removeAttribute;
 document.removeAttributeNS = mw$.removeAttributeNS;
@@ -1705,7 +1719,6 @@ return children;
 // attributes
 p.hasAttribute = mw$.hasAttribute;
 p.hasAttributeNS = mw$.hasAttributeNS;
-p.markAttribute = mw$.markAttribute;
 p.getAttribute = mw$.getAttribute;
 p.getAttributeNS = mw$.getAttributeNS;
 p.getAttributeNames = mw$.getAttributeNames;
@@ -1713,10 +1726,7 @@ p.setAttribute = mw$.setAttribute;
 p.setAttributeNS = mw$.setAttributeNS;
 p.removeAttribute = mw$.removeAttribute;
 p.removeAttributeNS = mw$.removeAttributeNS;
-/* which one is it?
 Object.defineProperty(p, "className", { get: function() { return this.getAttribute("class"); }, set: function(h) { this.setAttribute("class", h); }});
-*/
-Object.defineProperty(p, "className", { get: function() { return this.class; }, set: function(h) { this.class = h; }});
 Object.defineProperty(p, "parentElement", { get: function() { return this.parentNode && this.parentNode.nodeType == 1 ? this.parentNode : null; }});
 p.getAttributeNode = mw$.getAttributeNode;
 p.getClientRects = function(){ return []; }
@@ -2126,7 +2136,7 @@ case "form": c = new HTMLFormElement; break;
 case "input": c = new HTMLInputElement; break;
 case "textarea": c = new HTMLTextAreaElement; c.type = t; break;
 case "element": c = new HTMLElement; break;
-case "button": c = new HTMLInputElement; c.type = "submit"; break;
+case "button": c = new HTMLButtonElement; break;
 default:
 unknown = true;
 // alert("createElement default " + s);
@@ -2135,10 +2145,6 @@ c = new HTMLElement;
 
 c.childNodes = [];
 c.parentNode = null;
-if(t == "input") { // name and type are automatic attributes acid test 53
-c.setAttribute("name", "");
-c.setAttribute("type", "");
-}
 // Split on : if this comes from a name space
 var colon = t.split(':');
 if(colon.length == 2) {
@@ -2148,6 +2154,9 @@ c.prefix = colon[0], c.localName = colon[1];
 c.nodeName = c.tagName = unknown ? s : s.toUpperCase();
 c.class = "";
 if(c.nodeType == 1) c.id = c.name = "";
+if(t == "input") { // name and type are automatic attributes acid test 53
+c.name = c.type = "";
+}
 eb$logElement(c, s);
 return c;
 } 

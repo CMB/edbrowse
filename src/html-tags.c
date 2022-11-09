@@ -1356,37 +1356,29 @@ static void findAttributes(const char *start, const char *end)
 		if (v && !*v) v = 0;
 		if (v) {
 			v = resolveURL(cf->hbase, v);
-			cnzFree(t->atvals[j]);
-			t->atvals[j] = v;
 			if (action == TAGACT_BASE && !cf->baseset) {
 				nzFree(cf->hbase);
 				cf->hbase = cloneString(v);
 				cf->baseset = true;
 			}
-			t->href = cloneString(v);
+// first href wins
+			if(!t->href) t->href = (char*)v;
+			else cnzFree(v);
 		}
 	}
 	if ((j = stringInListCI(t->attributes, "src")) >= 0) {
 		v = t->atvals[j];
 		if (v && !*v) v = 0;
-		if (v) {
-			v = resolveURL(cf->hbase, v);
-			cnzFree(t->atvals[j]);
-			t->atvals[j] = v;
-			if (!t->href)
-				t->href = cloneString(v);
-		}
+// first src wins
+		if (v && !t->href)
+			t->href = resolveURL(cf->hbase, v);
 	}
 	if ((j = stringInListCI(t->attributes, "action")) >= 0) {
 		v = t->atvals[j];
 		if (v && !*v) v = 0;
-		if (v) {
-			v = resolveURL(cf->hbase, v);
-			cnzFree(t->atvals[j]);
-			t->atvals[j] = v;
-			if (!t->href)
-				t->href = cloneString(v);
-		}
+// first action wins
+		if (v && !t->href)
+			t->href = resolveURL(cf->hbase, v);
 	}
 // href=javascript:foo() is another doorway into js
 	if (t->href && memEqualCI(t->href, "javascript:", 11))
@@ -4726,50 +4718,9 @@ static void pushAttributes(const Tag *t)
 		return;
 
 	for (i = 0; a[i]; ++i) {
-// There are some exceptions, some attributes that we handle individually.
-// these are handled in domLink()
-		static const char *const excdom[] = {
-			"name", "id", "class", "classname",
-			"selected", "checked", "value", "type",
-			"href", "src", "action",
-			0
-		};
-// These are on node.prototype, and you don't want to displace them.
-// Sadly, you have to keep this list in sync with startwindow.js.
-// These must be lower case, something about the attribute processing.
-		static const char *const excprot[] = {
-			"getelementsbytagname", "getelementsbyname",
-			"getelementsbyclassname", "contains",
-			"queryselectorall", "queryselector", "matches",
-			"haschildnodes", "appendchild", "prependchild",
-			"insertbefore", "replacechild",
-			"eb$apch1", "eb$apch2", "eb$insbf", "removechild",
-			"firstchild", "firstelementchild",
-			"lastchild", "lastelementchild",
-			"nextsibling", "nextelementsibling",
-			"previoussibling", "previouselementsibling",
-			"children",
-			"hasattribute", "hasattributens", "markattribute",
-			"getattribute", "getattributens",
-			"setattribute", "setattributens",
-			"removeattribute", "removeattributens",
-			"parentelement",
-			"getattributenode", "getclientrects",
-			"clonenode", "importnode",
-			"comparedocumentposition", "getboundingclientrect",
-			"focus", "blur",
-			"eb$listen", "eb$unlisten",
-			"addeventlistener", "removeeventlistener",
-			"attachevent", "detachevent", "dispatchevent",
-			"insertadjacenthtml", "outerhtml",
-			"injectsetup", "document_fragment_node",
-			"classlist", "textcontent", "contenttext", "nodevalue",
-// handlers are reserved yes, but they have important setters,
-// so we do want to allow <A onclick=blah>
-			0
-		};
 		static const char *const dotrue[] = {
 			"required", "hidden", "aria-hidden",
+			"selected", "checked",
 			"multiple", "readonly", "disabled", "async", 0
 		};
 
@@ -4781,48 +4732,22 @@ static void pushAttributes(const Tag *t)
 		x = cloneString(a[i]);
 		caseShift(x, 'l');
 
-// attributes on HTML tags that begin with "data-" should be available under a
-// "dataset" object in JS
-		if (strncmp(x, "data-", 5) == 0) {
-// must convert to camelCase
-			char *a2 = cloneString(x + 5);
-			camelCase(a2);
-			set_dataset_string_t(t, a2, u);
-			nzFree(a2);
-			run_function_onestring_t(t, "markAttribute",        x);
-			nzFree(x);
-			continue;
-		}
-
 		if (stringEqual(x, "style")) {	// no clue
-			nzFree(x);
-			continue;
-		}
-
-// check for exceptions.
-// Maybe they wrote <a firstChild=foo>
-		if( stringInList(excprot, a[i]) >= 0) {
-			debugPrint(3, "html attribute overload %s.%s",
-				   t->info->name, x);
 			nzFree(x);
 			continue;
 		}
 
 // There are some, like multiple or readonly, that should be set to true,
 // not the empty string.
-		if (stringInList(dotrue, a[i]) >= 0) {
-			set_property_bool_t(t, x, !stringEqual(u, "false"));
+		if (stringInList(dotrue, x) >= 0) {
+			run_function_stringbool_t(t, "setAttribute", x, !stringEqual(u, "false"));
 		} else {
-// standard attribute here
-			                        if (stringInListCI(excdom, x) < 0)
-				set_property_string_t(t, x, u);
+			run_function_twostring_t(t, "setAttribute", x, u);
 		}
 // special case, classname sets the class.
 // Are there others like this?
 		if(stringEqual(x, "classname"))
-			run_function_onestring_t(t, "markAttribute", "class");
-		else
-			run_function_onestring_t(t, "markAttribute", x);
+			run_function_twostring_t(t, "setAttribute", "class", u);
 		nzFree(x);
 	}
 }

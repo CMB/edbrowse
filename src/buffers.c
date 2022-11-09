@@ -3733,10 +3733,8 @@ findField(const char *line, int ftype, int n,
 	static const char urlok[] =
 	    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890,./?@#%&-_+=:~*()'";
 
-	if (href)
-		*href = 0;
-	if (tagp)
-		*tagp = 0;
+	if (href) *href = 0;
+	if (tagp) *tagp = 0;
 
 	if (cw->browseMode) {
 
@@ -3829,16 +3827,9 @@ findField(const char *line, int ftype, int n,
 		    t->action == TAGACT_MUSIC || t->action == TAGACT_AREA) {
 			if (href)
 				*href = cloneString(t->href);
-			if (href) {
-// defer to the js variable for the reference
-				char *jh = get_property_url_t(t, false);
-				if (jh) {
-					if (!*href || !stringEqual(*href, jh)) {
-						nzFree(*href);
-						*href = jh;
-					} else
-						nzFree(jh);
-				}
+			if (href && !*href) {
+// nothing yet, defer to the js variable for href
+				*href = get_property_url_t(t, false);
 			}
 		} else {
 // This link is not an anchor or frame, it's onclick on something else.

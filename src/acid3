@@ -1837,11 +1837,7 @@ edbrowse should agree with that.
       // test 54: changing a parsed <input>
       var i = document.getElementsByTagName('input')[0];
       // initial values
-//@` <input type=HIDDEN> tidy changes HIDDEN to hidden. It doesn't mess
-// with other attributes, but it "normalizes" type to lower case.
-// I don't think this is a problem, except here; so I changed to hidden.
-//    assertEquals(i.getAttribute('type'), 'HIDDEN', "input control's type content attribute was wrong");
-      assertEquals(i.getAttribute('type'), 'hidden', "input control's type content attribute was wrong");
+    assertEquals(i.getAttribute('type'), 'HIDDEN', "input control's type content attribute was wrong");
       assertEquals(i.type, 'hidden', "input control's type DOM attribute was wrong");
       // change values
       i.name = 'test';

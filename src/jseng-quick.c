@@ -950,6 +950,133 @@ void run_function_onestring_t(const Tag *t, const char *name, const char *s)
 	run_function_onestring(t->f0->cx, *((JSValue*)t->jv), name, s);
 }
 
+static char *run_function_onestring1(JSContext *cx, JSValueConst parent, const char *name,
+				const char *s)
+{
+	JSValue v, r, l[1];
+	v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
+	if(!JS_IsFunction(cx, v)) {
+		debugPrint(3, "no such function %s", name);
+		JS_Release(cx, v);
+		return 0;
+	}
+	l[0] = JS_NewAtomString(cx, s);
+	grab(l[0]);
+	r = JS_Call(cx, v, parent, 1, l);
+	grab(r);
+	JS_Release(cx, v);
+	JS_Release(cx, l[0]);
+	if(!JS_IsException(r)) {
+		char *result = 0;
+	enum ej_proptype proptype = top_proptype(cx, r);
+// This is used to call getAttribute, thus the return should be
+// a string or something reasonably interpreted as a string.
+		if(proptype >= EJ_PROP_STRING && proptype <= EJ_PROP_FLOAT) {
+			const char *s = JS_ToCString(cx, r);
+			if(s && *s)
+				result = cloneString(s);
+			JS_FreeCString(cx, s);
+		}
+		JS_Release(cx, r);
+		return result;
+	}
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError(cx);
+	debugPrint(3, "failure on %s(%s)", name, s);
+	uptrace(cx, parent);
+	JS_Release(cx, r);
+	return 0;
+}
+
+char *run_function_onestring1_t(const Tag *t, const char *name, const char *s)
+{
+	if (!allowJS || !t->jslink)
+		return 0;
+	return run_function_onestring1(t->f0->cx, *((JSValue*)t->jv), name, s);
+}
+
+// The arguments to the function have to be strings.
+static void run_function_twostring(JSContext *cx, JSValueConst parent, const char *name,
+				const char *s1, const char *s2)
+{
+	JSValue v, r, l[2];
+	v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
+	if(!JS_IsFunction(cx, v)) {
+		debugPrint(3, "no such function %s", name);
+		JS_Release(cx, v);
+		return;
+	}
+	l[0] = JS_NewAtomString(cx, s1);
+	grab(l[0]);
+	l[1] = JS_NewAtomString(cx, s2);
+	grab(l[1]);
+	r = JS_Call(cx, v, parent, 2, l);
+	grab(r);
+	JS_Release(cx, v);
+	JS_Release(cx, l[0]);
+	JS_Release(cx, l[1]);
+	if(!JS_IsException(r)) {
+		JS_Release(cx, r);
+		return;
+	}
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError(cx);
+	debugPrint(3, "failure on %s(%s,%s)", name, s1, s2);
+	uptrace(cx, parent);
+	JS_Release(cx, r);
+}
+
+void run_function_twostring_t(const Tag *t, const char *name, const char *s1, const char *s2)
+{
+	if (!allowJS || !t->jslink)
+		return;
+	run_function_twostring(t->f0->cx, *((JSValue*)t->jv), name, s1, s2);
+}
+
+static void run_function_stringbool(JSContext *cx, JSValueConst parent, const char *name,
+				const char *s, bool b)
+{
+	JSValue v, r, l[2];
+	v = JS_GetPropertyStr(cx, parent, name);
+	grab(v);
+	if(!JS_IsFunction(cx, v)) {
+		debugPrint(3, "no such function %s", name);
+		JS_Release(cx, v);
+		return;
+	}
+	l[0] = JS_NewAtomString(cx, s);
+	grab(l[0]);
+	l[1] = b ? JS_TRUE : JS_FALSE;
+	r = JS_Call(cx, v, parent, 2, l);
+	grab(r);
+	JS_Release(cx, v);
+	JS_Release(cx, l[0]);
+	if(!JS_IsException(r)) {
+		JS_Release(cx, r);
+		return;
+	}
+// error in execution
+	if (intFlag)
+		i_puts(MSG_Interrupted);
+	processError(cx);
+	debugPrint(3, "failure on %s(%s,%s)", name, s, (b ? "true" : "false"));
+	uptrace(cx, parent);
+	JS_Release(cx, r);
+}
+
+void run_function_stringbool_t(const Tag *t, const char *name, const char *s, bool b)
+{
+	if (!allowJS || !t->jslink)
+		return;
+	run_function_stringbool(t->f0->cx, *((JSValue*)t->jv), name, s, b);
+}
+
 void run_function_onestring_win(const Frame *f, const char *name, const char *s)
 {
 	if (!allowJS || !f->jslink)

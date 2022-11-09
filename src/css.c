@@ -1890,7 +1890,7 @@ top:
 	if (bulkmatch)
 		v = (char *)attribVal(t, "lang");
 	else {
-		v = get_property_string_t(t, "lang");
+		v = run_function_onestring1_t(t, "getAttribute", "lang");
 		valloc = true;
 	}
 	if (!v)
@@ -2186,7 +2186,7 @@ if(!t) {
 			if (bulkmatch)
 				v = (char *)attribVal(t, p + 1);
 			else {
-					v = get_dataset_string_t(t, p + 1);
+					v = run_function_onestring1_t(t, "getAttribute", p + 1);
 				valloc = true;
 			}
 			if (cut)

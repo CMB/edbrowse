@@ -1446,6 +1446,24 @@ name === "options" && o.dom$class == "Select" ||
 name === "selectedOptions" && o.dom$class == "Select";
 }
 
+function spilldown(name) {
+// Ideally I should have a list of all the on functions, but I'm gonna say
+// any word that starts with on spills down.
+if(name.match(/^on[a-zA-Z]*$/)) return true;
+return name == "readonly" || name == "multiple" || name == "checked" || name == "selected" ||
+name == "disabled" || name == "required" ||
+name == "value" || name == "id"
+name == "class";
+}
+
+function spilldownResolve(t, name) {
+if(!t.nodeName) return false;
+var nn = t.nodeName.toLowerCase();
+return name == "action" && nn == "form" ||
+name == "src" && (nn == "img" || nn == "script" || nn == "frame" || nn == "iframe" || nn == "audio" || nn == "video" || nn == "link") ||
+name == "href" && (nn == "a" || nn == "area");
+}
+
 /*********************************************************************
 Set and clear attributes. This is done in 3 different ways,
 the third using attributes as a NamedNodeMap.
@@ -1453,15 +1471,16 @@ This may be overkill - I don't know.
 *********************************************************************/
 
 function getAttribute(name) {
-var w = my$win();
+var a, w = my$win();
 name = name.toLowerCase();
 if(implicitMember(this, name)) return null;
-// not to collide with the array length
-if(name === "length") name = "lx$yth";
 // has to be a real attribute
 if(!this.attributes$2) return null;
-if(!this.attributes[name]) return null;
-var v = this.attributes[name].value;
+a = null;
+for(var i=0; i<this.attributes.length; ++i)
+if(this.attributes[i].name == name) { a = this.attributes[i]; break; }
+if(!a) return null;
+var v = a.value;
 var t = typeof v;
 if(t == "undefined" || v == null) return null;
 // I stringify URL objects, should we do that to other objects?
@@ -1476,7 +1495,6 @@ var a = new w.Array;
 if(!this.attributes$2) return a;
 for(var l = 0; l < this.attributes$2.length; ++l) {
 var z = this.attributes$2[l].name;
-if(z === "lx$yth") z = "length";
 a.push(z);
 }
 return a;
@@ -1489,10 +1507,8 @@ return this.getAttribute(name);
 function hasAttributeNS(space, name) { return this.getAttributeNS(space, name) !== null;}
 
 function setAttribute(name, v) {
-var w = my$win();
+var a, w = my$win();
 name = name.toLowerCase();
-var mutname = name;
-if(name === "length") name = "lx$yth";
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 this.style.cssText = v;
@@ -1502,29 +1518,28 @@ if(implicitMember(this, name)) return;
 var oldv = null;
 // referencing attributes should create it on demand, but if it doesn't...
 if(!this.attributes) this.attributes$2 = new w.NamedNodeMap;
-if(!this.attributes[name]) {
-var a = new w.Attr();
+a = null;
+for(var i=0; i<this.attributes.length; ++i)
+if(this.attributes[i].name == name) { a = this.attributes[i]; break; }
+if(!a) {
+a = new w.Attr();
 a.owner = this;
 a.name = name;
-a.specified = true;
-// don't have to set value because there is a getter that grabs value
-// from the html node, see Attr class.
 this.attributes.push(a);
-// easy hash access
-this.attributes[name] = a;
 } else {
-oldv = this.attributes[name].value;
+oldv = a.value;
 }
-if(v !== "from@@html") {
+a.value = v;
 if(name.substr(0,5) == "data-") {
 // referencing dataset should create it on demand, but if it doesn't...
 if(!this.dataset) this.dataset$2 = {};
 this.dataset[dataCamel(name)] = v;
-} else this[name] = v;
 }
-mutFixup(this, true, mutname, oldv);
+// names that spill down into the actual property
+if(spilldown(name)) this[name] = v;
+if(spilldownResolve(this, name)) this[name] = resolveURL(w.eb$base, v);
+mutFixup(this, true, name, oldv);
 }
-function markAttribute(name) { this.setAttribute(name, "from@@html"); }
 function setAttributeNS(space, name, v) {
 if(space && !name.match(/:/)) name = space + ":" + name;
 this.setAttribute(name, v);
@@ -1533,27 +1548,24 @@ this.setAttribute(name, v);
 function removeAttribute(name) {
 if(!this.attributes$2) return;
     name = name.toLowerCase();
-var mutname = name;
-if(name === "length") name = "lx$yth";
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 // wow I have no clue what this means but it happens, https://www.maersk.com
 return;
 }
-var oldv = null;
 if(name.substr(0,5) == "data-") {
 var n = dataCamel(name);
-if(this.dataset$2 && this.dataset$2[n]) { oldv = this.dataset$2[n]; delete this.dataset$2[n]; }
-} else {
-    if (this[name]) { oldv = this[name]; delete this[name]; }
+if(this.dataset$2 && this.dataset$2[n]) delete this.dataset$2[n];
 }
-// acid test 59 says there's some weirdness regarding button.type
-if(name === "type" && this.nodeName == "BUTTON") this[name] = "submit";
+if(spilldown(name)) delete this[name];
+if(spilldownResolve(this, name)) delete this[name];
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
 if(name === "class" && !this.last$class) this.last$class = "@@";
 if(name === "id" && !this.last$id) this.last$id = "@@";
-var a = this.attributes[name]; // hash access
+var a = null;
+for(var i=0; i<this.attributes.length; ++i)
+if(this.attributes[i].name == name) { a = this.attributes[i]; break; }
 if(!a) return;
 // Have to roll our own splice.
 var i, found = false;
@@ -1563,8 +1575,7 @@ if(found) this.attributes[i] = this.attributes[i+1];
 }
 this.attributes.length = i;
 delete this.attributes[i];
-delete this.attributes[name];
-mutFixup(this, true, mutname, oldv);
+mutFixup(this, true, name, a.value);
 }
 function removeAttributeNS(space, name) {
 if(space && !name.match(/:/)) name = space + ":" + name;
@@ -1576,8 +1587,10 @@ this.removeAttribute(name);
 function getAttributeNode(name) {
 if(!this.attributes$2) return null;
     name = name.toLowerCase();
-if(name === "length") name = "lx$yth";
-return this.attributes[name] ? this.attributes[name] : null;
+var a = null;
+for(var i=0; i<this.attributes.length; ++i)
+if(this.attributes[i].name == name) { a = this.attributes[i]; break; }
+return a;
 }
 
 /*********************************************************************
@@ -4881,7 +4894,7 @@ appendChild, prependChild, insertBefore, removeChild, replaceChild, hasChildNode
 insertAdjacentElement,append, prepend, before, after, replaceWith,
 getAttribute, getAttributeNames, getAttributeNS,
 hasAttribute, hasAttributeNS,
-setAttribute, markAttribute, setAttributeNS,
+setAttribute, setAttributeNS,
 removeAttribute, removeAttributeNS, getAttributeNode,
 compareDocumentPosition,
 getComputedStyle,
@@ -4920,10 +4933,10 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
-"implicitMember",
+"implicitMember", "spilldown","spilldownResolve",
 "getAttribute", "getAttributeNames", "getAttributeNS",
 "hasAttribute", "hasAttributeNS",
-"setAttribute", "markAttribute", "setAttributeNS",
+"setAttribute",  "setAttributeNS",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
 "compareDocumentPosition",

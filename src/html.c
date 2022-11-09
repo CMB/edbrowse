@@ -535,8 +535,8 @@ void prepareScript(Tag *t)
 	if (f->fileName && !t->scriptgen)
 		js_file = f->fileName;
 
-	if (t->jslink) {
-// js might have set or changed the source url.
+	if (!t->href && t->jslink) {
+// js might have set the source url.
 		char *new_url = get_property_url_t(t, false);
 		if (new_url && *new_url) {
 			if (t->href && !stringEqual(t->href, new_url))
@@ -2243,8 +2243,7 @@ bool infPush(int tagno, char **post_string)
 
 	dopost = form->post;
 	action = form->href;
-/* But we defer to the js variable */
-	if (form->jslink && allowJS) {
+	if (!action && form->jslink && allowJS) {
 		char *jh = get_property_url_t(form, true);
 		if (jh && (!action || !stringEqual(jh, action))) {
 			nzFree(form->href);
@@ -4294,8 +4293,8 @@ nocolor:
 		currentA = (opentag ? t : 0);
 		if (!retainTag)
 			break;
-// Javascript might have set or changed this url.
-		if (opentag && t->jslink) {
+// Javascript might have set this url.
+		if (opentag && !t->href && t->jslink) {
 			char *new_url = get_property_url_t(t, false);
 			if (new_url && *new_url) {
 				nzFree(t->href);
