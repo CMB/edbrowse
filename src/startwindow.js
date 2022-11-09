@@ -494,6 +494,12 @@ Object.defineProperty(HTMLElement.prototype, "id", {
 get:function(){ var t = this.getAttribute("id");
 return typeof t == "string" ? t : undefined; },
 set:function(v) { this.setAttribute("id", v);}});
+Object.defineProperty(HTMLElement.prototype, "title", {
+get:function(){ var t = this.getAttribute("title");
+// in the real world this is always a string, but acid test 3 has numbers for titles
+var y = typeof t;
+return y == "string" || y == "number" ? t : undefined; },
+set:function(v) { this.setAttribute("title", v);}});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
 
