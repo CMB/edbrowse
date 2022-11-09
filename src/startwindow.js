@@ -490,6 +490,10 @@ if(!f.elements[n]) f.elements[n] = this;
 }
 this.setAttribute("name", n);
 }});
+Object.defineProperty(HTMLElement.prototype, "id", {
+get:function(){ var t = this.getAttribute("id");
+return typeof t == "string" ? t : undefined; },
+set:function(v) { this.setAttribute("id", v);}});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
 
@@ -2153,7 +2157,6 @@ c.prefix = colon[0], c.localName = colon[1];
 } else if(c.nodeType == 1)
 c.nodeName = c.tagName = unknown ? s : s.toUpperCase();
 c.class = "";
-if(c.nodeType == 1) c.id = c.name = "";
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.name = c.type = "";
 }

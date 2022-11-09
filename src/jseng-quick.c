@@ -4137,9 +4137,11 @@ Don't do any of this if the tag is itself <style>. */
 		io = ca;
 	}
 
-	set_property_string(cx, io, "name", (symname ? symname : emptyString));
-	set_property_string(cx, io, "id", (idname ? idname : emptyString));
-	set_property_string(cx, io, "last$id", (idname ? idname : emptyString));
+	if(symname) set_property_string(cx, io, "name", symname);
+	if(idname) {
+		set_property_string(cx, io, "id", idname);
+		set_property_string(cx, io, "last$id", idname);
+	}
 
 	if (href && href_url)
 // This use to be instantiate_url, but with the new side effects

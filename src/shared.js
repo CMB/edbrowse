@@ -1452,8 +1452,7 @@ function spilldown(name) {
 if(name.match(/^on[a-zA-Z]*$/)) return true;
 return name == "readonly" || name == "multiple" || name == "checked" || name == "selected" ||
 name == "disabled" || name == "required" ||
-name == "value" || name == "id"
-name == "class";
+name == "value" || name == "class";
 }
 
 function spilldownResolve(t, name) {

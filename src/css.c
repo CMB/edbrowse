@@ -2526,6 +2526,13 @@ static bool qsaMatchChain(Tag *t, const struct asel *a)
 	if (!a)			// should never happen
 		return false;
 
+/*********************************************************************
+Remember that we deal with the selector right to left.
+That reverses the sense of the combinator.
+We read div > a as <div> has a child of <a>,
+but we process it as <a> parent <div>
+*********************************************************************/
+
 	switch (a->combin) {
 	case ',':
 // this is the base node; it has to match.
@@ -2537,7 +2544,7 @@ onetime:
 			return true;
 		return qsaMatchChain(t, a->next);
 
-	case '+':
+	case '+': // previousSibling
 		if (!t->parent)
 			break;
 		u = t->parent->firstchild;
@@ -2553,7 +2560,7 @@ onetime:
 		t = u;
 		goto onetime;
 
-	case '~':
+	case '~': // earlier sibling
 		if (!t->parent)
 			break;
 		u = t->parent->firstchild;
@@ -2569,7 +2576,7 @@ onetime:
 		}
 		break;
 
-	case '>':
+	case '>': // parentNode
 		t = t->parent;
 		if (!t || t->action == TAGACT_DOC)
 			break;
@@ -2577,7 +2584,7 @@ onetime:
 			break;
 		goto onetime;
 
-	case ' ':
+	case ' ': // ancestor
 		while ((t = t->parent) && t->action != TAGACT_DOC) {
 			if (!qsaMatch(t, a))
 				continue;
