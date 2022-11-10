@@ -1455,12 +1455,20 @@ name == "disabled" || name == "required" ||
 name == "value" || name == "class";
 }
 
+// This stuff has to agree with the tables in startwindow.js starting at "src"
+function spilldownResolveURL(t, name) {
+if(!t.nodeName) return false;
+var nn = t.nodeName.toLowerCase();
+return name == "src" && (nn == "frame" || nn == "iframe") ||
+name == "href" && (nn == "a" || nn == "area");
+}
+
 function spilldownResolve(t, name) {
 if(!t.nodeName) return false;
 var nn = t.nodeName.toLowerCase();
 return name == "action" && nn == "form" ||
-name == "src" && (nn == "img" || nn == "script" || nn == "frame" || nn == "iframe" || nn == "audio" || nn == "video" || nn == "link") ||
-name == "href" && (nn == "a" || nn == "area");
+name == "src" && (nn == "img" || nn == "script" || nn == "audio" || nn == "video") ||
+name == "href" && nn == "link";
 }
 
 /*********************************************************************
@@ -1536,7 +1544,8 @@ this.dataset[dataCamel(name)] = v;
 }
 // names that spill down into the actual property
 if(spilldown(name)) this[name] = v;
-if(spilldownResolve(this, name)) this[name] = resolveURL(w.eb$base, v);
+if(spilldownResolve(this, name)) this.href$2 = resolveURL(w.eb$base, v);
+if(spilldownResolveURL(this, name)) this.href$2 = new (w.URL)(resolveURL(w.eb$base, v));
 mutFixup(this, true, name, oldv);
 }
 function setAttributeNS(space, name, v) {

@@ -972,10 +972,10 @@ w.hrefset$a.push(h); \
 return; } \
 /* h is a string version of the url. Dont know what to do if h is empty. */ \
 if(!h) return; \
-/* return or blow up if h is not a url, not yet emplemented */ \
 var last_href = (this.href$2 ? this.href$2.toString() : null); \
-this.href$2 = new z$URL(h); \
+this.setAttribute("' + u +'",h); \
 /* special code for setting frame.src, redirect to a new page. */ \
+h = this.href$2.href$val; \
 if(this.dom$class == "Frame" && this.eb$expf && last_href != h) { \
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
 if(w == this.contentWindow) { w.location = h; return; } \
@@ -1017,7 +1017,7 @@ w.hrefset$a.push(h); \
 return; } \
 if(!h) return; \
 var last_href = (this.href$2 ? this.href$2 : null); \
-this.href$2 = h; \
+this.setAttribute("' + u +'",h) \
  }});');
 }
 })();

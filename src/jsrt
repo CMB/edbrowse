@@ -2,7 +2,7 @@
 <html>
 <!-- browse length 630, 643 with hover -->
 <head id=boom>
-<base href=http://yyy.zzz.com>
+<base href=http://y.z.com>
 <meta content=Snoopy>
 <title>Edbrowse js regression test</title>
 <!-- tidy5 says this is not a valid tag any more -->
@@ -942,6 +942,49 @@ q.then(pmf);
 // If you run it again you'll see the same with values but the counter will step along.
 }
 
+function relative() {
+var el = document.createElement("DIV")
+el.innerHTML = "<img src=/foo snork=77 id=garage>";
+if( el.firstChild.snork != undefined) fail(200);
+if( el.firstChild.getAttribute("snork") != 77) fail(201);
+el.firstChild.snork = 78;
+el.firstChild.setAttribute("snork", 79);
+if( el.firstChild.snork != 78) fail(202);
+if( el.firstChild.getAttribute("snork") != 79) fail(203);
+if(el.querySelectorAll("[snork=\"79\"]").length != 1) fail(204);
+if( el.firstChild.id != "garage") fail(205);
+if( el.firstChild.getAttribute("id") != "garage") fail(206);
+el.firstChild.id = "cat";
+if( el.firstChild.id != "cat") fail(207);
+if( el.firstChild.getAttribute("id") != "cat") fail(208);
+el.firstChild.setAttribute("id", "dog");
+if( el.firstChild.id != "dog") fail(209);
+if( el.firstChild.getAttribute("id") != "dog") fail(210);
+el.firstChild.setAttribute("length", -37);
+if( el.firstChild.length != undefined) fail(211);
+if( el.firstChild.getAttribute("length") != -37) fail(212);
+if( el.firstChild.src != "http://y.z.com/foo") fail(213);
+if( el.firstChild.getAttribute("src") != "/foo") fail(214);
+el.firstChild.setAttribute( "src" , "/goo");
+if( el.firstChild.src != "http://y.z.com/goo") fail(215);
+if( el.firstChild.getAttribute("src") != "/goo") fail(216);
+el.innerHTML = "<a href='/hoo'></a>";
+if( el.firstChild.href != "http://y.z.com/hoo") fail(217);
+if( el.firstChild.protocol != "http:") fail(218);
+if( el.firstChild.getAttribute( "href" ) != "/hoo") fail(219);
+el.firstChild.setAttribute( "href" , "/zoo");
+if( el.firstChild.href != "http://y.z.com/zoo") fail(220);
+if( el.firstChild.getAttribute( "href" ) != "/zoo") fail(221);
+if( el.firstChild.getAttribute( "class" ) != null) fail(222);
+if( el.firstChild.getAttribute( "name" ) != null) fail(223);
+if( el.firstChild.getAttribute( "id" ) != null) fail(224);
+el.innerHTML = "<img src=/foo data-fly=leash>";
+el.firstChild.src = "/koo";
+if( el.firstChild.src != "http://y.z.com/koo") fail(225);
+if( el.firstChild.getAttribute("src") != "/koo") fail(226);
+alert("relative");
+}
+relative();
 
 </script>
 

@@ -1,8 +1,10 @@
 #  Count lines of code, just for grins.
 
 cd ../src
+l=$(
 cat `
 /bin/ls -1 *.[ch] startwindow.js shared.js ../tools/*.pl |
 egrep -v "startwindow.c|msg-strings.c|ebrc.c"` |
-wc -l
-#  but subtract 2000 for the table at the end of html-tags.c
+wc -l | tr -d ' ')
+#  but subtract 2000 for the table in html-tags.c
+echo $((l-2000))
