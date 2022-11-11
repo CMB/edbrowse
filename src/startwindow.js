@@ -100,6 +100,7 @@ showscripts = mw$.showscripts, searchscripts = mw$.searchscripts, showframes = m
 snapshot = mw$.snapshot, aloop = mw$.aloop;
 showarg = mw$.showarg, showarglist = mw$.showarglist;
 eb$base$snapshot = mw$.eb$base$snapshot, set_location_hash = mw$.set_location_hash;
+document.getRootNode = mw$.getRootNode;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
 document.dispatchEvent = mw$.dispatchEvent;
@@ -1678,6 +1679,7 @@ Object.defineProperty( p, "dataset", { get: function(){ return this.dataset$2 ? 
 Object.defineProperty( p, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = my$doc(); return this.attributes$2;}});
 Object.defineProperty( p, "style", { get: function(){ if(!this.style$2) this.style$2 = new CSSStyleDeclaration, this.style$2.element = this; return this.style$2;}});
 // get elements below
+p.getRootNode = mw$.getRootNode;
 p.getElementsByTagName = mw$.getElementsByTagName;
 p.getElementsByName = mw$.getElementsByName;
 p.getElementsByClassName = mw$.getElementsByClassName;

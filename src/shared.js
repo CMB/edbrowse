@@ -340,6 +340,18 @@ else e.insertBefore(b, e.childNodes[i]);
 }
 }
 
+function getRootNode(o) {
+if(typeof o == "object" && o.composed)
+alert3("getRootNode shadow root not implemented")
+var t = this;
+while(t) {
+if(t.nodeName == "#document") return t;
+t = t.parentNode;
+}
+alert3("getRootNode no root found");
+return null;
+}
+
 // wrapper to turn function blah{ my js code } into function blah{ [native code] }
 // This is required by sanity tests in jquery and other libraries.
 function wrapString() {
@@ -4949,7 +4961,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "resolveURL", "eb$fetchHTTP",
 "setTimeout", "clearTimeout", "setInterval", "clearInterval",
 "getElement", "getHead", "setHead", "getBody", "setBody",
-"wrapString",
+"getRootNode","wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
 "eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
 "dispatchEvent","eb$listen","eb$unlisten",
