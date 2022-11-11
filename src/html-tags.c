@@ -4448,6 +4448,7 @@ Needless to say that's not good!
 	case TAGACT_HTML:
 		domLink(t, "HTML", 0, 0, 0, 4);
 		cf->htmltag = t;
+		set_property_string_win(cf, "eb$base", cf->fileName);
 		break;
 
 	case TAGACT_META:
@@ -4479,9 +4480,6 @@ Needless to say that's not good!
 		a = attribVal(t, "text");
 		if (a) set_property_string_t(t, "text", a);
 		else set_property_string_t(t, "text", "");
-		a = attribVal(t, "src");
-		if (a) set_property_string_t(t, "src", a);
-		else set_property_string_t(t, "src", "");
 		prepareScript(t);
 		break;
 
@@ -4655,6 +4653,8 @@ Needless to say that's not good!
 
 	case TAGACT_BASE:
 		domLink(t, "HTMLBaseElement", "href", 0, 0, 4);
+		if(t->href && *t->href)
+			set_property_string_win(cf, "eb$base", t->href);
 		break;
 
 	default:

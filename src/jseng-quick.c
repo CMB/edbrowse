@@ -3987,7 +3987,6 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 	const char *symname = t->name;
 	const char *idname = t->id;
 	const char *membername = 0;	/* usually symname */
-	const char *href_url = t->href;
 	const char *tcn = t->jclass;
 	const char *stylestring = attribVal(t, "style");
 	JSValue ca; // child array
@@ -4142,11 +4141,6 @@ Don't do any of this if the tag is itself <style>. */
 		set_property_string(cx, io, "id", idname);
 		set_property_string(cx, io, "last$id", idname);
 	}
-
-	if (href && href_url)
-// This use to be instantiate_url, but with the new side effects
-// on Anchor, Image, etc, we can just set the string.
-		set_property_string(cx, io, href, href_url);
 
 	if (t->action == TAGACT_INPUT) {
 /* link back to the form that owns the element */
