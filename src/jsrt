@@ -991,7 +991,7 @@ el.firstChild.removeAttribute( "data-fly" );
 if( el.firstChild.dataset.fly  != undefined) fail(231);
 if( el.firstChild.getAttribute( "data-fly" ) != null) fail(232);
 el.innerHTML = "<a href='/hoo' class='bell drum' name=feeney id=ring></a>";
-/* bare class doesn't work yet
+/* class bare doesn't work yet undefined in ff
 if( el.firstChild.class  != xx) fail(233);
 */
 if( el.firstChild.getAttribute( "class" ) != "bell drum") fail(234);
@@ -1008,6 +1008,11 @@ if( el.firstChild.getAttribute( "name" ) != "field") fail(243);
 if( el.firstChild.type  != "checkbox") fail(244);
 if( el.firstChild.getAttribute( "type" ) != "checkbox") fail(245);
 if( el.firstChild.checked  != true) fail(246);
+// bare access of onclick gives function onclick(event) { yyz() }
+// I think yyz() is close enough.
+if( el.firstChild.onclick  != "yyz()") fail(252);
+// Then getAttribute agrees.
+if( el.firstChild.getAttribute( "onclick" ) != "yyz()") fail(253);
 alert("relative");
 }
 relative();

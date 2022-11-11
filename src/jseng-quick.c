@@ -974,7 +974,7 @@ static char *run_function_onestring1(JSContext *cx, JSValueConst parent, const c
 // a string or something reasonably interpreted as a string.
 		if(proptype >= EJ_PROP_STRING && proptype <= EJ_PROP_FLOAT) {
 			const char *s = JS_ToCString(cx, r);
-			if(s && *s)
+			if(s) // should always happen, even the empty string
 				result = cloneString(s);
 			JS_FreeCString(cx, s);
 		}
