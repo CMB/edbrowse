@@ -1039,44 +1039,6 @@ void run_function_twostring_t(const Tag *t, const char *name, const char *s1, co
 	run_function_twostring(t->f0->cx, *((JSValue*)t->jv), name, s1, s2);
 }
 
-static void run_function_stringbool(JSContext *cx, JSValueConst parent, const char *name,
-				const char *s, bool b)
-{
-	JSValue v, r, l[2];
-	v = JS_GetPropertyStr(cx, parent, name);
-	grab(v);
-	if(!JS_IsFunction(cx, v)) {
-		debugPrint(3, "no such function %s", name);
-		JS_Release(cx, v);
-		return;
-	}
-	l[0] = JS_NewAtomString(cx, s);
-	grab(l[0]);
-	l[1] = b ? JS_TRUE : JS_FALSE;
-	r = JS_Call(cx, v, parent, 2, l);
-	grab(r);
-	JS_Release(cx, v);
-	JS_Release(cx, l[0]);
-	if(!JS_IsException(r)) {
-		JS_Release(cx, r);
-		return;
-	}
-// error in execution
-	if (intFlag)
-		i_puts(MSG_Interrupted);
-	processError(cx);
-	debugPrint(3, "failure on %s(%s,%s)", name, s, (b ? "true" : "false"));
-	uptrace(cx, parent);
-	JS_Release(cx, r);
-}
-
-void run_function_stringbool_t(const Tag *t, const char *name, const char *s, bool b)
-{
-	if (!allowJS || !t->jslink)
-		return;
-	run_function_stringbool(t->f0->cx, *((JSValue*)t->jv), name, s, b);
-}
-
 void run_function_onestring_win(const Frame *f, const char *name, const char *s)
 {
 	if (!allowJS || !f->jslink)

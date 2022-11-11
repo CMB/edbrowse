@@ -1008,11 +1008,17 @@ if( el.firstChild.getAttribute( "name" ) != "field") fail(243);
 if( el.firstChild.type  != "checkbox") fail(244);
 if( el.firstChild.getAttribute( "type" ) != "checkbox") fail(245);
 if( el.firstChild.checked  != true) fail(246);
+if( el.firstChild.checked  != true) fail(247);
+if( el.firstChild.getAttribute( "checked" ) != "") fail(248);
+if( el.firstChild.readOnly  != true) fail(249);
+if( el.firstChild.getAttribute( "readonly" ) != "") fail(250);
+if( el.firstChild.disabled  != true) fail(251);
+if( el.firstChild.getAttribute( "disabled" ) != "") fail(252);
 // bare access of onclick gives function onclick(event) { yyz() }
 // I think yyz() is close enough.
-if( el.firstChild.onclick  != "yyz()") fail(252);
+if( el.firstChild.onclick  != "yyz()") fail(253);
 // Then getAttribute agrees.
-if( el.firstChild.getAttribute( "onclick" ) != "yyz()") fail(253);
+if( el.firstChild.getAttribute( "onclick" ) != "yyz()") fail(254);
 alert("relative");
 }
 relative();

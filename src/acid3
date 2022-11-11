@@ -1460,13 +1460,6 @@ if(div === null) { var e = new Error; e.code = 14; throw e; }
         input1.checked = true;
         expect(input1, checked, "failure 8");
         expect(input2, 0, "failure 9");
-//@` It is dumb luck that this next test passes. I do in fact set the
-// value of checked. That's part of what setAttribute does. It creates a new
-// attribute yes, but it also sets object.foo = bar.
-// Maybe it shouldn't but it does, so, I read the value of checked,
-// coercing it into a boolean, and "checked" is nonsense, so false.
-// If you had done setAttribute("checked", 1) then it would look like
-// it was checked, and that is wrong.
         input2.setAttribute("checked", "checked"); // sets defaultChecked, doesn't change actual state
         expect(input1, checked, "failure 10");
         expect(input2, 0, "failure 11");

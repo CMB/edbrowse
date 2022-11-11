@@ -1471,6 +1471,17 @@ name == "src" && (nn == "img" || nn == "script" || nn == "audio" || nn == "video
 name == "href" && (nn == "link" || nn == "base");
 }
 
+function spilldownBool(t, name) {
+if(!t.nodeName) return false;
+var nn = t.nodeName.toLowerCase();
+return name == "async" && nn == "script" || name == "disabled" ||
+name == "hidden" || name == "aria-hidden" ||
+name == "selected" && nn == "option" ||
+name == "multiple" && nn == "select" ||
+name == "checked" && nn == "input" ||
+(name == "readonly" || name == "required") && (nn == "input" || nn == "select");
+}
+
 /*********************************************************************
 Set and clear attributes. This is done in 3 different ways,
 the third using attributes as a NamedNodeMap.
@@ -1546,6 +1557,16 @@ this.dataset[dataCamel(name)] = v;
 if(spilldown(name)) this[name] = v;
 if(spilldownResolve(this, name)) this.href$2 = resolveURL(w.eb$base, v);
 if(spilldownResolveURL(this, name)) this.href$2 = new (w.URL)(resolveURL(w.eb$base, v));
+if(spilldownBool(this, name)) {
+// This one is required by acid test 43, I don't understand it at all.
+if(name == "checked" && v == "checked") name = "defaultChecked", v = "true";
+// is a nonsense string like blah, true or false? I don't know.
+// For now I'll assume it's true.
+v = (v === "false" ? false : true);
+// readOnly is the standard
+if(name == "readonly") name = "readOnly";
+this[name] = v;
+}
 mutFixup(this, true, name, oldv);
 }
 function setAttributeNS(space, name, v) {
@@ -1568,6 +1589,7 @@ if(this.dataset$2 && this.dataset$2[n]) delete this.dataset$2[n];
 if(spilldown(name)) delete this[name];
 if(spilldownResolve(this, name)) delete this[name];
 if(spilldownResolveURL(this, name)) delete this[name];
+if(spilldownBool(this, name)) delete this[name];
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
 if(name === "class" && !this.last$class) this.last$class = "@@";
@@ -4942,7 +4964,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
-"implicitMember", "spilldown","spilldownResolve","spilldownResolveURL",
+"implicitMember", "spilldown","spilldownResolve","spilldownResolveURL","spilldownBool",
 "getAttribute", "getAttributeNames", "getAttributeNS",
 "hasAttribute", "hasAttributeNS",
 "setAttribute",  "setAttributeNS",

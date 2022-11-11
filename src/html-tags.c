@@ -4718,12 +4718,6 @@ static void pushAttributes(const Tag *t)
 		return;
 
 	for (i = 0; a[i]; ++i) {
-		static const char *const dotrue[] = {
-			"required", "hidden", "aria-hidden",
-			"selected", "checked",
-			"multiple", "readonly", "disabled", "async", 0
-		};
-
 // html tags and attributes are case insensitive.
 // That's why the entire getAttribute system drops names to lower case.
 		u = v[i];
@@ -4737,13 +4731,7 @@ static void pushAttributes(const Tag *t)
 			continue;
 		}
 
-// There are some, like multiple or readonly, that should be set to true,
-// not the empty string.
-		if (stringInList(dotrue, x) >= 0) {
-			run_function_stringbool_t(t, "setAttribute", x, !stringEqual(u, "false"));
-		} else {
-			run_function_twostring_t(t, "setAttribute", x, u);
-		}
+		run_function_twostring_t(t, "setAttribute", x, u);
 // special case, classname sets the class.
 // Are there others like this?
 		if(stringEqual(x, "classname"))
