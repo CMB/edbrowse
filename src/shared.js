@@ -1464,7 +1464,11 @@ function spilldown(name) {
 if(name.match(/^on[a-zA-Z]*$/)) return true;
 return name == "readonly" || name == "multiple" || name == "checked" || name == "selected" ||
 name == "disabled" || name == "required" ||
-name == "value" || name == "class";
+name == "value" ||
+// class shouldn't spill down. But if we don't, the class == last$class system fails.
+// We don't detect a change in class and rerun the css rules.
+// We could push it down to new$class and compare new$class and last$class.
+name == "class";
 }
 
 // This stuff has to agree with the tables in startwindow.js starting at "src"
@@ -1571,13 +1575,16 @@ if(spilldownResolve(this, name)) this.href$2 = resolveURL(w.eb$base, v);
 if(spilldownResolveURL(this, name)) this.href$2 = new (w.URL)(resolveURL(w.eb$base, v));
 if(spilldownBool(this, name)) {
 // This one is required by acid test 43, I don't understand it at all.
-if(name == "checked" && v == "checked") name = "defaultChecked", v = "true";
+if(name == "checked" && v == "checked")
+this.defaultChecked = true;
+else {
 // is a nonsense string like blah, true or false? I don't know.
 // For now I'll assume it's true.
 v = (v === "false" ? false : true);
 // readOnly is the standard
-if(name == "readonly") name = "readOnly";
-this[name] = v;
+if(name == "readonly") this.readOnly = v;
+else this[name] = v;
+}
 }
 mutFixup(this, true, name, oldv);
 }
@@ -1601,7 +1608,10 @@ if(this.dataset$2 && this.dataset$2[n]) delete this.dataset$2[n];
 if(spilldown(name)) delete this[name];
 if(spilldownResolve(this, name)) delete this[name];
 if(spilldownResolveURL(this, name)) delete this[name];
-if(spilldownBool(this, name)) delete this[name];
+if(spilldownBool(this, name)) {
+if(name == "readonly") delete this.readOnly;
+else delete this[name];
+}
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
 if(name === "class" && !this.last$class) this.last$class = "@@";
