@@ -4587,12 +4587,14 @@ down_again:
 			if(--n) goto down_again;
 		}
 		selfFrame();
-		if (cw->htmltitle)
-			printf("%s", cw->htmltitle);
-		else if (cw->f0.fileName)
-			printf("%s", cw->f0.fileName);
-		else i_printf(MSG_NoFile);
-		nl();
+		if (debugLevel >= 1) {
+			if (cw->htmltitle)
+				printf("%s", cw->htmltitle);
+			else if (cw->f0.fileName)
+				printf("%s", cw->f0.fileName);
+			else i_printf(MSG_NoFile);
+			nl();
+		}
 		return true;
 	}
 
