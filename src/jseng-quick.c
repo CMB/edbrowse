@@ -3973,7 +3973,7 @@ static void processStyles(JSValueConst so, const char *stylestring)
 }
 
 void domLink(Tag *t, const char *classname,	/* instantiate this class */
-		    const char *href, const char *list,	/* next member of this array */
+		    const char *list,	/* next member of this array */
 		    const Tag * owntag, int extra)
 {
 	JSContext *cx = cf->cx;

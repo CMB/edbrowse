@@ -459,7 +459,7 @@ void jsRunScript_t(const Tag *t, const char *str, const char *filename, 		 int l
 char *jsRunScriptWinResult(const char *str, const char *filename, int lineno) ;
 void establish_js_option(Tag *t, Tag *sel, Tag *og);
 void establish_js_textnode(Tag *t, const char *fpn);
-void domLink(Tag *t, const char *classname, const char *href, const char *list, const Tag *owntag, int extra);
+void domLink(Tag *t, const char *classname, const char *list, const Tag *owntag, int extra);
 void rebuildSelectors(void);
 bool has_gcs(const char *name);
 enum ej_proptype typeof_gcs(const char *name);

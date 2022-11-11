@@ -991,10 +991,10 @@ el.firstChild.removeAttribute( "data-fly" );
 if( el.firstChild.dataset.fly  != undefined) fail(231);
 if( el.firstChild.getAttribute( "data-fly" ) != null) fail(232);
 el.innerHTML = "<a href='/hoo' class='bell drum' name=feeney id=ring></a>";
-/* class stuff doesn't work yet
+/* bare class doesn't work yet
 if( el.firstChild.class  != xx) fail(233);
-if( el.firstChild.getAttribute( "class" ) != xx) fail(234);
 */
+if( el.firstChild.getAttribute( "class" ) != "bell drum") fail(234);
 if( el.querySelectorAll("[class='bell drum']").length != 1) fail(235);
 if( el.querySelectorAll(".bell").length != 1) fail(236);
 if( el.firstChild.querySelectorAll(".bell").length != 0) fail(237);
@@ -1007,6 +1007,7 @@ if( el.firstChild.name  != "field") fail(242);
 if( el.firstChild.getAttribute( "name" ) != "field") fail(243);
 if( el.firstChild.type  != "checkbox") fail(244);
 if( el.firstChild.getAttribute( "type" ) != "checkbox") fail(245);
+if( el.firstChild.checked  != true) fail(246);
 alert("relative");
 }
 relative();
