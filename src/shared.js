@@ -888,7 +888,7 @@ this.splice(j, 1);
 --j;
 }
 }
-this.node.class = this.join(' ');
+this.node.setAttribute("class", this.join(' '));
 }
 
 function classListAdd() {
@@ -897,7 +897,7 @@ for(var j=0; j<this.length; ++j)
 if(arguments[i] == this[j]) break;
 if(j == this.length) this.push(arguments[i]);
 }
-this.node.class = this.join(' ');
+this.node.setAttribute("class", this.join(' '));
 }
 
 function classListReplace(o, n) {
@@ -905,7 +905,7 @@ if(!o) return;
 if(!n) { this.remove(o); return; }
 for(var j=0; j<this.length; ++j)
 if(o == this[j]) { this[j] = n; break; }
-this.node.class = this.join(' ');
+this.node.setAttribute("class", this.join(' '));
 }
 
 function classListContains(t) {
@@ -926,7 +926,7 @@ this.add(t); return true;
 }
 
 function classList(node) {
-var c = node.class;
+var c = node.getAttribute("class");
 if(!c) c = "";
 // turn string into array
 var a = c.replace(/^\s+/, "").replace(/\s+$/, "").split(/\s+/);
