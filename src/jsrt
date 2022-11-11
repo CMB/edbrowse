@@ -982,6 +982,14 @@ el.innerHTML = "<img src=/foo data-fly=leash>";
 el.firstChild.src = "/koo";
 if( el.firstChild.src != "http://y.z.com/koo") fail(225);
 if( el.firstChild.getAttribute("src") != "/koo") fail(226);
+if( el.firstChild.dataset.fly  != "leash") fail(227);
+if( el.firstChild.getAttribute( "data-fly" ) != "leash") fail(228);
+el.firstChild.setAttribute( "data-fly" , "swat");
+if( el.firstChild.dataset.fly  != "swat") fail(229);
+if( el.firstChild.getAttribute( "data-fly" ) != "swat") fail(230);
+el.firstChild.removeAttribute( "data-fly" );
+if( el.firstChild.dataset.fly  != undefined) fail(231);
+if( el.firstChild.getAttribute( "data-fly" ) != null) fail(232);
 alert("relative");
 }
 relative();

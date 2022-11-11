@@ -1468,7 +1468,7 @@ if(!t.nodeName) return false;
 var nn = t.nodeName.toLowerCase();
 return name == "action" && nn == "form" ||
 name == "src" && (nn == "img" || nn == "script" || nn == "audio" || nn == "video") ||
-name == "href" && nn == "link";
+name == "href" && (nn == "link" || nn == "base");
 }
 
 /*********************************************************************
@@ -1567,6 +1567,7 @@ if(this.dataset$2 && this.dataset$2[n]) delete this.dataset$2[n];
 }
 if(spilldown(name)) delete this[name];
 if(spilldownResolve(this, name)) delete this[name];
+if(spilldownResolveURL(this, name)) delete this[name];
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
 if(name === "class" && !this.last$class) this.last$class = "@@";
@@ -4941,7 +4942,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
-"implicitMember", "spilldown","spilldownResolve",
+"implicitMember", "spilldown","spilldownResolve","spilldownResolveURL",
 "getAttribute", "getAttributeNames", "getAttributeNS",
 "hasAttribute", "hasAttributeNS",
 "setAttribute",  "setAttributeNS",
