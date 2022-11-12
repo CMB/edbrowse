@@ -542,7 +542,7 @@ I have it enabled for now...
 This is frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
 
-attachOn = true;
+attachOn = false;
 
 function eb$listen(ev, handler, iscapture, addon) {
 if(addon) ev = "on" + ev;

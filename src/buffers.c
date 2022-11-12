@@ -7079,6 +7079,8 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		cs->lw = cw->prev;
 		cw->prev = 0;
 		cw = cs->lw;
+		if(cx > maxSession) maxSession = cx;
+		cx_previous = cx;
 		selfFrame();
 		if(debugLevel >= 1)
 			printDot();
