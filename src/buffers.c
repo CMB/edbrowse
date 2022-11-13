@@ -7049,7 +7049,7 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 
 	if (cmd == 'M') {	// move this to another session
 		int scx = cx; // remember
-		if (first && !cx) {
+		if (first && (first != '0' || line[1]) && !cx) {
 			setError(MSG_MAfter);
 			return false;
 		}
@@ -7072,7 +7072,7 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
-		if(!scx || debugLevel >= 1)
+		if((!scx && first != '0') || debugLevel >= 1)
 			i_printf(MSG_MovedSession, cx);
 /* Magic with pointers, hang on to your hat. */
 		sessionList[cx].fw = sessionList[cx].lw = cw;
