@@ -700,7 +700,9 @@ get:function(){ var t = this.getAttribute("type");
 // input type is special, tidy converts it to lower case, so I will too.
 // Also acid test 54 requires it.
 return typeof t == "string" ? t.toLowerCase() : undefined; },
-set:function(v) { this.setAttribute("type", v);}});
+set:function(v) { this.setAttribute("type", v);
+if(v.toLowerCase() == "checkbox") this.value = "on";
+}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
@@ -2141,6 +2143,7 @@ case "option":
 c = new Option;
 c.childNodes = [];
 c.parentNode = null;
+c.selected = true; // jquery says we should do this
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
 return c;
