@@ -1019,6 +1019,15 @@ if( el.firstChild.getAttribute( "disabled" ) != "") fail(252);
 if( el.firstChild.onclick  != "yyz()") fail(253);
 // Then getAttribute agrees.
 if( el.firstChild.getAttribute( "onclick" ) != "yyz()") fail(254);
+el.innerHTML = "<div j1='z' j2=' z '>"
+if((el.querySelectorAll("[j1=z]").length * 1
++ el.querySelectorAll("[j1= z ]").length * 2
++ el.querySelectorAll("[j1=' z ']").length * 4
++ el.querySelectorAll("[j1= ' z ' ]").length * 8) != 3) fail(255);
+if((el.querySelectorAll("[j2=z]").length * 1
++ el.querySelectorAll("[j2= z ]").length * 2
++ el.querySelectorAll("[j2=' z ']").length * 4
++ el.querySelectorAll("[j2= ' z ' ]").length * 8) != 12) fail(256);
 alert("relative");
 }
 relative();

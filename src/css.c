@@ -1608,6 +1608,7 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 			return;
 		}
 		t[--n] = 0;	// lop off ]
+		trim(t);
 // remove whitespace from either side of =
 		w = strchr(t, '=');
 // I assume = is not in quotes, not part of the attribute name
@@ -2175,7 +2176,6 @@ if(!t) {
 			char *cut = strchr(p, '=');
 			if (cut) {
 				value = cut + 1;
-				skipWhite2(&value);
 				l = strlen(value);
 				if (strchr("|~^$*", cut[-1]))
 					--cut;
