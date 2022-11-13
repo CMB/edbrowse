@@ -928,6 +928,15 @@ so also break out at >< like a new tag is starting.
 				strcpy(tagname, innerhtmltag), --htmlcount;
 				strcpy(lowname, innerhtmltag);
 			}
+
+// get rid of <option></option>, as tidy does
+			if(stringEqual(lowname, "option") && stack &&
+			stringEqual(stack->lowname, lowname) &&
+			!stack->t->attributes) {
+				tagList[cw->numTags - 1]->dead = true;
+				scannerInfo1("empty option\n", 0);
+			}
+
 // create this tag in the edbrowse world.
 			scannerInfo2("</%s>\n", tagname);
 			makeTag(tagname, lowname, true, lt);
