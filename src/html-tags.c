@@ -929,14 +929,6 @@ so also break out at >< like a new tag is starting.
 				strcpy(lowname, innerhtmltag);
 			}
 
-// get rid of <option></option>, as tidy does
-			if(stringEqual(lowname, "option") && stack &&
-			stringEqual(stack->lowname, lowname) &&
-			!stack->t->attributes) {
-				tagList[cw->numTags - 1]->dead = true;
-				scannerInfo1("empty option\n", 0);
-			}
-
 // create this tag in the edbrowse world.
 			scannerInfo2("</%s>\n", tagname);
 			makeTag(tagname, lowname, true, lt);
@@ -4032,14 +4024,17 @@ static void prerenderNode(Tag *t, bool opentag)
 			}
 			break;
 		}
+		currentOpt = t;
+		t->controller = currentSel;
+		t->lic = 0;
+		if (!t->value)
+			t->value = emptyString;
+		t->textval = emptyString;
 		if (!currentSel) {
-			debugPrint(3,
-				   "option appears outside a select statement");
+			debugPrint(3, "option appears outside a select statement");
 			optg = 0;
 			break;
 		}
-		currentOpt = t;
-		t->controller = currentSel;
 		t->lic = nopt++;
 		if (attribPresent(t, "selected")) {
 			if (currentSel->lic && !currentSel->multiple)
@@ -4049,9 +4044,6 @@ static void prerenderNode(Tag *t, bool opentag)
 				++currentSel->lic;
 			}
 		}
-		if (!t->value)
-			t->value = emptyString;
-		t->textval = emptyString;
 		if(optg && *optg) {
 // borrow custom_h, opt group is like a custom header
 			t->custom_h = cloneString(optg);
@@ -4503,11 +4495,16 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_OPTION:
-		optionJS(t);
+		if(t->controller) {
+			optionJS(t);
 // The parent child relationship has already been established,
 // don't break, just return;
-		pushAttributes(t);
-		return;
+			pushAttributes(t);
+			return;
+		}
+// not part of a select, just link to parent as usual
+		domLink(t, "HTMLOptionElement", 0, 0, 4);
+		break;
 
 	case TAGACT_OPTG:
 		domLink(t, "HTMLOptGroupElement", 0, 0, 4);
