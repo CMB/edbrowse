@@ -1448,7 +1448,6 @@ if(arguments.length > 0) {
 // data always has to be a string
 this.data$2 += arguments[0];
 }
-this.class = "";
 }
 TextNode.prototype = new HTMLElement;
 TextNode.prototype.dom$class = "TextNode";
@@ -1478,7 +1477,6 @@ return c;
 
 Comment = function(t) {
 this.data = t;
-this.class = "";
 }
 Comment.prototype = new HTMLElement;
 Comment.prototype.dom$class = "Comment";
@@ -2167,7 +2165,6 @@ c.nodeName = c.tagName = t;
 c.prefix = colon[0], c.localName = colon[1];
 } else if(c.nodeType == 1)
 c.nodeName = c.tagName = unknown ? s : s.toUpperCase();
-c.class = "";
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.name = c.type = "";
 }

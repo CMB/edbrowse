@@ -1748,7 +1748,7 @@ var a2 = node2[item];
 if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
 a2.type = a1.type;
 a2.nodeName = a1.nodeName;
-a2.class = a1.class;
+if(a1.class) a2.setAttribute("class", a1.class);
 a2.last$class = a1.last$class;
 for(i = 0; i < a1.length; ++i) {
 var p = findObject(a1[i]);

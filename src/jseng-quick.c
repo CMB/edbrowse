@@ -2375,8 +2375,7 @@ static JSValue set_timeout(JSContext * cx, JSValueConst this, int argc, JSValueC
 		return JS_NULL;
 	}
 
-// classs is overloaded with milliseconds, for debugging
-	JS_SetPropertyStr(cx, to, "class", JS_NewInt32(cx, n));
+	JS_SetPropertyStr(cx, to, "ms", JS_NewInt32(cx, n));
 // function is contained in an ontimer handler
 // don't free fo after this line
 	JS_SetPropertyStr(cx, to, "ontimer", fo);
@@ -4057,8 +4056,6 @@ Don't do any of this if the tag is itself <style>. */
 			JS_Release(cx, so);
 		}
 
-/* Other attributes that are expected by pages, even if they
- * aren't populated at domLink-time */
 		if (!tcn)
 			tcn = emptyString;
 		set_property_string(cx, io, "class", tcn);
