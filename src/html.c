@@ -1912,14 +1912,10 @@ skip_encode:
 		}
 
 		if (itype >= INP_RADIO) {
-			value = t->value;
 			bval = fetchBoolVar(t);
-			if (!bval)
-				continue;
-			if (!name[0])
-				if (value && !*value)
-					value = 0;
-			if (itype == INP_CHECKBOX && value == 0)
+			if (!bval) continue;
+			value = t->value;
+			if (itype == INP_CHECKBOX && (!value || !*value))
 				value = "on";
 			goto success;
 		}
