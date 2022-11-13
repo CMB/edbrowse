@@ -701,7 +701,7 @@ get:function(){ var t = this.getAttribute("type");
 // Also acid test 54 requires it.
 return typeof t == "string" ? t.toLowerCase() : undefined; },
 set:function(v) { this.setAttribute("type", v);
-if(v.toLowerCase() == "checkbox") this.value = "on";
+if(v.toLowerCase() == "checkbox" && !this.value) this.value = "on";
 }});
 
 HTMLButtonElement = function(){}

@@ -2386,6 +2386,8 @@ function newTextUnder(top, s, flavor) {
 var l = top.childNodes.length;
 for(var i=l-1; i>=0; --i)
 top.removeChild(top.childNodes[i]);
+// do nothing if s is undefined, or null, or the empty string
+if(!s) return;
 top.appendChild(my$doc().createTextNode(s));
 }
 
