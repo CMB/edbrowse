@@ -1028,6 +1028,8 @@ if((el.querySelectorAll("[j2=z]").length * 1
 + el.querySelectorAll("[j2= z ]").length * 2
 + el.querySelectorAll("[j2=' z ']").length * 4
 + el.querySelectorAll("[j2= ' z ' ]").length * 8) != 12) fail(256);
+el.textContent = "";
+if(el.lastChild) fail(257);
 alert("relative");
 }
 relative();

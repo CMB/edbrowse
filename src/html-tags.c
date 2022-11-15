@@ -21,7 +21,7 @@ static const char innerhtmltag[] = "innerhtml";
 static const char headtag[] = "head";
 static const char bodytag[] = "body";
 static const char innerbodytag[] = "innerbody";
-static const char iftag[] = "include-fragment";
+static const char iftag[] = "zinclude-fragment";
 static const char inneriftag[] = "innerfragment";
 
 // report debugging information or errors
