@@ -4258,14 +4258,8 @@ static void formControlJS(Tag *t)
 		if (itype != INP_FILE) {
 /* No default value on file, for security reasons */
 			set_property_string_t(t, defvl, t->value);
-		}		/* not file */
+		}		// not file
 	}
-
-	if (isselect)
-		typedesc = t->multiple ? "select-multiple" : "select-one";
-	else
-		typedesc = inp_types[itype];
-	set_property_string_t(t, "type", typedesc);
 
 	if (itype >= INP_RADIO) {
 		set_property_bool_t(t, "checked", t->checked);

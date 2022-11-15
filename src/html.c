@@ -1296,7 +1296,7 @@ static bool inputDisabled(const Tag *t)
 static bool inputReadonly(const Tag *t)
 {
 	if (allowJS && t->jslink)
-		return get_property_bool_t(t, "readOnly") | get_property_bool_t(t, "readonly");
+		return get_property_bool_t(t, "readOnly");
 	return t->rdonly;
 }
 

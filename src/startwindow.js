@@ -652,13 +652,15 @@ var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
+Object.defineProperty(HTMLSelectElement.prototype, "type", {
+get:function(){ return this.multiple ? "select-multiple" : "select-one"}});
 Object.defineProperty(HTMLSelectElement.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
-return (t == true || t == 1);},
+return t === null || t === false || t === 0 ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 Object.defineProperty(HTMLSelectElement.prototype, "required", {
 get:function(){ var t = this.getAttribute("required");
-return (t == true || t == 1);},
+return t === null || t === false || t === 0 ? false : true},
 set:function(v) { this.setAttribute("required", v);}});
 
 HTMLSelectElement.prototype.eb$bso = function() { // build selected options array
@@ -718,12 +720,16 @@ return y == "string" || y == "number" ? t : ""; },
 set:function(v) { this.setAttribute("placeholder", v);}});
 Object.defineProperty(HTMLInputElement.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
-return (t == true || t == 1);},
+return t === null || t === false || t === 0 ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 Object.defineProperty(HTMLInputElement.prototype, "required", {
 get:function(){ var t = this.getAttribute("required");
-return (t == true || t == 1);},
+return t === null || t === false || t === 0 ? false : true},
 set:function(v) { this.setAttribute("required", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "readOnly", {
+get:function(){ var t = this.getAttribute("readonly");
+return t === null || t === false || t === 0 ? false : true},
+set:function(v) { this.setAttribute("readonly", v);}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
@@ -742,18 +748,28 @@ HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
 Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
 get: function() { return this.value},
 set: function(t) { this.value = t }});
+Object.defineProperty(HTMLTextAreaElement.prototype, "type", {
+get: function() { return "textarea"}});
 Object.defineProperty(HTMLTextAreaElement.prototype, "placeholder", {
 get:function(){ var t = this.getAttribute("placeholder");
 var y = typeof t;
 return y == "string" || y == "number" ? t : ""; },
 set:function(v) { this.setAttribute("placeholder", v);}});
+Object.defineProperty(HTMLTextAreaElement.prototype, "required", {
+get:function(){ var t = this.getAttribute("required");
+return t === null || t === false || t === 0 ? false : true},
+set:function(v) { this.setAttribute("required", v);}});
+Object.defineProperty(HTMLTextAreaElement.prototype, "readOnly", {
+get:function(){ var t = this.getAttribute("readonly");
+return t === null || t === false || t === 0 ? false : true},
+set:function(v) { this.setAttribute("readonly", v);}});
 
 z$Datalist = function() {}
 z$Datalist.prototype = new HTMLElement;
 z$Datalist.prototype.dom$class = "Datalist";
 Object.defineProperty(z$Datalist.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
-return (t == true || t == 1);},
+return t === null || t === false || t === 0 ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 
 Image = HTMLImageElement = function(){};
@@ -2176,7 +2192,7 @@ c.selected = true; // jquery says we should do this
 return c;
 case "form": c = new HTMLFormElement; break;
 case "input": c = new HTMLInputElement; break;
-case "textarea": c = new HTMLTextAreaElement; c.type = t; break;
+case "textarea": c = new HTMLTextAreaElement; break;
 case "element": c = new HTMLElement; break;
 case "button": c = new HTMLButtonElement; break;
 default:

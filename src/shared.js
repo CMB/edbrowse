@@ -1462,7 +1462,7 @@ function spilldown(name) {
 // Ideally I should have a list of all the on functions, but I'm gonna say
 // any word that starts with on spills down.
 if(name.match(/^on[a-zA-Z]*$/)) return true;
-return name == "readonly" || name == "checked" || name == "selected" ||
+return name == "checked" || name == "selected" ||
 name == "disabled" ||
 name == "value" ||
 // class shouldn't spill down. But if we don't, the class == last$class system fails.
@@ -1493,8 +1493,7 @@ var nn = t.nodeName.toLowerCase();
 return name == "async" && nn == "script" || name == "disabled" ||
 name == "hidden" || name == "aria-hidden" ||
 name == "selected" && nn == "option" ||
-name == "checked" && nn == "input" ||
-(name == "readonly") && (nn == "input" || nn == "select");
+name == "checked" && nn == "input";
 }
 
 /*********************************************************************
@@ -1580,9 +1579,7 @@ else {
 // is a nonsense string like blah, true or false? I don't know.
 // For now I'll assume it's true.
 v = (v === "false" ? false : true);
-// readOnly is the standard
-if(name == "readonly") this.readOnly = v;
-else this[name] = v;
+this[name] = v;
 }
 }
 mutFixup(this, true, name, oldv);
@@ -1607,10 +1604,7 @@ if(this.dataset$2 && this.dataset$2[n]) delete this.dataset$2[n];
 if(spilldown(name)) delete this[name];
 if(spilldownResolve(this, name)) delete this[name];
 if(spilldownResolveURL(this, name)) delete this[name];
-if(spilldownBool(this, name)) {
-if(name == "readonly") delete this.readOnly;
-else delete this[name];
-}
+if(spilldownBool(this, name)) delete this[name];
 // acid test 48 removes class before we can check its visibility.
 // class is undefined and last$class is undefined, so getComputedStyle is never called.
 if(name === "class" && !this.last$class) this.last$class = "@@";
