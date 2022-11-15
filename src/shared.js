@@ -1463,7 +1463,6 @@ function spilldown(name) {
 // any word that starts with on spills down.
 if(name.match(/^on[a-zA-Z]*$/)) return true;
 return name == "checked" || name == "selected" ||
-name == "disabled" ||
 name == "value" ||
 // class shouldn't spill down. But if we don't, the class == last$class system fails.
 // We don't detect a change in class and rerun the css rules.
@@ -1490,7 +1489,7 @@ name == "href" && (nn == "link" || nn == "base");
 function spilldownBool(t, name) {
 if(!t.nodeName) return false;
 var nn = t.nodeName.toLowerCase();
-return name == "async" && nn == "script" || name == "disabled" ||
+return name == "async" && nn == "script" ||
 name == "hidden" || name == "aria-hidden" ||
 name == "selected" && nn == "option" ||
 name == "checked" && nn == "input";

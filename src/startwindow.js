@@ -501,6 +501,11 @@ get:function(){ var t = this.getAttribute("title");
 var y = typeof t;
 return y == "string" || y == "number" ? t : undefined; },
 set:function(v) { this.setAttribute("title", v);}});
+// almost anything can be disabled, an entire div section, etc
+Object.defineProperty(HTMLElement.prototype, "disabled", {
+get:function(){ var t = this.getAttribute("disabled");
+return t === null || t === false || t === 0 ? false : true},
+set:function(v) { this.setAttribute("disabled", v);}});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
 
@@ -645,7 +650,6 @@ alert3("textarea.innerHTML is too complicated for me to render");
 HTMLSelectElement = function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[]; this.options=[];this.validity = new Validity, this.validity.owner = this};
 HTMLSelectElement.prototype = new HTMLElement;
 HTMLSelectElement.prototype.dom$class = "Select";
-HTMLSelectElement.prototype.disabled = false;
 Object.defineProperty(HTMLSelectElement.prototype, "value", {
 get: function() {
 var a = this.options;
@@ -1554,14 +1558,12 @@ Option.prototype = new HTMLElement;
 Option.prototype.dom$class = "Option";
 Option.prototype.selected = false;
 Option.prototype.defaultSelected = false;
-Option.prototype.disabled = false;
 Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
 Option.prototype.text = Option.prototype.value = "";
 
 HTMLOptGroupElement = function() {}
 HTMLOptGroupElement.prototype = new HTMLElement;
 HTMLOptGroupElement.prototype.dom$class = "OptGroup";
-HTMLOptGroupElement.prototype.disabled = false;
 HTMLOptGroupElement.prototype.nodeName = HTMLOptGroupElement.prototype.tagName = "OPTGROUP";
 
 document.getBoundingClientRect = function(){
