@@ -525,7 +525,7 @@ static void set_property_string(JSContext *cx, JSValueConst parent, const char *
 		const char *dcs = JS_ToCString(cx, dc);
 		grab(dc);
 		if(stringEqual(dcs, "Input") ||
-		stringEqual(dcs, "HTMLTextAreaElement"))
+		stringEqual(dcs, "TextArea"))
 			getter = getter_value,
 			setter = setter_value,
 			    altname = "val$ue";

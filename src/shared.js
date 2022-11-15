@@ -1462,8 +1462,8 @@ function spilldown(name) {
 // Ideally I should have a list of all the on functions, but I'm gonna say
 // any word that starts with on spills down.
 if(name.match(/^on[a-zA-Z]*$/)) return true;
-return name == "checked" || name == "selected" ||
-name == "value" ||
+// I'm not sure value should spill down, setAttribute("value","blah")
+return name == "value" ||
 // class shouldn't spill down. But if we don't, the class == last$class system fails.
 // We don't detect a change in class and rerun the css rules.
 // We could push it down to new$class and compare new$class and last$class.

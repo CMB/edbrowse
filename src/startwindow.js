@@ -768,7 +768,7 @@ set:function(v) { this.setAttribute("type", v);}});
 
 HTMLTextAreaElement = function(){};
 HTMLTextAreaElement.prototype = new HTMLElement;
-HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
+HTMLTextAreaElement.prototype.dom$class = "TextArea";
 Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
 get: function() { return this.value},
 set: function(t) { this.value = t }});
