@@ -703,6 +703,11 @@ return typeof t == "string" ? t.toLowerCase() : undefined; },
 set:function(v) { this.setAttribute("type", v);
 if(v.toLowerCase() == "checkbox" && !this.value) this.value = "on";
 }});
+Object.defineProperty(HTMLInputElement.prototype, "placeholder", {
+get:function(){ var t = this.getAttribute("placeholder");
+var y = typeof t;
+return y == "string" || y == "number" ? t : ""; },
+set:function(v) { this.setAttribute("placeholder", v);}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
@@ -721,6 +726,11 @@ HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
 Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
 get: function() { return this.value},
 set: function(t) { this.value = t }});
+Object.defineProperty(HTMLTextAreaElement.prototype, "placeholder", {
+get:function(){ var t = this.getAttribute("placeholder");
+var y = typeof t;
+return y == "string" || y == "number" ? t : ""; },
+set:function(v) { this.setAttribute("placeholder", v);}});
 
 z$Datalist = function() {}
 z$Datalist.prototype = new HTMLElement;
