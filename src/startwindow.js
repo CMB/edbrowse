@@ -734,6 +734,26 @@ Object.defineProperty(HTMLInputElement.prototype, "readOnly", {
 get:function(){ var t = this.getAttribute("readonly");
 return t === null || t === false || t === 0 ? false : true},
 set:function(v) { this.setAttribute("readonly", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "step", {
+get:function(){ var t = this.getAttribute("step");
+var y = typeof t;
+return y == "number" || y == "string" ? t : undefined},
+set:function(v) { this.setAttribute("step", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "minLength", {
+get:function(){ var t = this.getAttribute("minlength");
+var y = typeof t;
+return y == "number" || y == "string" ? t : undefined},
+set:function(v) { this.setAttribute("minlength", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "maxLength", {
+get:function(){ var t = this.getAttribute("maxlength");
+var y = typeof t;
+return y == "number" || y == "string" ? t : undefined},
+set:function(v) { this.setAttribute("maxlength", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "size", {
+get:function(){ var t = this.getAttribute("size");
+var y = typeof t;
+return y == "number" || y == "string" ? t : undefined},
+set:function(v) { this.setAttribute("size", v);}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
