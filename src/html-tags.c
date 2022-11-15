@@ -335,10 +335,10 @@ skiplink:
 			t = k->t;
 			scannerInfo2("close include %s\n", t->href ? t->href : "null");
 // the stuff inside can all go away
+// but I can't free it cause the t->same links might pass through it
 			j = t->seqno;
 			for(++j; j < cw->numTags; ++j)
-				freeTag(tagList[j]);
-			cw->numTags = k->t->seqno + 1;
+				tagList[j]->dead = true, ++cw->deadTags;
 			t->firstchild = 0;
 // if we have source, push the fragment onto the scanning stack
 			if((a = readIncludeFragment(t))) {
