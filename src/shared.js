@@ -1462,8 +1462,8 @@ function spilldown(name) {
 // Ideally I should have a list of all the on functions, but I'm gonna say
 // any word that starts with on spills down.
 if(name.match(/^on[a-zA-Z]*$/)) return true;
-return name == "readonly" || name == "multiple" || name == "checked" || name == "selected" ||
-name == "disabled" || name == "required" ||
+return name == "readonly" || name == "checked" || name == "selected" ||
+name == "disabled" ||
 name == "value" ||
 // class shouldn't spill down. But if we don't, the class == last$class system fails.
 // We don't detect a change in class and rerun the css rules.
@@ -1493,9 +1493,8 @@ var nn = t.nodeName.toLowerCase();
 return name == "async" && nn == "script" || name == "disabled" ||
 name == "hidden" || name == "aria-hidden" ||
 name == "selected" && nn == "option" ||
-name == "multiple" && nn == "select" ||
 name == "checked" && nn == "input" ||
-(name == "readonly" || name == "required") && (nn == "input" || nn == "select");
+(name == "readonly") && (nn == "input" || nn == "select");
 }
 
 /*********************************************************************

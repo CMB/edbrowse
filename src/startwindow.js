@@ -652,6 +652,14 @@ var a = this.options;
 var n = this.selectedIndex;
 return (this.multiple || n < 0 || n >= a.length) ? "" : a[n].value;
 }});
+Object.defineProperty(HTMLSelectElement.prototype, "multiple", {
+get:function(){ var t = this.getAttribute("multiple");
+return (t == true || t == 1);},
+set:function(v) { this.setAttribute("multiple", v);}});
+Object.defineProperty(HTMLSelectElement.prototype, "required", {
+get:function(){ var t = this.getAttribute("required");
+return (t == true || t == 1);},
+set:function(v) { this.setAttribute("required", v);}});
 
 HTMLSelectElement.prototype.eb$bso = function() { // build selected options array
 // do not replace the array with a new one, this is suppose to be a live array
@@ -708,6 +716,14 @@ get:function(){ var t = this.getAttribute("placeholder");
 var y = typeof t;
 return y == "string" || y == "number" ? t : ""; },
 set:function(v) { this.setAttribute("placeholder", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "multiple", {
+get:function(){ var t = this.getAttribute("multiple");
+return (t == true || t == 1);},
+set:function(v) { this.setAttribute("multiple", v);}});
+Object.defineProperty(HTMLInputElement.prototype, "required", {
+get:function(){ var t = this.getAttribute("required");
+return (t == true || t == 1);},
+set:function(v) { this.setAttribute("required", v);}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
@@ -735,7 +751,10 @@ set:function(v) { this.setAttribute("placeholder", v);}});
 z$Datalist = function() {}
 z$Datalist.prototype = new HTMLElement;
 z$Datalist.prototype.dom$class = "Datalist";
-z$Datalist.prototype.multiple = true;
+Object.defineProperty(z$Datalist.prototype, "multiple", {
+get:function(){ var t = this.getAttribute("multiple");
+return (t == true || t == 1);},
+set:function(v) { this.setAttribute("multiple", v);}});
 
 Image = HTMLImageElement = function(){};
 HTMLImageElement.prototype = new HTMLElement;
