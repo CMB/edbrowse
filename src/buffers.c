@@ -98,7 +98,7 @@ This also checks for special input fields that are masked and
 displays stars instead, whenever we would display formatted text.
 *********************************************************************/
 
-void removeHiddenNumbers(pst p, uchar terminate)
+void removeHiddenNumbers(pst p, uchar terminate, int cx)
 {
 	pst s, t, u;
 	uchar c, d;
@@ -123,7 +123,7 @@ addchar:
 			continue;
 		}
 		if (d == '<') {
-			if (tagList[field]->masked) {
+			if (sessionList[cx].lw->tags[field]->masked) {
 				*t++ = d;
 				while (*++u != InternalCodeChar)
 					*t++ = '*';
@@ -135,8 +135,8 @@ addchar:
 			s = u;
 			continue;
 		}
-/* This is not a code sequence I recognize. */
-/* This should never happen; just move along. */
+// This is not a code sequence I recognize.
+// This should never happen; just move along.
 		goto addchar;
 	}			// loop over p
 	*t = c;			/* terminating character */
@@ -173,7 +173,7 @@ static pst fetchLineContext(int n, int show, int cx)
 		return t->text;
 	p = clonePstring(t->text);
 	if (show && lw->browseMode)
-		removeHiddenNumbers(p, '\n');
+		removeHiddenNumbers(p, '\n', cx);
 	return p;
 }
 
@@ -5043,7 +5043,7 @@ pwd:
 et_go:
 			cw->f_dot = 0;
 			for (i = 1; i <= cw->dol; ++i)
-				removeHiddenNumbers(cw->map[i].text, '\n');
+				removeHiddenNumbers(cw->map[i].text, '\n', context);
 			freeWindowLines(cw->r_map);
 			cw->r_map = 0;
 		}
@@ -6049,7 +6049,7 @@ static char *showLinks(void)
 		nzFree(h);
 	}
 
-	if(a_l) removeHiddenNumbers((pst) a, 0);
+	if(a_l) removeHiddenNumbers((pst) a, 0, context);
 	return a;
 }
 

@@ -13,7 +13,7 @@ extern "C" {
 // sourcefile=buffers.c
 void setHistcontrol(void);
 void undoSpecialClear(void);
-void removeHiddenNumbers(pst p, uchar terminate);
+void removeHiddenNumbers(pst p, uchar terminate, int cx);
 pst fetchLine(int n, int show);
 void displayLine(int n);
 void printDot(void);

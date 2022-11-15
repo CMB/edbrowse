@@ -3049,8 +3049,8 @@ and new internal numbers each time, and that use to trip this algorithm.
 	if(rr_command < 0)
 		goto done;
 
-	removeHiddenNumbers((pst) snap, 0);
-	removeHiddenNumbers((pst) newbuf, 0);
+	removeHiddenNumbers((pst) snap, 0, context);
+	removeHiddenNumbers((pst) newbuf, 0, context);
 	if (stringEqual(snap, newbuf)) {
 		if (rr_command > 0)
 			i_puts(MSG_NoChange);
