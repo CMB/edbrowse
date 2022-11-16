@@ -45,6 +45,7 @@ function alert4(s) { logputs(4, s); }
 // You can make this more elaborate and informative if you wish.
 function dumptree(top) {
 var nn = top.nodeName;
+var r = "";
 var extra = "";
 if(nn === "#text" && top.data) {
 extra = top.data;
@@ -67,19 +68,20 @@ if(extra.length) extra = ' ' + extra;
 // some tags should never have anything below them so skip the parentheses notation for these.
 if((nn == "BASE" || nn == "META" || nn == "LINK" ||nn == "#text" || nn == "IMAGE" || nn == "OPTION" || nn == "INPUT" || nn == "SCRIPT") &&
 (!top.childNodes || top.childNodes.length == 0)) {
-alert(nn + extra);
-return;
+r += nn + extra + '\n';
+return r;
 }
-alert(nn + " {" + extra);
+r += nn + " {" + extra + '\n';
 if(top.dom$class == "Frame") {
-if(top.eb$expf) top.contentWindow.dumptree(top.contentDocument);
+if(top.eb$expf) r += top.contentWindow.dumptree(top.contentDocument);
 } else if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-dumptree(c);
+r += dumptree(c);
 }
 }
-alert("}");
+r += '}\n';
+return r;
 }
 
 function uptrace(t) {
