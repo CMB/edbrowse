@@ -27,28 +27,28 @@ static const char inneriftag[] = "innerfragment";
 // report debugging information or errors
 static void scannerInfo1(const char *msg, int n)
 {
-	if(debugScanner) printf(msg, n);
+	if(debugScanner) printf(msg, n), nl();
 }
 
 static void scannerInfo2(const char *msg, const char *w)
 {
-	if(debugScanner) printf(msg, w);
+	if(debugScanner) printf(msg, w), nl();
 }
 
 static void scannerInfo3(const char *msg, const char *w, int n)
 {
-	if(debugScanner) printf(msg, w, n);
+	if(debugScanner) printf(msg, w, n), nl();
 }
 
 static void scannerError1(const char *msg, int n)
 {
-	if(debugScanner) printf(msg, n);
+	if(debugScanner) printf(msg, n), nl();
 	else if(isXML) debugPrint(3, msg, n);
 }
 
 static void scannerError2(const char *msg, const char *w)
 {
-	if(debugScanner) printf(msg, w);
+	if(debugScanner) printf(msg, w), nl();
 	else if(isXML) debugPrint(3, msg, w);
 }
 
@@ -253,14 +253,14 @@ static void makeTag(const char *name, const char *lowname, bool slash, const cha
 	if(slash) {
 		if(!(k = balance(lowname))) {
 // </foo> without <foo>, may as well just throw it away.
-			scannerError2("%s unbalanced\n", name);
+			scannerError2("%s unbalanced", name);
 			return;
 		}
 // now handle <i><b></i></b>
 // the balancing tag is not at the top of the stack, where it should be!
 // I think the best thing is to close out the other tags.
 		while(stack != k) {
-			scannerError2("force closure of %s\n", stack->name);
+			scannerError2("force closure of %s", stack->name);
 			makeTag(stack->name, stack->lowname, true, mark);
 		}
 	}
@@ -290,50 +290,50 @@ skiplink:
 
 		if(stringEqual(lowname, htmltag)) {
 			headbody = 1;
-			scannerInfo1("in html\n", 0);
+			scannerInfo1("in html", 0);
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqual(lowname, headtag)) {
 			headbody = 2;
-			scannerInfo1("in head\n", 0);
+			scannerInfo1("in head", 0);
 		}
 		if(stringEqual(lowname, bodytag)) {
 			headbody = 4, bodycount = htmlcount = 1;
-			scannerInfo1("in body\n", 0);
+			scannerInfo1("in body", 0);
 			if(htmlGenerated) t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqual(lowname, "pre")) {
 			premode = true;
-			scannerInfo1("pre\n", 0);
+			scannerInfo1("pre", 0);
 // Need a tag for </pre>. It's weird.
 			t = newTag(cf, name);
 			t->slash = t->dead = true, ++cw->deadTags;
 		}
 		if(stringEqual(lowname, iftag)) {
-			scannerInfo1("include\n", 0);
+			scannerInfo1("include", 0);
 		}
 	} else {
 		if(stringEqual(lowname, headtag)) {
 			headbody = 3;
-			scannerInfo1("post head\n", 0);
+			scannerInfo1("post head", 0);
 		}
 		if(stringEqual(lowname, bodytag)) {
 			headbody = 5, bodycount = 0;
-			scannerInfo1("post body\n", 0);
+			scannerInfo1("post body", 0);
 		}
 		if(stringEqual(lowname, htmltag)) {
 			headbody = 6, htmlcount = 0;
-			scannerInfo1("post html\n", 0);
+			scannerInfo1("post html", 0);
 		}
 		if(stringEqual(lowname, "pre")) {
 			premode = false;
-			scannerInfo1("close pre\n", 0);
+			scannerInfo1("close pre", 0);
 		}
 		if(stringEqual(lowname, iftag)) {
 			int j;
 			char *a;
 			t = k->t;
-			scannerInfo2("close include %s\n", t->href ? t->href : "null");
+			scannerInfo2("close include %s", t->href ? t->href : "null");
 // the stuff inside can all go away
 // but I can't free it cause the t->same links might pass through it
 			j = t->seqno;
@@ -785,7 +785,7 @@ top:
 				pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
-				  scannerInfo2("text{%s}\n", w);
+				  scannerInfo2("text{%s}", w);
 				makeTag(texttag, texttag, false, 0);
 				if(!ws) atWall = false, lasttext = working_t;
 				working_t->textval = w;
@@ -796,10 +796,10 @@ top:
 // xml cdata section
 		if(memEqualCI(t, "![cdata[", 8)) {
 			if(!(u = strstr(t, "]]>"))) {
-				scannerError1("open cdata at line %d, html parsing stops here\n", ln);
+				scannerError1("open cdata at line %d, html parsing stops here", ln);
 				goto stop;
 			}
-			scannerInfo1("cdata length %d\n", u - t - 8);
+			scannerInfo1("cdata length %d", u - t - 8);
 // adjust line number
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
@@ -827,7 +827,7 @@ closecomment:
 				if(u[-i] != '-') break;
 			if(i < hyphens) { ++u; goto closecomment; }
 // this is a valid comment
-			scannerInfo1("comment\n", 0);
+			scannerInfo1("comment", 0);
 // adjust line number
 			for(t = lt; t < u; ++t)
 				if(*t == '\n') ++ln;
@@ -839,7 +839,7 @@ closecomment:
 			w = (u <= t ? 0 : pullString(t, u - t));
 			if(w && headbody == 0 && memEqualCI(t, "doctype", 7) &&
 			!isalnumByte(t[7])) {
-				scannerInfo1("doctype\n", 0);
+				scannerInfo1("doctype", 0);
 				makeTag("doctype", "doctype", false, 0);
 				working_t->textval = w;
 				makeTag("doctype", "doctype", true, 0);
@@ -850,18 +850,18 @@ closecomment:
 			}
 			continue;
 opencomment:
-			scannerError1("open comment at line %d, html parsing stops here\n", ln);
+			scannerError1("open comment at line %d, html parsing stops here", ln);
 			goto stop;
 		}
 
 // xml specifier - I don't really understand this.
 		if(memEqualCI(t, "?xml", 4)) {
 			if(!(gt = strstr(t, "?>"))) {
-				scannerError1("open xml\n", 0);
+				scannerError1("open xml", 0);
 				s = t;
 				continue;
 			}
-			scannerInfo1("xml\n", 0);
+			scannerInfo1("xml", 0);
 			s = seek = gt + 2;
 			continue;
 		}
@@ -930,7 +930,7 @@ so also break out at >< like a new tag is starting.
 			}
 
 // create this tag in the edbrowse world.
-			scannerInfo2("</%s>\n", tagname);
+			scannerInfo2("</%s>", tagname);
 			makeTag(tagname, lowname, true, lt);
 			s = seek; // needed for </include-fragment>
 			if(headbody == 6) goto stop;
@@ -943,11 +943,11 @@ so also break out at >< like a new tag is starting.
 		}
 
 // create this tag in the edbrowse world.
-		scannerInfo3("<%s> line %d\n", tagname, ln);
+		scannerInfo3("<%s> line %d", tagname, ln);
 // has to start and end with html
 		if(stringEqual(lowname, htmltag)) {
 			if(headbody == 0) goto tag_ok;
-			if(headbody != 4) { scannerError1("sequence\n", 0); continue; }
+			if(headbody != 4) { scannerError1("sequence", 0); continue; }
 			strcpy(tagname, innerhtmltag), ++htmlcount;
 			strcpy(lowname, innerhtmltag);
 			goto tag_ok;
@@ -955,25 +955,25 @@ so also break out at >< like a new tag is starting.
 		if(headbody == 0)
 			makeTag(htmltag, htmltag, false, lt);
 		if(stringEqual(lowname, headtag)) {
-			if(headbody > 1) { scannerError1("sequence\n", 0); continue; }
+			if(headbody > 1) { scannerError1("sequence", 0); continue; }
 			goto tag_ok;
 		}
 		if(!isInhead(lowname)) {
 			if(headbody == 1) {
 				if(htmlGenerated) {
-					scannerInfo1("skip head section\nin head\npost head\n", 0);
+					scannerInfo1("skip head section\nin head\npost head", 0);
 				} else {
-					scannerInfo1("initiate and terminate head\n", 0);
+					scannerInfo1("initiate and terminate head", 0);
 					makeTag(headtag, headtag, false, lt);
 					makeTag(headtag, headtag, true, lt);
 				}
 			} else if(headbody == 2) {
-				scannerInfo1("terminate head\n", 0);
+				scannerInfo1("terminate head", 0);
 				makeTag(headtag, headtag, true, lt);
 			}
 		} else pushState(lt, true);
 		if(stringEqual(lowname, bodytag)) {
-			if(headbody > 4) { scannerError1("sequence\n", 0); continue; }
+			if(headbody > 4) { scannerError1("sequence", 0); continue; }
 			if(headbody == 4) {
 				strcpy(tagname, innerbodytag), ++bodycount;
 				strcpy(lowname, innerbodytag);
@@ -986,12 +986,12 @@ tag_ok:
 //  see if we need to close a prior instance of this tag
 		k = isXML ? 0 : balance(lowname);
 		if(k && isNonest(lowname, k)) {
-			scannerInfo2("%s not nestable\n", tagname);
+			scannerInfo2("%s not nestable", tagname);
 			makeTag(tagname, lowname, true, lt);
 		}
 
 		if(!isXML && stack && isNextclose(stack->lowname)) {
-			scannerInfo2("prior close %s\n", stack->name);
+			scannerInfo2("prior close %s", stack->name);
 			makeTag(stack->name, stack->lowname, true, lt);
 		}
 
@@ -1000,7 +1000,7 @@ tag_ok:
 			for(k = stack; k; k = hold) {
 				hold = k->next;
 				if(isCrossclose(k->lowname)) {
-					scannerInfo2("cross close %s\n", k->name);
+					scannerInfo2("cross close %s", k->name);
 					makeTag(k->name, k->lowname, true, lt);
 				}
 			}
@@ -1012,7 +1012,7 @@ tag_ok:
 			for(k = stack; k; k = k->next) {
 				if(stringEqual(k->lowname, "table")) break;
 				if(isTableSection(k->lowname)) {
-					scannerInfo2("cross close %s\n", k->name);
+					scannerInfo2("cross close %s", k->name);
 					makeTag(k->name, k->lowname, true, lt);
 					break;
 				}
@@ -1023,7 +1023,7 @@ tag_ok:
 			for(k = stack; k; k = k->next) {
 				if(stringEqual(k->lowname, "table")) break;
 				if(isCell(k->lowname)) {
-					scannerInfo2("cross close %s\n", k->name);
+					scannerInfo2("cross close %s", k->name);
 					makeTag(k->name, k->lowname, true, lt);
 					break;
 				}
@@ -1048,11 +1048,11 @@ tag_ok:
 		}
 		findAttributes(t, gt);
 		if(!isXML && isAutoclose(lowname)) {
-			scannerInfo2("%s autoclose\n", tagname);
+			scannerInfo2("%s autoclose", tagname);
 			makeTag(tagname, lowname, true, seek);
 		} else if(*gt == '>' && gt[-1] == '/' &&
 		(gt - 1 == t || isspaceByte(gt[-2]))) {
-			scannerInfo2("%s close by slash\n", tagname);
+			scannerInfo2("%s close by slash", tagname);
 			makeTag(tagname, lowname, true, seek);
 			s = seek; // needed for </include-fragment>
 // if we have <script /> stuf and stuff </script> what are we suppose to do?
@@ -1079,18 +1079,18 @@ Such has to be written
 With this understanding, we can, and should, scan for </script
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</script"))) {
-				scannerError1("open script at line %d, html parsing stops here\n", ln);
+				scannerError1("open script at line %d, html parsing stops here", ln);
 				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				scannerError1("open script at line %d, html parsing stops here\n", ln);
+				scannerError1("open script at line %d, html parsing stops here", ln);
 				goto stop;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspaceByte(*seek)) ++seek;
-			   scannerInfo1("script length %d\n", (int)(lt - seek));
+			   scannerInfo1("script length %d", (int)(lt - seek));
 			working_t->doorway = true;
 			working_t->scriptgen = htmlGenerated;
 			if(lt > seek) {
@@ -1101,7 +1101,7 @@ With this understanding, we can, and should, scan for </script
 				working_t->textval = cloneString(w);
 				makeTag(texttag, texttag, true, 0);
 			}
-			scannerInfo1("</script>\n", 0);
+			scannerInfo1("</script>", 0);
 			makeTag(tagname, lowname, true, lt);
 			seek = s = gt + 1;
 			continue;
@@ -1110,18 +1110,18 @@ With this understanding, we can, and should, scan for </script
 		if(stringEqual(lowname, "style")) {
 // this is like script; leave it alone!
 			if(!(lt = strcasestr(seek, "</style"))) {
-				scannerError1("open style at line %d, html parsing stops here\n", ln);
+				scannerError1("open style at line %d, html parsing stops here", ln);
 				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				scannerError1("open style at line %d, html parsing stops here\n", ln);
+				scannerError1("open style at line %d, html parsing stops here", ln);
 				goto stop;
 			}
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
 			while(isspaceByte(*seek)) ++seek;
-			   scannerInfo1("style length %d\n", (int)(lt - seek));
+			   scannerInfo1("style length %d", (int)(lt - seek));
 			if(lt > seek) {
 // pull out the style, do not andify or change in any way.
 				w = pullString(seek, lt - seek);
@@ -1130,7 +1130,7 @@ With this understanding, we can, and should, scan for </script
 				working_t->textval = w;
 				makeTag(texttag, texttag, true, 0);
 			}
-			scannerInfo1("</style>\n", 0);
+			scannerInfo1("</style>", 0);
 			makeTag(tagname, lowname, true, lt);
 			seek = s = gt + 1;
 			continue;
@@ -1143,11 +1143,11 @@ textarea is sometimes html code that you are suppose to embed in your web page.
 With this understanding, we can, and should, scan for </textarea
 *********************************************************************/
 			if(!(lt = strcasestr(seek, "</textarea"))) {
-				scannerError1("open textarea at line %d, html parsing stops here\n", ln);
+				scannerError1("open textarea at line %d, html parsing stops here", ln);
 				goto stop;
 			}
 			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
-				scannerError1("open textarea at line %d, html parsing stops here\n", ln);
+				scannerError1("open textarea at line %d, html parsing stops here", ln);
 				goto stop;
 			}
 // adjust line number
@@ -1157,12 +1157,12 @@ With this understanding, we can, and should, scan for </textarea
 			if(lt > seek) {
 // pull out the text and andify.
 				w = pullAnd(seek, lt);
-				   scannerInfo1("textarea length %d\n", strlen(w));
+				   scannerInfo1("textarea length %d", strlen(w));
 				makeTag(texttag, texttag, false, 0);
 				working_t->textval = w;
 				makeTag(texttag, texttag, true, 0);
 			}
-			scannerInfo1("</textarea>\n", 0);
+			scannerInfo1("</textarea>", 0);
 			makeTag(tagname, lowname, true, lt);
 			seek = s = gt + 1;
 			continue;
@@ -1179,7 +1179,7 @@ With this understanding, we can, and should, scan for </textarea
 			pushState(seek, true);
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w), trimWhite(w);
-			  scannerInfo2("text{%s}\n", w);
+			  scannerInfo2("text{%s}", w);
 			makeTag(texttag, texttag, false, 0);
 			working_t->textval = w;
 			makeTag(texttag, texttag, true, 0);
@@ -1191,7 +1191,7 @@ With this understanding, we can, and should, scan for </textarea
 		nzFree(ifrag->base);
 		s = seek = ifrag->seek;
 		ln = ifrag->ln;
-		scannerInfo1("pop include line %d\n", ln);
+		scannerInfo1("pop include line %d", ln);
 		free(ifrag);
 		ifrag = hold;
 		makeTag(inneriftag, inneriftag, true, 0);
@@ -1243,15 +1243,15 @@ static void pushState(const char *start, bool head_ok)
 		makeTag(htmltag, htmltag, false, start);
 	}
 	if(headbody == 1) {
-		scannerInfo1("initiate head\n", 0);
+		scannerInfo1("initiate head", 0);
 		makeTag(headtag,headtag, false, start);
 	}
 	if(headbody == 2 && !head_ok) {
-		scannerInfo1("terminate head\n", 0);
+		scannerInfo1("terminate head", 0);
 		makeTag(headtag,headtag, true, start);
 	}
 	if(headbody == 3) {
-		scannerInfo1("initiate body\n", 0);
+		scannerInfo1("initiate body", 0);
 		makeTag(bodytag,bodytag, false, start);
 	}
 }

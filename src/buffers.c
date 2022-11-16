@@ -1941,7 +1941,8 @@ static bool readFile(const char *filename, bool newwin,
 		}
 // acid says a frame has to be text/html, not even text/plain.
 		if (fromframe && g.content[0]
-		    && !stringEqual(g.content, "text/html")) {
+		    && !stringEqual(g.content, "text/html")
+		    && !stringEqual(g.content, "text/xml")) {
 			debugPrint(3,
 				   "frame suppressed because content type is %s",
 				   g.content);

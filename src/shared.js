@@ -2760,6 +2760,31 @@ swap = list[i], list[i] = list[i+1], list[i+1] = swap, change = true;
 }
 }
 
+DOMParser = function() {
+return {
+parseFromString: function(t,y) {
+var d = my$doc();
+if(y == "text/html" || y == "text/xml") {
+var v = d.createElement("iframe");
+if(t) {
+if(typeof t == "string") {
+if(y.match(/xml$/)) t = "`~*xml}@;" + t;
+v.src = "data:" + y + "," + encodeURIComponent(t);
+} else
+alert3("DOMParser expects a string but gets " + typeof t);
+}
+// this expands the frame on demand
+return v.contentDocument;
+}
+if(y == "text/plain") {
+return d.createTextNode(t);
+}
+alert3("trying to use the DOMParser\n" + y + " <<< ");
+alert4(t);
+alert3(">>>");
+return d.createTextNode("DOMParser not yet implemented");
+}}}
+
 function xml_open(method, url, async, user, password){
 if(user || password) alert3("xml user and password ignored");
 this.readyState = 1;
@@ -4997,6 +5022,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "clickfn", "checkset", "cel_define", "cel_get",
 "jtfn0", "jtfn1", "jtfn2", "jtfn3", "deminimize", "addTrace",
 "url_rebuild", "url_hrefset", "sortTime",
+"DOMParser",
 "xml_open", "xml_srh", "xml_grh", "xml_garh", "xml_send", "xml_parse",
 "onmessage$$running",
 ];
