@@ -2972,6 +2972,7 @@ static bool crossOrigin(Tag *t, const char *url2)
 	const char *url1 = t->f0->hbase;
 	bool u1, u2;
 	const char *host1, *host2;
+	const char *prot2;
 
 // If the bottom url is empty then it is a blank frame, which is fine,
 // or it was some javascript code, which has been moved to another
@@ -3008,6 +3009,10 @@ static bool crossOrigin(Tag *t, const char *url2)
 		debugPrint(3, "crossorigin violation: internet over local");
 		return false;
 	}
+
+// the data protocol is always ok
+	prot2 = getProtURL(url2);
+	if(stringEqual(prot2, "data")) return true;
 
 // they are both urls, compare the domains.
 // Neither of them should come out null, but I'll check for that.
