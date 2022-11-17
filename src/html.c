@@ -1092,6 +1092,7 @@ char *htmlParse(char *buf, int remote)
 	if (isJSAlive) {
 		decorate();
 		set_basehref(cf->hbase);
+		if(cw->xmlMode) goto past_html_events;
 		run_function_bool_win(cf, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
@@ -1099,10 +1100,10 @@ char *htmlParse(char *buf, int remote)
 		run_function_bool_win(cf, "readyStateComplete");
 		run_event_win(cf, "window", "onfocus");
 		run_event_doc(cf, "document", "onfocus");
-
 		runScriptsPending(false);
 		rebuildSelectors();
 	}
+past_html_events:
 	debugPrint(3, "end parse html from browse");
 
 	a = render();
@@ -1126,6 +1127,10 @@ bool htmlTest(void)
 		char *p = (char *)fetchLine(ln, -1);
 		char c;
 		int state = 0;
+
+// special xml indicator of my own creation
+		if(ln == 1 && !memcmp(p, "`~*xml}@;", 9))
+			return true;
 
 		while (isspaceByte(*p) && *p != '\n')
 			++p;

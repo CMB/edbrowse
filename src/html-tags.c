@@ -14,7 +14,7 @@ which we must then import into the edbrowse tree of tags.
 
 // This makes a lot of output; maybe it should go to a file like debug css does
 bool debugScanner;
-bool isXML; // parse as xml
+static bool isXML; // parse as xml
 
 static const char htmltag[] = "html";
 static const char innerhtmltag[] = "innerhtml";
@@ -267,6 +267,8 @@ static void makeTag(const char *name, const char *lowname, bool slash, const cha
 
 	if(!slash) {
 		working_t = t = newTag(cf, name);
+// xml parse comes from the xhr system, so we need the javascript objects
+		if(isXML) t->doorway = true;
 		if((t->action == TAGACT_HTML || t->action == TAGACT_BODY) && htmlGenerated)
 			goto skiplink;
 		t->parent = parent = stack ? stack->t : overnode;
@@ -288,6 +290,7 @@ skiplink:
 		k->start = mark;
 		k->next = stack, stack = k;
 
+		if(isXML) goto past_html_open_semantics;
 		if(stringEqual(lowname, htmltag)) {
 			headbody = 1;
 			scannerInfo1("in html", 0);
@@ -312,7 +315,9 @@ skiplink:
 		if(stringEqual(lowname, iftag)) {
 			scannerInfo1("include", 0);
 		}
+past_html_open_semantics: ;
 	} else {
+		if(isXML) goto past_html_close_semantics;
 		if(stringEqual(lowname, headtag)) {
 			headbody = 3;
 			scannerInfo1("post head", 0);
@@ -351,6 +356,7 @@ skiplink:
 				return;
 			}
 		}
+past_html_close_semantics:
 
 		stack = k->next;
 // set up for innerHTML
@@ -753,6 +759,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	isXML = false;
 // magic code to say this is xml
 	if(!strncmp(htmltext, "`~*xml}@;", 9)) isXML = true, htmltext += 9;
+	if(isXML) scannerInfo1("xml parsing", 0), cw->xmlMode = true;
 	seek = s = htmltext, ln = 1, premode = false;
 
 top:
@@ -782,7 +789,7 @@ top:
 // Ignore whitespace that is not in the head or the body.
 // Ignore text after body
 			if(headbody < 5 && (!ws || (headbody == 4 && !atWall))) {
-				pushState(seek, true);
+				if(!isXML) pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);
 				  scannerInfo2("text{%s}", w);
@@ -838,7 +845,7 @@ closecomment:
 // for <!----> u could be less than t
 			w = (u <= t ? 0 : pullString(t, u - t));
 			if(w && headbody == 0 && memEqualCI(t, "doctype", 7) &&
-			!isalnumByte(t[7])) {
+			!isalnumByte(t[7] && !isXML)) {
 				scannerInfo1("doctype", 0);
 				makeTag("doctype", "doctype", false, 0);
 				working_t->textval = w;
@@ -920,6 +927,7 @@ so also break out at >< like a new tag is starting.
 		s = seek; // ready to march on
 
 		if(slash) {
+			if(isXML) goto past_html_close_semantics;
 			if(stringEqual(lowname, bodytag) && bodycount > 1) {
 				strcpy(tagname, innerbodytag), --bodycount;
 				strcpy(lowname, innerbodytag);
@@ -928,13 +936,15 @@ so also break out at >< like a new tag is starting.
 				strcpy(tagname, innerhtmltag), --htmlcount;
 				strcpy(lowname, innerhtmltag);
 			}
+past_html_close_semantics:
 
 // create this tag in the edbrowse world.
 			scannerInfo2("</%s>", tagname);
 			makeTag(tagname, lowname, true, lt);
 			s = seek; // needed for </include-fragment>
+// this will never happen in xml
 			if(headbody == 6) goto stop;
-			if(isWall(lowname)) {
+			if(!isXML && isWall(lowname)) {
 				atWall = true;
 				if(lasttext) trimWhite(lasttext->textval);
 				lasttext = 0;
@@ -944,6 +954,7 @@ so also break out at >< like a new tag is starting.
 
 // create this tag in the edbrowse world.
 		scannerInfo3("<%s> line %d", tagname, ln);
+		if(isXML) goto past_html_open_semantics;
 // has to start and end with html
 		if(stringEqual(lowname, htmltag)) {
 			if(headbody == 0) goto tag_ok;
@@ -984,18 +995,18 @@ so also break out at >< like a new tag is starting.
 
 tag_ok:
 //  see if we need to close a prior instance of this tag
-		k = isXML ? 0 : balance(lowname);
+		k = balance(lowname);
 		if(k && isNonest(lowname, k)) {
 			scannerInfo2("%s not nestable", tagname);
 			makeTag(tagname, lowname, true, lt);
 		}
 
-		if(!isXML && stack && isNextclose(stack->lowname)) {
+		if(stack && isNextclose(stack->lowname)) {
 			scannerInfo2("prior close %s", stack->name);
 			makeTag(stack->name, stack->lowname, true, lt);
 		}
 
-		if(!isXML && stack && isCrossclose2(lowname)) {
+		if(stack && isCrossclose2(lowname)) {
 			const struct opentag *hold;
 			for(k = stack; k; k = hold) {
 				hold = k->next;
@@ -1008,7 +1019,7 @@ tag_ok:
 
 // This one doesn't fit into our simple table-driven crossclose pattern.
 // Any of thead tbody tfoot closes the prior, unless in a lower table.
-		if(!isXML && stack && isTableSection(lowname)) {
+		if(stack && isTableSection(lowname)) {
 			for(k = stack; k; k = k->next) {
 				if(stringEqual(k->lowname, "table")) break;
 				if(isTableSection(k->lowname)) {
@@ -1019,7 +1030,7 @@ tag_ok:
 			}
 		}
 
-		if(!isXML && stack && isCell(lowname)) {
+		if(stack && isCell(lowname)) {
 			for(k = stack; k; k = k->next) {
 				if(stringEqual(k->lowname, "table")) break;
 				if(isCell(k->lowname)) {
@@ -1030,13 +1041,14 @@ tag_ok:
 			}
 		}
 
+past_html_open_semantics:
 		makeTag(tagname, lowname, false, seek);
 		if(!isXML && isWall(lowname)) {
 			atWall = true;
 			lasttext = 0;
 		}
 		i = working_t->action;
-		if(i == TAGACT_INPUT || i == TAGACT_SELECT) {
+		if(!isXML && (i == TAGACT_INPUT || i == TAGACT_SELECT)) {
 			atWall = false;
 			lasttext = 0;
 		}
@@ -1176,7 +1188,7 @@ With this understanding, we can, and should, scan for </textarea
 			if(!isspaceByte(*u)) ws = false;
 		}
 		if(headbody < 5 && !ws) {
-			pushState(seek, true);
+			if(!isXML) pushState(seek, true);
 			w = pullAnd(seek, seek + strlen(seek));
 			if(!premode) compress(w), trimWhite(w);
 			  scannerInfo2("text{%s}", w);
@@ -1199,6 +1211,8 @@ With this understanding, we can, and should, scan for </textarea
 	}
 
 stop:
+	if(isXML) goto past_html_final_semantics;
+
 // we should have a head and a body
 	pushState(s, false);
 
@@ -1233,8 +1247,16 @@ if(headbody < 6)
 		ifrag = hold;
 	}
 
+past_html_final_semantics:
+	// this could happen if xml tags are not closed
 	if(stack)
 		debugPrint(1, "stack not empty after html scan");
+// clear memory leak
+	while(stack) {
+		struct opentag *hold = stack->next;
+		free(stack);
+		stack = hold;
+	}
 }
 
 static void pushState(const char *start, bool head_ok)
@@ -4675,11 +4697,14 @@ Needless to say that's not good!
 		linked_in = true;
 	}
 
-	if (action == TAGACT_HTML || action == TAGACT_DOCTYPE) {
+// doctype and html are at the top of an html document.
+// for xml, anything can be at the top.
+	if ((isXML && !linked_in) || (action == TAGACT_HTML || action == TAGACT_DOCTYPE)) {
 		run_function_onearg_doc(cf, "eb$apch1", t);
 		linked_in = true;
 	}
 
+// innerHTML should never apply in the xml world
 	if (!t->parent && innerParent) {
 // this is the top of innerHTML or some such.
 // It is never html head or body, as those are skipped.

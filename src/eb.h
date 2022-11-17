@@ -283,7 +283,6 @@ extern int verifyCertificates;	/* is a certificate required for the ssl connecti
 extern int displayLength;	// when printing a line
 extern int formatLineLength;	// when formatting html
 extern bool formatOverflow;
-extern bool isXML;
 extern int webTimeout, mailTimeout;
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
@@ -485,6 +484,7 @@ int ehsn;
 	bool iso8859Mode:1;
 	bool dosMode:1; // \r\n
 	bool browseMode:1;	/* browsing html */
+	bool xmlMode;
 	bool changeMode:1;	/* something has changed in this file */
 	bool quitMode:1;	/* you can quit this buffer any time */
 	bool dirMode:1;		// directory mode

@@ -293,7 +293,7 @@ return s;
 // document.head, document.body; shortcuts to head and body.
 function getElement() {
   var e = this.lastChild;
-if(!e) { alert3("missing html node"); return null; }
+if(!e) { alert3("missing documentElement node"); return null; }
 if(e.nodeName.toUpperCase() != "HTML") alert3("html node name " + e.nodeName);
 return e
 }
