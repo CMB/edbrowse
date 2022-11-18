@@ -546,8 +546,6 @@ void prepareScript(Tag *t)
 			t->href = new_url;
 		}
 	}
-	t->async = get_property_bool_t(t, "async") |
-	get_property_bool_t(t, "defer");
 
 // If <script> is under <template>, and we clone it again and again,
 // we could be asked to prepare it again and again.
@@ -854,9 +852,13 @@ top:
 passes:
 
 	for (t = cw->scriptlist; t; t = t->same) {
-		if (t->dead || !t->jslink || t->step >= 5 || t->step <= 2 || t->async != async)
+		if (t->dead || !t->jslink || t->step >= 5 || t->step <= 2)
 			continue;
 		if(!isRooted(t)) continue;
+// defer is equivalent to async in edbrowse
+		t->async = (get_property_bool_t(t, "async") |
+		get_property_bool_t(t, "defer"));
+		if(t->async != async) continue;
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))
 			continue;

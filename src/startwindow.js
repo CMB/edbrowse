@@ -504,7 +504,7 @@ set:function(v) { this.setAttribute("title", v);}});
 // almost anything can be disabled, an entire div section, etc
 Object.defineProperty(HTMLElement.prototype, "disabled", {
 get:function(){ var t = this.getAttribute("disabled");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("disabled", v);}});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
@@ -660,11 +660,11 @@ Object.defineProperty(HTMLSelectElement.prototype, "type", {
 get:function(){ return this.multiple ? "select-multiple" : "select-one"}});
 Object.defineProperty(HTMLSelectElement.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 Object.defineProperty(HTMLSelectElement.prototype, "required", {
 get:function(){ var t = this.getAttribute("required");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("required", v);}});
 
 HTMLSelectElement.prototype.eb$bso = function() { // build selected options array
@@ -724,15 +724,15 @@ return y == "string" || y == "number" ? t : ""; },
 set:function(v) { this.setAttribute("placeholder", v);}});
 Object.defineProperty(HTMLInputElement.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 Object.defineProperty(HTMLInputElement.prototype, "required", {
 get:function(){ var t = this.getAttribute("required");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("required", v);}});
 Object.defineProperty(HTMLInputElement.prototype, "readOnly", {
 get:function(){ var t = this.getAttribute("readonly");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("readonly", v);}});
 Object.defineProperty(HTMLInputElement.prototype, "step", {
 get:function(){ var t = this.getAttribute("step");
@@ -781,11 +781,11 @@ return y == "string" || y == "number" ? t : ""; },
 set:function(v) { this.setAttribute("placeholder", v);}});
 Object.defineProperty(HTMLTextAreaElement.prototype, "required", {
 get:function(){ var t = this.getAttribute("required");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("required", v);}});
 Object.defineProperty(HTMLTextAreaElement.prototype, "readOnly", {
 get:function(){ var t = this.getAttribute("readonly");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("readonly", v);}});
 
 z$Datalist = function() {}
@@ -793,7 +793,7 @@ z$Datalist.prototype = new HTMLElement;
 z$Datalist.prototype.dom$class = "Datalist";
 Object.defineProperty(z$Datalist.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 
 Image = HTMLImageElement = function(){};
@@ -898,11 +898,11 @@ HTMLScriptElement.prototype = new HTMLElement;
 HTMLScriptElement.prototype.dom$class = "HTMLScriptElement";
 Object.defineProperty(HTMLScriptElement.prototype, "async", {
 get:function(){ var t = this.getAttribute("async");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("async", v);}});
 Object.defineProperty(HTMLScriptElement.prototype, "defer", {
 get:function(){ var t = this.getAttribute("defer");
-return t === null || t === false || t === 0 ? false : true},
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("defer", v);}});
 HTMLScriptElement.prototype.type = "";
 HTMLScriptElement.prototype.text = "";
@@ -1188,7 +1188,7 @@ translate: eb$nullfunction }}}
 HTMLCanvasElement.prototype = new HTMLElement;
 HTMLCanvasElement.prototype.dom$class = "HTMLCanvasElement";
 HTMLCanvasElement.prototype.toDataURL = function() {
-if(this.height === 0 || this.width === 0) return "data:,";
+if(this.height === 0  || this.width === 0) return "data:,";
 // this is just a stub
 return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
 }
