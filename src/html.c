@@ -856,8 +856,10 @@ passes:
 			continue;
 		if(!isRooted(t)) continue;
 // defer is equivalent to async in edbrowse
-		t->async = (get_property_bool_t(t, "async") |
-		get_property_bool_t(t, "defer"));
+// these are not meaningful on inline stcipts
+		if(t->href)
+			t->async = (get_property_bool_t(t, "async") |
+			get_property_bool_t(t, "defer"));
 		if(t->async != async) continue;
 		cf = t->f0;
 		if (!is_subframe(cf, save_cf))

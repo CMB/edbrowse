@@ -2795,6 +2795,12 @@ alert3("xhr " + (this.async ? "async " : "") + "open " + this.method + " " + url
 this.url = resolveURL(my$win().eb$base, url);
 this.status = 0;
 this.statusText = "";
+// state = 1 and technically that's a change
+// a website might use this to set something up, before send
+// warning: if you don't call open, just set variables, this won't be called;
+// but I think you're suppose to call open
+this.onreadystatechange();
+this.onload();
 };
 
 function xml_srh(header, value){
