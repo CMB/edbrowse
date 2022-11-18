@@ -1338,8 +1338,6 @@ static void findAttributes(const char *start, const char *end)
 		t->multiple = true;
 	if (stringInListCI(t->attributes, "required") >= 0)
 		t->required = true;
-	if (stringInListCI(t->attributes, "async") >= 0)
-		t->async = true;
 	if ((j = stringInListCI(t->attributes, "name")) >= 0) {
 // temporarily make another copy; some day we'll point to the value
 		v = t->atvals[j];

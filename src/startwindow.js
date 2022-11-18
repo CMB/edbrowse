@@ -896,8 +896,17 @@ z$Footer.prototype.dom$class = "Footer";
 HTMLScriptElement = function(){};
 HTMLScriptElement.prototype = new HTMLElement;
 HTMLScriptElement.prototype.dom$class = "HTMLScriptElement";
+Object.defineProperty(HTMLScriptElement.prototype, "async", {
+get:function(){ var t = this.getAttribute("async");
+return t === null || t === false || t === 0 ? false : true},
+set:function(v) { this.setAttribute("async", v);}});
+Object.defineProperty(HTMLScriptElement.prototype, "defer", {
+get:function(){ var t = this.getAttribute("defer");
+return t === null || t === false || t === 0 ? false : true},
+set:function(v) { this.setAttribute("defer", v);}});
 HTMLScriptElement.prototype.type = "";
 HTMLScriptElement.prototype.text = "";
+
 z$Timer = function(){this.nodeName = "TIMER"};
 z$Timer.prototype.dom$class = "Timer";
 HTMLMediaElement = function(){}

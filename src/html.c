@@ -545,8 +545,9 @@ void prepareScript(Tag *t)
 			nzFree(t->href);
 			t->href = new_url;
 		}
-		t->async = get_property_bool_t(t, "async");
 	}
+	t->async = get_property_bool_t(t, "async") |
+	get_property_bool_t(t, "defer");
 
 // If <script> is under <template>, and we clone it again and again,
 // we could be asked to prepare it again and again.
