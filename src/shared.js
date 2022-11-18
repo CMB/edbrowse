@@ -1491,8 +1491,7 @@ name == "href" && (nn == "link" || nn == "base");
 function spilldownBool(t, name) {
 if(!t.nodeName) return false;
 var nn = t.nodeName.toLowerCase();
-return name == "async" && nn == "script" ||
-name == "hidden" || name == "aria-hidden" ||
+return name == "hidden" || name == "aria-hidden" ||
 name == "selected" && nn == "option" ||
 name == "checked" && nn == "input";
 }
