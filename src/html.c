@@ -525,13 +525,6 @@ void prepareScript(Tag *t)
 	if (intFlag)
 		goto fail;
 
-/* As per the starting line number, we cant distinguish between
- * <script> foo </script>  and
- * <script>
- * foo
- * </script>
- * so make a guess towards the first form, knowing we could be off by 1.
- * Just leave it at t->js_ln */
 	if (f->fileName && !t->scriptgen)
 		js_file = f->fileName;
 

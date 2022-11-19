@@ -1030,6 +1030,14 @@ if((el.querySelectorAll("[j2=z]").length * 1
 + el.querySelectorAll("[j2= ' z ' ]").length * 8) != 12) fail(256);
 el.textContent = "";
 if(el.lastChild) fail(257);
+var o  = document.createElement("option");
+// jquery says it is selected by default
+if(!o.selected) fail(258);
+o = document.createElement("input");
+o.type = "checkbox";
+if(o.value != "on") fail(259);
+o = document.createElement("button");
+if(o.type != "submit") fail(260);
 alert("relative");
 }
 relative();

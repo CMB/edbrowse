@@ -1101,7 +1101,11 @@ With this understanding, we can, and should, scan for </script
 // adjust line number
 			for(u = seek; u < gt; ++u)
 				if(*u == '\n') ++ln;
-			while(isspaceByte(*seek)) ++seek;
+// remove leading whitespace from script; I think this is ok
+			while(isspaceByte(*seek)) {
+				if(*seek == '\n') ++working_t->js_ln;
+				++seek;
+			}
 			   scannerInfo1("script length %d", (int)(lt - seek));
 			working_t->doorway = true;
 			working_t->scriptgen = htmlGenerated;
