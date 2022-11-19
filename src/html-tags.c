@@ -759,7 +759,7 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	isXML = false;
 // magic code to say this is xml
 	if(!strncmp(htmltext, "`~*xml}@;", 9)) isXML = true, htmltext += 9;
-	if(isXML) scannerInfo1("xml parsing", 0), cw->xmlMode = true;
+	if(isXML) scannerInfo1("xml parsing", 0), cf->xmlMode = true;
 	seek = s = htmltext, ln = 1, premode = false;
 
 top:

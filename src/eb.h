@@ -402,6 +402,7 @@ struct ebFrame {
 	bool uriEncoded; // filename is url encoded
 	bool jslink; // linke to javascript
 	bool browseMode;
+	bool xmlMode;
 	short jtmin;
 	char *dw;		// document.write string
 	int dw_l;		// length of the above
@@ -484,7 +485,6 @@ int ehsn;
 	bool iso8859Mode:1;
 	bool dosMode:1; // \r\n
 	bool browseMode:1;	/* browsing html */
-	bool xmlMode;
 	bool changeMode:1;	/* something has changed in this file */
 	bool quitMode:1;	/* you can quit this buffer any time */
 	bool dirMode:1;		// directory mode

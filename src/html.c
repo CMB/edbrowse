@@ -1090,7 +1090,7 @@ char *htmlParse(char *buf, int remote)
 	if (isJSAlive) {
 		decorate();
 		set_basehref(cf->hbase);
-		if(cw->xmlMode) goto past_html_events;
+		if(cf->xmlMode) goto past_html_events;
 		run_function_bool_win(cf, "eb$qs$start");
 		runScriptsPending(true);
 		runOnload();
