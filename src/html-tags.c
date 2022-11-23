@@ -952,8 +952,10 @@ past_html_close_semantics:
 			scannerInfo2("</%s>", tagname);
 			makeTag(tagname, lowname, true, lt);
 			s = seek; // needed for </include-fragment>
-// this will never happen in xml
+#if 0
+// we use to do this but then you can't paste two html documents together
 			if(headbody == 6) goto stop;
+#endif
 			if(!isXML && isWall(lowname)) {
 				atWall = true;
 				if(lasttext) trimWhite(lasttext->textval);
@@ -994,7 +996,7 @@ past_html_close_semantics:
 			}
 		} else pushState(lt, true);
 		if(stringEqual(lowname, bodytag)) {
-			if(headbody > 4) { scannerError1("sequence", 0); continue; }
+			if(headbody > 4) { scannerError1("sequence reset", 0); headbody = 3; goto tag_ok; }
 			if(headbody == 4) {
 				strcpy(tagname, innerbodytag), ++bodycount;
 				strcpy(lowname, innerbodytag);
