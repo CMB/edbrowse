@@ -772,6 +772,9 @@ top:
 		slash = false, t = lt + 1;
 		if(*t == '/') ++t, slash = true;
 
+// <> and </> are null tags
+		if(*t == '>') goto between;
+
 // bare < just passes through
 		if((!slash && *t != '!' && !isalphaByte(*t) && !memEqualCI(t, "?xml", 4)) ||
 		(slash && !isalphaByte(*t))) {
@@ -780,6 +783,7 @@ top:
 		}
 
 // text fragment between tags
+between:
 		if(lt > seek) {
 // adjust line number
 			for(ws = true, u = seek; u < lt; ++u) {
@@ -798,6 +802,12 @@ top:
 				working_t->textval = w;
 				makeTag(texttag, texttag, true, 0);
 			}
+		}
+
+		if(*t == '>') {
+			scannerInfo1("null tag line %d", ln);
+			s = seek = t+1;
+			continue;
 		}
 
 // xml cdata section
