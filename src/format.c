@@ -295,13 +295,13 @@ static void anchorSwap(char *buf)
 		change = false;
 		++cnt;
 		premode = false;
-/* w represents the state of whitespace */
+// w represents the state of whitespace
 		w = NULL;
-/* a points to the prior anchor, which is swappable with following whitespace */
+// a points to the prior anchor, which is swappable with following whitespace
 		a = NULL;
 
 		for (s = buf; (c = *s); ++s) {
-			if (isspaceByte(c) || c == '|') {
+			if (isspaceByte(c) || (c == '|' && !premode)) {
 				if (c == '\t' && !premode)
 					*s = ' ';
 				if (!w)
@@ -471,7 +471,7 @@ static void html_ws(char *buf)
 		strong = false;
 // watch for pipes inside whitespace, these are usually cell delimiters.
 // pipe ends a whitespace region if only spaces come before
-		for (w = s; isspaceByte(*w) || *w == '|'; ++w) {
+		for (w = s; isspaceByte(*w) || (*w == '|' && !premode); ++w) {
 			if(*w == '|') {
 				if(strong) continue;
 				break;
