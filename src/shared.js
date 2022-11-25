@@ -1504,7 +1504,7 @@ This may be overkill - I don't know.
 
 function getAttribute(name) {
 var a, w = my$win();
-name = name.toLowerCase();
+if(!this.eb$xml) name = name.toLowerCase();
 if(implicitMember(this, name)) return null;
 // has to be a real attribute
 if(!this.attributes$2) return null;
@@ -1540,7 +1540,7 @@ function hasAttributeNS(space, name) { return this.getAttributeNS(space, name) !
 
 function setAttribute(name, v) {
 var a, w = my$win();
-name = name.toLowerCase();
+if(!this.eb$xml) name = name.toLowerCase();
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 this.style.cssText = v;
@@ -1568,6 +1568,7 @@ if(!this.dataset) this.dataset$2 = {};
 this.dataset[dataCamel(name)] = v;
 }
 // names that spill down into the actual property
+// should we be doing any of this for xml nodes?
 if(spilldown(name)) this[name] = v;
 if(spilldownResolve(this, name)) this.href$2 = resolveURL(w.eb$base, v);
 if(spilldownResolveURL(this, name)) this.href$2 = new (w.URL)(resolveURL(w.eb$base, v));
@@ -1591,7 +1592,7 @@ this.setAttribute(name, v);
 
 function removeAttribute(name) {
 if(!this.attributes$2) return;
-    name = name.toLowerCase();
+if(!this.eb$xml)     name = name.toLowerCase();
 // special code for style
 if(name == "style" && this.style.dom$class == "CSSStyleDeclaration") {
 // wow I have no clue what this means but it happens, https://www.maersk.com
@@ -1601,6 +1602,7 @@ if(name.substr(0,5) == "data-") {
 var n = dataCamel(name);
 if(this.dataset$2 && this.dataset$2[n]) delete this.dataset$2[n];
 }
+// should we be doing any of this for xml nodes?
 if(spilldown(name)) delete this[name];
 if(spilldownResolve(this, name)) delete this[name];
 if(spilldownResolveURL(this, name)) delete this[name];

@@ -1383,11 +1383,8 @@ static void findAttributes(const char *start, const char *end)
 		t->rvalue = cloneString(v);
 	}
 // Resolve href against the base, but wait a minute, what if it's <p href=blah>
-// and we're not suppose to resolve it? I don't ask about the parent node.
-// Well, in general, I don't carry the href attribute into the js node.
-// I only do it when it is relevant, such as <a> or <area>.
-// See the exceptions in pushAttributes() in decorate.c
-// I know, it's confusing.
+// and we're not suppose to resolve it? I don't ask about the parent node,
+// I just do it. Hope that's ok for now.
 	if ((j = stringInListCI(t->attributes, "href")) >= 0) {
 		v = t->atvals[j];
 		if (v && !*v) v = 0;
@@ -4763,7 +4760,7 @@ static void pushAttributes(const Tag *t)
 		if (!u)
 			u = emptyString;
 		x = cloneString(a[i]);
-		caseShift(x, 'l');
+		if(!isXML) caseShift(x, 'l');
 
 		if (stringEqual(x, "style")) {	// no clue
 			nzFree(x);

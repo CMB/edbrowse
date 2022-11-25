@@ -713,7 +713,7 @@ Object.defineProperty(HTMLInputElement.prototype, "type", {
 get:function(){ var t = this.getAttribute("type");
 // input type is special, tidy converts it to lower case, so I will too.
 // Also acid test 54 requires it.
-return typeof t == "string" ? t.toLowerCase() : undefined; },
+return typeof t == "string" ? this.eb$xml ? t : t.toLowerCase() : undefined; },
 set:function(v) { this.setAttribute("type", v);
 if(v.toLowerCase() == "checkbox" && !this.value) this.value = "on";
 }});
