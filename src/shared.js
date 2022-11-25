@@ -2625,31 +2625,30 @@ and all should be defined, even if they are empty.
 
 function url_rebuild() {
 var h = "";
-if(this.protocol$val.length) {
+if(this.protocol$val) {
 // protocol includes the colon
 h = this.protocol$val;
 var plc = h.toLowerCase();
 if(plc != "mailto:" && plc != "telnet:" && plc != "javascript:")
 h += "//";
 }
-if(this.host$val.length) {
+if(this.host$val) {
 h += this.host$val;
-} else if(this.hostname$val.length) {
+} else if(this.hostname$val) {
 h += this.hostname$val;
-if(this.port$val != 0)
-h += ":" + this.port$val;
+if(this.port$val) h += ":" + this.port$val;
 }
-if(this.pathname$val.length) {
+if(this.pathname$val) {
 // pathname should always begin with /, should we check for that?
 if(!this.pathname$val.match(/^\//))
 h += "/";
 h += this.pathname$val;
 }
-if(this.search$val.length) {
+if(this.search$val) {
 // search should always begin with ?, should we check for that?
 h += this.search$val;
 }
-if(this.hash$val.length) {
+if(this.hash$val) {
 // hash should always begin with #, should we check for that?
 h += this.hash$val;
 }
@@ -2669,13 +2668,13 @@ Object.defineProperty(this, "href$val", {enumerable:false, writable:true, value:
 Object.defineProperty(this, "protocol$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "hostname$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "host$val", {enumerable:false, writable:true, value:""});
-Object.defineProperty(this, "port$val", {enumerable:false, writable:true, value:0});
+Object.defineProperty(this, "port$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "pathname$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "search$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "hash$val", {enumerable:false, writable:true, value:""});
 } else {
 this.href$val = v;
-this.port$val = 0;
+this.port$val = "";
 this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
 }
 if(v.match(/^[a-zA-Z]*:/)) {
@@ -2697,21 +2696,17 @@ if(this.host$val.substr(0,1) == '[') { // I'll assume this is ipv6
 if(this.host$val.match(/]:/)) {
 this.hostname$val = this.host$val.replace(/]:.*/, "]");
 this.port$val = this.host$val.replace(/^.*]:/, "");
-/* port has to be an integer */
-this.port$val = parseInt(this.port$val);
 } else {
 this.hostname$val = this.host$val;
-this.port$val = setDefaultPort(this.protocol$val);
+//this.port$val = setDefaultPort(this.protocol$val);
 }
 } else {
 if(this.host$val.match(/:/)) {
 this.hostname$val = this.host$val.replace(/:.*/, "");
 this.port$val = this.host$val.replace(/^.*:/, "");
-/* port has to be an integer */
-this.port$val = parseInt(this.port$val);
 } else {
 this.hostname$val = this.host$val;
-this.port$val = setDefaultPort(this.protocol$val);
+//this.port$val = setDefaultPort(this.protocol$val);
 }
 }
 // perhaps set protocol to http if it looks like a url?
@@ -2723,8 +2718,6 @@ this.hostname$val.match(/^\d+\.\d+\.\d+\.\d+$/) ||
 this.hostname$val.match(/^\[[\da-fA-F:]+]$/) ||
 this.hostname$val.match(/^www\..*\.[a-zA-Z]{2,}$/))) {
 this.protocol$val = "http:";
-if(this.port$val == 0)
-this.port$val = 80;
 }
 if(v.match(/[#?]/)) {
 this.pathname$val = v.replace(/[#?].*/, "");
@@ -2741,7 +2734,7 @@ this.hash$val = v.replace(/^[^#]*/, "");
 } else {
 this.search$val = v;
 }
-if(!inconstruct && (this == w.location || this == d.location)) {
+if(this.href$val && (this == w.location || this == d.location)) {
 // replace the web page
 eb$newLocation('r' + this.href$val + '\n');
 }

@@ -390,11 +390,9 @@ Object.defineProperty(URL.prototype, "host", {
 if(v.match(/:/)) {
 this.hostname$val = v.replace(/:.*/, "");
 this.port$val = v.replace(/^.*:/, "");
-/* port has to be an integer */
-this.port$val = parseInt(this.port$val);
 } else {
 this.hostname$val = v;
-this.port$val = 0;
+this.port$val = "";
 }
 this.rebuild(); },
 enumerable:true});
