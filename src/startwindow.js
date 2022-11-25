@@ -2508,7 +2508,7 @@ window.location$2 = new z$URL(h);
 window.location$2.href = h;
 }
 }});
-// We need location$2 so we can define origin
+// We need location$2 so we can define origin and replace etc
 location$2 = new URL;
 Object.defineProperty(location$2, "origin", {get:function(){
 return this.protocol ? this.protocol + "//" + this.host : null}});
@@ -2522,6 +2522,10 @@ this.location$2 = new z$URL(h);
 this.location$2.href = h;
 }
 }});
+document.location$2 = new URL;
+    location.replace = document.location.replace = function(s) { this.href = s};
+Object.defineProperty(window.location,'replace',{enumerable:false});
+Object.defineProperty(document.location,'replace',{enumerable:false});
 
 // Window constructor, passes the url back to edbrowse
 // so it can open a new web page.

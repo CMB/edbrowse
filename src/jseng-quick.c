@@ -3769,9 +3769,6 @@ static void setup_window_2(void)
 	set_property_string(cx, d, "URL", cf->fileName);
 	set_property_string(cx, d, "location", cf->fileName);
 	set_property_string(cx, w, "location", cf->fileName);
-	jsRunScriptWin(
-		    "window.location.replace = document.location.replace = function(s) { this.href = s; };Object.defineProperty(window.location,'replace',{enumerable:false});Object.defineProperty(document.location,'replace',{enumerable:false});",
-		    "locreplace", 1);
 	set_property_string(cx, d, "domain", getHostURL(cf->fileName));
 }
 
