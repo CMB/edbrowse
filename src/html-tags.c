@@ -4783,6 +4783,7 @@ static void pushAttributes(const Tag *t)
 void decorate(void)
 {
 	currentOG = 0;
+	if(isXML) set_property_bool_doc(cf, "eb$xml", true);
 	traverse_callback = jsNode;
 	traverseAll();
 }

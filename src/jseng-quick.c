@@ -367,27 +367,6 @@ return 0;
 return get_property_url(t->f0->cx, *((JSValue*)t->jv), action);
 }
 
-char *get_dataset_string_t(const Tag *t, const char *p)
-{
-	JSContext *cx = t->f0->cx;
-	char *v;
-	if(!t->jslink)
-		return 0;
-	if (!strncmp(p, "data-", 5)) {
-		char *k;
-		JSValue ds = get_property_object(cx, *((JSValue*)t->jv), "dataset$2");
-		if(JS_IsUndefined(ds))
-			return 0;
-		k = cloneString(p + 5);
-		camelCase(k);
-		v = get_property_string(cx, ds, k);
-		nzFree(k);
-		JS_Release(cx, ds);
-	} else
-		v = get_property_string(cx, *((JSValue*)t->jv), p);
-	return v;
-}
-
 char *get_style_string_t(const Tag *t, const char *name)
 {
 	JSContext *cx = t->f0->cx;
@@ -584,6 +563,11 @@ void set_property_bool_win(const Frame *f, const char *name, bool v)
 	set_property_bool(f->cx, *((JSValue*)f->winobj), name, v);
 }
 
+void set_property_bool_doc(const Frame *f, const char *name, bool v)
+{
+	set_property_bool(f->cx, *((JSValue*)f->docobj), name, v);
+}
+
 static void set_property_object(JSContext *cx, JSValueConst parent, const char *name, JSValueConst child);
 void set_property_object_doc(const Frame *f, const char *name, const Tag *t2)
 {
@@ -624,20 +608,6 @@ static void set_array_element_object(JSContext *cx, JSValueConst parent, int idx
 	JSAtom a = JS_NewAtomUInt32(cx, idx);
 	JS_SetProperty(cx, parent, a, JS_DupValue(cx, child));
 	JS_FreeAtom(cx, a);
-}
-
-void set_dataset_string_t(const Tag *t, const char *name, const char *v)
-{
-	JSContext *cx;
-	JSValue dso; // dataset object
-	if(!t->jslink || !allowJS)
-		return;
-	cx = t->f0->cx;
-	dso = get_property_object(cx, *((JSValue*)t->jv), "dataset");
-	if(!JS_IsUndefined(dso)) {
-		set_property_string(cx, dso, name, v);
-		JS_Release(cx, dso);
-	}
 }
 
 static void delete_property(JSContext *cx, JSValueConst parent, const char *name)
@@ -3863,6 +3833,7 @@ void establish_js_option(Tag *t, Tag *sel, Tag *og)
 	if(og) ogobj = *((JSValue*)og->jv);
 	oa = get_property_object(cx, selobj, "options");
 	oo = instantiate_array_element(cx, oa, idx, "Option");
+	if(cf->xmlMode) set_property_bool(cx, oo, "eb$xml", true);
 	if(t->checked) {
 		soa = get_property_object(cx, selobj, "selectedOptions");
 		set_array_element_object(cx, soa, idx, oo);
@@ -3892,6 +3863,7 @@ void establish_js_textnode(Tag *t, const char *fpn)
 	JSContext *cx = cf->cx;
 	JSValue cn;
 	 JSValue tagobj = instantiate(cx, *((JSValue*)cf->winobj), fpn, "TextNode");
+	if(cf->xmlMode) set_property_bool(cx, tagobj, "eb$xml", true);
 	cn = instantiate_array(cx, tagobj, "childNodes");
 	connectTagObject(t, tagobj);
 	JS_Release(cx, cn);
@@ -4040,6 +4012,7 @@ That's how it was for a long time, but I think we only do this on form.
 (fakeName ? *((JSValue*)cf->winobj) : owner), membername, classtweak);
 			if(JS_IsUndefined(io))
 				return;
+			if(cf->xmlMode) set_property_bool(cx, io, "eb$xml", true);
 // Not an array; needs the childNodes array beneath it for the children.
 			ca = instantiate_array(cx, io, "childNodes");
 			JS_Release(cx, ca);
@@ -4088,6 +4061,7 @@ Don't do any of this if the tag is itself <style>. */
 // Borrow ca, so we can free things.
 		length = get_arraylength(cx, io);
 		ca = instantiate_array_element(cx, io, length, "HTMLInputElement");
+		if(cf->xmlMode) set_property_bool(cx, ca, "eb$xml", true);
 		JS_Release(cx, io);
 		if(JS_IsUndefined(ca))
 			return;
