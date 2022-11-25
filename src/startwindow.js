@@ -2510,6 +2510,11 @@ window.location$2 = new z$URL(h);
 window.location$2.href = h;
 }
 }});
+// We need location$2 so we can define origin
+location$2 = new URL;
+Object.defineProperty(location$2, "origin", {get:function(){
+return this.protocol ? this.protocol + "//" + this.host : null}});
+Object.defineProperty(window, "origin", {get: function(){return top.location.origin}});
 Object.defineProperty(document, "location", {
 get: function() { return this.location$2; },
 set: function(h) {
