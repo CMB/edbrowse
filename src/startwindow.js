@@ -1206,7 +1206,7 @@ if (target_origin == locstring || target_origin == "*") {
 var me = new Event;
 me.name = me.type = "message";
 var l = my$win().location;
-me.origin = l.protocol + "//" + l.hostname + ":" + l.port;
+me.origin = l.protocol + "//" + l.hostname;
 me.data = message;
 me.source = my$win();
 if(transfer) {
@@ -2514,7 +2514,7 @@ window.location$2.href = h;
 location$2 = new URL;
 Object.defineProperty(location$2, "origin", {get:function(){
 return this.protocol ? this.protocol + "//" + this.host : null}});
-Object.defineProperty(window, "origin", {get: function(){return top.location.origin}});
+Object.defineProperty(window, "origin", {get: function(){return location.origin}});
 Object.defineProperty(document, "location", {
 get: function() { return this.location$2; },
 set: function(h) {
