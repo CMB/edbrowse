@@ -1549,6 +1549,7 @@ var c = new TextNode(t);
  * I have to treat a text node like an html node. */
 c.childNodes = [];
 c.parentNode = null;
+if(this.eb$xml) c.eb$xml = true;
 eb$logElement(c, "text");
 return c;
 }
@@ -2159,7 +2160,8 @@ c = new x.construct;
 if(c instanceof HTMLElement) {
 c.childNodes = [];
 c.parentNode = null;
-c.nodeName = c.tagName = t.toUpperCase();
+c.nodeName = c.tagName = this.eb$xml ? s : s.toUpperCase();
+if(this.eb$xml) c.eb$xml = true;
 }
 eb$logElement(c, t);
 return c;
@@ -2217,6 +2219,7 @@ case "option":
 c = new Option;
 c.childNodes = [];
 c.parentNode = null;
+if(this.eb$xml) c.eb$xml = true;
 c.selected = true; // jquery says we should do this
 // we don't log options because rebuildSelectors() checks
 // the dropdown lists after every js run.
@@ -2234,13 +2237,14 @@ c = new HTMLElement;
 
 c.childNodes = [];
 c.parentNode = null;
+if(this.eb$xml && !(c instanceof HTMLFrameElement) && !(c instanceof HTMLIFrameElement)) c.eb$xml = true;
 // Split on : if this comes from a name space
 var colon = t.split(':');
 if(colon.length == 2) {
 c.nodeName = c.tagName = t;
 c.prefix = colon[0], c.localName = colon[1];
 } else if(c.nodeType == 1)
-c.nodeName = c.tagName = unknown ? s : s.toUpperCase();
+c.nodeName = c.tagName = (unknown || this.eb$xml) ? s : s.toUpperCase();
 if(t == "input") { // name and type are automatic attributes acid test 53
 c.name = c.type = "";
 }
