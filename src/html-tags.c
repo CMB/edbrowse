@@ -4188,6 +4188,10 @@ Are there other situations where we need to supress meta processing?
 			break;
 // If somebody wrote <frame><p>foo</frame>, those tags should be excised.
 		underKill(t);
+// strange situation: html page has no indication of javascript,
+// but subframe runs javascript and tries to access javascript objects
+// from the top frame. So this could be a doorway into js.
+		t->doorway = true;
 		break;
 
 	case TAGACT_MUSIC:

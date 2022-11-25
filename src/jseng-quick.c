@@ -2473,7 +2473,9 @@ static JSValue nat_fe(JSContext * cx, JSValueConst this, int argc, JSValueConst 
 
 static JSValue nat_top(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
-	return JS_DupValue(cx, *((JSValue*)cw->f0.winobj));
+	jsobjtype w = cw->f0.winobj;
+	if(!w) return JS_NULL; // should never happen
+	return JS_DupValue(cx, *((JSValue*)w));
 }
 
 static bool append0(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv, bool side)
