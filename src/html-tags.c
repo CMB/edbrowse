@@ -579,6 +579,7 @@ const struct tagInfo availableTags[] = {
 	{"q", "quoted text", TAGACT_JS, 0, 0},
 	{"abbr", "an abbreviation", TAGACT_JS, 0, 0},
 	{"span", "an html span", TAGACT_SPAN, 0, 1},
+	{"section", "an html section", TAGACT_SPAN, 0, 1},
 	{"svg", "an svg image", TAGACT_SVG, 0, 1},
 	{"canvas", "a canvas", TAGACT_CANVAS, 0, 1},
 	{"frameset", "a frame set", TAGACT_JS, 0, 0},

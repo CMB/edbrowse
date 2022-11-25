@@ -4038,14 +4038,37 @@ static void liCheck(Tag *t)
 
 // this routine guards against <td onclick=blah><a href=#>stuff</a></td>
 // showing up as {{stuff}}
-// For now we look immediately below, but we might need to look deeper.
-static bool ahref_under(const Tag *t)
+static int ahref_under(const Tag *t)
 {
 	Tag *u;
-	for(u = t->firstchild; u; u = u->sibling)
-		if(u->action == TAGACT_A && u->href)
-			return true;
-	return false;
+	int rc;
+	for(u = t->firstchild; u; u = u->sibling) {
+		if(u->action == TAGACT_A) {
+			if (!u->href && u->jslink) {
+				char *new_url = get_property_url_t(u, false);
+				if (new_url && *new_url)
+					nzFree(u->href), u->href = new_url;
+			}
+			if (!u->href && u->jslink && handlerPresent(u, "onclick"))
+				u->href = cloneString("#");
+			if(u->href) return 1;
+		}
+		if(u->action == TAGACT_TEXT) {
+			if (u->jslink) {
+// defer to the javascript text.
+				char *w = get_property_string_t(u, "data");
+				if (w)
+					nzFree(u->textval), u->textval = w;
+			}
+			const char *s = u->textval;
+			if(!s) s = emptyString;
+			while(*s) { if(!isspaceByte(*s)) return -1; ++s; }
+			continue;
+		}
+		rc = ahref_under(u);
+		if(rc) return rc;
+	}
+	return 0;
 }
 
 static Tag *deltag;
@@ -4269,10 +4292,8 @@ nocolor:
 // either we query js every time, on every piece of text, as we do now,
 // or we include a setter so that TextNode.data assignment has a side effect.
 			char *u = get_property_string_t(t, "data");
-			if (u) {
-				nzFree(t->textval);
-				t->textval = u;
-			}
+			if (u)
+				nzFree(t->textval), t->textval = u;
 		}
 		if (!t->textval)
 			break;
@@ -4290,15 +4311,12 @@ nocolor:
 	case TAGACT_A:
 		liCheck(t);
 		currentA = (opentag ? t : 0);
-		if (!retainTag)
-			break;
+		if (!retainTag) break;
 // Javascript might have set this url.
 		if (opentag && !t->href && t->jslink) {
 			char *new_url = get_property_url_t(t, false);
-			if (new_url && *new_url) {
-				nzFree(t->href);
-				t->href = new_url;
-			}
+			if (new_url && *new_url)
+				nzFree(t->href), t->href = new_url;
 		}
 		if (opentag && !t->href) {
 // onclick turns this into a hyperlink.
@@ -4357,7 +4375,7 @@ nocolor:
 // This rerender function is getting more and more js intensive!
 		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
-		if (!(t->onclick & allowJS) || ahref_under(t)) {
+		if (!(t->onclick & allowJS) || ahref_under(t) > 0) {
 // regular span
 			if((u || a) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
@@ -4710,7 +4728,7 @@ past_cell_paragraph:
 		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
 		if(!opentag) {
-			if(t->onclick && !ahref_under(t)) {
+			if(t->onclick && ahref_under(t) <= 0) {
 				sprintf(hnum, "%c0}", InternalCodeChar);
 				ns_hnum();
 			}
@@ -4750,7 +4768,7 @@ past_cell_paragraph:
 			td2columnHeading(ltag, t);
 		}
 // Always retain the <td> tag, for the ur command.
-		if(t->onclick && !ahref_under(t)) {
+		if(t->onclick && ahref_under(t) <= 0) {
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 				ns_hnum();
 		} else {
