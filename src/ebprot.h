@@ -397,6 +397,7 @@ void ircReadlineRelease(void);
 // sourcefile=css.c
 void writeShortCache(void);
 bool matchMedia(char *t);
+Frame *frameFromWindow(int gsn);
 void cssDocLoad(int frameNumber, char *s, bool pageload);
 void cssFree(Frame *f);
 Tag **querySelectorAll(const char *selstring, Tag *top);

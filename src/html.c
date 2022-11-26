@@ -389,16 +389,17 @@ static void gotoLocation(char *url, int delay, bool rf)
 		return;
 	}
 	if (newlocation && delay >= newloc_d) {
+		debugPrint(3, "redirection disabled: %s delay %d >= %d", url, delay, newloc_d);
 		nzFree(url);
 		return;
 	}
-	nzFree(newlocation);
-	newlocation = url;
+	if(newlocation)
+		debugPrint(3, "redirection %s displaced by %s", newlocation, url);
+	nzFree(newlocation), newlocation = url;
 	newloc_d = delay;
 	newloc_r = rf;
 	newloc_f = cf;
-	if (!delay)
-		js_redirects = true;
+	if (!delay) js_redirects = true;
 }
 
 /* helper function for meta tag */
@@ -3675,12 +3676,20 @@ void domOpensWindow(const char *href, const char *name)
 	char *copy, *r;
 	const char *a;
 	bool replace = false;
+	int ctx;
+	Frame *f;
 
-	if (*href == 'r')
-		replace = true;
+// replace and context number are packed into the url
+	if (*href == 'r') replace = true;
 	++href;
+	ctx = strtol(href, (char**)&href, 10);
 	if (!*href) {
 		debugPrint(3, "javascript is opening a blank window");
+		return;
+	}
+	f = frameFromWindow(ctx);
+	if(!f) {
+		debugPrint(3, "redirect %s abort no frame for context %d", href, ctx);
 		return;
 	}
 

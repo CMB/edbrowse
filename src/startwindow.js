@@ -2526,6 +2526,8 @@ document.location$2 = new URL;
     location.replace = document.location.replace = function(s) { this.href = s};
 Object.defineProperty(window.location,'replace',{enumerable:false});
 Object.defineProperty(document.location,'replace',{enumerable:false});
+Object.defineProperty(window.location,'eb$ctx',{get:function(){return eb$ctx}});
+Object.defineProperty(document.location,'eb$ctx',{get:function(){return eb$ctx}});
 
 // Window constructor, passes the url back to edbrowse
 // so it can open a new web page.
@@ -2537,7 +2539,7 @@ if(arguments.length > 1) winname = arguments[1];
 // I only do something if opening a new web page.
 // If it's just a blank window, I don't know what to do with that.
 if(newloc.length)
-eb$newLocation('p' + newloc+ '\n' + winname);
+eb$newLocation('p' + eb$ctx + newloc+ '\n' + winname);
 this.opener = window;
 }
 

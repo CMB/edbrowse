@@ -1647,17 +1647,14 @@ static void cssModify(struct asel *a, const char *m1, const char *m2)
 }
 
 // Warning: this function changes the current frame!
-static void frameFromWindow(int gsn)
+Frame *frameFromWindow(int gsn)
 {
 	Frame *f;
 	for (f = &(cw->f0); f; f = f->next)
 		if (f->gsn == gsn)
-			break;
-	if (f) {
-		cf = f;
-	} else {
-		debugPrint(3, " can't find frame for window %d", gsn);
-	}
+			return f;
+	debugPrint(3, " can't find frame for window %d", gsn);
+	return 0;
 }
 
 // The selection string (start) must be allocated - css will use it in place,
@@ -1668,7 +1665,9 @@ void cssDocLoad(int frameNumber, char *start, bool pageload)
 	Frame *save_cf = cf;
 	struct cssmaster *cm;
 	bool recompile = false;
-	frameFromWindow(frameNumber);
+	Frame *new_f = frameFromWindow(frameNumber);
+// no clue what to do if new_f is null, should never happen
+	if(new_f) cf = new_f;
 	cm = cf->cssmaster;
 	if (!cm) {
 		cf->cssmaster = cm = allocZeroMem(sizeof(struct cssmaster));
@@ -3122,8 +3121,9 @@ void cssApply(int frameNumber, Tag *t, int pe)
 	Frame *save_cf = cf;
 	struct cssmaster *cm;
 	struct desc *d;
-
-	frameFromWindow(frameNumber);
+	Frame *new_f = frameFromWindow(frameNumber);
+// no clue what to do if new_f is null, should never happen
+	if(new_f) cf = new_f;
 
 // I think the root is document, not the current node, but that is not clear.
 	rootnode = 0;

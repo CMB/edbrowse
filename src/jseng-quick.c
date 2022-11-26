@@ -744,8 +744,11 @@ static bool run_function_bool(JSContext *cx, JSValueConst parent, const char *na
 	int32_t seqno = -1;
 		JSValue v, r, l[1];
 	if(cx != cf->cx) {
-		debugPrint(3, "running function %s in a context that doesn't match frame context %d - function abort!", cf->gsn);
-		return false;
+		JSValue g = JS_GetGlobalObject(cx);
+		int jj = get_property_number(cx, g, "eb$ctx");
+		JS_FreeValue(cx, g);
+		debugPrint(3, "running function %s in context %d but current context is %d", name, jj, cf->gsn);
+// run it anyways and hope we know what we're doing
 	}
 // don't print timer in and out unless debug >= 4
 	if (stringEqual(name, "ontimer")) {

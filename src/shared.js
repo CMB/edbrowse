@@ -2657,6 +2657,7 @@ this.href$val = h;
 
 function url_hrefset(v) {
 var w = my$win(), d = my$doc(), inconstruct = true;
+var previous_href = "";
 // if passed a url, turn it back into a string
 if(v === null || v === undefined) v = "";
 if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
@@ -2673,9 +2674,9 @@ Object.defineProperty(this, "pathname$val", {enumerable:false, writable:true, va
 Object.defineProperty(this, "search$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "hash$val", {enumerable:false, writable:true, value:""});
 } else {
+previous_href = this.href$val;
 this.href$val = v;
-this.port$val = "";
-this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
+this.port$val = this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
 }
 if(v.match(/^[a-zA-Z]*:/)) {
 this.protocol$val = v.replace(/:.*/, "");
@@ -2734,9 +2735,9 @@ this.hash$val = v.replace(/^[^#]*/, "");
 } else {
 this.search$val = v;
 }
-if(this.href$val && (this == w.location || this == d.location)) {
+if(previous_href && (this == w.location || this == d.location)) {
 // replace the web page
-eb$newLocation('r' + this.href$val + '\n');
+eb$newLocation('r' + this.eb$ctx + this.href$val + '\n');
 }
 };
 
