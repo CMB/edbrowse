@@ -3295,6 +3295,8 @@ bool reexpandFrame(void)
 
 	cf = newloc_f;
 	frametag = cf->frametag;
+// even if this frame was closed, I think we're going to want to see it.
+	frametag->contracted = false;
 	cdt = frametag->firstchild;
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
@@ -3320,14 +3322,14 @@ bool reexpandFrame(void)
 	cf->firstURL = 0;
 	rc = readFileArgv(cf->fileName, 2, 0);
 	if (!rc) {
-/* serverData was never set, or was freed do to some other error. */
+// serverData was never set, or was freed do to some other error
 		fileSize = -1;	// don't print 0
 		cf = save_cf;
 		return false;
 	}
 
 	if (serverData == NULL) {
-/* frame replaced itself with a playable stream, what to do? */
+// frame replaced itself with a playable stream, what to do?
 		fileSize = -1;
 		cf = save_cf;
 		return true;
