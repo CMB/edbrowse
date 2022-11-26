@@ -6140,10 +6140,11 @@ bool runCommand(const char *line)
 	char first;
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
 	int tagno;
+	int newloc_count = 0;
 	const char *s = NULL;
 		char *p;
-	static char newline[MAXTTYLINE];
 	char *thisfile;
+	static char newline[MAXTTYLINE];
 
 	selfFrame();
 	nzFree(allocatedLine);
@@ -7694,6 +7695,12 @@ browse:
 				newlocation = 0;
 			} else {
 redirect:
+// sanity check for infinite loop
+				if(++newloc_count == 3) {
+				debugPrint(1, "more than 2 redirects, stop at %s", newlocation);
+				nzFree(newlocation), newlocation = 0;
+				return true;
+			}
 				selfFrame();
 				noStack = newloc_r;
 				if (newloc_f != cf)

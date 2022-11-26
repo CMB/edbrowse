@@ -3218,8 +3218,7 @@ So check for serverData null here. Once again we pop the frame.
 	prepareForBrowse(serverData, serverDataLen);
 	if (javaOK(cf->fileName))
 		createJSContext(cf);
-	nzFree(newlocation);	/* should already be 0 */
-	newlocation = 0;
+	nzFree(newlocation), newlocation = 0;
 
 	start = cw->numTags;
 	cdt = newTag(cf, "Document");
@@ -3294,13 +3293,18 @@ bool reexpandFrame(void)
 	Frame *save_cf = cf;
 	bool rc;
 
-// I don't know why cf would ever not be newloc_f.
 	cf = newloc_f;
 	frametag = cf->frametag;
 	cdt = frametag->firstchild;
 
 // Cut away our tree nodes from the previous document, which are now inaccessible.
 	underKill(cdt);
+
+// Warning: subframes of this frame are not removed.
+// they hang around in the js system until the entire window is removed.
+// Illustrated by jsrt: expand the butterfly frame,  then the rubix cube frame,
+// then replace the butterfly frame and the rubik context doesn't go away.
+// Fix this some day.
 
 	delTimers(cf);
 	freeJSContext(cf);

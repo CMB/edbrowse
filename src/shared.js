@@ -2735,7 +2735,7 @@ this.hash$val = v.replace(/^[^#]*/, "");
 } else {
 this.search$val = v;
 }
-if(previous_href && (this == w.location || this == d.location)) {
+if(previous_href && this.eb$ctx) {
 // replace the web page
 eb$newLocation('r' + this.eb$ctx + this.href$val + '\n');
 }

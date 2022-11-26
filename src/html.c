@@ -369,19 +369,96 @@ void jClearSync(void)
 }
 
 /*********************************************************************
-This function is called for a new web page, by http refresh,
-or by document.location = new_url, or by new Window().
-If delay is 0 or less then the action should happen now.
-The refresh parameter means replace the current page.
-This is false only if js creates a new window, which should stack up on top of the old.
+Some notes on the newlocation system.
+javascript is not reentrant, nor the machinery that I build around it.
+If js tells us to replace a window with another, like location = new_url,
+we can't fetch and parse and run that window from within js.
+After all, the new window has its own js, in a new context.
+Instead we set a global variable, newlocation, and when js returns,
+we test newlocation to see if we should open a new window.
+It's awkward, as you will see, but we don't have much choice.
+There is a suite of global variables here.
+newloc_d a delay factor, open the window after so many seconds.
+This is used by <meta http-equiv="refresh" content="delay;url(blah)">
+newloc_r boolean do we refresh the page or open a new window?
+newloc_f frame that is being replaced or pushed.
+in http.c:
+frameExpandLine clears newlocation, but it should be clear already.
+reexpandFrame uses the newloc variables.
+cf, the current frame, is saved, and restored when reexpandFrame is finished.
+reexpandFrame sets cf to newloc_cf, running in that frame.
+newloc_r is assumed to be true, so call it that way.
+That frame page is deleted and a new one fetched and processed.
+newlocation is cleared, so we don't keep doing this in an infinite loop.
+in html.c:
+static void gotoLocation(char *url, int delay, bool rf, Frame *f)...
+url is allocated and if it sticks, it is passed to newlocation,
+which is then responsible for that string.
+newlocation is always freed, in some way or another, when it is used or cleared.
+If it doesn't stick, then url is freed.
+It won't stick if we already have a newlocation set,
+with the same or lesser delay.
+We print debug  messages at level 1 because you should probably see that.
+So this is, from the get-go, not the best design.
+If js causes two separate frames to replace themselves, only the first one
+will work. But you know, I don't think this ever happens in the wild.
+These redirections are very rare, and there's usually only one,
+so this is the design for now.
+In any case there are debug messages along the way to help.
+	newloc_d = delay, newloc_r = rf, newloc_f = f;
+This is the only function in html.c that accesses newlocation,
+so who calls gotoLocation?
+htmlMetaHelper, as described above.
+runScriptsPending if a script calls form.submit.
+The new url which is the action of the form, no refresh, no delay,
+and frame is the frame that contains the form.
+void domOpensWindow(const char *href, const char *name)...
+href starts with r or p, refresh the existing buffer
+or push it onto the stack and open a new window.
+Then an integer which is the context number for the frame.
+This is turned into a frame pointer, and that should always work.
+Finally the url, which becomes newlocation.
+These variables are passed to gotoLocation, and when js is done
+we can take action based on newlocation and its friends.
+name is the name of the new window.
+href could be a relative url.
+It is resolved against the base of f, assuming that frame f created it.
+A subframe can't push a new window.
+The master frame, that controls the entire window, can push onto the stack
+and then open a new window, that happens whenever you go to a hyperlink.
+That is ok; but not a subframe.
+So if newloc_r is false, and if f is not the top frame,
+there are two choices.
+We could still be parsing the html for that frame.
+Use the document.write system to add this to the document as a hyperlink.
+new Window(blah) now becomes a suggestion rather than a directive.
+It is a hyperlink, go to it if you want.
+In fact we can do this whenever we are still in the browse process,
+for a subframe or for the top frame.
+Let's set that to the side for now.
+So we have already browsed the page,
+this action coming from a timer or onclick or something dynamic.
+If you want a new page it has to be the top frame.
+A subframe prints a message and returns.
+Now we have a frame replacement or pushing the entire window
+and opening a new one.
+This is when we call gotoLocation and set the newloc variables.
+domOpensWindow is only called from the native method that corresponds to eb$newLocation.
+This happens under two circumstances.
+eb$newLocation called from the Window constructor new Window(blah)
+that opens a new window and is not refresh
+The first letter of href is p indicating push.
+eb$newLocation called from url_hrefset
+for location = blah or document.location = blah.
+The first letter of href is r, this is a replacement.
 *********************************************************************/
 
 char *newlocation;
-int newloc_d;			/* possible delay */
-bool newloc_r;			/* replace the buffer */
-Frame *newloc_f;	/* frame calling for new web page */
+int newloc_d;			// possible delay
+bool newloc_r;			// replace the buffer
+Frame *newloc_f;	// frame calling for new web page
 bool js_redirects;
-static void gotoLocation(char *url, int delay, bool rf)
+static void gotoLocation(char *url, int delay, bool rf, Frame *f)
 {
 	if (!allowRedirection) {
 		debugPrint(1, "javascript redirection disabled: %s", url);
@@ -389,16 +466,15 @@ static void gotoLocation(char *url, int delay, bool rf)
 		return;
 	}
 	if (newlocation && delay >= newloc_d) {
-		debugPrint(3, "redirection disabled: %s delay %d >= %d", url, delay, newloc_d);
+		debugPrint(1, "redirection %s ignored", url);
 		nzFree(url);
 		return;
 	}
 	if(newlocation)
-		debugPrint(3, "redirection %s displaced by %s", newlocation, url);
+		debugPrint(1, "redirection %s displaced by %s", newlocation, url);
+	else debugPrint(3, "redirection set %s", url);
 	nzFree(newlocation), newlocation = url;
-	newloc_d = delay;
-	newloc_r = rf;
-	newloc_f = cf;
+	newloc_d = delay, newloc_r = rf, newloc_f = f;
 	if (!delay) js_redirects = true;
 }
 
@@ -452,7 +528,7 @@ void htmlMetaHelper(const Tag *t)
 				char *newcontent;
 				unpercentURL(copy);
 				newcontent = resolveURL(cf->hbase, copy);
-				gotoLocation(newcontent, delay, true);
+				gotoLocation(newcontent, delay, true, cf);
 			}
 		}
 	}
@@ -699,16 +775,13 @@ found:
 /*********************************************************************
 Run pending scripts, and perform other actions that have been queued up by javascript.
 This includes document.write, linkages, perhaps even form.submit.
-Things stop however if we detect document.location = new_url,
-i.e. a page replacement, as indicated by the newlocation variable being set.
-The old page doesn't matter any more.
 I run the scripts linked to the current frame.
 That way the scripts in a subframe will run, then return, then the scripts
 in the parent frame pick up where they left off.
 The algorithm for which sripts to run when is far from obvious,
 and nowhere documented.
 I had to write several contrived web pages and run them through chrome
-and firefox and document the results.
+and firefox and note the results.
 
 1. Scripts that come from the internet (src=url) are different from
 inline scripts, i.e. those that are part of the home page, or generated
@@ -730,11 +803,12 @@ but still, we have to execute them in order.
 
 4. A script could have async set, and in theory I could
 skip that one and do the next one if it is available (postpone), or even do the
-async script in another thread, but I can't, because duktape is not threadsafe,
+async script in another thread, but I can't, because quickjs is not threadsafe,
 as is clearly documented.
 So I allow for postponement, that is, two passes,
 the first pass runs scripts in order and skips async scripts,
 the second pass runs the async scripts.
+defered scripts are treated the same as async scripts.
 Pass 2 runs the async scripts in order, and it doesn't have to, but it's
 the easiest way to go, and how often do we have several async scripts,
 some ready several seconds before others? Not very often.
@@ -802,9 +876,6 @@ void runScriptsPending(bool startbrowse)
 	int ln;
 	bool change, async;
 	Frame *f, *save_cf = cf;
-
-	if (newlocation && newloc_r)
-		return;
 
 // Not sure where document.write objects belong.
 // For now I'm putting them under body.
@@ -944,11 +1015,6 @@ I will disconnect here, and also check for inxhr in runOnload().
 		debugPrint(3, "exec complete");
 
 afterscript:
-		if (newlocation && newloc_r) {
-			cf = save_cf;
-			return;
-		}
-
 /* look for document.write from this script */
 		if (cf->dw) {
 // completely different behavior before and after browse
@@ -1030,10 +1096,8 @@ afterscript:
 		bool rc;
 		js_submit = 0;
 		rc = infPush(t->seqno, &post);
-		if (rc)
-			gotoLocation(post, 0, false);
-		else
-			showError();
+		if (rc) gotoLocation(post, 0, false, t->f0);
+		else showError();
 	}
 
 	cf = save_cf;
@@ -3689,37 +3753,42 @@ void domOpensWindow(const char *href, const char *name)
 	}
 	f = frameFromWindow(ctx);
 	if(!f) {
-		debugPrint(3, "redirect %s abort no frame for context %d", href, ctx);
+		debugPrint(1, "redirect %s abort no frame for context %d", href, ctx);
 		return;
 	}
 
 	copy = cloneString(href);
 	unpercentURL(copy);
-	r = resolveURL(cf->hbase, copy);
+	r = resolveURL(f->hbase, copy);
 	nzFree(copy);
-	if ((replace || cw->browseMode) && foregroundWindow) {
-		gotoLocation(r, 0, replace);
+	if(!f->browseMode) goto create_hyperlink;
+
+	if(!replace && f != &cw->f0) {
+		debugPrint(1, "subframe %d suggestss you go to a new web page %s", ctx, r);
+		nzFree(r);
 		return;
 	}
 
-/* Turn the new window into a hyperlink. */
-/* just shovel this onto dw, as though it came from document.write() */
+	gotoLocation(r, 0, replace, f);
+	return;
+
+create_hyperlink:
+// shovel this onto dw, as though it came from document.write()
 	dwStart();
-	stringAndString(&cf->dw, &cf->dw_l, "<P>");
-	stringAndString(&cf->dw, &cf->dw_l,
+	stringAndString(&f->dw, &f->dw_l, "<P>");
+	stringAndString(&f->dw, &f->dw_l,
 			i_message(replace ? MSG_Redirect : MSG_NewWindow));
-	stringAndString(&cf->dw, &cf->dw_l, ": <A href=");
-	stringAndString(&cf->dw, &cf->dw_l, r);
-	stringAndChar(&cf->dw, &cf->dw_l, '>');
+	stringAndString(&f->dw, &f->dw_l, ": <A href=");
+	stringAndString(&f->dw, &f->dw_l, r);
+	stringAndChar(&f->dw, &f->dw_l, '>');
 	a = altText(r);
 	nzFree(r);
-/* I'll assume this is more helpful than the name of the window */
-	if (a)
-		name = a;
+// I assume this is more helpful than the name of the window
+	if (a) name = a;
 	r = htmlEscape(name);
-	stringAndString(&cf->dw, &cf->dw_l, r);
+	stringAndString(&f->dw, &f->dw_l, r);
 	nzFree(r);
-	stringAndString(&cf->dw, &cf->dw_l, "</A><br>\n");
+	stringAndString(&f->dw, &f->dw_l, "</A><br>\n");
 }
 
 /* the new string, the result of the render operation */

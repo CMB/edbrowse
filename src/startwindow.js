@@ -2526,8 +2526,8 @@ document.location$2 = new URL;
     location.replace = document.location.replace = function(s) { this.href = s};
 Object.defineProperty(window.location,'replace',{enumerable:false});
 Object.defineProperty(document.location,'replace',{enumerable:false});
-Object.defineProperty(window.location,'eb$ctx',{get:function(){return eb$ctx}});
-Object.defineProperty(document.location,'eb$ctx',{get:function(){return eb$ctx}});
+Object.defineProperty(window.location,'eb$ctx',{value:eb$ctx});
+Object.defineProperty(document.location,'eb$ctx',{value:eb$ctx});
 
 // Window constructor, passes the url back to edbrowse
 // so it can open a new web page.
