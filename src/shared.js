@@ -2656,12 +2656,12 @@ this.href$val = h;
 }
 
 function url_hrefset(v) {
-var w = my$win(), d = my$doc(), inconstruct = true;
-var previous_href = "";
+var w = my$win(), d = my$doc(), inconstruct = true, firstassign = false;
 // if passed a url, turn it back into a string
 if(v === null || v === undefined) v = "";
 if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
 if(typeof v != "string") return;
+if(v.substr(0,7) == "Wp`Set@") v = v.substr(7), firstassign = true;
 v = resolveURL(w.eb$base, v);
 // return or blow up if v is not a url; not yet implemented
 if(typeof this.href$val == "string") inconstruct = false;
@@ -2675,7 +2675,6 @@ Object.defineProperty(this, "pathname$val", {enumerable:false, writable:true, va
 Object.defineProperty(this, "search$val", {enumerable:false, writable:true, value:""});
 Object.defineProperty(this, "hash$val", {enumerable:false, writable:true, value:""});
 } else {
-previous_href = this.href$val;
 this.href$val = v;
 this.port$val = this.protocol$val = this.host$val = this.hostname$val = this.pathname$val = this.search$val = this.hash$val = "";
 }
@@ -2736,7 +2735,7 @@ this.hash$val = v.replace(/^[^#]*/, "");
 } else {
 this.search$val = v;
 }
-if(previous_href && this.eb$ctx) {
+if(!firstassign && this.eb$ctx) {
 // replace the web page
 eb$newLocation('r' + this.eb$ctx + this.href$val + '\n');
 }

@@ -3770,8 +3770,11 @@ static void setup_window_2(void)
 
 	set_property_string(cx, d, "referrer", cw->referrer);
 	set_property_string(cx, d, "URL", cf->fileName);
-	set_property_string(cx, d, "location", cf->fileName);
-	set_property_string(cx, w, "location", cf->fileName);
+	char *wpc; // webpage with secret code
+	asprintf(&wpc, "Wp`Set@%s", cf->fileName);
+	set_property_string(cx, w, "location", wpc);
+	set_property_string(cx, d, "location", wpc);
+	free(wpc);
 	set_property_string(cx, d, "domain", getHostURL(cf->fileName));
 }
 
