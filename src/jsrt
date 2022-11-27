@@ -596,8 +596,8 @@ if(ilo.a.who.value != "eklhad") fail(122);
 /* the URL class, most of the setters are in startwindow.js */
 /* malformed url, not sure what to do here */
 uo = new URL("local-file"); // url object
-if(uo.href != "local-file") fail(130);
-if(uo.host != "local-file" || uo.pathname != "/") fail(131);
+// other browsers blow up on a non-url
+if(uo.href != "http://y.z.com/local-file") fail(130);
 new_path = "https://this.that.com:777/dir/ectory?search=k&l=english#middle";
 uo.href = new_path;
 if(uo != new_path) fail(132);

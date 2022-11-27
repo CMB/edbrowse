@@ -422,7 +422,7 @@ These variables are passed to gotoLocation, and when js is done
 we can take action based on newlocation and its friends.
 name is the name of the new window.
 href could be a relative url.
-It is resolved against the base of f, assuming that frame f created it.
+It is resolved against the base of cf, the running frame.
 A subframe can't push a new window.
 The master frame, that controls the entire window, can push onto the stack
 and then open a new window, that happens whenever you go to a hyperlink.
@@ -3800,8 +3800,10 @@ void domOpensWindow(const char *href, const char *name)
 	}
 
 	copy = cloneString(href);
+// not sure why we are unpercenting or resolving,
+// we probably don't need to do either
 	unpercentURL(copy);
-	r = resolveURL(f->hbase, copy);
+	r = resolveURL(cf->hbase, copy);
 	nzFree(copy);
 	if(!f->browseMode) goto create_hyperlink;
 

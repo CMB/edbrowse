@@ -2662,6 +2662,7 @@ var previous_href = "";
 if(v === null || v === undefined) v = "";
 if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
 if(typeof v != "string") return;
+v = resolveURL(w.eb$base, v);
 // return or blow up if v is not a url; not yet implemented
 if(typeof this.href$val == "string") inconstruct = false;
 if(inconstruct) {
