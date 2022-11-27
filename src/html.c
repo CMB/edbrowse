@@ -386,7 +386,7 @@ in http.c:
 frameExpandLine clears newlocation, but it should be clear already.
 reexpandFrame uses the newloc variables.
 cf, the current frame, is saved, and restored when reexpandFrame is finished.
-reexpandFrame sets cf to newloc_cf, running in that frame.
+reexpandFrame sets cf to newloc_f, running in that frame.
 newloc_r is assumed to be true, so call it that way.
 That frame page is deleted and a new one fetched and processed.
 newlocation is cleared, so we don't keep doing this in an infinite loop.
@@ -448,9 +448,51 @@ This happens under two circumstances.
 eb$newLocation called from the Window constructor new Window(blah)
 that opens a new window and is not refresh
 The first letter of href is p indicating push.
-eb$newLocation called from url_hrefset
+eb$newLocation called from url_hrefset,
 for location = blah or document.location = blah.
 The first letter of href is r, this is a replacement.
+in buffers.c:
+BrowseCurrentBuffer clears newlocation, but it should be clear already.
+Just a precaution before we browse.
+Browsing could set newlocation, by <meta http-equiv>.
+Other mechanisms turn into hyperlinks.
+Well we check newlocation after browse, in fact we check it after any command
+that might invoke js.
+Like pushing a button; after infPush(), check for newlocation.
+This is a theme throughout runCommand().
+If newlocation is set, goto redirect;
+What happens there?
+Set cf to the top frame.
+If newloc_f is a subframe, goto replaceframe.
+If refresh was false, if we were pushing a new page, on a frame
+other than the top frame, we would print a message and not set newlocation.
+We already talked about this.
+So at replaceframe we know newloc_r is true.
+Call reexpandFrame.
+Check again for newlocation, it could happen, but guard against an
+infinite fetch loop.
+Alternatively, the frame could be the top frame.
+At that point, create a new browse command, as though you had typed it in.
+The browse command will include nostack if new_r is true.
+And on through runCommand().
+There is another situation - a timer fires and sets newlocation,
+not in response to any of our commands.
+We are in inputLine(), gathering input.
+First, debug print a message, which you might not see
+Check to see if this is from a background window.
+It shouldn't be, timers only run on the foreground window.
+Just in case, print an error message and clear newlocation.
+if this was the result of a command.
+It just happened; maybe you should know what is happening.
+Now here is the same logic. If we are pushing a page, it is the master frame.
+Return a browse command, b url, as though the user had typed it in.
+If new_r is true, return a special code ReF@b url.
+It's special in that a user would never type it by accident.
+runCommand sees this.
+If it is the master frame, then run the b command as usual,
+with nostack, so the window is replaced.
+If it is a subframe, goto  replaceframe;
+And that's how it works to date.
 *********************************************************************/
 
 char *newlocation;

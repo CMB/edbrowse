@@ -474,25 +474,18 @@ thus the call to ircReadlineControl().
 			inInput = false;
 			runTimer();
 			inInput = true;
-			if (newlocation && intFlag) {
-				i_puts(MSG_RedirectionInterrupted);
-				goto top;
-			}
 			intFlag = false;
 
-/* in case a timer set document.location to a new page, or opens a new window */
+// in case a timer set document.location to a new page, or opens a new window
 			if (newlocation) {
 				debugPrint(2, "redirect %s", newlocation);
 				if (newloc_f->owner != cw) {
-/* background window; we shouldn't even be here! */
-/* Such redirections are turned into hyperlinks on the page. */
-#if 0
+// background window; we shouldn't even be here!
 					printf((newloc_r ?
 						"redirection of a background window to %s is not implemented\n"
 						:
 						"background window opening %s is not implemented\n"),
 					       newlocation);
-#endif
 					nzFree(newlocation);
 					newlocation = 0;
 				} else {
