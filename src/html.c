@@ -3779,7 +3779,7 @@ void showTimers(void)
 
 void domOpensWindow(const char *href, const char *name)
 {
-	char *copy, *r;
+	char *r;
 	const char *a;
 	bool replace = false;
 	int ctx;
@@ -3799,12 +3799,7 @@ void domOpensWindow(const char *href, const char *name)
 		return;
 	}
 
-	copy = cloneString(href);
-// not sure why we are unpercenting or resolving,
-// we probably don't need to do either
-	unpercentURL(copy);
-	r = resolveURL(cf->hbase, copy);
-	nzFree(copy);
+	r = resolveURL(cf->hbase, href);
 	if(!f->browseMode) goto create_hyperlink;
 
 	if(!replace && f != &cw->f0) {

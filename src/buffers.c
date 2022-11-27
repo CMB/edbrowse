@@ -6154,6 +6154,7 @@ bool runCommand(const char *line)
 	if (!strncmp(line, "ReF@b", 5)) {
 		line += 4;
 		noStack = 1;
+		uriEncoded = true;
 		if (cf != newloc_f) {
 /* replace a frame, not the whole window */
 			newlocation = cloneString(line + 2);
