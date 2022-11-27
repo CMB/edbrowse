@@ -4422,15 +4422,21 @@ void underKill(Tag *t)
 void set_basehref(const char *h)
 {
 	JSContext *cx = cf->cx;
-	JSValue g = *(JSValue*)cf->winobj;
+	JSValue w = *(JSValue*)cf->winobj;
+	JSValue d = *(JSValue*)cf->docobj;
 	if (!h)
 		h = emptyString;
-	JS_DefinePropertyValueStr(cx, g, "eb$base", JS_NewAtomString(cx, h), 0);
+	set_property_string(cx, w, "eb$base", h);
 // This is special code for snapshot simulations.
 // If the file jslocal is present, push base over to window.location,
 // as though you were running that page.
 	if (!access("jslocal", 4) && h[0] && cf == &cw->f0) {
-		run_function_bool_win(cf, "eb$base$snapshot");
+		char *wpc; // webpage with secret code
+		asprintf(&wpc, "Wp`Set@%s", h);
+		set_property_string(cx, w, "location", wpc);
+		set_property_string(cx, d, "location", wpc);
+		free(wpc);
+		set_property_string(cx, d, "URL", h);
 		nzFree(cf->fileName);
 		cf->fileName = cloneString(h);
 	}

@@ -22,6 +22,7 @@ using the obvious window = this.
 if(typeof window === "undefined") {
 window = this;
 document = {};
+eb$ctx = 77;
 // Stubs for native methods that are normally provided by edbrowse.
 // Example: alert, which we can replace with print,
 // or console.log, or anything present in the command line js interpreter.
@@ -99,7 +100,7 @@ dumptree = mw$.dumptree, uptrace = mw$.uptrace;
 showscripts = mw$.showscripts, searchscripts = mw$.searchscripts, showframes = mw$.showframes;
 snapshot = mw$.snapshot, aloop = mw$.aloop;
 showarg = mw$.showarg, showarglist = mw$.showarglist;
-eb$base$snapshot = mw$.eb$base$snapshot, set_location_hash = mw$.set_location_hash;
+set_location_hash = mw$.set_location_hash;
 document.getRootNode = mw$.getRootNode;
 document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
 document.nodeContains = mw$.nodeContains;
