@@ -1390,8 +1390,8 @@ static void findAttributes(const char *start, const char *end)
 		v = t->atvals[j];
 		if (v && !*v) v = 0;
 		if (v) {
-			v = resolveURL(cf->hbase, v);
-			if (action == TAGACT_BASE && !cf->baseset) {
+			v = v[0] == '#' ? cloneString(v) : resolveURL(cf->hbase, v);
+			if (action == TAGACT_BASE && !cf->baseset && isURL(v)) {
 				nzFree(cf->hbase);
 				cf->hbase = cloneString(v);
 				cf->baseset = true;
