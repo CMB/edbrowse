@@ -695,7 +695,7 @@ enum {
 	MSG_NullCharInList,
 	MSG_NullPtr,
 	MSG_IoctlError,
-	MSG_OpenFail,
+	MSG_notused598,
 	MSG_CreateFail,
 	MSG_InvalidFopen,
 	MSG_BadDirSlash,

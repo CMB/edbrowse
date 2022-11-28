@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 ponteiro nulo na pstLength
 não posso usar ioctl() para controlar o TTY
-não é possível abrir %s
+0
 não é possível criar ou escrever em %s
 chamando fopen() em modo inválido %s
 / mal posicionada na getDirURL(%s)

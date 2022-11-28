@@ -1817,7 +1817,6 @@ static bool readFile(const char *filename, bool newwin,
 	int readSize;		// should agree with fileSize
 	bool rc;		// return code
 	bool fileprot = false;
-	char *nopound; // url without the hash
 	const char *hash;
 	char filetype;
 	int inparts = 0;
@@ -2069,15 +2068,10 @@ badfile:
 			cmd = 'e';
 	} else {
 
-		nopound = cloneString(filename);
-		rbuf = findHash(nopound);
-		if (rbuf && !filetype)
-			*rbuf = 0;
 		inparts = 1, fileSize = 0;
 // set inparts to 0 if you don't want this feature or if it causes trouble
 nextpart:
-		rc = fileIntoMemory(nopound, &rbuf, &partSize, inparts);
-		if(inparts == 1) nzFree(nopound);
+		rc = fileIntoMemory(filename, &rbuf, &partSize, inparts);
 		inparts = (rc == 2 ? 2 : 0);
 		if(rc) fileSize += partSize;
 	}
@@ -7489,43 +7483,9 @@ rebrowse:
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
 		debugPrint(4, "ifetch %d %s", uriEncoded, line);
 
-// If we got here from typing g in directory mode, and directory had /
-// at the end, and if the file starts with #, then the sameURL test passes,
-// and we go down a completely unintended path.
 		if (noStack < 2 && sameURL(line, cf->fileName) && !cw->dirMode) {
-			if (stringEqual(line, cf->fileName)) {
-				setError(MSG_AlreadyInBuffer);
-				return false;
-			}
-/* Same url, but a different #section */
-			s = findHash(line);
-			if (!s) {	// no section specified
-// jump to line 1, if there is a line 1
-				if(!cw->dot) {
-					if(debugLevel >= 1)
-						i_puts(MSG_Empty);
-					return true;
-				}
-				if(cw->dot == 1) {
-					if(debugLevel >= 1)
-						printDot();
-					return true;
-				}
-				struct histLabel *label =
-				    allocMem(sizeof(struct histLabel));
-				label->label = cw->dot;
-				label->prev = cw->histLabel;
-				cw->histLabel = label;
-				cw->dot = 1;
-				if(debugLevel >= 1)
-					printDot();
-				return true;
-			}
-			line = s;
-			first = '#';
-			cmd = 'b';
-			emode = false;
-			goto browse;
+			setError(MSG_AlreadyInBuffer);
+			return false;
 		}
 
 // Different URL, go get it.

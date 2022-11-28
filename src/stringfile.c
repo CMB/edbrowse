@@ -2383,7 +2383,7 @@ FILE *efopen(const char *name, const char *mode)
 		return f;
 
 	if (*mode == 'r')
-		i_printfExit(MSG_OpenFail, name);
+		i_printfExit(MSG_NoOpen, name);
 	else if (*mode == 'w' || *mode == 'a')
 		i_printfExit(MSG_CreateFail, name);
 	else
@@ -2400,7 +2400,7 @@ int eopen(const char *name, int mode, int perms)
 	if (mode & O_WRONLY)
 		i_printfExit(MSG_CreateFail, name);
 	else
-		i_printfExit(MSG_OpenFail, name);
+		i_printfExit(MSG_NoOpen, name);
 	return -1;
 }
 

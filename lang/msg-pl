@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 zerowy wskaźnik w pstLength
 nie można użyć ioctl() aby zarządzać konsolą (tty)
-nie można otworzyć %s
+0
 nie można utworzyć lub zapisać %s
 wywołanie fopen() z niewłaściwym trybem %s
 '/' w złym miejscu w getDirURL(%s)

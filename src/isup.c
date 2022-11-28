@@ -1018,34 +1018,16 @@ squash:
 /* This routine could be, should be, more sophisticated */
 bool sameURL(const char *s, const char *t)
 {
-	const char *u, *p, *q;
+	const char *p, *q;
 	int l;
-
-	if (!s || !t)
-		return false;
-
-/* check for post data at the end */
-	p = strchr(s, '\1');
-	if (!p)
-		p = s + strlen(s);
-	q = strchr(t, '\1');
-	if (!q)
-		q = t + strlen(t);
-	if (!stringEqual(p, q))
-		return false;
-
-/* lop off hash */
-	if ((u = findHash(s)))
-		p = u;
-	if ((u = findHash(t)))
-		q = u;
-
-/* It's ok if one says http and the other implies it. */
+	if (!s || !t) return false;
+// It's ok if one says http and the other implies it
 	if (memEqualCI(s, "http://", 7))
 		s += 7;
 	if (memEqualCI(t, "http://", 7))
 		t += 7;
-
+	p = s + strlen(s);
+	q = t + strlen(t);
 	if (p - s >= 7 && stringEqual(p - 7, ".browse"))
 		p -= 7;
 	if (q - t >= 7 && stringEqual(q - 7, ".browse"))

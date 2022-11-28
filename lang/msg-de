@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 Nullzeiger in pstLength
 kann ioctl() nicht zur Verwaltung des ttys verwenden
-kann %s nicht öffnen
+0
 kann %s weder erstellen noch schreiben
 Aufruf von fopen() mit ungültigem Modus %s
 fehlplatzierter / in getDirURL(%s)

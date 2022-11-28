@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 null pointer in pstLength
 canot use ioctl() to manage the tty
-cannot open %s
+0
 cannot create or write to %s
 calling fopen() with invalid mode %s
 misplaced / in getDirURL(%s)

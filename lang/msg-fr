@@ -595,7 +595,7 @@ StringInListCI(null,...)
 charInList(null,...)
 Pointeur nul dans pstLength
 Impossible d'utiliser ioctl() pour gérer le terminal
-Impossible d'ouvrir %s
+0
 Impossible de créer ou d'écrire %s
 Mode d'appel %s de fopen() invalide
 / mal placé dans getDirUrl(%s)

@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 puntero vacío en pstLength
 no se puede usar ioctl() para controlar el tty
-no se puede abrir %s
+0
 no se puede crear o escribir en %s
 llamando fopen() con modo inválido %s
 / fuera de lugar en getDirURL(%s)
