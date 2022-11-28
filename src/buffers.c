@@ -3612,7 +3612,7 @@ static int replaceText(const char *line, int len, const char *rhs,
 				int y, z;
 				t += 2;
 				d -= '0';
-				if (d > re_count)
+				if (d >= re_count)
 					continue;
 				y = re_vector[2 * d];
 				z = re_vector[2 * d + 1];
