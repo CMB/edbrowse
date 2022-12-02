@@ -2721,12 +2721,14 @@ static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 	char *q = strchr(p, ',');
 	if(q) *q = 0;
 // check syntax first, then validate session number
-	if(((p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
+	if(((p[1] == 0 && q) ||
+	(p[1] == '\'' && p[2] >= 'a' && p[2] <= 'z' && p[3] == 0) ||
 	(p[1] && strchr(".-+$", p[1]) && p[2] == 0) ||
 	(p[1] == ';' && p[2] == 0 && !q) ||
 	(isdigitByte(p[1]) && (lno1 = stringIsNum(p+1)) >= 0)) &&
-	(!q || ((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
-	(q[1] && strchr(".-+$", q[1]) && q[2] == 0) ||
+	(!q || q[1] == 0 ||
+	((q[1] == '\'' && q[2] >= 'a' && q[2] <= 'z' && q[3] == 0) ||
+	(strchr(".-+$", q[1]) && q[2] == 0) ||
 	(isdigitByte(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
 // syntax is good
 		if(!cxCompare(cx) || !cxActive(cx, true))
@@ -2736,7 +2738,9 @@ static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 			setError(MSG_EmptyBuffer);
 			return globSub = false;
 		}
-// session is ok, how bout the line numbers?
+// session is ok, how about the line numbers?
+		if(p[1] == 0)
+			lno1 = 1;
 		if(p[1] == '\'' &&
 		 !(lno1 = w2->labels[p[2] - 'a'])) {
 			setError(MSG_NoLabel, p[2]);
@@ -2758,7 +2762,7 @@ static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 				setError(MSG_NoLabel, q[2]);
 				return globSub = false;
 			}
-			if(q[1] == '$')
+			if(q[1] == 0 || q[1] == '$')
 				lno2 = w2->dol;
 			if(q[1] == '.')
 				lno2 = w2->dot;
