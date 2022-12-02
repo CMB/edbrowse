@@ -667,7 +667,7 @@ riavvia
 opzioni che contengano %c
 files che contengano %c
 il campo richiesto %s è vuoto
-limit
+limit 
 la sessione %d non può ricevere testo
 @ sintassi non corretta
 %s: la libreria emoji %s non è un file regolare

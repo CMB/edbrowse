@@ -326,7 +326,7 @@ la dernière ligne de votre carnet d'adresses n'est pas terminée
 aucun dossier ne contient %s\n
 plusieurs dossiers contiennent %s\n
 recherche 
-enveloppe
+enveloppe 
 déplacer vers 
 attention : le formulaire url spécifie une section %s, qui sera ignorée\n
 le fichier %s est vide
@@ -667,7 +667,7 @@ redémarrez
 l'option contient %c
 le nom de fichier contient %c
 le champ requis %s est vide
-limit
+limit 
 la session %d ne peut recevoir du texte
 erreur de @ syntax
 %s: la librairie emoji %s n'est pas un fichier normal

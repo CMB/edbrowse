@@ -326,7 +326,7 @@ a última linha do catálogo de endereços não possui terminação
 nenhuma pastas contém %s\n
 várias pastas contém %s\n
 buscar 
-envelope
+envelope 
 mover para 
 aviso: a URL do formulário especifica uma sessão %s que será ignorada\n
 arquivo %s vazio
@@ -667,7 +667,7 @@ reinicie
 opção contém %c
 nome do arquivo contém %c
 campo obrigatório %s está vazio
-limit
+limit 
 sessão %d não pode receber texto
 @ sintaxe na linha
 %s: biblioteca de emojis %s não é um arquivo regular

@@ -326,7 +326,7 @@ ostatni wiersz Twojej książki adresowej nie jest zakończony
 żaden katalog nie zawiera %s\n
 wiele katalogów zawiera %s\n
 wyszukaj 
-opakuj (envelope)
+opakuj (envelope) 
 przenieś do 
 uwaga: URL formularza podaje sekcję %s, która zostanie zignorowana\n
 plik %s jest pusty
@@ -667,7 +667,7 @@ uruchom
 opcja zawiera %c
 nazwa pliku zawiera %c
 wymagane pole %s jest puste
-limit
+limit 
 sesja %d nie może przyjąć tekstu
 nieprawidłowa @-składnia
 %s: biblioteka emoji %s nie jest regularnym plikiem

@@ -326,7 +326,7 @@ no se pueden imprimir los carácteres de tu alias o email, en la linea% de la li
 no hay directorios que contengan %s\n
 multiples directorios contienen %s\n
 buscar
-envoltorio
+envoltorio 
 mover a
 antención: desde la url se especifica una sección %s, la cual se ignorará\n
 el archivo %s está vacío
@@ -667,7 +667,7 @@ reinicio
 las opciones contienen %c
 el nombre de archivo contiene %c
 campo requerido %s está vacío
-límite
+límite 
 sesión %d no puede recibir texto
 sintaxis @ inválida
 %s: la libreria emoji %s no es un archivo regular

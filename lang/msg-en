@@ -326,7 +326,7 @@ last line of your address book is not terminated
 no folders contain %s\n
 multiple folders contain %s\n
 search 
-envelope
+envelope 
 move to 
 warning: form url specifies a section %s, which will be ignored\n
 file %s is empty
@@ -667,7 +667,7 @@ restart
 option contains %c
 filename contains %c
 required field %s is empty
-limit
+limit 
 session %d cannot receive text
 invalid @ syntax
 %s: emoji library %s is not a regular file
