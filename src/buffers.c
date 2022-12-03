@@ -2719,6 +2719,10 @@ static bool atPartCracker(int cx, bool writeMode, char *p, int *lp1, int *lp2)
 	int lno1, lno2 = -1; // line numbers
 	const Window *w2; // far window
 	char *q = strchr(p, ',');
+	if(q && writeMode) {
+		setError(MSG_AtSyntax);
+		return globSub = false;
+	}
 	if(q) *q = 0;
 // check syntax first, then validate session number
 	if(((p[1] == 0 && q) ||
