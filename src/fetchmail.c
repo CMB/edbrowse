@@ -1119,8 +1119,8 @@ We'll deal with that later.
 			continue;
 		}
 
-/* pull out subject, reply, etc */
-/* Don't free mailstring, we're using pieces of it */
+// pull out subject, reply, etc
+// Don't free mailstring, we're using pieces of it
 		t += 10;
 		while (*t == ' ')
 			++t;
@@ -1139,7 +1139,7 @@ We'll deal with that later.
 			++t;
 	}
 
-/* subject next, I'll assume it is always quoted */
+// subject next, I'll assume it is always quoted
 		while (*t == ' ')
 			++t;
 
@@ -1183,7 +1183,7 @@ We'll deal with that later.
 doreply:
 		while (*t == ' ')
 			++t;
-		if (strncmp(t, "((\"", 3))
+		if (t[0] != '(' || t[1] != '(')
 			goto doref;
 		t += 2;
 		if (!grabEmailFromEnvelope(&t, &mif->from, &mif->reply))
