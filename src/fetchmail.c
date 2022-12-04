@@ -1113,6 +1113,16 @@ We'll deal with that later.
 		mif->prec = emptyString;
 		mif->ccrec = emptyString;
 
+/*********************************************************************
+Before we start cracking, here are a couple of illustrative examples.
+You can get these, or another envelope that doesn't seem to parse
+correctly, by db4. Note in the second example,
+that the encoded subject is 105 bytes, which matches {105}
+* 358 FETCH (FLAGS (\Seen $HasAttachment) INTERNALDATE "03-Dec-2022 12:57:23 +0000" RFC822.SIZE 121285 ENVELOPE ("Sat, 03 Dec 2022 12:57:12 +0000" "Your Daily Digest for Sat, Dec 03" ((NIL NIL "USPSInformeddelivery" "email.informeddelivery.usps.com")) ((NIL NIL "USPSInformeddelivery" "email.informeddelivery.usps.com")) ((NIL NIL "USPSInformeddelivery" "email.informeddelivery.usps.com")) ((NIL NIL "KWNRE" "comcast.net")) NIL NIL NIL "<20221203125712.0a463f28d45908a3@email.informeddelivery.usps.com>"))
+* 359 FETCH (FLAGS ($HasNoAttachment) INTERNALDATE "03-Dec-2022 16:06:55 +0000" RFC822.SIZE 33094 ENVELOPE ("3 Dec 2022 16:01:33 +0000" {105}
+=?Windows-1252?Q?Wendy=2C_very_important=2E_=28Note=3A_Failur?= =?Windows-1252?Q?e_to_act_in_time=85=29?= (("Publishers Clearing House" NIL "PublishersClearingHouse" "e.superprize.pch.com")) (("Publishers Clearing House" NIL "PublishersClearingHouse" "e.superprize.pch.com")) (("Publishers Clearing House" NIL "PublishersClearingHouse" "e.superprize.pch.com")) (("Wendy Dahlke" NIL "kwnre" "comcast.net")) NIL NIL NIL "<543.30570379008.202212031601292260087.0123746943@e.superprize.pch.com>"))
+*********************************************************************/
+
 		t = strstr(mailstring, "ENVELOPE (");
 		if (!t) {
 			nzFree(mailstring);
@@ -1191,6 +1201,7 @@ doreply:
 
 // We have parsed from-reply in block 1, block 4 contains the recipients,
 // Don't know what is in blocks 2 and 3.
+// shouldn't we be checking for (( or NIL here?
 		u = strstr(t, "(("); // block 2
 		if(!u)
 			goto doref;

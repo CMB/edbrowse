@@ -820,7 +820,7 @@ and dot and dollar and some other things.
 This starts out with map = 0.
 The u command swaps undoWindow and current window (cw).
 Thus another u undoes your undo.
-You can step back through all your changes,
+You cannot step back through all your changes,
 popping a stack like a modern editor. Sorry.
 Just don't screw up more than once,
 and don't save your file til you're sure it's ok.
@@ -2575,27 +2575,23 @@ static void debrowseSuffix(char *s)
 	}
 }
 
-// Set environment variables for filename, content of the current line,
-// etc, before running a shell command.
-static void eb_variables()
+// Set environment variables that use the file name.
+static void eb_file_name_variables(const char *file_name, const bool browsing, const char *file_var, const char *base_var, const char *dir_var)
 {
-	pst p;
-	int n, rc, i;
-	char var[12];
-	static const char *hasnull = "line contains nulls";
-	char *s0 = cloneString(cf->fileName);
+	char var[13];
+	char *s0 = cloneString(file_name);
 	char *s = s0;
 
 	if(!s) s = emptyString;
 	s = skipFileProtocol(s);
 
-	strcpy(var, "EB_FILE");
+	strcpy(var, file_var);
 	setenv(var, s, 1);
-	if(cw->browseMode) debrowseSuffix(s);
-	strcpy(var, "EB_BASE");
+	if(browsing) debrowseSuffix(s);
+	strcpy(var, base_var);
 	setenv(var, s, 1);
 
-	strcpy(var, "EB_DIR");
+	strcpy(var, dir_var);
 	if (isURL(s)) {
 		char *t = cloneString(s);
 		char *u = dirname(s);
@@ -2608,6 +2604,33 @@ static void eb_variables()
 		setenv(var, dirname(s), 1);
 	}
 	nzFree(s0);
+}
+
+// Set environment variables for filename, content of the current line,
+// etc, before running a shell command.
+static void eb_variables()
+{
+	pst p;
+	int n, rc, i;
+	char var[12];
+	static const char *hasnull = "line contains nulls";
+	Window *lw = sessionList[cx_previous].lw;
+	if(lw)
+		eb_file_name_variables(lw->f0.fileName, lw->browseMode, "EB_PREV_FILE", "EB_PREV_BASE", "EB_PREV_DIR");
+	else {
+		unsetenv("EB_PREV_FILE");
+		unsetenv("EB_PREV_BASE");
+		unsetenv("EB_PREV_DIR");
+	}
+	lw = cw->prev;
+	if(lw)
+		eb_file_name_variables(lw->f0.fileName, lw->browseMode, "EB_UP_FILE", "EB_UP_BASE", "EB_UP_DIR");
+	else {
+		unsetenv("EB_UP_FILE");
+		unsetenv("EB_UP_BASE");
+		unsetenv("EB_UP_DIR");
+	}
+	eb_file_name_variables(cf->fileName, cw->browseMode, "EB_FILE", "EB_BASE", "EB_DIR");
 
 	strcpy(var, "EB_DOT");
 	unsetenv(var);
