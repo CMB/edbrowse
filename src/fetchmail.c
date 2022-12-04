@@ -1000,15 +1000,23 @@ char **name, char **addr)
 	char *t = *t0, *u;
 	if(!strncmp(t, "NIL ", 4)) {
 		t += 4;
+	} else if(*t == '{') {
+		 int l = strtol(t+1, &t, 10);
+		if(*t == '}') ++t;
+		// with number in braces, subject is on next line.
+// isspace takes us past crlf
+		while(isspaceByte(*t)) ++t;
+		u = t + l;
+		*u = 0;
+		if(name) *name = t;
+		*t0 = t = u + 2;
 	} else {
-		if(*t != '"')
-			return false;
+		if(*t != '"') return false;
 		u = nextRealQuote(++t);
 		if (!u)
 			return false;
 		*u = 0;
-		if(name)
-			*name = t;
+		if(name) *name = t;
 		*t0 = t = u + 2;
 	}
 // next should come NIL "email" "domain"
@@ -1121,6 +1129,14 @@ that the encoded subject is 105 bytes, which matches {105}
 * 358 FETCH (FLAGS (\Seen $HasAttachment) INTERNALDATE "03-Dec-2022 12:57:23 +0000" RFC822.SIZE 121285 ENVELOPE ("Sat, 03 Dec 2022 12:57:12 +0000" "Your Daily Digest for Sat, Dec 03" ((NIL NIL "USPSInformeddelivery" "email.informeddelivery.usps.com")) ((NIL NIL "USPSInformeddelivery" "email.informeddelivery.usps.com")) ((NIL NIL "USPSInformeddelivery" "email.informeddelivery.usps.com")) ((NIL NIL "KWNRE" "comcast.net")) NIL NIL NIL "<20221203125712.0a463f28d45908a3@email.informeddelivery.usps.com>"))
 * 359 FETCH (FLAGS ($HasNoAttachment) INTERNALDATE "03-Dec-2022 16:06:55 +0000" RFC822.SIZE 33094 ENVELOPE ("3 Dec 2022 16:01:33 +0000" {105}
 =?Windows-1252?Q?Wendy=2C_very_important=2E_=28Note=3A_Failur?= =?Windows-1252?Q?e_to_act_in_time=85=29?= (("Publishers Clearing House" NIL "PublishersClearingHouse" "e.superprize.pch.com")) (("Publishers Clearing House" NIL "PublishersClearingHouse" "e.superprize.pch.com")) (("Publishers Clearing House" NIL "PublishersClearingHouse" "e.superprize.pch.com")) (("Wendy Dahlke" NIL "kwnre" "comcast.net")) NIL NIL NIL "<543.30570379008.202212031601292260087.0123746943@e.superprize.pch.com>"))
+* 360 FETCH (FLAGS ($HasNoAttachment) INTERNALDATE "04-Dec-2022 06:27:36 +0000" RFC822.SIZE 7083 ENVELOPE ("Sun, 4 Dec 2022 06:27:35 +0000" "Discover The Power Of Comparison Shopping" (({21}
+Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) (({21}
+Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) (({21}
+Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comcast.net")) NIL NIL NIL "<01000184dbd191f0-a0febe67-5ffe-4875-b066-8bf71e7bcedb-000000@email.amazonses.com>"))
+* 361 FETCH (FLAGS ($HasNoAttachment) INTERNALDATE "04-Dec-2022 08:26:13 +0000" RFC822.SIZE 5968 ENVELOPE ("Sun, 4 Dec 2022 08:26:11 +0000" "=?UTF-8?B?4biMbyB5b3Ugd2FrZSB1cCDhua1pcmVkLCB3aXRoIGRyeSBza2luICYgIOG2gWFtYWdlZCBoYWlyPw==?=" (({20}
+"=?UTF-8?Q?BLlSSY?=" NIL "WeCare4U" "cateringadvetiser.com")) (({20}
+"=?UTF-8?Q?BLlSSY?=" NIL "WeCare4U" "cateringadvetiser.com")) (({20}
+"=?UTF-8?Q?BLlSSY?=" NIL "WeCare4U" "cateringadvetiser.com")) ((NIL NIL "kwnre" "comcast.net")) NIL NIL NIL "<01010184dc3e266d-c67755c2-facc-4650-9375-f85825069dd6-000000@us-west-2.amazonses.com>"))
 *********************************************************************/
 
 		t = strstr(mailstring, "ENVELOPE (");
@@ -1162,12 +1178,10 @@ that the encoded subject is 105 bytes, which matches {105}
 		sublength = -1;
 		if(*t == '{') {
 			 sublength = strtol(t+1, &t, 10);
-			if(*t == '}')
-				++t;
+			if(*t == '}') ++t;
 		// with number in braces, subject is on next line.
 // isspace takes us past crlf
-			while(isspaceByte(*t))
-				++t;
+			while(isspaceByte(*t)) ++t;
 		}
 
 //  printf("%d,%d,%d|%s|\n", mailstring_l, t-mailstring, strlen(t), t);
