@@ -494,7 +494,11 @@ q : quit the current session
 <br>!! : previous shell command
 <br>!! stuff : previous shell command with stuff appended
 <br>! program "$EB_DOT" : run program on the contents of the current line
+<br>! program "$EB_PLUS" : run program on the contents of the next line
+<br>! program "$EB_MINUS" : run program on the contents of the previous line
 <br>! program "$EB_LNx" : run program on the contents of the line marked by kx
+<br>!program $EB_LN : access the current line number
+<br>!program $EB_LINES : access the number of lines in the buffer
 <br>! program "$EB_FILE" : run program on the file name
 <br>! program "$EB_BASE" : use the file name without the .browse suffix
 <br>!program $EB_DIR : access the directory that holds the file

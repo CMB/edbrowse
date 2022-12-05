@@ -1008,6 +1008,8 @@ char **name, char **addr)
 		while(isspaceByte(*t)) ++t;
 		u = t + l;
 		*u = 0;
+// allow for quotes either side
+		if(*t == '"' && u[-1] == '"') ++t, u[-1] = 0;
 		if(name) *name = t;
 		*t0 = t = u + 2;
 	} else {

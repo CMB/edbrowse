@@ -2612,7 +2612,7 @@ static void eb_variables()
 {
 	pst p;
 	int n, rc, i;
-	char var[12];
+	char var[12], numbuf[12];
 	static const char *hasnull = "line contains nulls";
 	Window *lw = sessionList[cx_previous].lw;
 	if(lw)
@@ -2640,6 +2640,14 @@ static void eb_variables()
 		setenv(var, rc ? hasnull : (char*)p, 1);
 		free(p);
 	}
+
+	sprintf(numbuf, "%d", n);
+	strcpy(var, "EB_LN");
+	setenv(var, numbuf, 1);
+
+	sprintf(numbuf, "%d", cw->dol);
+	strcpy(var, "EB_LINES");
+	setenv(var, numbuf, 1);
 
 	strcpy(var, "EB_PLUS");
 	unsetenv(var);
