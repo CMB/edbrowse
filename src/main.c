@@ -35,6 +35,7 @@ int verifyCertificates = 1;
 char *sslCerts, *pubKey;
 int localAccount, maxAccount;
 struct MACCOUNT accounts[MAXACCOUNT];
+bool ebvar = true; // update environment variables before each shell command
 bool flow = true; // send mail with format=flowed
 int maxMime;
 struct MIMETYPE mimetypes[MAXMIME];
@@ -955,7 +956,7 @@ int runEbFunction(const char *line)
 
 // local copies of settings, to restore after function runs.
 	struct {
-		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, flow;
+		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow;
 		uchar dw, ls_sort;
 		char lsformat[12], showProgress;
 		char *currentAgent;
@@ -1003,6 +1004,7 @@ int runEbFunction(const char *line)
 		save.timerspeed = timerspeed;
 		save.dw = dirWrite;
 		save.dno = dno;
+		save.ebvar = ebvar;
 		save.flow = flow;
 		save.ls_sort = ls_sort;
 		strcpy(save.lsformat, lsformat);
@@ -1171,6 +1173,7 @@ done:
 		timerspeed = save.timerspeed;
 		dirWrite = save.dw;
 		dno = save.dno;
+		ebvar = save.ebvar;
 		flow = save.flow;
 		ls_sort = save.ls_sort;
 		strcpy(lsformat, save.lsformat);

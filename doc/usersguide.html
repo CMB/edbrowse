@@ -493,6 +493,7 @@ q : quit the current session
 <br>!command : shell command
 <br>!! : previous shell command
 <br>!! stuff : previous shell command with stuff appended
+<br>ebvar : update environment variables before each shell command (toggle)
 <br>! program "$EB_DOT" : run program on the contents of the current line
 <br>! program "$EB_PLUS" : run program on the contents of the next line
 <br>! program "$EB_MINUS" : run program on the contents of the previous line
@@ -502,12 +503,6 @@ q : quit the current session
 <br>! program "$EB_FILE" : run program on the file name
 <br>! program "$EB_BASE" : use the file name without the .browse suffix
 <br>!program $EB_DIR : access the directory that holds the file
-<br>! program "$EB_PREV_FILE" : run program on the file name of the previous session (reachable with the eret command)
-<br>! program "$EB_PREV_BASE" : use the file name of the previous session without the .browse suffix
-<br>!program $EB_PREV_DIR : access the directory that holds the file of the previous session
-<br>! program "$EB_UP_FILE" : run program on the file name of the previous buffer (reachable with the up command)
-<br>! program "$EB_UP_BASE" : use the file name of the previous buffer without the .browse suffix
-<br>!program $EB_UP_DIR : access the directory that holds the file of the previous buffer
 <br>! : spawn an interactive shell
 <br>cd newdirectory : change directory
 <br>pwd : print working directory

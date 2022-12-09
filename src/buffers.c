@@ -2578,7 +2578,7 @@ static void debrowseSuffix(char *s)
 // Set environment variables that use the file name.
 static void eb_file_name_variables(const char *file_name, const bool browsing, const char *file_var, const char *base_var, const char *dir_var)
 {
-	char var[13];
+	char var[8];
 	char *s0 = cloneString(file_name);
 	char *s = s0;
 
@@ -2608,28 +2608,13 @@ static void eb_file_name_variables(const char *file_name, const bool browsing, c
 
 // Set environment variables for filename, content of the current line,
 // etc, before running a shell command.
-static void eb_variables()
+static void eb_variables(void)
 {
+	if(!ebvar) return;
 	pst p;
 	int n, rc, i;
 	char var[12], numbuf[12];
 	static const char *hasnull = "line contains nulls";
-	Window *lw = sessionList[cx_previous].lw;
-	if(lw)
-		eb_file_name_variables(lw->f0.fileName, lw->browseMode, "EB_PREV_FILE", "EB_PREV_BASE", "EB_PREV_DIR");
-	else {
-		unsetenv("EB_PREV_FILE");
-		unsetenv("EB_PREV_BASE");
-		unsetenv("EB_PREV_DIR");
-	}
-	lw = cw->prev;
-	if(lw)
-		eb_file_name_variables(lw->f0.fileName, lw->browseMode, "EB_UP_FILE", "EB_UP_BASE", "EB_UP_DIR");
-	else {
-		unsetenv("EB_UP_FILE");
-		unsetenv("EB_UP_BASE");
-		unsetenv("EB_UP_DIR");
-	}
 	eb_file_name_variables(cf->fileName, cw->browseMode, "EB_FILE", "EB_BASE", "EB_DIR");
 
 	strcpy(var, "EB_DOT");
@@ -5281,6 +5266,20 @@ et_go:
 		dno = (line[3] == '+');
 		if (helpMessagesOn)
 			i_puts(dno + MSG_DirNamesOnlyOff);
+		return true;
+	}
+
+	if (stringEqual(line, "ebvar")) {
+		ebvar ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(ebvar + MSG_UpdateEBVarOff);
+		return true;
+	}
+
+	if (stringEqual(line, "ebvar+") || stringEqual(line, "ebvar-")) {
+		ebvar = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(ebvar + MSG_UpdateEBVarOff);
 		return true;
 	}
 

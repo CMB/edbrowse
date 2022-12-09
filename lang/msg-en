@@ -714,8 +714,8 @@ multiple buttons present, please use %s1 through %s%d
 multiple images present, please use %s1 through %s%d
 0
 could not fetch html fragment\n
-0
-0
+do not update environment variables
+update environment variables
 0
 0
 0

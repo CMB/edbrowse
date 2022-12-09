@@ -814,4 +814,6 @@ enum {
 	MSG_ManyImages,
 	MSG_hold715,
 	MSG_GetFrag2,
+	MSG_UpdateEBVarOff,
+	MSG_UpdateEBVarOn,
 };
