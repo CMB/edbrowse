@@ -31,7 +31,7 @@ static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpvwXz=<";
 // Commands that work at line number 0, in an empty file
-static const char zero_cmd[] = "aAbefhHMqruwz=^<";
+static const char zero_cmd[] = "aAbefhHkMqruwz=^<";
 // Commands that expect a space afterward
 static const char spaceplus_cmd[] = "befrw";
 // Commands that should have no text after them
