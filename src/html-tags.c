@@ -1196,6 +1196,39 @@ With this understanding, we can, and should, scan for </textarea
 			seek = s = gt + 1;
 			continue;
 		}
+
+		if(stringEqual(lowname, "title")) {
+/*********************************************************************
+A title should not contain other tags.
+Do not interpret < > etc, but do interpret &stuff;
+With this understanding, we can, and should, scan for </title
+*********************************************************************/
+			if(!(lt = strcasestr(seek, "</title"))) {
+				scannerError1("open title at line %d, html parsing stops here", ln);
+				goto stop;
+			}
+			if(!(gt = strpbrk(lt + 1, "<>")) || *gt == '<') {
+				scannerError1("open title at line %d, html parsing stops here", ln);
+				goto stop;
+			}
+// adjust line number
+			for(u = seek; u < gt; ++u)
+				if(*u == '\n') ++ln;
+			while(isspaceByte(*seek)) ++seek; // should we be doing this?
+			if(lt > seek) {
+// pull out the text and andify.
+				w = pullAnd(seek, lt);
+				   scannerInfo1("title length %d", strlen(w));
+				makeTag(texttag, texttag, false, 0);
+				working_t->textval = w;
+				makeTag(texttag, texttag, true, 0);
+			}
+			scannerInfo1("</title>", 0);
+			makeTag(tagname, lowname, true, lt);
+			seek = s = gt + 1;
+			continue;
+		}
+
 	}
 
 // seek points to the last piece of the buffer, after the last tag

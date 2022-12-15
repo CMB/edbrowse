@@ -4,7 +4,7 @@
 <head id=boom>
 <base href=http://y.z.com>
 <meta content=Snoopy>
-<title>Edbrowse js regression test</title>
+<title>Edbrowse js&pi; regression test</title>
 <!-- tidy5 says this is not a valid tag any more -->
 <bgsound src=whatever.mid>
 <style>
