@@ -137,13 +137,13 @@ static char *find_http_header(struct i_get *g, const char *name)
 	if (!h)
 		return NULL;
 	for (s = h; *s; s = v) {
-/* find start of next line */
+// find start of next line
 		v = strchr(s, '\n');
 		if (!v)
 			break;
 		++v;
 
-/* name: value */
+// name: value
 		t = strchr(s, ':');
 		if (!t || t >= v)
 			continue;
@@ -155,14 +155,12 @@ static char *find_http_header(struct i_get *g, const char *name)
 		if (!memEqualCI(s, name, namelen))
 			continue;
 
-/* This is a match */
+// This is a match
 		++t;
-		while (t < v && isspaceByte(*t))
-			++t;
+		while (t < v && isspaceByte(*t)) ++t;
 		u = v;
-		while (u > t && isspaceByte(u[-1]))
-			--u;
-/* remove quotes */
+		while (u > t && isspaceByte(u[-1])) --u;
+// remove quotes
 		if (u - t >= 2 && *t == u[-1] && (*t == '"' || *t == '\''))
 			++t, --u;
 		if (u == t)
@@ -825,7 +823,7 @@ bool httpConnect(struct i_get *g)
 	uchar sxfirst = 0;
 	int n;
 
-		redirect_count = 0;
+	redirect_count = 0;
 
 	if (!getProtHostURL(url, prot, host)) {
 // only the foreground http thread uses setError,
@@ -2415,6 +2413,9 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(h, CURLOPT_WRITEDATA, g);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, curl_header_callback);
+// curl_header_callback references cf, but download could be in the background,
+// so make this threadsafe.
+	g->cf = cf;
 	curl_easy_setopt(h, CURLOPT_HEADERDATA, g);
 	if (debugLevel >= 4)
 		curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
@@ -2676,7 +2677,7 @@ curl_header_callback(char *header_line, size_t size, size_t nmemb,
 		       header_line, bytes_in_line);
 
 	scan_http_headers(g, true);
-	mt = cf->mt;
+	mt = g->cf->mt;
 
 // a from-the-web mime type causes a download interrupt
 	if (g->pg_ok && mt && !(mt->down_url | mt->from_file) &&

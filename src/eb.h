@@ -194,6 +194,7 @@ struct i_get {
 	const char *thisfile;
 	char *referrer;
 	CURL *h;
+	struct ebFrame *cf; // current frame
 	int tsn; // thread sequence number
 // State of download to disk, see http.c for state values.
 	int down_state;
