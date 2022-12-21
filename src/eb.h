@@ -345,6 +345,7 @@ extern bool showHiddenFiles;	/* during directory scan */
 extern bool showall; // show messages that are normally hidden, for various reasons
 extern bool doColors;
 extern int context;		// which session (buffer) are we in?
+extern int cx_previous;		// the number of the previous session
 extern pst linePending;
 extern char *changeFileName;
 extern char *addressFile;	// your address book

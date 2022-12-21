@@ -1120,7 +1120,6 @@ bool cxQuit(int cx, int action)
 /* Switch to another edit session.
  * This assumes cxCompare has succeeded - we're moving to a different context.
  * Pass the context number and an interactive flag. */
-static int cx_previous;
 void cxSwitch(int cx, bool interactive)
 {
 	bool created = false;

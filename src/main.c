@@ -53,6 +53,7 @@ bool binaryDetect = true;
 bool inputReadLine;
 bool curlAuthNegotiate = false;
 int context = 1;
+int cx_previous;
 pst linePending;
 struct ebSession sessionList[MAXSESSION], *cs;
 int maxSession;
@@ -960,7 +961,7 @@ int runEbFunction(const char *line)
 		uchar dw, ls_sort;
 		char lsformat[12], showProgress;
 		char *currentAgent;
-		int agentIndex, debugLevel, timerspeed;
+		int agentIndex, cx_previous, debugLevel, timerspeed;
 		int ll, fll;
 	} save;
 
@@ -1000,6 +1001,7 @@ int runEbFunction(const char *line)
 	if(!stringEqual(linecopy, "init") && strncmp(linecopy, "set", 3)) {
 		restore = true;
 		save.currentAgent = currentAgent, save.agentIndex = agentIndex;
+		save.cx_previous = cx_previous, cx_previous = 0;
 		save.debugLevel = debugLevel;
 		save.timerspeed = timerspeed;
 		save.dw = dirWrite;
@@ -1169,6 +1171,7 @@ done:
 	nzFree(allargs);
 	if(restore) {
 		currentAgent = save.currentAgent, agentIndex = save.agentIndex;
+		cx_previous = save.cx_previous;
 		debugLevel = save.debugLevel;
 		timerspeed = save.timerspeed;
 		dirWrite = save.dw;
