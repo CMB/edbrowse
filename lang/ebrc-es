@@ -1,0 +1,158 @@
+#  .ebrc: ejemplo de archivo de configuración para edbrowse version 3.7.3
+
+#  cuenta de email; puedes tener varias.
+#  una cuenta de gmail, la mayoría de gente tiene una estos días .
+#  Esto es un acceso pop3. Para buscar y leer tu mail desde esta cuenta:
+#  edbrowse -fm1
+mail {
+inserver = pop.gmail.com
+outserver = smtp.gmail.com
+secure
+login = edbrowse
+password = rhinoceros
+from = Donald Duck
+reply = edbrowse@gmail.com
+}
+
+#  Acceso imap a tu cliente de gmail. 
+#  Si esto sigue siendo tu segunda cuenta de email en este archivo, entonces el acceso imap es:
+#  edbrowse -f2
+mail {
+imap
+inserver = imap.gmail.com
+outserver = smtp.gmail.com
+secure
+login = edbrowse
+password = rhinoceros
+from = Donald Duck
+reply = edbrowse@gmail.com
+}
+
+#  Añadir dirección a la libreta de direcciones.
+#adbook=/home/mylogin/outside/adbook
+
+#  Bandeja de entrada: Debería ser una ruta absoluta.
+#maildir = /home/mylogin/mbox
+
+#  Luegar donde descargar los archivos. Debería ser una ruta absoluta.
+# downdir = /home/mylogin/downloads
+# Si lo lvidaste, las descargas se hrán en el archivo donde estés.
+
+#  El tarro de las galletas - donde guardamos las cookis de http.
+#jar = /home/mylogin/outside/cookies
+
+# Directorio donde almacenamos el cache de edbrowse, y el tamaño de este en megabytes
+# cachedir = /b3/ebcache
+# cachesize = 200
+
+#  esperar 30 segundos para una respuesta desde el servidor web
+webtimer = 30
+#  esperar 3 minutos para una respuesta del servidor de mail
+mailtimer = 180
+
+#  Redirigir mail en función del remitente, o la cuenta de destino.
+fromfilter {
+fred flintstone > fredmail
+fred.flintstone@bedrock.us > fredmail
+jerk@hotmail.com > x
+word@m-w.com > -wod
+}
+
+# tofilter { }
+
+#  Describe los tipos mime i los plugins correspondientes.
+plugin {
+type = audio/basic
+desc = audio file in a wave format
+suffix = wav,voc,au,ogg
+content = audio/x-wav
+#  %i es el archivo de entrada temporal generado por edbrowse, o la url
+program = play -q %i
+}
+
+plugin {
+type = audio/mp3
+desc = audio file in mp3 format
+suffix = mp3
+content = audio/mpeg
+program = mpg123 -q -C %i
+}
+
+plugin {
+type = audio/x-pn-realaudio
+desc = streaming audio
+protocol = rtsp,pnm,sdp
+suffix = rm,ra,ram,m3u8
+urlmatch = youtube.com/watch?|youtube.com/embed/
+content = audio/x-scpls,application/pls+xml
+program = /usr/bin/mpv --really-quiet --load-unsafe-playlists %i
+}
+
+#  este plugin renderiza un archivo, en lugar de "reproducir" un archivo
+plugin {
+type = pdf
+desc = pdf file
+suffix = pdf
+content = application/pdf
+program = pdftohtml -i -noframes %i %o >/dev/null
+#  indica que la salida es en html, en lugar de texto
+outtype = H
+#  indica que los datos deben ser descargador; pdf o html no acepta una url
+down_url
+}
+
+plugin {
+type = rtf
+desc = rich text file
+suffix = rtf
+content = application/rtf
+down_url
+program = catdoc %i
+# esto es texto, no html
+outtype = T
+}
+
+#  Todas las veces que tu buscas una página web en internet,
+#  tu navegador se identifica a si mismo en el host.
+# Aquí hay algunos agentes alternativos, por defecto es edbrowse 3.7.3
+agent = Lynx/2.8.4rel.1 libwww-FM/2.14
+agent = Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)
+
+#  Ok, estamols listos para escribir nuestro primer script.
+#  Qué tal una función para acceder a google.
+#  Des esta manera <gg elephants tigers   llamará a google,
+#  buscando elephants y tigers juntos.
+function+gg {
+b http://www.google.com
+/<>/ i=~0
+/</ i1*
+/h3/p
+#  Buscar resultados por etiquetas de cabecera h3 sólo funciona si google reconoce tu navegador,
+#  por lo que es posible que tenga que pasar a IE7.
+}
+
+#  Buscar en el diccionario Merriam-Webster , ~1 es el parámetro 1, la palabra a buscar
+#  <mw elephant
+function+mw {
+b http://www.merriam-webster.com/dictionary/~1
+/spelling suggestion/X
+if(?) {
+/^h2 Definition/X
+}
+/./p
+}
+
+#  Esta función se activa al iniciar edbrowse
+function:init {
+# hace que los directorios puedan ser escritos, de esta manera puedes cambiar el nombre o borrar archivos
+dw
+# Muestra el tamaño de cada archivo en el listado de un directorio
+ls=s
+# límite de carácteres que se muestran en una línea; las lineas pueden ser arbitrariamente largas dentro.
+ll 700
+# otras configuraciones personales
+#  tu puedes querer ua2, para que las búsquedas en google tenga encabezamientos, y quizás para otras páginas web.
+#  Nadie sabe quien es edbrowse.
+}
+
+# y mucho más...

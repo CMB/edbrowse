@@ -3073,6 +3073,8 @@ See dircmp_alph() in stringfile.c
 		eb_lang = 8;
 		messageArray = msg_es;
 		type8859 = 1;
+		ebrc_string = ebrc_es;
+		qrg_string = qrg_es;
 		return;
 	}
 

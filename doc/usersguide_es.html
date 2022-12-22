@@ -1,0 +1,356 @@
+<!-- qrg start -->
+Los comandos que son designados con (toggle), como en js para habilitar o deshabilitar Javascript, también admite un + o - como sufijo para habilitar o deshabilitar esta característica.
+Así como js puede gestionar Javascript, js+ habilita Javascript, y js- deshabilita Javascript.
+Las variantes con + o - no están listadas.
+Toogle imprime el estado de la función, on o off, si los mensajes de ayuda están habilitados o i el nivel de depuración és al menos de 1.
+El ajuste o compensación de un modo sólo imprime mensajes si los mensajes de ayuda están activados.
+
+<P>
+Salir del programa
+<P>
+q : salir de la actual sessión
+<br>qt : salir completamente del programa, hayas o no guradado los archivos.
+<br>bw : buffer escrito; puedes salir en cualquier momento
+<br>!comando: comando de interprete de comandos
+<br>!! : comando previo de interprete de comandos
+<br>!! material: comando previo de interprete de comandos con material añadido
+<br>! programa "$EB_DOT" : corre programa con el contenido de la actual linea
+<br>! programa "$EB_LNx" : corre programa con el contenido de la linea marcada por kx
+<br>! programa "$EB_FILE" : corre probrama con el nombre de archivo
+<br>! programa "$EB_BASE" : usa el nombre de archivo sin el sufijo .browse
+<br>!programa $EB_DIR : accede al directorio que contiene el archivo.
+<br>! : engendra un intérprete de comandos interactivo
+<br>cd nuevodirectorio : canvia el directorio
+<br>pwd : imprime el actual directorio
+<br>config: vuelve a leer el archivo de configuración
+<P>
+entrada
+<P>
+rl : usa readline() en la entrada (toggle), respeta $HISTCONTROL
+<P>
+Muestra Lineas en el Buffer
+<P>
+p: imprime la actual linea
+<br>4,7p : imprime las lineas desde la 4 a la 7 
+<br>+3p : avanca 3 lineas e imprime
+<br>+3 : igual que +3p, imprimir es un comando por defecto
+<br>- : linea previa
+<br>--- : retrocede tres lineas
+<br>'a,'bp : imprime un rango de lineas marcadas con las etiquetas a y b
+<br>kb : marca la actual linea como b 
+<br>l : lista la actual linea, mostrando carácteres invisibles y marcadores de final
+<br>endm : muestra marcadores de finales ^$ en las lineas listadas (toggle)
+<br>lna : expande todos los carácteres nonascii dentro de hex cuando una linea es listada (toggle)
+<br>n : imprime la actual lineas con el número de linea
+<br>ll 1000 :  longitud de linea 1000, muestra los primeros 1000 caracteres de cada linea
+<br> ll : imprime la actual longitud de linea 
+<br>z22 : imprime las siguientes 22 lineas
+<br>z : imprime otras 22 lineas
+<br>= : imprime el número de lineas en el archivo
+<br>.= : imprime el número de la actual linea
+<br>B : encuentra la linea donde se halla el correspondiente cierre abierto o cerrado
+<br>B[ : encuentra la liena con el correspondiente corchete de cierre 
+<br>B( : find the line with the balancing closed parenthesis
+<br>B{2 : encuentra la linea que corresponde al segundo (de dentro hacia fuera) llave desparejada
+<P>
+Mensajes de ayuda
+<P>
+h : ayuda, explica el último interrogante
+<br>H : mostrar todos los mensajes de error (toggle)
+<br>help : pone esta guia de referencia  en un buffer de edbrowse para poder leerla
+<P>
+Búsqueda y Substitución
+<P>
+s/x/y/ : reemplaza x con y en la actual linea
+<br>s/x/y : reemplaxa x con y e imprime el resultado
+<br>s//y/ : usa la última cadena sustituida, en este caso x
+<br>s/x/%/ : usa la última cadena de susticución, en este caso y
+<br>s/x : reemplaxa x con nada e imprime el resultado
+<br>s : repite el comando de sustitución prévio
+<br>s/x/y/2p : reemplaza la segunda instancia de x con y en la actual linea
+<br>s2 : lo mismo que lo anterior
+<br>s$ : s//%/$p
+<br>4,7s/x/y/g : reemplaza todas las instancia de x con y desde la línea 4 hasta la 7
+<br>s/x/y/3g : reemplaza x con y empezando por la tercera instancia y procediendo hacia abajo en la línea
+<br>s/dog/cat/gfip : reemplaza dog o DOG por cat en toda esta linea,
+olvida dog y cat como búsqueda y reemplazo de cadenas,
+e imprime el resultado
+<br>s/a\(.\)c/a$1$1c/ : duplica la letra entre a y c
+<br>s, : reemplaza com espacio por una cambio de línea, rompe la línea en dos
+<br>s. : reemplaza el espacio del punto con un cambio de línea, rompe la línea en dos
+<br>s?2 : rompe la linea por el segundo interrogante
+<br>s.$ : rompe la linea por el último periodo
+<br>bl : rompe una línea muy larga en oraciones y frases
+<br>fll 80 : formate la longitud de línea a 80, cortando las líneas a 80 caracteres, quizás para ajustarlas al terminal
+<br>fll 80+ : corta líneas a 80 caracteres pero permite cierto desbordamiento para que no haya lineas con una o dos palabras
+<br>fll : imprime el formato de longitud de línea
+<br>/x/ : busca la línea que contiene x
+<br>/x : igual que /x/
+<br>/x/i : busca la linea que contiene x o X
+<br>/x/f : busca x, pero olvida x como cadena de búsqueda
+<br>?x? : busca x hacia atrás
+<br>/x/! : encuentra la siguiente línea que no contenga x
+<br>?x?i! : encuentra la línea anterior que no contenga x o X
+<br>ci : búsqueda y sustituciones no disinguen mayúsculas de minúsculas (toggle)
+<br>sg : las cadenas de sustitución són globales para las diferentes sessiones (toggle)
+<br>su8 : búsqueda y sustitución usan secuencias de carácteres utf8 (toggle)
+<br>ebre : expresiones regulares modificadas de edbrowse, ser más como ed (toggle)
+<br>sw : buscar con envoltura (toggle)
+<br>g/x/ p : imprimir cada línea que tenga una x
+<br>g/x : igual que el anterior
+<br>v/x/ p : imprimir cada linea que no contenga una x
+<br>v/x/i l : listar todas las líneas que no tengan x o X
+<br>g/x/f p : imprimir cada línea que tenga una x, pero olvidando x como cadena de búsqueda
+<br>g/x/ -r foo : leer el archivo foo antes de cada línea que contenga x
+<br>g/x/ -,.w !command : pasar la línea anterior y la actual por un comando, por cada línea que contenga x
+<br>lc : convertir la línea en minúsculas
+<br>mc : convertir la línea en mayúsculas y minúsuclas alternadas
+<br>uc : convertir la línea en mayúsculas
+<br>s/foo/uc : convertir foo a FOO en la actual línea
+<br>s/\bfoo\b/mc/g : convertir foo a Foo, pero no foobar
+<br>,s/$/ %line/ : poner el número de línea al final de cada línea
+<P>
+Archivos y Sesiones
+<P>
+f : imprimir el nombre del actual archivo
+<br>f foo : establece el nombre del archivo a foo
+<br>f/ : retén sólo el último componente del nombre de archivo
+<br>e : imprime el número de la actual sesión
+<br>e3 : mover a la sesión 3
+<br>e+ : mover a la siguiente sesión de edición
+<br>e- : mover a la edición de sesión anterior
+<br>enum : mover a la sesión indicada por el número de la actual linea
+<br>eret : volver a la serión donde estabas
+<br>enew : crear un nuevo buffer vacío en la actual sessión
+<br>e foo : editar el archivo llamado foo
+<br>e ftp://login:password@example.com/file  descarga ftp 
+<br>e scp://login:password@example.com/absolute-path  descarga scp
+<br>r foo : lee el contenido de foo en el actual buffer
+<br>r7 : lee el contenido de la sesión 7 en el actual buffer
+<br>r7@3,8 : lee de la sesión 7, desde la línea 3 hasta la 8 en el actual buffer
+<br>r7@-,+ : lee 3 líneas alrededor . en el actual buffer
+<br>r7@'a,'b : lee el bloque desibnado en el actual buffer
+<br> w : escribe los cambios que has hecho en el actual archivo
+<br>w foo : escribe el actual buffer en foo
+<br>w+ foo : añade a foo
+<br>w/ : escribe el último componente del nombre de archivo
+<br>8,20w7 : escribe las líneas 8 hasta la 20 en la sesión 7, sobreescribiendo lo que hubiera
+<br>'a,'bw7@'c : escribe este bolque de texto en la sesión 7, en la linea con la etiqueta c
+<br>.w7@0 : escribe esta línea al inicio de la seisión 7
+<br>9w7@- : escribe la línea 9 en al sesión 7 antes de la actual linea
+<br>w7@$ : añade este archivo en la sesión 7
+<br>w+7 : igual que w7@$
+<br>5,7w !command : envióa las líneas de la 5 hasta la 7 a un comando del intérprete de comandos
+<br>11r !command : pon la salida del intérprete de comandos después de la línea 11 
+<br>w ftp://login:password@example.com/file  subir ftp 
+<br>w scp://login:password@example.com/absolute-path  subir scp 
+<br>e ~/projects/edbrowse/src/buf*.c : amplía el comodin si hay exáctamente una coincidencia
+<br>e $EBSRC/buf*.c : expansión variable
+<br>bflist : lista buffer, todas las sesiones de ebrowse y sus nombre de archivo o títulos
+<br>hist : muestra el historial de buffers para la actual sessión
+<br>up : sube en el historial de archivos y/o páginas web
+<br>down : baja en el historial de archivos y/o páginas web
+<br>up3 : subir 3 buffers en la pila
+<br>down4 : bajar 4 buffers en la pila
+<br>bd : detección binaria en archivos (toggle)
+<br>iu : convertir automáticamente entre iso8859 y utf8 (toggle)
+<P>
+Edición de Texto, como ed
+<P>
+u : deshacer último comando
+<br>d : borrar la actual línea
+<br>1,$d : borrar todas las líneas, desde la 1 al final del archivo
+<br>D : borra la actual línea e imprime la siguiente
+<br>j : une esta línea con la siguiente
+<br>2,5j : une las líneas desde la 2 hata la 5
+<br>2,5J : une las líneas desde la 2 hasta la 5 separándolas un espacio
+<br>2,5Jhello : une las líneas desde la 2 hasta la 5 separándolas con la palabra hello
+<br>i : inserta texto antes de la actual línea, finaliza con un punto
+<br>c : canvia la actual línea, entra un nuevo bloque de texto, finaliza con un punto
+<br>a : añade texto despues de la actual línea, finaliza con un punto
+<br>a+ : incluye la linea que acabas de escribir, cuando pensabas que estabas en modo append
+<br>4,7m11 : mueve las líneas desde la 4 hasta la 7 a la línea 11
+<br>4,7t11 : copia las líneas 4 hasta la 7 a la línea 11
+<P>
+Escaner de Directorio
+<P>
+dr : el directorio es sólo de lectura
+<br>dw : el directorio permite la escritura, y d mueve el archivo a tu carpeta de basura bin
+<br>dx : el directorio permite la escritura, y d borra los archivos 
+<br>hf : muestra los archivos oculto en el listado del directorio (toggle)
+<br>dno : listado solo de nombres de directorios (toggle)
+<br>lsl : lstado de longitud de archivo en la actual linea (direcotrio), o el actual archivo
+<br>lss : listado del tamaño aproximado del archivo, en kilobytes, megabytes, etc
+<br>lst : listado con la fecha de la última modificación del archivo
+<br>lsp : listado de permisos del grupo propietario
+<br>lsi : listado de inodos
+<br>lsk : listado de número de enlaces fuertes
+<br>lsm : listado de números mayores y menores
+<br>lsy : listado de ruta de archivo para un enlace simbólico
+<br>lsX : modo de verificación de directorio, primariamente para scripting
+<br>ls : igual que lsst 
+<br>ls=lt : muestra la longitud y la hora de todos los archivos en las siguientes escaneos de directorio
+<br>ls= : solo lista los archivos en un escaneo de directorio
+<br>sort=a : ordena los archivos alfabeticamente
+<br>sort=t : ordena los archivos por fecha de modificación
+<br>sort=s : ordena los archivos por tamaño
+<br>sort+a : igual que sort=a
+<br>sort-a : orden alfabetico inverso
+<br>sort-t : orden inverso por última modificación
+<br>sort-s : orden inverso por tamaño
+<br>rf : actualiza el escaneo de directorio, útil si has cambiado los parámetros de ls o sort 
+<br>M : mueve este directorio a una sesión vacía y vuelve
+<br> d : borra el archivo o muévelo a la basura; no se puede deshacer
+<br>g/\.o$/d : borra todos los .o archivos
+<br>.m3 : mueve este archivo al directorio en la sesión 3; no se puede deshacer
+<br>.t3 : copia este archivo al directorio en la sesión 3: no se puede deshacer
+<br>.m+2 : mueve este archivo 2 niveles hacia arriba en tu historial de edición
+<br>.t-3 : copia este archivo 3 niveles hacia abajo en tu historial de edición
+<P>
+Navegar en un archivo html o en una página web
+<P>
+b : navegar por el archivo actuval, ya sea html, o email, o renderizado por plugin
+<br>b foo.html : edita el archivo foo.html y navega en él
+<br>b url : busca la url de internet y navega en ella
+<br>nostack b url : no abras una nueva ventana, reemplaza la actual ventana usando la nueva url
+<br>^ b url : igual que nostack
+<br>ub : desexplora un archivo
+<br>ft : muestra el título de la actual página web (título de archivo)
+<br>fd : muestra la descripción de la actual pálgina web
+<br>fk : muestra las palabras clave de la actual página web
+<br>fu : imprimir la URL subyacente del archivo
+<br>rf : actualiza la página web o el directorio listado
+<br>et : edita esta página web como puro texto
+<br>hr : redirección http (toggle)
+<br>vs : verifica las conexiones ssl (toggle)
+<br>sr : enviar remitente (toggle)
+<br>ua3 : pretender ser el tercer agente usuario en tu archivo de configuración
+<br>ua : imprimir el actual agente usuario
+<br>can : (curl auth negotiate) toggle SPNEGO type authentication, required for kerberos (krb5/gss)
+<br>crs : (curl reiniciar) para recuperar desde alguna curl o ssl bugs
+<P>
+FTP or HTTP Descargas 
+<P>
+pdd : progreso de descarga indicado por puntos 
+<br>pdc : probreso de descarga indicado por un contador de megabyte
+<br>pdq : progreso de descargas en silencio, no hay indicador
+<br>ftpa : modo activo de ftp (toggle)
+<br>bg : descargar archivos en segundo plano (toggle)
+<br>bglist : listar descargas en segundo plano, completas o en progreso 
+<br>jsbg : descargar archivos Javascript en segundo plano (toggle)
+<P>
+Interactuar con una Página Web
+<P>
+g : seguir al enlace de la actual línea
+<br>g- : seguir el enlace, pero no navegar, renderizar o reproducir
+<br>g2 : seguir el segundo enlace en la actual línea
+<br>g$ : ir al último enace en la actual línea
+<br>g? : imprimir la url para el enlace en la actual línea
+<br>g2? : imprimir la url para el segundo enlace
+<br>g$? : imprimir la url para el último enlace
+<br>A : crear un buffer de <a> etiquetas para los hiperenlaces de la actual línea
+<br>4,7A : crear un buffer de <a> etiquetas para los enlaces entre las líneas 4 y 7
+<br>exp : expandir un frame, g también funciona
+<br>,exp : expandir todos los frames
+<br>ctr : contraer un frame
+<br>^ : la tecla retroceso, retrocede a la página web visitada anteriormente
+<br>&amp; : tecla de retroceso de enlace interno, retrocede al origen de un enlace interno
+<br>img : descarga la imágen de la actual línea
+<br>img2 : descarga la segunda imagen de la actual línea
+<br>img$ : descarga la última imagen de la actual línea
+<br>img? : imprime la url de la imagen de la actual línea
+<br>i=xyz : establece el campo de entrada de la línea actual a xyz
+<br>i=red,green,blue : selecciona las opciones rojo, verde, y azul de una lista de selección múltiple
+<br>s/$/,oran : añade la opción naranga a la lista de selección
+<br>i=`amber : pon tu propio color si la lista lo permite
+<br>s/,red/ : borra rojo de la lista de selección
+<br>selsep=| : cambiar el separador entre items de la lista de selección
+<br>selsep= : imprimir el separador
+<br>i&lt;5 : leer la sesión 5 en el campo de entrada de texto, una linea de texto
+<br>i&lt;5@3 : leer la linea 3 de la sesión 5 en el campo de entrada de texto
+<br>i&lt;5@'c : leer la linea con etiqueta c de la sesión 5 en el campo de entrada de texto
+<br>i&lt;foo : leer el archivo foo en el campo de entrada de texto, una línea de texto
+<br>i2=xyz : establece el segundo campo de entrada de la línea actual a xyz
+<br>i2* : presiona el segundo botón de la actual linea, normalmente enviar o reset
+<br>i$* : presiona el último botón de la actual línea
+<br>i3? : describe el tercer campo de entrada de la actual línea
+<br>ipass2 : solicitar el contenido del segundo campo de entrada, deshabilitando echo
+<br>ib : localizar un buffer de entrada para este area de texto
+<br>ib7 : usar la sesión 7 para esta area de texto de entrada
+<br>shc : mostrar columnas de una tabla html
+<br>ur : desplegar una fila en una tabla html (toggle)
+<br>M4 : mover esta página web a la sesión 4 y retroceder a la página web anterior
+<br>M : mover esta página web a una sesión vacía y volver
+<br>js : permitir Javascript (toggle)
+<br>rr : volver a renderizar la pantalla, para reflejar las cambios asincrónicos de Javascript
+<br>rr=75 : volver a renderizar la pantalla automáticamente cada 75 segundos
+<br>showall : mostrar todo el texto flotante e invisiblre (toggle)
+<br>colors : mostrar los colores en la página
+<P>
+Cliente de Email
+<P>
+sm : enviar mail [número de cuenta]
+<br>re : contestar a un mensaje de correo
+<br>rea : contestar a todos
+<br>flow : enviar mail con formato=flujo (toggle)
+<P>
+Cliente IRC 
+<P>
+irc m n domain nickname : configura el chat de irc usand sesiones m y n con el dominio y nick específicos
+<br>irc m n domain nickname group : configura el chat de irc y únete a un grupo específico
+<br>irc m n domain:port nickname:password group : especifica un puerto y un password
+<br>irc m n domain+:port* nickname:password group : muestra este canal en la salida del buffer, y usa sockets seguros
+<p>
+Plugins
+<P>
+pb : reproduce el buffer (tipicamente audio)
+<br>pb.mp3 : reproduce el actual buffer como un archivo mp3
+<br>pg : plugins activos (toggle)
+<P>
+Acceso a Bases de Datos
+<P>
+ds=source,login,password : configura el origen de datos
+<br>sht : muestra tablas
+<br>shc : muestra columnas (y claves primarias) para la actual tabla
+<br>shf : muestra claves foraneas para la actual tabla
+<br>fbc : busca columnas blob (toggle)
+<P>
+Funciones de Edbrowse
+<P>
+&lt;foo arg1 arg2 &#8230; : invoca la función foo, definida en tu archivo .ebrc
+<br>X : silenciosamente haz esto en la actual linea, a menudo usado en scripts
+<br>sleep n : duerme durante n segundos, mientras algún javascript funciona en segundo plano
+<P>
+Depurar
+<P>
+db3 : configurar nivel de depuración, del 0 al 9
+<br>db : informar del nivel de depuración
+<br>db&gt;/tmp/edbrowse.out : redirigir la salida de la depuración a un archivo
+<br>demin : desminimizar Javascript (toggle)
+<br>timers : deshabilitar temporizadores de JAvascript (toggle)
+<br> speed=7 : los temporizadores de Javascript funcionan 7 veces más lentos
+<br>tmlist : mostrar todos los temporizadores para esta ventana 
+<br>dbcn : habilitar depuración cloneNode (toggle)
+<br>dbev : habilitar sucesos de depuración (toggle)
+<br>dberr : habilitar depuración de errores de js (toggle)
+<br>dbcss : habilitar depuración de css (toggle)
+<br>dbtags : depurar el scanner de html (toggle)
+<br>dblay : depurar el diseño de la página (toggle)
+<br>trace : inyectar puntos de rastreo en Javascript (toggle)
+<br>jdb : depurar Javacsipt, adiós al salir 
+<br>ok(o) : listar todos los miembras de un objeto, algunos pueden no ser enumerables
+<br>showscripts() : mostrar script en cualquier lugar en el árbol 
+<br>searchscripts(string) : buscar una cadena en los scripts
+<br>showframes() : mostrar frames en cualquier lugar en el árbol
+<br>snapshot() : instantania de Javascript i archivos css para depuración local
+<br>aloop(array, string_on[i]) : ejectua la cadebba en cada miembro del array
+<br>uptrace(node) : sube por el árbol desde un nodo dado
+<br>dumptree(node) : muestra el árbol más allá del nodo dado
+<br>bp@(label) : inyecta este codigo en un archivo js para un simple punto de interrupción
+<br>step$stack() : muestra pila, normalmente desde un punto de interrupción 
+<br>step$l = 0|1|2 : establecer el nivel de traza por cada paso
+<br>step$go = label : establecer step$1 a 2 en este punto, interrumpiendo en cada paso posterior
+<br>step$exp = expression : establecer step$1 a 2 cuando la expresión sea verdadero, interrumpiendo en cada paso posterior
+<br>arg$ : referencia los objetos argumentos desde un punto de interrupción
+
+<h2></h2>
