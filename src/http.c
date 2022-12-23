@@ -2416,9 +2416,6 @@ static CURL *http_curl_init(struct i_get *g)
 	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(h, CURLOPT_WRITEDATA, g);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, curl_header_callback);
-// curl_header_callback references cf, but download could be in the background,
-// so make this threadsafe.
-	g->cf = cf;
 	curl_easy_setopt(h, CURLOPT_HEADERDATA, g);
 	if (debugLevel >= 4)
 		curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
@@ -2674,15 +2671,15 @@ static size_t
 curl_header_callback(char *header_line, size_t size, size_t nmemb,
 		     struct i_get *g)
 {
-	const struct MIMETYPE *mt;
+	const struct MIMETYPE *mt = 0;
 	size_t bytes_in_line = size * nmemb;
 	stringAndBytes(&g->headers, &g->headers_len,
 		       header_line, bytes_in_line);
 
 	scan_http_headers(g, true);
-	mt = g->cf->mt;
 
 // a from-the-web mime type causes a download interrupt
+	if(g->cf) mt = g->cf->mt;
 	if (g->pg_ok && mt && !(mt->down_url | mt->from_file) &&
 	    !(mt->outtype && g->playonly)) {
 		g->down_state = 6;

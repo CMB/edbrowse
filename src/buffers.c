@@ -1880,6 +1880,7 @@ static bool readFile(const char *filename, bool newwin,
 		g.url = filename;
 		g.thisfile = fromthis;
 		g.custom_h = orig_head;
+		g.cf = cf;
 		rc = httpConnect(&g);
 		serverData = g.buffer;
 		serverDataLen = g.length;
