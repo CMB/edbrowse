@@ -790,10 +790,10 @@ You'll see this after the perform function runs.
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 			undosOneMessage();
 			if (res != CURLE_OK) {
-				ebcurl_setError(res, mailbox_url, 1,
-						emptyString);
+// I don't know why the read message didn't work, probably connection error,
+// curl is probably going to log back in, so abort this folder.
 				nzFree(mailstring);
-				goto action;
+				goto abort;
 			}
 
 /* have to strip 2 fetch BODY lines off the front,
