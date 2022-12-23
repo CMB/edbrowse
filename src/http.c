@@ -328,16 +328,19 @@ static CURLcode fetch_internet(struct i_get *g)
 	return curlret;
 }
 
-/* Callback used by libcurl. Captures data from http, ftp, pop3, gopher.
- * download states:
- * -1 user aborted the download
- * 0 standard in-memory download
- * 1 download but stop and ask user if he wants to download to disk
-* 2 disk download in foreground
-* 3 disk download parent thread
-* 4 disk download child thread
-* 5 disk download before the thread is spawned
- * 6 mime type says this should be a stream */
+/*********************************************************************
+Callback used by libcurl. Captures data from http, ftp, pop3, gopher.
+download states, in down_state:
+-1 user aborted the download
+0 standard in-memory download
+1 download but stop and ask user if he wants to download to disk
+2 disk download in foreground
+3 disk download parent thread
+4 disk download child thread
+5 disk download before the thread is spawned
+6 mime type says this should be a stream
+*********************************************************************/
+
 size_t
 eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 {
@@ -1169,10 +1172,10 @@ they go where they go, so this doesn't come up very often.
 		}
 
 		if (g->down_state == 5) {
-/* user has directed a download of this file in the background. */
-/* We spawn a thread to do this, then return, but g could go away */
-/* before the child thread has a chance to read its contents. */
-			struct i_get g0;
+// user has directed a download of this file in the background.
+// We spawn a thread to do this, then return, but g could go away
+// before the child thread has a chance to read its contents.
+			static struct i_get g0;
 			pthread_t tid;
 			nzFree(g->buffer);
 			g->buffer = NULL;
@@ -1476,7 +1479,7 @@ void *httpConnectBack1(void *ptr)
 	g.tsn = ++tsn;
 	debugPrint(3, "bg thread %d", tsn);
 	i_puts(MSG_DownProgress);
-/* push job onto the list for tracking and display */
+// push job onto the list for tracking and display
 	job = allocMem(sizeof(struct BG_JOB) + strlen(g.down_file));
 	job->state = 4;
 	strcpy(job->file, g.down_file);
@@ -2002,10 +2005,10 @@ static bool ftpConnect(struct i_get *g, char *creds_buf)
 	curlret = fetch_internet(g);
 
 	if (g->down_state == 5) {
-/* user has directed a download of this file in the background. */
-/* We spawn a thread to do this, then return, but g could go away */
-/* before the child thread has a chance to read its contents. */
-		struct i_get g0;
+// user has directed a download of this file in the background.
+// We spawn a thread to do this, then return, but g could go away
+// before the child thread has a chance to read its contents.
+		static struct i_get g0;
 		pthread_t tid;
 		nzFree(g->buffer);
 		g->buffer = NULL;
@@ -2222,10 +2225,10 @@ static bool gopherConnect(struct i_get *g)
 	curlret = fetch_internet(g);
 
 	if (g->down_state == 5) {
-/* user has directed a download of this file in the background. */
-/* We spawn a thread to do this, then return, but g could go away */
-/* before the child thread has a chance to read its contents. */
-		struct i_get g0;
+// user has directed a download of this file in the background.
+// We spawn a thread to do this, then return, but g could go away
+// before the child thread has a chance to read its contents.
+		static struct i_get g0;
 		pthread_t tid;
 		nzFree(g->buffer);
 		g->buffer = NULL;
@@ -2812,7 +2815,7 @@ top:
 	answer = getFileName(g->down_msg, fp2, false, true);
 /* space for a filename means read into memory */
 	if (stringEqual(answer, " ")) {
-		g->down_state = 0;	/* in memory download */
+		g->down_state = 0;	// in memory download
 		nzFree(fp2);
 		return;
 	}

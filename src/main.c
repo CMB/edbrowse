@@ -120,17 +120,19 @@ static void finishBrowse(void)
 	cw->browseMode = cf->browseMode = true;
 }
 
-/* Catch interrupt and react appropriately. */
+// Catch interrupt and react appropriately
 static void catchSig(int n)
 {
 	time_t now;
 	int d;
 	pthread_t t1 = foreground_thread, t2;
 	intFlag = true;
-/* If we were reading from a file, or socket, this signal should
- * cause the read to fail.  Check for intFlag, so we know it was
- * interrupted, and not an io failure.
- * Then clean up appropriately. */
+// If we were reading from a file, or socket, this signal should
+//cause the read to fail.  Check for intFlag in that routine,
+// so we know it was interrupted, and not an io failure.
+// Then clean up appropriately.
+// That doesn't concern us here, except that the read should fail
+// and control should return quickly to the user.
 	signal(SIGINT, catchSig);
 	if (inInput) {
 		i_puts(MSG_EnterInterrupt);
@@ -156,7 +158,11 @@ static void catchSig(int n)
 			return;	// didn't work
 		pthread_exit(NULL);
 	} else {
+// When would this ever happen? Maybe downloading another js file in background.
 		pthread_kill(t1, SIGINT);
+// We recaught SIGINT on the current thread, so this really does kill the
+// forground thread. But then what happens when this download finishes?
+// Nobody is running inputForever(). I don't know.
 	}
 }
 
