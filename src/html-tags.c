@@ -12,6 +12,9 @@ which we must then import into the edbrowse tree of tags.
 
 #include "eb.h"
 
+#include <pthread.h>
+#include <signal.h>
+
 // This makes a lot of output; maybe it should go to a file like debug css does
 bool debugScanner;
 static bool isXML; // parse as xml
@@ -594,6 +597,17 @@ static void freeTag(Tag *t)
 // object, we should disconnect it.
 	if(t->jslink)
 		disconnectTagObject(t);
+
+// is a child thread downloading on behalf of this tag?
+	if(t->threadcreated && !t->threadjoined) {
+// try to stop the download
+		pthread_kill(t->loadthread, SIGINT);
+// thread has to finish before we free this tag
+// hopefully SIGINT will cause it to finish quickly, though that's not guaranteed
+		pthread_join(t->loadthread, NULL);
+		t->threadjoined = true;
+	}
+
 	nzFree(t->textval);
 	nzFree(t->name);
 	nzFree(t->id);

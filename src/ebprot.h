@@ -144,7 +144,7 @@ void delTags(int startRange, int endRange);
 void runOnload(void);
 const char *tack_fn(const char *e);
 void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterval);
-void scriptSetsTimeout( Tag *t);
+void scriptOnTimer( Tag *t);
 bool timerWait(int *delay_sec, int *delay_ms);
 void delTimers(const Frame *f);
 void runTimer(void);

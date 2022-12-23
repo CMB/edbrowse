@@ -624,6 +624,8 @@ struct htmlTag {
 	bool iscolor:1;
 	bool ur:1;		// row unfolded, only for trf
 	bool inur:1;		// in ur command
+	bool threadcreated:1;
+	bool threadjoined:1;
 	char subsup;		/* span turned into sup or sub */
 	uchar itype;		// input type =
 	uchar itype_minor;

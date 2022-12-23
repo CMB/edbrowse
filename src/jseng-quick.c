@@ -2758,9 +2758,10 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 			t->custom_h = cloneString(incoming_headers);
 		JS_FreeCString(cx, incoming_headers);
 		if (cw->browseMode)
-			scriptSetsTimeout(t);
+			scriptOnTimer(t);
 		pthread_create(&t->loadthread, NULL, httpConnectBack3,
 			       (void *)t);
+		t->threadcreated = true;
 		return JS_NewAtomString(cx, "async");
 	}
 

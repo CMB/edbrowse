@@ -626,11 +626,100 @@ static void runGeneratedHtml(Tag *t, const char *h)
 	debugPrint(3, "end parse html from docwrite");
 }
 
-/* helper function to prepare an html script.
- * steps: 1 parsed as html, 2 decorated with a coresponding javascript object
- * 3 downloading in background,
- * 4 data fetched and in the js world and possibly deminimized,
- * 5 script has run, 6 script could not run. */
+/*********************************************************************
+helper function to prepare an html script.
+Tags steps are as follows.
+1 parsed as html
+2 decorated with a coresponding javascript object
+3 downloading in background
+4 data fetched and in the js world and possibly deminimized
+5 script has run
+6 script could not run
+
+Here are some notes on threads.
+Particularly relevant for tags in step 3, downloading in the background.
+This assumes curl is threadsafe, and we have configured it
+so that different threads can perform different downloads, or actions,
+and all share certain structures like the cookie jar.
+
+1. main.c, signal handler for ^c. This one is drastic!
+If js has us in an infinite loop that has lasted fore 45 seconds,
+spin off a new interactive (foreground) thread and kill the current thread.
+js is turned off, and best not to turn it back on,
+it was left in a strange state, and quickjs is not reentrant.
+In fact you shouldn't do anything except save some critical files
+you were working on, and exit.
+
+2. Download a file in background. Data is going to the file and not
+associated with the foreground thread.
+The decision to download could happen after we started reading the file.
+Based on content-type in the http header, for example.
+If this happens, stop the download.
+From within the callback handler:
+if (g->down_state == 5) return -1;
+Now nobody is downloading the file, but hey we didn't get very far.
+Copy i_get onto a static structure, not on anybody's stack.
+Spin off a new thread that points to this structure.
+Before that runs, the foreground thread could return, and its i_get goes away.
+Child thread copies i_get onto its stack, and runs httpConnect anew.
+This is managed by httpConnectBack1, conect in background.
+The first function to manage a background connect.
+There will be two more.
+So the file just downloads by child thread, and finishes,
+and pritns a success message, and records the success for the bglist command,
+and has no interaction with the foreground thread.
+In fact you can run this test wherein the foreground window
+completely goes away, and the child marches on.
+edbrowse '' local-file
+bg+
+db3
+e http://some-large-file
+q
+httpConnectBack1 is invoked two more times but it's really the same thing.
+ftp download or gopher download and the user wants it in the background.
+Download in background threads based on the toggle command bg.
+Subsequent downloads are managed by the toggle command jsbg:
+javascript or xhr files downloaded in background.
+These will use httpConnectBack2 and httpConnectBack3.
+
+3. Download javascript by background threads.
+This uses httpConnectBack2(), from prepareScript().
+The tag is passsed to the child thread and the tag must survive
+during the entire download.
+httpConnectBack2 makes its own i_get structure on its stack.
+When parsing html, if js is enabled,
+jsNode calls prepareScript on each script tag.
+This reads the file if it is local, or fetches it if jsbg is off,
+or spawns the fetch thread if jsbg is true.
+In the browse process, decorate is followed by run ScriptsPending.
+This function runs the scripts in the html document, or at least,
+makes sure they are loaded.
+If we type q or ^ immediately after browse, the window goes away,
+and we don't want scripts loading into tags that aren't even there.
+If there is some corner case where that happens, freeTag has a defense against
+it, which is described below.
+If a script is created after browse, and rooted, i.e. put into the tree,
+and if it is asynchronous, it is prepared, which starts the download process,
+and then put on a timer.
+It can run whenever it is loaded.
+If the window closes while it is loading, freeTag sends an interrupt
+signal to the child thread, then waits for it to finish,
+which should be almost immediate thanks to the signal.
+With the thread gone, it is safe to free the tag.
+
+Note that we don't spawn threads to download the css files in background,
+though this might be worth doing, some sites have dozens of css files.
+
+4. Asynchronous xhr.
+A thread is created to start the fetch of the data,
+and it is put on a timer.
+The timer watches, and when the thread is done, and the data is available,
+it runs the javascript callback function on the data.
+If the window closes while the xhr data is being read,
+freeTag kills the thread, and waits for it to exit,
+as described earlier.
+*********************************************************************/
+
 
 void prepareScript(Tag *t)
 {
@@ -714,6 +803,10 @@ void prepareScript(Tag *t)
 				setupEdbrowseCache();
 			}
 
+// don't background fetch for xml, because the scripts never run
+// and we can't guarantee to complete the fetch.
+			if(cf->xmlMode) jsbg = false;
+
 			if(jsbg) {
 // We can't background fetch if this is under <template>
 				for(u = t; u; u = u->parent)
@@ -728,6 +821,7 @@ void prepareScript(Tag *t)
 			if (jsbg && !demin && !uvw
 			    && !pthread_create(&t->loadthread, NULL,
 					       httpConnectBack2, (void *)t)) {
+				t->threadcreated = true;
 				t->js_ln = 1;
 				js_file = realsource;
 				filepart = getFileURL(js_file, true);
@@ -946,10 +1040,8 @@ top:
 	for (t = cw->scriptlist; t; t = t->same) {
 		if (t->dead || !t->jslink || t->step >= 3)
 			continue;
-
 // don't execute a script until it is linked into the tree.
 		if(!isRooted(t)) continue;
-
 		cf = t->f0;
 		prepareScript(t);
 // step will now be 3, load in background, 4, loaded, or 6, failure.
@@ -978,7 +1070,7 @@ passes:
 
 		if (async && down_jsbg && cw->browseMode) {
 			if (!t->intimer) {
-				scriptSetsTimeout(t);
+				scriptOnTimer(t);
 				t->intimer = true;
 			}
 			continue;
@@ -987,6 +1079,7 @@ passes:
 		if (t->step == 3) {
 // waiting for background process to load
 			pthread_join(t->loadthread, NULL);
+			t->threadjoined = true;
 			if (!t->loadsuccess || t->hcode != 200) {
 				if (debugLevel >= 3)
 					i_printf(MSG_GetJS, t->href, t->hcode);
@@ -3350,7 +3443,7 @@ jt->tsn is a timer sequence number, globally, to help us keep track.
 Another path is an asynchronous script.
 If we have browsed the page, and down_jsbg is true,
 downloading js in background,
-then runScriptsPending doesn't run the script, it callse scriptSetsTimeout(),
+then runScriptsPending doesn't run the script, it callse scriptOnTimer(),
 and thereby puts the script on a timer.
 The timer runs as an interval, according to asyncTimer ms.
 The script is out of the hands of runScriptsPending,
@@ -3469,7 +3562,7 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 	jt->tsn = seqno;
 }
 
-void scriptSetsTimeout(Tag *t)
+void scriptOnTimer(Tag *t)
 {
 	struct jsTimer *jt = allocZeroMem(sizeof(struct jsTimer));
 // asychronous scripts or xhr are not throttled by timerspeed
@@ -3647,6 +3740,7 @@ We need to fix this someday, though it is a very rare corner case.
 				rc = 0;
 			}
 			if (!rc) {	// it's done
+				t->threadjoined = true;
 				if (!t->loadsuccess ||
 				(t->action == TAGACT_SCRIPT &&  t->hcode != 200)) {
 					if (debugLevel >= 3)
