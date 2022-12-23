@@ -3840,13 +3840,11 @@ const char *const inp_others[] = {
 /* helper function for input tag */
 void htmlInputHelper(Tag *t)
 {
-	int n = INP_TEXT;
-	int len;
+	int n, len, itype;
 	char *myname = (t->name ? t->name : t->id);
 	const char *s = attribVal(t, "type");
 	bool isbutton = stringEqual(t->info->name, "button");
-
-	t->itype = (isbutton ? INP_BUTTON : INP_TEXT);
+	t->itype = itype = (isbutton ? INP_BUTTON : INP_TEXT);
 	if (s && *s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
@@ -3854,15 +3852,15 @@ void htmlInputHelper(Tag *t)
 			if (n < 0)
 				debugPrint(3, "unrecognized input type %s", s);
 			else
-				t->itype = INP_TEXT, t->itype_minor = n;
+				t->itype = itype = INP_TEXT, t->itype_minor = n;
 			if (n == INP_PW)
 				t->masked = true;
 		} else
-			t->itype = n;
+			t->itype = itype = n;
 	}
 // button no type means submit
 	if (!s && isbutton)
-		t->itype = INP_SUBMIT;
+		t->itype = itype = INP_SUBMIT;
 
 	s = attribVal(t, "maxlength");
 	len = 0;
@@ -3873,7 +3871,7 @@ void htmlInputHelper(Tag *t)
 
 // No preset value on file, for security reasons.
 // <input type=file value=/etc/passwd> then submit via onload().
-	if (n == INP_FILE) {
+	if (itype == INP_FILE) {
 		nzFree(t->value);
 		t->value = 0;
 		cnzFree(t->rvalue);
@@ -3886,7 +3884,7 @@ void htmlInputHelper(Tag *t)
 	if (t->rvalue == 0)
 		t->rvalue = cloneString(t->value);
 
-	if (n == INP_RADIO && t->checked && radioCheck && myname) {
+	if (itype == INP_RADIO && t->checked && radioCheck && myname) {
 		char namebuf[200];
 		if (strlen(myname) < sizeof(namebuf) - 3) {
 			if (!*radioCheck)
@@ -3901,8 +3899,8 @@ void htmlInputHelper(Tag *t)
 		}
 	}
 
-	/* Even the submit fields can have a name, but they don't have to */
-	formControl(t, (n > INP_SUBMIT));
+	// the submit fields can have a name, but they don't have to
+	formControl(t, (itype > INP_SUBMIT));
 }
 
 static void prerenderNode(Tag *t, bool opentag)
