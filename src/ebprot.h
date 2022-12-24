@@ -78,6 +78,7 @@ char *htmlReformat(char *buf);
 void extractEmailAddresses(char *line);
 void cutDuplicateEmails(char *tolist, char *cclist, const char *reply);
 bool isEmailAddress(const char *s);
+bool isEmailAddressList(char *s);
 int byteOrderMark(const uchar *buf, int buflen);
 bool looksBinary(const unsigned char *buf, int buflen);
 void looks_8859_utf8(const uchar *buf, int buflen, bool * iso_p, bool * utf8_p);

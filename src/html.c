@@ -1688,7 +1688,7 @@ bool infReplace(int tagno, char *newtext, bool notify)
 			goto fail;
 		}
 
-		if (itype_minor == INP_EMAIL && (*newtext && !isEmailAddress(newtext))) {
+		if (itype_minor == INP_EMAIL && *newtext && ((!t->multiple && !isEmailAddress(newtext)) || (t->multiple && !isEmailAddressList(newtext)))) {
 			setError(MSG_EmailInput);
 			goto fail;
 		}

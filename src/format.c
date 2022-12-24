@@ -1352,6 +1352,22 @@ bool isEmailAddress(const char *s)
 	return atfound & dotfound;
 }
 
+/* Check for a list of email addresses separated by commas. */
+bool isEmailAddressList(char *s)
+{
+	if (!s || !*s)
+		return false;
+	char *e = strchr(s, ',');
+	if (!e) return isEmailAddress(s);
+	if (isEmailAddressList(e + 1)) {
+		*e = 0;
+		bool starts_well = isEmailAddress(s);
+		*e = ',';
+		return starts_well;
+	}
+	return false;
+}
+
 /* return 1 for utf16, 2 for utf32, ored with 4 for big endian */
 int byteOrderMark(const uchar * buf, int buflen)
 {
