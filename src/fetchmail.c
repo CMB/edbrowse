@@ -633,6 +633,7 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 	struct MIF *mif = f->mlist;
 	int ex_cnt = 0;		// expunge count
 	char *t, *fromline = 0;
+	bool marked_for_delete = false;
 
 	if (key == 'f') {
 		fromline = this_mif->from;
@@ -680,6 +681,7 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 			if (res != CURLE_OK)
 				goto abort;
 			mif->gone = true;
+			marked_for_delete = true;
 
 /*********************************************************************
 We have thus far marked thismessage for delete, but it's not really gone
@@ -745,7 +747,7 @@ like we did before.
 		}
 	}
 
-	if(subkey == 'd') {
+	if(marked_for_delete) {
 		debugPrint(3, "` EXPUNGE");
 		if(!expunge(handle)) goto abort;
 	}
