@@ -24,6 +24,8 @@ static const char innerhtmltag[] = "innerhtml";
 static const char headtag[] = "head";
 static const char bodytag[] = "body";
 static const char innerbodytag[] = "innerbody";
+// The <include-fragment> is managed by javascript; we never should have implemented it.
+// Remove this feature some day.
 static const char iftag[] = "zinclude-fragment";
 static const char inneriftag[] = "innerfragment";
 

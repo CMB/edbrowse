@@ -10,9 +10,9 @@ Move / copy files to other directories in the history.
 
 Automatically parse xml files received through xhr. Slight differences from html.
 
-<include-fragment> tag
-
 Messages in Spanish.
+
+clean up download threads before we free the tags that own them.
 
 3.8.5
 s/x/y/$ command, and s$ shorthand.
