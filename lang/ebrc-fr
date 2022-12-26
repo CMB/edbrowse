@@ -131,7 +131,7 @@ function+mw {
 b http://www.merriam-webster.com/dictionary/~1
 /spelling suggestion/X
 if(?) {
-/^h2 Definition/X
+/^h1/X
 }
 /./p
 }

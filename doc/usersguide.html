@@ -184,7 +184,7 @@ wikipedia article</A> for a history of edbrowse and an overview of its features.
 <h2> <A NAME=copy> Copyright Notice </A> </h2>
 
 <P>
-This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2022.
+This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2023.
 It is made available by the authors under the terms of the GNU General Public License (GPL),
 as articulated by the Free Software Foundation.
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
@@ -5355,11 +5355,6 @@ In the same way, you can batch move all the messages to another folder.
 However, move is more useful with the from clause.
 If the current message is from Fred Flintstone, type f, and edbrowse will print "from Fred Flintstone".
 Then type m cartoon, and all the messages from Fred Flintstone will move to the cartoon folder.
-Warning, older imap servers, prior to 2013, implement move as a copy followed by delete.
-The delete does not take place until you reach the end of the folder.
-Thus, if you move a file on such a server, then type q to quit, or otherwise exit the program before reaching the end of your folder, you will log back in and find two copies of your message.
-You can avoid this by typing s, to stop reading the current folder; this will delete any messages marked for deletion.
-Newer servers implement move as a true move, whence this situation will never arise.
 
 <P>
 The create and delete commands will create new folders or delete existing folders.

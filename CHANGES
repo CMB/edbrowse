@@ -1,7 +1,7 @@
 Here are some changes introduced by recent versions of edbrowse.
 
 3.8.6
-Support tls sockets and lst command for irc.
+Support tls sockets, and lst command, for irc.
 
 html template element.
 
@@ -13,6 +13,8 @@ Automatically parse xml files received through xhr. Slight differences from html
 Messages in Spanish.
 
 clean up download threads before we free the tags that own them.
+
+move delete and expunge in a manner that should work with all imap servers.
 
 3.8.5
 s/x/y/$ command, and s$ shorthand.
