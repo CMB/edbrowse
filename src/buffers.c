@@ -7521,9 +7521,43 @@ rebrowse:
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
 		debugPrint(4, "ifetch %d %s", uriEncoded, line);
 
+// If we got here from typing g in directory mode, and directory had /
+// at the end, and if the file starts with #, then the sameURL test passes,
+// and we go down a completely unintended path.
 		if (noStack < 2 && sameURL(line, cf->fileName) && !cw->dirMode) {
-			setError(MSG_AlreadyInBuffer);
-			return false;
+			if (stringEqual(line, cf->fileName)) {
+				setError(MSG_AlreadyInBuffer);
+				return false;
+			}
+/* Same url, but a different #section */
+			s = findHash(line);
+			if (!s) {	// no section specified
+// jump to line 1, if there is a line 1
+				if(!cw->dot) {
+					if(debugLevel >= 1)
+						i_puts(MSG_Empty);
+					return true;
+				}
+				if(cw->dot == 1) {
+					if(debugLevel >= 1)
+						printDot();
+					return true;
+				}
+				struct histLabel *label =
+				    allocMem(sizeof(struct histLabel));
+				label->label = cw->dot;
+				label->prev = cw->histLabel;
+				cw->histLabel = label;
+				cw->dot = 1;
+				if(debugLevel >= 1)
+					printDot();
+				return true;
+			}
+			line = s;
+			first = '#';
+			cmd = 'b';
+			emode = false;
+			goto browse;
 		}
 
 // Different URL, go get it.
