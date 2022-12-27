@@ -199,7 +199,10 @@ wlf(jslocal, "jslocal");
 alert("bye   ub   ci+   /<head/r from   w base   q");
 }
 
-function set_location_hash(h) { h = '#'+h; var loc = my$win().location$2; loc.hash$val = h;
+function set_location_hash(h) { h = '#'+h;
+var loc = my$win().location$2; loc.hash$val = h;
+loc.href$val = loc.href$val.replace(/#.*/, "") + h; 
+loc = my$doc().location$2; loc.hash$val = h;
 loc.href$val = loc.href$val.replace(/#.*/, "") + h; }
 
 // run an expression in a loop.
