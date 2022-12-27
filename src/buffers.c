@@ -7383,7 +7383,8 @@ past_js:
 			if (nogo)
 				return true;
 // to access local files
-			if (!isURL(h))
+// but not for a fragment
+			if (!isURL(h) && *h != '#')
 				unpercentString(h);
 		}
 	}
