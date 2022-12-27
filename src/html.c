@@ -1503,6 +1503,19 @@ static bool inputReadonly(const Tag *t)
 	return t->rdonly;
 }
 
+static const char *imageAlt(const Tag *t)
+{
+	const char *u, *v;
+	if (allowJS && t->jslink)
+		u = get_property_string_t(t, "alt");
+	else
+		u = attribVal(t, "alt");
+	v = altText(u);
+	if (allowJS && t->jslink)
+		cnzFree(u);
+	return v;
+}
+
 /*********************************************************************
 Update an input field in the current edbrowse buffer.
 This can be done for one of two reasons.
@@ -4821,20 +4834,9 @@ past_cell_paragraph:
 			if (t->value[0])
 				stringAndString(&ns, &ns_l, t->value);
 			else if (itype == INP_SUBMIT || itype == INP_IMAGE) {
-				u = (char *)i_message(MSG_Submit);
-				if ((a = attribVal(t, "alt"))) {
-					u = altText(a);
-					a = NULL;
-	/* see if js has changed the alt tag */
-					if (allowJS && t->jslink) {
-						char *aa =
-						    get_property_string_t(t, "alt");
-						if (aa)
-							u = altText(aa);
-						nzFree(aa);
-					}
-				}
-				stringAndString(&ns, &ns_l, u);
+				a = imageAlt(t);
+				if(!a) a = (char *)i_message(MSG_Submit);
+				stringAndString(&ns, &ns_l, a);
 			} else if (itype == INP_RESET)
 				stringAndString(&ns, &ns_l,
 						i_message(MSG_Reset));
@@ -5076,21 +5078,20 @@ unparen:
 		}
 		a = 0;
 		if (action == TAGACT_AREA)
-			a = attribVal(t, "alt");
-		u = (char *)a;
-		if (!u) {
-			u = t->name;
-			if (!u)
-				u = altText(t->href);
+			a = imageAlt(t);
+		if (!a) {
+			a = t->name;
+			if (!a)
+				a = altText(t->href);
 		}
-		if (!u)
-			u = (action == TAGACT_FRAME ? "???" : "area");
+		if (!a)
+			a = (action == TAGACT_FRAME ? "???" : "area");
 		if (t->href) {
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			ns_hnum();
 		}
 		if (t->href || action == TAGACT_FRAME)
-			stringAndString(&ns, &ns_l, u);
+			stringAndString(&ns, &ns_l, a);
 		if (t->href) {
 			ns_ic();
 			stringAndString(&ns, &ns_l, "0}");
@@ -5118,41 +5119,23 @@ unparen:
 		liCheck(t);
 		tagInStream(tagno);
 		if (!currentA) {
-			if ((a = attribVal(t, "alt"))) {
-				u = altText(a);
-				a = NULL;
-/* see if js has changed the alt tag */
-				if (allowJS && t->jslink) {
-					char *aa =
-					    get_property_string_t(t, "alt");
-					if (aa)
-						u = altText(aa);
-					nzFree(aa);
-				}
-				if (u && *u && !invisible) {
-					stringAndChar(&ns, &ns_l, '[');
-					stringAndString(&ns, &ns_l, u);
-					stringAndChar(&ns, &ns_l, ']');
-				}
+			if (!invisible && (a = imageAlt(t))) {
+				stringAndChar(&ns, &ns_l, '[');
+				stringAndString(&ns, &ns_l, a);
+				stringAndChar(&ns, &ns_l, ']');
 			}
 			break;
 		}
-/* image is part of a hyperlink */
+// image is part of a hyperlink
 		if (!retainTag || !currentA->href || currentA->textin)
 			break;
-		u = 0;
-		a = attribVal(t, "alt");
-		if (a)
-			u = altText(a);
-		if (!u)
-			u = altText(t->name);
-		if (!u)
-			u = altText(currentA->href);
-		if (!u)
-			u = altText(t->href);
-		if (!u)
-			u = "image";
-		stringAndString(&ns, &ns_l, u);
+		a = imageAlt(t);
+		if (!a) a = altText(t->name);
+		if (!a) a = altText(currentA->href);
+		if (!a) a = altText(t->href);
+		if (!a) a = "image";
+		stringAndString(&ns, &ns_l, a);
+		stringAndChar(&ns, &ns_l, ' ');
 		break;
 
 // This is for <unrecognized id=foo> and somewhere else <a href=#foo>

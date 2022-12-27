@@ -798,6 +798,11 @@ set:function(v) { this.setAttribute("multiple", v);}});
 Image = HTMLImageElement = function(){};
 HTMLImageElement.prototype = new HTMLElement;
 HTMLImageElement.prototype.dom$class = "HTMLImageElement";
+Object.defineProperty(HTMLImageElement.prototype, "alt", {
+get:function(){ var t = this.getAttribute("alt");
+return typeof t == "string" ? t : undefined},
+set:function(v) { this.setAttribute("alt", v);
+}});
 
 HTMLFrameElement = function(){};
 HTMLFrameElement.prototype = new HTMLElement;

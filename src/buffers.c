@@ -7314,7 +7314,7 @@ past_g_file:
 			jsh = memEqualCI(h, "javascript:", 11);
 
 			if (lookmode) {
-				puts(jsh ? "javascript:" : h);
+				puts(h);
 				nzFree(h);
 				return true;
 			}

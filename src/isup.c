@@ -1114,6 +1114,7 @@ retry:
 			strmove(buf, s + 1);
 		}
 	}			/* more than ten characters */
+	if(!buf[0]) return 0;
 	return buf;
 }
 
