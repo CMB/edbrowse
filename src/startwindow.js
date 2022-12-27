@@ -369,7 +369,7 @@ Object.defineProperty(URL.prototype, "searchParams", {
 enumerable:true});
 Object.defineProperty(URL.prototype, "hash", {
   get: function() {return this.hash$val; },
-  set: function(v) { this.hash$val = v; this.rebuild(); },
+  set: function(v) { if(typeof v != "string") return; if(!v.match(/^#/)) v = '#'+v; this.hash$val = v; this.rebuild(); },
 enumerable:true});
 Object.defineProperty(URL.prototype, "port", {
   get: function() {return this.port$val; },
