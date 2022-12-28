@@ -32,6 +32,7 @@ eb$nullfunction = function() { return null; }
 eb$voidfunction = function() { }
 eb$truefunction = function() { return true; }
 eb$falsefunction = function() { return false; }
+db$flags = eb$falsefunction;
 eb$newLocation = function (s) { print("new location " + s); }
 eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
 eb$playAudio = eb$voidfunction;
@@ -48,6 +49,7 @@ eb$listen = eb$unlisten = addEventListener = removeEventListener = eb$voidfuncti
 my$win = function() { return window; }
 my$doc = function() { return document; }
 document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
+// other browsers don't have querySelectorAll under window
 querySelectorAll = function() { return [] ; }
 querySelector = function() { return {} ; }
 querySelector0 = function() { return false; }
@@ -2112,6 +2114,26 @@ if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 }}})();
 
+// onhashchange from certain places
+; (function() {
+// also HTMLFrameSetElement and SVGEElement, which we have not yet implemented
+var cnlist = ["HTMLBodyElement.prototype", "window"];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+eval(cn + '["onhashchange$$watch"] = true');
+eval('Object.defineProperty(' + cn + ', "onhashchange", { \
+get: function() { return this.onhashchange$2; }, \
+set: function(f) { if(db$flags(1)) alert3((this.onhashchange?"clobber ":"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".onhashchange"); \
+if(typeof f == "string") f = my$win().handle$cc(f, this); \
+if(typeof f == "function") { this.onhashchange$2 = f}}})')
+}})();
+
+// Some websites expect an onhashchange handler from the get-go.
+// This will produce a create message at db3 and dbev+
+// whence a subsequent assignment to onhashchange will create a clobber message,
+// even though it isn't really a clobber.
+onhashchange = eb$voidfunction;
+
 document.createElementNS = function(nsurl,s) {
 var mismatch = false;
 var u = this.createElement(s);
@@ -2558,9 +2580,6 @@ return Window.apply(this, arguments);
 // That is, Window should be the constructor of window.
 // The constructor is Object by default.
 window.constructor = Window;
-
-// Some websites expect an onhashchange handler from the get-go.
-onhashchange = eb$truefunction;
 
 // Apply rules to a given style object, which is this.
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: mw$.cssTextGet,

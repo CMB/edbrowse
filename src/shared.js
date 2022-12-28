@@ -9,6 +9,11 @@ A website might innocently do that.
 Nail down prototype and some methods that might innocently be called.
 *********************************************************************/
 
+// so we can run this stand alone
+if(typeof puts === "undefined") {
+function puts(s){}
+}
+
 Object.defineProperty(this, "self",{writable:false,configurable:false,value:this});
 
 Object.defineProperty(this, "Object",{writable:false,configurable:false});
