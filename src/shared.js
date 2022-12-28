@@ -205,10 +205,40 @@ alert("bye   ub   ci+   /<head/r from   w base   q");
 }
 
 function set_location_hash(h) { h = '#'+h;
-var loc = my$win().location$2; loc.hash$val = h;
+var w = my$win(), d = my$doc(), body = d.body;
+var loc = w.location$2;
+// save the old url, but I don't know if it's a URL or a string
+var oldURL = loc.toString();
+loc.hash$val = h;
 loc.href$val = loc.href$val.replace(/#.*/, "") + h; 
-loc = my$doc().location$2; loc.hash$val = h;
-loc.href$val = loc.href$val.replace(/#.*/, "") + h; }
+var newURL = loc.toString();
+loc = d.location$2;
+loc.hash$val = h;
+loc.href$val = loc.href$val.replace(/#.*/, "") + h;
+// call the onhashchange handlers
+// this code comes from dispatchEvent, but is simpler.
+var e = new (w.HashChangeEvent);
+e.eventPhase = 2, e.target = e.currentTarget = w;
+e.oldURL = oldURL, e.newURL = newURL;
+var fn1 = "on" + e.type;
+var fn2 = fn1 + "$$fn";
+if(typeof w[fn2] == "function") {
+if(db$flags(1)) alert3("current Window hashchange");
+w[fn2](e);
+} else if(typeof w[fn1] == "function") {
+if(db$flags(1)) alert3("current Window hashchange\nfire assigned");
+w[fn1](e);
+if(db$flags(1)) alert3("endfire assigned");
+}
+if(typeof body[fn2] == "function") {
+if(db$flags(1)) alert3("current Body hashchange");
+body[fn2](e);
+} else if(typeof body[fn1] == "function") {
+if(db$flags(1)) alert3("current Body hashchange\nfire assigned");
+body[fn1](e);
+if(db$flags(1)) alert3("endfire assigned");
+}
+}
 
 // run an expression in a loop.
 function aloop(s$$, t$$, exp$$) {

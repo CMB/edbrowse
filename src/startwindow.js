@@ -1682,6 +1682,15 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 
 document.createEvent = function(unused) { return new Event; }
 
+HashChangeEvent = function(){
+    this.currentTarget =     this.target = null;
+    this.eventPhase = 0;
+    this.timeStamp = new Date().getTime();
+this.type = "hashchange";
+};
+// says we inherit from event but I can't think of any event methods we would want to use
+HashChangeEvent.prototype.dom$class = "HashChangeEvent";
+
 MouseEvent = function(etype){
     this.bubbles =     this.cancelable = true;
     this.cancelled = this.defaultPrevented = false;
@@ -2128,11 +2137,13 @@ if(typeof f == "string") f = my$win().handle$cc(f, this); \
 if(typeof f == "function") { this.onhashchange$2 = f}}})')
 }})();
 
-// Some websites expect an onhashchange handler from the get-go.
-// This will produce a create message at db3 and dbev+
-// whence a subsequent assignment to onhashchange will create a clobber message,
-// even though it isn't really a clobber.
-onhashchange = eb$voidfunction;
+// Some website expected an onhashchange handler from the get-go.
+// Don't know what website, and didn't write it down, but it makes no sense to me!
+// Handlers aren't there unless the website puts them there.
+// onhashchange = eb$voidfunction;
+// If we do need a default handler don't create it as above,
+// that leads to confusion; use the get  method.
+// get: function() { return this.onhashchange$2 ? this.onhashchange$2 : eb$voidfunction; }
 
 document.createElementNS = function(nsurl,s) {
 var mismatch = false;
