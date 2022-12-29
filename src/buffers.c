@@ -4945,6 +4945,7 @@ pwd:
 	}
 	if(lookmode) {
 		puts(h);
+		if(debugLevel >= 3) printf("%d\n", tagList[tagno]->seqno);
 		return true;
 	}
 	uriEncoded = true;
@@ -7316,6 +7317,7 @@ past_g_file:
 			if (lookmode) {
 				puts(h);
 				nzFree(h);
+				if(debugLevel >= 3) printf("%d\n", tag->seqno);
 				return true;
 			}
 
@@ -7464,6 +7466,7 @@ past_js:
 
 				if (scmd == '?') {
 					infShow(tagno, line);
+					if(debugLevel >= 3) printf("%d\n", tagList[tagno]->seqno);
 					return true;
 				}
 
