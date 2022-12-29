@@ -99,6 +99,7 @@ document.ownerDocument = document;
 if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
 dumptree = mw$.dumptree, uptrace = mw$.uptrace;
+by_esn = mw$.by_esn;
 showscripts = mw$.showscripts, searchscripts = mw$.searchscripts, showframes = mw$.showframes;
 snapshot = mw$.snapshot, aloop = mw$.aloop;
 showarg = mw$.showarg, showarglist = mw$.showarglist;

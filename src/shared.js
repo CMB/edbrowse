@@ -99,6 +99,14 @@ t = t.parentNode;
 }
 }
 
+function by_esn(n) {
+if(typeof n != "number") { alert("numeric argument expected"); return; }
+var a = my$doc().getElementsByTagName("*");
+for(var i = 0; i < a.length; ++i)
+if(a[i].eb$seqno === n) return a[i];
+return null;
+}
+
 /*********************************************************************
 Show the scripts, where they come from, type, length, whether deminimized.
 This uses document.scripts and getElementsByTagname() so you see
@@ -5003,7 +5011,7 @@ Object.defineProperty(Function.prototype, "toString",{enumerable:false,writable:
 
 flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "Error", "String", "parseInt", "Event",
-"alert","alert3","alert4","dumptree","uptrace",
+"alert","alert3","alert4","dumptree","uptrace","by_esn",
 "showscripts", "showframes", "searchscripts", "snapshot", "aloop",
 "showarg", "showarglist",
 "eb$base$snapshot", "set_location_hash",
