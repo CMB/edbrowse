@@ -2575,7 +2575,17 @@ static void debrowseSuffix(char *s)
 	}
 }
 
-// Set environment variables that use the file name.
+// Set various environment variables before a shell command
+static void p_setenv(const char *var, const char *val) // protected setenv
+{
+// something bad happens on some platforms if env variable is too long
+	if(strlen(val) > 5000) {
+		unsetenv(var);
+		debugPrint(1, " variable %s too long", var);
+	} else if(setenv(var, val, 1))
+		debugPrint(1, " variable %s not set", var);
+}
+
 static void eb_file_name_variables(const char *file_name, const bool browsing, const char *file_var, const char *base_var, const char *dir_var)
 {
 	char var[8];
@@ -2586,22 +2596,22 @@ static void eb_file_name_variables(const char *file_name, const bool browsing, c
 	s = skipFileProtocol(s);
 
 	strcpy(var, file_var);
-	setenv(var, s, 1);
+	p_setenv(var, s);
 	if(browsing) debrowseSuffix(s);
 	strcpy(var, base_var);
-	setenv(var, s, 1);
+	p_setenv(var, s);
 
 	strcpy(var, dir_var);
 	if (isURL(s)) {
 		char *t = cloneString(s);
 		char *u = dirname(s);
 		if (isURL(u))
-			setenv(var, u, 1);
+			p_setenv(var, u);
 		else
-			setenv(var, t, 1);
+			p_setenv(var, t);
 		nzFree(t);
 	} else {
-		setenv(var, dirname(s), 1);
+		p_setenv(var, dirname(s));
 	}
 	nzFree(s0);
 }
@@ -2622,17 +2632,17 @@ static void eb_variables(void)
 	if((n = cw->dot)) {
 		p = fetchLine(n, 1);
 		rc = perl2c((char *)p);
-		setenv(var, rc ? hasnull : (char*)p, 1);
+		p_setenv(var, rc ? hasnull : (char*)p);
 		free(p);
 	}
 
 	sprintf(numbuf, "%d", n);
 	strcpy(var, "EB_LN");
-	setenv(var, numbuf, 1);
+	p_setenv(var, numbuf);
 
 	sprintf(numbuf, "%d", cw->dol);
 	strcpy(var, "EB_LINES");
-	setenv(var, numbuf, 1);
+	p_setenv(var, numbuf);
 
 	strcpy(var, "EB_PLUS");
 	unsetenv(var);
@@ -2640,7 +2650,7 @@ static void eb_variables(void)
 	if(n <= cw->dol) {
 		p = fetchLine(n, 1);
 		rc = perl2c((char *)p);
-		setenv(var, rc ? hasnull : (char*)p, 1);
+		p_setenv(var, rc ? hasnull : (char*)p);
 		free(p);
 	}
 
@@ -2650,7 +2660,7 @@ static void eb_variables(void)
 	if(n > 0) {
 		p = fetchLine(n, 1);
 		rc = perl2c((char *)p);
-		setenv(var, rc ? hasnull : (char*)p, 1);
+		p_setenv(var, rc ? hasnull : (char*)p);
 		free(p);
 	}
 
@@ -2663,7 +2673,7 @@ static void eb_variables(void)
 			continue;
 		p = fetchLine(n, 1);
 		rc = perl2c((char *)p);
-		setenv(var, rc ? hasnull : (char*)p, 1);
+		p_setenv(var, rc ? hasnull : (char*)p);
 		free(p);
 	}
 }
