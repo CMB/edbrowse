@@ -1,0 +1,121 @@
+#!/usr/bin/perl
+
+# find the matching blocks from the output of diff -y
+# Assumes no line in either file contains | < or >
+# this should be run on the trace of a website in edbrowse and in firefox.
+# We are looking for the sections that are executed the same way.
+# You'll want to put in a higher limit, 5 is just for testing.
+
+my $limit = 5;
+if($#ARGV == 2 && $ARGV[0] =~ /^\d+$/) {
+$limit = $ARGV[0];
+shift @ARGV;
+}
+
+if($#ARGV != 1) {
+print "usage: findblocks [limit] file1 file2\n";
+exit 1;
+}
+
+my $file1 = "block1";
+my $file2 = "block2";
+my $file3 = "blockdiff";
+
+#  this process destroys the files, so we have to make copies
+exit 1 if system "cp '$ARGV[0]' $file1";
+exit 1 if system "cp '$ARGV[1]' $file2";
+
+my ($ln1, $ln2, $lk1, $lk2, $start1, $start2, $l);
+
+sub lookblock() {
+$ln1 = $ln2 = $lk1 = $lk2 = $start1 = 0;
+system "diff -y $file1 $file2 > $file3";
+open DIFF, $file3;
+while(<DIFF>) {
+if(/[<>|]/) { # not a match
+if ($start1 && $l >= $limit) {
+close DIFF;
+return 1;
+}
+$start1 = 0;
+}
+if(/</) { # line in first file
+if(/`advance`/) {
+s/.*`advance`//;
+s/`.*//;
+$ln1 += $_;
+} else {
+$ln1++;
+}
+$lk1++;
+next;
+}
+if(/>/) { # line in second file
+if(/`advance`/) {
+s/.*`advance`//;
+s/`.*//;
+$ln2 += $_;
+} else {
+$ln2++;
+}
+$lk2++;
+next;
+}
+if(/\|/) { # different lines in the two files
+my $x = $_;
+if(/`advance`.*\|/) {
+s/.*`advance`//;
+s/`.*//;
+$ln1 += $_;
+} else {
+$ln1++;
+}
+$_ = $x;
+if(/\|.*`advance`/) {
+s/.*`advance`//;
+s/`.*//;
+$ln2 += $_;
+} else {
+$ln2++;
+}
+$lk1++, $lk2++;
+next;
+}
+# lines match
+$ln1++, $ln2++;
+$lk1++, $lk2++;
+if(!$start1) {
+$start1 = $ln1, $start2 = $ln2;
+$stark1 = $lk1, $stark2 = $lk2;
+$l = 1;
+next;
+}
+++$l;
+}
+close DIFF;
+return $start1 && $l >= $limit;
+}
+
+my $advcnt = 0;
+
+sub removeblock($$$) {
+my $file = shift;
+my $start = shift;
+my $l = shift;
+my $t = $start + $l - 1;
+my $t2 = $t - 1;
+# I can do it in perl of course, but sed is easier.
+++$advcnt;
+system "sed -i -e '$start,$t2"."d' -e '$t"."s/.*/`advance`$l`$advcnt/'  $file";
+}
+
+while(lookblock()) {
+print "block at lines $start1 and $start2 length $l\n";
+removeblock($file1, $stark1, $l);
+removeblock($file2, $stark2, $l);
+}
+
+# remove temp files
+unlink $file1, $file2, $file3;
+
+exit 0;
