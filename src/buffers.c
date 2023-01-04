@@ -2578,8 +2578,8 @@ static void debrowseSuffix(char *s)
 // Set various environment variables before a shell command
 static void p_setenv(const char *var, const char *val) // protected setenv
 {
-// something bad happens on some platforms if env variable is too long
-	if(strlen(val) > 5000) {
+// something bad happens on some platforms if env variable is too long (limit comes from MAX_ARG_STRLEN)
+	if(strlen(var) + strlen(val) > 131070) {
 		unsetenv(var);
 		debugPrint(1, " variable %s too long", var);
 	} else if(setenv(var, val, 1))

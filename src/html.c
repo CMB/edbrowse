@@ -2996,6 +2996,9 @@ static bool reportZ(void)
 	if (!(front1z || front2z || back1z || back2z))
 		return false;
 
+// Everything past this point just prints update messages.
+// So return true if we printed stuff.
+
 	if (front1z || front2z) {
 		if (front2z > front1z)
 			oplow = 1;
@@ -3049,6 +3052,8 @@ static bool reportZ(void)
 				i_printf(MSG_LineDelete2, act1, front1z);
 			else if (oplow == 1)
 				i_printf(MSG_LineAdd1, sameFront + 1);
+			else if(sameFront + 1 == cw->dot)
+				printDot();
 			else
 				i_printf(MSG_LineUpdate1, sameFront + 1);
 			goto done;
@@ -3113,6 +3118,8 @@ static bool reportZ(void)
 			i_printf(MSG_LineDelete2, act1, sameFront);
 		else if (ophigh == 1)
 			i_printf(MSG_LineAdd1, sameBack2);
+		else if(sameBack2 == cw->dot)
+			printDot();
 		else
 			i_printf(MSG_LineUpdate1, sameBack2);
 		goto done;
@@ -3309,9 +3316,12 @@ and new internal numbers each time, and that use to trip this algorithm.
 				cw->dot = sameFront + 1;
 		}
 	} else {
-		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1)
-			(*say_fn) (MSG_LineUpdate1, sameFront + 1);
-		else if (sameBack2 == sameFront + 1)
+		if (sameBack1 == sameFront + 1 && sameBack2 == sameFront + 1) {
+			if(sameFront + 1 == cw->dot && !z)
+				printDot();
+			else
+				(*say_fn) (MSG_LineUpdate1, sameFront + 1);
+		} else if (sameBack2 == sameFront + 1)
 			(*say_fn) (MSG_LineUpdate2, sameBack1 - sameFront,
 				   sameFront + 1);
 		else {
