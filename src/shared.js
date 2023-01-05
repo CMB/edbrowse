@@ -442,25 +442,12 @@ if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
 }
-var a = eb$gebi(this, s, true);
-return a.length ? a[0] : null;
+var w = my$win();
+var t = w.id$hash[s];
+return t && isRooted(t) ? t : null;
 }
 
 // this could stop when it finds the first match, it just doesn't
-function eb$gebi(top, s, first) {
-var a = [];
-if(!first && (s === '*' || top.id === s))
-a.push(top);
-if(top.childNodes) {
-if(top.dom$class != "Frame")
-for(var i=0; i<top.childNodes.length; ++i) {
-var c = top.childNodes[i];
-a = a.concat(eb$gebi(c, s, false));
-}
-}
-return a;
-}
-
 function getElementsByClassName(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByTagName(type " + typeof s + ")");
@@ -1588,6 +1575,7 @@ this.attributes.push(a);
 oldv = a.value;
 }
 a.value = v;
+if(name === "id") w.id$hash[v] = this;
 if(name.substr(0,5) == "data-") {
 // referencing dataset should create it on demand, but if it doesn't...
 if(!this.dataset) this.dataset$2 = {};
@@ -5021,7 +5009,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "getRootNode","wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
-"eb$gebtn","eb$gebn","eb$gebcn","eb$gebid","eb$cont",
+"eb$gebtn","eb$gebn","eb$gebcn","eb$cont",
 "dispatchEvent","eb$listen","eb$unlisten",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
