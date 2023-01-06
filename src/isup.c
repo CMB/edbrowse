@@ -1549,7 +1549,7 @@ bool receiveCookie(const char *url, const char *str)
 
 	if (!curlActive)
 		return false;
-	debugPrint(3, "cookie %s", str);
+	debugPrint(3, "set cookie %s", str);
 
 	server = getHostURL(url);
 	if (server == 0 || !*server)
@@ -1743,7 +1743,7 @@ that belong to this web page, including any new cookies that were
 added during this edbrowse session, e.g. document.cookie = newCookie;
 *********************************************************************/
 
-void sendCookies(char **s, int *l, const char *url, bool issecure)
+void findcookies(char **s, int *l, const char *url, bool issecure)
 {
 	const char *server = getHostURL(url);
 	const char *data = getDataURL(url);
@@ -1802,7 +1802,7 @@ void sendCookies(char **s, int *l, const char *url, bool issecure)
 		stringAndString(s, l, c->name);
 		stringAndChar(s, l, '=');
 		stringAndString(s, l, c->value);
-		debugPrint(3, "send cookie %s=%s", c->name, c->value);
+		debugPrint(3, "find cookie %s=%s", c->name, c->value);
 	}
 
 	if (c != NULL) {
@@ -2993,7 +2993,7 @@ bool runPluginCommand(const struct MIMETYPE * m,
 			proto = getProtURL(inurl);
 			if (proto && stringEqualCI(proto, "https"))
 				secure = true;
-			sendCookies(&cookie, &cook_l, inurl, secure);
+			findcookies(&cookie, &cook_l, inurl, secure);
 			setenv("PLUGINHEADERS", cookie, 1);
 			nzFree(cookie);
 		}

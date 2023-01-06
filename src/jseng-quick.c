@@ -2897,7 +2897,7 @@ static void startCookie(void)
 		proto = getProtURL(url);
 		if (proto && stringEqualCI(proto, "https"))
 			secure = true;
-		sendCookies(&cookieCopy, &cook_l, url, secure);
+		findcookies(&cookieCopy, &cook_l, url, secure);
 		if (memEqualCI(cookieCopy, "; cookie: ", 10)) {	// should often happen
 			strmove(cookieCopy + 2, cookieCopy + 10);
 			cook_l -= 8;

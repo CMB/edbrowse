@@ -370,7 +370,7 @@ bool frameSecurityFile(const char *thisfile);
 bool receiveCookie(const char *url, const char *str) ;
 void cookiesFromJar(void) ;
 bool isInDomain(const char *d, const char *s);
-void sendCookies(char **s, int *l, const char *url, bool issecure) ;
+void findcookies(char **s, int *l, const char *url, bool issecure) ;
 void mergeCookies(void);
 void setupEdbrowseCache(void);
 void clearCache(void) ;
