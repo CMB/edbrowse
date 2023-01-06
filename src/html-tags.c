@@ -3824,9 +3824,13 @@ void formControl(Tag *t, bool namecheck)
 	}
 	if (cform)
 		t->controller = cform;
+// tidy doesn't mind input elements freely floating about,
+// so I guess I won't complain about them either.
+#if 0
 	else if (itype != INP_BUTTON && itype != INP_SUBMIT && !htmlGenerated)
 		debugPrint(3, "%s is not part of a fill-out form",
 			   t->info->desc);
+#endif
 	if (namecheck && !myname && !htmlGenerated)
 		debugPrint(3, "%s does not have a name", t->info->desc);
 }
