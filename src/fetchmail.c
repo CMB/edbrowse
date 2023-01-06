@@ -2489,6 +2489,15 @@ copy:
 	if (len)
 		memmove(t, s, len);
 	vr = t + len;
+// remove spaces between blocks
+	for(t = start; t < vr; ++t) {
+		if(*t != ' ' && *t != '\t') break;
+	}
+	if(t > start && (t == vr || (t[0] == '=' && t[1] == '?'))) {
+		len = vr - t;
+		memmove(start, t, len);
+		vr = start + len;
+	}
 	goto restart;
 
 finish:
