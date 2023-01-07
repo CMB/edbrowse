@@ -2491,7 +2491,7 @@ copy:
 	vr = t + len;
 // remove spaces between blocks
 	for(t = start; t < vr; ++t) {
-		if(*t != ' ' && *t != '\t') break;
+		if(!isspaceByte(*t)) break;
 	}
 	if(t > start && (t == vr || (t[0] == '=' && t[1] == '?'))) {
 		len = vr - t;
