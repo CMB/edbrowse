@@ -1718,8 +1718,8 @@ bool isInDomain(const char *d, const char *s)
 		return false;
 	if (!memEqualCI(d, s + j, dl))
 		return false;
-	if (j && s[j - 1] != '.')
-		return false;
+	if(s[j] == '.') return true;
+	if (j && s[j - 1] != '.') return false;
 	return true;
 }
 
@@ -1786,8 +1786,13 @@ void findcookies(char **s, int *l, const char *url, bool issecure)
  */
 		if (!strncmp(c->domain, httponly_prefix, httponly_prefix_len))
 			continue;
-		if (!isInDomain(c->domain, server))
-			continue;
+		if(c->tail) {
+			if (!isInDomain(c->domain, server))
+				continue;
+		} else {
+			if(!stringEqualCI(c->domain, server))
+				continue;
+		}
 		if (!isPathPrefix(c->path, data))
 			continue;
 		if (c->expires && c->expires < now)
