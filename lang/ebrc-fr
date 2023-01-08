@@ -133,6 +133,7 @@ b http://www.merriam-webster.com/dictionary/~1
 if(?) {
 /^h1/X
 }
+/^$/X
 /./p
 }
 # Cette fonction s'exécute au démarrage de edbrowse
