@@ -1711,6 +1711,8 @@ void cookiesFromJar(void)
 
 bool isInDomain(const char *d, const char *s)
 {
+// .foo.bar is same as foo.bar
+	if(*d == '.') ++d;
 	int dl = strlen(d);
 	int sl = strlen(s);
 	int j = sl - dl;
@@ -1718,7 +1720,6 @@ bool isInDomain(const char *d, const char *s)
 		return false;
 	if (!memEqualCI(d, s + j, dl))
 		return false;
-	if(s[j] == '.') return true;
 	if (j && s[j - 1] != '.') return false;
 	return true;
 }
