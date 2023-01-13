@@ -656,7 +656,8 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 	char c, d, e;
 
 	if (!len)
-		return;
+		return; // nothing to add
+// gather stats on the whitespace chunk
 	for (i = 0; i < len; ++i) {
 		c = chunk[i];
 		if (c == '\n' || c == '\r') {
@@ -670,7 +671,10 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 		++spc;
 	}
 
-	if (!premode && spaceNotInInput()) {
+// in an input field is like preformatted, don't crunch space
+	if(!spaceNotInInput()) premode = true;
+	if (!premode) {
+// was there a period or such just before this whitespace?
 		int l = bl_cursor - bl_start;
 		c = d = ' ';
 		if (l)
@@ -682,7 +686,7 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 			e = c;
 		if (strchr(".?!:", e)) {
 			bool ok = true;
-/* Check for Mr. Mrs. and others. */
+// Check for Mr. Mrs. and others
 			if (e == '.' && bl_cursor - bl_start > 10) {
 				static const char *const prefix[] =
 				    { "mr.", "mrs.", "sis.", "ms.", 0 };
@@ -697,7 +701,7 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 				for (i = 0; prefix[i]; ++i)
 					if (strstr(trailing, prefix[i]))
 						ok = false;
-/* Check for John C. Calhoon */
+// Check for John C. Calhoon
 				if (isupperByte(bl_cursor[-2])
 				    && isspaceByte(bl_cursor[-3]))
 					ok = false;
@@ -714,14 +718,15 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 			lright = colno, idxright = l;
 		lany = colno, idxany = l;
 		if (formatOverflow) {
-/* tack a short fragment onto the previous line. */
+// tack a short fragment onto the previous line
 			if (longcut && colno <= 15 && (nlc || lperiod == colno)) {
 				bl_start[longcut] = ' ';
 				if (!nlc)
 					len = spc = 0, nlc = 1;
-			}	/* pasting small fragment onto previous line */
+			}	// pasting small fragment onto previous line
 		}
-	}			/* allowing line breaks */
+	}
+
 	if (lspace == 3)
 		nlc = 0;
 	if (nlc) {
