@@ -3064,11 +3064,20 @@ static bool reportZ(void)
 			i_printf(MSG_LineUpdateRange,
 				 (front2z - sameFront <
 				  10 ? sameFront + 1 : front2z + 1), sameBack2);
-		else if (act2 == 1)
-			i_printf(MSG_LineUpdateZ1, sameFront + 1, sameBack2);
-		else
-			i_printf(MSG_LineUpdateZ2, sameFront + 1, front2z + 1,
-				 sameBack2);
+		else if (act2 == 1) {
+			if(cw->dot == sameFront + 1) {
+				i_printf(MSG_LineUpdate1, sameBack2);
+				printDot();
+			} else if(cw->dot == sameBack2) {
+				i_printf(MSG_LineUpdate1, sameFront + 1);
+				printDot();
+			} else i_printf(MSG_LineUpdateZ1, sameFront + 1, sameBack2);
+		} else {
+			if(cw->dot == sameFront + 1) {
+				i_printf(MSG_LineUpdate3, front2z + 1,  sameBack2);
+				printDot();
+			} else i_printf(MSG_LineUpdateZ2, sameFront + 1, front2z + 1,  sameBack2);
+		}
 		goto done;
 	}
 // At this point the single line change comes second,
@@ -3130,9 +3139,12 @@ static bool reportZ(void)
 		i_printf(MSG_LineUpdateRange,
 			 sameFront + 1,
 			 (sameBack2 - back2z < 10 ? sameBack2 : back2z - 1));
-	else
-		i_printf(MSG_LineUpdateZ3, sameFront + 1, back2z - 1,
-			 sameBack2);
+	else {
+		if(cw->dot == sameBack2) {
+			i_printf(MSG_LineUpdate3, sameFront + 1, back2z - 1);
+			printDot();
+		} else i_printf(MSG_LineUpdateZ3, sameFront + 1, back2z - 1,  sameBack2);
+	}
 
 done:
 	return true;
