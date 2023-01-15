@@ -51,7 +51,7 @@ void prepareForField(char *h)
 	while (*h) {
 // this line is goofy cause null would terminate the loop
 		if (*h == 0) *h = ' ';
-		if (*h == '\r') *h = '\07';
+		if (*h == '\n') *h = '\07'; // should never happen
 		if (*h == InternalCodeChar) *h = InternalCodeCharAlternate;
 		++h;
 	}
@@ -302,8 +302,10 @@ static void anchorSwap(char *buf)
 
 		for (s = buf; (c = *s); ++s) {
 			if (isspaceByte(c) || (c == '|' && !premode)) {
+#if 0
 				if (c == '\t' && !premode)
 					*s = ' ';
+#endif
 				if (!w)
 					w = s;
 				continue;
@@ -625,17 +627,16 @@ static void appendOneChar(char c)
 		*bl_cursor++ = c;
 }
 
-static bool spaceNotInInput(void)
+static bool spacesInInput(void)
 {
 	char *t = bl_cursor;
 	char c;
 	for (--t; t >= bl_start; --t) {
 		c = *t;
-		if (c == '\n' || c == '\r')
-			return true;
+		if (c == '\n') return false;
 		if (c == '>' && t >= bl_start + 2 &&
 		    t[-1] == '0' && t[-2] == InternalCodeChar)
-			return true;
+			return false;
 		if (c != '<')
 			continue;
 		while (t > bl_start && isdigitByte(t[-1]))
@@ -643,9 +644,9 @@ static bool spaceNotInInput(void)
 		if (*t == '<')
 			continue;
 		if (t > bl_start && t[-1] == InternalCodeChar)
-			return false;
+			return true;
 	}
-	return true;
+	return false;
 }
 
 static void appendSpaceChunk(const char *chunk, int len, bool premode)
@@ -657,6 +658,21 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 
 	if (!len)
 		return; // nothing to add
+
+// spaces in input field are literal
+	if(spacesInInput()) {
+		for (i = 0; i < len; ++i) {
+			c = chunk[i];
+			if (c == '\n') // should never happen
+				c = '\r';
+			if (c == 0) // should never happen
+				c = ' ';
+			colno += (c == '\t' ? 4 : 1);
+			appendOneChar(c);
+		}
+		return;
+	}
+
 // gather stats on the whitespace chunk
 	for (i = 0; i < len; ++i) {
 		c = chunk[i];
@@ -671,8 +687,6 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 		++spc;
 	}
 
-// in an input field is like preformatted, don't crunch space
-	if(!spaceNotInInput()) premode = true;
 	if (!premode) {
 // was there a period or such just before this whitespace?
 		int l = bl_cursor - bl_start;
