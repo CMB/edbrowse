@@ -323,7 +323,7 @@ static char *isoEncode(char *start, char *end)
 package:
 	len = strlen(s);
 	t = allocMem(len + 20);
-	sprintf(t, "=?ISO-8859-1?%c?%s?=", code, s);
+	sprintf(t, "=?UTF-8?%c?%s?=", code, s);
 	nzFree(s);
 	return t;
 }
