@@ -1091,9 +1091,7 @@ past_html_open_semantics:
 		if(!isXML && isAutoclose(lowname)) {
 			scannerInfo2("%s autoclose", tagname);
 			makeTag(tagname, lowname, true, seek);
-		} else if(*gt == '>' && gt[-1] == '/' &&
-		(gt - 1 == t || isspaceByte(gt[-2]) ||
-		gt[-2] == '"' || gt[-2] == '\'')) {
+		} else if(*gt == '>' && gt[-1] == '/') {
 			scannerInfo2("%s close by slash", tagname);
 			makeTag(tagname, lowname, true, seek);
 			s = seek; // needed for </include-fragment>
@@ -1354,6 +1352,9 @@ static void findAttributes(const char *start, const char *end)
 	Tag *t = working_t; // shorthand
 	int action, j;
 	const char *v;
+
+// <script src=blah/> tidy treats the final / as close indicator
+	if(*end == '>' && end[-1] == '/') --end;
 
 	while(s < end) {
 // look for a C identifier, then whitespace, then =
