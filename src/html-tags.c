@@ -1092,7 +1092,8 @@ past_html_open_semantics:
 			scannerInfo2("%s autoclose", tagname);
 			makeTag(tagname, lowname, true, seek);
 		} else if(*gt == '>' && gt[-1] == '/' &&
-		(gt - 1 == t || isspaceByte(gt[-2]))) {
+		(gt - 1 == t || isspaceByte(gt[-2]) ||
+		gt[-2] == '"' || gt[-2] == '\'')) {
 			scannerInfo2("%s close by slash", tagname);
 			makeTag(tagname, lowname, true, seek);
 			s = seek; // needed for </include-fragment>
