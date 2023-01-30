@@ -2682,8 +2682,18 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 	return true;
 }
 
+// Export this to the rest of edbrowse.
+// Because of the above machinery, you won't have to free it, but then again,
+// you can't call it twice for two files simultaneous.
 static int tempIndex;
+const char *edbrowseTempFilename(const char *suffix, int idx, bool output)
+{
+	if(!makeTempFilename(suffix, ++tempIndex, output))
+		return 0;
+	return output ? tempout : tempin;
+}
 
+static int tempIndex;
 static const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 {
 	int i;
