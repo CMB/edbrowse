@@ -1130,13 +1130,8 @@ char *encodePostData(const char *s, const char *keep_chars)
 		return 0;
 	if (s == emptyString)
 		return emptyString;
-	if (!keep_chars) {
-// If we want to be exactly like other browsers, we would encode ~ for post
-// method and not for get method. But at this point I can't tell
-// if it's post or get, so I encode and I don't think there's any harm in that.
-// Thus ~ is not one of our keep characters.
+	if (!keep_chars)
 		keep_chars = "-._*", is_http = true;
-	}
 	post = initString(&l);
 	while ((c = *s++)) {
 		if (isalnumByte(c))
