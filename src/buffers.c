@@ -19,7 +19,7 @@ static bool bad_utf8_alert;
 // Static variables for this file
 
 // The valid edbrowse commands
-static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwWxz=^&<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwWXz=^&<";
 // Commands that can be done in browse mode
 static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 // Commands for sql mode
@@ -27,7 +27,7 @@ static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 // Commands for directory mode
 static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
 // Commands for irc input mode
-static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwWxz=&<";
+static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpvwXz=<";
 // Commands that work at line number 0, in an empty file
