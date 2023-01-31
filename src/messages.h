@@ -695,7 +695,7 @@ enum {
 	MSG_NullCharInList,
 	MSG_NullPtr,
 	MSG_IoctlError,
-	MSG_notused598,
+	MSG_WBang,
 	MSG_CreateFail,
 	MSG_InvalidFopen,
 	MSG_BadDirSlash,
@@ -816,4 +816,5 @@ enum {
 	MSG_GetFrag2,
 	MSG_UpdateEBVarOff,
 	MSG_UpdateEBVarOn,
+	MSG_CmdFail,
 };

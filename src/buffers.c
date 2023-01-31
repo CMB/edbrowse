@@ -19,7 +19,7 @@ static bool bad_utf8_alert;
 // Static variables for this file
 
 // The valid edbrowse commands
-static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwXz=^&<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwWxz=^&<";
 // Commands that can be done in browse mode
 static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
 // Commands for sql mode
@@ -27,17 +27,17 @@ static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
 // Commands for directory mode
 static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
 // Commands for irc input mode
-static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwXz=&<";
+static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwWxz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpvwXz=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHkMqruwz=^<";
 // Commands that expect a space afterward
-static const char spaceplus_cmd[] = "befrw";
+static const char spaceplus_cmd[] = "befrwW";
 // Commands that should have no text after them
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 // Commands that can be done after a g// global directive
-static const char global_cmd[] = "<!dDijJlmnprstwX=";
+static const char global_cmd[] = "<!dDijJlmnprstwWX=";
 static bool *gflag;
 static Window *gflag_w;
 
@@ -6166,7 +6166,9 @@ bool runCommand(const char *line)
 	int i, j, n;
 	int writeMode = O_TRUNC; // could change to append
 	int writeLine = -1; // write text into a session
-	int readLine1 = -1, readLine2 = -1;
+	int readLine1 = -1, readLine2 = -1; // read lines from a session
+	bool wrc = false; // read write command
+	const char *wrc_file;
 	char *atsave = 0;
 	Window *w = NULL;
 	const Tag *tag = 0, *jumptag = 0;
@@ -6278,7 +6280,7 @@ bool runCommand(const char *line)
 		startRange = endRange = cw->dol;
 	}
 
-	if (first == 'w' || first == 'v' || (first == 'g' && line[1]
+	if (first == 'w' || first == 'W' || first == 'v' || (first == 'g' && line[1]
 					     && strchr(valid_delim, line[1])
 					     && !stringEqual(line, "g-")
 					     && !stringEqual(line, "g?"))) {
@@ -6725,7 +6727,17 @@ dest_ok:
 		}		// was there something after m or t
 	} // m or t
 
-if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
+	if(cmd == 'W') {
+		if(first != '!') {
+			setError(MSG_WBang);
+			return (globSub = false);
+		}
+		wrc = true;
+		wrc_file = edbrowseTempFilename("txt", true);
+		cmd = 'w';
+	}
+
+	if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		setError(MSG_IrcCommand, cmd);
 		return false;
 	}
@@ -6954,11 +6966,17 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		selfFrame();
 
 		if(first == '!') { // write to a command, like ed
-			int l = 0;
+			int l = 0, pexit, outlen;
+			char *outdata;
+			char *wrapline = 0;
 			FILE *p;
 			char *newline = bangbang(line + 1);
 			eb_variables();
-			p = popen(newline, "w");
+// W command must write to a temp file, then read back in
+			if(wrc)
+				asprintf(&wrapline, "( %s ) > %s", newline, wrc_file);
+			p = popen(wrapline ? wrapline : newline, "w");
+			nzFree(wrapline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
 				return false;
@@ -6975,7 +6993,7 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 				l += len;
 				if (cw->browseMode)
 					free(s);
-			}		/* loop over lines */
+			}
 			if(!globSub && debugLevel >= 1)
 				printf("%d\n", l);
 			for (i = startRange; i <= endRange; ++i) {
@@ -6995,10 +7013,26 @@ if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 				}
 				if (cw->browseMode)
 					free(s);
-			}		/* loop over lines */
-			pclose(p);
-			if(!globSub && debugLevel > 0)
+			}
+			pexit = pclose(p);
+			if(!globSub && debugLevel > 0 && !pexit && !wrc)
 				i_puts(MSG_OK);
+			if(pexit) {
+				if(wrc) unlink(wrc_file);
+				setError(MSG_CmdFail);
+				return false;
+			}
+			if(!wrc) return true;
+			rc = fileIntoMemory(wrc_file, &outdata, &outlen, 0);
+			unlink(wrc_file);
+			if(!rc) return false;
+			delText(startRange, endRange);
+// Warning, we don't convert output from iso8859 or other formats to utf8,
+// like we do when reading from a file; just assume it is proper.
+			rc = addTextToBuffer((pst)outdata, outlen, startRange - 1, true);
+			nzFree(outdata);
+			if(rc)
+				debugPrint(1, "%d", outlen);
 			return true;
 		}
 
@@ -7865,7 +7899,7 @@ afterdelete:
 
 		if(first == '!') { // read from a command, like ed
 			char *outdata;
-			int outlen;
+			int outlen, pexit;
 			FILE *p;
 			char *newline = bangbang(line + 1);
 			eb_variables();
@@ -7875,9 +7909,16 @@ afterdelete:
 				return false;
 			}
 			rc = fdIntoMemory(fileno(p), &outdata, &outlen, 0);
-			pclose(p);
-			if (!rc)
+			if(!rc) {
+				pclose(p);
 				return false;
+			}
+			pexit = pclose(p);
+			if(pexit) {
+				setError(MSG_CmdFail);
+				nzFree(outdata);
+				return false;
+			}
 // Warning, we don't convert output from iso8859 or other formats to utf8,
 // like we do when reading from a file; just assume it is proper.
 			rc = addTextToBuffer((pst)outdata, outlen, endRange, true);

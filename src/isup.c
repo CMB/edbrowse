@@ -2686,7 +2686,7 @@ static bool makeTempFilename(const char *suffix, int idx, bool output)
 // Because of the above machinery, you won't have to free it, but then again,
 // you can't call it twice for two files simultaneous.
 static int tempIndex;
-const char *edbrowseTempFilename(const char *suffix, int idx, bool output)
+const char *edbrowseTempFilename(const char *suffix, bool output)
 {
 	if(!makeTempFilename(suffix, ++tempIndex, output))
 		return 0;

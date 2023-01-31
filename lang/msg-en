@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 null pointer in pstLength
 canot use ioctl() to manage the tty
-0
+!command must follow W
 cannot create or write to %s
 calling fopen() with invalid mode %s
 misplaced / in getDirURL(%s)
@@ -716,7 +716,7 @@ multiple images present, please use %s1 through %s%d
 could not fetch html fragment\n
 do not update environment variables
 update environment variables
-0
+shell command failed
 0
 0
 0

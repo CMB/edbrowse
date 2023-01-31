@@ -382,7 +382,7 @@ bool getUserPassRealm(const char *url, char *creds, const char *realm);
 // Add authorization entries only in the foreground, but it's an
 // atomic operation, so the previous routines can run from other threads.
 bool addWebAuthorization(const char *url, const char *credentials, bool proxy, const char *realm);
-const char *edbrowseTempFilename(const char *suffix, int idx, bool output);
+const char *edbrowseTempFilename(const char *suffix, bool output);
 const struct MIMETYPE *findMimeByURL(const char *url, uchar *sxfirst);
 const struct MIMETYPE *findMimeByFile(const char *filename);
 const struct MIMETYPE *findMimeByContent(const char *content);
