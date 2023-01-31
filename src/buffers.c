@@ -2723,7 +2723,8 @@ static bool shellEscape(const char *line)
 		}
 		eb_variables();
 		interactive_shell_cmd = get_interactive_shell(sh);
-		eb_system(interactive_shell_cmd, !globSub);
+		eb_system(interactive_shell_cmd, false);
+		i_puts(MSG_OK);
 		nzFree(interactive_shell_cmd);
 		return true;
 	}
@@ -2731,11 +2732,7 @@ static bool shellEscape(const char *line)
 	newline = bangbang(line);
 	eb_variables();
 
-/* Run the command.  Note that this routine returns success
- * even if the shell command failed.
- * Edbrowse succeeds if it is *able* to run the system command. */
-	eb_system(newline, !globSub);
-	return true;
+	return !eb_system(newline, !globSub);
 }
 
 // parse portion syntax as in 7@'a,'b. ASsume context has been cracked,
