@@ -627,8 +627,10 @@ f : print the name of the current file
 <br>w+7 : same as w7@$
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
-<br>w ftp://login:password@example.com/file  ftp upload
-<br>w scp://login:password@example.com/absolute-path  scp upload
+<br>'a,'bW !command : run a range of lines through a shell command and replace them
+<br>W !sort : sort the lines in the buffer
+<br>w ftp://login:password@example.com/file :  ftp upload
+<br>w scp://login:password@example.com/absolute-path :  scp upload
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles

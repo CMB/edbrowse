@@ -1115,6 +1115,8 @@ retry:
 		}
 	}			/* more than ten characters */
 	if(!buf[0]) return 0;
+// more than a few characters without spaces, forget it
+	if(strlen(buf) > 10 && !strchr(buf, ' ')) return 0;
 	return buf;
 }
 
