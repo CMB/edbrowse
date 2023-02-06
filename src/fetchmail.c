@@ -2300,10 +2300,8 @@ static void unpackQP(struct MHINFO *w)
 	char c, d, *q, *r;
 	for (q = r = w->start; q < w->end; ++q) {
 		c = *q;
-		if (c != '=') {
-			*r++ = c;
-			continue;
-		}
+		if (c == '_') { *r++ = ' '; continue; }
+		if (c != '=') { *r++ = c; continue; }
 		c = *++q;
 		if (c == '\n')
 			continue;
@@ -2440,6 +2438,7 @@ restart:
 	if (code == 'Q') {
 		while (s < end) {
 			c = *s++;
+			if (c == '_') c = ' ';
 			if (c == '=') {
 				c = *s;
 				d = s[1];
