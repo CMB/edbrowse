@@ -252,7 +252,7 @@ Ein Optionsfeld kann nicht geleert werden, ein anderes muss aktiviert werden.
 Zahl erwartet
 Sitzung %d enthält Nullbytes
 Senden einer Datei erfordert method=post und enctype=multipart/form-data.
-dies ist ein Eingabefeld, kein Schalter
+kein Schalter
 dieser Schalter ist nicht Teil eines Eingabebereichs
 kein JavaScript mit diesem Schalter verknüpft
 die Eingabemaske enthält eine Zieladresse

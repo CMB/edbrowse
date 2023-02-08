@@ -252,7 +252,7 @@ vous ne pouvez réinitialiser un bouton radio; vous devez en activer un autre
 nombre attendu
 la session %d contient des caractères nuls
 l'envoi d'un fichier exige 'method=post and enctype=multipart/form-data'
-c'est une zone de saisie, pas un bouton
+pas un bouton
 ce bouton ne fait pas partie d'un formulaire
 pas de javascript associé à ce bouton
 le formulaire n'inclut aucune URL de destination

@@ -252,7 +252,7 @@ nie możesz wyczyścić przycisku radio; musisz wybrać inne pole
 oczekiwano liczby
 sesja %d zawiera znaki zerowe
 wysyłanie pliku wymaga parametrów method=post i enctype=multipart/form-data
-to jest pole wprowadzania, nie przycisk
+nie przycisk
 ten przycisk nie jest częścią formularza
 brak JavaScriptu powiązanego z tym przyciskiem
 formularz nie zawiera docelowego URLa

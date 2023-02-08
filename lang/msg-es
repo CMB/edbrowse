@@ -252,7 +252,7 @@ no puedes reiniciar un botón de opción; debes configurar otro
 falta un número
 la sesión %d está vacía
 enviar un archivo requiere method=post y enctype=multipart/form-data
-esto es un campo de entrada, no un botón
+no un botón
 este botón no forma parte de un formulario
 no hay javascript asociado a este botón
 el formulario no incluye una url de destino

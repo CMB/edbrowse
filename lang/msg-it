@@ -252,7 +252,7 @@ non puoi deselezionare un bottone radio; devi selezionarne un altro
 un numero è atteso
 la sessione %d contiene valori nulli
 l'invio di un file richiede method=post e enctype=multipart/form-data
-questo è un campo di input, non un bottone
+non un bottone
 questo bottone non è parte di una form
 non c'è javascript associato a questo bottone
 la form non include un url di destinazione

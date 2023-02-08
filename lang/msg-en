@@ -252,7 +252,7 @@ you cannot clear a radio button; you must set another one
 number expected
 session %d contains nulls
 sending a file requires method=post and enctype=multipart/form-data
-this is an input field, not a button
+not a button
 this button is not part of a form
 no javascript associated with this button
 form does not include a destination url

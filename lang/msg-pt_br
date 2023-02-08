@@ -252,7 +252,7 @@ não pode desmarcar um botão de opção; tem que marcar outro
 espera-se um número
 a sessão %d contém caracteres nulos
 enviar um arquivo requer method=post e enctype=multipart/form-data
-isto é um campo de entrada e não um botão
+não um botão
 botão não faz parte de um formulário
 sem javascript associado a este botão
 formulário não inclui URL de destino
