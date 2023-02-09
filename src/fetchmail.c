@@ -459,9 +459,10 @@ static void cleanFolder(struct FOLDER *f)
 	f->nmsgs = f->nfetch = f->unread = 0;
 }
 
-/* search through imap server for a particular string */
-/* Return true if the search ran successfully and found some messages. */
-static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
+// search through imap server for a particular string.
+// Return 1 if the search ran successfully and found some messages.
+// Return 0 for no messages and -1 for error.
+static int imapSearch(CURL * handle, struct FOLDER *f, char *line)
 {
 	char searchtype = 's';
 	char *t, *u;
@@ -476,18 +477,18 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	} else if (line[0] && !isspaceByte(line[0]) &&
 		   (isspaceByte(line[1]) || !line[1])) {
 		i_puts(MSG_ImapSearchHelp);
-		return false;
+		return 0;
 	}
 
 	stripWhite(line);
 	if (!line[0]) {
 		i_puts(MSG_Empty);
-		return false;
+		return 0;
 	}
 
 	if (strchr(line, '"')) {
 		i_puts(MSG_SearchQuote);
-		return false;
+		return 0;
 	}
 
 	strcpy(cust_cmd, "SEARCH ");
@@ -507,7 +508,7 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	if (res != CURLE_OK) {
 		nzFree(mailstring);
 		ebcurl_setError(res, mailbox_url, 1, emptyString);
-		return false;
+		return -1;
 	}
 
 	t = strstr(mailstring, "SEARCH ");
@@ -515,7 +516,7 @@ static bool imapSearch(CURL * handle, struct FOLDER *f, char *line)
 none:
 		nzFree(mailstring);
 		i_puts(MSG_NoMatch);
-		return false;
+		return 0;
 	}
 	t += 6;
 	cnt = 0;
@@ -553,7 +554,7 @@ none:
 
 	envelopes(handle, f);
 
-	return true;
+	return 1;
 }
 
 static void printEnvelope(const struct MIF *mif)
@@ -824,8 +825,9 @@ imap_done:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
-			if (!imapSearch(handle, f, inputline))
-				goto reaction;
+			j2 = imapSearch(handle, f, inputline);
+			if(j2 == 0) goto reaction;
+			if(j2 < 0) goto abort;
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 			else
