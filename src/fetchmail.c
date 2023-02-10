@@ -507,7 +507,6 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	res = getMailData(handle);
 	if (res != CURLE_OK) {
 		nzFree(mailstring);
-		ebcurl_setError(res, mailbox_url, 1, emptyString);
 		return -1;
 	}
 
@@ -2302,7 +2301,6 @@ static void unpackQP(struct MHINFO *w)
 	char c, d, *q, *r;
 	for (q = r = w->start; q < w->end; ++q) {
 		c = *q;
-		if (c == '_') { *r++ = ' '; continue; }
 		if (c != '=') { *r++ = c; continue; }
 		c = *++q;
 		if (c == '\n')
