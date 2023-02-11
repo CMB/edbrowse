@@ -646,7 +646,7 @@ operação falhou porque a memória não pôde ser alocada
 A sua versão de libcurl é mais velha que a %u.%u.%u.\nVocê tem que atualizá-la para usar o Edbrowse.
 tempo limite da operação esgotado
 não é possível enviar dados ao servidor
-a biblioteca curl retornou o seguinte erro ao executar a operação solicitada: %s
+curl: %s
 chaves estrangeiras para %s\n
 não pegar colunas de blob
 pegar colunas de blob

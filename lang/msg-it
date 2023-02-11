@@ -646,7 +646,7 @@ operazione fallita perchè la memoria non poteva essere allocata
 La tua versione di libcurl è più vecchia della versione %u.%u.%u.\nDevi aggiornare libcurl per usare edbrowse.
 timeout durante l'operazione
 impossibile inviare dati al server
-la libreria curl ha riportato il seguent messaggio di errore durante l'operazione richiesta: %s
+curl: %s
 le foreign key per %s\n
 non acquisire colonne blob
 acquisisci colonne blob

@@ -646,7 +646,7 @@ operacja zakończona niepowodzeniem z powodu błędu alokacji pamięci
 Twoja wersja libcurl jest starsza niż %u.%u.%u.\nMusisz zaktualizować by używać edbrowse
 przekroczenie czasu wykonania operacji
 nie można wysłać danych do serwera
-biblioteka curl zwróciła następującą informację o błędzie podczas wykonywania żądanej operacji: %s
+curl: %s
 klucze obce dla %s\n
 nie pobieraj kolumn BLOB
 pobieraj kolumny BLOB

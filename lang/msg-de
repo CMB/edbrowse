@@ -646,7 +646,7 @@ Operation schlug fehl, es konnte kein Speicher angefordert werden
 Ihre Version von libcurl ist älter als %u.%u.%u.\nSie müssen libcurl aktualisieren, um Edbrowse nutzen zu können.
 Zeitüberschreitung für Operation
 kann Daten nicht an Server senden
-die Curl-Bibliothek gab folgenden Fehler während der Ausführung zurück: %s
+curl: %s
 Fremdschlüssel für %s\n
 hole keine Blob-Spalten
 hole Blob-Spalten

@@ -646,7 +646,7 @@ operación fallida porque la memoria no puede ser asignada
 Tu versión de libcurl es más vieja que la versión %u.%u.%u.\nDebes actualizar libcurl para usar edbrowse.
 tiempo de espera de la operación
 no se puede enviar datos al servidor
-la libreria curl devolvió el siguiente error mientras se realizaba la operación: %s
+curl: %s
 claves externas para %s\n
 no se pueden recuperar las columnas blob
 recuperar las columnas blob

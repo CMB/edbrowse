@@ -646,7 +646,7 @@ l'opération a échoué : impossibilité d'allouer de la mémoire
 votre version de la librairie libcurl est antérieure à %u.%u.%u.\nMettez à jour libcurl pour utiliser edbrowse.
 délai d'attente de l'opération dépassé
 impossible d'envoyer des données au serveur
-la librairie curl a renvoyé ce message d'erreur suite à l'opération demandée : %s
+curl: %s
 clés extérieures pour %s\n
 ne pas extraire de colonnes blob
 extraction de colonnes blob

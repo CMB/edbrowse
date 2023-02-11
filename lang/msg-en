@@ -646,7 +646,7 @@ operation failed because memory could not be allocated
 Your version of libcurl is older than version %u.%u.%u.\nYou must upgrade libcurl in order to use edbrowse.
 operation timed out
 cannot send data to the server
-the curl library returned the following error message while performing the requested operation: %s
+curl: %s
 foreign keys for %s\n
 do not fetch blob columns
 fetch blob columns
