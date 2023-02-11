@@ -817,4 +817,5 @@ enum {
 	MSG_UpdateEBVarOff,
 	MSG_UpdateEBVarOn,
 	MSG_CmdFail,
+	MSG_SameFolder,
 };

@@ -999,8 +999,7 @@ You'll see this after the perform function runs.
 					     (move_capable ? "MOVE" : "COPY"),
 					     mif->seqno, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
-				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
-						 t);
+				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 				free(t);
 				res = getMailData(handle);
 				nzFree(mailstring);
@@ -1018,7 +1017,10 @@ You'll see this after the perform function runs.
 				} else {
 					delflag = true;
 				}
-			} else goto action;
+			} else{
+				if(g) i_puts(MSG_SameFolder);
+				goto reaction;
+			}
 		}
 
 		if (key == 'd') {
