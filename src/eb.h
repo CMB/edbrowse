@@ -260,7 +260,7 @@ struct DBTABLE {
 	char *name, *shortname;
 	char *cols[MAXTCOLS];
 	int ncols;
-	unsigned char key1, key2, key3, key4;
+	uchar key1, key2, key3, key4;
 	char *types;
 	char *nullable;
 };

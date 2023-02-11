@@ -273,7 +273,7 @@ static char *qpEncode(const char *line)
 	char c;
 	newbuf = initString(&l);
 	for (s = line; (c = *s); ++s) {
-		if (c < '\n' || c == '=' || c == '_' || c == '?') {
+		if ((signed char)c < '\n' || c == '=' || c == '_' || c == '?') {
 			char expand[4];
 			sprintf(expand, "=%02X", (uchar) c);
 			stringAndString(&newbuf, &l, expand);
