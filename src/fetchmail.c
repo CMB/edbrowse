@@ -506,6 +506,7 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	res = getMailData(handle);
 	if (res != CURLE_OK) {
+		ebcurl_setError(res, mailbox_url, 1, emptyString);
 		nzFree(mailstring);
 		return -1;
 	}
@@ -826,7 +827,10 @@ imap_done:
 				goto imap_done;
 			j2 = imapSearch(handle, f, inputline);
 			if(j2 == 0) goto reaction;
-			if(j2 < 0) goto abort;
+			if(j2 < 0) {
+				i_puts(MSG_EndFolder);
+				return;
+			}
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 			else
@@ -1041,7 +1045,7 @@ You'll see this after the perform function runs.
 		}
 	}
 
-	puts("end of folder");
+	i_puts(MSG_EndFolder);
 }
 
 // \" is an escaped quote inside the string.
