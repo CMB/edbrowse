@@ -462,7 +462,8 @@ static void cleanFolder(struct FOLDER *f)
 // search through imap server for a particular string.
 // Return 1 if the search ran successfully and found some messages.
 // Return 0 for no messages and -1 for error.
-static int imapSearch(CURL * handle, struct FOLDER *f, char *line)
+static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
+	CURLcode *res_p)
 {
 	char searchtype = 's';
 	char *t, *u;
@@ -506,7 +507,7 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line)
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	res = getMailData(handle);
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url, 1, emptyString);
+		*res_p = res;
 		nzFree(mailstring);
 		return -1;
 	}
@@ -825,12 +826,9 @@ imap_done:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
-			j2 = imapSearch(handle, f, inputline);
+			j2 = imapSearch(handle, f, inputline, &res);
 			if(j2 == 0) goto reaction;
-			if(j2 < 0) {
-				i_puts(MSG_EndFolder);
-				return;
-			}
+			if(j2 < 0) goto abort;
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 			else
