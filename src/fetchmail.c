@@ -635,7 +635,6 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 	struct MIF *mif = f->mlist;
 	int ex_cnt = 0;		// expunge count
 	char *t, *fromline = 0;
-	bool marked_for_delete = false;
 
 	if (key == 'f') {
 		fromline = this_mif->from;
@@ -683,7 +682,6 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 			if (res != CURLE_OK)
 				goto abort;
 			mif->gone = true;
-			marked_for_delete = true;
 
 /*********************************************************************
 We have thus far marked thismessage for delete, but it's not really gone
@@ -731,28 +729,15 @@ I haven't worked all this out, so for now let's just expunge every time.
 A hybrid solution wouldn't be implemented here anyways,
 this is bulk move or bulk delete.
 Bear in mind, d irreversible is consistent with the pop3 interface,
-so maybe it's not such a bad thihng.
-Now - all that said, we don't have to do the delete expunge here,
-because it isn't a mix of move and delete commands.
-It is either bulk move or bulk delete.
-We may have deleted or moved before this bulk command was issued,
-but thence we are in sync with the server.
-So just mark for delete and expunge at the end,
-like we did before.
+so maybe it's not such a bad thihng after all.
 *********************************************************************/
 
-#if 0
 			debugPrint(3, "` %d EXPUNGE", mif->seqno);
 			if(!expunge(handle)) goto abort;
 			++ex_cnt;
-#endif
 		}
 	}
 
-	if(marked_for_delete) {
-		debugPrint(3, "` EXPUNGE");
-		if(!expunge(handle)) goto abort;
-	}
 	return true;
 
 abort:
