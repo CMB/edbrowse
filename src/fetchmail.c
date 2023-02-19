@@ -744,8 +744,29 @@ abort:
 	return false;
 }
 
+// go back into a folder after a disconnect and reconnect
+static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
+{
+	CURLcode res2;
+	char *t;
+// We should check here that res1 is the right kind of error,
+// we reconnected but aren't in any folder.
+// If some other error code then return false;
+	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
+		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+	free(t);
+	res2 = getMailData(handle);
+	nzFree(mailstring);
+	if(res2 == CURLE_OK) {
+		debugPrint(3, "reconnect to %s", f->path);
+		return true;
+	}
+	debugPrint(3, "reconnect to %s failed", f->path);
+	return false;
+}
 
-/* scan through the messages in a folder */
+// scan through the messages in a folder
 static char postkey;
 static void scanFolder(CURL * handle, struct FOLDER *f)
 {
@@ -756,7 +777,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	char key;
 	char cust_cmd[80];
 	char inputline[80];
-	bool delflag;
+	bool delflag, retry;
 
 	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
@@ -786,7 +807,7 @@ showmessages:
 reaction:
 		printEnvelope(mif);
 action:
-		delflag = false;
+		delflag = retry = false;
 		postkey = 0;
 		preferPlain = false;
 		printf("? ");
@@ -1013,12 +1034,17 @@ You'll see this after the perform function runs.
 
 		if (!delflag)
 			continue;
+redelete:
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = getMailData(handle);
 		nzFree(mailstring);
-		if (res != CURLE_OK)
-			goto abort;
+		if (res != CURLE_OK) {
+			if(retry || !refolder(handle, f, res))
+				goto abort;
+			retry = true;
+			goto redelete;
+		}
 		mif->gone = true;
 		debugPrint(3, "` %d EXPUNGE", mif->seqno);
 		if(!expunge(handle)) goto abort;
