@@ -2348,7 +2348,7 @@ static int entry_cmp(const void *s, const void *t)
  * Is a URL present in the cache?  This can save on HEAD requests,
  * since we can just do a straight GET if the item is not there.
  */
-bool presentInCache(const char *url)
+bool presentInCache(const char *url, bool *recent)
 {
 	bool ret = false;
 	struct CENTRY *e;
@@ -2358,7 +2358,6 @@ bool presentInCache(const char *url)
 		return false;
 
 	e = entries;
-
 	for (i = 0; (!ret && i < numentries); ++i, ++e) {
 		if (!sameURL(url, e->url))
 			continue;
@@ -2367,6 +2366,12 @@ bool presentInCache(const char *url)
 
 	free(cache_data);
 	clearLock();
+	if(ret) {
+		time(&now_t);
+		int j = now_t / 8;
+// accessed within the past 5 minutes?
+		*recent = (j - e->accesstime <= 40);
+	}
 	return ret;
 }
 

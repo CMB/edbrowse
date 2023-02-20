@@ -752,7 +752,7 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 // We should check here that res1 is the right kind of error,
 // we reconnected but aren't in any folder.
 // If some other error code then return false;
-	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
+	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
@@ -853,6 +853,7 @@ dispmail:
 		if (key == ' ' || key == 'g' || key == 't') {
 			if(key == 't') preferPlain = true;
 // download the email from the imap server
+redown:
 			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 					 cust_cmd);
@@ -880,10 +881,11 @@ You'll see this after the perform function runs.
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 			undosOneMessage();
 			if (res != CURLE_OK) {
-// I don't know why the read message didn't work, probably connection error,
-// curl is probably going to log back in, so abort this folder.
 				nzFree(mailstring);
-				goto abort;
+				if(retry || !refolder(handle, f, res))
+					goto abort;
+				retry = true;
+				goto redown;
 			}
 
 /* have to strip 2 fetch BODY lines off the front,
@@ -1408,7 +1410,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	cleanFolder(f);
 
 /* interrogate folder */
-	if (asprintf(&t, "EXAMINE \"%s\"", f->path) == -1)
+	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);

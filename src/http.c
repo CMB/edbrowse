@@ -823,6 +823,7 @@ bool httpConnect(struct i_get *g)
 	bool proceed_unauthenticated = false;
 	bool post_request = false;
 	bool head_request = false;
+	bool recent;
 	uchar sxfirst = 0;
 	int n;
 
@@ -1076,7 +1077,7 @@ mimestream:
 
 	still_fetching = true;
 
-	if (!post_request && (g->headrequest || presentInCache(g->urlcopy))) {
+	if (!post_request && (g->headrequest || presentInCache(g->urlcopy, &recent))) {
 		head_request = true;
 		curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
 	}
@@ -1323,7 +1324,7 @@ they go where they go, so this doesn't come up very often.
 				if (curlret != CURLE_OK)
 					goto curl_fail;
 
-				if (!post_request && (g->headrequest || presentInCache(g->urlcopy))) {
+				if (!post_request && (g->headrequest || presentInCache(g->urlcopy, &recent))) {
 					head_request = true;
 					curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
 				}

@@ -375,7 +375,7 @@ void mergeCookies(void);
 void setupEdbrowseCache(void);
 void clearCache(void) ;
 bool fetchCache(const char * url, const char *etag, time_t modtime, char **data, int *data_len) ;
-bool presentInCache(const char *url) ;
+bool presentInCache(const char *url, bool *recent) ;
 void storeCache(const char *url, const char *etag, time_t modtime, const char *data, int datalen) ;
 bool getUserPass(const char *url, char *creds, bool find_proxy) ;
 bool getUserPassRealm(const char *url, char *creds, const char *realm);
