@@ -823,7 +823,11 @@ action:
 		if (key == 'q') {
 			i_puts(MSG_Quit);
 imap_done:
+/* at this point we should say goodbye to imap and to curl, but on some servers,
+ * and under some anomalous situations, it can take 10 minutes.
+ * We don't lose anything by simply dropping the socket.
 			curl_easy_cleanup(handle);
+ */
 			exit(0);
 		}
 

@@ -1103,7 +1103,14 @@ mimestream:
 
 perform:
 		g->is_http = g->cacheable = true;
-		curlret = fetch_internet(g);
+		if(hlocal) {
+			g->buffer = initString(&g->length);
+			g->headers = initString(&g->headers_len);
+			g->code = 200;
+			curlret = (head_request ? CURLE_OK : CURLE_COULDNT_CONNECT);
+		} else {
+			curlret = fetch_internet(g);
+		}
 
 /*********************************************************************
 This is a one line workaround for an apparent bug in curl.
@@ -1248,7 +1255,8 @@ they go where they go, so this doesn't come up very often.
 			goto perform;
 		}
 // get http code
-		curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
+		if(!hlocal)
+			curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
 

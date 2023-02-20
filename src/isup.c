@@ -2272,19 +2272,20 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 	char *newrec;
 	size_t newlen = 0;
 
-/* you have to give me enough information */
-	if (!modtime && (!etag || !*etag))
+// you have to give me enough information
+	if (!hlocal && !modtime && (!etag || !*etag))
 		return false;
 
 	if (!setLock())
 		return false;
 
-/* find the url */
+// find the url
 	e = entries;
 	for (i = 0; i < numentries; ++i, ++e) {
 		if (!sameURL(url, e->url))
 			continue;
-/* look for match on etag */
+		if(hlocal) goto match;
+// look for match on etag
 		if (e->etag[0] && etag && etag[0]) {
 /* both etags are present */
 			if (stringEqual(etag, e->etag))
