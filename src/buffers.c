@@ -5608,6 +5608,20 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "local")) {
+		hlocal ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(hlocal + MSG_HttpInternet);
+		return true;
+	}
+
+	if (stringEqual(line, "local+") || stringEqual(line, "local-")) {
+		hlocal = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(hlocal + MSG_HttpInternet);
+		return true;
+	}
+
 	if (stringEqual(line, "dbcn")) {
 		debugClone ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

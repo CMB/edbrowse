@@ -361,6 +361,7 @@ extern char *cookieFile;	/* persistent cookies */
 extern char *cacheDir;	/* directory for a persistent cache of http pages */
 extern int cacheSize; // in megabytes
 extern int cacheCount; // number of cache files
+extern bool hlocal; // http local, read from cache only
 
 // General link list. This is, interestingly, the same design
 // that Fabrice came up with for his quickjs project.

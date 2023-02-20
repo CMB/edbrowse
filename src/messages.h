@@ -818,4 +818,6 @@ enum {
 	MSG_UpdateEBVarOn,
 	MSG_CmdFail,
 	MSG_SameFolder,
+	MSG_HttpInternet,
+	MSG_HttpLocal,
 };
