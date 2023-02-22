@@ -2017,11 +2017,11 @@ void setupEdbrowseCache(void)
 		}
 	}
 
-/* the cache control file, which urls go to which files, and when fetched? */
+// the cache control file, which urls go to which files, and when fetched?
 	nzFree(cacheControl);
 	cacheControl = allocMem(strlen(cacheDir) + 11);
 	sprintf(cacheControl, "%s/control%02d", cacheDir, CACHECONTROLVERSION);
-/* make sure the control file exists, just for grins */
+// make sure the control file exists, just for grins
 	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
 	if (fh >= 0)
 		close(fh);
@@ -2068,8 +2068,8 @@ static bool readControl(void)
 	for (s = data; s != endfile; s = t, ++ln) {
 		t = strchr(s, '\n');
 		if (!t) {
-/* file does not end in newline; this should never happen! */
-/* Not sure what to do, but at least it's not a seg fault. */
+// file does not end in newline; this should never happen!
+// Not sure what to do, but at least it's not a seg fault.
 			break;
 		}
 		++t;
@@ -2078,8 +2078,7 @@ static bool readControl(void)
 		e->url = s;
 		s = strchr(s, '\t');
 		if (!s || s >= t) {
-			debugPrint(3, "cache control file line %d is bogus",
-				   ln);
+			debugPrint(3, "cache control file line %d is bogus", ln);
 			continue;
 		}
 		*s++ = 0;
@@ -2088,8 +2087,7 @@ static bool readControl(void)
 		e->etag = s;
 		s = strchr(s, '\t');
 		if (!s || s >= t) {
-			debugPrint(3, "cache control file line %d is bogus",
-				   ln);
+			debugPrint(3, "cache control file line %d is bogus", ln);
 			continue;
 		}
 		*s++ = 0;
@@ -2189,7 +2187,7 @@ top:
 				control_fh =
 				    open(cacheControl, O_RDWR | O_BINARY, 0);
 				if (control_fh < 0) {
-/* got the lock but couldn't open the database */
+// got the lock but couldn't open the database
 					unlink(cacheLock);
 					return false;
 				}
@@ -2298,7 +2296,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime, bool grab,
 			goto nomatch;
 		goto match;
 	}
-/* url not found */
+// url not found
 
 nomatch:
 	free(cache_data);
@@ -2323,7 +2321,8 @@ match:
 	newlen = strlen(newrec);
 	if (newlen == e->textlength) {
 		lseek(control_fh, e->offset, 0);
-		write(control_fh, newrec, newlen);
+		if(write(control_fh, newrec, newlen) < (int)newlen)
+			debugPrint(2, "cache cannot write %d bytes", newlen);
 	} else {
 		if (!writeControl())
 			clearCacheInternal();
@@ -2358,10 +2357,11 @@ bool presentInCache(const char *url, bool *recent)
 		return false;
 
 	e = entries;
-	for (i = 0; (!ret && i < numentries); ++i, ++e) {
+	for (i = 0; i < numentries; ++i, ++e) {
 		if (!sameURL(url, e->url))
 			continue;
 		ret = true;
+		break;
 	}
 
 	free(cache_data);
@@ -2369,7 +2369,8 @@ bool presentInCache(const char *url, bool *recent)
 	if(ret) {
 		time(&now_t);
 		int j = now_t / 8;
-// accessed within the past 5 minutes?
+// accessed within the past 5 minutes? If so then perhaps
+// We don't have to issue the head request across the internet.
 		*recent = (j - e->accesstime <= 40);
 	}
 	return ret;

@@ -1080,7 +1080,7 @@ mimestream:
 	if (!post_request && (g->headrequest || presentInCache(g->urlcopy, &recent))) {
 		head_request = true;
 		curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
-//		if(!local2 && !g->headrequest && recent) { local2 = true; debugPrint(3, "skip head"); }
+		if(!local2 && !g->headrequest && recent) { local2 = true; debugPrint(3, "skip head"); }
 	}
 
 	while (still_fetching == true) {
@@ -1328,7 +1328,7 @@ they go where they go, so this doesn't come up very often.
 				if (!post_request && (g->headrequest || presentInCache(g->urlcopy, &recent))) {
 					head_request = true;
 					curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
-//					if(!local2 && !g->headrequest && recent) { local2 = true; debugPrint(3, "skip head"); }
+					if(!local2 && !g->headrequest && recent) { local2 = true; debugPrint(3, "skip head"); }
 				}
 // This is unusual in that we're using the i_get structure again,
 // so we need to reset some parts of it and not others.
