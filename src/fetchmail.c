@@ -836,9 +836,15 @@ imap_done:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
+research:
 			j2 = imapSearch(handle, f, inputline, &res);
 			if(j2 == 0) goto reaction;
-			if(j2 < 0) goto abort;
+			if(j2 < 0) {
+				if(retry || !refolder(handle, f, res))
+					goto abort;
+				retry = true;
+				goto research;
+			}
 			if (f->nmsgs > f->nfetch)
 				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 			else
@@ -967,8 +973,13 @@ You'll see this after the perform function runs.
 					goto reaction;
 				}
 			}
-			if(!bulkMoveDelete(handle, f, mif, key, subkey, g))
-				goto abort;
+rebulk:
+			if(!bulkMoveDelete(handle, f, mif, key, subkey, g)) {
+				if(retry || !refolder(handle, f, res))
+					goto abort;
+				retry = true;
+				goto rebulk;
+			}
 // If current mail is gone, step ahead.
 			if (mif->gone)
 				continue;

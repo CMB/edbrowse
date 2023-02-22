@@ -6,6 +6,8 @@ W !shell_command   reads the data back into the buffer
 local command reads pages from cache.
 don't issue head request if you (recently) read the page or confirmed its etag.
 
+Recover from an imap disconect and reconnect.
+
 3.8.6
 Support tls sockets, and the lst command, for irc.
 
