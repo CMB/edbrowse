@@ -910,8 +910,9 @@ You'll see this after the perform function runs.
 			}
 
 			key = presentMail();
-/* presentMail has already freed mailstring */
+			retry = false; // user has issued another command
 			postkey = 0;
+// presentMail has already freed mailstring
 			if(key == 'g') goto dispmail;
 			if(strchr("wua", key)) goto reaction;
 		}
@@ -1005,6 +1006,7 @@ You'll see this after the perform function runs.
 				goto imap_done;
 			g = folderByName(inputline);
 			if (g && g != f) {
+re_move:
 				if (asprintf(&t, "%s %d \"%s\"",
 					     (move_capable ? "MOVE" : "COPY"),
 					     mif->seqno, g->path) == -1)
@@ -1013,8 +1015,12 @@ You'll see this after the perform function runs.
 				free(t);
 				res = getMailData(handle);
 				nzFree(mailstring);
-				if (res != CURLE_OK)
-					goto abort;
+				if (res != CURLE_OK) {
+					if(retry || !refolder(handle, f, res))
+						goto abort;
+					retry = true;
+					goto re_move;
+				}
 // The move command shifts all the sequence numbers down.
 				if (move_capable) {
 					mif->gone = true;
