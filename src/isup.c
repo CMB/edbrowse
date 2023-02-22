@@ -2264,7 +2264,7 @@ so is at the top of the list, and won't be removed.
 In other words, a destructive race condition is almost impossible. Some goofy
 characters are prepended to the filename to help us identify it as such. */
 
-bool fetchCache(const char *url, const char *etag, time_t modtime,
+bool fetchCache(const char *url, const char *etag, time_t modtime, bool grab,
 		char **data, int *data_len)
 {
 	struct CENTRY *e;
@@ -2273,7 +2273,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 	size_t newlen = 0;
 
 // you have to give me enough information
-	if (!hlocal && !modtime && (!etag || !*etag))
+	if (!grab && !modtime && (!etag || !*etag))
 		return false;
 
 	if (!setLock())
@@ -2284,7 +2284,7 @@ bool fetchCache(const char *url, const char *etag, time_t modtime,
 	for (i = 0; i < numentries; ++i, ++e) {
 		if (!sameURL(url, e->url))
 			continue;
-		if(hlocal) goto match;
+		if(grab) goto match;
 // look for match on etag
 		if (e->etag[0] && etag && etag[0]) {
 /* both etags are present */

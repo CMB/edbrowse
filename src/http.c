@@ -823,7 +823,7 @@ bool httpConnect(struct i_get *g)
 	bool proceed_unauthenticated = false;
 	bool post_request = false;
 	bool head_request = false;
-	bool recent;
+	bool recent, local2 = hlocal;
 	uchar sxfirst = 0;
 	int n;
 
@@ -1080,6 +1080,7 @@ mimestream:
 	if (!post_request && (g->headrequest || presentInCache(g->urlcopy, &recent))) {
 		head_request = true;
 		curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
+//		if(!local2 && !g->headrequest && recent) { local2 = true; debugPrint(3, "skip head"); }
 	}
 
 	while (still_fetching == true) {
@@ -1104,7 +1105,7 @@ mimestream:
 
 perform:
 		g->is_http = g->cacheable = true;
-		if(hlocal) {
+		if(local2) {
 			g->buffer = initString(&g->length);
 			g->headers = initString(&g->headers_len);
 			g->code = 200;
@@ -1256,7 +1257,7 @@ they go where they go, so this doesn't come up very often.
 			goto perform;
 		}
 // get http code
-		if(!hlocal)
+		if(!local2)
 			curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &g->code);
 		if (curlret != CURLE_OK)
 			goto curl_fail;
@@ -1327,6 +1328,7 @@ they go where they go, so this doesn't come up very often.
 				if (!post_request && (g->headrequest || presentInCache(g->urlcopy, &recent))) {
 					head_request = true;
 					curl_easy_setopt(h, CURLOPT_NOBODY, 1l);
+//					if(!local2 && !g->headrequest && recent) { local2 = true; debugPrint(3, "skip head"); }
 				}
 // This is unusual in that we're using the i_get structure again,
 // so we need to reset some parts of it and not others.
@@ -1393,7 +1395,7 @@ they go where they go, so this doesn't come up very often.
 					break;
 				}
 				if (fetchCache
-				    (g->urlcopy, g->etag, g->modtime,
+				    (g->urlcopy, g->etag, g->modtime, local2,
 				     &cacheData, &cacheDataLen)) {
 					nzFree(g->buffer);
 					g->buffer = cacheData;

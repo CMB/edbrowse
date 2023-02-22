@@ -4083,6 +4083,14 @@ If this is set to 0, edbrowse does not cache any files.
 When the cache is full, edbrowse deletes the 100 oldest files and marches on.
 Edbrowse does not retain more than 10,000 files, even if the cache could hold more.
 
+<p>
+The local command causes edbrowse to read http or https pages from cache. It does not go out to the internet.
+If a page is not in cache it prints a connection error.
+This can be useful when there is no internet connection and you want to review some pages that are cached.
+It can also be used in a function that fetches a web page that is static, and fetched often, so it will not fall out of cache.
+Remember that settings are local to a function, so local+ in a function will not disturb your interactive session.
+This setting does not affect ftp, scp, gopher, etc.
+
 <P>
 imapfetch = 40
 
