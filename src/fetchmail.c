@@ -824,7 +824,7 @@ action:
 			i_puts(MSG_Quit);
 imap_done:
 /* at this point we should say goodbye to imap and to curl, but on some servers,
- * and under some anomalous situations, it can take 10 minutes.
+ * and under some anomalous situations, it can take over a minute.
  * We don't lose anything by simply dropping the socket.
 			curl_easy_cleanup(handle);
  */
@@ -1644,7 +1644,11 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 		if (!n_folders) {
 			i_puts(MSG_NoFolders);
 imap_done:
+/* at this point we should say goodbye to imap and to curl, but on some servers,
+ * and under some anomalous situations, it can take over a minute.
+ * We don't lose anything by simply dropping the socket.
 			curl_easy_cleanup(handle);
+ */
 			exit(0);
 		}
 
