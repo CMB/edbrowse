@@ -2635,15 +2635,9 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		if (vr == vl)
 			continue;	// empty
 
-// is it too long?
-// Should print out an error or something.
-		if (vr - vl > MHLINE - 1)
-			vr = vl + MHLINE - 1;
-
-/* This is sort of a switch statement on the word */
+// This is sort of a switch statement on the word
 		if (memEqualCI(s, "subject:", q - s)) {
-			if (w->subject[0])
-				continue;
+			if (w->subject[0]) continue;
 // get rid of forward/reply prefixes
 			for (q = vl; q < vr; ++q) {
 				static const char *const prefix[] = {
@@ -2669,6 +2663,10 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 				vr -= j;
 				--q;	/* try again */
 			}
+// is it too long?
+// Should print out an error or something.
+			if (vr - vl > MHLINE - 1)
+				vr = vl + MHLINE - 1;
 			strncpy(w->subject, vl, vr - vl);
 			mhReformat((vl = w->subject));
 			vr = vl + strlen(vl);
@@ -2678,26 +2676,33 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		}
 
 		if (memEqualCI(s, "reply-to:", q - s)) {
-			if (!w->reply[0])
-				strncpy(w->reply, vl, vr - vl);
+			if (w->reply[0]) continue;
+			if (vr - vl > MHLINE - 1)
+				vr = vl + MHLINE - 1;
+			strncpy(w->reply, vl, vr - vl);
 			continue;
 		}
 
 		if (memEqualCI(s, "message-id:", q - s)) {
-			if (!w->mid[0])
-				strncpy(w->mid, vl, vr - vl);
+			if (w->mid[0]) continue;
+			if (vr - vl > MHLINE - 1)
+				vr = vl + MHLINE - 1;
+			strncpy(w->mid, vl, vr - vl);
 			continue;
 		}
 
 		if (memEqualCI(s, "references:", q - s)) {
-			if (!w->ref[0])
-				strncpy(w->ref, vl, vr - vl);
+			if (w->ref[0]) continue;
+			if (vr - vl > MHLINE - 1)
+				vr = vl + MHLINE - 1;
+			strncpy(w->ref, vl, vr - vl);
 			continue;
 		}
 
 		if (memEqualCI(s, "from:", q - s)) {
-			if (w->from[0])
-				continue;
+			if (w->from[0]) continue;
+			if (vr - vl > MHLINE - 1)
+				vr = vl + MHLINE - 1;
 			isoDecode(vl, &vr);
 			strncpy(w->from, vl, vr - vl);
 			mhReformat(w->from);
@@ -2706,14 +2711,15 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 
 		if (memEqualCI(s, "date:", q - s)
 		    || memEqualCI(s, "sent:", q - s)) {
-			if (w->date[0])
-				continue;
+			if (w->date[0]) continue;
 // don't need the weekday, seconds, or timezone
 			if (vr - vl > 5 &&
 			    isalphaByte(vl[0]) && isalphaByte(vl[1])
 			    && isalphaByte(vl[2]) && vl[3] == ','
 			    && vl[4] == ' ')
 				vl += 5;
+			if (vr - vl > MHLINE - 1) // should never happen
+				vr = vl + MHLINE - 1;
 			strncpy(w->date, vl, vr - vl);
 			q = strrchr(w->date, ':');
 			if (q)

@@ -12,7 +12,7 @@
 #define ABDELIMITER ':'		// character between fields in address book entry
 #define FULLNAMEDELIMITER '>'		// character between email address and full name in address book entry
 #define REPLACEMENTFULLNAMEDELIMITER '\n' // character temporarily used between email address and full name
-#define MAXRECAT 100		// max number of recipients or attachments
+#define MAXRECAT 1000		// max number of recipients or attachments
 #define MAXMSLINE 1024		// max mail server line
 #define LONGLINELIMIT 76
 #define LONGWORDLIMIT 998
