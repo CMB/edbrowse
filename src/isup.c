@@ -600,7 +600,7 @@ bool missingProtURL(const char *url)
 	return (s != url);
 }
 
-static char hostbuf[MAXHOSTLEN];
+static char hostbuf[MAXHOSTLEN + 4];
 const char *getHostURL(const char *url)
 {
 	int l;
@@ -781,8 +781,8 @@ char *getFileURL(const char *url, bool chophash)
 /* don't retain the .browse suffix on a url */
 	if (e - s > 7 && stringEqual(e - 7, ".browse"))
 		e -= 7;
-	if (e - s > 64)
-		e = s + 64;
+	if (e - s > MAXHOSTLEN)
+		e = s + MAXHOSTLEN;
 	if (e == s)
 		strcpy(hostbuf, "/");
 	else {
