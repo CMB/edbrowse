@@ -90,7 +90,7 @@ type = pdf
 desc = pdf file
 suffix = pdf
 content = application/pdf
-program = pdftohtml -i -noframes %i %o >/dev/null
+program = pdftohtml -i -q -noframes %i %o
 # indique que la sortie est de l'html, plutôt que du texte
 outtype = H
 down_url
@@ -118,6 +118,7 @@ agent = Mozilla/4.0 (compatible; MSIE 5.5; Windows 98; Win 9x 4.90)
 function+gg {
 db0
 b http://www.google.com
+sw+
 /<>/ i=~0
 db1
 /</ i1*
@@ -128,13 +129,15 @@ db1
 # le mot cherché
 # <mv éléphant
 function+mw {
-b http://www.merriam-webster.com/dictionary/~1
+b http://www.merriam-webster.com/dictionary/~0
+sw+
 /spelling suggestion/X
-if(?) {
+if(*){
+/{.*}?/
+} else {
 /^h1/X
+/^h2/
 }
-/^$/X
-/./p
 }
 # Cette fonction s'exécute au démarrage de edbrowse
 function:init {

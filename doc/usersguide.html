@@ -4472,6 +4472,8 @@ function+gg {
 <br>
 &nbsp;&nbsp;b http://www.google.com
 <br>
+&nbsp;&nbsp;sw+
+<br>
 &nbsp;&nbsp;/&lt;&gt;/f i=~0
 <br>
 &nbsp;&nbsp;/&lt;/f i1*
@@ -4689,7 +4691,7 @@ suffix = pdf
 content = application/pdf
 #  file must be local
 down_url
-program = pdftohtml -i -noframes %i %o >/dev/null
+program = pdftohtml -i -q -noframes %i %o
 outtype = H
 }
 </font></PRE>
