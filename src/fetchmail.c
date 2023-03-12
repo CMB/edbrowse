@@ -812,9 +812,12 @@ action:
 		preferPlain = false;
 		printf("? ");
 		fflush(stdout);
+// include +-^$ for some other options
 		key = getLetter("h?qvbefdsmnp gtwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
+		if(key == '+') key = 'n';
+		if(key == '-') key = 'p';
 		if (key == '?' || key == 'h') {
 			i_puts(MSG_ImapMessageHelp);
 			goto action;
@@ -934,6 +937,30 @@ You'll see this after the perform function runs.
 				goto reaction;
 			i_puts(MSG_NoPrevMail);
 			mif = f->mlist + (j = j2);
+			goto reaction;
+		}
+
+		if (key == '$') {
+			j = f->nfetch;
+			mif = f->mlist + j;
+			while(--j >= 0) {
+				--mif;
+				if(!mif->gone) goto reaction;
+			}
+// we can't possibly be here!
+			++j, ++mif;
+			goto reaction;
+		}
+
+		if (key == '^') {
+			j = 0;
+			mif = f->mlist;
+			while(j < f->nfetch) {
+				if(!mif->gone) goto reaction;
+				++j, ++mif;
+			}
+// we can't possibly be here!
+			j = 0, mif = f->mlist;
 			goto reaction;
 		}
 
