@@ -4,7 +4,6 @@ Here are some changes introduced by recent versions of edbrowse.
 W !shell_command   reads the data back into the buffer
 
 local command reads pages from cache.
-don't issue head request if you (recently) read the page or confirmed its etag.
 
 Recover from an imap disconect and reconnect.
 
