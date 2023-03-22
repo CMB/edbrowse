@@ -820,4 +820,5 @@ enum {
 	MSG_SameFolder,
 	MSG_HttpInternet,
 	MSG_HttpLocal,
+	MSG_SessionMode,
 };

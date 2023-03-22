@@ -14,6 +14,7 @@ extern "C" {
 void setHistcontrol(void);
 void undoSpecialClear(void);
 void removeHiddenNumbers(pst p, uchar terminate, int cx);
+pst fetchLineContext(int n, int show, int cx);
 pst fetchLine(int n, int show);
 void displayLine(int n);
 void printDot(void);
@@ -211,6 +212,7 @@ const char *findAgentForURL(const char *url);
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 int runEbFunction(const char *line);
 const char *getInputLineFromScript(void);
+bool runBuffer(int b);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
 bool readConfigFile(void);

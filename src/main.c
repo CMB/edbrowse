@@ -1249,6 +1249,39 @@ const char *getInputLineFromScript(void)
 	return new;
 }
 
+bool runBuffer(int b)
+{
+	int ln, dol;
+	const Window *w;
+	char b0[16];
+	sprintf(b0, "session %d", b);
+	if(!b) { setError(MSG_Session0); return false; }
+	if(b >= MAXSESSION) {
+		setError(MSG_SessionHigh, b, MAXSESSION - 1);
+		return false;
+	}
+	if(!cxActive(b, true)) return false;
+	w = sessionList[b].lw;
+	dol = w->dol;
+	if(!dol) { setError(MSG_BufferXEmpty, b); return false; }
+	if(w->dirMode | w->binMode | w->sqlMode | w->irciMode | w->ircoMode | w->browseMode) {
+		setError(MSG_SessionMode);
+		return false;
+	}
+	for(ln = 1; ln <= dol; ++ln) {
+		char *p = (char*)fetchLineContext(ln, -1, b);
+		char *s = strchr(p, '\n');
+		if(!s) { // line contains nulls
+			setError(MSG_EBRC_Nulls, b, ln);
+			return false;
+		}
+		*s = 0; // I'll put it back
+		edbrowseCommand(p, true);
+		*s = '\n';
+	}
+	return true;
+}
+
 struct DBTABLE *findTableDescriptor(const char *sn)
 {
 	int i;

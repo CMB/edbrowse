@@ -154,7 +154,7 @@ addchar:
  * all the time, even if the line doesn't change, to be consistent.
  * You can suppress the copy feature with -1. */
 
-static pst fetchLineContext(int n, int show, int cx)
+pst fetchLineContext(int n, int show, int cx)
 {
 	Window *lw = sessionList[cx].lw;
 	struct lineMap *map, *t;
@@ -7193,9 +7193,15 @@ dest_ok:
 		return rc;
 	}
 
-	if (cmd == '<') {	/* run a function */
+	if (cmd == '<') {	// run a function
+		int b = stringIsNum(line);
 		cw->dot = endRange;
-		j =  runEbFunction(line);
+		if(b >= 0) {
+			j = runBuffer(b);
+			if(!j) j = -1;
+		} else {
+			j =  runEbFunction(line);
+		}
 		if(j < 0)
 			globSub = false, j = 0;
 		return j;

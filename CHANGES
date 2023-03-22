@@ -7,6 +7,8 @@ local command reads pages from cache.
 
 Recover from an imap disconect and reconnect.
 
+<7 to run the commands in session 7
+
 3.8.6
 Support tls sockets, and the lst command, for irc.
 
