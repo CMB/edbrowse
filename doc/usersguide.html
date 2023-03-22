@@ -807,6 +807,7 @@ ds=source,login,password : set the data source
 Edbrowse Functions
 <P>
 &lt;foo arg1 arg2 &#8230; : invoke the function foo, defined in your .ebrc file
+<br>&lt;7 : run the commands in session 7
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
 <P>
@@ -4533,6 +4534,13 @@ It then deletes the blank lines at the top.
 <P>
 You can use loop(100){ ... } to repeat a set of commands 100 times.
 This feature is not used very often.
+
+<P>
+&lt;7 executes the edbrowse commands in session 7.
+This is not a function, simply a sequence of commands.
+The commands are executed in your current context.
+If session 7 has one line, containing the letter n, &lt;7 will print the current line, with its number, in your current session.
+It is possible to be in session 7 and issue &lt;7, though I don't know when you would ever want to do that.
 
 <h2> <A NAME=init> The Init Function </A> </h2>
 

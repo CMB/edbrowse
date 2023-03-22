@@ -1272,7 +1272,7 @@ bool runBuffer(int b)
 		char *p = (char*)fetchLineContext(ln, -1, b);
 		char *s = strchr(p, '\n');
 		if(!s) { // line contains nulls
-			setError(MSG_EBRC_Nulls, b, ln);
+			setError(MSG_EBRC_Nulls, b0, ln);
 			return false;
 		}
 		*s = 0; // I'll put it back
