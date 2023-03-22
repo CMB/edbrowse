@@ -1249,9 +1249,10 @@ const char *getInputLineFromScript(void)
 	return new;
 }
 
+static int *rb_ln, *rb_b;
 bool runBuffer(int b)
 {
-	int ln, dol;
+	int ln;
 	const Window *w;
 	char b0[16];
 	sprintf(b0, "session %d", b);
@@ -1262,22 +1263,27 @@ bool runBuffer(int b)
 	}
 	if(!cxActive(b, true)) return false;
 	w = sessionList[b].lw;
-	dol = w->dol;
-	if(!dol) { setError(MSG_BufferXEmpty, b); return false; }
+	if(!w->dol) { setError(MSG_BufferXEmpty, b); return false; }
 	if(w->dirMode | w->binMode | w->sqlMode | w->irciMode | w->ircoMode | w->browseMode) {
 		setError(MSG_SessionMode);
 		return false;
 	}
-	for(ln = 1; ln <= dol; ++ln) {
-		char *p = (char*)fetchLineContext(ln, -1, b);
+	for(ln = 1; ln <= w->dol; ++ln) {
+		char *p = (char*)fetchLineContext(ln, 0, b);
 		char *s = strchr(p, '\n');
 		if(!s) { // line contains nulls
 			setError(MSG_EBRC_Nulls, b0, ln);
+			free(p);
 			return false;
 		}
-		*s = 0; // I'll put it back
+		*s = 0;
+		rb_ln = &ln, rb_b = &b;
+// Here we go!
+		debugPrint(3, "< %s", p);
 		edbrowseCommand(p, true);
-		*s = '\n';
+		free(p);
+// has the window gone away?
+		if(w != sessionList[b].lw) break;
 	}
 	return true;
 }
