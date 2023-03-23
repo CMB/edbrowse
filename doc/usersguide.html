@@ -808,6 +808,7 @@ Edbrowse Functions
 <P>
 &lt;foo arg1 arg2 &#8230; : invoke the function foo, defined in your .ebrc file
 <br>&lt;7 : run the commands in session 7
+<br>&lt;+7 : run the commands but stopp on error
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
 <P>
@@ -4546,6 +4547,10 @@ There might be unintended consequences, if earlier commands modify the commands 
 <p>
 Since this is not a function, it does not take arguments.
 However, you can use edbrowse to construct the commands in session 7 just as you want them.
+
+<P>
+&lt;+7 executes the commands in session 7, but stops upon error.
+This is like + in a function declaration, which has the same effect.
 
 <h2> <A NAME=init> The Init Function </A> </h2>
 

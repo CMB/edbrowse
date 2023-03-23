@@ -1273,10 +1273,11 @@ const char *getInputLineFromScript(void)
 	return new;
 }
 
-bool runBuffer(int b)
+bool runBuffer(int b, bool stopflag)
 {
 	int ln;
 	const Window *w;
+	bool ok;
 	char b0[16];
 	sprintf(b0, "session %d", b);
 	if(!b) { setError(MSG_Session0); return false; }
@@ -1303,8 +1304,9 @@ bool runBuffer(int b)
 		rb_ln = &ln, rb_b = &b, endl_ptr = 0;
 // Here we go!
 		debugPrint(3, "< %s", p);
-		edbrowseCommand(p, true);
+		ok = edbrowseCommand(p, true);
 		free(p);
+		if(stopflag && !ok) return false;
 // has the window gone away?
 		if(w != sessionList[b].lw) break;
 	}
