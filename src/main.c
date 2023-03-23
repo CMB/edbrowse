@@ -909,6 +909,101 @@ static const char **args_ptr;
 static int *argl_ptr;
 static int *rb_ln, *rb_b;
 
+struct ebSettings {
+	bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow;
+	uchar dw, ls_sort;
+	char lsformat[12], showProgress;
+	char *currentAgent;
+	int agentIndex, context, cx_previous, debugLevel, timerspeed;
+	int ll, fll;
+};
+
+static void saveEbSettings(struct ebSettings *s)
+{
+	s->currentAgent = currentAgent, s->agentIndex = agentIndex;
+	s->context = context;
+	s->cx_previous = cx_previous, cx_previous = 0;
+	s->debugLevel = debugLevel;
+	s->timerspeed = timerspeed;
+	s->dw = dirWrite;
+	s->dno = dno;
+	s->ebvar = ebvar;
+	s->flow = flow;
+	s->ls_sort = ls_sort;
+	strcpy(s->lsformat, lsformat);
+	s->showProgress = showProgress;
+	s->bg = down_bg;
+	s->jsbg = down_jsbg;
+	s->iu = iuConvert;
+	s->bd = binaryDetect;
+	s->rl = inputReadLine;
+	s->can = curlAuthNegotiate;
+	s->lna = listNA;
+	s->fbc = fetchBlobColumns;
+	s->ls_reverse = ls_reverse;
+	s->sw = searchWrap;
+	s->ebre = ebre;
+	s->hr = allowRedirection;
+	s->sr = sendReferrer;
+	s->js = allowJS;
+	s->ftpa = ftpActive;
+	s->H = helpMessagesOn;
+	s->pg = pluginsOn;
+	s->hf = showHiddenFiles;
+	s->showall = showall;
+	s->endm = endMarks;
+	s->sg = searchStringsAll;
+	s->ci = caseInsensitive;
+	s->su8 = re_utf8;
+	s->vs = verifyCertificates;
+	s->hlocal = hlocal;
+	s->ll = displayLength;
+	s->fll = formatLineLength;
+	s->fllo = formatOverflow;
+}
+
+static void restoreEbSettings(struct ebSettings *s)
+{
+	currentAgent = s->currentAgent, agentIndex = s->agentIndex;
+	cx_previous = (context == s->context) ? s->cx_previous : s->context;
+	debugLevel = s->debugLevel;
+	timerspeed = s->timerspeed;
+	dirWrite = s->dw;
+	dno = s->dno;
+	ebvar = s->ebvar;
+	flow = s->flow;
+	ls_sort = s->ls_sort;
+	strcpy(lsformat, s->lsformat);
+	showProgress = s->showProgress;
+	down_bg = s->bg;
+	down_jsbg = s->jsbg;
+	iuConvert = s->iu;
+	binaryDetect = s->bd;
+	inputReadLine = s->rl;
+	curlAuthNegotiate = s->can;
+	listNA = s->lna;
+	ls_reverse = s->ls_reverse;
+	searchWrap = s->sw;
+	ebre = s->ebre;
+	allowRedirection = s->hr;
+	sendReferrer = s->sr;
+	allowJS = s->js;
+	ftpActive = s->ftpa;
+	helpMessagesOn = s->H;
+	pluginsOn = s->pg;
+	showHiddenFiles = s->hf;
+	showall = s->showall;
+	endMarks = s->endm;
+	searchStringsAll = s->sg;
+	caseInsensitive = s->ci;
+	re_utf8 = s->su8;
+	verifyCertificates = s->vs;
+	hlocal = s->hlocal;
+	displayLength = s->ll;
+	formatLineLength = s->fll;
+	formatOverflow = s->fllo;
+}
+
 static char *substituteArgs(void)
 {
 	const char *ip = ip_ptr;
@@ -962,16 +1057,8 @@ int runEbFunction(const char *line)
 	int rc = -1;
 	char stack[MAXNEST];
 	int loopcnt[MAXNEST];
-
 // local copies of settings, to restore after function runs.
-	struct {
-		bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow;
-		uchar dw, ls_sort;
-		char lsformat[12], showProgress;
-		char *currentAgent;
-		int agentIndex, context, cx_previous, debugLevel, timerspeed;
-		int ll, fll;
-	} save;
+	struct ebSettings save;
 
 /* Separate function name and arguments */
 	spaceCrunch(linecopy, true, false);
@@ -1008,46 +1095,7 @@ int runEbFunction(const char *line)
 
 	if(!stringEqual(linecopy, "init") && strncmp(linecopy, "set", 3)) {
 		restore = true;
-		save.currentAgent = currentAgent, save.agentIndex = agentIndex;
-		save.context = context;
-		save.cx_previous = cx_previous, cx_previous = 0;
-		save.debugLevel = debugLevel;
-		save.timerspeed = timerspeed;
-		save.dw = dirWrite;
-		save.dno = dno;
-		save.ebvar = ebvar;
-		save.flow = flow;
-		save.ls_sort = ls_sort;
-		strcpy(save.lsformat, lsformat);
-		save.showProgress = showProgress;
-		save.bg = down_bg;
-		save.jsbg = down_jsbg;
-		save.iu = iuConvert;
-		save.bd = binaryDetect;
-		save.rl = inputReadLine;
-		save.can = curlAuthNegotiate;
-		save.lna = listNA;
-		save.fbc = fetchBlobColumns;
-		save.ls_reverse = ls_reverse;
-		save.sw = searchWrap;
-		save.ebre = ebre;
-		save.hr = allowRedirection;
-		save.sr = sendReferrer;
-		save.js = allowJS;
-		save.ftpa = ftpActive;
-		save.H = helpMessagesOn;
-		save.pg = pluginsOn;
-		save.hf = showHiddenFiles;
-		save.showall = showall;
-		save.endm = endMarks;
-		save.sg = searchStringsAll;
-		save.ci = caseInsensitive;
-		save.su8 = re_utf8;
-		save.vs = verifyCertificates;
-		save.hlocal = hlocal;
-		save.ll = displayLength;
-		save.fll = formatLineLength;
-		save.fllo = formatOverflow;
+		saveEbSettings(&save);
 	}
 
 /* collect arguments, ~0 first */
@@ -1179,46 +1227,8 @@ done:
 	nzFree(linecopy);
 	nzFree(fncopy);
 	nzFree(allargs);
-	if(restore) {
-		currentAgent = save.currentAgent, agentIndex = save.agentIndex;
-		cx_previous = (context == save.context) ? save.cx_previous : save.context;
-		debugLevel = save.debugLevel;
-		timerspeed = save.timerspeed;
-		dirWrite = save.dw;
-		dno = save.dno;
-		ebvar = save.ebvar;
-		flow = save.flow;
-		ls_sort = save.ls_sort;
-		strcpy(lsformat, save.lsformat);
-		showProgress = save.showProgress;
-		down_bg = save.bg;
-		down_jsbg = save.jsbg;
-		iuConvert = save.iu;
-		binaryDetect = save.bd;
-		inputReadLine = save.rl;
-		curlAuthNegotiate = save.can;
-		listNA = save.lna;
-		ls_reverse = save.ls_reverse;
-		searchWrap = save.sw;
-		ebre = save.ebre;
-		allowRedirection = save.hr;
-		sendReferrer = save.sr;
-		allowJS = save.js;
-		ftpActive = save.ftpa;
-		helpMessagesOn = save.H;
-		pluginsOn = save.pg;
-		showHiddenFiles = save.hf;
-		showall = save.showall;
-		endMarks = save.endm;
-		searchStringsAll = save.sg;
-		caseInsensitive = save.ci;
-		re_utf8 = save.su8;
-		verifyCertificates = save.vs;
-		hlocal = save.hlocal;
-		displayLength = save.ll;
-		formatLineLength = save.fll;
-		formatOverflow = save.fllo;
-	}
+	if(restore)
+		restoreEbSettings(&save);
 	return rc;
 
 soft_fail:
