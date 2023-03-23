@@ -907,6 +907,7 @@ static const char *ip_ptr;
 static const char **endl_ptr;
 static const char **args_ptr;
 static int *argl_ptr;
+static int *rb_ln, *rb_b;
 
 static char *substituteArgs(void)
 {
@@ -1147,7 +1148,7 @@ ahead:
 			goto soft_fail;
 
 		ip_ptr = ip;
-		endl_ptr = &endl;
+		endl_ptr = &endl, rb_ln = 0;
 		args_ptr = args;
 		argl_ptr = argl;
 		new = substituteArgs();
@@ -1228,9 +1229,22 @@ soft_fail:
 // so we can append text from within a script, like a here document
 const char *getInputLineFromScript(void)
 {
-	const char *endl = *endl_ptr;
-	const char *ip = endl + 1;
 	char *new;
+	const char *endl, *ip;
+
+// exactly one of endl_ptr and rb_ln is not null.
+	if(rb_ln) {
+		int b = *rb_b, ln = *rb_ln;
+		const Window *w = sessionList[b].lw;
+		int dol = w->dol;
+// the buffer could run out before . terminates the input
+		if(ln == dol) return ".\n";
+		*rb_ln = ++ln;
+		return (const char *)fetchLineContext(ln, 0, b);
+	}
+
+	endl = *endl_ptr;
+	ip = endl + 1;
 // the script could run out before . terminates the input
 	if(!*ip) return ".\n";
 	endl = strchr(ip, '\n');
@@ -1249,7 +1263,6 @@ const char *getInputLineFromScript(void)
 	return new;
 }
 
-static int *rb_ln, *rb_b;
 bool runBuffer(int b)
 {
 	int ln;
@@ -1277,7 +1290,7 @@ bool runBuffer(int b)
 			return false;
 		}
 		*s = 0;
-		rb_ln = &ln, rb_b = &b;
+		rb_ln = &ln, rb_b = &b, endl_ptr = 0;
 // Here we go!
 		debugPrint(3, "< %s", p);
 		edbrowseCommand(p, true);

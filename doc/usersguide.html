@@ -4541,7 +4541,11 @@ This is not a function, simply a sequence of commands.
 The commands are executed in your current context.
 If session 7 has one line, containing the letter n, &lt;7 will print the current line, with its number, in your current session.
 It is possible to be in session 7 and issue &lt;7, though I don't know when you would ever want to do that.
-There might be unintended consequences, as earlier commands modify the commands that have yet to run.
+There might be unintended consequences, if earlier commands modify the commands that have yet to run.
+
+<p>
+Since this is not a function, it does not take arguments.
+However, you can use edbrowse to construct the commands in session 7 just as you want them.
 
 <h2> <A NAME=init> The Init Function </A> </h2>
 
