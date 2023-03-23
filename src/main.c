@@ -907,7 +907,7 @@ static const char *ip_ptr;
 static const char **endl_ptr;
 static const char **args_ptr;
 static int *argl_ptr;
-static int *rb_ln, *rb_b;
+static int *rb_ln, *rb_ln2, *rb_b;
 
 struct ebSettings {
 	bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow;
@@ -1244,11 +1244,11 @@ const char *getInputLineFromScript(void)
 
 // exactly one of endl_ptr and rb_ln is not null.
 	if(rb_ln) {
-		int b = *rb_b, ln = *rb_ln;
+		int b = *rb_b, ln = *rb_ln, ln2 = *rb_ln2;
 		const Window *w = sessionList[b].lw;
 		int dol = w->dol;
 // the buffer could run out before . terminates the input
-		if(ln == dol) return ".\n";
+		if(ln == dol || ln == ln2) return ".\n";
 		*rb_ln = ++ln;
 		return (const char *)fetchLineContext(ln, 0, b);
 	}
@@ -1273,26 +1273,30 @@ const char *getInputLineFromScript(void)
 	return new;
 }
 
-bool runBuffer(int b, bool stopflag)
+bool runBuffer(int b, bool stopflag, int ln1, int ln2)
 {
 	int ln;
 	const Window *w;
 	bool ok;
 	char b0[16];
 	sprintf(b0, "session %d", b);
-	if(!b) { setError(MSG_Session0); return false; }
-	if(b >= MAXSESSION) {
-		setError(MSG_SessionHigh, b, MAXSESSION - 1);
-		return false;
+	if(!ln1) {
+// did not run through atPartCracker()
+		if(!b) { setError(MSG_Session0); return false; }
+		if(b >= MAXSESSION) {
+			setError(MSG_SessionHigh, b, MAXSESSION - 1);
+			return false;
+		}
+		if(!cxActive(b, true)) return false;
+		w = sessionList[b].lw;
+		ln1 = 1, ln2 = w->dol;
 	}
-	if(!cxActive(b, true)) return false;
 	w = sessionList[b].lw;
-	if(!w->dol) { setError(MSG_BufferXEmpty, b); return false; }
 	if(w->dirMode | w->binMode | w->sqlMode | w->irciMode | w->ircoMode | w->browseMode) {
 		setError(MSG_SessionMode);
 		return false;
 	}
-	for(ln = 1; ln <= w->dol; ++ln) {
+	for(ln = ln1; ln <= ln2; ++ln) {
 		char *p = (char*)fetchLineContext(ln, 0, b);
 		char *s = strchr(p, '\n');
 		if(!s) { // line contains nulls
@@ -1301,7 +1305,7 @@ bool runBuffer(int b, bool stopflag)
 			return false;
 		}
 		*s = 0;
-		rb_ln = &ln, rb_b = &b, endl_ptr = 0;
+		rb_ln = &ln, rb_ln2 = &ln2, rb_b = &b, endl_ptr = 0;
 // Here we go!
 		debugPrint(3, "< %s", p);
 		ok = edbrowseCommand(p, true);

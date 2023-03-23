@@ -212,7 +212,7 @@ const char *findAgentForURL(const char *url);
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 int runEbFunction(const char *line);
 const char *getInputLineFromScript(void);
-bool runBuffer(int b, bool stopflag);
+bool runBuffer(int b, bool stopflag, int ln1, int ln2);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
 bool readConfigFile(void);

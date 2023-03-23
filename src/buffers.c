@@ -7201,9 +7201,13 @@ dest_ok:
 		bool stopflag = false;
 		if(*p == '+' && isdigit(p[1])) ++p, stopflag = true;
 		int b = strtol(p, &p, 10);
-// check for *p == '@' if you want to fold in atPartCracker
-		if(b >= 0 && *p == 0) {
-			j = runBuffer(b, stopflag);
+		if(b >= 0 && (*p == 0 || *p == '@')) {
+			int ln1 = 0, ln2 = 0;
+			if(*p == '@') {
+				if(!atPartCracker(b, false, true, p, &ln1, &ln2))
+					return false;
+			}
+			j = runBuffer(b, stopflag, ln1, ln2);
 			if(!j) j = -1;
 		} else {
 			j =  runEbFunction(line);
