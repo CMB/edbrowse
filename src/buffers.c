@@ -6702,7 +6702,7 @@ after_ib:
 // i as text insert cannot be global, but i for a fill-out form can.
 // g/re/ i=+ to set a bunch of checkboxes.
 // However, g/re/ i* probably should be disallowed. We need to refine this a bit.
-	if (icmd == 'i' && (!cw->browseMode || line[0] == '*')) {
+	if (globSub && icmd == 'i' && (!cw->browseMode || line[0] == '*')) {
 		setError(MSG_GlobalCommand, icmd);
 		return (globSub = false);
 	}
