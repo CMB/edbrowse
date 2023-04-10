@@ -4749,74 +4749,6 @@ down_again:
 		}
 	}
 
-	if (line[0] == 'l' && line[1] == 's') {
-		char lsmode[12];
-		bool setmode = false;
-		char *file, *path, *t;
-		const char *s = line + 2;
-		skipWhite(&s);
-		if (*s == '=') {
-			setmode = true;
-			++s;
-			skipWhite(&s);
-		} else if (stringEqual(s, "X")) {
-			if (!cw->dirMode) {
-				setError(MSG_NoDir);
-				return false;
-			} else
-				return true;
-		}
-		if (!lsattrChars(s, lsmode)) {
-			setError(MSG_LSBadChar);
-			return false;
-		}
-		if (setmode) {
-			strcpy(lsformat, lsmode);
-			return true;
-		}
-// default ls mode is size time
-		if (!lsmode[0])
-			strcpy(lsmode, "st");
-		if(cw->ircoMode && stringEqual(lsmode, "t")) {
-			if (cw->dot == 0) {
-				setError(MSG_AtLine0);
-				return false;
-			}
-			const char *timestring = (char*)cw->r_map[cw->dot].text;
-			puts(timestring == emptyString ? "-" : timestring);
-			return true;
-		}
-		if (cw->dirMode) {
-			if (cw->dot == 0) {
-				setError(MSG_AtLine0);
-				return false;
-			}
-			file = (char *)fetchLine(cw->dot, -1);
-			t = strchr(file, '\n');
-			if (!t) i_printfExit(MSG_NoNlOnDir, file);
-			*t = 0;
-			path = makeAbsPath(file);
-			*t = '\n';	// put it back
-		} else {
-			path = cloneString(cf->fileName);
-			if(cw->browseMode) debrowseSuffix(path);
-			path = skipFileProtocol(path);
-			if(!path || !*path) {
-				setError(MSG_MissingFileName);
-				return false;
-			}
-		}
-		if (path && fileTypeByName(path, 1))
-			t = lsattr(path, lsmode);
-		else
-			t = emptyString;
-		if (*t)
-			eb_puts(t);
-		else
-			i_puts(MSG_Inaccess);
-		return true;
-	}
-
 	if (!strncmp(line, "sort", 4)
 	    && (line[4] == '+' || line[4] == '-' || line[4] == '=') &&
 	    line[5] && !line[6] && strchr("ast", line[5])) {
@@ -5950,6 +5882,74 @@ no_action:
 // There aren't very many of them.
 static int twoLetterG(const char *line, const char **runThis)
 {
+
+	if (line[0] == 'l' && line[1] == 's') {
+		char lsmode[12];
+		bool setmode = false;
+		char *file, *path, *t;
+		const char *s = line + 2;
+		skipWhite(&s);
+		if (*s == '=') {
+			setmode = true;
+			++s;
+			skipWhite(&s);
+		} else if (stringEqual(s, "X")) {
+			if (!cw->dirMode) {
+				setError(MSG_NoDir);
+				return globSub = false;
+			} else
+				return true;
+		}
+		if (!lsattrChars(s, lsmode)) {
+			setError(MSG_LSBadChar);
+			return globSub = false;
+		}
+		if (setmode) {
+			strcpy(lsformat, lsmode);
+			return true;
+		}
+// default ls mode is size time
+		if (!lsmode[0])
+			strcpy(lsmode, "st");
+		if(cw->ircoMode && stringEqual(lsmode, "t")) {
+			if (cw->dot == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+			const char *timestring = (char*)cw->r_map[cw->dot].text;
+			puts(timestring == emptyString ? "-" : timestring);
+			return true;
+		}
+		if (cw->dirMode) {
+			if (cw->dot == 0) {
+				setError(MSG_AtLine0);
+				return false;
+			}
+			file = (char *)fetchLine(cw->dot, -1);
+			t = strchr(file, '\n');
+			if (!t) i_printfExit(MSG_NoNlOnDir, file);
+			*t = 0;
+			path = makeAbsPath(file);
+			*t = '\n';	// put it back
+		} else {
+			path = cloneString(cf->fileName);
+			if(cw->browseMode) debrowseSuffix(path);
+			path = skipFileProtocol(path);
+			if(!path || !*path) {
+				setError(MSG_MissingFileName);
+				return false;
+			}
+		}
+		if (path && fileTypeByName(path, 1))
+			t = lsattr(path, lsmode);
+		else
+			t = emptyString;
+		if (*t)
+			eb_puts(t);
+		else
+			i_puts(MSG_Inaccess);
+		return true;
+	}
 
 	if (line[0] == 'd' && line[1] == 'b' && isdigitByte(line[2])
 	    && !line[3]) {
