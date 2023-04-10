@@ -6699,7 +6699,16 @@ after_ib:
 		return (globSub = false);
 	}
 
-/* move/copy destination, the third address */
+// i as text insert cannot be global, but i for a fill-out form can.
+// g/re/ i=+ to set a bunch of checkboxes.
+// However, g/re/ i* probably should be disallowed. We need to refine this a bit.
+	if (icmd == 'i' && (!cw->browseMode || line[0] == '*')) {
+		setError(MSG_GlobalCommand, icmd);
+		return (globSub = false);
+	}
+
+
+// move/copy destination, the third address
 	if (cmd == 't' || cmd == 'm') {
 		if (!first) {
 			if (cw->dirMode) {
