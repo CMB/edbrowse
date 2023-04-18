@@ -577,8 +577,12 @@ void htmlMetaHelper(const Tag *t)
 
 	if (name) {
 		ptr = 0;
+		if (stringEqualCI(name, "author"))
+			ptr = &cw->htmlauthor;
 		if (stringEqualCI(name, "description"))
 			ptr = &cw->htmldesc;
+		if (stringEqualCI(name, "generator"))
+			ptr = &cw->htmlgen;
 		if (stringEqualCI(name, "keywords"))
 			ptr = &cw->htmlkey;
 		if (ptr && !*ptr && content) {

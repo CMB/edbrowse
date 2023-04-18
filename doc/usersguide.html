@@ -703,7 +703,9 @@ b : browse the current file, either html, or email, or rendered by plugin
 <br>^ b url : same as nostack
 <br>ub : unbrowse a file
 <br>ft : show the title of the current web page (file title)
+<br>fa : show the author of the current web page
 <br>fd : show the description of the current web page
+<br>fg : show the generator of the current web page
 <br>fk : show the keywords of the current web page
 <br>fu : print the file's underlying URL
 <br>rf : refresh the web page or directory listing
@@ -2649,20 +2651,22 @@ that attempts to be both sighted and blind friendly at the same time.
 <h2> <A NAME=title> Title, Description, Keywords </A> </h2>
 
 <P>
-While in browse mode, the commands ft, fd, and fk
-produce the title, description, and keywords of the current web file respectively.
+While in browse mode, the commands ft, fa, fd, fg, and fk
+produce the title, author, description, generator, and keywords of the current web file respectively.
 These are normally not visible to the user.
 The title describes the web page in 80 characters or less.
 The description is a more complete explanation,
 which is displayed by a search engine such as yahoo or altavista.
 The user reads the description via the search engine and decides whether to read that web page.
+The author is the name of the author of the page.
+The generator is the name and version of the software that generated the page.
 Finally, the keywords are used by search engines to facilitate keyword searches.
 Like the rest of the browsable text,
-these three attributes are readonly.
+these five attributes are readonly.
 If it is your web page,
 you can modify them by returning to the raw html.
 Web designers should pay close attention to the description and the keywords,
-else your pages might not be accessible via the standard search engines.
+else your pages might not rank high in the standard search engines.
 
 <P>
 The fu command prints the file's url.

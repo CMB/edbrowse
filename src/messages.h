@@ -821,4 +821,6 @@ enum {
 	MSG_HttpInternet,
 	MSG_HttpLocal,
 	MSG_SessionMode,
+	MSG_NoAuthor,
+	MSG_NoGenerator,
 };

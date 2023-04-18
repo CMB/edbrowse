@@ -448,7 +448,7 @@ struct ebWindow {
 	struct ebFrame *jdb_frame; // if in jdb mode
 	char *referrer; // another web page that brought this one to life
 	char *baseDirName;	// when scanning a directory
-	char *htmltitle, *htmldesc, *htmlkey;	// title, description, keywords
+	char *htmltitle, *htmlauthor, *htmldesc, *htmlgen, *htmlkey;	// title, author, description, generator, keywords
 	char *saveURL;		// for the fu command
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */

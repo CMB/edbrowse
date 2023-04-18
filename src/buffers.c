@@ -972,7 +972,9 @@ static void freeWindow(Window *w)
 	freeWindowLines(w->r_map);
 	nzFree(w->dmap);
 	nzFree(w->htmltitle);
+	nzFree(w->htmlauthor);
 	nzFree(w->htmldesc);
+	nzFree(w->htmlgen);
 	nzFree(w->htmlkey);
 	nzFree(w->saveURL);
 	nzFree(w->mailInfo);
@@ -5029,8 +5031,12 @@ et_go:
 		cw->histLabel = 0;
 		nzFree(cw->htmltitle);
 		cw->htmltitle = 0;
+		nzFree(cw->htmlauthor);
+		cw->htmlauthor = 0;
 		nzFree(cw->htmldesc);
 		cw->htmldesc = 0;
+		nzFree(cw->htmlgen);
+		cw->htmlgen = 0;
 		nzFree(cw->htmlkey);
 		cw->htmlkey = 0;
 		nzFree(cw->mailInfo);
@@ -5084,7 +5090,8 @@ et_go:
 	}
 #endif
 
-	if (stringEqual(line, "ft") || stringEqual(line, "fd") ||
+	if (stringEqual(line, "ft") || stringEqual(line, "fa") ||
+	    stringEqual(line, "fd") || stringEqual(line, "fg") ||
 	    stringEqual(line, "fk") || stringEqual(line, "fu")) {
 		const char *s;
 		int t;
@@ -5095,8 +5102,12 @@ et_go:
 		}
 		if (line[1] == 't')
 			s = cw->htmltitle, t = MSG_NoTitle;
+		if (line[1] == 'a')
+			s = cw->htmlauthor, t = MSG_NoAuthor;
 		if (line[1] == 'd')
 			s = cw->htmldesc, t = MSG_NoDesc;
+		if (line[1] == 'g')
+			s = cw->htmlgen, t = MSG_NoGenerator;
 		if (line[1] == 'k')
 			s = cw->htmlkey, t = MSG_NoKeywords;
 		if (line[1] == 'u')
