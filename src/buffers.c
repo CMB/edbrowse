@@ -4656,7 +4656,7 @@ down_again:
 	}
 
 	if(stringEqual(line, "e+")) {
-		for(n = context + 1; n < MAXSESSION; ++n)
+		for(n = context + 1; n <= maxSession; ++n)
 			if(sessionList[n].lw) {
 					cxSwitch(n, true);
 					return true;
@@ -4675,6 +4675,13 @@ down_again:
 		cmd = 'e';
 		setError(MSG_EMinus, context);
 		return false;
+	}
+
+	if(line[0] == 'e' && (line[1] == '/' || line[1] == '?')) {
+		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
+		if(!n) return 0;
+		cxSwitch(n, true);
+		return 1;
 	}
 
 	if(stringEqual(line, "enum")) {
