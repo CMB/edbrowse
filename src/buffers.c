@@ -4514,6 +4514,34 @@ static const char *windowTitle(const Window *w)
 	return emptyString;
 }
 
+static int sessionByText(const char *s, int dir)
+{
+	int n = context;
+	const Window *lw;
+	const char *title;
+	if(!s || !*s) goto fail; // empty string
+	while(true) {
+		if(dir > 0) {
+			if(++n > maxSession) {
+				if(!searchWrap) goto fail;
+				n = 1;
+			}
+		} else {
+			if(--n == 0) {
+				if(!searchWrap) goto fail;
+				n = maxSession;
+			}
+		}
+		if(!(lw = sessionList[n].lw)) continue;
+		title = windowTitle(lw);
+		if(strstr(title, s)) return n; // found it
+		if(n == context) break;
+	}
+fail:
+	setError(MSG_NotFound);
+	return 0;
+}
+
 static char shortline[60];
 static int twoLetter(const char *line, const char **runThis)
 {
