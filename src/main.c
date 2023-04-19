@@ -709,6 +709,10 @@ int main(int argc, char **argv)
 
 	signal(SIGINT, catchSig);
 
+// a child process terminates, either from a plugin or from a w !command,
+// all of edbrowse should not crash.
+	signal(SIGPIPE, SIG_IGN);
+
 	js_main();
 
 // This sanity check on number of files assumes they are all files,
