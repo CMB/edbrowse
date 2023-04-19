@@ -13,7 +13,7 @@ blind, script, accessible">
 <meta charset="UTF-8">
 <TITLE> edbrowse documentation </TITLE>
 <LINK REL="SHORTCUT ICON" href="pc.ico">
-        <style type="text/css">
+        <style>
 body { background: white; color: black; font-family: Arial,Helvetica,sans-serif; font-size: 1.0em; }
 a:link { color: red; }
 a:active { color: green; }
@@ -29,11 +29,11 @@ p.cen { text-align: center; }
 
 <BODY>
 
-<h1> edbrowse Documentation, a User's Guide </h1>
+<h1>edbrowse Documentation, a User's Guide</h1>
 
-<h1> Chapter 0, <A NAME=top> Contents </A> </h1>
+<h1 id="top">Chapter 0, Contents</h1>
 
-<h2> Chapter 1, Preface </h2>
+<h2>Chapter 1, Preface</h2>
 
 <UL>
 <LI><A HREF=#maint> Maintainer </A>
@@ -45,7 +45,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#lang> Other Languages </A>
 </UL>
 
-<h2> Chapter 2, Quick Reference Guide </h2>
+<h2>Chapter 2, Quick Reference Guide</h2>
 
 <UL>
 <LI><A HREF=#guide> Quick Reference Guide </A>
@@ -54,7 +54,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#wiki> Edbrowse Wiki </A>
 </UL>
 
-<h2> Chapter 3, The Editor </h2>
+<h2>Chapter 3, The Editor</h2>
 
 <UL>
 <LI><A HREF=#dev> Important Deviations From /bin/ed </A>
@@ -71,7 +71,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#race> Race Conditions </A>
 </UL>
 
-<h2> Chapter 4, Web Browser </h2>
+<h2>Chapter 4, Web Browser</h2>
 
 <UL>
 <LI><A HREF=#url> Accessing A URL </A>
@@ -102,7 +102,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#frame> Frames </A>
 </UL>
 
-<h2> Chapter 5, Javascript </h2>
+<h2>Chapter 5, Javascript</h2>
 
 <UL>
 <LI><A HREF=#js> Introduction to Javascript </A>
@@ -112,7 +112,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#jex> Javascript Debugger </A>
 </UL>
 
-<h2> Chapter 6, Edbrowse Scripts and the Configuration File </h2>
+<h2>Chapter 6, Edbrowse Scripts and the Configuration File</h2>
 
 <UL>
 <LI><A HREF=#cfg> The Config File </A>
@@ -125,7 +125,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#sampcfg> A Sample Config File </A>
 </UL>
 
-<h2> Chapter 7, Mail Client </h2>
+<h2>Chapter 7, Mail Client</h2>
 
 <UL>
 <LI><A HREF=#sm> Send Mail </A>
@@ -138,13 +138,13 @@ p.cen { text-align: center; }
 <LI><A HREF=#imap> Imap Client </A>
 </UL>
 
-<h2> Chapter 8, IRC Client </h2>
+<h2>Chapter 8, IRC Client</h2>
 
 <ul>
 <li><a href=#irc>Using IRC</a>
 </ul>
 
-<h2> Chapter 9, Database Access </h2>
+<h2>Chapter 9, Database Access</h2>
 
 <UL>
 <LI><A HREF=#sqlb> Building edbrowse with Database Access </A>
@@ -158,9 +158,9 @@ p.cen { text-align: center; }
 </UL>
 
 <HR>
-<h1> Chapter 1, Preface </h1>
+<h1>Chapter 1, Preface</h1>
 
-<h2> <A NAME="maint"> Maintainer </A> </h2>
+<h2 id="maint">Maintainer</h2>
 
 <P>
 The edbrowse home page is <A href=http://edbrowse.org>edbrowse.org</A>.
@@ -168,7 +168,7 @@ The edbrowse home page is <A href=http://edbrowse.org>edbrowse.org</A>.
 Chris Brannon</A>
 is the current project maintainer and webmaster.
 
-<h2> <A NAME=auth> Author </A> </h2>
+<h2 id="auth">Author</h2>
 
 <P>
 <A HREF=mailto:eklhad@gmail.com>
@@ -177,11 +177,11 @@ wrote the first version of edbrowse in perl, in 2001,
 and he is still the principal developer of the project.
 <!--
 Please see the
-<A href=http://en.wikipedia.org/wiki/edbrowse>
+<A href=https://en.wikipedia.org/wiki/edbrowse>
 wikipedia article</A> for a history of edbrowse and an overview of its features.
 -->
 
-<h2> <A NAME=copy> Copyright Notice </A> </h2>
+<h2 id="copy">Copyright Notice</h2>
 
 <P>
 This program is copyright &copy; Karl Dahlke (and other authors and contributors), 2001-2023.
@@ -189,7 +189,7 @@ It is made available by the authors under the terms of the GNU General Public Li
 as articulated by the Free Software Foundation.
 It may be used for any purpose, and redistributed, provided this copyright notice is included.
 
-<h2> <A NAME=disclaim> Disclaimer </A> </h2>
+<h2 id="disclaim">Disclaimer</h2>
 
 <P>
 Edbrowse is provided as-is,
@@ -203,7 +203,7 @@ This is a spare-time project written by a couple of volunteers,
 that (understandably) cannot attain the quality and rigor of corporate or government software.
 By using this program, you agree to use it as-is.
 
-<h2> <A NAME=ack> Acknowledgements </A> </h2>
+<h2 id="ack">Acknowledgements</h2>
 
 <P>
 <A HREF=mailto:chris@the-brannons.com>
@@ -222,7 +222,7 @@ Jeremy O'Brien</A> ported the software to Mac OS X.
 Several people translated the output and error messages into other languages,
 and they are given due credit in the Languages section below.
 
-<h2> <A NAME=over> Overview </A> </h2>
+<h2 id="over">Overview</h2>
 
 <P>
 This program is, at first glance, a reimplementation of /bin/ed.
@@ -242,7 +242,7 @@ and activate browse mode to render the html tags
 in a manner that is appropriate for a command-response program such as this.
 In other words, we discard most of the formatting information
 and retain the links and fill-out forms.
-This allows blind  users to access the Internet
+This allows blind users to access the Internet
 through an application that is compatible with the linear nature of speech or braille.
 
 <P>
@@ -278,13 +278,13 @@ The * in the if statement is true if the previous command was successful.
 </UL>
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif><code>function+xy {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>--><code>function+xy {
         ,s/x/y/g
         if(*) {
                 w
         }
 }
-</code></font></PRE>
+</code><!--</font>--></PRE>
 
 <P>
 If edbrowse is not included in your distribution, there is a perl version, with fewer features,
@@ -308,7 +308,7 @@ This documentation assumes you are familiar with ed.
 In fact it helps if you are fluent in ed.
 Experience with Internet browsers and the associated terminology is also helpful.
 
-<h2> <A NAME=lang> Other Languages </A> </h2>
+<h2 id="lang">Other Languages</h2>
 
 <P>
 First, a few words about character sets (charsets).
@@ -317,17 +317,17 @@ In fact, each letter fits in 7 bits; the eighth bit is not needed, and is set to
 This system is called ascii, and is English specific.
 
 <P>
-<A HREF=http://en.wikipedia.org/wiki/Indo-European_languages>
+<A HREF=https://en.wikipedia.org/wiki/Indo-European_languages>
 Indo-european languages</A>
 bring in more characters,
 such as &ntilde; (Spanish), &egrave; (French),
 and &ouml; (German).
 These can still fit within single bytes,
 by setting the eighth bit to 1, according to the
-<A HREF=http://en.wikipedia.org/wiki/ISO_8859>
+<A HREF=https://en.wikipedia.org/wiki/ISO_8859>
 ISO8859-1</A> standard.
 Still other languages, such as Czech and Hungarian, fit within the
-<A HREF=http://en.wikipedia.org/wiki/ISO/IEC_8859-2>
+<A HREF=https://en.wikipedia.org/wiki/ISO/IEC_8859-2>
 iso8859-2</A> standard,
 which assigns different characters to the bytes above 127.
 And there is iso8859-3, and so on.
@@ -343,7 +343,7 @@ You either switch from iso8859-1 to iso8859-2 in mid stream,
 or we come up with a new standard that represents all letters in all languages simultaneously.
 This charset, which obviously will not fit into a single byte,
 is known as
-<A HREF=http://en.wikipedia.org/wiki/Utf8>
+<A HREF=https://en.wikipedia.org/wiki/Utf8>
 utf8</A>,
 and it has become the new standard across the computer industry.
 Software does not have to select an iso8859 page and map numbers to letters in a manner that depends on the country you live in.
@@ -469,9 +469,9 @@ Edbrowse always sends a language designator to the web servers, because some web
 If you do set localizeweb yourself, be sure to set it to language code hyphen territory code.
 
 <hr>
-<h1> Chapter 2, Quick Reference Guide </h1>
+<h1>Chapter 2, Quick Reference Guide</h1>
 
-<h2> <A NAME=guide> Quick Reference Guide </A> </h2>
+<h2 id="guide">Quick Reference Guide</h2>
 
 <P>
 Here are the ed and edbrowse commands, all in one place.
@@ -738,8 +738,8 @@ g : go to the link on the current line
 <br>g? : print the url for the link on the current line
 <br>g2? : print the url for the second link
 <br>g$? : print the url for the last link
-<br>A : create a buffer of <a> tags for the hyperlinks on the current line
-<br>4,7A : create a buffer of <a> tags for the hyperlinks on lines 4 through 7
+<br>A : create a buffer of &lt;a&gt; tags for the hyperlinks on the current line
+<br>4,7A : create a buffer of &lt;a&gt; tags for the hyperlinks on lines 4 through 7
 <br>exp : expand a frame, g also works
 <br>,exp : expand all frames
 <br>ctr : contract a frame
@@ -848,7 +848,7 @@ db3 : set debug level, 0 through 9
 <br>step$exp = expression : set step$l to 2 when expression is true, breaking at each step thereafter
 <br>arg$ : reference the arguments object from within a breakpoint
 
-<h2> <A NAME=tips> Tips for Avoiding Line Numbers </A> </h2>
+<h2 id="tips">Tips for Avoiding Line Numbers</h2>
 
 <P>
 If you haven't spent time using the ed editor, you may find this program awkward.
@@ -889,14 +889,14 @@ Similarly, you can look for input fields by searching for the less than sign.
 This will make sense as you read about the representation of web pages below.
 And of course, multiple operations can be scripted, an important feature of edbrowse.
 
-<h2> <A NAME=mlist> Mailing List </A> </h2>
+<h2 id="mlist">Mailing List</h2>
 
 <P>
 There is a mailing list for users of edbrowse and other command line utilities.
 You can subscribe by sending a message to
 <a href=mailto:commandline+subscribe@lists.the-brannons.com>commandline+subscribe@lists.the-brannons.com</a>.
 
-<h2> <A NAME=wiki> Edbrowse Wiki </A> </h2>
+<h2 id="wiki">Edbrowse Wiki</h2>
 
 <P>
 There is a wiki devoted to edbrowse,
@@ -904,9 +904,9 @@ including tips and tricks, and sample .ebrc configurations and functions.
 See <A href=http://edbrowse.org>edbrowse.org</A> for more information.
 
 <hr>
-<h1> Chapter 3, The Editor </h1>
+<h1>Chapter 3, The Editor</h1>
 
-<h2> <A NAME=dev> Important Deviations From /bin/ed </A> </h2>
+<h2 id="dev">Important Deviations From /bin/ed</h2>
 
 <P>
 Certain search/substitute commands may behave differently under this editor.
@@ -932,7 +932,7 @@ Once you are accustomed to their power and flexibility,
 you'll never go back to ed.
 
 <P>
-Great.  You've read the perlre man page, and you're back.
+Great. You've read the perlre man page, and you're back.
 Here are a few changes that I've made to perl regular expressions.
 I have found that ( and ) are almost always meant to be literal,
 as in searching for myFunction(),
@@ -1180,7 +1180,7 @@ where each file has its own search/replace strings.
 
 <LI><P>
 Errors associated with reading or writing files, or switching sessions,
-are always printed.  Other errors elicit the usual question mark,
+are always printed. Other errors elicit the usual question mark,
 whence you must type h to read the explanation.
 Type capital H if you always want to see the error messages.
 This is consistent with ed.
@@ -1208,7 +1208,7 @@ These include the simultaneous edit of multiple files
 similar to emacs and vi,
 and the ability to browse an html file and edit its fill-out form.
 
-<h2> <A NAME=edperf> Performance of the Editor </A> </h2>
+<h2 id="edperf">Performance of the Editor</h2>
 
 <p>
 Certain g commands have been optimized for performance.
@@ -1247,7 +1247,7 @@ try ,s/\(^xyz.*dog\)house/$1\nhouse/
 <P>
 Contact the developers if you feel other editor commands should be optimized.
 
-<h2> <A NAME=brace> Balancing Braces </A> </h2>
+<h2 id="brace">Balancing Braces</h2>
 
 <P>
 The capital B command is of interest to programmers,
@@ -1256,14 +1256,14 @@ It locates the line with the balancing brace, parenthesis, or bracket.
 Consider the following code fragment.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif><code>    if(x == 3 &amp;&amp;
+<!--<font size=3 face=Arial,Helvetica,sans-serif>--><code>    if(x == 3 &amp;&amp;
     y == 7) {
         printf("hello\n");
     } else {
         printf("world\n");
         exit(1);
     }
-</code></font></PRE>
+</code><!--</font>--></PRE>
 
 <P>
 The capital B command, on either the second or the last line,
@@ -1299,7 +1299,7 @@ Edbrowse skips past strings, so that c = '{', or s = "abc}def", should not derai
 However, comments, or bare regular expressions, (as seen in perl or javascript), that contain punctuation marks,
 will throw edbrowse off the track.
 
-<h2> <A NAME=cx> Context Switch </A> </h2>
+<h2 id="cx">Context Switch</h2>
 
 <P>
 This program allows you to edit multiple files at the same time,
@@ -1363,7 +1363,7 @@ The # sign delimits my injected comments,
 which would not normally appear in the middle of a line.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>&lt; e2   # switch to session 2
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->&lt; e2   # switch to session 2
 &gt; new session
 #  Unlike ed, the r command does not establish a file name, even if the
 #  buffer is empty.
@@ -1385,13 +1385,13 @@ which would not normally appear in the middle of a line.
 &gt; 3279  # size of text read from session 2
 &lt; w  # write foo, with the new paragraph included
 &gt; 62121
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The following moves the data from one file to another.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>&lt; e2
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->&lt; e2
 &gt; new session
 &lt; e bar  # this time I'm going to change bar
 &gt; 28719
@@ -1415,7 +1415,7 @@ The following moves the data from one file to another.
 &lt; q3  # quit session 3 remotely, while still in session 1
 &lt; w  # write foo, with the new paragraph included
 &gt; 62121
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Here is a faster and easier way to do the same thing, without using an extra transfer buffer.
@@ -1428,7 +1428,7 @@ A single space can change the meaning.
 'a,'bw 1@'c writes the block of text to a file named 1@'c, which is not what you want.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->kc # mark your current location, where you want the cool paragraph to be
 &lt; e2
 &gt; new session
 &lt; e bar
@@ -1448,7 +1448,7 @@ A single space can change the meaning.
 &gt; foo  # back to session 1
 &lt; w  # write foo, with the new paragraph included
 &gt; 62121
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Here is another way, that reads instead of writes.
@@ -1461,7 +1461,7 @@ Complex expressions like @/xyz/-3 are not allowed here.
 If a second line number is not given, the single line is read.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>kc # mark your current location, where you want the cool paragraph to be
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->kc # mark your current location, where you want the cool paragraph to be
 &lt; e2
 &gt; new session
 &lt; e bar
@@ -1486,13 +1486,13 @@ If a second line number is not given, the single line is read.
 &lt; 'a,'bd
 &lt; w  # write bar, without the cool paragraph
 &gt; 25440
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 An e command by itself prints the current session, in case you've forgotten.
 This is similar to f, by itself, which prints the current file.
 
-<h2> <A NAME=usage> Usage </A> </h2>
+<h2 id="usage">Usage</h2>
 
 <P>
 type `edbrowse -h' to produce the following usage message.
@@ -1503,7 +1503,7 @@ mail client.
 This will be discussed later.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>edbrowse  -v    (show version)
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->edbrowse  -v    (show version)
 edbrowse -h (this message)
 edbrowse -c (edit config file)
 edbrowse [-d#] -f[#] (fetch mail) 
@@ -1511,7 +1511,7 @@ edbrowse  [-d#] -[p]m    (read pending mail)
 edbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)
 edbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]
 edbrowse  [-c configfile] [-b] [-e] [-d#] file1 file2 ...
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The -dx option sets the debug level to x, where x is between 0 and 9.
@@ -1585,7 +1585,7 @@ alias e="/usr/bin/edbrowse"
 If you do this you can use `e filename'
 to edit a new file, whether you are inside edbrowse or at the shell prompt.
 
-<h2> <A NAME=bin> Binary Characters </A> </h2>
+<h2 id="bin">Binary Characters</h2>
 
 <P>
 At all times, even when entering a file name, this program scans its input
@@ -1660,7 +1660,7 @@ Every line ends in ~0d.
 Issue one of the three commands shown above to undos the file.
 However, edbrowse usually converts these dos files automatically for you, unless you have disabled this feature with the iu command.
 
-<h2> <A NAME=emoji> Emojis </A> </h2>
+<h2 id="emoji">Emojis</h2>
 
 <P>
 An emoji is a small image that is represented by a high unicode.
@@ -1691,7 +1691,7 @@ emoji = /home/mylogin/.ebsys/Emojis.txt
 For illustration, here is part of that file.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>#  fruit, and fruit-like plants, like melons
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->#  fruit, and fruit-like plants, like melons
 fruit {
     1f347 grapes
     1f34c banana
@@ -1699,7 +1699,7 @@ fruit {
     1f34f green apple
     1f351 peach
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The group definition must be a single word of ascii letters and numbers, followed by a left brace.
@@ -1735,13 +1735,13 @@ Edbrowse presents a menu of emojis that start with the string you entered, or al
 Thus ~jfruit.xx, or ~jfruit by itself, produces a menu of emojis in the fruit group.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->
 1: grapes
 2: banana
 3: red apple
 4: green apple
 5: peach
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Select an entry by number, or by a unique substring.
@@ -1768,7 +1768,7 @@ Happy birthday 💛🧡💙💚 🎂
 Perhaps something is extremely funny, and you want to indicate same with three roll-on-floor-laughing emojis.
 Type ~jmisc, or whatever group has this emoji, then roll,roll,roll to produce three of them.
 
-<h2> <A NAME=bfile> Binary Files </A> </h2>
+<h2 id="bfile">Binary Files</h2>
 
 <P>
 Data is considered binary if it is sufficiently large
@@ -1807,7 +1807,7 @@ You can disable binary detection with the `bd' command, whence your file will re
 This is a corner case, since utf8 is nearly universal.
 Therefore, the bd command is deprecated, and could go away in a future version of edbrowse.
 
-<h2> <A NAME=dir> Directory Scan, File Manager </A> </h2>
+<h2 id="dir">Directory Scan, File Manager</h2>
 
 <P>
 If you edit a directory
@@ -1961,10 +1961,10 @@ This isn't always the case.
 Suppose an application generates log files as follows.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>ProgramFooBar.-04-04-1998.06:31:59.log
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->ProgramFooBar.-04-04-1998.06:31:59.log
 ProgramFooBar.-04-11-1998.11:37:14.log
 ProgramFooBar.-04-18-1998.16:22:51.log
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 How do you delete the old ones and keep the most recent,
@@ -2045,7 +2045,7 @@ Type ls= to turn this off.
 Here is how the root directory might look with ls=lt.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>bin@/ 36864 Aug 31 2015 16:20
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->bin@/ 36864 Aug 31 2015 16:20
 boot/ 4096 Dec  4 2014 07:54
 cd/ 4096 Nov 30 2014 09:38
 dev/ 3560 Sep  3 2015 05:00
@@ -2062,7 +2062,7 @@ sys/ 0 Sep  3 2015 04:59
 tmp/ 260 Sep 24 2015 11:05
 usr/ 4096 Jan 12 2015 04:47
 var/ 4096 Sep  3 2015 04:59
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 All entries are directories under the root directory,
@@ -2094,7 +2094,7 @@ sort+s and sort-s sort by file size.
 With dno enabled, sorting by size or time won't work.
 The listing reverts back to alphabetical.
 
-<h2> <A NAME=case> Upper/Lower Case </A> </h2>
+<h2 id="case">Upper/Lower Case</h2>
 
 <P>
 The `lc' command converts a line to lower case,
@@ -2116,7 +2116,7 @@ All the other substitution suffixes apply.
 To change foo, Foo, FOo, and FOO to FOO, everywhere,
 type ,s/\bfoo\b/uc/ig.
 
-<h2> <A NAME=bl> Break Line </A> </h2>
+<h2 id="bl">Break Line</h2>
 
 <P>
 The `bl' command breaks the current line into sentences and phrases,
@@ -2169,7 +2169,7 @@ Again, the fll command changes the format line length.
 Each character counts as one column, so wide characters, e.g. a line with several emojis, might cause an overflow on your terminal.
 Try fll 78 to give yourself some breathing room.
 
-<h2> <A NAME=race> Race Conditions </A> </h2>
+<h2 id="race">Race Conditions</h2>
 
 <P>
 Suppose you are writing a file,
@@ -2226,9 +2226,9 @@ but edbrowse doesn't have it, simply because I haven't gotten round to writing i
 This feature is not in high demand.
 
 <hr>
-<h1> Chapter 4, Web Browser </h1>
+<h1>Chapter 4, Web Browser</h1>
 
-<h2> <A NAME=url> Accessing A URL </A> </h2>
+<h2 id="url">Accessing A URL</h2>
 
 <P>
 Instead of invoking `e filename', you can invoke `e http://this.that.com/file.html',
@@ -2301,7 +2301,7 @@ In this case you'll want to retain the public url,
 which will always work, even if the company relocates its web server.
 Use your best judgment.
 
-<h2> <A NAME=browse> Browse Mode </A> </h2>
+<h2 id="browse">Browse Mode</h2>
 
 <P>
 If the editor contains html text, from any source,
@@ -2391,7 +2391,7 @@ If a url is opened from the command line,
 as in `e www.google.com', it is automatically browsed.
 Type `ub' to revert back to the raw html.
 
-<h2> <A NAME=htab> HTML Tables </A> </h2>
+<h2 id="htab">HTML Tables</h2>
 
 <P>
 Tables are formatted like an ascii unload from a spreadsheet or sql database.
@@ -2404,11 +2404,11 @@ Better to write the table to a local file and use cut, sort, join, etc.
 Here is a sample table.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>part number|quantity|price
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->part number|quantity|price
 2635|2|$34.80
 1398|1|$67.50
 8118|5|$125.00
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Empty fields at the end of a row are dropped.
@@ -2605,7 +2605,7 @@ You will see these concepts again, including unfolded rows, when accessing an sq
 Of course, there are no colspan or rowspan issues in an sql table.
 If there are rowspan considerations, then your database is probably not in normal form.
 
-<h2> <A NAME=math> Technical, Math </A> </h2>
+<h2 id="math">Technical, Math</h2>
 
 <P>
 Most people never read technical web pages, but if you do...
@@ -2648,7 +2648,7 @@ These translations are designed to work with the pages of the
 an archive of advanced mathematics
 that attempts to be both sighted and blind friendly at the same time.
 
-<h2> <A NAME=title> Title, Description, Keywords </A> </h2>
+<h2 id="title">Title, Description, Keywords</h2>
 
 <P>
 While in browse mode, the commands ft, fa, fd, fg, and fk
@@ -2675,7 +2675,7 @@ It does not change, even if you change the file name.
 This is the same string that is put into a bookmark if you issue the A command on a line without any links.
 See Web and Email Addresses below.
 
-<h2> <A NAME=rf> The Refresh Command </A> </h2>
+<h2 id="rf">The Refresh Command</h2>
 
 <P>
 Type `rf' to refresh the current file.
@@ -2699,7 +2699,7 @@ For example, you might use the shell escape to execute
 `cat x y &gt;z',
 yet z will not appear in your directory scan until you type rf.
 
-<h2> <A NAME=hlink> Hyperlinks </A> </h2>
+<h2 id="hlink">Hyperlinks</h2>
 
 <P>
 A link to another web page is enclosed in braces, like this:
@@ -2773,7 +2773,7 @@ Deleting the line does not delete the file, substituting in the line does not re
 If your text file contains filenames that you want to go to, you have to be in the directory that contains those files, (unless they are absolute pathnames).
 This aspect of g can be convenient at times, but please don't confuse it with directory mode.
 
-<h2> <A NAME=ilink> Internal Links </A> </h2>
+<h2 id="ilink">Internal Links</h2>
 
 <P>
 Although most links lead to other web pages,
@@ -2797,7 +2797,7 @@ Often the words are the same.
 Activate {Appendix I}, and you'll probably see the section heading "Appendix I".
 Enter z10 to read the first few lines of the appendix.
 
-<h2> <A NAME=back> The Back Key </A> </h2>
+<h2 id="back">The Back Key</h2>
 
 <P>
 If you edit a new file via the `e', `b', or `g' command,
@@ -2878,7 +2878,7 @@ An alternative, if you often want to go back to the table of contents, is to
 mark the current position with kr, then return to it via the label 'r.
 Even with this label set, &amp; is often more convenient, since it takes you back to the last heading you jumped on, whence you can proceed down the table of contents to the next section that interests you.
 
-<h2> <A NAME=move> The M Command </A> </h2>
+<h2 id="move">The M Command</h2>
 
 <P>
 If you want to read and/or interact with several web pages in parallel,
@@ -2910,13 +2910,13 @@ If you are curious about all three topics,
 issue these commands in this order.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>1g
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->1g
 M2
 2g
 M3
 3g
 M4
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Now sessions 2 3 and 4 are the subpages about plains trains and automobiles respectively.
@@ -2933,7 +2933,7 @@ and print something like "moved to session 15".
 M0 is the same as M, but does not print the new session at debug level 0.
 Just as M3 does not print session 3 at debug level 0.
 
-<h2> <A NAME=hist> Browsing History </A> </h2>
+<h2 id="hist">Browsing History</h2>
 
 <P>
 Edbrowse maintains a stack of buffers for each session.
@@ -2978,7 +2978,7 @@ Do not confuse up with ^.
 You can't go down after that.
 However, up simply moves up the stack; the page you were on is still there, and accessible by down.
 
-<h2> <A NAME=music> Background Music </A> </h2>
+<h2 id="music">Background Music</h2>
 
 <P>
 If you are trying to listen to a speech synthesizer,
@@ -3009,7 +3009,7 @@ It will say something like,
 "I don't know how to process an mp3 file".
 This is consistent with other browsers, which use plugins to play multimedia files that are retrieved from the Internet.
 
-<h2> <A NAME=heading> Headings </A> </h2>
+<h2 id="heading">Headings</h2>
 
 <P>
 Some web pages are written with headings, from level 1 to level 6.
@@ -3019,19 +3019,19 @@ Thus h2 is not part of the text; it is a markup character.
 You can jump to different headings using the familiar ed commands:
 /h2 for the next level 2 heading, ?h1 for the previous level 1 heading, and /h\d for the next heading at any level.
 
-<h2> <A NAME=input> Input Fields </A> </h2>
+<h2 id="input">Input Fields</h2>
 
 <P>
 The input fields of an on-line form are indicated by angle brackets.
 For example, a search engine might present the following form.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>Keywords: &lt;&gt;
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->Keywords: &lt;&gt;
 Advanced parsing: &lt;-&gt;
 Language: &lt;en&gt;
 Search now: &lt;GO&gt;
 Clear form: &lt;RESET&gt;
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The first line in this sample form is a simple text field, which is initially empty.
@@ -3063,7 +3063,7 @@ It clears all the data you have entered, so you can start over.
 Default values will be restored.
 Thus the third line goes back to &lt;en&gt;, rather than &lt;&gt;.
 
-<h2> <A NAME=entry> Data Entry </A> </h2>
+<h2 id="entry">Data Entry</h2>
 
 <P>
 Filling out a form is relatively easy,
@@ -3090,13 +3090,13 @@ Recall the sample form in the previous section.
 If you type i? at the third field, you might see the following.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>select[7] language
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->select[7] language
 1: english
 2: french
 3: german
 4: italian
 5: spanish
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 If a select list contains hundreds of options,
@@ -3196,7 +3196,7 @@ rather than i1=kangaroo, if the second field on the current line is a submit but
 You only need specify a field number
 when there are multiple input fields, or multiple buttons, on the current line.
 
-<h2> <A NAME=textarea> Text Areas </A> </h2>
+<h2 id="textarea">Text Areas</h2>
 
 <P>
 Some Internet forms allow you to type freely, as in "Please enter your comments here."
@@ -3226,9 +3226,9 @@ The editing session is chosen for you, and appears in the input field.
 Consider the following form.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>Enter your email address: &lt;&gt;
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->Enter your email address: &lt;&gt;
 Enter your comments: &lt;session ?&gt;
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 If you wish to enter any comments, you must allocate the buffer using the ib command.
@@ -3262,7 +3262,7 @@ If your comments fit on one line, possibly a long line, you can type i=comments,
 At this point the textarea acts like a simple text input field.
 You can't change your mind; your comments are now an inline string.
 
-<h2> <A NAME=button> Push The Button </A> </h2>
+<h2 id="button">Push The Button</h2>
 
 <P>
 If the third input field on the current line is a reset or submit button,
@@ -3298,7 +3298,7 @@ Remember that buttons can run Javascript, without being type submit or reset.
 These are all pressed by the i* command.
 If more than one button is on the current line, any style of button, then i* is not sufficient; you have to specify which button, as in i3*.
 
-<h2> <A NAME=hover> Hover Text </A> </h2>
+<h2 id="hover">Hover Text</h2>
 
 <P>
 Some websites cause text to appear when you hover over a link or icon; then it disappears when you move the mouse away.
@@ -3346,7 +3346,7 @@ Thus you might want to see what you are missing.
 The showall command is rarely needed when javascript is turned off.
 Without Javascript and css, all the hover text and all the invisible sections are shown.
 
-<h2> <A NAME=colors> Colors on the Page </A> </h2>
+<h2 id="colors">Colors on the Page</h2>
 
 <P>
 In an accessible world,
@@ -3392,7 +3392,7 @@ Also, you can configure your adapter to read these higher unicodes any way you l
 <p>
 Colors come from css, and css doesn't run without Javascript, thus this feature only works with Javascript enabled.
 </p>
-<h2> <A NAME=addr> Web And Email Addresses </A> </h2>
+<h2 id="addr">Web And Email Addresses</h2>
 
 <P>
 The capital A command shows you the web addresses behind
@@ -3408,7 +3408,7 @@ Finally, use the ^ key to return to the web page you were viewing.
 Here is how it might look.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>&lt; b this.that.com/whatever  # browse a web page
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->&lt; b this.that.com/whatever  # browse a web page
 &gt; 16834  # size of the raw html
 &gt; 7855  # size of the browsable text
 &lt; /kangaroo/i  # looking for kangaroo on the page
@@ -3425,7 +3425,7 @@ Here is how it might look.
 &gt; 336
 &lt; ^  # back to browsing
 &gt; Click here for {more information about kangaroos}, or {send us mail}.
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 I suppose I could interrogate the environment variable $bookmarks myself
@@ -3487,17 +3487,17 @@ To avoid this disastrous typo, create a macro to append to your bookmark file.
 I know, we haven't talked about user defined macros yet, but we will.
 And when we do, you should write a "bookmark append" macro that looks like this.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>function+bma {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->function+bma {
   w+ $bookmarks
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Now you can type &lt;bma to add a link to your favorites,
 and you don't have to worry about typos.
 It's shorter than `w+ $bookmarks' anyway.
 
-<h2> <A NAME=cook> Cookies </A> </h2>
+<h2 id="cook">Cookies</h2>
 
 Most websites serve cookies,
 which your browser is expected to retain
@@ -3527,7 +3527,7 @@ and the second could conceivably clobber some cookies that were set by the first
 It's only a minor nuisance, and you might not even notice.
 Still, a future version of edbrowse might use one global http server to get around this problem.
 
-<h2> <A NAME=ssl> Secure Connections </A> </h2>
+<h2 id="ssl">Secure Connections</h2>
 
 <P>
 Edbrowse supports the most common method of encrypting web traffic,
@@ -3607,7 +3607,7 @@ so it's OK to be a little bit paranoid,
 in fact it's probably a good idea,
 but don't let that stop you from making your online purchases.
 
-<h2> <A NAME=ftp> FTP Retrievals </A> </h2>
+<h2 id="ftp">FTP Retrievals</h2>
 
 <P>
 This browser supports the retrieval of ftp files and directories.
@@ -3639,9 +3639,9 @@ e ftp://chris:xxx@whatever.localdomain/opt/foobar
 The ftp connection will be made as user "Chris", with password "XXX".
 
 <P>
-Some ftp URLs point at directories, not files.  If you visit one of these,
+Some ftp URLs point at directories, not files. If you visit one of these,
 and it is located on a Unix-like server, you will receive the listing as an
-html file with hyperlinks.  You can visit the directory members just as
+html file with hyperlinks. You can visit the directory members just as
 though you were exploring a website.
 If the server does not run some
 flavour of Unix, you will receive the directory listing in plain
@@ -3655,14 +3655,14 @@ and the other works well when the server is behind a router.
 You can specify ftp mode active by entering the command `ftpa+',
 or ftp mode passive by `ftpa-'.
 
-<h2> <A NAME=gopher> Gopher Support </A> </h2>
+<h2 id="gopher">Gopher Support</h2>
 
 <P>
 Gopher is similar to ftp, providing an easy way to download files from a public site.
 Edbrowse supports this via the gopher:// protocol.
 Once again, directory listings are converted into html, so you can activate a hyperlink and proceed to a submenu or download a file.
 
-<h2> <A NAME=proxy> Proxy Servers </A> </h2>
+<h2 id="proxy">Proxy Servers</h2>
 
 <P>
 A proxy server is a web server that sits between your web browser and remote websites.
@@ -3721,7 +3721,7 @@ As shown in this example, different protocols can be separated by pipes.
 Beware, placing a * in the protocol field embraces all protocols, including ftp, pop3, and smtp.
 Mail will attempt to pass through this proxy, just like web traffic.
 
-<h2> <A NAME=frame> Frames </A> </h2>
+<h2 id="frame">Frames</h2>
 
 <P>
 Frames are a mechanism whereby a web page can fetch and display several other web pages on the screen at once.
@@ -3765,9 +3765,9 @@ We've got the lowest prices anywhere.
 Frame {bottom}
 
 <hr>
-<h1> Chapter 5, Javascript </h1>
+<h1>Chapter 5, Javascript</h1>
 
-<h2> <A NAME=js> Introduction to Javascript </A> </h2>
+<h2 id="js">Introduction to Javascript</h2>
 
 Javascript is software, embedded in the web page, that runs on your computer.
 These functions do not run on the web server,
@@ -3850,7 +3850,7 @@ The javascript engine was interrupted in mid operation, and its behavior is unpr
 However, I have tried it a few times and it seems to work.
 </p>
 
-<h2> <A NAME=valid> Validating Forms </A> </h2>
+<h2 id="valid">Validating Forms</h2>
 
 When a web page asks for user input,
 it often includes a
@@ -3894,7 +3894,7 @@ You will see a message like, "Line 352 has been updated",
 where 352 contains the submenu.
 Type 352I? to see the newly created menu options.
 
-<h2> <A NAME=popup> Popups and Popunders </A> </h2>
+<h2 id="popup">Popups and Popunders</h2>
 
 A popup is a window that suddenly appears in front of the window you really want to see.
 It usually advertises something, and is often annoying,
@@ -3931,7 +3931,7 @@ page you were looking at.
 If you need access to a popup window and the main page in parallel,
 use the <A HREF=#move>M command</A>.
 
-<h2> <A NAME=onc> Onchange and Undo </A> </h2>
+<h2 id="onc">Onchange and Undo</h2>
 
 <P>
 When you set or change the value of an input field,
@@ -3956,7 +3956,7 @@ Sometimes the input field is long, and a substitute doesn't do what you expect i
 If you are formulating a text response in a textarea, that is done in another session,
 and you have the full power of the editor, including the undo command.
 
-<h2> <A NAME=jex> Javascript Debugger </A> </h2>
+<h2 id="jex">Javascript Debugger</h2>
 
 <P>
 In browse mode, the jdb (javascript debug) command
@@ -3982,9 +3982,9 @@ These are: the db commands (to change debugging), e number (to jump to another e
 bflist, bglist, timers, demin, and shell escapes.
 
 <hr>
-<h1> Chapter 6, Edbrowse Scripts and the Configuration File </h1>
+<h1>Chapter 6, Edbrowse Scripts and the Configuration File</h1>
 
-<h2> <A NAME=cfg> Config File </A> </h2>
+<h2 id="cfg">Config File</h2>
 
 <P>
 At startup, edbrowse reads and parses a config file.
@@ -4024,7 +4024,7 @@ This will be described later, under email clients.
 <LI><P> Describe a table or a view in an sql database.
 </OL>
 
-<h2> <A NAME=keyval> Keyword = Value </A> </h2>
+<h2 id="keyval">Keyword = Value</h2>
 
 The best documentation is an example, so let's dive right in.
 
@@ -4091,9 +4091,9 @@ When the cache is full, edbrowse deletes the 100 oldest files and marches on.
 Edbrowse does not retain more than 10,000 files, even if the cache could hold more.
 
 <p>
-The local command causes edbrowse to read http or https pages from cache. It does not go out to the internet.
+The local command causes edbrowse to read http or https pages from cache. It does not go out to the Internet.
 If a page is not in cache it prints a connection error.
-This can be useful when there is no internet connection and you want to review some pages that are cached.
+This can be useful when there is no Internet connection and you want to review some pages that are cached.
 It can also be used in a function that fetches a web page that is static, and fetched often, so it will not fall out of cache.
 Remember that settings are local to a function, so local+ in a function will not disturb your interactive session.
 This setting does not affect ftp, scp, gopher, etc.
@@ -4103,7 +4103,7 @@ imapfetch = 40
 
 <P>
 Fetch the last 40 emails when calling up a folder through imap.
-The fetch count must be between  5 and 1000.
+The fetch count must be between 5 and 1000.
 In the interactive imap client, you can specify -40, for the first 40 emails (in time order), but that can't be done from the config file.
 I assume you are always starting with the most recent emails.
 
@@ -4274,7 +4274,7 @@ reply = john.smith@some-domain.com
 These lines are added in to the emails that you send.
 They tell the recipient who you are, and how to reply.
 It is
-<A HREF=http://www.spamlaws.com>
+<A HREF=https://www.spamlaws.com>
 illegal</A> to use these lines for deceptive purposes.
 Make sure they identify you, and that the reply address is indeed one of your email accounts.
 
@@ -4347,7 +4347,7 @@ mail accounts and filters in one file, plugins in another, functions in another 
 However, edbrowse -c only brings up the base config file, and would not provide direct access to these other files.
 So it is a matter of taste; some people use this feature and some don't.
 
-<h2> <A NAME=agent> User Agent </A> </h2>
+<h2 id="agent">User Agent</h2>
 
 Every time you fetch a web page from the Internet,
 your browser identifies itself to the host.
@@ -4387,7 +4387,7 @@ when talking to google.com or any of its subdomains.
 This was necessary for a time, but is, fortunately, no longer needed.
 Still, some sites are particular about the type of browser, and none of them are looking for edbrowse.
 
-<h2> <A NAME=script> Edbrowse Functions </A> </h2>
+<h2 id="script">Edbrowse Functions</h2>
 
 <P>
 You can bundle a set of edbrowse commands together under one name,
@@ -4422,7 +4422,7 @@ the first definition wins.
 Edbrowse silently ignores subsequent definitions.
 
 <P>
-Function names are alphanumeric, and can even start with a digit.  function:4tops { }
+Function names are alphanumeric, and can even start with a digit. function:4tops { }
 
 <P>
 Normally, edbrowse marches along, whether a command succeeds or not.
@@ -4501,7 +4501,7 @@ You can follow up with an else block, by } else {, if you wish.
 The following looks for a line containing foo, and if it finds one,
 it advances to the next line, and if that line contains bar, it deletes it.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>function+silly {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->function+silly {
   /foo/
   if(*) {
     +s/bar//
@@ -4510,7 +4510,7 @@ it advances to the next line, and if that line contains bar, it deletes it.
     }
   }
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 I deliberately used function+ instead of function: in the above example.
@@ -4527,7 +4527,7 @@ The following deletes lines from the top of the file,
 as long as they contain foo or bar.
 It then deletes the blank lines at the top.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>function+topclean {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->function+topclean {
   until(?) {
     1g/foo\|bar/d
   }
@@ -4535,7 +4535,7 @@ It then deletes the blank lines at the top.
     1g/^$/d
   }
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 You can use loop(100){ ... } to repeat a set of commands 100 times.
@@ -4562,14 +4562,14 @@ The at syntax is supported here.
 &lt;7@22,29 will run the commands from lines 22 through 29.
 You can even create a command in your current session, then run it, then delete it.
 
-<h2> <A NAME=init> The Init Function </A> </h2>
+<h2 id="init">The Init Function</h2>
 
 The function named "init" is run at edbrowse startup.
 Use this to establish your default settings - even read in your bookmark file,
 so your favorites are close at hand.
 Here is an example.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>function+init {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->function+init {
 #  turn debug off, so we don't see any status messages from this script
 db0
 #  Assume directories can be modified
@@ -4584,7 +4584,7 @@ b $bookmarks
 #  back to session 1, ready to go to work
 e1
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 This is just a sample.
@@ -4595,7 +4595,7 @@ or leave it out altogether if you are happy with edbrowse out of the box.
 The -d option on the command line overrides any db settings that are made by the init script.
 Thus edbrowse -d4 could make a lot of noise, even if db0 is the first entry in your init script.
 
-<h2> <A NAME=ma> Mail Accounts </A> </h2>
+<h2 id="ma">Mail Accounts</h2>
 
 The next chapter describes edbrowse as a mail client,
 so let's use the config file to define some email accounts.
@@ -4608,7 +4608,7 @@ The first mail account becomes #1, the second becomes #2, and so on.
 We already discussed the relevant keywords for an email account.
 All you have to do is enclose them in mail{...}, like this.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>mail {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->mail {
   default
   inserver = pop3.some-domain.com
   outserver = smtp.some-domain.com
@@ -4617,7 +4617,7 @@ All you have to do is enclose them in mail{...}, like this.
   from = Full Name
   reply = john.smith@some-domain.com
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The "default" directive makes this account the default.
@@ -4636,7 +4636,7 @@ and we can use these settings to send and receive mail.
 Here is a typical configuration for Google's gmail.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>mail {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->mail {
   inserver = pop.gmail.com
   outserver = smtp.gmail.com
   secure
@@ -4646,7 +4646,7 @@ Here is a typical configuration for Google's gmail.
   reply = somebody@gmail.com
   from = Full Name
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Mail filtering, by sender and/or subject,
@@ -4654,7 +4654,7 @@ is controlled by your config file as well.
 This will be <A HREF=#filter>described later</A>,
 as part of the fetchmail client.
 
-<h2> <A NAME=mt> Plugin Descriptors </A> </h2>
+<h2 id="mt">Plugin Descriptors</h2>
 
 <P>
 Plugins are determined by the extension of the file, or in some cases the protocol.
@@ -4667,7 +4667,7 @@ It generally does the right thing.
 Here is one example.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>plugin {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->plugin {
 type = audio/mp3
 desc = audio file in mp3 format
 suffix = mp3
@@ -4675,7 +4675,7 @@ content = audio/mpeg
 #  %i is replaced with the mp3 file or the mp3 url
 program = mpg123 -q -C %i
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 This example handles an mp3 file or an mp3 stream.
@@ -4712,7 +4712,7 @@ The outtype attribute determines the type of plugin.
 In this example, a pdf file turns into html, where it can be browsed in the usual way.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>plugin {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->plugin {
 type = pdf
 desc = pdf file
 suffix = pdf
@@ -4722,14 +4722,14 @@ down_url
 program = pdftohtml -i -q -noframes %i %o
 outtype = H
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Other plugins could convert rich text, Word docs, Open Office docs, etc.
 Set outtype to h if the output is in html, or t if the output is in text.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>plugin {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->plugin {
 type = Word doc
 desc = Microsoft Word document, not docx
 suffix = doc
@@ -4739,14 +4739,14 @@ down_url
 program = catdoc %i
 outtype = T
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Note, there are pdf to text converters that skip the middle html step,
 but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf,
 so I thought it worthwhile going through html, even though it adds another step.
 
-<h2> <A NAME=sampcfg> A Sample Config File </A> </h2>
+<h2 id="sampcfg">A Sample Config File</h2>
 
 The best documentation is an example,
 so I have provided a sample config file with fake data.
@@ -4758,9 +4758,9 @@ and
 <A href=sample_it.ebrc>Italian</A>.
 
 <hr>
-<h1> Chapter 7, Mail Client </h1>
+<h1>Chapter 7, Mail Client</h1>
 
-<h2> <A NAME=sm> Send Mail </A> </h2>
+<h2 id="sm">Send Mail</h2>
 
 Email the contents of your current editing session to someone else
 via the `sm' command.
@@ -4782,7 +4782,7 @@ The recipients, attachments, and subject must appear at the top of your file.
 The sm command is picky, so observe the following syntax carefully.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>To: fred.flintstone@bedrock.us
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->To: fred.flintstone@bedrock.us
 CC: barney.rubble@bedrock.us
 account: 1
 attach: hollyrock-brochure.pdf
@@ -4791,7 +4791,7 @@ Come visit Hollyrock.
 Brochure attached.
 Sincerely,
 Rock studios incorporated.
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The account line is optional.
@@ -4819,12 +4819,12 @@ flow+ is the default; you probably won't have cause to turn it off.
 
 <P>
 When the body of your message includes a word longer than 998 bytes, edbrowse uses the quoted-printable transfer encoding.
-This is an internet requirement.
+This is an Internet requirement.
 It will probably never happen in the real world.
 
 <p>
 Different operating systems traditionally use different characters to mark the end of a line.
-Usually, edbrowse sends text attachments with neutral line endings. The receiving email client will save the file with the line endings that are usual on  that operating system.
+Usually, edbrowse sends text attachments with neutral line endings. The receiving email client will save the file with the line endings that are usual on that operating system.
 Use flow- if you want edbrowse to send text files with the line endings exactly as they are.
 You won't need to do this very often.
 
@@ -4934,7 +4934,7 @@ Don't push the button again!
 The mail has been sent,
 and you'll be hearing from the company in the next few days.
 
-<h2> <A NAME=smc> Send Mail Client </A> </h2>
+<h2 id="smc">Send Mail Client</h2>
 
 as described in the previous section,
 edbrowse incorporates the features of a mail client.
@@ -4957,7 +4957,7 @@ A leading - indicates an alternate format, like this.
 <P>
 edbrowse -m1 fred ^barney hollyrock-notice -hollyrock-graphical.html
 
-<h2> <A NAME=retrmail> Retrieving Mail </A> </h2>
+<h2 id="retrmail">Retrieving Mail</h2>
 
 If edbrowse is invoked with the -f option, it will fetch mail from all
 accounts, except the ones that you have marked nofetch.
@@ -4976,7 +4976,7 @@ Remember, you can specify several mail accounts in your .ebrc file.
 The first account is indicated by index 1, as in -m1, and so on.
 You can make life easier with some aliases in your .bashrc file.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>#  My mail, home account
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->#  My mail, home account
 alias mymail="edbrowse -fm1"
 #  My wife's account.
 alias wifemail="edbrowse -pfm2"
@@ -4984,9 +4984,9 @@ alias wifemail="edbrowse -pfm2"
 alias workmail="edbrowse -fm3"
 #  mail is obsolete
 alias mail="echo use mymail, wifemail, or workmail"
-</font></PRE>
+<!--</font>--></PRE>
 
-<h2> <A NAME=imr> Interactive Mail Reader </A> </h2>
+<h2 id="imr">Interactive Mail Reader</h2>
 
 If edbrowse is run with the -m option, and no other arguments,
 it is an interactive mail reader,
@@ -5006,7 +5006,7 @@ You respond by hitting a key.
 Keys have the following meaning.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>?	summary of key commands
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->?	summary of key commands
 q	quit the program
 space	display more text
 g	go to top
@@ -5015,7 +5015,7 @@ n	read the next message
 d	delete this message
 w	write this message to a file and delete it
 u	write this message unformatted to a file and delete it
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Typing space continues to display the email, like /bin/more.
@@ -5050,7 +5050,7 @@ As mentioned previously, it's a good idea to run a weekly cron job to clean
 out the trash bin; if that cron job removes subdirectories, it will ensure
 that raw mail does not accumulate indefinitely.
 
-<h2> <A NAME=mailfmt> Formatted Mail </A> </h2>
+<h2 id="mailfmt">Formatted Mail</h2>
 
 When mail is retrieved, it is saved in the directory of unread
 messages without any formatting applied.
@@ -5070,7 +5070,7 @@ finish your email session, edit that file,
 and type b to browse.
 Now the html is active, as though you were looking at a web page on somebody's site.
 
-<h2> <A NAME=filter> Mail Filtering </A> </h2>
+<h2 id="filter">Mail Filtering</h2>
 
 The config file supports a modest level of mail filtering.
 You can redirect incoming mail
@@ -5095,13 +5095,13 @@ Of course you can override with an absolute path if you wish.
 A mail filtering rule always occurs in the context of a filter block.
 For instance, if you wish to redirect mail from certain people, do this.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>fromfilter {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->fromfilter {
 fred flintstone &gt; fredmail
 fred.flintstone@bedrock.us &gt; fredmail
 jerk@hotmail.com &gt; x
 word@m-w.com > -wod
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 You can specify the sender's name or his email address.
@@ -5134,13 +5134,13 @@ This is useful if you have several mail accounts,
 or mail aliases that are forwarded to your primary account.
 Here is a sample block.
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>tofilter {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->tofilter {
 support@my-side-business.com &gt; support
 sales@my-side-business.com &gt; sales
 @my-side-business.com &gt; business
 me@my-regular-dayjob.com &gt; work
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The third entry is a catchall address,
@@ -5222,7 +5222,7 @@ Use the -p option to pass over the filters, as in `e -pm1'.
 I set this when looking at other people's mail, such as my wife's account.
 I don't want her mail sent somewhere else because it matches one of my filter rules.
 
-<h2> <A NAME=reply> Mail Reply </A> </h2>
+<h2 id="reply">Mail Reply</h2>
 
 The `re' command prepares a formatted email for reply.
 The "Reply to" line (which must exist) is moved to the top.
@@ -5247,7 +5247,7 @@ The resulting lines might look like this.
 <P>
 Reply to somebody@foo.bar.com
 <br>
-references: <4387A55E6AF43C4F9830C74EFECE9132022D0638@foo-bar.net>
+references: &lt;4387A55E6AF43C4F9830C74EFECE9132022D0638@foo-bar.net&gt;
 <br>
 Subject: What's in a name?
 
@@ -5291,7 +5291,7 @@ You must re-edit the saved mail message,
 browse, and reply.
 Like everything else in edbrowse, you'll get use to it once you play with it.
 
-<h2> <A NAME=imap> Imap Client </A> </h2>
+<h2 id="imap">Imap Client</h2>
 
 A pop3 client, as described above, fetches mail down to your computer,
 whereupon you are responsible for it.
@@ -5306,7 +5306,7 @@ The earlier configuration entry for gmail,
 when adjusted for imap, looks like this.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>mail {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->mail {
   imap
   inserver = imap.gmail.com
   outserver = smtp.gmail.com
@@ -5316,7 +5316,7 @@ when adjusted for imap, looks like this.
   reply = somebody@gmail.com
   from = Full Name
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 If this is the third mail entry in your config file, then you access this account by `edbrowse -f3'.
@@ -5326,7 +5326,7 @@ Rather, edbrowse provides access to all the emails on the imap server in an inte
 Here is a sample screenshot.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif> 1 INBOX, 0 messages
+<!--<font size=3 face=Arial,Helvetica,sans-serif>--> 1 INBOX, 0 messages
  2 [Gmail]/All Mail, 7 messages
  3 [Gmail]/Drafts, 0 messages
  4 [Gmail]/Important, 0 messages
@@ -5336,7 +5336,7 @@ Here is a sample screenshot.
  8 [Gmail]/Trash, 16 messages
 Select a folder by number or by substring. q to quit,
 rf to refresh, l number to change fetch limit, e string to set envelope format.
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 Type 6, or spam, or just spa, and edbrowse takes you through the 7 messages in the Spam folder.
@@ -5357,7 +5357,7 @@ Type / to search for emails by subject, by sender, or by the text in the body of
 Finally type h for the help message, which looks like this.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->
 h	print this help message
 q	quit this program
 s	stop reading from this folder
@@ -5377,7 +5377,7 @@ u	write this email unformatted to a file
 U	write this email unformatted to a file and delete it
 a	scan and save attachments
 e	envelope format string
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 On some servers, such as gmail, you can't delete an email from the "All Mail" folder.
@@ -5414,9 +5414,9 @@ You can rename a folder via `rename foo bar'.
 This command assumes there is no whitespace in a folder's name.
 
 <hr>
-<h1> Chapter 8, IRC Client </h1>
+<h1>Chapter 8, IRC Client</h1>
 
-<h2> <A NAME=irc> Using IRC </A> </h2>
+<h2 id="irc">Using IRC</h2>
 
 <p>
 Edbrowse can participate in irc chat sessions, on multiple servers in parallel.
@@ -5526,22 +5526,22 @@ Thus you can determine when things were said on the channel.
 The other ls commands do not apply here.
 
 <hr>
-<h1> Chapter 9, Database Access </h1>
+<h1>Chapter 9, Database Access</h1>
 
-<h2> <A NAME=sqlb> Building edbrowse with Database Access </A> </h2>
+<h2 id="sqlb">Building edbrowse with Database Access</h2>
 
 <P>
 Edbrowse can connect to sql databases through odbc.
 This assumes you have the unixODBC and unixODBC-devel packages installed on your machine.
 A separate target, edbrowseinf, provides a direct link to an
-<A HREF=http://www.informix.com>Informix database</A>.
+<A HREF=https://www.informix.com>Informix database</A>.
 This works, but is not generally supported.
 Other database specific edbrowse connectors could be built.
 You are basically implementing the interface described in dbapi.h,
 using the C database development toolkit provided by the vendor.
 Since odbc connects to everything, it will probably meet your needs.
 
-<h2> <A NAME=rtb> Reading Tables </A> </h2>
+<h2 id="rtb">Reading Tables</h2>
 
 When a file name is of a certain format, with http:// in front,
 it is deemed to be a url.
@@ -5562,7 +5562,7 @@ use the shc (show columns) command.
 The output might look like this.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>Table customers, 536281 rows
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->Table customers, 536281 rows
 1 *custnum int
 2 firstname string
 3 lastname string
@@ -5570,7 +5570,7 @@ The output might look like this.
 5 sex char
 6 email string
 7 picture blob
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 The first column is a unique number that designates this particular customer.
@@ -5697,7 +5697,7 @@ To fetch binary columns, use the fbc command.
 It is not possible to fetch more than one binary column at a time,
 so make sure your select only grabs one such column.
 
-<h2> <A NAME=dsource> Data source </A> </h2>
+<h2 id="dsource">Data source</h2>
 
 To do anything with the database, your config file must specify
 the name of the data source, the login, and the password.
@@ -5720,7 +5720,7 @@ For instance, you can read the parts table in the inventory database by calling 
 This is standard sql syntax for looking at tables in another database;
 edbrowse just passes it through.
 
-<h2> <A NAME=insupd> Insert, Update, Delete </A> </h2>
+<h2 id="insupd">Insert, Update, Delete</h2>
 
 Now that we have run a few selects, let's modify some data.
 These operations are known as insert, update, and delete in the database world.
@@ -5790,7 +5790,7 @@ As mentioned before, referential integrity should be employed wherever it makes 
 As a last check, I only let you delete 100 rows at a time.
 Be careful, and run regular backups.
 
-<h2> <A NAME=td> Table Descriptors </A> </h2>
+<h2 id="td">Table Descriptors</h2>
 
 Suppose a table contains 100 fields.
 Displaying all those fields is awkward, to say the least.
@@ -5802,7 +5802,7 @@ It will contain only the columns you specify.
 Here are two descriptors for the aforementioned customers table.
 
 <PRE>
-<font size=3 face=Arial,Helvetica,sans-serif>table {
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->table {
     tname = customers
 #  cnm is my cryptic shorthand for customer name
 #  I want to be cryptic here, cause I'm going to be typing this a lot.
@@ -5819,7 +5819,7 @@ table {
     cols = birthdate,custnum
     keycol = 2
 }
-</font></PRE>
+<!--</font>--></PRE>
 
 <P>
 When inserting a row through one of these descriptors,
@@ -5830,7 +5830,7 @@ If you receive a Not-Null error, it could be due to one of the other columns,
 which requires an entered value.
 It is usually safer to insert a row using the complete table.
 
-<h2> <A NAME=gosql> Go SQL </A> </h2>
+<h2 id="gosql">Go SQL</h2>
 
 <p>
 If you know the trick, you can feed sql statements directly to the database,
@@ -5863,7 +5863,7 @@ where custnum = addrnum and addrtype = "HOME"
 <br>
 and custnum between 500 and 600;
 
-<h2> <A NAME=pipes> Pipes in the Data </A> </h2>
+<h2 id="pipes">Pipes in the Data</h2>
 
 <P>
 Since | is our reserved separator, what happens if the strings contain pipes?
@@ -5904,7 +5904,7 @@ It's not a perfect solution.
 Since the row is represented on one edbrowse line, it can't contain a newline.
 If there are nonascii characters, we hope they are utf-8, or they will display strangely.
 
-<h2> <A NAME=dbur> Unfolded Rows </A> </h2>
+<h2 id="dbur">Unfolded Rows</h2>
 
 <p>
 The ur command unfolds a row, just as it does with an html table.
