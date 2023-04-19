@@ -4514,6 +4514,8 @@ static const char *windowTitle(const Window *w)
 	return emptyString;
 }
 
+// Search by substring. We could search by regexp, which brings more power,
+// but perhaps more confusion as well.
 static int sessionByText(const char *s, int dir)
 {
 	int n = context;
