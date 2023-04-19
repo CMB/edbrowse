@@ -4506,6 +4506,14 @@ Tag *line2frame(int ln)
 	return 0;
 }
 
+// return the title of a web page, or the file name
+static const char *windowTitle(const Window *w)
+{
+	if (w->htmltitle) return w->htmltitle;
+	if (w->f0.fileName) return w->f0.fileName;
+	return emptyString;
+}
+
 static char shortline[60];
 static int twoLetter(const char *line, const char **runThis)
 {
@@ -4611,10 +4619,8 @@ down_again:
 		}
 		selfFrame();
 		if (debugLevel >= 1) {
-			if (cw->htmltitle)
-				printf("%s", cw->htmltitle);
-			else if (cw->f0.fileName)
-				printf("%s", cw->f0.fileName);
+			const char *title = windowTitle(cw);
+			if(title[0]) printf("%s", title);
 			else i_printf(MSG_NoFile);
 			nl();
 		}
@@ -5315,12 +5321,8 @@ et_go:
 			Window *lw = sessionList[n].lw;
 			if (!lw)
 				continue;
-			printf("%d%c ", n, n == context ? '*' : ':');
-			if (lw->htmltitle)
-				printf("%s", lw->htmltitle);
-			else if (lw->f0.fileName)
-				printf("%s", lw->f0.fileName);
-			nl();
+			printf("%d%c %s\n", n, (n == context ? '*' : ':'),
+			windowTitle(lw));
 		}
 		return true;
 	}
@@ -5334,11 +5336,7 @@ et_go:
 		while(true) {
 			if(n) printf("+%d: ", n);
 			else printf("*0: ");
-			if (w->htmltitle)
-				printf("%s", w->htmltitle);
-			else if (w->f0.fileName)
-				printf("%s", w->f0.fileName);
-			nl();
+			printf("%s\n", windowTitle(w));
 			if(w == cw) break;
 			--n;
 			for(x = s->lw; x->prev != w; x = x->prev) ;
@@ -5348,11 +5346,7 @@ et_go:
 		if(!w) return true;
 		while(true) {
 			printf("-%d: ", ++n);
-			if (w->htmltitle)
-				printf("%s", w->htmltitle);
-			else if (w->f0.fileName)
-				printf("%s", w->f0.fileName);
-			nl();
+			printf("%s\n", windowTitle(w));
 			if(w == s->lw2) break;
 			for(x = s->lw2; x->prev != w; x = x->prev) ;
 			w = x;
