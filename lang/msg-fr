@@ -232,7 +232,7 @@ navigation impossible dans un fichier vide
 ce contenu ne semble pas navigable
 en cours de navigation
 label %s non trouvé
-0
+email malformé dans le carnet d'adresses ligne %d
 impossible de lancer une commande d'insertion à partir d'une fonction d'edbrowse
 les lignes du %d au %d ont été mises à jour\n
 commande %c non implémentée
@@ -280,7 +280,7 @@ Erreur de connexion SSL %d
 début de l'historique
 fin de l'historique
 %s impossible en mode irc
-0
+utf8 invalide, voyez su8-
 impossible de charger html fragment depuis %s, code %ld\n
 impossible de lire les données sur le serveur
 %s n'est pas une url
@@ -595,7 +595,7 @@ StringInListCI(null,...)
 charInList(null,...)
 Pointeur nul dans pstLength
 Impossible d'utiliser ioctl() pour gérer le terminal
-0
+!commande doit suivre W
 Impossible de créer ou d'écrire %s
 Mode d'appel %s de fopen() invalide
 / mal placé dans getDirUrl(%s)
@@ -714,15 +714,15 @@ il y a plusieurs boutons, utilisez svp %s1 à %s%d
 il y a plusieurs images présentes, veuillez utiliser %s1 à %s%d
 0
 impossible de charger html fragment\n
-0
-0
-0
-0
-0
-0
-0
-0
-0
+ne pas mettre à jour les variables d'environnement
+mettre à jour les variables d'environnement
+échec de la commande shell
+même dossier
+http internet
+http local
+mode impropre en session %d
+pas d'auteur
+pas de générateur
 0
 0
 0
