@@ -617,6 +617,9 @@ f : print the name of the current file
 <br>r7@-,+ : read 3 lines around . into the current buffer
 <br>r7@'a,'b : read the designated block into the current buffer
 <br>r7@100, : same as r7@100,$
+<br>r/foo : find the session whose filename contains foo and read it into the current buffer
+<br>r/foo@6 : read line 6 of session foo into the current buffer
+<br>r/foo@'a,'b : read a range of lines from session foo into the current buffer
 <br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
@@ -627,6 +630,8 @@ f : print the name of the current file
 <br>9w7@- : write line 9 to session 7 before the current line
 <br>w7@$ : append this file to session 7
 <br>w+7 : same as w7@$
+<br>w/foo : find the session whose filename contains foo and overwrite it with the current buffer
+<br>3w/foo@6 : write line 3 into session foo after line 6
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
 <br>'a,'bW !command : run a range of lines through a shell command and replace them
@@ -1231,7 +1236,7 @@ g/\.o$/d makes sense, g/\.o$/-d, or anything else, is risky and unpredictable.
 Reading from a buffer is also optimized.
 g/re/ r7
 this prints "mass read" at debug level 3.
-You must read the contents of a buffer, or part of the buffer using the @ syntax.
+You must read the contents of a buffer, or part of the buffer using the at syntax.
 If you want to inject the contents of a file many times over, read that file into a buffer in another session first, and then use the above construct.
 This is more efficient anyways; you don't want to open that file over and over again.
 
@@ -1431,6 +1436,7 @@ Here is a faster and easier way to do the same thing, without using an extra tra
 It uses the special notation 'a,'bw1@'c, which injects the prescribed text from a to b, into session 1, at line label c, rather than overwriting the file.
 The at sign makes all the difference.
 Say the word at to yourself: put the text *at* this line in the preexisting buffer.
+This is called the at syntax.
 A label or a line number or $ or . or + or - must follow @, and there can be no whitespace.
 Complex expressions like @/xyz/-3 are not allowed here.
 A single space can change the meaning.
@@ -1464,6 +1470,7 @@ Here is another way, that reads instead of writes.
 It uses the special notation r2@'a,'b, which reads the prescribed text from a to b, into session 1, at the current location.
 The at sign makes all the difference.
 Say the word at to yourself: read the text starting *at* this line in the other session.
+This is once again the at syntax.
 A label or a line number or $ or . or + or - or ; must follow @, and there can be no whitespace.
 There is no need to implement r3@, reading the entire file, as that is the same as r3.
 Complex expressions like @/xyz/-3 are not allowed here.
@@ -1500,6 +1507,19 @@ If a second line number is not given, the single line is read.
 <P>
 An e command by itself prints the current session, in case you've forgotten.
 This is similar to f, by itself, which prints the current file.
+
+<p>
+r/foo reads the contents of the session whose filename contains the substring foo, or whose html title contains the substring foo, if it is a web page.
+The bflist command shows you the filenames or titles of the sessions.
+r?foo looks backwards through the sessions for the buffer to read.
+This is just like e/foo and e?foo, which were described earlier.
+And w/foo and w?foo work the same way.
+
+<P>
+Unlike the e/ command, r/ and w/ respect the at syntax.
+r/foo@3 reads line 3 into the current buffer, from the next session whose filename or title contains the substring foo.
+'a,'bw/foo@7 writes a range of lines from the current buffer into the next session whose filename or title contains the substring foo.
+This notation can be cryptic, but it can be powerful.
 
 <h2 id="usage">Usage</h2>
 
