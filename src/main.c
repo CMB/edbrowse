@@ -1543,10 +1543,8 @@ static bool preConfigFile(char *buf, int buflen)
 				q = last + 9;
 				if (*q == 0 || *q == '{' || *q == '(')
 					cfgLine0(MSG_EBRC_NoFnName);
-#if 0
 				if (isdigitByte(*q))
 					cfgLine0(MSG_EBRC_FnDigit);
-#endif
 				while (isalnumByte(*q))
 					++q;
 				if (q - last - 9 > 10)

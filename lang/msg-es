@@ -127,7 +127,7 @@ nombre del archivo no encontrado
 dominio vacío en la url
 no se puede escribir en la url
 no se puede escribir en una tabla de una base de datos
-0
+%c no está disponible en modo irc
 no se puede crear %s
 no se puede escribir %s
 la sesión no es interactiva
@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 puntero vacío en pstLength
 no se puede usar ioctl() para controlar el tty
-0
+!el comando debe seguir a W
 no se puede crear o escribir en %s
 llamando fopen() con modo inválido %s
 / fuera de lugar en getDirURL(%s)
@@ -714,15 +714,15 @@ múltiples botones presentes, por favor usa %s1 hasta %s%d
 múltiuples imágenes presente, por favor usa %s1 hasta %s%d
 0
 no se pudo obtener el fragmento de html\n
-0
-0
-0
-0
-0
-0
-0
-0
-0
+no actualizar las variables de entorno
+actualizar las variable de entorno
+el comando del shell falló
+mismo directorio
+http internet
+http local
+modo inadecuado en sesión %d
+sin autor
+sin generador
 0
 0
 0

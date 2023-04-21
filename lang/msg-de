@@ -232,7 +232,7 @@ kann leere Datei nicht im Browsermodus anzeigen
 Dies sieht nicht wie Text zum Browsen aus.
 bereits am Browsen
 Marke %s nicht gefunden
-0
+ungültige E-Mail-Adresse in Zeile %d des Adressbuchs
 kann Einfügekommando nicht aus einer Edbrowse-Funktion heraus starten
 Zeilen von %d auf %d aktualisiert\n
 Kommando %c noch nicht implementiert
@@ -280,7 +280,7 @@ SSL-Verbindungsfehler %d
 Anfang der Historie
 Ende der Historie
 %s im irc Modes nicht verfügbar
-0
+ungültiges UTF-8, setzen Sie su8-
 konnte html fragment von %s nicht abrufen, Code %ld\n
 konnte Daten nicht vom Server lesen
 %s ist keine URL
@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 Nullzeiger in pstLength
 kann ioctl() nicht zur Verwaltung des ttys verwenden
-0
+!Kommando muss nach W kommen
 kann %s weder erstellen noch schreiben
 Aufruf von fopen() mit ungültigem Modus %s
 fehlplatzierter / in getDirURL(%s)
@@ -698,11 +698,11 @@ format=flowed aktiviert
 Audiowiedergabe im irc Modes unmöglich
 Umbrechen von Zeilen im irc Modes nicht möglich
 kann den Namen irc nicht ändern
-0
-0
-0
-0
-0
+itte schreiben Sie den gesamten Puffer nach irc
+irc m n Domäne[+][:[*]Port] Nickname[:Passwort] [Gruppe]
+Sitzung %d ist inkompatibel mit IRC
+Debug-Ansicht deaktiviert
+Debug-Ansicht aktiviert
 keine eingabefelder vorhanden
 keine Links vorhanden
 keine Schalter vorhanden
@@ -714,15 +714,15 @@ mehrere Schalter vorhanden, nutzen Sie %s1 bis %s%d
 mehrere Bilder vorhanden, nutzen Sie %s1 bis %s%d
 0
 konnte html fragment nicht abrufen\n
-0
-0
-0
-0
-0
-0
-0
-0
-0
+aktualisiere keine Umgebungsvariablen
+aktualisiere Umgebungsvariablen
+Shell-Kommando fehlgeschlagen
+gleiches Verzeichnis
+HTTP im Internet
+HTTP lokal
+ungültiger Modus in Sitzung %d
+kein Author
+kein Generator
 0
 0
 0
