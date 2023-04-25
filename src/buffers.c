@@ -4695,7 +4695,16 @@ down_again:
 		if(at) *at = '@';
 		if(!n) return 0;
 		sprintf(shortline, "%c%d", line[0], n);
-		if(at) strcat(shortline, at);
+		if(at) {
+// check for buffer overrun, albeit extremely unlikely
+// Proper at syntax will always fit in the buffer.
+			i = sizeof(shortline) - strlen(shortline) - 1;
+			n = strlen(at);
+			if(n > i) n = i;
+			char *e = shortline + strlen(shortline);
+			strncpy(e, at, n);
+			e[n] = 0;
+		}
 		return 2;
 	}
 

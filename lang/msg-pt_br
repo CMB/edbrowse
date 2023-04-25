@@ -280,7 +280,7 @@ Erro de conexão SSL %d
 início do histórico
 fim do histórico
 %s não disponível em modo irc
-0
+UTF8 inválido; considere definir su8-
 não consegui trazer o html fragment de %s; código %ld\n
 não consegui ler os dados do servidor
 %s não é uma URL
@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 ponteiro nulo na pstLength
 não posso usar ioctl() para controlar o TTY
-0
+!comando tem que seguir W
 não é possível criar ou escrever em %s
 chamando fopen() em modo inválido %s
 / mal posicionada na getDirURL(%s)
@@ -714,6 +714,15 @@ presentes; por favor use %s1 até %s%d
 várias imagens presentes, por favor use %s1 até %s%d
 0
 não consegui trazer o html fragment\n
+não atualizar variáveis de ambiente
+atualizar variáveis de ambiente
+comando de shell falhou
+mesma pasta
+http da internet
+http local
+modo impróprio na sessão %d
+nenhum autor
+nenhum gerador
 0
 0
 0
@@ -788,13 +797,4 @@ não consegui trazer o html fragment\n
 0
 0
 0
-0
-0
-0
-0
-0
-0
-0
-0
-0
-0
+e-mail em formato errado na linha %d do catálogo de endereços
