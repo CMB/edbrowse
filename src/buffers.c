@@ -2707,10 +2707,101 @@ static char *bangbang(const char *line)
 	return (ascmd = s);
 }
 
+// replace '. with $EB_DOT, '_ with $EB_FILE, etc
+static char *apostropheMacros(const char *line)
+{
+	char *newline, *s;
+	const char *t;
+	char key;
+	int linesize = 0, pass, n;
+
+	for (pass = 1; pass <= 2; ++pass) {
+		for (t = line; *t; ++t) {
+			if (*t != '\'')
+				goto addchar;
+			if (t > line && isalnumByte(t[-1]))
+				goto addchar;
+			key = t[1];
+			if (key && isalnumByte(t[2]))
+				goto addchar;
+
+			if (key == '_') {
+				++t;
+				if (pass == 1) {
+					linesize += 8;
+				} else {
+					strcpy(s, "$EB_FILE");
+					s += strlen(s);
+				}
+				continue;
+			}
+
+			if (key == '.') {
+				++t;
+				if (pass == 1) {
+					linesize += 7;
+				} else {
+					strcpy(s, "$EB_DOT");
+					s += strlen(s);
+				}
+				continue;
+			}
+
+			if (key == '-') {
+				++t;
+				if (pass == 1) {
+					linesize += 9;
+				} else {
+					strcpy(s, "$EB_MINUS");
+					s += strlen(s);
+				}
+				continue;
+			}
+
+			if (key == '+') {
+				++t;
+				if (pass == 1) {
+					linesize += 8;
+				} else {
+					strcpy(s, "$EB_PLUS");
+					s += strlen(s);
+				}
+				continue;
+			}
+
+			if (islowerByte(key)) {
+				++t;
+				if (pass == 1) {
+					linesize += 8;
+				} else {
+					strcpy(s, "$EB_LN");
+					s += strlen(s);
+					*s++ = key;
+				}
+				continue;
+			}
+
+addchar:
+			if (pass == 1)
+				++linesize;
+			else
+				*s++ = *t;
+		}		// loop over chars
+
+		if (pass == 1)
+			s = newline = allocMem(linesize + 1);
+		else
+			*s = 0;
+	}			// two passes
+
+	return newline;
+}
+
 static bool shellEscape(const char *line)
 {
-	char *sh, *newline;
+	char *sh, *line1, *line2;
 	char *interactive_shell_cmd = NULL;
+	bool rc;
 
 /* preferred shell */
 	sh = getenv("SHELL");
@@ -2731,10 +2822,13 @@ static bool shellEscape(const char *line)
 		return true;
 	}
 
-	newline = bangbang(line);
+	line1 = bangbang(line);
+	line2 = apostropheMacros(line1);
 	eb_variables();
 
-	return !eb_system(newline, !globSub);
+	rc =  !eb_system(line2, !globSub);
+	free(line2);
+	return rc;
 }
 
 // parse portion syntax as in 7@'a,'b. ASsume context has been cracked,
