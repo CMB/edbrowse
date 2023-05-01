@@ -12,6 +12,8 @@ Recover from an imap disconect and reconnect.
 The e/, e?, r/, r?, w/, and w? commands.
 The read and write commands support the at syntax.
 
+Resurrect the '. macros, but in a safe way.
+
 3.8.6
 Support tls sockets, and the lst command for irc.
 

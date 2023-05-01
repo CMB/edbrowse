@@ -495,12 +495,17 @@ q : quit the current session
 <br>!! stuff : previous shell command with stuff appended
 <br>ebvar : update environment variables before each shell command (toggle)
 <br>! program "$EB_DOT" : run program on the contents of the current line
+<br>! program '. : same as above
 <br>! program "$EB_PLUS" : run program on the contents of the next line
+<br>! program '+ : same as above
 <br>! program "$EB_MINUS" : run program on the contents of the previous line
+<br>! program '- : same as above
 <br>! program "$EB_LNx" : run program on the contents of the line marked by kx
+<br>! program 'x : same as above
 <br>!program $EB_LN : access the current line number
 <br>!program $EB_LINES : access the number of lines in the buffer
 <br>! program "$EB_FILE" : run program on the file name
+<br>! program '_ : same as above
 <br>! program "$EB_BASE" : use the file name without the .browse suffix
 <br>!program $EB_DIR : access the directory that holds the file
 <br>! : spawn an interactive shell
@@ -2052,6 +2057,19 @@ Use kx and ky to mark two files that you want to compare, then run !diff "$EB_LN
 This feature is not limited to directory scans.
 You may be editing a simple file,
 but you can still paste the contents of a line into your shell command.
+
+<P>
+'. is shorthand for "$EB_DOT".
+'- becomes "$EB_MINUS", '+ becomes "$EB_PLUS", 't becomes "$EB_LNt",
+and '_ becomes "$EB_FILE".
+These replacements are only made if there are no lettters or numbers on either side of the punctuation marks.
+After all, you wouldn't want to replace 't in the word wouldn't.
+
+<P>
+The replacement is quoted, and thus a single argument to the shell.
+Because the shorthand references the environment variable, and not the line itself, it is quoted safely.
+For example, create a line that contains only ", then !echo '. works.
+If you don't want the contents of your line to be quoted in this way, use the variable $EB_DOT directly.
 
 <P>
 When in directory mode, the ls command displays various attributes of the file on the current line.

@@ -2728,9 +2728,9 @@ static char *apostropheMacros(const char *line)
 			if (key == '_') {
 				++t;
 				if (pass == 1) {
-					linesize += 8;
+					linesize += 10;
 				} else {
-					strcpy(s, "$EB_FILE");
+					strcpy(s, "\"$EB_FILE\"");
 					s += strlen(s);
 				}
 				continue;
@@ -2739,9 +2739,9 @@ static char *apostropheMacros(const char *line)
 			if (key == '.') {
 				++t;
 				if (pass == 1) {
-					linesize += 7;
+					linesize += 9;
 				} else {
-					strcpy(s, "$EB_DOT");
+					strcpy(s, "\"$EB_DOT\"");
 					s += strlen(s);
 				}
 				continue;
@@ -2750,9 +2750,9 @@ static char *apostropheMacros(const char *line)
 			if (key == '-') {
 				++t;
 				if (pass == 1) {
-					linesize += 9;
+					linesize += 11;
 				} else {
-					strcpy(s, "$EB_MINUS");
+					strcpy(s, "\"$EB_MINUS\"");
 					s += strlen(s);
 				}
 				continue;
@@ -2761,9 +2761,9 @@ static char *apostropheMacros(const char *line)
 			if (key == '+') {
 				++t;
 				if (pass == 1) {
-					linesize += 8;
+					linesize += 10;
 				} else {
-					strcpy(s, "$EB_PLUS");
+					strcpy(s, "\"$EB_PLUS\"");
 					s += strlen(s);
 				}
 				continue;
@@ -2772,11 +2772,12 @@ static char *apostropheMacros(const char *line)
 			if (islowerByte(key)) {
 				++t;
 				if (pass == 1) {
-					linesize += 8;
+					linesize += 10;
 				} else {
-					strcpy(s, "$EB_LN");
+					strcpy(s, "\"$EB_LN");
 					s += strlen(s);
 					*s++ = key;
+					*s++ = '"';
 				}
 				continue;
 			}
