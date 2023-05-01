@@ -1297,7 +1297,7 @@ bool runBuffer(int b, bool stopflag, int ln1, int ln2)
 	}
 	w = sessionList[b].lw;
 	if(w->dirMode | w->binMode | w->sqlMode | w->irciMode | w->ircoMode | w->browseMode) {
-		setError(MSG_SessionMode);
+		setError(MSG_SessionMode, b);
 		return false;
 	}
 	for(ln = ln1; ln <= ln2; ++ln) {

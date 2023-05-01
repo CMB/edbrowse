@@ -232,7 +232,7 @@ impossibile svolgere il browsing di un file vuoto
 questo non sembra testo di cui si possa fare il browsing
 già svolgendo il browsing
 etichetta %s non trovata
-0
+indirizzo email in formato non corretto nella rubrica
 impossibile eseguire un comando insert da una funzione edbrowse
 varie righe da %d a %d sono state aggiornate\n
 comando %c non ancora implementato
@@ -277,10 +277,10 @@ impossibile rinominare il file come %s
 impossibile inserire valori nulli in un campo di input
 impossibile inserire newlines in un campo di input
 errore durante la connessione SSL %d
-0
-0
+inizio della cronologia
+fine della cronologia
 %s non disponibile in modalità irc
-0
+utf8 non valido, potresti settare su8-
 impossibile scaricare html fragment da %s, codice %ld\n
 impossibile leggere dati dal server
 %s non è un url
@@ -693,31 +693,31 @@ directory listing, dati aggiuntivi
 directory listing, solo nomi
 debug scanner html disabilitato
 debug scanner html abilitato
-0
-0
+non usare format=flowed
+usa format=flowed
 impossibile attivare il playing dell'audio in modalità irc
 impossibile rompere righe in modalità irc
 impossibile cambiare il nome di irc
-0
-0
-0
+per favore invia l'intero buffer ad irc
+irc m n dominio[+][:[*]porta] nickname[:password] [gruppo]
+la sessione %d non è compatibile con irc
 0
 0
 non sono presenti campi di input
 non ci sono links
 non ci sono bottoni
-0
+non sono presenti immagini
 0
 multipli campi di input sono presenti, usa %s1 fino a %s%d
 multipli links sono presenti, per favore usa da %s1 fino a %s%d
 multipli bottoni sono presenti, per favore usa da %s1 a %s%d
-0
+multiple immagini sono presenti, per favore usa da %s1 a %s%d
 0
 impossibile acquisire html fragment\n
-0
-0
-0
-0
+non aggiornare le variabili d'ambiente
+aggiorna le variabili d'ambiente
+comando shell fallito
+stesso folder
 0
 0
 0
