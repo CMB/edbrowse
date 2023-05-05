@@ -4782,7 +4782,7 @@ down_again:
 		return 2;
 	}
 
-	if((line[0] == 'r' || line[0] == 'w' || line[0] == '<') && (line[1] == '/' || line[1] == '?')) {
+	if((line[0] == 'r' || line[0] == 'w' || line[0] == '<') && (line[1] == '/' || line[1] == '?') && !stringEqual(line, "w/")) {
 		char *at = strchr(line, '@'); // look for at syntax
 		if(at) *at = 0; // I'll put it back
 		cmd = 'e';
