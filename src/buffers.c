@@ -4774,35 +4774,6 @@ down_again:
 		return false;
 	}
 
-	if((line[0] == 'e' || line[0] == 'q') && (line[1] == '/' || line[1] == '?')) {
-		cmd = 'e';
-		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
-		if(!n) return 0;
-		sprintf(shortline, "%c%d", line[0], n);
-		return 2;
-	}
-
-	if((line[0] == 'r' || line[0] == 'w' || line[0] == '<') && (line[1] == '/' || line[1] == '?') && !stringEqual(line, "w/")) {
-		char *at = strchr(line, '@'); // look for at syntax
-		if(at) *at = 0; // I'll put it back
-		cmd = 'e';
-		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
-		if(at) *at = '@';
-		if(!n) return 0;
-		sprintf(shortline, "%c%d", line[0], n);
-		if(at) {
-// check for buffer overrun, albeit extremely unlikely
-// Proper at syntax will always fit in the buffer.
-			i = sizeof(shortline) - strlen(shortline) - 1;
-			n = strlen(at);
-			if(n > i) n = i;
-			char *e = shortline + strlen(shortline);
-			strncpy(e, at, n);
-			e[n] = 0;
-		}
-		return 2;
-	}
-
 	if(stringEqual(line, "enum")) {
 		pst p, p0;
 		cmd = 'e';
@@ -6555,6 +6526,36 @@ range2:
 			return false;
 		}
 		line = "s`bl";
+	}
+
+// [eqwr<][/?] commands
+	if((first == 'e' || first == 'q') && (line[1] == '/' || line[1] == '?')) {
+		cmd = 'e';
+		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
+		if(!n) return globSub = 0;
+		sprintf(newline, "%c%d", first, n);
+		line = newline;
+	}
+
+	if((first == 'r' || first == 'w' || first == '<') && (line[1] == '/' || line[1] == '?') && !stringEqual(line, "w/")) {
+		char *at = strchr(line, '@'); // look for at syntax
+		if(at) *at = 0; // I'll put it back
+		cmd = 'e';
+		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
+		if(at) *at = '@';
+		if(!n) return globSub = 0;
+		sprintf(newline, "%c%d", first, n);
+		if(at) {
+// check for buffer overrun, albeit extremely unlikely
+// Proper at syntax will always fit in the buffer.
+			i = sizeof(newline) - strlen(newline) - 1;
+			n = strlen(at);
+			if(n > i) n = i;
+			char *e = newline + strlen(newline);
+			strncpy(e, at, n);
+			e[n] = 0;
+		}
+		line = newline;
 	}
 
 expctr:
