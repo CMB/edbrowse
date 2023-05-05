@@ -10,7 +10,7 @@ Recover from an imap disconect and reconnect.
 <7 to run the commands in session 7
 
 The [erwq<][/?] commands.
-The read and write commands support the at syntax.
+The read write and < commands support the at syntax.
 
 Resurrect the '. macros, but in a safe way.
 

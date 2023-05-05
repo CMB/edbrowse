@@ -4774,7 +4774,7 @@ down_again:
 		return false;
 	}
 
-	if((line[0] == 'e' || line[0] == '<' || line[0] == 'q') && (line[1] == '/' || line[1] == '?')) {
+	if((line[0] == 'e' || line[0] == 'q') && (line[1] == '/' || line[1] == '?')) {
 		cmd = 'e';
 		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
 		if(!n) return 0;
@@ -4782,7 +4782,7 @@ down_again:
 		return 2;
 	}
 
-	if((line[0] == 'r' || line[0] == 'w') && (line[1] == '/' || line[1] == '?')) {
+	if((line[0] == 'r' || line[0] == 'w' || line[0] == '<') && (line[1] == '/' || line[1] == '?')) {
 		char *at = strchr(line, '@'); // look for at syntax
 		if(at) *at = 0; // I'll put it back
 		cmd = 'e';
