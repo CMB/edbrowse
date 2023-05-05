@@ -4774,12 +4774,12 @@ down_again:
 		return false;
 	}
 
-	if(line[0] == 'e' && (line[1] == '/' || line[1] == '?')) {
+	if((line[0] == 'e' || line[0] == '<' || line[0] == 'q') && (line[1] == '/' || line[1] == '?')) {
 		cmd = 'e';
 		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
 		if(!n) return 0;
-		cxSwitch(n, true);
-		return 1;
+		sprintf(shortline, "%c%d", line[0], n);
+		return 2;
 	}
 
 	if((line[0] == 'r' || line[0] == 'w') && (line[1] == '/' || line[1] == '?')) {
