@@ -12,7 +12,7 @@ Recover from an imap disconect and reconnect.
 The [erwq<][/?] commands.
 The read write and < commands support the at syntax.
 
-Resurrect the '. macros, but in a safe way.
+Resurrect the apostrophe macros, but in a safe way.
 
 3.8.6
 Support tls sockets, and the lst command for irc.

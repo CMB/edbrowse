@@ -5353,20 +5353,6 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "ebvar")) {
-		ebvar ^= 1;
-		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(ebvar + MSG_UpdateEBVarOff);
-		return true;
-	}
-
-	if (stringEqual(line, "ebvar+") || stringEqual(line, "ebvar-")) {
-		ebvar = (line[5] == '+');
-		if (helpMessagesOn)
-			i_puts(ebvar + MSG_UpdateEBVarOff);
-		return true;
-	}
-
 	if (stringEqual(line, "flow")) {
 		flow ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -6090,6 +6076,20 @@ static int twoLetterG(const char *line, const char **runThis)
 
 	if(stringEqual(line, "db")) {
 		printf("%d\n", debugLevel);
+		return true;
+	}
+
+	if (stringEqual(line, "ebvar")) {
+		ebvar ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(ebvar + MSG_UpdateEBVarOff);
+		return true;
+	}
+
+	if (stringEqual(line, "ebvar+") || stringEqual(line, "ebvar-")) {
+		ebvar = (line[5] == '+');
+		if (helpMessagesOn)
+			i_puts(ebvar + MSG_UpdateEBVarOff);
 		return true;
 	}
 
