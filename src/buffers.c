@@ -5523,20 +5523,6 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "H")) {
-		if (helpMessagesOn ^= 1)
-			if (debugLevel >= 1)
-				i_puts(MSG_HelpOn);
-		return true;
-	}
-
-	if (stringEqual(line, "H+") || stringEqual(line, "H-")) {
-		helpMessagesOn = (line[1] == '+');
-		if (helpMessagesOn && debugLevel >= 1)
-			i_puts(MSG_HelpOn);
-		return true;
-	}
-
 	if (stringEqual(line, "bd")) {
 		binaryDetect ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
@@ -6090,6 +6076,20 @@ static int twoLetterG(const char *line, const char **runThis)
 		ebvar = (line[5] == '+');
 		if (helpMessagesOn)
 			i_puts(ebvar + MSG_UpdateEBVarOff);
+		return true;
+	}
+
+	if (stringEqual(line, "H")) {
+		if (helpMessagesOn ^= 1)
+			if (debugLevel >= 1)
+				i_puts(MSG_HelpOn);
+		return true;
+	}
+
+	if (stringEqual(line, "H+") || stringEqual(line, "H-")) {
+		helpMessagesOn = (line[1] == '+');
+		if (helpMessagesOn && debugLevel >= 1)
+			i_puts(MSG_HelpOn);
 		return true;
 	}
 

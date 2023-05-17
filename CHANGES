@@ -7,7 +7,7 @@ local command reads pages from cache.
 
 Recover from an imap disconect and reconnect.
 
-<7 to run the commands in session 7
+<7 to run the commands in session 7. at syntax is supported.
 
 The [erwq<][/?] commands.
 The read write and < commands support the at syntax.
