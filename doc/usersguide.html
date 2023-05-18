@@ -535,6 +535,9 @@ p : print the current line
 <br>n : print the current line with its line number
 <br>ll 1000 : line length 1000, show the first 1000 chars of each line
 <br> ll : print the current line length
+<br>fll 80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
+<br>fll 80+ : cut lines to 80 chars but allow some overflow so the next line isn't just one or two words
+<br>fll : print the format line length
 <br>z22 : print the next 22 lines
 <br>z : print another 22 lines
 <br>= : print the number of lines in the file
@@ -571,10 +574,7 @@ and print the result
 <br>s. : replace period space with newline, break line in two
 <br>s?2 : break line at the second question mark
 <br>s.$ : break line at the last period
-<br>bl : break very long line into sentences and phrases
-<br>fll 80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
-<br>fll 80+ : cut lines to 80 chars but allow some overflow so the next line isn't just one or two words
-<br>fll : print the format line length
+<br>bl : break very long line into sentences and phrases, uses fll to wrap
 <br>/x/ : look for the line containing x
 <br>/x : same as /x/
 <br>/x/i : look for the line containing x or X

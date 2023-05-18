@@ -4318,6 +4318,7 @@ static int substituteText(const char *line)
 					undoSpecial = cloneString(p), undo1line = ln, undoField = 0;
 					p[len - 1] = '\n';
 				}
+				cw->dot = ln;
 			}	// source and dest are different
 } // dir mode
 
