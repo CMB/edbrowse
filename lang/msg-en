@@ -272,7 +272,7 @@ sorry, cannot apply the bl command to lines longer than %d bytes
 replacement data contains newlines
 replacement data contains null characters
 cannot embed slash, newline, or null in a directory name
-destination file already exists
+destination file %s exists
 cannot rename file to %s
 cannot embed null in an input field
 cannot embed newline in an input field

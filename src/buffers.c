@@ -4305,7 +4305,7 @@ static int substituteText(const char *line)
 				goto abort;
 			if (!stringEqual(src, dest)) {
 				if (fileTypeByName(dest, 1)) {
-					setError(MSG_DestFileExists);
+					setError(MSG_DestFileExists, dest);
 					goto abort;
 				}
 				if (rename(src, dest)) {
@@ -6773,7 +6773,7 @@ after_ib:
 		if (!dest)
 			return false;
 		if (fileTypeByName(dest, 1)) {
-			setError(MSG_DestFileExists);
+			setError(MSG_DestFileExists, dest);
 			return false;
 		}
 		if (rename(src, dest)) {

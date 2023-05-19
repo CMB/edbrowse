@@ -272,7 +272,7 @@ perdón, no se puede aplicar el comando bl a lineas de mas de %d bytes
 datos de reemplazo contienen nuevas lineas
 datos de reemplazo contienen carácteres vacíos
 no se puede incluir el caracter de barra inclinada, nueva linea o vacío en un nombre de directorio
-el archivo de destino ya existe
+el archivo de destino ya %s existe
 no se puede renombrar el archivo a %s
 no se puede insertar carácter de vacío en un campo de entrada
 no se puede insertar carácter de nueva linea en un campo de entrada

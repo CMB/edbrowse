@@ -272,7 +272,7 @@ kann das bl-Kommando nicht auf Zeilen länger als %d Bytes anwenden
 Ersatzdaten enthalten Zeilenumbrüche
 Ersetzung enthalten Nullbytes
 kann weder /, ein Nullbyte noch einen Zeilenumbruch in einem Dateinamen verwenden
-Zieldatei existiert bereits
+Zieldatei %s existiert bereits
 kann Datei nicht in %s umbenennen
 kann Nullbytes nicht in ein Eingabefeld einfügen
 kann Zeilenumbrüche nicht in ein Eingabefeld einfügen

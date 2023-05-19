@@ -2049,7 +2049,7 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 		}
 
 		if (!access(path2, 0)) {
-			setError(MSG_DestFileExists);
+			setError(MSG_DestFileExists, path2);
 			free(file);
 			free(path1);
 			return false;
@@ -2122,6 +2122,8 @@ moved:
 		free(path1);
 		if(origcmd == 'm')
 			delText(ln, ln);
+		else
+			cw->dot = ln;
 // add it to the other directory
 		*t++ = '\n';
 		cw = cw2;

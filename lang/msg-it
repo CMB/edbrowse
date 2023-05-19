@@ -272,7 +272,7 @@ mi spiace, non è possibile applicare il comando bl a righe più lunghe di %d by
 i dati di sostituzione contengono caratteri newline
 i dati di sostituzione contengono caratteri nulli
 un nome di directory non può contenere uno slash, un carattere newline o nullo
-il file di destinazione esiste già
+il file di destinazione %s esiste già
 impossibile rinominare il file come %s
 impossibile inserire valori nulli in un campo di input
 impossibile inserire newlines in un campo di input

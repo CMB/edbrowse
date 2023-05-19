@@ -272,7 +272,7 @@ impossível aplicar o comando bl a linhas maiores que %d bytes
 dados de substituição contêm linhas novas
 dados de substituição contêm caracteres nulos
 impossível embutir barra, nova linha ou caractere nulo num nome de diretório
-arquivo destino já existe
+arquivo destino já %s existe
 impossível renomear o arquivo para %s
 impossível embutir caracteres nulos num campo de entrada
 impossível embutir novas linhas num campo de entrada

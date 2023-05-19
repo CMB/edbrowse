@@ -272,7 +272,7 @@ przykro mi, nie można zastosować polecenia 'bl' do wierszy dłuższych niż %d
 dane podstawiane zawierają znaki końca linii
 dane podstawiane zawierają puste znaki
 nazwa katalogu nie może zawierać ukośnika, znaku końca linii ani znaku zerowego
-plik docelowy już istnieje
+plik docelowy już %s istnieje
 nie można zmienić nazwy pliku na %s
 pole wprowadzania nie może zawierać znaków zerowych
 pole wprowadzania nie może zawierać znaków końca linii

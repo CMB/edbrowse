@@ -272,7 +272,7 @@ désolé, impossible d'exécuter la commande bl sur les lignes excédant %d cara
 les données de remplacement contiennent des sauts de ligne
 les données de remplacement contiennent des caractères nuls
 un nom de répertoire ne peut contenir un slash, un saut de ligne ou un caractère nul
-le fichier destination existe déjà
+le fichier destination %s existe déjà
 impossible de renommer le fichier à %s
 une zone de saisie ne peut contenir des caractères nuls
 une zone de saisie ne peut contenir des sauts de ligne
