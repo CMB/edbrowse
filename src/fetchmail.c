@@ -2487,6 +2487,7 @@ restart:
 	if (!memEqualCI(start, "iso-", 4) &&
 	    !memEqualCI(start, "us-ascii", 8) &&
 	    !memEqualCI(start, "utf-", 4) &&
+	    !memEqualCI(start, "utf8", 4) &&
 	    !memEqualCI(start, "cp1252", 6) &&
 	    !memEqualCI(start, "gb", 2) && !memEqualCI(start, "windows-", 8))
 		goto restart;
