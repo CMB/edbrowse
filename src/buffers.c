@@ -6340,6 +6340,7 @@ bool runCommand(const char *line)
 	first = *line;
 	noStack = 0;
 
+	debugPrint(8, "in:%s", line);
 	if (!strncmp(line, "ReF@b", 5)) {
 		line += 4;
 		noStack = 1;
@@ -6546,6 +6547,27 @@ range2:
 		if(at) *at = '@';
 		if(!n) return globSub = 0;
 		sprintf(newline, "%c%d", first, n);
+		if(at) {
+// check for buffer overrun, albeit extremely unlikely
+// Proper at syntax will always fit in the buffer.
+			i = sizeof(newline) - strlen(newline) - 1;
+			n = strlen(at);
+			if(n > i) n = i;
+			char *e = newline + strlen(newline);
+			strncpy(e, at, n);
+			e[n] = 0;
+		}
+		line = newline;
+	}
+
+	if(first == '<' && line[1] == '+' && (line[2] == '/' || line[2] == '?')) {
+		char *at = strchr(line, '@'); // look for at syntax
+		if(at) *at = 0; // I'll put it back
+		cmd = 'e';
+		n = sessionByText(line + 3, line[1] == '/' ? 1 : -1);
+		if(at) *at = '@';
+		if(!n) return globSub = 0;
+		sprintf(newline, "<+%d", n);
 		if(at) {
 // check for buffer overrun, albeit extremely unlikely
 // Proper at syntax will always fit in the buffer.
