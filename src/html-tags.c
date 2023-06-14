@@ -4790,7 +4790,7 @@ Needless to say that's not good!
 	if (!linked_in) {
 		debugPrint(3, "tag %s not linked in", ti->name);
 		if (action == TAGACT_TEXT)
-			debugPrint(1, "text %s\n", t->textval);
+			debugPrint(3, "text %s\n", t->textval);
 	}
 
 /* set innerHTML from the source html, if this tag supports it */

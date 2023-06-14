@@ -127,6 +127,24 @@ void unpercentString(char *s)
 	*w = 0;
 }
 
+// like the above but without + processing
+static void unpercentString2(char *s)
+{
+	char c, *u, *w;
+	u = w = s;
+	while ((c = *u)) {
+		++u;
+		if (c == '%' && isxdigit(u[0]) && isxdigit(u[1])) {
+			c = fromHex(u[0], u[1]);
+			u += 2;
+		}
+		if (!c)
+			c = ' ';	// should never happen
+		*w++ = c;
+	}
+	*w = 0;
+}
+
 /*********************************************************************
 Function: percentURL
 start and end delimit the input string.
@@ -1270,8 +1288,10 @@ void decodeMailURL(const char *url, char **addr_p, char **subj_p, char **body_p)
 		url += 7;
 	s = strchr(url, '?');
 	if(!s) s = url + strlen(url);
-	if (addr_p)
+	if (addr_p) {
 		*addr_p = pullString1(url, s);
+		unpercentString2(*addr_p);
+	}
 	if (subj_p)
 		*subj_p = 0;
 	if (body_p)
