@@ -1505,10 +1505,11 @@ Don't forget to free it when you're done.
 static const unsigned int iso_unicodes[2][128] = {
 	{
 /*********************************************************************
-The first 32 nonascii chars in iso8859-1 are control characters,
+The first 32 nonascii chars in iso8859-1 are symbols,
 and almost never used.
 Much more common are the cp1252 characters, introduced by Microsoft.
 I'm gonna go with those, and hope I'm right more often than wrong.
+There should be a switch for this.
 *********************************************************************/
 #define CP1252 1
 #if CP1252

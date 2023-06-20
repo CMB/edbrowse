@@ -1846,6 +1846,18 @@ You can disable binary detection with the `bd' command, whence your file will re
 This is a corner case, since utf8 is nearly universal.
 Therefore, the bd command is deprecated, and could go away in a future version of edbrowse.
 
+<p>
+If you want to find sporadic lines in your file that contain binary characteres that are not part of a valid utf8 sequence, do this.
+This is destructive, so don't save the file.
+<p>
+su8+
+<br>
+,s/^/@@/
+<br>
+su8-
+<br>
+v/^@@/ n
+
 <h2 id="dir">Directory Scan, File Manager</h2>
 
 <P>
