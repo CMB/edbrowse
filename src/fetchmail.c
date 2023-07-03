@@ -813,7 +813,7 @@ action:
 		printf("? ");
 		fflush(stdout);
 // include +-^$ for some other options
-		key = getLetter("h?qvbefdsmnp gtwWuUa/");
+		key = getLetter("h?qvbelfdsmnp gtwWuUa/");
 		printf("\b\b\b");
 		fflush(stdout);
 		if(key == '+') key = 'n';
@@ -1024,7 +1024,7 @@ rebulk:
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
 			setLimit(inputline);
-			goto action;
+			goto reaction;
 		}
 
 		if (key == 'e') {
