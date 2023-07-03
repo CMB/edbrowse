@@ -368,10 +368,15 @@ static struct FOLDER *folderByName(char *line)
 			++cnt, j = i;
 	if (cnt == 1)
 		return topfolders + j;
-	if (cnt)
+	if (cnt) {
 		i_printf(MSG_ManyFolderMatch, line);
-	else
+		f = topfolders;
+		for (i = 0; i < n_folders; ++i, ++f)
+			if (strcasestr(f->path, line))
+				printf("%2d %s\n", i+1, f->path);
+	} else {
 		i_printf(MSG_NoFolderMatch, line);
+	}
 	return 0;
 }
 
