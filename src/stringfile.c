@@ -1359,6 +1359,7 @@ void ttySetEcho(bool enable_echo)
 int getche(void)
 {
 	char c;
+	if(!isInteractive) return getchar();
 	fflush(stdout);
 	ttyRaw(1, 0, true);
 	read(0, &c, 1);
@@ -1369,6 +1370,7 @@ int getche(void)
 int getch(void)
 {
 	char c;
+	if(!isInteractive) return getchar();
 	fflush(stdout);
 	ttyRaw(1, 0, false);
 	read(0, &c, 1);
