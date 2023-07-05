@@ -1386,8 +1386,10 @@ char getLetter(const char *s)
 		c = getch();
 		if (strchr(s, c))
 			break;
-		printf("\a\b");
-		fflush(stdout);
+		if(isInteractive) {
+			printf("\a\b");
+			fflush(stdout);
+		}
 	}
 	printf("%c", c);
 	return c;

@@ -208,7 +208,8 @@ static void setLimit(const char *t)
 	}
 	imapfetch = atoi(t);
 	earliest = early;
-	if (imapfetch < 5) imapfetch = 5;
+	if (imapfetch < 1) imapfetch = 1;
+	if (imapfetch > 1000) imapfetch = 1000;
 	i_printf(MSG_FetchN, imapfetch);
 }
 
@@ -819,8 +820,10 @@ action:
 		fflush(stdout);
 // include +-^$ for some other options
 		key = getLetter("h?qvbelfdsmnp gtwWuUa/");
-		printf("\b\b\b");
-		fflush(stdout);
+		if(isInteractive) {
+			printf("\b\b\b");
+			fflush(stdout);
+		}
 		if(key == '+') key = 'n';
 		if(key == '-') key = 'p';
 		if (key == '?' || key == 'h') {
@@ -986,7 +989,8 @@ You'll see this after the perform function runs.
 				i_printf(MSG_From, mif->from);
 			fflush(stdout);
 			subkey = getLetter("mdx");
-			printf("\b");
+			if(isInteractive)
+				printf("\b");
 			if (subkey == 'x') {
 				i_puts(MSG_Abort);
 				goto reaction;
@@ -2063,8 +2067,10 @@ key_command:
 		printf("%c ", displine > cw->dol ? '?' : '*');
 		fflush(stdout);
 		key = getLetter((isimap ? "qvbfh? gtnpwWuUasdm" : "qh? gtnwud"));
-		printf("\b\b\b");
-		fflush(stdout);
+		if(isInteractive) {
+			printf("\b\b\b");
+			fflush(stdout);
+		}
 	}
 
 	switch (key) {
