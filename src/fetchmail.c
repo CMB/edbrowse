@@ -2045,7 +2045,7 @@ paging:
 	if (!delflag && !postkey) {		/* show next page */
 		if (displine <= cw->dol) {
 			for (j = 0; j < 20 && displine <= cw->dol;
-			     ++j, ++displine) {
+			     j += isInteractive, ++displine) {
 				char *showline = (char *)fetchLine(displine, 1);
 				k = pstLength((pst) showline);
 				showline[--k] = 0;
