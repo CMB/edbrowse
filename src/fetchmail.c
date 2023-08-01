@@ -2658,7 +2658,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		char quote;
 		t = strchr(s, '\n');
 		if (!t)
-			t = end - 1;	/* should never happen */
+			t = end - 1;	// should never happen
 		if (t == s)
 			break;	// empty line, end of headers
 
@@ -2669,8 +2669,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		if (*q++ != ':')
 			continue;	// should never happen
 		for (vl = q; *vl == ' ' || *vl == '\t'; ++vl) ;
-		for (vr = t; vr > vl && (vr[-1] == ' ' || vr[-1] == '\t');
-		     --vr) ;
+		for (vr = t; vr > vl && (vr[-1] == ' ' || vr[-1] == '\t'); --vr) ;
 		if (vr == vl)
 			continue;	// empty
 
@@ -2772,6 +2771,8 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 			stringAndBytes(&w->tolist, &w->tolen, q, vr - q);
 			if (w->to[0])
 				continue;
+			if (vr - vl > MHLINE - 1)
+				vr = vl + MHLINE - 1;
 			strncpy(w->to, vl, vr - vl);
 // Only retain the first recipient
 			quote = 0;
