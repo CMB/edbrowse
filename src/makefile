@@ -1,7 +1,8 @@
 #  compiler and flags
 CC ?=		cc
 PERL ?= perl
-QUICKJS_DIR ?= ../../quickjs
+QUICKJS_INCLUDE ?= ../../quickjs
+QUICKJS_LIB ?= ../../quickjs
 CFLAGS +=	-Wall -Wno-unused -D_FILE_OFFSET_BITS=64
 ifeq ($(shell uname),Linux)
 	PLATFORM_CFLAGS = -DEDBROWSE_ON_LINUX
@@ -34,7 +35,7 @@ CFLAGS += $(DEBUGFLAGS)
 LDFLAGS = $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
 
 # LDFLAGS for quickjs loading.
-QUICKJS_LDFLAGS = $(QUICKJS_DIR)/libquickjs.a -ldl
+QUICKJS_LDFLAGS = $(QUICKJS_LIB)/libquickjs.a -ldl
 ifeq ($(shell uname),Linux)
 	QUICKJS_LDFLAGS += -latomic
 endif
@@ -67,7 +68,7 @@ msg-strings.c: ../lang/msg-*
 	cd .. ; $(PERL) ./tools/buildmsgstrings.pl
 
 jseng-quick.o : jseng-quick.c
-	$(CC) -I$(QUICKJS_DIR) $(CFLAGS) -c jseng-quick.c
+	$(CC) -I$(QUICKJS_INCLUDE) $(CFLAGS) -c jseng-quick.c
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
@@ -102,7 +103,7 @@ js_hello_v8 : js_hello_v8.cpp
 	g++ -I/usr/include/v8 js_hello_v8.cpp -lv8 -lstdc++ -o js_hello_v8
 
 js_hello_quick : js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o
-	$(CC) -I$(QUICKJS_DIR) $(CFLAGS) js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
+	$(CC) -I$(QUICKJS_INCLUDE) $(CFLAGS) js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
 
 hello: js_hello_quick
 
