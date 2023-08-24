@@ -94,8 +94,8 @@ in most distributions, so you will need to build it from source.
 git clone https://github.com/bellard/quickjs
 It is best to clone this tree in a directory adjacent to edbrowse.
 That is, edbrowse and quickjs are in the same directory.
-If you are unable to do this, set QUICKJS_DIR to the quickjs directory
-tree before you build edbrowse.
+If you are unable to do this, set QUICKJS_INCLUDE and QUICKJS_LIB
+to the quickjs directory tree before you build edbrowse.
 cd quickjs
 make
 If you get a lot of atomic undefines:
@@ -104,6 +104,10 @@ This builds a static library- libquickjs.a.
 By default, edbrowse links to this library, and thus the
 quickjs code is part of edbrowse, and a quickjs package,
 or a dependency thereto, is not necessary.
+If your distrubution provides quickjs like a prebuilt package,
+set QUICKJS_INCLUDE to the quickjs directory containing its
+library header files, and QUICKJS_LIB to the directory containing
+the libquickjs.a static library.
 
 ------------------------------------------------------------
 
