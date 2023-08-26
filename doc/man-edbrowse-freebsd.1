@@ -1,5 +1,5 @@
 .\"
-.\" Copyright (c) 2018 Alfonso Sabato Siciliano
+.\" Copyright (c) 2018, 2023 Alfonso Sabato Siciliano
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -21,14 +21,13 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-
-.Dd $Mdocdate: December 6 2019 $ 
+.Dd August 25, 2023
 .Dt EDBROWSE 1
-.Os 
-.Sh NAME 
-.Nm edbrowse 
-.Nd a Command Line Editor Browser
-.Sh SYNOPSIS 
+.Os
+.Sh NAME
+.Nm edbrowse
+.Nd Command Line editor, browser, and mail client
+.Sh SYNOPSIS
 .Nm
 .Op Fl v
 .Op Fl h
@@ -48,11 +47,11 @@
 .Op Fl e
 .Op Fl c Ar configFile
 .Ar file1 file2 ...
-.Sh DESCRIPTION 
+.Sh DESCRIPTION
 .Nm
-is a combination of editor, browser, and mail client text based. You can
-specify several mail accounts and indicate one by its index following the
-email options.
+is a combination of editor, browser, and mail client text based.
+You can specify several mail accounts and indicate one by its index following
+the email options.
 .Pp
 The
 .Sy options
@@ -63,8 +62,8 @@ print version
 .It Fl h
 print help
 .It Fl c
-without argument edit the default configuration file. If the first argument
-is
+without argument edit the default configuration file.
+If the first argument is
 .Sy -c
 .Em filename
 , edbrowse uses it as config file
@@ -77,18 +76,16 @@ specify an email account index [#]
 .It Fl f
 fetch mail from all accounts, except the ones that you have marked nofetch.
 .It Fl f[#]
-specify an index [#] to fetch mail from a single account. For instance, -f1
-will fetch mail from the first mail account
+specify an index [#] to fetch mail from a single account.
+For instance, -f1 will fetch mail from the first mail account
 .It Fl fm
 retrieve and read email (combine the -f and -m options)
 .It Fl pm pfm
 like -f and -fm options but pass over the filters
 .El
 .Pp
-The
-.Sy debug
-options:
-.Bl -tag
+The debug options:
+.Bl -tag -width indent
 .It Fl d0
 silent
 .It Fl d1
@@ -114,7 +111,8 @@ text lines freed, debug garbage collection
 not used
 .El
 .Sh FILES
-$home/.ebrc is the configuration file
+.Pa $home/.ebrc
+is the configuration file.
 .Sh DIAGNOSTICS
 The error message is left in a buffer, which you can see by typing 'h' in
 the
@@ -126,12 +124,14 @@ style.
 is, at first glance, a reimplementation of ed
 .Pp
 Full guide
-.Em userguide.html
-,type:
+.Em userguide.html ,
+type:
 .Pp
 .Dl edbrowse /usr/local/share/doc/edbrowse/usersguide.html
 .Sh AUTHORS
 .Nm
-was primarily written by Karl Dahlke <eklhad@comcast.net>.
+was primarily written by
+.An Karl Dahlke Aq Mt eklhad@comcast.net .
 .Pp
-This manual page was written by Alfonso S. Siciliano <alf.siciliano@gmail.com>.
+This manual page was written by
+.An Alfonso Sabato Siciliano Aq Mt asiciliano@FreeBSD.org .
