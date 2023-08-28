@@ -451,10 +451,17 @@ bool stringEqualCI(const char *s, const char *t)
 
 // a text line in the buffer isn't a string; you can't use strstr.
 // It ends in \n
+// Stop as soon as the target string overlaps the end of s to avoid
+// peeking past the end of s
 const char *stringInBufLine(const char *s, const char *t)
 {
 	int n = strlen(t);
-	for (; *s != '\n'; ++s) {
+	int i;
+	for (i = 0; i < n; i++) {
+		if (s[i] == '\n')
+			return 0;
+	}
+	for (; s[n-1] != '\n'; ++s) {
 		if (!strncmp(s, t, n))
 			return s;
 	}
