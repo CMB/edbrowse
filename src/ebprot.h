@@ -291,6 +291,7 @@ bool stringIsDate(const char *s) ;
 bool stringIsFloat(const char *s, double *dp) ;
 bool memEqualCI(const char *s, const char *t, int len) ;
 const char *stringInBufLine(const char *s, const char *t);
+const char *charInBufLine(const char *s, char t);
 bool stringEqual(const char *s, const char *t) ;
 bool stringEqualCI(const char *s, const char *t) ;
 int stringInList(const char *const *list, const char *s) ;

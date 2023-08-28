@@ -3153,7 +3153,7 @@ int frameExpandLine(int ln, Tag *t)
 		s = stringInBufLine((char *)line, "Frame ");
 		if (!s)
 			return 1;
-		if ((s = strchr(s, InternalCodeChar)) == NULL)
+		if ((s = charInBufLine(s, InternalCodeChar)) == NULL)
 			return 2;
 		tagno = strtol(s + 1, (char **)&s, 10);
 		if (tagno < 0 || tagno >= cw->numTags || *s != '{')

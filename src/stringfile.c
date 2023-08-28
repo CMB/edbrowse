@@ -461,6 +461,15 @@ const char *stringInBufLine(const char *s, const char *t)
 	return 0;
 }
 
+const char *charInBufLine(const char *s, char t)
+{
+	for (; *s != '\n'; ++s) {
+		if (*s == t)
+			return s;
+	}
+	return 0;
+}
+
 int stringInList(const char *const *list, const char *s)
 {
 	int i = 0;
