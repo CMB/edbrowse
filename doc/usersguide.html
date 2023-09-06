@@ -615,6 +615,7 @@ f : print the name of the current file
 <br>enum : move to the session indicated by the number on the current line
 <br>eret : return to the session you were previously in
 <br>enew : create a new empty buffer in the current session
+<br>etmp : like enew but don't check for buffer written
 <br>e foo : edit the file named foo
 <br>e ftp://login:password@example.com/file  ftp download
 <br>e scp://login:password@example.com/absolute-path  scp download
@@ -1347,8 +1348,7 @@ This search will wrap around if the sw (search with wrap) option is enabled.
 e?foo moves back to the session whose file name, or html title, contains the substring foo.
 A script can create temp buffers, and name them, and move among them, without knowing their session numbers.
 Use enew to create a new empty buffer, f to name it, and M to move it to a new session.
-Since enew is usually used to make a temporary work space, it does not check to make sure the current buffer has been written,
-as is done when editing a new file or going to a hyperlink.
+Use etmp if you don't want to check whether the current buffer has been written.
 
 <P>
 enum moves to the sesssion indicated by the number on the current line.

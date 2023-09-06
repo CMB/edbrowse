@@ -5948,6 +5948,29 @@ et_go:
 			setError(MSG_IrcCommand, 'e');
 			return false;
 		}
+		if(!cxQuit( context, 0))
+			return false;
+		undoCompare();
+		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
+		freeWindows(context, false);
+		w = createWindow();
+		w->sno = context;
+		w->prev = cw;
+		cw = w;
+		selfFrame();
+		cs->lw = w;
+		debugPrint(1, "0");
+		return true;
+	}
+
+	if (stringEqual(line, "etmp")) {
+		Window *w;
+		if(cw->irciMode | cw->ircoMode) {
+			cmd = 'e';
+			setError(MSG_IrcCommand, 'e');
+			return false;
+		}
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
