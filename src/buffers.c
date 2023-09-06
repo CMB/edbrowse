@@ -5948,10 +5948,8 @@ et_go:
 			setError(MSG_IrcCommand, 'e');
 			return false;
 		}
-		if (!cxQuit(context, 0))
-			return false;
 		undoCompare();
-		cw->undoable = cw->changeMode = false;
+		cw->undoable = false;
 		undoSpecialClear();
 		freeWindows(context, false);
 		w = createWindow();

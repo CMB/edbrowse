@@ -1347,6 +1347,8 @@ This search will wrap around if the sw (search with wrap) option is enabled.
 e?foo moves back to the session whose file name, or html title, contains the substring foo.
 A script can create temp buffers, and name them, and move among them, without knowing their session numbers.
 Use enew to create a new empty buffer, f to name it, and M to move it to a new session.
+Since enew is usually used to make a temporary work space, it does not check to make sure the current buffer has been written,
+as is done when editing a new file or going to a hyperlink.
 
 <P>
 enum moves to the sesssion indicated by the number on the current line.
