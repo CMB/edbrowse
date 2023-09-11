@@ -288,6 +288,8 @@ static bool jdb_passthrough(const char *s)
 		if (!s[i])
 			return true;
 	}
+	if(!strncmp(s, "bflist/", 7) || !strncmp(s, "bflist?", 7))
+		return true;
 	return false;
 }
 
@@ -4631,7 +4633,7 @@ static int sessionByText(const char *s, int dir)
 		}
 		if(!(lw = sessionList[n].lw)) continue;
 		title = windowTitle(lw);
-		if(strstr(title, s)) return n; // found it
+		if(strcasestr(title, s)) return n; // found it
 		if(n == context) break;
 	}
 fail:
@@ -5427,13 +5429,18 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "bflist")) {
-		for (n = 1; n <= maxSession; ++n) {
+	if (stringEqual(line, "bflist") || !strncmp(line, "bflist/", 7) || !strncmp(line, "bflist?", 7)) {
+		const char c = line[6];
+		const char *s = line + 7;
+		for (i = 1; i <= maxSession; ++i) {
+			const char *title;
+			n = (!c || c == '/') ? i : 1 + maxSession -i;
 			Window *lw = sessionList[n].lw;
-			if (!lw)
+			if (!lw) continue;
+			title = windowTitle(lw);
+			if (c && *s && 			!strcasestr(title,s))
 				continue;
-			printf("%d%c %s\n", n, (n == context ? '*' : ':'),
-			windowTitle(lw));
+			printf("%d%c %s\n", n, (n == context ? '*' : ':'), title);
 		}
 		return true;
 	}

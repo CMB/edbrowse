@@ -491,7 +491,7 @@ q : quit the current session
 <br>qt : quit the program completely, whether you've written your files or not
 <br>bw : buffer written; you can quit at any time
 <br>q7 : quit session 7
-<br>q/jkl : quit session whose file name contains jkl
+<br>q/foo : quit session whose file name contains foo
 <br>!command : shell command
 <br>!! : previous shell command
 <br>!! stuff : previous shell command with stuff appended
@@ -565,7 +565,7 @@ s/x/y/ : replace x with y on the current line
 <br>s2 : same as above
 <br>s$ : s//%/$p
 <br>4,7s/x/y/g : replace all instances of x with y on lines 4 through 7
-<br>s/x/y/3g : replace x with y starting with the third instance and proceeding down the line.
+<br>s/x/y/3g : replace x with y starting with the third instance and proceeding down the line
 <br>s/dog/cat/gfip : replace dog or DOG with cat throughout this line,
 forget dog and cat as search and replacement strings,
 and print the result
@@ -649,6 +649,8 @@ f : print the name of the current file
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
+<br>bflist/foo : list each edbrowse session (with its file name or title) whose file name contains the substring foo
+<br>bflist?foo : list in reverse each edbrowse session (with its file name or title) whose file name contains the substring foo
 <br>hist : show the history of buffers for the current session
 <br>up : go up in the history of files and/or web pages
 <br>down : go down in the history of files and/or web pages
@@ -827,9 +829,9 @@ Edbrowse Functions
 <br>&lt;7 : run the commands in session 7
 <br>&lt;+7 : run the commands but stopp on error
 <br>&lt;7@22,29 : run the commands from lines 22 through 29
-<br>&lt;/jkl : run the commands in session whose file name contains jkl
-<br>&lt;+/jkl : run commands but stop on error
-<br>&lt;/jkl@22,29 : run the commands from lines 22 through 29
+<br>&lt;/foo : run the commands in session whose file name contains foo
+<br>&lt;+/foo : run commands but stop on error
+<br>&lt;/foo@22,29 : run the commands from lines 22 through 29
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
 <P>
@@ -1344,6 +1346,7 @@ eret returns to the previous editting session, like the button on your tv remote
 
 <P>
 e/foo moves ahead to the session whose file name, or html title, contains the substring foo.
+The search is case insensitive.
 This search will wrap around if the sw (search with wrap) option is enabled.
 e?foo moves back to the session whose file name, or html title, contains the substring foo.
 A script can create temp buffers, and name them, and move among them, without knowing their session numbers.
@@ -1372,6 +1375,9 @@ Make sure everything is copacetic before you switch to another session.
 <P>
 Use the bflist (buffer list) command to see a list of all the editing sessions that are currently open.
 Edbrowse presents the session number, and the title if the session's buffer holds a web page, else it prints the file name.
+Use bflist/foo to list each session whose file name contains the substring foo.
+The search is case insensitive.
+Use bflist?foo to show this list in reverse.
 
 <P>
 Use the hist command to see a history of files or web pages that are open on the current session.
