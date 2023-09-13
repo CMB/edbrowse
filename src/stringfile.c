@@ -1923,12 +1923,12 @@ unlink:
 					if (*ftype == '/' ||
 					fileSizeByName(path) > 200000000) {
 // let mv do the work
-						if(!qc) {
+						if(!qc || strchr(bin, qc)) {
 							setError(MSG_MetaChar);
 							goto abort;
 						}
-						asprintf(&a, "mv -n %c%s%c %s",
-						qc, path, qc, bin);
+						asprintf(&a, "mv -n %c%s%c %c%s%c",
+						qc, path, qc, qc, bin, qc);
 						j = system(a);
 						free(a);
 						if(!j) {
