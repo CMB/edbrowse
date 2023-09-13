@@ -1927,8 +1927,8 @@ unlink:
 							setError(MSG_MetaChar);
 							goto abort;
 						}
-						asprintf(&a, "mv -n %c%s%c",
-						qc, path, qc);
+						asprintf(&a, "mv -n %c%s%c %s",
+						qc, path, qc, bin);
 						j = system(a);
 						free(a);
 						if(!j) {
