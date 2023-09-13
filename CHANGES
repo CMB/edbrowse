@@ -1,5 +1,10 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.8.8
+Allow mail client noninteractive, i.e. from a batch job.
+
+bflist/ and bflist?
+
 3.8.7
 W !shell_command   reads the data back into the buffer
 

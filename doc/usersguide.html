@@ -970,14 +970,12 @@ However, if * is the first character, it is treated as a literal star.
 This makes sense, as there is no previous character to modify.
 Some versions of ed do this, some don't.
 This is convenient; when you want to replace * + or ? you don't have to escape it just because it is a modifier.
-Similarly, an open bracket by itself is treated as literal,
+Similarly, an open bracket with no closing bracket is treated as literal,
 and {m,n} at the beginning is literal.
 These changes to regular expressions, to look more like ed, may be confusing
 if you are a perl expert,
 however, these changes make this editor easier to use for others,
 especially the experienced ed users.
-
-<P>
 Perl users may wish to turn edbrowse modified regular expressions off via ebre-.
 At this point edbrowse passes regular expressions to perl with almost no changes.
 If a script employs complex regular expressions with many parentheses, that script might begin with ebre-, so these parentheses need not be escaped.

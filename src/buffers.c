@@ -2987,16 +2987,15 @@ regexpCheck(const char *line, bool isleft,
 	}
 
 	if (ebre && isleft) {
-// Interpret lead * or lone [ as literal
-		if (strchr("*?+{", c) || (c == '[' && !line[1])) {
+// Interpret lead * or other special characters as literal
+		if (strchr("*?+{", c)) {
 			*e++ = '\\';
 			*e++ = c;
 			++line;
 			ondeck = true;
 		}
-// and similarly for /^* and /^[
-		if (c == '^' && (c = line[1]) &&
-		(strchr("*?+{", c) || (c == '[' && !line[2]))) {
+// and similarly for /^*
+		if (c == '^' && (c = line[1]) && strchr("*?+{", c)) {
 			*e++ = '^';
 			*e++ = '\\';
 			*e++ = c;
@@ -3069,6 +3068,13 @@ regexpCheck(const char *line, bool isleft,
 // Remember, I reverse the sense of ()|
 			if (ebre && strchr("()|", c))
 				*e++ = '\\';
+// treat [ as a literal [ if there is no ]
+			if(ebre && !cc && c == '[' && !strchr(line, ']')) {
+				*e++ = '\\';
+				*e++ = c;
+				++line;
+				continue;
+			}
 // treat ^ as a literal ^ when it is not at the start of a group
 			if(ebre && c == '^' && !cc && (ondeck ||
 			(e > re && (e[-1] != '(' && e[-1] != '|'))))
