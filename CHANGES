@@ -4,6 +4,8 @@ Here are some changes introduced by recent versions of edbrowse.
 Allow mail client noninteractive, i.e. from a batch job.
 
 bflist/ and bflist?
+hist/ and hist?
+up/ and down/
 
 3.8.7
 W !shell_command   reads the data back into the buffer

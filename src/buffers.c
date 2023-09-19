@@ -288,7 +288,8 @@ static bool jdb_passthrough(const char *s)
 		if (!s[i])
 			return true;
 	}
-	if(!strncmp(s, "bflist/", 7) || !strncmp(s, "bflist?", 7))
+	if(!strncmp(s, "bflist/", 7) || !strncmp(s, "bflist?", 7) ||
+	!strncmp(s, "hist/", 5) || !strncmp(s, "hist?", 5))
 		return true;
 	return false;
 }
@@ -4694,9 +4695,33 @@ static int twoLetter(const char *line, const char **runThis)
 		struct ebSession *s = &sessionList[context];
 		int k;
 		const Window *w;
-		const char *v = line + (line[0] == 'd' ? 4 : 2);
+		bool down = (line[0] == 'd');
+		const char *v = line + (down ? 4 : 2);
 		if(!*v) {
 			n = 1;
+		} else if(*v == '/') {
+			bool found = false;
+			++v;
+			if (down) {
+				n = -1;
+				for(k = 0, w = s->lw2; w; w = w->prev, ++k)
+					if(!*v || strcasestr(windowTitle(w), v)) {
+						found = true;
+						n = k;
+					}
+				n = k - n;
+			} else { // up/
+				for(n = 1, w = cw->prev; w; w = w->prev, ++n)
+					if(!*v || strcasestr(windowTitle(w), v)) {
+						found = true;
+						break;
+					}
+			}
+			if(!found) {
+					cmd = 'e';
+					setError(MSG_NotFound);
+					return false;
+			}
 		} else {
 			n = stringIsNum(v);
 			if(n < 0) goto no_action;
@@ -4713,7 +4738,7 @@ static int twoLetter(const char *line, const char **runThis)
 		cw->undoable = cw->changeMode = false;
 		undoSpecialClear();
 		cmd = 'e';
-		if(line[0] == 'u') { // up
+		if(!down) { // up
 			for(k = 0, w = cw; w; w = w->prev, ++k) ;
 			if(n >= k) {
 				setError(MSG_NoUp);
@@ -5444,36 +5469,54 @@ et_go:
 			Window *lw = sessionList[n].lw;
 			if (!lw) continue;
 			title = windowTitle(lw);
-			if (c && *s && 			!strcasestr(title,s))
+			if (c && *s && 			!strcasestr(title, s))
 				continue;
 			printf("%d%c %s\n", n, (n == context ? '*' : ':'), title);
 		}
 		return true;
 	}
 
-	if (stringEqual(line, "hist")) {
+	if (stringEqual(line, "hist") || !strncmp(line, "hist/", 5) || !strncmp(line, "hist?", 5)) {
+		const char c = line[4];
+		const char *str = line + 5;
 		const Window *w, *x;
 		struct ebSession *s = sessionList + context;
+		if (!c || c == '/') {
 // This is the only place where not having a next link is a pain in the ass!
-		for(n = -1, w = cw; w; w = w->prev, ++n) ;
-		w = s->fw;
-		while(true) {
-			if(n) printf("+%d: ", n);
-			else printf("*0: ");
-			printf("%s\n", windowTitle(w));
-			if(w == cw) break;
-			--n;
-			for(x = s->lw; x->prev != w; x = x->prev) ;
-			w = x;
-		}
-		w = s->fw2;
-		if(!w) return true;
-		while(true) {
-			printf("-%d: ", ++n);
-			printf("%s\n", windowTitle(w));
-			if(w == s->lw2) break;
-			for(x = s->lw2; x->prev != w; x = x->prev) ;
-			w = x;
+			for(n = -1, w = cw; w; w = w->prev, ++n) ;
+			w = s->fw;
+			while(true) {
+				const char *title = windowTitle(w);
+				if (!c || !*str || 			strcasestr(title, str))
+					printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
+				if(w == cw) break;
+				--n;
+				for(x = s->lw; x->prev != w; x = x->prev) ;
+				w = x;
+			}
+			w = s->fw2;
+			if(!w) return true;
+			while(true) {
+				const char *title = windowTitle(w);
+				if (!c || !*str || 			strcasestr(title, str))
+					printf("-%d: %s\n", ++n, title);
+				if(w == s->lw2) break;
+				for(x = s->lw2; x->prev != w; x = x->prev) ;
+				w = x;
+			}
+		} else {
+			for(n = 0, w = s->lw2; w != s->fw2; ++n, w = w->prev) ;
+			++n;
+			for(w = s->lw2; w; --n, w = w->prev) {
+				const char *title = windowTitle(w);
+				if (!c || !*str || 			strcasestr(title, str))
+					printf("-%d: %s\n", n, title);
+			}
+			for(n = 0, w = cw; w; ++n, w = w->prev) {
+				const char *title = windowTitle(w);
+				if (!c || !*str || 			strcasestr(title, str))
+					printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
+			}
 		}
 		return true;
 	}

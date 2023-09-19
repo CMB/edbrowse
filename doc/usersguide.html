@@ -649,13 +649,17 @@ f : print the name of the current file
 <br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
 <br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
-<br>bflist/foo : list each edbrowse session (with its file name or title) whose file name contains the substring foo
-<br>bflist?foo : list in reverse each edbrowse session (with its file name or title) whose file name contains the substring foo
+<br>bflist/foo : list each edbrowse session whose file name or title contains the substring foo
+<br>bflist?foo : list in reverse each edbrowse session whose file name or title contains the substring foo
 <br>hist : show the history of buffers for the current session
-<br>up : go up in the history of files and/or web pages
-<br>down : go down in the history of files and/or web pages
-<br>up3 : go up 3 buffers on the stack
-<br>down4 : go down 4 buffers on the stack
+<br>hist/foo : list each buffer in the history whose file name or title contains the substring foo
+<br>hist?foo : list in reverse each buffer in the history whose file name or title contains the substring foo
+<br>up : go up in the history of buffers
+<br>down : go down in the history of buffers
+<br>up3 : go up 3 buffers in the history
+<br>down4 : go down 4 buffers in the history
+<br>up/foo : go up in the history to a buffer whose file name or title contains the substring foo
+<br>down/foo : go down in the history to a buffer whose file name or title contains the substring foo
 <br>bd : binary detection on files (toggle)
 <br>iu : automatically convert between iso8859 and utf8 (toggle)
 <P>
@@ -1373,7 +1377,7 @@ Make sure everything is copacetic before you switch to another session.
 <P>
 Use the bflist (buffer list) command to see a list of all the editing sessions that are currently open.
 Edbrowse presents the session number, and the title if the session's buffer holds a web page, else it prints the file name.
-Use bflist/foo to list each session whose file name contains the substring foo.
+Use bflist/foo to list each session whose file name or title contains the substring foo.
 The search is case insensitive.
 Use bflist?foo to show this list in reverse.
 
@@ -1381,6 +1385,9 @@ Use bflist?foo to show this list in reverse.
 Use the hist command to see a history of files or web pages that are open on the current session.
 This is more common when browsing, where each new web page pushes the previous page onto a stack, and the ^ command pops the stack.
 It is less common when editing local files.
+Use hist/foo to list each buffer whose file name or title contains the substring foo.
+The search is case insensitive.
+Use hist?foo to see this list in reverse.
 
 <P>
 Let's run through a cut &amp; paste example.
@@ -3035,6 +3042,8 @@ This is similar to gdb, where up and down traverse the stack frames.
 
 <P>
 up3 is shorthand for up 3 times, and so on.
+up/foo goes up to a buffer whose file name or title contains the substring foo.
+You can append these modifiers to down.
 
 <P>
 If you follow a hyperlink, then go up, then follow another hyperlink, the page fetched by the first hyperlink is freed.
