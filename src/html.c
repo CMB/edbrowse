@@ -1516,6 +1516,7 @@ and other things that edbrowse doesn't process, so I will just remove them.
 static void stripTag(char *b)
 {
 	char *s;
+	if(!b) return;
 	while((b = strchr(b, '<'))) {
 		if(isalpha(b[1]) || (b[1] == '/' && isalpha(b[2]))) {
 // looks like a tag
