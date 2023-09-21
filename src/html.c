@@ -1506,17 +1506,40 @@ static bool inputReadonly(const Tag *t)
 		return get_property_bool_t(t, "readOnly");
 	return t->rdonly;
 }
+/*********************************************************************
+Some image alt texts contain tags, I've only seen one so far.
+<a href="/players/c/cabremi01.shtml"><img class="poptip" tip="17. <strong>Miguel&nbsp;Cabrera</strong> (3167)" src="https://www.baseball-reference.com/req/202308280/images/headshots/b/bceca907_br_det.jpg" height="135" width="90" alt="Photo of <strong>Miguel&nbsp;Cabrera</strong>"></a>
+I don't think just any tags could be there, like anchors; more like <i> <b> <em>
+and other things that edbrowse doesn't process, so I will just remove them.
+*********************************************************************/
+
+static void stripTag(char *b)
+{
+	char *s;
+	while((b = strchr(b, '<'))) {
+		if(isalpha(b[1]) || (b[1] == '/' && isalpha(b[2]))) {
+// looks like a tag
+			s = strchr(b, '>');
+// what to do if there is no closing >
+			if(!s) break;
+			strcpy(b, s+1);
+			continue;
+		}
+// isolated <
+		++b;
+	}
+}
 
 static const char *imageAlt(const Tag *t)
 {
-	const char *u, *v;
+	char *u, *v;
 	if (allowJS && t->jslink)
 		u = get_property_string_t(t, "alt");
 	else
-		u = attribVal(t, "alt");
+		u = cloneString(attribVal(t, "alt"));
+	stripTag(u);
 	v = altText(u);
-	if (allowJS && t->jslink)
-		cnzFree(u);
+	cnzFree(u);
 	return v;
 }
 
