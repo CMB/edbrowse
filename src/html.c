@@ -1511,6 +1511,8 @@ Some image alt texts contain tags, I've only seen one so far.
 <a href="/players/c/cabremi01.shtml"><img class="poptip" tip="17. <strong>Miguel&nbsp;Cabrera</strong> (3167)" src="https://www.baseball-reference.com/req/202308280/images/headshots/b/bceca907_br_det.jpg" height="135" width="90" alt="Photo of <strong>Miguel&nbsp;Cabrera</strong>"></a>
 I don't think just any tags could be there, like anchors; more like <i> <b> <em>
 and other things that edbrowse doesn't process, so I will just remove them.
+It is possible that this website simply generates some bad html. I haven't seen it elsewhere.
+So this is coded, but commented out.
 *********************************************************************/
 
 static void stripTag(char *b)
@@ -1538,7 +1540,7 @@ static const char *imageAlt(const Tag *t)
 		u = get_property_string_t(t, "alt");
 	else
 		u = cloneString(attribVal(t, "alt"));
-	stripTag(u);
+//	stripTag(u);
 	v = altText(u);
 	cnzFree(u);
 	return v;
