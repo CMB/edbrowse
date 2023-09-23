@@ -7,6 +7,8 @@ bflist/ and bflist?
 hist/ and hist?
 up/ and down/
 
+dld= command to preset the download filename
+
 3.8.7
 W !shell_command   reads the data back into the buffer
 

@@ -2805,6 +2805,7 @@ static void setup_download(struct i_get *g)
 // did we preset a filename?
 	if((answer = down_prefile)) {
 		preset = true;
+		if(stringEqual(answer, "%")) goto default_filename;
 		goto got_answer;
 	}
 
@@ -2814,6 +2815,7 @@ static void setup_download(struct i_get *g)
 		return;
 	}
 
+default_filename:
 	if (g->cdfn)
 		filepart = g->cdfn;
 	else
@@ -2823,11 +2825,12 @@ static void setup_download(struct i_get *g)
 	for (s = fp2; *s; ++s)
 		if (*s == '/' || *s == '\\')
 			*s = '_';
+	if(preset) { answer = fp2; goto got_answer; }
 
 top:
 	answer = getFileName(g->down_msg, fp2, false, true);
-/* space for a filename means read into memory */
 got_answer:
+/* space for a filename means read into memory */
 	if (stringEqual(answer, " ")) {
 		g->down_state = 0;	// in memory download
 		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
@@ -2842,18 +2845,25 @@ got_answer:
 	}
 
 	if (!envFileDown(answer, &answer)) {
-		showError();
-		if(!preset) goto top;
+		if(!preset) {
+			showError();
+			goto top;
+		}
 		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
+		g->down_state = -1;
 		return;
 	}
 
 	g->down_fd = creat(answer, MODE_rw);
 	if (g->down_fd < 0) {
-		i_printf(MSG_NoCreate2, answer);
-		nl();
-		if(!preset) goto top;
+		if(!preset) {
+			i_printf(MSG_NoCreate2, answer);
+			nl();
+			goto top;
+		}
+		setError(MSG_NoCreate2, answer);
 		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
+		g->down_state = -1;
 		return;
 	}
 
