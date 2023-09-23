@@ -1508,13 +1508,14 @@ static bool delTextG(char action, int n, int back)
 {
 	int i, j, k;
 	int *label;
-	struct lineMap *t;
+	struct lineMap *t, *t2 = 0;
 	bool rc = true;
 
 	debugPrint(3, "mass delete %d %d", back, n);
 
 	 t = cw->map + 1;
-	for(i = j = 1; i <= cw->dol; ++i, ++t) {
+	if((cw->dirMode | cw->ircoMode) && cw->r_map) t2 = cw->r_map + 1;
+	for(i = j = 1; i <= cw->dol; ++i, ++t, t2 ? ++t2 : 0) {
 		if(gflag[i] && rc && j - back <= 0) {
 			cw->dot = j;
 			setError(j - back < 0 ? MSG_LineLow : MSG_AtLine0);
@@ -1546,6 +1547,14 @@ static bool delTextG(char action, int n, int back)
 			if(i + n == cw->dol)
 				cw->nlMode = false;
 			j -= back, i += n, t += n;
+			if(t2) {
+				int n2;
+				for(n2 = 1; n2 <= back; ++n2)
+					nzFree(cw->r_map[j + n2].text);
+				for(n2 = 0; n2 <= n; ++n2)
+					nzFree(t2[n2].text);
+				t2 += n;
+			}
 			cw->dot = j;
 			if(action == 'd') continue;
 			k = i + 1;
@@ -1557,6 +1566,7 @@ static bool delTextG(char action, int n, int back)
 		}
 		if(i > j) {
 			cw->map[j] = *t;
+			if(t2) cw->r_map[j] = *t2;
 			label = NULL;
 			while ((label = nextLabel(label)))
 				if(*label == i)
@@ -1567,6 +1577,7 @@ static bool delTextG(char action, int n, int back)
 
 // map of lines has to null terminate
 	cw->map[j] = *t;
+	if(t2) cw->r_map[j] = *t2;
 
 	cw->dol = j - 1;
 	if (cw->dot > cw->dol)
@@ -1575,6 +1586,10 @@ static bool delTextG(char action, int n, int back)
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
+		if(t2) {
+			free(cw->r_map);
+			cw->r_map = 0;
+		}
 	}
 	return rc;
 }
