@@ -6077,6 +6077,13 @@ no_action:
 static int twoLetterG(const char *line, const char **runThis)
 {
 
+	if(!strncmp(line, "dld=", 4)) {
+		nzFree(down_prefile);
+		if(line[4]) down_prefile = cloneString(line+4);
+		else down_prefile = 0;
+		return true;
+	}
+
 	if (line[0] == 'l' && line[1] == 's') {
 		char lsmode[12];
 		bool setmode = false;

@@ -21,7 +21,7 @@ bool gotimers = true;
 bool uvw;
 int timerspeed = 1;
 long long fileSize;
-char *downDir, *home;
+char *downDir, *down_prefile, *home;
 bool endMarks;		// ^ $ on listed lines
 uchar dirWrite;		// directories read write
 bool dno; // directory names only

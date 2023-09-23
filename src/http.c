@@ -2799,7 +2799,14 @@ static void setup_download(struct i_get *g)
 {
 	const char *filepart;
 	const char *answer;
-	char *fp2, *s;
+	char *fp2 = 0, *s;
+	bool preset = false;
+
+// did we preset a filename?
+	if((answer = down_prefile)) {
+		preset = true;
+		goto got_answer;
+	}
 
 /* if not run from a terminal then just return. */
 	if (!isInteractive) {
@@ -2820,29 +2827,34 @@ static void setup_download(struct i_get *g)
 top:
 	answer = getFileName(g->down_msg, fp2, false, true);
 /* space for a filename means read into memory */
+got_answer:
 	if (stringEqual(answer, " ")) {
 		g->down_state = 0;	// in memory download
-		nzFree(fp2);
+		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
 		return;
 	}
 
 	if (stringEqual(answer, "x") || stringEqual(answer, "X")) {
 		g->down_state = -1;
 		setError(MSG_DownAbort);
-		nzFree(fp2);
+		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
 		return;
 	}
 
 	if (!envFileDown(answer, &answer)) {
 		showError();
-		goto top;
+		if(!preset) goto top;
+		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
+		return;
 	}
 
 	g->down_fd = creat(answer, MODE_rw);
 	if (g->down_fd < 0) {
 		i_printf(MSG_NoCreate2, answer);
 		nl();
-		goto top;
+		if(!preset) goto top;
+		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
+		return;
 	}
 
 	nzFree(fp2);
@@ -2859,6 +2871,7 @@ top:
 	}
 
 	g->down_state = (down_bg ? 5 : 2);
+	nzFree(down_prefile), down_prefile = 0;
 }
 
 /* show background jobs and return the number of jobs pending */

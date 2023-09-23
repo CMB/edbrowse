@@ -324,6 +324,7 @@ extern char *mailReply;		/* file to hold reply info for each email */
  * but you never know. Should probably live somewhere under .Trash */
 extern char *mailStash;
 extern char *downDir;		/* the download directory */
+extern char *down_prefile; // set file name ahead of time
 extern char *ebTempDir;		/* edbrowse temp, such as /tmp/.edbrowse */
 extern char *ebUserDir;		/* $ebTempDir/nnn user ID appended */
 extern char *dbarea, *dblogin, *dbpw;	/* to log into the database */
