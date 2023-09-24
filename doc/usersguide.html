@@ -3043,7 +3043,7 @@ The up and down commands move up and down in the history, i.e. up and down in th
 This is similar to gdb, where up and down traverse the stack frames.
 
 <P>
-up3 is shorthand for up 3 times, and so on.
+up3 is shorthand for up 3 times.
 up/foo goes up to a buffer whose file name or title contains the substring foo.
 You can append these modifiers to down.
 
@@ -4237,10 +4237,16 @@ or type a different file name if you wish.
 If the file already exists, it is overwritten.
 
 <P>
+The dld= command presets a download file name.
+This can be used in a noninteractive setting, such as an edbrowse function or a batch job.
+dld=jkl is the same as typing jkl when edbrowse asks you for the file name.
+A single space downloads into memory as usual, and x aborts.
+dld=% accepts the file name as provided by the server.
+dld= is a one-time command; it only applies to the next download.
+
+<P>
 Type bglist to list your background download jobs, including those that have run to completion.
-Upon exit, edbrowse will list any background downloads that are in progress.
-These continue to run, even after edbrowse exits,
-and they will print "download complete" messages when they finish.
+If edbrowse exits, any background downloads still in progress will not complete.
 
 <P>
 Foreground downloads, or any Internet fetch for that matter, prints progress dots,

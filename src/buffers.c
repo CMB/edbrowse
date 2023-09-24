@@ -1451,7 +1451,7 @@ void delText(int start, int end)
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
-	if ((cw->dirMode | cw->ircoMode) && cw->r_map) {
+	if (cw->dirMode && cw->r_map) {
 // if you are looking at directories with ls-s or some such,
 // we have to delete the corresponding stat information.
 		for (ln = start; ln <= end; ++ln)
