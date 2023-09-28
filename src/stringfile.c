@@ -1426,7 +1426,7 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 				return spacename;
 			if (!defname)
 				continue;
-/* make a copy just to be safe */
+// make a copy just to be safe
 			l = strlen(defname);
 			if (l >= ABSPATH)
 				l = ABSPATH - 1;
@@ -1435,7 +1435,8 @@ char *getFileName(int msg, const char *defname, bool isnew, bool ws)
 			p = buf;
 		} else
 			defname = 0;
-		if (isnew && fileTypeByName(p, 0)) {
+// see if file exists
+		if (isnew && !stringEqual(p, "x") && !stringEqual(p, "X") && fileTypeByName(p, 0)) {
 			i_printf(MSG_FileExists, p);
 			defname = 0;
 			continue;
