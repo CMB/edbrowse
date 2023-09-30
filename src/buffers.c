@@ -4499,6 +4499,7 @@ Uses of allocatedLine:
 rf sets allocatedLine to b currentFile
 f/  becomes  f lastComponent
 w/  becomes  w lastComponent
+w+/  becomes  w+ lastComponent
 g becomes b url  (going to a hyperlink)
 i<7 becomes i=contents of session 7
 i<file becomes i=contents of file
@@ -5225,7 +5226,7 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "f/") || stringEqual(line, "w/")) {
+	if (stringEqual(line, "f/") || stringEqual(line, "w/") || stringEqual(line, "w+/")) {
 		char *t;
 		cmd = line[0];
 		if (!cf->fileName) {
@@ -5245,7 +5246,10 @@ et_go:
 		t = getFileURL(cf->fileName, false);
 		allocatedLine = allocMem(strlen(t) + 8);
 /* ` prevents wildcard expansion, which normally happens on an f command */
-		sprintf(allocatedLine, "%c `%s", cmd, t);
+		if (line[1] == '+')
+			sprintf(allocatedLine, "%c+ `%s", cmd, t);
+		else
+			sprintf(allocatedLine, "%c `%s", cmd, t);
 		*runThis = allocatedLine;
 		return 2;
 	}
@@ -6628,7 +6632,7 @@ range2:
 		line = "s`bl";
 	}
 
-// [eqwr<][/?] commands
+// [eqwr<][/?] and w+[/?] commands
 	if((first == 'e' || first == 'q') && (line[1] == '/' || line[1] == '?')) {
 		cmd = 'e';
 		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
@@ -6676,6 +6680,14 @@ range2:
 			strncpy(e, at, n);
 			e[n] = 0;
 		}
+		line = newline;
+	}
+
+	if(first == 'w' && line[1] == '+' && (line[2] == '/' || line[2] == '?')) {
+		cmd = 'e';
+		n = sessionByText(line + 3, line[2] == '/' ? 1 : -1);
+		if(!n) return globSub = 0;
+		sprintf(newline, "w+%d", n);
 		line = newline;
 	}
 
