@@ -232,7 +232,7 @@ impossível navegar num arquivo vazio
 isto não parece um texto navegável
 já está navegando
 rótulo %s não achado
-0
+e-mail em formato errado na linha %d do catálogo de endereços
 impossível executar um comando insert a partir de uma função do edbrowse
 linhas de %d para %d foram atualizadas\n
 comando %c ainda não implementado
@@ -723,6 +723,7 @@ http local
 modo impróprio na sessão %d
 nenhum autor
 nenhum gerador
+texto inesperado após o comando bw
 0
 0
 0
@@ -797,4 +798,3 @@ nenhum gerador
 0
 0
 0
-e-mail em formato errado na linha %d do catálogo de endereços

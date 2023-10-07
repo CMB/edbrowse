@@ -4711,7 +4711,7 @@ static int twoLetter(const char *line, const char **runThis)
 		struct ebSession *s = &sessionList[context];
 		int k;
 		const Window *w;
-		bool down = (line[0] == 'd');
+		const bool down = (line[0] == 'd');
 		const char *v = line + (down ? 4 : 2);
 		if(!*v) {
 			n = 1;
@@ -4850,12 +4850,6 @@ down_again:
 
 	if (!strncmp(line, "db>", 3)) {
 		setDebugFile(line + 3);
-		return true;
-	}
-
-	if (stringEqual(line, "bw")) {
-		cw->changeMode = false;
-		cw->quitMode = true;
 		return true;
 	}
 
@@ -6080,6 +6074,31 @@ no_action:
 // There aren't very many of them.
 static int twoLetterG(const char *line, const char **runThis)
 {
+
+	if (stringEqual(line, "bw") || !strncmp(line, "bw/", 3) || !strncmp(line, "bw?", 3) || (!strncmp(line, "bw", 2) && isdigitByte(line[2]))) {
+		Window *lw;
+		if(!line[2]) lw = cw;
+		else if(line[2] == '/' || line[2] == '?') {
+			const int n = sessionByText(line + 3, line[2] == '/' ? 1 : -1);
+			if(!n) return false;
+			lw = sessionList[n].lw;
+		} else {
+			const char *s = line + 2;
+			const int n = strtol(s, (char **)&s, 10);
+			if(*s) {
+				setError(MSG_BWAfter);
+				return false;
+			}
+			if (!cxCompare(n))
+				return false;
+			if (!cxActive(n, true))
+				return false;
+			lw = sessionList[n].lw;
+		}
+		lw->changeMode = false;
+		lw->quitMode = true;
+		return true;
+	}
 
 	if(!strncmp(line, "dld=", 4)) {
 		nzFree(down_prefile);

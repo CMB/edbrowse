@@ -6,6 +6,7 @@ Allow mail client noninteractive, i.e. from a batch job.
 bflist/ and bflist?
 hist/ and hist?
 up/ and down/
+bw/ bw? and bw#
 
 dld= command to preset the download filename
 

@@ -823,4 +823,5 @@ enum {
 	MSG_SessionMode,
 	MSG_NoAuthor,
 	MSG_NoGenerator,
+	MSG_BWAfter,
 };
