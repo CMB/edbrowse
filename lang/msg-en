@@ -724,9 +724,9 @@ improper mode on session %d
 no author
 no generator
 unexpected text after the bw command
-0
-0
-0
+imask disabled
+imask enabled
+no imask
 0
 0
 0

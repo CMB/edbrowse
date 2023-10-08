@@ -1767,7 +1767,7 @@ inside:
 			memset(act->maskfolder, 0, sizeof(act->maskfolder));
 			while (*v) {
 				n = strtol(v, &v, 10);
-				if(n > 1 && n < (int)sizeof(act->maskfolder)) act->maskfolder[n] = 1;
+				if(n > 0 && n < (int)sizeof(act->maskfolder)) act->maskfolder[n] = 1;
 				q = strchr(v, ',');
 				if (!q) break;
 				*q = 0;

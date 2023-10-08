@@ -824,4 +824,7 @@ enum {
 	MSG_NoAuthor,
 	MSG_NoGenerator,
 	MSG_BWAfter,
+MSG_ImaskOff,
+MSG_ImaskOn,
+	MSG_NoMask,
 };

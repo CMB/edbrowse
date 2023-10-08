@@ -12,7 +12,7 @@ redireccionando http
 no se puede redirigir http
 no enviar referente
 enviar referente
-javascrip desactivado
+javascript desactivado
 javascript activado
 tratando binario como texto
 buscando archivos binarios
@@ -724,9 +724,9 @@ modo inadecuado en sesión %d
 sin autor
 sin generador
 inesperado texto después del comando bw
-0
-0
-0
+imask desactivado
+imask activado
+no existe imask
 0
 0
 0

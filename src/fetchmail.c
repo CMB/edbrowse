@@ -1454,6 +1454,7 @@ dosize:
 }
 
 static const struct MACCOUNT *imap_a;
+static bool maskon;
 
 // examine the specified folder, gather message envelopes
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
@@ -1504,7 +1505,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	nzFree(mailstring);
 	if (dostats) {
 		j = f - topfolders + 1;
-		if(imap_a->maskon && (j >= (int)sizeof(imap_a->maskfolder) || !imap_a->maskfolder[j]))
+		if(maskon && (j >= (int)sizeof(imap_a->maskfolder) || !imap_a->maskfolder[j]))
 			return; // not in mask, don't print
 		printf("%2d %s", j, f->path);
 /*
@@ -1708,6 +1709,14 @@ refresh:
 			goto input;
 		}
 
+		if (stringEqual(inputline, "imask")) {
+			if(!imap_a->maskon) { i_puts(MSG_NoMask); goto input; }
+			maskon ^= 1;
+			if(debugLevel >= 1)
+				i_puts(MSG_ImaskOff + maskon);
+			goto input;
+		}
+
 		if (stringEqual(inputline, "q")
 		|| stringEqual(inputline, "qt")) {
 			i_puts(MSG_Quit);
@@ -1837,7 +1846,7 @@ int fetchMail(int account)
 	const char *url_for_error;
 	int message_count = 0, message_number;
 
-	if(isimap) imap_a = a;
+	if(isimap) imap_a = a, maskon = imap_a->maskon;
 // remember the envelope format we got from the config file
 	strcpy(envelopeFormatDef, envelopeFormat);
 
