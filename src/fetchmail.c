@@ -1453,7 +1453,9 @@ dosize:
 	}
 }
 
-/* examine the specified folder, gather message envelopes */
+static const struct MACCOUNT *imap_a;
+
+// examine the specified folder, gather message envelopes
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
 	int j;
@@ -1501,8 +1503,10 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 
 	nzFree(mailstring);
 	if (dostats) {
-		printf("%2lld %s", (unsigned long long)(f - topfolders + 1),
-		       f->path);
+		j = f - topfolders + 1;
+		if(imap_a->maskon && (j >= (int)sizeof(imap_a->maskfolder) || !imap_a->maskfolder[j]))
+			return; // not in mask, don't print
+		printf("%2d %s", j, f->path);
 /*
 		if (f->children)
 			printf(" with children");
@@ -1833,6 +1837,7 @@ int fetchMail(int account)
 	const char *url_for_error;
 	int message_count = 0, message_number;
 
+	if(isimap) imap_a = a;
 // remember the envelope format we got from the config file
 	strcpy(envelopeFormatDef, envelopeFormat);
 

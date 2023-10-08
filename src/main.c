@@ -1763,6 +1763,16 @@ inside:
 			continue;
 
 		case 12:	// imask
+			act->maskon = true;
+			memset(act->maskfolder, 0, sizeof(act->maskfolder));
+			while (*v) {
+				n = strtol(v, &v, 10);
+				if(n > 1 && n < (int)sizeof(act->maskfolder)) act->maskfolder[n] = 1;
+				q = strchr(v, ',');
+				if (!q) break;
+				*q = 0;
+				v = q + 1;
+			}
 			continue;
 
 		case 13:	// type
@@ -1814,8 +1824,7 @@ inside:
 					cfgLine1(MSG_EBRC_ManyCols, MAXTCOLS);
 				td->cols[td->ncols++] = v;
 				q = strchr(v, ',');
-				if (!q)
-					break;
+				if (!q) break;
 				*q = 0;
 				v = q + 1;
 			}
