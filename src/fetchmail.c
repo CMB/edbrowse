@@ -101,16 +101,14 @@ static void writeAttachment(struct MHINFO *w)
 				diagnoseAndConvert(&w->start, &w->startAllocated, &length, true, true);
 				w->end = w->start + length; // in case of realloc
 	} else if (binaryDetect & !cw->binMode) {
-		if(debugLevel >= 1)
-			i_puts(MSG_BinaryData);
+		if(debugLevel > 0) i_puts(MSG_BinaryData);
 		cw->binMode = true;
 	}
 			if (!addTextToBuffer
 			    ((pst) w->start, length, 0, false))
 				i_printf(MSG_AttNoCopy, cx);
 			else {
-				if (debugLevel >= 1)
-					printf("%d\n", length);
+				if (debugLevel > 0) printf("%d\n", length);
 				if (w->cfn[0])
 					cf->fileName = cloneString(w->cfn);
 				cw->changeMode = false;
@@ -1693,7 +1691,7 @@ imap_done:
 			exit(0);
 		}
 
-		i_puts(MSG_SelectFolder);
+		if(debugLevel > 0) i_puts(MSG_SelectFolder);
 input:
 		if (!fgets(inputline, sizeof(inputline), stdin))
 			goto imap_done;
@@ -1712,7 +1710,7 @@ refresh:
 		if (stringEqual(inputline, "imask")) {
 			if(!imap_a->maskon) { i_puts(MSG_NoMask); goto input; }
 			maskon ^= 1;
-			if(debugLevel >= 1)
+			if(debugLevel > 0)
 				i_puts(MSG_ImaskOff + maskon);
 			goto input;
 		}
