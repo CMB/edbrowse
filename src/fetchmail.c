@@ -1721,6 +1721,11 @@ refresh:
 			goto imap_done;
 		}
 
+		if (stringEqual(inputline, "db")) {
+			printf("%d\n", debugLevel);
+			goto input;
+		}
+
 		t = inputline;
 		if (t[0] == 'd' && t[1] == 'b' && isdigitByte(t[2]) && !t[3]) {
 			debugLevel = t[2] - '0';
