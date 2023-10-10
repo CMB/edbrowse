@@ -208,7 +208,7 @@ static void setLimit(const char *t)
 	earliest = early;
 	if (imapfetch < 1) imapfetch = 1;
 	if (imapfetch > 1000) imapfetch = 1000;
-	i_printf(MSG_FetchN, imapfetch);
+if (debugLevel > 0) 	i_printf(MSG_FetchN, imapfetch);
 }
 
 /* mail message in a folder */
@@ -854,10 +854,12 @@ research:
 				retry = true;
 				goto research;
 			}
-			if (f->nmsgs > f->nfetch)
-				i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
-			else
-				i_printf(MSG_MessagesX, f->nmsgs);
+			if (debugLevel > 0) {
+				if (f->nmsgs > f->nfetch)
+					i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
+				else
+					i_printf(MSG_MessagesX, f->nmsgs);
+			}
 			goto showmessages;
 		}
 
@@ -1527,10 +1529,12 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 
 	envelopes(handle, f);
 
-	if (f->nmsgs > f->nfetch)
-		i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
-	else
-		i_printf(MSG_MessagesX, f->nmsgs);
+	if (debugLevel > 0) {
+		if (f->nmsgs > f->nfetch)
+			i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
+		else
+			i_printf(MSG_MessagesX, f->nmsgs);
+	}
 }
 
 /* find the last mail in the local unread directory */
