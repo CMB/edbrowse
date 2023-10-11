@@ -989,8 +989,10 @@ static void freeWindow(Window *w)
 			if(--w2->ircCount == 0) {
 				w2->ircoMode = false;
 				nzFree(w2->f0.fileName), w2->f0.fileName = 0;
+/* retain the time stamps
 				freeWindowLines(w2->r_map);
 				w2->r_map = 0;
+*/
 			} else {
 // I have to clear the channel here so the file name comes out right.
 				nzFree(w->ircChannel), w->ircChannel = 0;
@@ -1216,7 +1218,7 @@ void addToMap(int nlines, int destl)
 	free(newpiece);
 	newpiece = 0;
 
-	if(cw->ircoMode) {
+	if(cw->ircoMode1) {
 // capture the time stamp of the added lines in irc mode.
 // This isn't very space efficient, but an irc buffer isn't going to get very large.
 		int i;
@@ -1232,7 +1234,7 @@ void addToMap(int nlines, int destl)
 		time(&t);
 		timestring = conciseTime(t);
 		for(i=svdol + 1; i <= cw->dol; ++i)
-			cw->r_map[i].text = (uchar*)cloneString(timestring);
+			cw->r_map[i].text = cw->ircoMode ? (uchar*)cloneString(timestring) : (uchar*)emptyString;
 		cw->r_map[i].text = 0;
 	}
 
@@ -1488,7 +1490,7 @@ void delText(int start, int end)
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
-		if ((cw->dirMode | cw->ircoMode) && cw->r_map) {
+		if ((cw->dirMode | cw->ircoMode1) && cw->r_map) {
 			free(cw->r_map);
 			cw->r_map = 0;
 		}
@@ -1514,7 +1516,7 @@ static bool delTextG(char action, int n, int back)
 	debugPrint(3, "mass delete %d %d", back, n);
 
 	 t = cw->map + 1;
-	if((cw->dirMode | cw->ircoMode) && cw->r_map) t2 = cw->r_map + 1;
+	if((cw->dirMode | cw->ircoMode1) && cw->r_map) t2 = cw->r_map + 1;
 	for(i = j = 1; i <= cw->dol; ++i, ++t, t2 ? ++t2 : 0) {
 		if(gflag[i] && rc && j - back <= 0) {
 			cw->dot = j;
