@@ -6135,12 +6135,12 @@ static int twoLetterG(const char *line, const char **runThis)
 // default ls mode is size time
 		if (!lsmode[0])
 			strcpy(lsmode, "st");
-		if(cw->ircoMode && stringEqual(lsmode, "t")) {
+		if(cw->ircoMode1 && stringEqual(lsmode, "t")) {
 			if (cw->dot == 0) {
 				setError(MSG_AtLine0);
 				return false;
 			}
-			const char *timestring = (char*)cw->r_map[cw->dot].text;
+			const char *timestring = cw->r_map ? (char*)cw->r_map[cw->dot].text : emptyString;
 			puts(timestring == emptyString ? "-" : timestring);
 			return true;
 		}

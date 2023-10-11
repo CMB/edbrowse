@@ -3923,7 +3923,7 @@ Will this induce bugs that are very difficult to reproduce?
 
 	win->irc_fd = fd;
 	win->irciMode = true;
-	wout->ircoMode = true;
+	wout->ircoMode = wout->ircoMode1 = true;
 	wout->ircCount++;
 	win->ircOther = cxout;
 	win->ircNick = cloneString(nick);
