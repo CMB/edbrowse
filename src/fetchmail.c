@@ -817,7 +817,7 @@ action:
 		printf("? ");
 		fflush(stdout);
 // include +-^$ for some other options
-		key = getLetter("h?qvbelfdsmnp gtwWuUa/");
+		key = getLetter("h?qvbe=lfdsmnp gtwWuUa/");
 		if(isInteractive) {
 			printf("\b\b\b");
 			fflush(stdout);
@@ -1027,12 +1027,27 @@ rebulk:
 			break;
 		}
 
+		if (key == '=') {
+			struct MIF *p = f->mlist;
+			int n = 0;
+			int i;
+			for (i = 0; i < f->nfetch; ++i) {
+				if (!p->gone) ++n;
+				++p;
+			}
+			i_printf(MSG_MessagesX, n);
+			goto reaction;
+		}
+
 		if (key == 'l') {
 			i_printf(MSG_Limit);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
-			setLimit(inputline);
+			if (inputline[0] == '\n')
+				i_printf(MSG_FetchN, imapfetch);
+			else
+				setLimit(inputline);
 			goto reaction;
 		}
 
@@ -1701,6 +1716,11 @@ input:
 			goto imap_done;
 		stripWhite(inputline);
 
+		if (stringEqual(inputline, "?") || stringEqual(inputline, "h")) {
+			i_puts(MSG_SelectFolder);
+			goto input;
+		}
+
 		if (stringEqual(inputline, "rf")) {
 refresh:
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, 0);
@@ -1735,6 +1755,11 @@ refresh:
 			debugLevel = t[2] - '0';
 			curl_easy_setopt(handle, CURLOPT_VERBOSE,
 					 (debugLevel >= 4));
+			goto input;
+		}
+
+		if (stringEqual(inputline, "l")) {
+			i_printf(MSG_FetchN, imapfetch);
 			goto input;
 		}
 
