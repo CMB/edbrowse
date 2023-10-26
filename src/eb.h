@@ -342,6 +342,8 @@ extern bool allowJS;		// javascript on
 extern bool blockJS; // javascript is blocked
 extern bool ftpActive;
 extern bool helpMessagesOn;	/* no need to type h */
+extern bool promptOn;	/* show prompt */
+extern char *prompt; /* prompt string */
 extern bool pluginsOn;		/* plugins are active */
 extern bool showHiddenFiles;	/* during directory scan */
 extern bool showall; // show messages that are normally hidden, for various reasons

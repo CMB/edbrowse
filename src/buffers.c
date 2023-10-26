@@ -19,21 +19,21 @@ static bool bad_utf8_alert;
 // Static variables for this file
 
 // The valid edbrowse commands
-static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpqrstuvwWXz=^&<";
+static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpPqrstuvwWXz=^&<";
 // Commands that can be done in browse mode
-static const char browse_cmd[] = "AbBdDefghHiklMnpqsvwXz=^&<";
+static const char browse_cmd[] = "AbBdDefghHiklMnpPqsvwXz=^&<";
 // Commands for sql mode
-static const char sql_cmd[] = "AadDefghHiklmnpqrsvwXz=^<";
+static const char sql_cmd[] = "AadDefghHiklmnpPqrsvwXz=^<";
 // Commands for directory mode
-static const char dir_cmd[] = "AbdDefghHklMmnpqstvwXz=^<";
+static const char dir_cmd[] = "AbdDefghHklMmnpPqstvwXz=^<";
 // Commands for irc input mode
-static const char irci_cmd[] = "aBcdDefghHijJklmnprstuvwWXz=&<";
+static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
-static const char irco_cmd[] = "BdDefghHklnpvwXz=<";
+static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // Commands that work at line number 0, in an empty file
-static const char zero_cmd[] = "aAbefhHkMqruwz=^<";
+static const char zero_cmd[] = "aAbefhHkMPqruwz=^<";
 // Commands that expect a space afterward
-static const char spaceplus_cmd[] = "befrwW";
+static const char spaceplus_cmd[] = "befPrwW";
 // Commands that should have no text after them
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 // Commands that can be done after a g// global directive
@@ -251,6 +251,14 @@ void printDot(void)
 		i_puts(MSG_Empty);
 }
 
+void printPrompt(char *const s)
+{
+	if (promptOn && prompt && isInteractive) {
+		printf("%s", s);
+		fflush(stdout);
+	}
+}
+
 // These commands pass through jdb and on to normal edbrowse processing.
 static bool jdb_passthrough(const char *s)
 {
@@ -259,6 +267,7 @@ static bool jdb_passthrough(const char *s)
 		"dbcn", "dbcn+", "dbcn-",
 		"dbev", "dbev+", "dbev-",
 		"dbcss", "dbcss+", "dbcss-", "db",
+		"P", "P+", "P-",
 		"timers", "timers+", "timers-", "tmlist",
 		"demin", "demin+", "demin-",
 		"e+", "e-", "eret",
@@ -289,7 +298,8 @@ static bool jdb_passthrough(const char *s)
 			return true;
 	}
 	if(!strncmp(s, "bflist/", 7) || !strncmp(s, "bflist?", 7) ||
-	!strncmp(s, "hist/", 5) || !strncmp(s, "hist?", 5))
+	!strncmp(s, "hist/", 5) || !strncmp(s, "hist?", 5) ||
+	!strncmp(s, "P ", 2) || !strncmp(s, "P=", 2))
 		return true;
 	return false;
 }
@@ -713,6 +723,7 @@ addchar:
 				newlocation = 0;
 			}
 		}
+		printPrompt(prompt);
 		goto top;
 	}
 
@@ -1349,7 +1360,7 @@ static bool inputLinesIntoBuffer(void)
 		} else line = clonePstring(line);
 		t->text = line;
 		++t, ++linecount;
-		if(!inscript) line = inputLine();
+		if(!inscript)  line = inputLine();
 		else line = (uchar *)getInputLineFromScript();
 		if(!line) goto fail;
 	}
@@ -4708,6 +4719,16 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if (stringEqual(line, "P")) {
+		promptOn ^= 1;
+		return true;
+	}
+
+	if (stringEqual(line, "P+") || stringEqual(line, "P-")) {
+		promptOn = (line[1] == '+');
+		return true;
+	}
+
 	if(!strncmp(line, "up", 2) ||
 	!strncmp(line, "down", 4)) {
 		struct ebSession *s = &sessionList[context];
@@ -6214,6 +6235,13 @@ static int twoLetterG(const char *line, const char **runThis)
 		helpMessagesOn = (line[1] == '+');
 		if (helpMessagesOn && debugLevel >= 1)
 			i_puts(MSG_HelpOn);
+		return true;
+	}
+
+	if(!strncmp(line, "P ", 2) || !strncmp(line, "P=", 2)) {
+		nzFree(prompt);
+		if(line[2]) prompt = cloneString(line+2);
+		else prompt = 0;
 		return true;
 	}
 
@@ -8324,6 +8352,7 @@ bool edbrowseCommand(const char *line, bool script)
 	inscript = script;
 	fileSize = -1;
 	skipWhite(&line);
+	if (!*line && !script) printPrompt("\n");
 	rc = runCommand(line);
 	if (fileSize >= 0)
 		debugPrint(1, "%lld", fileSize);
@@ -8333,6 +8362,7 @@ bool edbrowseCommand(const char *line, bool script)
 			showErrorConditional(cmd);
 		eeCheck();
 	}
+	if (!script) printPrompt(prompt);
 	return rc;
 }
 

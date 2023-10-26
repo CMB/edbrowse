@@ -4,13 +4,14 @@
 
 #include <dirent.h>
 #include <termios.h>
-#include <unistd.h>
 #include <glob.h>
 #include <pwd.h>
 #include <grp.h>
 
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
+bool promptOn;
+char *prompt;
 int debugLevel = 1;
 FILE *debugFile = NULL;
 char *debugFileName;

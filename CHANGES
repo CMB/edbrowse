@@ -12,6 +12,8 @@ dld= command to preset the download filename
 
 imask = to restrict imap folders presented.
 
+P to toggle and set prompt.
+
 3.8.7
 W !shell_command   reads the data back into the buffer
 

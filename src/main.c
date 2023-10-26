@@ -543,6 +543,7 @@ int main(int argc, char **argv)
 	strcat(agent0, version);
 	userAgents[0] = currentAgent = agent0;
 
+	prompt = cloneString("*");
 	setupEdbrowseTempDirectory();
 
 	progname = argv[0];
