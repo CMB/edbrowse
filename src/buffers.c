@@ -7998,7 +7998,7 @@ rebrowse:
 		startRange = endRange = 0;
 		freeWindows(context, false);
 		changeFileName = 0;	// should already be zero
-		thisfile = cf->fileName;
+		thisfile = (icmd == 'g' ? cf->fileName : 0);
 		jumptag = 0;
 		w = createWindow();
 		w->sno = context;
