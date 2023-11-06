@@ -1826,6 +1826,32 @@ Happy birthday 💛🧡💙💚 🎂
 Perhaps something is extremely funny, and you want to indicate same with three roll-on-floor-laughing emojis.
 Type ~jmisc, or whatever group has this emoji, then roll,roll,roll to produce three of them.
 
+<p>
+Emoji combinations are allowed.
+These can be simple concatenations, such as the flags.
+Two emojis together, regional U and regional S, produce the flag of the united states, stars &amp; stripes.
+The line in your config file, in the flags group, looks like this.
+
+<p>
+1f1fa+1f1f8 united states
+
+<p>
+During text entry, ~jflag.united produces the regional U and the regional S, which is code for the flag.
+Unless you also have the United Arab Emirates in your config file, in which case you will see a menu of both countries.
+
+<p>
+There is a sneaky way of joining two emojis together to produce a symbol that is related to both.
+This uses the join combinator.
+An example is the baseball mit, which is a baseball joined with a pair of gloves.
+In the sports group, the line might look like this.
+The ^ indicates the join operator, the emojis are not simply next to each other, they are joined by unicode 8205.
+
+<p>
+26be^1f9e4 baseball glove
+
+<p>
+Refer to the sample file in the wiki for more examples of these combinations.
+
 <h2 id="bfile">Binary Files</h2>
 
 <p>

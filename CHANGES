@@ -14,6 +14,8 @@ imask = to restrict imap folders presented.
 
 P to toggle and set prompt.
 
+emoji combos in the config file
+
 3.8.7
 W !shell_command   reads the data back into the buffer
 

@@ -2622,6 +2622,8 @@ static struct EJGROUP {
 	const char *name;
 	const char *desc[EJGROUPSIZE];
 	long code[EJGROUPSIZE];
+	long code2[EJGROUPSIZE];
+	char join[EJGROUPSIZE];
 } *ejgroup0;
 // the emojis file pulled into memory
 static char *ejbase;
@@ -2691,7 +2693,7 @@ void loadEmojis(void)
 			i_printf(MSG_EmojiBadControl, c, lineno);
 			goto fail;
 		}
-		if((signed char)c > ' ' && !isalnumByte(c) && c != '{' && c != '}') {
+		if((signed char)c > ' ' && !isalnumByte(c) &&  !strchr("{}+^", c)) {
 			i_printf(MSG_EmojiBadChar, c, lineno);
 			goto fail;
 		}
@@ -2703,7 +2705,8 @@ void loadEmojis(void)
 	s = ejbase, lineno = 0;
 	while(++lineno, *s) {
 		bool limitprint = false;
-		long uc;
+		long uc, uc2;
+		char joinchar;
 		t = strchr(s, '\n');
 		if(t) *t++ = 0; else t = s + strlen(s);
 		if(!*s) { // empty line
@@ -2739,6 +2742,11 @@ void loadEmojis(void)
 			i_printf(MSG_EmojiUnicode, lineno);
 			s = t; continue;
 		}
+		joinchar = 0;
+		if(*u == '^' || *u == '+') {
+			joinchar = *u;
+			uc2 = strtol(u + 1, &u, 16);
+		}
 		if(!*u) { // no description
 			s = t; continue;
 		}
@@ -2753,6 +2761,9 @@ void loadEmojis(void)
 		} else {
 			g->desc[g->n] = u+1;
 			g->code[g->n] = uc;
+			g->join[g->n] = joinchar;
+			if(joinchar)
+				g->code2[g->n] = uc2;
 			++g->n;
 		}
 		s = t;
@@ -2950,8 +2961,12 @@ char *selectEmoji(const char *p, int len)
 	if(dot) { // foo.bar
 		n = ejSelect(g, p + dot + 1, len - dot - 1, false);
 		if(n >= 0) {
-			ejresponse = allocMem(7);
+			ejresponse = allocMem(15 + 1);
 			strcpy(ejresponse, uni2utf8(g->code[n]));
+			if(g->join[n] == '^')
+				strcat(ejresponse, uni2utf8(8205));
+			if(g->join[n])
+				strcat(ejresponse, uni2utf8(g->code2[n]));
 			return ejresponse;
 		}
 	}
@@ -2972,7 +2987,7 @@ top:
 		return 0;
 	}
 // picking one or more emojis
-	ejresponse = allocMem(6 * ejcommas + 6 + 1);
+	ejresponse = allocMem(15 * ejcommas + 15 + 1);
 	ejresponse[0] = 0;
 	s = ejline;
 	while(*s) {
@@ -2987,6 +3002,10 @@ top:
 			goto top;
 		}
 		strcat(ejresponse, uni2utf8(g->code[n]));
+			if(g->join[n] == '^')
+				strcat(ejresponse, uni2utf8(8205));
+			if(g->join[n])
+				strcat(ejresponse, uni2utf8(g->code2[n]));
 		s = t;
 	}
 // all good
