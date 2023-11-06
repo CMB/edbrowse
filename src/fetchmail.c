@@ -476,7 +476,7 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	struct MIF *mif;
 	char cust_cmd[200];
 
-	if (*line && line[1] == ' ' && strchr("sfb", *line)) {
+	if (*line && line[1] == ' ' && strchr("sftb", *line)) {
 		searchtype = *line;
 		line += 2;
 	} else if (line[0] && !isspaceByte(line[0]) &&
@@ -503,6 +503,8 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 		strcat(cust_cmd, "SUBJECT");
 	if (searchtype == 'f')
 		strcat(cust_cmd, "FROM");
+	if (searchtype == 't')
+		strcat(cust_cmd, "TO");
 	if (searchtype == 'b')
 		strcat(cust_cmd, "BODY");
 	strcat(cust_cmd, " \"");
@@ -814,14 +816,13 @@ action:
 		delflag = retry = false;
 		postkey = 0;
 		preferPlain = false;
-		printf("? ");
+		if(isInteractive) printf("? ");
 		fflush(stdout);
 // include +-^$ for some other options
 		key = getLetter("h?qvbe=lfdsmnp gtwWuUa/");
-		if(isInteractive) {
-			printf("\b\b\b");
-			fflush(stdout);
-		}
+		printf("\b");
+		if(isInteractive) printf("\b\b");
+		fflush(stdout);
 		if(key == '+') key = 'n';
 		if(key == '-') key = 'p';
 		if (key == '?' || key == 'h') {
@@ -989,8 +990,7 @@ You'll see this after the perform function runs.
 				i_printf(MSG_From, mif->from);
 			fflush(stdout);
 			subkey = getLetter("mdx");
-			if(isInteractive)
-				printf("\b");
+			printf("\b");
 			if (subkey == 'x') {
 				i_puts(MSG_Abort);
 				goto reaction;
@@ -2110,13 +2110,12 @@ key_command:
 		key = postkey, postkey = 0;
 	} else {
 /* interactive prompt depends on whether there is more text or not */
-		printf("%c ", displine > cw->dol ? '?' : '*');
+		if(isInteractive) printf("%c ", displine > cw->dol ? '?' : '*');
 		fflush(stdout);
 		key = getLetter((isimap ? "qvbfh? gtnpwWuUasdm" : "qh? gtnwud"));
-		if(isInteractive) {
-			printf("\b\b\b");
-			fflush(stdout);
-		}
+		printf("\b");
+		if(isInteractive) printf("\b\b");
+		fflush(stdout);
 	}
 
 	switch (key) {
