@@ -1842,7 +1842,8 @@ static bool joinTextG(char action, int n, int back, const char *fs)
 
 // Read a file, or url, into the current buffer.
 static bool readFile(const char *filename, bool newwin,
-		     int fromframe, const char *fromthis, const char *orig_head)
+		     int fromframe, const char *fromthis, const char *orig_head,
+uchar prebrowse)
 {
 	char *rbuf;		// the read buffer
 	int readSize;		// should agree with fileSize
@@ -2100,10 +2101,17 @@ badfile:
 			cmd = 'e';
 	} else {
 
+		char *h = 0;
 		inparts = 1, fileSize = 0;
 // set inparts to 0 if you don't want this feature or if it causes trouble
 nextpart:
+// some code to lop of hash for a local file when browsing locally,
+// <a href=foo.html#bar>go to the bar section</a>
+		if(prebrowse && icmd == 'g')
+			h = strchr(filename, '#');
+		if(h) *h = 0;
 		rc = fileIntoMemory(filename, &rbuf, &partSize, inparts);
+		if(h) *h = '#'; // put it back
 		inparts = (rc == 2 ? 2 : 0);
 		if(rc) fileSize += partSize;
 	}
@@ -2160,7 +2168,7 @@ bool readFileArgv(const char *filename, int fromframe, const char *orig_head)
 	bool newwin = !fromframe;
 	cmd = 'e';
 	return readFile(filename, newwin, fromframe,
-			(newwin ? 0 : cw->f0.fileName), orig_head);
+			(newwin ? 0 : cw->f0.fileName), orig_head, 0);
 }
 
 // Skip the file: protocol, if present.
@@ -7994,6 +8002,7 @@ rebrowse:
 			return false;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
+		uchar prebrowse = cw->browseMode;
 		undoSpecialClear();
 		startRange = endRange = 0;
 		freeWindows(context, false);
@@ -8056,7 +8065,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 			if (emode)
 				pluginsOn = false;
 			j = readFile(line, (cmd != 'r'), 0,
-				     thisfile, 0);
+				     thisfile, 0, prebrowse);
 			pluginsOn = save_pg;
 		}
 		w->undoable = w->changeMode = false;
@@ -8316,7 +8325,7 @@ afterdelete:
 				strmove(strchr(newline + 1, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, (cmd != 'r'), 0, 0, 0);
+			j = readFile(line, false, 0, 0, 0, cw->browseMode);
 			if (!serverData)
 				fileSize = -1;
 			return j;
