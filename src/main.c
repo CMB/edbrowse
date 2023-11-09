@@ -864,7 +864,7 @@ static void *inputForever(void *ptr)
 {
 	foreground_thread = pthread_self();
 	while (true) {
-		pst p = inputLine();
+		pst p = inputLine(false);
 		pst save_p = clonePstring(p);
 		if (perl2c((char *)p)) {
 			i_puts(MSG_EnterNull);

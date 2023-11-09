@@ -251,7 +251,7 @@ void printDot(void)
 		i_puts(MSG_Empty);
 }
 
-void printPrompt(char *const s)
+static void printPrompt(char *const s)
 {
 	if (promptOn && prompt && isInteractive) {
 		printf("%s", s);
@@ -376,7 +376,7 @@ nextrender is the suggested time to render again, if js changes have been made.
 It is generally 20 seconds after the last render.
 *********************************************************************/
 
-pst inputLine(void)
+pst inputLine(bool textEntry)
 {
 	static char line[MAXTTYLINE];
 	int i, j, len;
@@ -525,7 +525,12 @@ thus the call to ircReadlineControl().
 
 	if (inputReadLine && isInteractive) {
 		ircReadlineControl();
-		last_rl = readline("");
+		if(promptOn && prompt && !textEntry) {
+			printf("\r");
+			last_rl = readline(prompt);
+		} else {
+			last_rl = readline("");
+		}
 		ircReadlineRelease();
 		if (last_rl != NULL && *last_rl &&
 		(!(histcontrol&1) || *last_rl != ' ')) {
@@ -1342,7 +1347,7 @@ static bool inputLinesIntoBuffer(void)
 
 	if(!inscript) {
 		if (linePending) line = linePending;
-		else line = inputLine();
+		else line = inputLine(true);
 	} else {
 		line = (uchar *)getInputLineFromScript();
 		if(!line) goto fail;
@@ -1360,7 +1365,7 @@ static bool inputLinesIntoBuffer(void)
 		} else line = clonePstring(line);
 		t->text = line;
 		++t, ++linecount;
-		if(!inscript)  line = inputLine();
+		if(!inscript)  line = inputLine(true);
 		else line = (uchar *)getInputLineFromScript();
 		if(!line) goto fail;
 	}
