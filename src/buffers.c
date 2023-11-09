@@ -55,6 +55,8 @@ static bool globSub;		/* in the midst of a g// command */
 static bool inscript;		/* run from inside an edbrowse function */
 static int lastq, lastqq;
 static char icmd;		/* input command, usually the same as cmd */
+static bool promptOn;		/* show prompt */
+static char *promptString;
 static bool uriEncoded;
 
 /*********************************************************************
@@ -253,7 +255,7 @@ void printDot(void)
 
 static void printPrompt(char *const s)
 {
-	if (promptOn && prompt && isInteractive) {
+	if (promptOn && promptString && isInteractive) {
 		printf("%s", s);
 		fflush(stdout);
 	}
@@ -317,14 +319,11 @@ static char *edbrowse_completion(const char *text, int state)
 	return rl_filename_completion_function(text, state);
 }
 
+static uchar histcontrol;
 void initializeReadline(void)
 {
 	rl_completion_entry_function = edbrowse_completion;
-}
-
-static uchar histcontrol;
-void setHistcontrol(void)
-{
+	promptString = cloneString("*");
 	const char *hc = getenv("HISTCONTROL");
 	const char *s;
 	if(!hc) return;
@@ -376,7 +375,7 @@ nextrender is the suggested time to render again, if js changes have been made.
 It is generally 20 seconds after the last render.
 *********************************************************************/
 
-pst inputLine(bool textEntry)
+pst inputLine(const bool textEntry)
 {
 	static char line[MAXTTYLINE];
 	int i, j, len;
@@ -525,9 +524,9 @@ thus the call to ircReadlineControl().
 
 	if (inputReadLine && isInteractive) {
 		ircReadlineControl();
-		if(promptOn && prompt && !textEntry) {
+		if(promptOn && promptString && !textEntry) {
 			printf("\r");
-			last_rl = readline(prompt);
+			last_rl = readline(promptString);
 		} else {
 			last_rl = readline("");
 		}
@@ -728,7 +727,7 @@ addchar:
 				newlocation = 0;
 			}
 		}
-		printPrompt(prompt);
+		printPrompt(promptString);
 		goto top;
 	}
 
@@ -6252,9 +6251,9 @@ static int twoLetterG(const char *line, const char **runThis)
 	}
 
 	if(!strncmp(line, "P ", 2) || !strncmp(line, "P=", 2)) {
-		nzFree(prompt);
-		if(line[2]) prompt = cloneString(line+2);
-		else prompt = 0;
+		nzFree(promptString);
+		if(line[2]) promptString = cloneString(line+2);
+		else promptString = 0;
 		return true;
 	}
 
@@ -8376,7 +8375,7 @@ bool edbrowseCommand(const char *line, bool script)
 			showErrorConditional(cmd);
 		eeCheck();
 	}
-	if (!script) printPrompt(prompt);
+	if (!script) printPrompt(promptString);
 	return rc;
 }
 

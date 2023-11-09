@@ -11,7 +11,6 @@ extern "C" {
 #endif
 
 // sourcefile=buffers.c
-void setHistcontrol(void);
 void undoSpecialClear(void);
 void removeHiddenNumbers(pst p, uchar terminate, int cx);
 pst fetchLineContext(int n, int show, int cx);
@@ -19,7 +18,7 @@ pst fetchLine(int n, int show);
 void displayLine(int n);
 void printDot(void);
 void initializeReadline(void);
-pst inputLine(bool textEntry);
+pst inputLine(const bool textEntry);
 void freeWindowLines(struct lineMap *map);
 bool cxCompare(int cx) ;
 bool cxActive(int cx, bool error);

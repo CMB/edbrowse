@@ -10,8 +10,6 @@
 
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
-bool promptOn;
-char *prompt;
 int debugLevel = 1;
 FILE *debugFile = NULL;
 char *debugFileName;

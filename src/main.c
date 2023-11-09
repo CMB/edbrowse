@@ -487,9 +487,6 @@ int main(int argc, char **argv)
 	selectLanguage();
 	setHTTPLanguage(eb_language);
 
-// bring HISTCONTROL down to edbrowse
-	setHistcontrol();
-
 // Establish the home directory, and standard edbrowse files thereunder.
 	home = getenv("HOME");
 
@@ -543,7 +540,6 @@ int main(int argc, char **argv)
 	strcat(agent0, version);
 	userAgents[0] = currentAgent = agent0;
 
-	prompt = cloneString("*");
 	setupEdbrowseTempDirectory();
 
 	progname = argv[0];
