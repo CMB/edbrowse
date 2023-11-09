@@ -80,6 +80,7 @@ static void writeAttachment(struct MHINFO *w)
 		i_printf(MSG_Att);
 		atname = getFileName(MSG_FileName, (w->cfn[0] ? w->cfn : 0),
 				     true, false);
+		if(!isInteractive) puts(atname);
 /* X is like x, but deletes all future images */
 		if (stringEqual(atname, "X")) {
 			atname = "x";
@@ -846,6 +847,7 @@ imap_done:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
+			if(!isInteractive) printf(inputline);
 research:
 			j2 = imapSearch(handle, f, inputline, &res);
 			if(j2 == 0) goto reaction;
@@ -1002,6 +1004,7 @@ You'll see this after the perform function runs.
 				fflush(stdout);
 				if (!fgets(inputline, sizeof(inputline), stdin))
 					goto imap_done;
+				if(!isInteractive) printf(inputline);
 				g = folderByName(inputline);
 				if (!g || g == f) {
 // should have a better error message here.
@@ -1066,6 +1069,7 @@ rebulk:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
+			if(!isInteractive) printf(inputline);
 			g = folderByName(inputline);
 			if (g && g != f) {
 re_move:
@@ -2191,8 +2195,10 @@ writeMail:
 		goto attachOnly;
 
 saveMail:
-	if (!atname)
+	if (!atname) {
 		atname = getFileName(MSG_FileName, redirect, false, false);
+		if(!isInteractive) puts(atname);
+	}
 	if (stringEqual(atname, "x"))
 		goto afterinput;
 
