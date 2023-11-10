@@ -17,7 +17,7 @@ pst fetchLineContext(int n, int show, int cx);
 pst fetchLine(int n, int show);
 void displayLine(int n);
 void printDot(void);
-void printPrompt(char *const);
+void printPrompt(void);
 void initializeReadline(void);
 pst inputLine(const bool textEntry);
 void freeWindowLines(struct lineMap *map);

@@ -255,10 +255,10 @@ void printDot(void)
 
 // Print the string argument if the prompt is on.
 // Print the promptString if the string argument is NULL.
-void printPrompt(char *const s)
+void printPrompt(void)
 {
 	if (promptOn && promptString && isInteractive) {
-		printf("%s", (s ? s : promptString));
+		printf("%s", promptString);
 		fflush(stdout);
 	}
 }
@@ -729,7 +729,7 @@ addchar:
 				newlocation = 0;
 			}
 		}
-		printPrompt(NULL);
+		printPrompt();
 		goto top;
 	}
 
@@ -8367,7 +8367,6 @@ bool edbrowseCommand(const char *line, bool script)
 	inscript = script;
 	fileSize = -1;
 	skipWhite(&line);
-	if (!*line && !script) printPrompt("\n");
 	rc = runCommand(line);
 	if (fileSize >= 0)
 		debugPrint(1, "%lld", fileSize);
@@ -8377,7 +8376,7 @@ bool edbrowseCommand(const char *line, bool script)
 			showErrorConditional(cmd);
 		eeCheck();
 	}
-	if (!script) printPrompt(NULL);
+	if (!script) printPrompt();
 	return rc;
 }
 

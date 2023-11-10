@@ -859,7 +859,7 @@ int main(int argc, char **argv)
 static void *inputForever(void *ptr)
 {
 	foreground_thread = pthread_self();
-	printPrompt(NULL);
+	printPrompt();
 	while (true) {
 		pst p = inputLine(false);
 		pst save_p = clonePstring(p);
