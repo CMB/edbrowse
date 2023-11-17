@@ -1866,7 +1866,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 	void (*fn) (int, ...);
 
 	if (!getProtHostURL(url, prot, host)) {
-/* this should never happen */
+// this should never happen
 		prot[0] = host[0] = 0;
 	}
 

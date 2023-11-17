@@ -757,8 +757,9 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 	CURLcode res2;
 	char *t;
 // We should check here that res1 is the right kind of error,
-// we reconnected but aren't in any folder.
 // If some other error code then return false;
+// Let's at least print it out.
+	if(res1 != CURLE_OK && debugLevel >= 3) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
 	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
@@ -770,6 +771,7 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 		return true;
 	}
 	debugPrint(3, "reconnect to %s failed", f->path);
+	if(debugLevel >= 3) ebcurl_setError(res2, "mail://url-unspecified", 1, "fetchmail_ssl");
 	return false;
 }
 
