@@ -154,17 +154,17 @@ static char *mailbox_url, *message_url;
 
 int imapfetch = 100;
 static bool earliest;
-static const char envelopeFormatChars[] = "tfsdz";
-// to from subject date size
-static char envelopeFormat[6] = {'f', 's'}; // default is from subject
-static char envelopeFormatDef[6] = { 'f', 's'};
+static const char envelopeFormatChars[] = "tfsdzn";
+// to from subject date size number
+static char envelopeFormat[sizeof(envelopeFormatChars)] = {'f', 's'}; // default is from subject
+static char envelopeFormatDef[sizeof(envelopeFormatChars)] = { 'f', 's'};
 
 bool setEnvelopeFormat(const char *s)
 {
 	char c;
 	bool something = false;
 	int i, j;
-	char count[6];
+	char count[sizeof(envelopeFormatChars)];
 
 // check
 	for(j=0; (c = s[j]); ++j) {
@@ -217,6 +217,7 @@ struct MIF {
 	int uid;
 	int seqno;
 	int size;
+	struct MIF *startlist;
 	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *to, *reply;
 // references, principal recipient, carbon recipient
@@ -570,8 +571,9 @@ static void printEnvelope(const struct MIF *mif)
 	char *envp;		// print the envelope concisely
 	char *envp_end;
 	int envp_l;
-	int i;
+	int i, j;
 	char c;
+	const struct MIF *m2;
 	envp = initString(&envp_l);
 #if 0
 	if (!mif->seen)
@@ -599,6 +601,11 @@ static void printEnvelope(const struct MIF *mif)
 			break;
 		case 'z':
 			stringAndString(&envp, &envp_l, conciseSize(mif->size));
+			break;
+		case 'n':
+			for(m2 = mif->startlist, j = 1; m2 != mif; ++m2)
+				if(!m2->gone) ++j;
+			stringAndNum(&envp, &envp_l, j);
 			break;
 		}
 	}
@@ -1283,6 +1290,7 @@ We'll deal with that later.
 		}
 
 		mif->cbase = mailstring;
+		mif->startlist = f->mlist;
 		mif->subject = emptyString;
 		mif->from = emptyString;
 		mif->to = emptyString;
