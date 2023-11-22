@@ -305,7 +305,7 @@ failed
 ftp could not connect to remote host
 ftp transfer failed
 no folders present
-Select a folder by number or by substring. q to quit,\nrf to refresh, l number to change fetch limit, e string to set envelope format.
+Select a folder by number or by substring. q to quit, rf to refresh, l number\nto change fetch limit, e string to set envelope format, imask to toggle filter.
 in progress
 stop
 fetch %d at a time\n
