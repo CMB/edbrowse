@@ -2754,7 +2754,7 @@ static char *bangbang(const char *line)
 // replace '. with $EB_DOT, '_ with $EB_FILE, etc
 static char *apostropheMacros(const char *line)
 {
-	char *newline, *s;
+	char *newline = 0, *s;
 	const char *t;
 	char key;
 	int linesize = 0, pass, n;
@@ -2880,7 +2880,7 @@ static bool shellEscape(const char *line)
 // and line begins with @.
 static bool atPartCracker(int cx, bool writeMode, bool selfMode, char *p, int *lp1, int *lp2)
 {
-	int lno1, lno2 = -1; // line numbers
+	int lno1 = 0, lno2 = -1; // line numbers
 	const Window *w2; // far window
 	char *q = strchr(p, ',');
 	if(q && writeMode) {
@@ -3846,7 +3846,7 @@ static int openTA(pst s)
 {
 	uchar c;
 	bool hascodes = false;
-	int tag, lev = 0;
+	int tag = 0, lev = 0;
 	const Tag *t;
 	while((c = *s) != '\n') {
 		if(c != InternalCodeChar || !isdigitByte(s[1])) { ++s; continue; }
@@ -4134,7 +4134,7 @@ static int substituteText(const char *line)
 	int lastSubst = 0;	// last successful substitution
 	char *re;		// the parsed regular expression
 	int ln, ln2;			// line number
-	int dol2, alloc2;
+	int dol2 = 0, alloc2 = 0;
 	int j, linecount, slashcount, nullcount, tagno, total, realtotal;
 	char lhs[MAXRE], rhs[MAXRE];
 	struct lineMap *mptr, *newmap = 0;
@@ -5307,7 +5307,7 @@ et_go:
 	if (stringEqual(line, "ft") || stringEqual(line, "fa") ||
 	    stringEqual(line, "fd") || stringEqual(line, "fg") ||
 	    stringEqual(line, "fk") || stringEqual(line, "fu")) {
-		const char *s;
+		const char *s = 0;
 		int t;
 		cmd = 'e';
 		if (!cw->browseMode) {
@@ -6477,7 +6477,7 @@ bool runCommand(const char *line)
 	int writeLine = -1; // write text into a session
 	int readLine1 = -1, readLine2 = -1; // read lines from a session
 	bool wrc = false; // read write command
-	const char *wrc_file;
+	const char *wrc_file = 0;
 	char *atsave = 0;
 	Window *w = NULL;
 	const Tag *tag = 0, *jumptag = 0;
@@ -7353,7 +7353,7 @@ dest_ok:
 			newline = apostropheMacros(newline);
 // W command must write to a temp file, then read back in
 			if(wrc)
-				asprintf(&wrapline, "( %s ) > %s", newline, wrc_file);
+				ignore = asprintf(&wrapline, "( %s ) > %s", newline, wrc_file);
 			p = popen(wrapline ? wrapline : newline, "w");
 			nzFree(wrapline);
 			nzFree(newline);

@@ -11,6 +11,7 @@
 Window *cw;
 Frame *cf;
 int gfsn; // global frame sequence number
+int ignore;
 const char *progname;
 const char eol[] = "\r\n";
 const char *version = "3.8.7+";
@@ -374,7 +375,7 @@ const char *mailRedirect(const char *to, const char *from,
 	int rlen = strlen(reply);
 	int slen = strlen(subj);
 	int tlen = strlen(to);
-	int mlen;		// length of match string
+	int mlen = 0;		// length of match string
 	unsigned i;
 	int k;
 	struct ebhost *f = ebhosts;
@@ -504,7 +505,7 @@ int main(int argc, char **argv)
 	if (fileTypeByName(configFile, 0) == 0) {
 		int fh = creat(configFile, MODE_private);
 		if (fh >= 0) {
-			write(fh, ebrc_string, strlen(ebrc_string));
+			ignore = write(fh, ebrc_string, strlen(ebrc_string));
 			close(fh);
 			i_printfExit(MSG_Personalize, configFile);
 		}
@@ -1589,9 +1590,9 @@ bool readConfigFile(void)
 	int nest, ln, j;
 	int sn = 0;		/* script number */
 	char stack[MAXNEST];
-	struct MACCOUNT *act;
-	struct MIMETYPE *mt;
-	struct DBTABLE *td;
+	struct MACCOUNT *act = 0;
+	struct MIMETYPE *mt = 0;
+	struct DBTABLE *td = 0;
 	struct cfgFile *f, *g;
 
 	unreadConfigFile();

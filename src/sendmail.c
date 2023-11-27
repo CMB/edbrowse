@@ -362,7 +362,7 @@ bool *long_p)
 {
 	char *buf;
 	char c;
-	bool longline, longword, cr, endlinespace, flowed;
+	bool longline, longword, cr, endlinespace, flowed = false;
 	char *s, *t, *v;
 	char *ct, *ce;		// content type, content encoding
 	int buflen, i, cx;
@@ -490,7 +490,7 @@ empty:
 						setError(MSG_SigAccess);
 						goto freefail;
 					}
-					read(fd, buf + buflen, n);
+					ignore = read(fd, buf + buflen, n);
 					close(fd);
 					buflen += n;
 					buf[buflen] = 0;

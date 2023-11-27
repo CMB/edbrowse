@@ -61,6 +61,7 @@ typedef uchar bool;
 // between edbrowse and the js engine.
 typedef void *jsobjtype;
 
+extern int ignore; // used to suppress warnings
 extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // js line number
 extern int undo1line; // special undo line number

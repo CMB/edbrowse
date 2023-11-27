@@ -856,7 +856,7 @@ imap_done:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
-			if(!isInteractive) printf(inputline);
+			if(!isInteractive) printf("%s", inputline);
 research:
 			j2 = imapSearch(handle, f, inputline, &res);
 			if(j2 == 0) goto reaction;
@@ -1013,7 +1013,7 @@ You'll see this after the perform function runs.
 				fflush(stdout);
 				if (!fgets(inputline, sizeof(inputline), stdin))
 					goto imap_done;
-				if(!isInteractive) printf(inputline);
+				if(!isInteractive) printf("%s", inputline);
 				g = folderByName(inputline);
 				if (!g || g == f) {
 // should have a better error message here.
@@ -1078,7 +1078,7 @@ rebulk:
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
-			if(!isInteractive) printf(inputline);
+			if(!isInteractive) printf("%s", inputline);
 			g = folderByName(inputline);
 			if (g && g != f) {
 re_move:
@@ -2219,9 +2219,7 @@ saveMail:
 		goto saveMail;
 	}
 	if (exists)
-		write(fh,
-		      "======================================================================\n",
-		      71);
+		ignore = write(fh, "======================================================================\n", 71);
 	if (key == 'u' || key == 'U') {
 		if (write(fh, mailstring, mailstring_l) < mailstring_l) {
 badsave:
@@ -3628,9 +3626,9 @@ static void writeReplyInfo(const char *addstring)
 	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
 	if (rfh < 0)
 		return;
-	write(rfh, addstring, 12);
-	write(rfh, cw->mailInfo, strlen(cw->mailInfo));
-	write(rfh, "\n", 1);
+	ignore = write(rfh, addstring, 12);
+	ignore = write(rfh, cw->mailInfo, strlen(cw->mailInfo));
+	ignore = write(rfh, "\n", 1);
 	close(rfh);
 }
 
