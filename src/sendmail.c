@@ -362,7 +362,7 @@ bool *long_p)
 {
 	char *buf;
 	char c;
-	bool longline, longword, cr, endlinespace, flowed = false;
+	bool longline, longword, cr, endlinespace, startlinedot, flowed;
 	char *s, *t, *v;
 	char *ct, *ce;		// content type, content encoding
 	int buflen, i, cx;
@@ -537,13 +537,15 @@ empty:
 
 /* Count the nonascii characters */
 	nacount = nullcount = linelength = wordlength = 0;
-	longline = longword = cr = endlinespace = flowed = false;
+	longline = longword = cr = endlinespace = startlinedot = flowed = false;
 	for (t = buf, i = 0; i < buflen; ++i, ++t) {
 		c = *t;
 		if (c == '\0')
 			++nullcount;
 		if (c & 0x80)
 			++nacount;
+		if (c == '.' && linelength == 0 && t != buf)
+			startlinedot = true;
 		if (c == '\n') {
 			if(linelength > LONGLINELIMIT) longline = true;
 			linelength = 0;
@@ -596,7 +598,7 @@ empty:
 	}
 
 	ce = (nacount ? "8bit" : "7bit");
-	if (webform || !(longline || (ismail && flow && endlinespace))) {
+	if (webform || !(longline || (ismail && flow && endlinespace) || (!ismail && startlinedot))) {
 		buf[buflen] = 0;
 		goto success;
 	}
@@ -607,7 +609,7 @@ empty:
 	char *newbuf;
 	int l, colno = 0, space = 0;
 	if (ismail && flow && !longword) flowed = true;
-	else ce = "quoted-printable";
+	else if (longline) ce = "quoted-printable";
 	newbuf = initString(&l);
 	v = buf + buflen;
 	for (s = buf; s < v; ++s) {
@@ -634,17 +636,20 @@ empty:
 			}
 		}
 // do we have to =expand this character?
-		if (!flowed &&
+		if (!flowed && longline &&
 		((((uchar)c < '\n' && c != '\t') ||
 		    c == '=' ||
 		    (uchar)c == 0xff ||
-		(c == '.' && (s == buf || s[-1] == '\n')) ||
 		    ((c == ' ' || c == '\t') &&
 		     s < v - 1 && (s[1] == '\n' || s[1] == '\r'))))) {
 			char expand[4];
 			sprintf(expand, "=%02X", (uchar) c);
 			stringAndString(&newbuf, &l, expand);
 			colno += 3;
+		} else if (!ismail && startlinedot && c == '.' && s != buf && s[-1] == '\n') {
+// In an attachment, add an extra dot at the start of a line (other than the first line).
+			stringAndString(&newbuf, &l, "..");
+			colno += 2;
 		} else {
 			stringAndChar(&newbuf, &l, c);
 // make a utf8 char look like 1
