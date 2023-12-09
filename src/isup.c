@@ -2723,7 +2723,7 @@ const char *edbrowseTempFilename(const char *suffix, bool output)
 }
 
 static int tempIndex;
-static const struct MIMETYPE *findMimeBySuffix(const char *suffix)
+const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 {
 	int i;
 	int len = strlen(suffix);

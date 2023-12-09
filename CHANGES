@@ -16,6 +16,8 @@ P to toggle and set prompt.
 
 emoji combos in the config file
 
+b.pdf renders the current buffer by the pdf converter.
+
 3.8.7
 W !shell_command   reads the data back into the buffer
 

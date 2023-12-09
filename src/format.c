@@ -3301,7 +3301,7 @@ bool helpUtility(void)
 		return false;
 	cxSwitch(cx, false);
 	i_printf(MSG_MovedSession, cx);
-	browseCurrentBuffer();
+	browseCurrentBuffer(NULL);
 	cw->dot = 1;
 	return true;
 }

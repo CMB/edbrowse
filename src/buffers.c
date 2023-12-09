@@ -6491,6 +6491,7 @@ bool runCommand(const char *line)
 	const char *s = NULL;
 		char *p;
 	char *thisfile;
+	const char *browseSuffix = 0;
 	static char newline[MAXTTYLINE];
 
 	selfFrame();
@@ -7032,6 +7033,13 @@ after_ib:
 	if (startRange == 0 && !strchr(zero_cmd, cmd)) {
 		setError(MSG_AtLine0);
 		return (globSub = false);
+	}
+
+// special code for b.pdf
+	if(cmd == 'b' && first == '.') {
+		browseSuffix = line + 1;
+		first = 0;
+		line += strlen(line);
 	}
 
 // eat spaces after the command, but not after J
@@ -8145,7 +8153,7 @@ browse:
 				debugPrint(1, "%lld", fileSize);
 				fileSize = -1;
 			}
-			if (!browseCurrentBuffer()) {
+			if (!browseCurrentBuffer(browseSuffix)) {
 				if (icmd == 'b')
 					return false;
 				return true;
@@ -8434,7 +8442,7 @@ void freeEmptySideBuffer(int n)
 	cxQuit(n, 3);
 }
 
-bool browseCurrentBuffer(void)
+bool browseCurrentBuffer(const char *suffix)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
@@ -8446,11 +8454,17 @@ bool browseCurrentBuffer(void)
 
 	remote = isURL(cf->fileName);
 
-	if (!cf->render2 && cf->fileName) {
-		if (remote)
+	if (!cf->render2 && (cf->fileName || suffix)) {
+		if (remote) {
 			mt = findMimeByURL(cf->fileName, &sxfirst);
-		else
+		} else if(suffix) {
+			if(!(mt = findMimeBySuffix(suffix))) {
+				setError(MSG_SuffixBad, suffix);
+				return false;
+			}
+		} else {
 			mt = findMimeByFile(cf->fileName);
+		}
 	}
 
 	if (mt && !mt->outtype) {

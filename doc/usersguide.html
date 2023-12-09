@@ -489,11 +489,11 @@ Leave the Program
 <p>
 q : quit the current session
 <br>qt : quit the program completely, whether you've written your files or not
+<br>q7 : quit session 7
+<br>q/foo : quit session whose file name contains the substring foo
 <br>bw : buffer written; you can quit at any time
 <br>bw7 : buffer written in session 7
 <br>bw/foo : buffer written in session whose file name contains the substring foo
-<br>q7 : quit session 7
-<br>q/foo : quit session whose file name contains the substring foo
 <br>!command : shell command
 <br>!! : previous shell command
 <br>!! stuff : previous shell command with stuff appended
@@ -725,6 +725,7 @@ dr : directory is readonly
 Browse an html file or a web page
 <p>
 b : browse the current file, either html, or email, or rendered by plugin
+<br>b.pdf : browse the current fileusing plugin pdf
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the Internet and browse it
 <br>nostack b url : don't push a new window, replace the current window using the new url
@@ -4872,6 +4873,10 @@ outtype = T
 Note, there are pdf to text converters that skip the middle html step,
 but I wanted to preserve the functionality of any hyperlinks that might be embedded within pdf,
 so I thought it worthwhile going through html, even though it adds another step.
+
+<p>
+If the file name does not reflect the correct plugin, use b.xxx to browse with the converter indicated by the suffix .xxx.
+This is the same as pb.xxx, to play the current buffer using the player indicated by .xxx.
 
 <h2 id="sampcfg">A Sample Config File</h2>
 
