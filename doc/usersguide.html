@@ -4878,6 +4878,21 @@ so I thought it worthwhile going through html, even though it adds another step.
 If the file name does not reflect the correct plugin, use b.xxx to browse with the converter indicated by the suffix .xxx.
 This is the same as pb.xxx, to play the current buffer using the player indicated by .xxx.
 
+<p>
+If the pdf file requires a password, type b.pdfp, and use this plugin.
+%p means parameter, edbrowse will ask you for the parameter.
+In this case the parameter is the password.
+
+<PRE>
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->plugin {
+type = pdf
+desc = pdf file with password
+suffix = pdfp
+program = pdftohtml -opw %p -i -q -noframes %i %o
+outtype = H
+}
+<!--</font>--></PRE>
+
 <h2 id="sampcfg">A Sample Config File</h2>
 
 The best documentation is an example,

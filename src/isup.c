@@ -2998,8 +2998,9 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	char *cmd = NULL, *t;
 	char *outfile;
 	char *suffix;
-	int len, inlen, outlen;
+	int len, inlen, outlen, paramlen;
 	bool has_o = false;
+	char param[64];
 
 	if(outdata)
 		*outdata = 0;
@@ -3061,6 +3062,8 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	outfile = tempout;
 
 	len = 0;
+	param[0] = 0;
+	paramlen = 0;
 	inlen = shellProtectLength(infile);
 	outlen = shellProtectLength(outfile);
 	for (s = m->program; *s; ++s) {
@@ -3072,6 +3075,14 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		if (*s == '%' && s[1] == 'o') {
 			has_o = true;
 			len += outlen;
+			++s;
+			continue;
+		}
+		if (*s == '%' && s[1] == 'p') {
+			printf("parameter: "); fflush(stdout);
+			if(!fgets(param, sizeof(param), stdin))
+				ebClose(1);
+			len += (paramlen = shellProtectLength(param));
 			++s;
 			continue;
 		}
@@ -3093,6 +3104,12 @@ bool runPluginCommand(const struct MIMETYPE * m,
 		if (*s == '%' && s[1] == 'o') {
 			shellProtect(t, outfile);
 			t += outlen;
+			++s;
+			continue;
+		}
+		if (*s == '%' && s[1] == 'p') {
+			shellProtect(t, param);
+			t += paramlen;
 			++s;
 			continue;
 		}
