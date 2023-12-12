@@ -2878,7 +2878,9 @@ static bool shellEscape(const char *line)
 
 // parse portion syntax as in 7@'a,'b. ASsume context has been cracked,
 // and line begins with @.
-static bool atPartCracker(int cx, bool writeMode, bool selfMode, char *p, int *lp1, int *lp2)
+// If relative is nonzero then cx is not context but an offset in the stack.
+// This is not yet implemented.
+static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, char *p, int *lp1, int *lp2)
 {
 	int lno1 = 0, lno2 = -1; // line numbers
 	const Window *w2; // far window
@@ -2899,11 +2901,31 @@ static bool atPartCracker(int cx, bool writeMode, bool selfMode, char *p, int *l
 	(strchr(".-+$", q[1]) && q[2] == 0) ||
 	(isdigitByte(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
 // syntax is good
-		if(cx != context || !selfMode) {
-			if(!cxCompare(cx) || !cxActive(cx, true))
-				return globSub = false;
+		if(!relative) {
+			if(cx != context || !selfMode) {
+				if(!cxCompare(cx) || !cxActive(cx, true))
+					return globSub = false;
+			}
+			w2 = sessionList[cx].lw;
+		} else {
+			int k;
+			if(relative == '+') {
+				for(k = 0, w2 = cw; w2; w2 = w2->prev, ++k) ;
+				if(cx >= k) {
+					setError(MSG_NoUp);
+					return globSub = false;
+				}
+				for(w2 = cw; cx; w2 = w2->prev, --cx)  ;
+			} else {
+				for(k = 0, w2 = cs->lw2; w2; w2 = w2->prev, ++k) ;
+				if(cx > k) {
+					setError(MSG_NoDown);
+					return globSub = false;
+				}
+				cx -= k;
+				for(w2 = cs->lw2; cx; w2 = w2->prev, --cx)  ;
+			}
 		}
-		w2 = sessionList[cx].lw;
 		if(!w2->dol && !writeMode) {
 			setError(MSG_EmptyBuffer);
 			return globSub = false;
@@ -3523,7 +3545,7 @@ static bool doGlobal(const char *line)
 		if(*p != '@') goto nomass;
 		cmd = 'e'; // show errors
 		int lno1, lno2 = -1;
-		if(!atPartCracker(block, false, false, p, &lno1, &lno2))
+		if(!atPartCracker(0, block, false, false, p, &lno1, &lno2))
 			return false;
 		readContextG(block, lno1, lno2);
 		return true;
@@ -4579,7 +4601,7 @@ static char *lessFile(const char *line, bool tamode)
 				}
 			lno1 = 1, lno2 = dol;
 		} else {
-			if(!atPartCracker(n, false, false, p, &lno1, &lno2))
+			if(!atPartCracker(0, n, false, false, p, &lno1, &lno2))
 				return false;
 			if (lno2 > lno1 && !tamode) {
 				setError(MSG_BufferXLines, n);
@@ -6917,7 +6939,7 @@ after_ib:
 		int sno = strtol(line, &p, 10);
 		int writeLine2;
 		if(*p == '@') {
-			if(!atPartCracker(sno, true, false, p, &writeLine, &writeLine2))
+			if(!atPartCracker(0, sno, true, false, p, &writeLine, &writeLine2))
 				return false;
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
@@ -6941,7 +6963,7 @@ after_ib:
 	if(cmd == 'r' && isdigitByte(first)) {
 		int sno = strtol(line, &p, 10);
 		if(*p == '@') { // at syntax
-			if(!atPartCracker(sno, false, false, p, &readLine1, &readLine2))
+			if(!atPartCracker(0, sno, false, false, p, &readLine1, &readLine2))
 				return false;
 // by being positive, readLine1 will remember that this happened.
 // Clobber @, so it looks like reading from a session,
@@ -7579,7 +7601,7 @@ dest_ok:
 		if(b >= 0 && (*p == 0 || *p == '@')) {
 			int ln1 = 0, ln2 = 0;
 			if(*p == '@') {
-				if(!atPartCracker(b, false, true, p, &ln1, &ln2))
+				if(!atPartCracker(0, b, false, true, p, &ln1, &ln2))
 					return false;
 			}
 			j = runBuffer(b, stopflag, ln1, ln2);
