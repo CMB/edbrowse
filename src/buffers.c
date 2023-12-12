@@ -2535,9 +2535,9 @@ static void readContextG(int cx, int readLine1, int readLine2)
 	cw->dol = j - 1;
 }
 
-static bool writeContext(int cx, int writeLine)
+static bool writeContext(int cx, Window *w, int writeLine)
 {
-	Window *lw, *save_cw;
+	Window *save_cw;
 	int i, len;
 	struct lineMap *t;
 	pst p;
@@ -2550,15 +2550,17 @@ static bool writeContext(int cx, int writeLine)
 		if (cxActive(cx, false) && !cxQuit(cx, 2))
 			return false;
 		cxInit(cx);
+		w = sessionList[cx].lw;
 	}
-	lw = sessionList[cx].lw;
-	at_the_end = (writeLine < 0 || writeLine == lw->dol);
+	at_the_end = (writeLine < 0 || writeLine == w->dol);
 	lost_nl = (cw->nlMode && endRange == cw->dol);
 	fileSize = 0;
 
 	if (!startRange) {
 // just blowing away the buffer with emptiness.
-		lw->dot = lw->dol = 0;
+// This can't happen through the at syntax.
+// dot and dol should already be 0, but ok.
+		w->dot = w->dol = 0;
 		return true;
 	}
 
@@ -2597,7 +2599,7 @@ static bool writeContext(int cx, int writeLine)
 
 	fileSize -= lost_nl;
 
-	save_cw = cw, cw = lw;
+	save_cw = cw, cw = w;
 // pretend like browsing, so addToMap doesn't mess with the undo machinery
 	cw->browseMode = true;
 	addToMap(fardol, (writeLine >= 0 ? writeLine : 0));
@@ -2884,10 +2886,11 @@ static bool shellEscape(const char *line)
 // and line begins with @.
 // If relative is nonzero then cx is not context but an offset in the stack.
 // This is not yet implemented.
+static Window *atWindow;
 static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, char *p, int *lp1, int *lp2)
 {
 	int lno1 = 0, lno2 = -1; // line numbers
-	const Window *w2; // far window
+	Window *w2; // far window
 	char *q = strchr(p, ',');
 	if(q && writeMode) {
 		setError(MSG_AtSyntax);
@@ -2982,6 +2985,7 @@ static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, 
 			return globSub = false;
 		}
 		*lp1 = lno1, *lp2 = lno2;
+		atWindow = w2;
 		return true;
 	}
 	setError(MSG_AtSyntax);
@@ -6926,7 +6930,7 @@ after_ib:
 
 	first = *line;
 
-// w+5 becomes w5@$     a simple translation
+// w+5 becomes w5@$     _ a simple translation
 // then we go on and parse that in the usual way.
 	if (cmd == 'w' && first == '+' &&
 	isdigitByte(line[1]) &&
@@ -6936,9 +6940,8 @@ after_ib:
 		first = *line;
 	}
 
-	if (cmd == 'w' && first == '+')
-		writeMode = O_APPEND, first = *++line;
-	else if(cmd == 'w' && isdigitByte(first)) {
+	atWindow = 0;
+	if(cmd == 'w' && isdigitByte(first)) {
 // check for at syntax
 		int sno = strtol(line, &p, 10);
 		int writeLine2;
@@ -6949,8 +6952,7 @@ after_ib:
 				setError(MSG_EmptyBuffer);
 				return globSub = false;
 			}
-			const Window *w2 = sessionList[sno].lw;
-			if(w2->dirMode | w2->binMode | w2->browseMode | w2->sqlMode | w2->ircoMode) {
+			if(atWindow->dirMode | atWindow->binMode | atWindow->browseMode | atWindow->sqlMode | atWindow->ircoMode) {
 				setError(MSG_TextRec, sno);
 				return globSub = false;
 			}
@@ -6962,6 +6964,10 @@ after_ib:
 			*p = 0, atsave = p;
 		}
 	}
+
+// w+ file means append to file
+	if (cmd == 'w' && first == '+')
+		writeMode = O_APPEND, first = *++line;
 
 // may as well check r at syntax while we're at it.
 	if(cmd == 'r' && isdigitByte(first)) {
@@ -7368,12 +7374,12 @@ dest_ok:
 
 	if (cmd == 'w') {
 		if (cx) {	// write to another session
-			if (writeMode == O_APPEND) {
+			if (writeMode == O_APPEND) { // I don't think this can happen any more
 				setError(MSG_BufferAppend);
 				return false;
 			}
 			if(atsave) *atsave = '@';
-			return writeContext(cx, writeLine);
+			return writeContext(cx, atWindow, writeLine);
 		}
 		selfFrame();
 
