@@ -727,7 +727,7 @@ unexpected text after the bw command
 imask disabled
 imask enabled
 no imask
-0
+buffer cannot receive text
 0
 0
 0

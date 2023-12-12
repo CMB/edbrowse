@@ -2929,8 +2929,8 @@ static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, 
 					setError(MSG_NoDown);
 					return globSub = false;
 				}
-				cx -= k;
-				for(w2 = cs->lw2; cx; w2 = w2->prev, --cx)  ;
+				k -= cx;
+				for(w2 = cs->lw2; k; w2 = w2->prev, --k)  ;
 			}
 		}
 		if(!w2->dol && !writeMode) {
@@ -6962,6 +6962,32 @@ after_ib:
 // and we'll set cx and go down that path,
 // then writeLine will send us down another path at the last minute.
 			*p = 0, atsave = p;
+		}
+	}
+
+	if(cmd == 'w' && (first == '-' || first == '+') && isdigitByte(line[1])) {
+// check for at syntax
+		int sno = strtol(line + 1, &p, 10);
+		int writeLine2;
+		if(*p == '@') {
+			if(!atPartCracker(first, sno, true, false, p, &writeLine, &writeLine2))
+				return false;
+			if(!cw->dol) {
+				setError(MSG_EmptyBuffer);
+				return globSub = false;
+			}
+			if(atWindow->dirMode | atWindow->binMode | atWindow->browseMode | atWindow->sqlMode | atWindow->ircoMode) {
+				setError(MSG_TextRecBuf);
+				return globSub = false;
+			}
+			writeLine = writeLine2;
+// by being positive, writeLine will remember that this happened.
+// Clobber @, so it looks like writing to a session,
+// and we'll set cx and go down that path,
+// then writeLine will send us down another path at the last minute.
+			*p = 0, atsave = p;
+// skip past + or -
+			first = *++line;
 		}
 	}
 

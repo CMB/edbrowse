@@ -2018,8 +2018,8 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 			setError(MSG_NoDown);
 			return false;
 		}
-		dest -= cnt;
-		for(w = cs->lw2; dest; w = w->prev, --dest)  ;
+		cnt -= dest;
+		for(w = cs->lw2; cnt; w = w->prev, --cnt)  ;
 		cw2 = w;
 	}
 

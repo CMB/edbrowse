@@ -827,4 +827,5 @@ enum {
 MSG_ImaskOff,
 MSG_ImaskOn,
 	MSG_NoMask,
+	MSG_TextRecBuf,
 };
