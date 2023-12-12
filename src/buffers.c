@@ -4814,7 +4814,7 @@ static int twoLetter(const char *line, const char **runThis)
 		if (!cxQuit(context, 0))
 			return false;
 		undoCompare();
-		cw->undoable = cw->changeMode = false;
+		cw->undoable = false;
 		undoSpecialClear();
 		cmd = 'e';
 		if(!down) { // up
