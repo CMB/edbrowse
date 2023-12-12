@@ -12,7 +12,7 @@ extern "C" {
 
 // sourcefile=buffers.c
 void undoSpecialClear(void);
-void removeHiddenNumbers(pst p, uchar terminate, int cx);
+void removeHiddenNumbers(pst p, uchar terminate, int cx, const Window *w);
 pst fetchLineContext(int n, int show, int cx);
 pst fetchLine(int n, int show);
 void displayLine(int n);

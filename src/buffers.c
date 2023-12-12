@@ -100,12 +100,13 @@ This also checks for special input fields that are masked and
 displays stars instead, whenever we would display formatted text.
 *********************************************************************/
 
-void removeHiddenNumbers(pst p, uchar terminate, int cx)
+void removeHiddenNumbers(pst p, uchar terminate, int cx, const Window *w)
 {
 	pst s, t, u;
 	uchar c, d;
 	int field;
 
+	if(!w) w = sessionList[cx].lw;
 	s = t = p;
 	while ((c = *s) != terminate) {
 		if (c != InternalCodeChar) {
@@ -125,7 +126,7 @@ addchar:
 			continue;
 		}
 		if (d == '<') {
-			if (sessionList[cx].lw->tags[field]->masked) {
+			if (w->tags[field]->masked) {
 				*t++ = d;
 				while (*++u != InternalCodeChar)
 					*t++ = '*';
@@ -156,27 +157,30 @@ addchar:
  * all the time, even if the line doesn't change, to be consistent.
  * You can suppress the copy feature with -1. */
 
-pst fetchLineContext(int n, int show, int cx)
+static pst fetchLineWindow(int n, int show, const Window *w)
 {
-	Window *lw = sessionList[cx].lw;
 	struct lineMap *map, *t;
 	int dol;
-	pst p;			/* the resulting copy of the string */
-
-	if (!lw)
-		i_printfExit(MSG_InvalidSession, cx);
-	map = lw->map;
-	dol = lw->dol;
+	pst p;			// the resulting copy of the string
+	map = w->map;
+	dol = w->dol;
 	if (n <= 0 || n > dol)
 		i_printfExit(MSG_InvalidLineNb, n);
-
 	t = map + n;
 	if (show < 0)
 		return t->text;
 	p = clonePstring(t->text);
-	if (show && lw->browseMode)
-		removeHiddenNumbers(p, '\n', cx);
+	if (show && w->browseMode)
+		removeHiddenNumbers(p, '\n', 0, w);
 	return p;
+}
+
+pst fetchLineContext(int n, int show, int cx)
+{
+	const Window *w = sessionList[cx].lw;
+	if (!w)
+		i_printfExit(MSG_InvalidSession, cx);
+	return fetchLineWindow(n, show, w);
 }
 
 pst fetchLine(int n, int show)
@@ -5232,7 +5236,7 @@ pwd:
 et_go:
 			cw->f_dot = 0;
 			for (i = 1; i <= cw->dol; ++i)
-				removeHiddenNumbers(cw->map[i].text, '\n', context);
+				removeHiddenNumbers(cw->map[i].text, '\n', context, 0);
 			freeWindowLines(cw->r_map);
 			cw->r_map = 0;
 		}
@@ -6417,7 +6421,7 @@ static char *showLinks(void)
 		nzFree(h);
 	}
 
-	if(a_l) removeHiddenNumbers((pst) a, 0, context);
+	if(a_l) removeHiddenNumbers((pst) a, 0, context, 0);
 	return a;
 }
 
