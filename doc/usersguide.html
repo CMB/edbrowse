@@ -1563,6 +1563,43 @@ If a second line number is not given, the single line is read.
 <!--</font>--></PRE>
 
 <p>
+If you want to do this cut &amp; paste operation in a script, and you aren't sure that you are in session 1, and you aren't sure that session 2 is available,
+you can do it all on-stack, like this.
+
+<PRE>
+<!--<font size=3 face=Arial,Helvetica,sans-serif>-->kc # mark your current location, where you want the cool paragraph to be
+&lt; e bar # push the file bar onto the editing stack
+&gt; 28719
+&lt; /start/
+&gt; This is the start of the cool paragraph that you want to move.
+&lt; ka
+&lt; /end/
+&gt; This is the end of the cool paragraph that you want to move.
+&lt; kb
+&lt; eup # go up in the stack, like gdb
+&gt; foo  # back to the first file
+&lt; r-1@'a,'b
+&gt; 3279
+&lt; 'c+   # just to verify we read it
+&gt; This is the start of the cool paragraph that you want to move.
+&lt; w  # write foo, with the new paragraph included
+&gt; 62121
+#  now we have to step down if we want to delete it from bar
+&lt; down
+&gt; bar
+&lt; 'a,'bd
+&lt; w  # write bar, without the cool paragraph
+&gt; 25440
+<!--</font>--></PRE>
+
+<p>
+The command that makes this all possible is r-1@'a,'b.
+-1 is a relative number.
+It doesn't refer to an edbrowse session, but rather, a buffer on the current stack.
+In this case it is the buffer that is 1 down from the current position.
+Sometimes it is easier to work within one stack; sometimes it is easier to work across separate edbrowse sessions.
+
+<p>
 An e command by itself prints the current session, in case you've forgotten.
 This is similar to f, by itself, which prints the current file.
 
