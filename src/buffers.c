@@ -2409,10 +2409,10 @@ endline:
 	return true;
 }
 
-static int readContext0(int entry, int cx, int readLine1, int readLine2)
+static int readContext0(int entry, int cx, const Window *w, int readLine1, int readLine2)
 {
-	Window *lw = sessionList[cx].lw;
-	int i, fardol = lw->dol, lines;
+	if(!w) w = sessionList[cx].lw;
+	int i, fardol = w->dol, lines;
 	struct lineMap *t;
 	bool at_the_end = cw->dol == entry;
 	fileSize = 0;
@@ -2425,13 +2425,13 @@ static int readContext0(int entry, int cx, int readLine1, int readLine2)
 	lines = readLine2 + 1 - readLine1;
 	newpiece = t = allocZeroMem(lines * LMSIZE);
 	for (i = readLine1; i <= readLine2; ++i, ++t) {
-		pst p = fetchLineContext(i, (lw->dirMode ? -1 : 1), cx);
+		pst p = fetchLineWindow(i, (w->dirMode ? -1 : 1), w);
 		int len = pstLength(p);
-		if (lw->dirMode) {
+		if (w->dirMode) {
 			char *suf = dirSuffixContext(i, cx);
 			char *q;
-			if (lw->r_map) {
-				char *extra = (char *)lw->r_map[i].text;
+			if (w->r_map) {
+				char *extra = (char *)w->r_map[i].text;
 				int elen = strlen(extra);
 				q = allocMem(len + 4 + elen);
 				memcpy(q, p, len);
@@ -2455,12 +2455,12 @@ static int readContext0(int entry, int cx, int readLine1, int readLine2)
 		t->text = p;
 		fileSize += len;
 	}			// loop over lines in the other context
-	if (lw->nlMode && readLine2 == lw->dol) {
+	if (w->nlMode && readLine2 == w->dol) {
 		--fileSize;
 		if (at_the_end)
 			cw->nlMode = true;
 	}
-	if (binaryDetect & !cw->binMode && lw->binMode) {
+	if (binaryDetect & !cw->binMode && w->binMode) {
 		cw->binMode = true;
 		if(debugLevel)
 			i_puts(MSG_BinaryData);
@@ -2468,14 +2468,15 @@ static int readContext0(int entry, int cx, int readLine1, int readLine2)
 	return lines;
 }
 
-static bool readContext(int cx, int readLine1, int readLine2)
+static bool readContext(int cx, const Window *w, int readLine1, int readLine2)
 {
 	int lines;
-	if (!cxCompare(cx))
-		return false;
-	if (!cxActive(cx, true))
-		return false;
-	lines = readContext0(endRange, cx, readLine1, readLine2);
+	if(!w) {
+		if (!cxCompare(cx) || !cxActive(cx, true))
+			return false;
+		w = sessionList[cx].lw;
+	}
+	lines = readContext0(endRange, cx, w, readLine1, readLine2);
 	if(lines)
 		addToMap(lines, endRange);
 	return true;
@@ -2520,7 +2521,7 @@ static void readContextG(int cx, int readLine1, int readLine2)
 		}
 		if(gflag[i]) { // read
 			undoPush();
-			readContext0(i, cx, readLine1, readLine2);
+			readContext0(i, cx, 0, readLine1, readLine2);
 			memcpy(newmap + j + 1, newpiece, LMSIZE*lines);
 			free(newpiece), newpiece = 0;
 			j += lines;
@@ -8337,7 +8338,7 @@ afterdelete:
 	if (cmd == 'r') {
 		if (cx) {
 			if(atsave) *atsave = '@';
-			return readContext(cx, readLine1, readLine2);
+			return readContext(cx, atWindow, readLine1, readLine2);
 		}
 
 		if(first == '!') { // read from a command, like ed
