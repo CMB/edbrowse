@@ -320,7 +320,7 @@ char getLetter(const char *s) ;
 char *getFileName(int msg, const char *defname, bool isnew, bool ws);
 int shellProtectLength(const char *s);
 void shellProtect(char *t, const char *s);
-char *dirSuffixContext(int n, int cx);
+char *dirSuffixWindow(int n, const Window *w);
 char *dirSuffix(int n);
 char *dirSuffix2(int n, const char *path);
 char *makeAbsPath(const char *f);

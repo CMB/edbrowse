@@ -1468,18 +1468,21 @@ void shellProtect(char *t, const char *s)
 
 // get the directory suffix for a file.
 // This only makes sense in directory mode.
-char *dirSuffixContext(int n, int cx)
+char *dirSuffixWindow(int n, const Window *w)
 {
 	static char suffix[4];
-	Window *lw = sessionList[cx].lw;
-
 	suffix[0] = 0;
-	if (lw->dirMode) {
-		suffix[0] = lw->dmap[DTSIZE*n];
-		suffix[1] = lw->dmap[DTSIZE*n + 1];
+	if (w->dirMode) {
+		suffix[0] = w->dmap[DTSIZE*n];
+		suffix[1] = w->dmap[DTSIZE*n + 1];
 		suffix[2] = 0;
 	}
 	return suffix;
+}
+
+static char *dirSuffixContext(int n, int cx)
+{
+	return dirSuffixWindow(n, sessionList[cx].lw);
 }
 
 char *dirSuffix(int n)

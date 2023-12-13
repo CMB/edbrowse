@@ -2428,7 +2428,7 @@ static int readContext0(int entry, int cx, const Window *w, int readLine1, int r
 		pst p = fetchLineWindow(i, (w->dirMode ? -1 : 1), w);
 		int len = pstLength(p);
 		if (w->dirMode) {
-			char *suf = dirSuffixContext(i, cx);
+			char *suf = dirSuffixWindow(i, w);
 			char *q;
 			if (w->r_map) {
 				char *extra = (char *)w->r_map[i].text;
@@ -6989,6 +6989,21 @@ after_ib:
 // and we'll set cx and go down that path,
 // then readLine will send us down another path at the last minute.
 			*p = 0, atsave = p;
+		}
+	}
+
+	if(cmd == 'r' && (first == '-' || first == '+') && isdigitByte(line[1])) {
+		int sno = strtol(line + 1, &p, 10);
+		if(*p == '@') { // at syntax
+			if(!atPartCracker(first, sno, false, false, p, &readLine1, &readLine2))
+				return false;
+// by being positive, readLine1 will remember that this happened.
+// Clobber @, so it looks like reading from a session,
+// and we'll set cx and go down that path,
+// then readLine will send us down another path at the last minute.
+			*p = 0, atsave = p;
+// skip past + or -
+			first = *++line;
 		}
 	}
 
