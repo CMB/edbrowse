@@ -8108,7 +8108,7 @@ rebrowse:
 		uchar prebrowse = cw->browseMode;
 		undoSpecialClear();
 		startRange = endRange = 0;
-		freeWindows(context, false);
+		if(!noStack) freeWindows(context, false);
 		changeFileName = 0;	// should already be zero
 		thisfile = (icmd == 'g' ? cf->fileName : 0);
 		jumptag = 0;
