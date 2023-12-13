@@ -841,10 +841,10 @@ Edbrowse Functions
 <p>
 &lt;foo arg1 arg2 &#8230; : invoke the function foo, defined in your .ebrc file
 <br>&lt;7 : run the commands in session 7
-<br>&lt;+7 : run the commands but stopp on error
+<br>&lt;*7 : run the commands but stopp on error
 <br>&lt;7@22,29 : run the commands from lines 22 through 29
 <br>&lt;/foo : run the commands in session whose file name contains foo
-<br>&lt;+/foo : run commands but stop on error
+<br>&lt;*/foo : run commands but stop on error
 <br>&lt;/foo@22,29 : run the commands from lines 22 through 29
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
@@ -4711,13 +4711,20 @@ Since this is not a function, it does not take arguments.
 However, you can use edbrowse to construct the commands in session 7 just as you want them.
 
 <p>
-&lt;+7 executes the commands in session 7, but stops upon error.
-This is like + in a function declaration, which has the same effect.
+&lt;*7 executes the commands in session 7, but stops upon error.
+I would have used +, but that has a different meaning, as we shall seee below.
 
 <p>
 The at syntax is supported here.
 &lt;7@22,29 will run the commands from lines 22 through 29.
-You can even create a command in your current session, then run it, then delete it.
+
+<p>
+If you are scripting this, and you're not sure that session 7 is available, it can all be done on-stack.
+Use etmp, then build your commands in that buffer.
+Go up, and run &lt;-1@,
+This runs all the commands that are one buffer down in your history.
+When complete, go down, and then ^ back up to get rid of the temp buffer.
+&lt;*-1@, will stop upon error.
 
 <h2 id="init">The Init Function</h2>
 

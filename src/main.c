@@ -1276,10 +1276,9 @@ const char *getInputLineFromScript(void)
 	return new;
 }
 
-bool runBuffer(int b, bool stopflag, int ln1, int ln2)
+bool runBuffer(int b, const Window *w, bool stopflag, int ln1, int ln2)
 {
 	int ln;
-	const Window *w;
 	bool ok;
 	char b0[16];
 	sprintf(b0, "session %d", b);
@@ -1291,16 +1290,19 @@ bool runBuffer(int b, bool stopflag, int ln1, int ln2)
 			return false;
 		}
 		if(!cxActive(b, true)) return false;
+		if(b == context) {
+			setError(MSG_SessionCurrent, context);
+			return false;
+		}
 		w = sessionList[b].lw;
 		ln1 = 1, ln2 = w->dol;
 	}
-	w = sessionList[b].lw;
 	if(w->dirMode | w->binMode | w->sqlMode | w->irciMode | w->ircoMode | w->browseMode) {
 		setError(MSG_SessionMode, b);
 		return false;
 	}
 	for(ln = ln1; ln <= ln2; ++ln) {
-		char *p = (char*)fetchLineContext(ln, 0, b);
+		char *p = (char*)fetchLineWindow(ln, 0, w);
 		char *s = strchr(p, '\n');
 		if(!s) { // line contains nulls
 			setError(MSG_EBRC_Nulls, b0, ln);
@@ -1315,7 +1317,8 @@ bool runBuffer(int b, bool stopflag, int ln1, int ln2)
 		free(p);
 		if(stopflag && !ok) return false;
 // has the window gone away?
-		if(w != sessionList[b].lw) break;
+// don't know how to test for this any more.
+//		if(w != sessionList[b].lw) break;
 	}
 	return true;
 }

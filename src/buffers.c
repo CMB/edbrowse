@@ -157,7 +157,7 @@ addchar:
  * all the time, even if the line doesn't change, to be consistent.
  * You can suppress the copy feature with -1. */
 
-static pst fetchLineWindow(int n, int show, const Window *w)
+pst fetchLineWindow(int n, int show, const Window *w)
 {
 	struct lineMap *map, *t;
 	int dol;
@@ -2889,7 +2889,7 @@ static bool shellEscape(const char *line)
 // If relative is nonzero then cx is not context but an offset in the stack.
 // This is not yet implemented.
 static Window *atWindow;
-static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, char *p, int *lp1, int *lp2)
+static bool atPartCracker(char relative, int cx, bool writeMode, char *p, int *lp1, int *lp2)
 {
 	int lno1 = 0, lno2 = -1; // line numbers
 	Window *w2; // far window
@@ -2911,10 +2911,8 @@ static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, 
 	(isdigitByte(q[1]) && (lno2 = stringIsNum(q+1)) >= 0)))) {
 // syntax is good
 		if(!relative) {
-			if(cx != context || !selfMode) {
-				if(!cxCompare(cx) || !cxActive(cx, true))
-					return globSub = false;
-			}
+			if(!cxCompare(cx) || !cxActive(cx, true))
+				return globSub = false;
 			w2 = sessionList[cx].lw;
 		} else {
 			int k;
@@ -3559,7 +3557,7 @@ static bool doGlobal(const char *line)
 		if(*p != '@') goto nomass;
 		cmd = 'e'; // show errors
 		int lno1, lno2 = -1;
-		if(!atPartCracker(0, block, false, false, p, &lno1, &lno2))
+		if(!atPartCracker(0, block, false, p, &lno1, &lno2))
 			return false;
 		readContextG(block, 0, lno1, lno2);
 		return true;
@@ -3572,7 +3570,7 @@ static bool doGlobal(const char *line)
 		if(*p != '@') goto nomass;
 		cmd = 'e'; // show errors
 		int lno1, lno2 = -1;
-		if(!atPartCracker(relative, block, false, false, p, &lno1, &lno2))
+		if(!atPartCracker(relative, block, false, p, &lno1, &lno2))
 			return false;
 		readContextG(0, atWindow, lno1, lno2);
 		return true;
@@ -4627,7 +4625,7 @@ static char *lessFile(const char *line, bool tamode)
 				}
 			lno1 = 1, lno2 = dol;
 		} else {
-			if(!atPartCracker(0, n, false, false, p, &lno1, &lno2))
+			if(!atPartCracker(0, n, false, p, &lno1, &lno2))
 				return false;
 			if (lno2 > lno1 && !tamode) {
 				setError(MSG_BufferXLines, n);
@@ -4644,7 +4642,7 @@ static char *lessFile(const char *line, bool tamode)
 		}
 		n = line2len;
 	} else if((line[0] == '-' || line[0] == '+') && isdigitByte(line[1]) && (n = strtol(line + 1, (char**)&p, 10)) >= 0 && *p == '@') {
-		if(!atPartCracker(line[0], n, false, false, p, &lno1, &lno2))
+		if(!atPartCracker(line[0], n, false, p, &lno1, &lno2))
 			return false;
 		if (lno2 > lno1 && !tamode) {
 			setError(MSG_BufferXLines, n);
@@ -6770,7 +6768,7 @@ range2:
 		line = newline;
 	}
 
-	if(first == '<' && line[1] == '+' && (line[2] == '/' || line[2] == '?')) {
+	if(first == '<' && line[1] == '*' && (line[2] == '/' || line[2] == '?')) {
 		char *at = strchr(line, '@'); // look for at syntax
 		if(at) *at = 0; // I'll put it back
 		cmd = 'e';
@@ -6960,7 +6958,7 @@ after_ib:
 		int sno = strtol(line, &p, 10);
 		int writeLine2;
 		if(*p == '@') {
-			if(!atPartCracker(0, sno, true, false, p, &writeLine, &writeLine2))
+			if(!atPartCracker(0, sno, true, p, &writeLine, &writeLine2))
 				return false;
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
@@ -6984,7 +6982,7 @@ after_ib:
 		int sno = strtol(line + 1, &p, 10);
 		int writeLine2;
 		if(*p == '@') {
-			if(!atPartCracker(first, sno, true, false, p, &writeLine, &writeLine2))
+			if(!atPartCracker(first, sno, true, p, &writeLine, &writeLine2))
 				return false;
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
@@ -7013,7 +7011,7 @@ after_ib:
 	if(cmd == 'r' && isdigitByte(first)) {
 		int sno = strtol(line, &p, 10);
 		if(*p == '@') { // at syntax
-			if(!atPartCracker(0, sno, false, false, p, &readLine1, &readLine2))
+			if(!atPartCracker(0, sno, false, p, &readLine1, &readLine2))
 				return false;
 // by being positive, readLine1 will remember that this happened.
 // Clobber @, so it looks like reading from a session,
@@ -7026,7 +7024,7 @@ after_ib:
 	if(cmd == 'r' && (first == '-' || first == '+') && isdigitByte(line[1])) {
 		int sno = strtol(line + 1, &p, 10);
 		if(*p == '@') { // at syntax
-			if(!atPartCracker(first, sno, false, false, p, &readLine1, &readLine2))
+			if(!atPartCracker(first, sno, false, p, &readLine1, &readLine2))
 				return false;
 // by being positive, readLine1 will remember that this happened.
 // Clobber @, so it looks like reading from a session,
@@ -7661,15 +7659,19 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char*)line;
 		bool stopflag = false;
-		if(*p == '+' && isdigit(p[1])) ++p, stopflag = true;
-		int b = strtol(p, &p, 10);
-		if(b >= 0 && (*p == 0 || *p == '@')) {
+		char relative = 0;
+		if(*p == '*' && isdigit(p[1])) ++p, stopflag = true;
+		if(*p == '*' && (p[1] == '-' || p[1] == '+') && isdigit(p[2])) ++p, stopflag = true;
+		if(p[0] == '-' || p[0] == '+') relative = *p;
+		int b = strtol((relative ? p+1 : p), &p, 10);
+		if(b >= 0 && ((*p == 0 && !relative) || *p == '@')) {
 			int ln1 = 0, ln2 = 0;
+			atWindow = 0;
 			if(*p == '@') {
-				if(!atPartCracker(0, b, false, true, p, &ln1, &ln2))
+				if(!atPartCracker(relative, b, false, p, &ln1, &ln2))
 					return false;
 			}
-			j = runBuffer(b, stopflag, ln1, ln2);
+			j = runBuffer(b, atWindow, stopflag, ln1, ln2);
 			if(!j) j = -1;
 		} else {
 			j =  runEbFunction(line);

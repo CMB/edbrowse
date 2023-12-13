@@ -13,6 +13,7 @@ extern "C" {
 // sourcefile=buffers.c
 void undoSpecialClear(void);
 void removeHiddenNumbers(pst p, uchar terminate, int cx, const Window *w);
+pst fetchLineWindow(int n, int show, const Window *w);
 pst fetchLineContext(int n, int show, int cx);
 pst fetchLine(int n, int show);
 void displayLine(int n);
@@ -212,7 +213,7 @@ const char *findAgentForURL(const char *url);
 const char *mailRedirect(const char *to, const char *from, const char *reply, const char *subj);
 int runEbFunction(const char *line);
 const char *getInputLineFromScript(void);
-bool runBuffer(int b, bool stopflag, int ln1, int ln2);
+bool runBuffer(int b, const Window *w, bool stopflag, int ln1, int ln2);
 struct DBTABLE *findTableDescriptor(const char *sn);
 struct DBTABLE *newTableDescriptor(const char *name);
 bool readConfigFile(void);
