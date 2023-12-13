@@ -4849,8 +4849,6 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_IrcCommandS, line);
 			return false;
 		}
-		if (!cxQuit(context, 0))
-			return false;
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
