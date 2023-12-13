@@ -4601,7 +4601,7 @@ reads in the data.
 static char *lessFile(const char *line, bool tamode)
 {
 	bool fromfile = false;
-	int j, k, n;
+	int j, k, n, plen, dol;
 	int lno1, lno2;
 	const Window *w2; // far window
 	char *line2, *p;
@@ -4613,7 +4613,6 @@ static char *lessFile(const char *line, bool tamode)
 	}
 	if(isdigitByte(line[0]) && (n = strtol(line, (char**)&p, 10)) >= 0 &&
 	(*p == 0 || *p == '@')) {
-		int plen, dol;
 		if(!*p) {
 			if (!cxCompare(n) || !cxActive(n, true))
 				return 0;
@@ -4638,6 +4637,22 @@ static char *lessFile(const char *line, bool tamode)
 		line2 = initString(&line2len);
 		while(lno1 <= lno2) {
 			p = (char *)fetchLineContext(lno1, 1, n);
+			plen = pstLength((pst) p);
+			stringAndBytes(&line2, &line2len, p, plen);
+			nzFree(p);
+			++lno1;
+		}
+		n = line2len;
+	} else if((line[0] == '-' || line[0] == '+') && isdigitByte(line[1]) && (n = strtol(line + 1, (char**)&p, 10)) >= 0 && *p == '@') {
+		if(!atPartCracker(line[0], n, false, false, p, &lno1, &lno2))
+			return false;
+		if (lno2 > lno1 && !tamode) {
+			setError(MSG_BufferXLines, n);
+			return 0;
+		}
+		line2 = initString(&line2len);
+		while(lno1 <= lno2) {
+			p = (char *)fetchLineWindow(lno1, 1, atWindow);
 			plen = pstLength((pst) p);
 			stringAndBytes(&line2, &line2len, p, plen);
 			nzFree(p);
