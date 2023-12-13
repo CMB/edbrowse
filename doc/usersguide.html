@@ -1263,9 +1263,39 @@ If you want to inject the contents of a file many times over, read that file int
 This is more efficient anyways; you don't want to open that file over and over again.
 
 <p>
-To implement g/xyz/ 1,3t. efficiently: 1,3w7 g/xyz/r7 q7.
-To implement g/xyz/+r5 efficiently: g/xyz/+s/$/uvw/ g/uvw$/r5 ,s/uvw$//.
-Other tricks are possible.
+To implement g/xyz/ 1,3t. efficiently:
+<br>
+1,3w7
+<br>
+g/xyz/r7
+<br>
+q7
+
+<p>
+If you are scripting this, and you're not sure that session 7 is available, it can all be done on-stack.
+<br>
+etmp
+<br>
+r+1@1,3
+<br>
+up
+<br>
+g/xyz/r-1@,
+<br>
+bw
+<br>
+down
+<br>
+^
+
+<p>
+To implement g/xyz/+r5 efficiently:
+<br>
+g/xyz/+s/$/uvw/
+<br>
+g/uvw$/r5
+<br>
+,s/uvw$//.
 
 <p>
 The s (substitute) command across a range is optimized when it turns one line into many, e.g. ,s/doghouse/dog\nhouse/.

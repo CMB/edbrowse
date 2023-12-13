@@ -2482,13 +2482,14 @@ static bool readContext(int cx, const Window *w, int readLine1, int readLine2)
 	return true;
 }
 
-static void readContextG(int cx, int readLine1, int readLine2)
+static void readContextG(int cx, const Window *w, int readLine1, int readLine2)
 {
+	if(!w) w = sessionList[cx].lw; else cx = context;
 	int i, j;
 	int *label;
 	struct lineMap *t, *newmap;
 	int g_count, g_last;
-	int fardol = sessionList[cx].lw->dol, lines;
+	int fardol = w->dol, lines;
 
 	debugPrint(3, "mass read  %d %d %d %d", cx, readLine1, readLine2, fardol);
 
@@ -2521,7 +2522,7 @@ static void readContextG(int cx, int readLine1, int readLine2)
 		}
 		if(gflag[i]) { // read
 			undoPush();
-			readContext0(i, cx, 0, readLine1, readLine2);
+			readContext0(i, cx, w, readLine1, readLine2);
 			memcpy(newmap + j + 1, newpiece, LMSIZE*lines);
 			free(newpiece), newpiece = 0;
 			j += lines;
@@ -3552,7 +3553,7 @@ static bool doGlobal(const char *line)
 			cmd = 'e'; // show errors
 			if (!cxCompare(block) || !cxActive(block, true))
 				return false;
-			readContextG(block, -1, -1);
+			readContextG(block, 0, -1, -1);
 			return true;
 		}
 		if(*p != '@') goto nomass;
@@ -3560,7 +3561,20 @@ static bool doGlobal(const char *line)
 		int lno1, lno2 = -1;
 		if(!atPartCracker(0, block, false, false, p, &lno1, &lno2))
 			return false;
-		readContextG(block, lno1, lno2);
+		readContextG(block, 0, lno1, lno2);
+		return true;
+	}
+
+	if(*p == 'r' && (p[1] == '-' || p[1] == '+') && isdigitByte(p[2])) {
+		if(cw->dirMode) goto nomass;
+		char relative = p[1];
+		block = strtol(p + 2, &p, 10);
+		if(*p != '@') goto nomass;
+		cmd = 'e'; // show errors
+		int lno1, lno2 = -1;
+		if(!atPartCracker(relative, block, false, false, p, &lno1, &lno2))
+			return false;
+		readContextG(0, atWindow, lno1, lno2);
 		return true;
 	}
 
