@@ -2917,6 +2917,10 @@ static bool atPartCracker(char relative, int cx, bool writeMode, bool selfMode, 
 			w2 = sessionList[cx].lw;
 		} else {
 			int k;
+			if(!cx) {
+				setError(MSG_SessionCurrent, context);
+				return globSub = false;
+			}
 			if(relative == '+') {
 				for(k = 0, w2 = cw; w2; w2 = w2->prev, ++k) ;
 				if(cx >= k) {
