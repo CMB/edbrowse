@@ -6118,7 +6118,7 @@ et_go:
 		if(!etmp && !cxQuit( context, 0))
 			return false;
 		undoCompare();
-		cw->undoable = cw->changeMode = false;
+		cw->undoable = false;
 		undoSpecialClear();
 		freeWindows(context, false);
 		w = createWindow();
