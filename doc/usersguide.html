@@ -2908,6 +2908,11 @@ In fact you can do any replacement. Perhaps you're in file foo and you want bar 
 Since edbrowse isn't pushing onto the stack, you won't lose any files below, and hist will show you the same chain of buffers -
 except for bar instead of foo.
 
+<p>
+It can be somewhat misleading if you replace one web page with another.
+The page below is still there, but you didn't get there by activating a hyperlink on the current page;
+you got there by activating a hyperlink on some other page.
+
 <h2 id="hlink">Hyperlinks</h2>
 
 <p>
@@ -4796,6 +4801,10 @@ which runs all the commands that are one buffer down in your history.
 When complete, go down, and then ^ back up to get rid of the temp buffer.
 &lt;*-1@, will stop upon error.
 Remember that the @ is necessary to reference other buffers on the stack.
+
+<p>
+Since this is not a function, changes are not local to this execution.
+If you modify a setting at the start, you should restore it at the end.
 
 <h2 id="init">The Init Function</h2>
 

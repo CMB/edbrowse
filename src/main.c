@@ -1301,7 +1301,14 @@ bool runBuffer(int b, const Window *w, bool stopflag, int ln1, int ln2)
 		setError(MSG_SessionMode, b);
 		return false;
 	}
+
+// loop over lines
 	for(ln = ln1; ln <= ln2; ++ln) {
+// has the window gone away?
+// Did you do something perverse like q2 while running commands in buffer 2?
+// There's almost no way to check for this safely, but here is a modest attempt.
+		if(!w->map) break;
+		if(ln > w->dol) break;
 		char *p = (char*)fetchLineWindow(ln, 0, w);
 		char *s = strchr(p, '\n');
 		if(!s) { // line contains nulls
@@ -1316,9 +1323,6 @@ bool runBuffer(int b, const Window *w, bool stopflag, int ln1, int ln2)
 		ok = edbrowseCommand(p, true);
 		free(p);
 		if(stopflag && !ok) return false;
-// has the window gone away?
-// don't know how to test for this any more.
-//		if(w != sessionList[b].lw) break;
 	}
 	return true;
 }
