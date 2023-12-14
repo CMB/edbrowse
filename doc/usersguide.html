@@ -630,27 +630,31 @@ f : print the name of the current file
 <br>r7@-,+ : read 3 lines around . into the current buffer
 <br>r7@'a,'b : read the designated block into the current buffer
 <br>r7@100, : same as r7@100,$
+<br>r7@, : same as r7
 <br>r/foo : find the session whose filename contains foo and read it into the current buffer
 <br>r/foo@6 : read line 6 of session foo into the current buffer
 <br>r/foo@'a,'b : read a range of lines from session foo into the current buffer
 <br>r+1@'a,'b : read a block of text from the buffer up 1 level in the stack
 <br>r-2@$ : read the last line of text from the buffer down 2 levels in the stack
+<br>r-2 : syntax error
+<br>r-2@, : read in the entire buffer below
 <br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
 <br>w/ : write to the last component of the filename
 <br>w+/ : append to the last component of the filename
 <br>8,20w7 : write lines 8 through 20 to session 7, overwriting whatever was there before
-<br>'a,'bw7@'c : write this block of text into session 7, at the line with label c
+<br>'a,'bw7@'c : write this block of text into session 7 at the line with label c
 <br>.w7@0 : write this line at the start of session 7
 <br>9w7@- : write line 9 to session 7 before the current line
 <br>w7@$ : append this file to session 7
-<br>w+7 : same as w7@$
+<br>w+7 : same as above
 <br>w/foo : find the session whose filename contains foo and overwrite it with the current buffer
 <br>w+/foo : find the session whose filename contains foo and append the current buffer to it
 <br>3w/foo@6 : write line 3 into session foo after line 6
 <br>'a,'bw+1@'c : write a block of text into the buffer up 1 level in the stack
 <br>.w-2@0 : write the current line at the start of the buffer down 2 levels in the stack
+<br>.w-2 : syntax error, @ is necessary for on-stack read and write
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
 <br>'a,'bW !command : run a range of lines through a shell command and replace them
@@ -723,7 +727,7 @@ dr : directory is readonly
 <br>g/\.o$/d : delete all the .o files
 <br>.m3 : move this file to the directory in session 3; there is no undo
 <br>.t3 : copy this file to the directory in session 3; there is no undo
-<br>.m+2 : move this file up 2 levels in your editing history
+<br>.m+2 : move this file up 2 levels in your editing history. Destination must be a directory. You don't need the @ sign here as the file is always placed at the end of the listing. Go up2 and refresh if you want it in sorted order.
 <br>.t-3 : copy this file down 3 levels in your editing history
 <p>
 Browse an html file or a web page
@@ -1533,9 +1537,9 @@ It uses the special notation r2@'a,'b, which reads the prescribed text from a to
 The at sign makes all the difference.
 Say the word at to yourself: read the text starting *at* this line in the other session.
 This is once again the at syntax.
-A label or a line number or $ or . or + or - or ; must follow @, and there can be no whitespace.
-There is no need to implement r3@, reading the entire file, as that is the same as r3.
-Complex expressions like @/xyz/-3 are not allowed here.
+A label or a line number or $ or . or + or - or ; or , must follow @, and there can be no whitespace.
+Note that r3@, is the same as r3.
+Complex expressions such as @/xyz/-3 are not allowed here.
 If a second line number is not given, the single line is read.
 
 <PRE>
@@ -1599,9 +1603,20 @@ you can do it all on-stack, like this.
 <p>
 The command that makes this all possible is r-1@'a,'b.
 -1 is a relative number.
-It doesn't refer to an edbrowse session, but rather, a buffer on the current stack.
+When followed by @, + or - n doesn't refer to an edbrowse session, but rather, a buffer on the current stack.
 In this case it is the buffer that is 1 down from the current position.
+It is the file bar, below the file foo.
+Type hist to see the history of edits in the current session.
+This is like a browser history, and is in fact the browser history if you are on the internet.
+In this example it prints foo and then bar.
+Note that @ is absolutely necessary here, r-1 produces an error.
+If you want to cut &amp; paste between buffers on the current stack, you need the at syntax.
+
+<p>
 Sometimes it is easier to work within one stack; sometimes it is easier to work across separate edbrowse sessions.
+Separate sessions are more intuitive in an interactive setting, in my opinion,
+but a script might not know what sesssion you are in, or what sessions are available,
+whence working within the current stack is easier.
 
 <p>
 An e command by itself prints the current session, in case you've forgotten.
@@ -2861,7 +2876,7 @@ See Web and Email Addresses below.
 Type `rf' to refresh the current file.
 This rereads the file or url into the current buffer.
 It does not push a new editing session onto the stack.
-This is analogous to the refresh button on Netscape and Explorer.
+This is analogous to the refresh button on any other browser.
 
 <p>
 If a web page is updated every minute, e.g. with the latest stock prices for your favorite companies,
@@ -2878,6 +2893,20 @@ to incorporate any new files that have been placed in that directory.
 For example, you might use the shell escape to execute
 `cat x y &gt;z',
 yet z will not appear in your directory scan until you type rf.
+
+<p>
+rf does not lose the history below.
+Say you are going up and down in a chain of directories. There's a file abc you want to move up.
+.m+1 does the trick.
+Up it goes, and when you go back up it's there but not in position. rf resorts the files.
+Because the file is closed and reopened, it use to lop off everything below in the editing history.
+In the same way refreshing a web page would lose anything below.
+I fixed this,
+so that the files below are retained if the iaction is designated nostack - and refresh is always nostack.
+In fact you can do any replacement. Perhaps you're in file foo and you want bar instead.
+^ e bar does the trick.
+Since edbrowse isn't pushing onto the stack, you won't lose any files below, and hist will show you the same chain of buffers -
+except for bar instead of foo.
 
 <h2 id="hlink">Hyperlinks</h2>
 
@@ -4763,9 +4792,10 @@ The at syntax is supported here.
 If you are scripting this, and you're not sure that session 7 is available, it can all be done on-stack.
 Use etmp, then build your commands in that buffer.
 Go up, and run &lt;-1@,
-This runs all the commands that are one buffer down in your history.
+which runs all the commands that are one buffer down in your history.
 When complete, go down, and then ^ back up to get rid of the temp buffer.
 &lt;*-1@, will stop upon error.
+Remember that the @ is necessary to reference other buffers on the stack.
 
 <h2 id="init">The Init Function</h2>
 
