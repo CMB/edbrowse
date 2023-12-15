@@ -636,8 +636,8 @@ f : print the name of the current file
 <br>r/foo@'a,'b : read a range of lines from session foo into the current buffer
 <br>r+1@'a,'b : read a block of text from the buffer up 1 level in the stack
 <br>r-2@$ : read the last line of text from the buffer down 2 levels in the stack
-<br>r-2 : syntax error
-<br>r-2@, : read in the entire buffer below
+<br>r-2@, : read in the entire buffer from below
+<br>r-2 : shorthand for r-2@,
 <br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
@@ -654,7 +654,7 @@ f : print the name of the current file
 <br>3w/foo@6 : write line 3 into session foo after line 6
 <br>'a,'bw+1@'c : write a block of text into the buffer up 1 level in the stack
 <br>.w-2@0 : write the current line at the start of the buffer down 2 levels in the stack
-<br>.w-2 : syntax error, @ is necessary for on-stack read and write
+<br>.w-2 : syntax error, @ is necessary for on-stack write, to set the location
 <br>5,7w !command : send lines 5 through 7 to a shell command
 <br>11r !command : put the output of the shell command after line 11
 <br>'a,'bW !command : run a range of lines through a shell command and replace them
@@ -798,6 +798,7 @@ g : go to the link on the current line
 <br>i&lt;5 : read session 5 into the text input field, one line of text
 <br>i&lt;5@3 : read line 3 from session 5 into the text input field
 <br>i&lt;5@'c : read line label c from session 5 into the text input field
+<br>i&lt;-1@'c : read line label c from the buffer below into the text input field
 <br>i&lt;foo : read file foo into the text input field, one line of text
 <br>i2=xyz : set the second input field on the current line to xyz
 <br>i2* : push the second button on the current line, usually submit or reset
@@ -1288,7 +1289,7 @@ r+1@1,3
 <br>
 up
 <br>
-g/xyz/r-1@,
+g/xyz/r-1
 <br>
 down
 <br>
@@ -1603,14 +1604,12 @@ you can do it all on-stack, like this.
 <p>
 The command that makes this all possible is r-1@'a,'b.
 -1 is a relative number.
-When followed by @, + or - n doesn't refer to an edbrowse session, but rather, a buffer on the current stack.
++ or - n doesn't refer to an edbrowse session, but rather, a buffer on the current stack.
 In this case it is the buffer that is 1 down from the current position.
 It is the file bar, below the file foo.
 Type hist to see the history of edits in the current session.
 This is like a browser history, and is in fact the browser history if you are on the internet.
 In this example it prints foo and then bar.
-Note that @ is absolutely necessary here, r-1 produces an error.
-If you want to cut &amp; paste between buffers on the current stack, you need the at syntax.
 
 <p>
 Sometimes it is easier to work within one stack; sometimes it is easier to work across separate edbrowse sessions.
@@ -3183,6 +3182,16 @@ up/foo goes up to a buffer whose file name or title contains the substring foo.
 You can append these modifiers to down.
 
 <p>
+Note that up and down do not produce errors if the buffer is not written.
+You can move to another edbrowse session with impunity, and to be consistent, you can also move up or down in the stack.
+However, there is a difference.
+If you are in session 1 and move to session 2, then type q1, edbrowse says session 1 has not been written.
+But if you go up to an earlier buffer and quit, edbrowse will let you quit without writing, because the current bufffer does not have the change flag set.
+Edbrowse does not look all the way up and down the stack to see if there is an unwritten buffer.
+In the same way, you can go up, then switch to session 2, then q1, and edbrowse will happily quit session 1.
+So be careful when leaving an unwritten buffer by going up or down.
+
+<p>
 If you follow a hyperlink, then go up, then follow another hyperlink, the page fetched by the first hyperlink is freed.
 Edbrowse retains a line of fetched pages, not a tree.
 This is how other browsers behave.
@@ -3386,13 +3395,16 @@ Use i&lt;7@39 to read in line 39, or i&lt;7@'c to read in the line at label c.
 Similarly, i&lt;filename reads the contents of the file into the current input field.
 Only the first line of text is read.
 The filename is expanded in the usual way.
-This includes wildcard expansion, as long as the expansion leads to one and only one file.
+This includes wildcard expansion, as long as the expansion leads to one file.
 Put enough characters around the * to designate a single file.
 
 <p>
 Text areas are often used to capture a paragraph, i.e. a complex thought, but some websites expect you to compose your thought in a one-line input field.
 In that case, switch to another session where you can use the power of the editor.
 Compose your thought, type ,J to put it all on one line, switch back, and type i&lt;7 to pull it into the input field.
+Alternatively, type etmp to make a temp area on the current stack.
+Compose your message as before,
+go up, type i&lt;-1, then down and ^ to get rid of the temp buffer.
 
 <p>
 Suppose you are entering your credit card number, all 16 digits, into a free text field.
@@ -3857,7 +3869,7 @@ The ftp connection will be made as user "Chris", with password "XXX".
 <p>
 Some ftp URLs point at directories, not files. If you visit one of these,
 and it is located on a Unix-like server, you will receive the listing as an
-html file with hyperlinks. You can visit the directory members just as
+html file with hyperlinks. You can visit the directory members as
 though you were exploring a website.
 If the server does not run some
 flavour of Unix, you will receive the directory listing in plain
@@ -4796,11 +4808,10 @@ The at syntax is supported here.
 <p>
 If you are scripting this, and you're not sure that session 7 is available, it can all be done on-stack.
 Use etmp, then build your commands in that buffer.
-Go up, and run &lt;-1@,
+Go up, and run &lt;-1
 which runs all the commands that are one buffer down in your history.
 When complete, go down, and then ^ back up to get rid of the temp buffer.
-&lt;*-1@, will stop upon error.
-Remember that the @ is necessary to reference other buffers on the stack.
+&lt;*-1 will stop upon error.
 
 <p>
 Since this is not a function, changes are not local to this execution.

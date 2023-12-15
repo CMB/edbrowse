@@ -3567,6 +3567,11 @@ static bool doGlobal(const char *line)
 		if(cw->dirMode) goto nomass;
 		char relative = p[1];
 		block = strtol(p + 2, &p, 10);
+		if(!*p) {
+			static char shorthand[4];
+			strcpy(shorthand, "@,");
+			p = shorthand;
+		}
 		if(*p != '@') goto nomass;
 		cmd = 'e'; // show errors
 		int lno1, lno2 = -1;
@@ -4641,7 +4646,12 @@ static char *lessFile(const char *line, bool tamode)
 			++lno1;
 		}
 		n = line2len;
-	} else if((line[0] == '-' || line[0] == '+') && isdigitByte(line[1]) && (n = strtol(line + 1, (char**)&p, 10)) >= 0 && *p == '@') {
+	} else if((line[0] == '-' || line[0] == '+') && isdigitByte(line[1]) && (n = strtol(line + 1, (char**)&p, 10)) >= 0 && (*p == '@' || *p == 0)) {
+		if(!*p) {
+			static char shorthand[4];
+			strcpy(shorthand, "@,");
+			p = shorthand;
+		}
 		if(!atPartCracker(line[0], n, false, p, &lno1, &lno2))
 			return false;
 		if (lno2 > lno1 && !tamode) {
@@ -6789,14 +6799,6 @@ range2:
 		line = newline;
 	}
 
-	if(first == 'w' && line[1] == '+' && (line[2] == '/' || line[2] == '?')) {
-		cmd = 'e';
-		n = sessionByText(line + 3, line[2] == '/' ? 1 : -1);
-		if(!n) return globSub = 0;
-		sprintf(newline, "w+%d", n);
-		line = newline;
-	}
-
 expctr:
 /* special commands to expand and contract frames */
 	if (stringEqual(line, "exp") || stringEqual(line, "ctr")) {
@@ -6941,18 +6943,8 @@ after_ib:
 	}
 
 	first = *line;
-
-// w+5 becomes w5@$     _ a simple translation
-// then we go on and parse that in the usual way.
-	if (cmd == 'w' && first == '+' &&
-	isdigitByte(line[1]) &&
-	(j = strtol(line + 1, &p, 10)) >= 0 && !*p) {
-		sprintf(shortline, "%d@$", j);
-		line = shortline;
-		first = *line;
-	}
-
 	atWindow = 0;
+
 	if(cmd == 'w' && isdigitByte(first)) {
 // check for at syntax
 		int sno = strtol(line, &p, 10);
@@ -7023,6 +7015,11 @@ after_ib:
 
 	if(cmd == 'r' && (first == '-' || first == '+') && isdigitByte(line[1])) {
 		int sno = strtol(line + 1, &p, 10);
+		if(!*p) {
+			static char shorthand[4];
+			strcpy(shorthand, "@,");
+			p = shorthand;
+		}
 		if(*p == '@') { // at syntax
 			if(!atPartCracker(first, sno, false, p, &readLine1, &readLine2))
 				return false;
@@ -7427,8 +7424,8 @@ dest_ok:
 
 	if (cmd == 'w') {
 		if (cx) {	// write to another session
-			if (writeMode == O_APPEND) { // I don't think this can happen any more
-				setError(MSG_BufferAppend);
+			if (writeMode == O_APPEND) {
+				setError(MSG_NoSpaceAfter);
 				return false;
 			}
 			if(atsave) *atsave = '@';
@@ -7664,9 +7661,14 @@ dest_ok:
 		if(*p == '*' && (p[1] == '-' || p[1] == '+') && isdigit(p[2])) ++p, stopflag = true;
 		if(p[0] == '-' || p[0] == '+') relative = *p;
 		int b = strtol((relative ? p+1 : p), &p, 10);
-		if(b >= 0 && ((*p == 0 && !relative) || *p == '@')) {
+		if(b >= 0 && (*p == 0 || *p == '@')) {
 			int ln1 = 0, ln2 = 0;
 			atWindow = 0;
+			if(!*p && relative) {
+				static char shorthand[4];
+				strcpy(shorthand, "@,");
+				p = shorthand;
+			}
 			if(*p == '@') {
 				if(!atPartCracker(relative, b, false, p, &ln1, &ln2))
 					return false;

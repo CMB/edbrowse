@@ -306,7 +306,7 @@ enum {
 	MSG_QAfter,
 	MSG_DirRename,
 	MSG_TableRename,
-	MSG_BufferAppend,
+	MSG_notused209,
 	MSG_NoFileSpecified,
 	MSG_NoDirWrite,
 	MSG_NoDBWrite,

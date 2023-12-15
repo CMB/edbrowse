@@ -1477,8 +1477,7 @@ static bool preConfigFile(char *buf, int buflen)
 				v[1] = 'm';
 				t = v + 2;
 			}
-			if (stringEqual(last, "plugin{") ||
-			    stringEqual(last, "mime{")) {
+			if (stringEqual(last, "plugin{")) {
 				*v = '\x81';
 				v[1] = 'e';
 				t = v + 2;

@@ -206,7 +206,7 @@ warning: no sessions available to handle the ancillary window
 unexpected text after the q command
 cannot change the name of a directory
 cannot change the name of a table
-cannot append to another buffer
+0
 no file specified
 cannot write to the directory; files are modified as you go
 cannot write to the database; rows are modified as you go
