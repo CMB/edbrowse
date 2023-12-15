@@ -2671,7 +2671,7 @@ void domSetsTagValue(Tag *t, const char *newtext)
 	if (t->itype == INP_TA) {
 		int side = t->lic;
 		if(side < 0) side = t->lic = 0;
-		if (side == 0 || side >= MAXSESSION || side == context)
+		if (side == 0 || side > maxSession || side == context)
 			return;
 		if (sessionList[side].lw == NULL)
 			return;
@@ -2687,10 +2687,9 @@ bool charInOptions(char c)
 	const Window *w;
 	const Tag *t;
 	int i;
-	for(i = 0; i < MAXSESSION; ++i) {
+	for(i = 1; i <= maxSession; ++i) {
 		for(w = sessionList[i].lw; w; w = w->prev) {
-			if(!w->browseMode)
-				continue;
+			if(!w->browseMode) continue;
 			for (t = w->optlist; t; t = t->same)
 				if(t->textval && strchr(t->textval, c) &&
 				t->controller && t->controller->multiple)
@@ -2706,10 +2705,9 @@ void charFixOptions(char c)
 	Tag *t;
 	int i, j;
 	char *u;
-	for(i = 0; i < MAXSESSION; ++i) {
+	for(i = 1; i <= maxSession; ++i) {
 		for(w = sessionList[i].lw; w; w = w->prev) {
-			if(!w->browseMode)
-				continue;
+			if(!w->browseMode) continue;
 			for(j = 0; j < w->numTags; ++j) {
 				t = w->tags[j];
 				if(t->action != TAGACT_INPUT || !t->value ||
@@ -2731,7 +2729,7 @@ bool charInFiles(char c)
 	const Tag *t;
 	int i, j;
 	char *u;
-	for(i = 0; i < MAXSESSION; ++i) {
+	for(i = 1; i <= maxSession; ++i) {
 		for(w = sessionList[i].lw; w; w = w->prev) {
 			if(!w->browseMode)
 				continue;
@@ -2758,10 +2756,9 @@ void charFixFiles(char c)
 	Tag *t;
 	int i, j;
 	char *u, *v;
-	for(i = 0; i < MAXSESSION; ++i) {
+	for(i = 1; i <= maxSession; ++i) {
 		for(w = sessionList[i].lw; w; w = w->prev) {
-			if(!w->browseMode)
-				continue;
+			if(!w->browseMode) continue;
 			cw = w;
 			for(j = 0; j < w->numTags; ++j) {
 				t = w->tags[j];

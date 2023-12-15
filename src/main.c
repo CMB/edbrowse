@@ -1285,10 +1285,6 @@ bool runBuffer(int b, const Window *w, bool stopflag, int ln1, int ln2)
 	if(!ln1) {
 // did not run through atPartCracker()
 		if(!b) { setError(MSG_Session0); return false; }
-		if(b >= MAXSESSION) {
-			setError(MSG_SessionHigh, b, MAXSESSION - 1);
-			return false;
-		}
 		if(!cxActive(b, true)) return false;
 		if(b == context) {
 			setError(MSG_SessionCurrent, context);

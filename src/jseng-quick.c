@@ -148,7 +148,7 @@ static bool frameFromContext(jsobjtype cx)
 	int i;
 	Window *w;
 	Frame *f;
-	for (i = 0; i < MAXSESSION; ++i) {
+	for (i = 1; i <= maxSession; ++i) {
 		for (w = sessionList[i].lw; w; w = w->prev) {
 			for (f = &(w->f0); f; f = f->next) {
 				if(f->cx == cx) {
@@ -3274,7 +3274,7 @@ void my_ExecutePendingMessages(void)
 	int i;
 	JSContext *cx;
 // This mucks with cw and cf, the calling routine must preserve them.
-	for (i = 1; i < MAXSESSION; ++i) {
+	for (i = 1; i <= maxSession; ++i) {
 		if(!(cw = sessionList[i].lw) ||
 		!cw->browseMode)
 			continue;
@@ -3305,7 +3305,7 @@ void my_ExecutePendingMessagePorts(void)
 	Frame *f0, *f1;
 	JSValue g, ra;
 // This mucks with cw and cf, the calling routine must preserve them.
-	for (i = 1; i < MAXSESSION; ++i) {
+	for (i = 1; i <= maxSession; ++i) {
 		if(!(cw = sessionList[i].lw) ||
 		!cw->browseMode)
 			continue;

@@ -1025,7 +1025,7 @@ static void freeWindow(Window *w)
 	if(w->ircoMode) {
 		int i;
 		Window *w2;
-		for(i = 1; i < MAXSESSION; ++i) {
+		for(i = 1; i <= maxSession; ++i) {
 			w2 = sessionList[i].lw;
 			if(!w2 || !w2->irciMode || w2->ircOther != w->sno) continue;
 			ircClose(w2);
@@ -1080,7 +1080,7 @@ bool cxCompare(int cx)
 // If error is true then record an error if not active.
 bool cxActive(int cx, bool error)
 {
-	if (cx <= 0 || cx >= MAXSESSION)
+	if (cx <= 0 || cx > maxSession)
 		i_printfExit(MSG_SessionOutRange, cx);
 	if (sessionList[cx].lw)
 		return true;

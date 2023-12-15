@@ -3283,7 +3283,7 @@ bool helpUtility(void)
 	undoSpecialClear();
 
 // maybe we already have a buffer with the help guide in it
-	for (cx = 1; cx < MAXSESSION; ++cx) {
+	for (cx = 1; cx <= maxSession; ++cx) {
 		Window *w = sessionList[cx].lw;
 		if (!w)
 			continue;

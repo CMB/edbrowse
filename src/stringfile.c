@@ -863,7 +863,7 @@ long long bufferSizeW(const Window *w, bool browsing)
 long long bufferSize(int cx, bool browsing)
 {
 	const Window *w;
-	if (cx <= 0 || cx >= MAXSESSION || (w = sessionList[cx].lw) == 0) {
+	if (cx <= 0 || cx > maxSession || (w = sessionList[cx].lw) == 0) {
 		setError(MSG_SessionInactive, cx);
 		return -1;
 	}
@@ -1980,10 +1980,6 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 	}
 
 	if(!relative) {
-				if (dest >= MAXSESSION) {
-					setError(MSG_SessionHigh, dest, MAXSESSION - 1);
-					return false;
-				}
 				if (dest == 0) {
 					setError(MSG_Session0);
 					return false;
@@ -1992,7 +1988,7 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 					setError(MSG_SessionCurrent, dest);
 					return false;
 				}
-				if (!(cw2 = sessionList[dest].lw) || !cw2->dirMode) {
+				if (dest > maxSession || !(cw2 = sessionList[dest].lw) || !cw2->dirMode) {
 					char numstring[12];
 					sprintf(numstring, "%d", dest);
 					setError(MSG_NotDir, numstring);

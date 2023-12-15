@@ -3532,7 +3532,7 @@ void ircSetFileName(Window *w)
 	char *p;
 	Window *w2;
 	if(!w->ircoMode) return;
-	for(i = 1, len = 0; i < MAXSESSION; ++i) {
+	for(i = 1, len = 0; i <= maxSession; ++i) {
 		w2 = sessionList[i].lw;
 		if(!w2 || !w2->irciMode || w2->ircOther != w->sno) continue;
 		if(w2->ircChannel) len += strlen(w2->ircChannel) + 1;
@@ -3540,7 +3540,7 @@ void ircSetFileName(Window *w)
 	nzFree(w->f0.fileName);
 	if(!len) { w->f0.fileName = cloneString("irc receive"); return; }
 	p = allocMem(len + 8);
-	for(i = 1, *p = 0; i < MAXSESSION; ++i) {
+	for(i = 1, *p = 0; i <= maxSession; ++i) {
 		w2 = sessionList[i].lw;
 		if(!w2 || !w2->irciMode || w2->ircOther != w->sno) continue;
 		if(w2->ircChannel) {
@@ -3734,7 +3734,7 @@ void ircRead(void)
 {
 	int i;
 	time(&ircNow);
-	for(i = 1; i < MAXSESSION; ++i) {
+	for(i = 1; i <= maxSession; ++i) {
 		Window *lw = sessionList[i].lw;
 		if(lw && lw->irciMode)
 			ircRead0(lw);
