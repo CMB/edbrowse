@@ -1080,9 +1080,7 @@ bool cxCompare(int cx)
 // If error is true then record an error if not active.
 bool cxActive(int cx, bool error)
 {
-	if (cx <= 0 || cx > maxSession)
-		i_printfExit(MSG_SessionOutRange, cx);
-	if (sessionList[cx].lw)
+	if (cx > 0 && cx <= maxSession && sessionList[cx].lw)
 		return true;
 	if(error)
 		setError(MSG_SessionInactive, cx);
@@ -6785,7 +6783,7 @@ range2:
 		n = sessionByText(line + 3, line[1] == '/' ? 1 : -1);
 		if(at) *at = '@';
 		if(!n) return globSub = 0;
-		sprintf(newline, "<+%d", n);
+		sprintf(newline, "<*%d", n);
 		if(at) {
 // check for buffer overrun, albeit extremely unlikely
 // Proper at syntax will always fit in the buffer.
