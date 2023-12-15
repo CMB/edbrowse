@@ -139,7 +139,7 @@ typedef uchar *pst;		/* perl string */
 #define MAXPROXY 200 // number of proxy entries
 #define MAXDBT 100 // number of configured database tables
 #define MAXTCOLS 40 // columns in a configured table
-#define MAXSESSION 1000 // concurrent edbrowse sessions
+#define MAXSESSION 10000 // concurrent edbrowse sessions
 /* Allocation increment for a growing string, that we don't expect
  * to get too large.  This must be a power of 2. */
 #define ALLOC_GR        0x100
