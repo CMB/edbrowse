@@ -2528,22 +2528,23 @@ return a + "{let x$rv=(" + b + ");trace" + "@(" + c + sn + ");return x$rv;}\n";
 // Argument is the script object.
 // escodegen.generate and esprima.parse are found in demin.js.
 function deminimize(s) {
-if( s.dom$class != "HTMLScriptElement") return;
+alert3("deminimizing");
+if( s.dom$class != "HTMLScriptElement") {alert3("wrong class " + s.dom$class); return; }
 // it might not be javascript.
 // This should agree with the criteria in html.c
-if(s.language && !s.language.match(/^javascript\b/i)) return;
-if(s.type && !s.type.match(/(\bjavascript|\/javascript)$/i)) return;
-if(s.demin) return; // already expanded
+if(s.language && !s.language.match(/^javascript\b/i)) { alert3("wrong language " + s.language); return; }
+if(s.type && !s.type.match(/(\bjavascript|\/javascript)$/i)) { alert3("wrong type " + s.type); return; }
+if(s.demin) { alert3("already deminimized"); return; }
 s.demin = true;
 s.expanded = false;
-if(! s.text) return;
+if(! s.text) { alert3("empty"); return; }
 
 // Don't deminimize if short, or if average line length is less than 120.
-if(s.text.length < 1000) return;
+if(s.text.length < 1000) { alert3("short"); return; }
 var i, linecount = 1;
 for(i=0; i<s.text.length; ++i)
 if(s.text.substr(i,1) === '\n') ++linecount;
-if(s.text.length / linecount <= 120) return;
+if(s.text.length / linecount <= 120) { alert3("short lines"); return; }
 
 /*********************************************************************
 You're not gonna believe this.
@@ -2576,10 +2577,10 @@ return;
 
 // Ok, run it through the deminimizer.
 if(self.escodegen) {
-alert3("deminimizing");
 s.original = s.text;
 s.text = escodegen.generate(esprima.parse(s.text));
 s.expanded = true;
+alert3("expanded");
 } else {
 alert("deminimization not available");
 }
