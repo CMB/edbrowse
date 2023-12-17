@@ -3385,9 +3385,130 @@ static char *tcp_dots_name(const char *s)
 	return tcp_ip_name(tcp_dots_ip(s));
 }
 
+// establish a tcp connection, this is outside of curl.
+static int tcp_connect(char *host, int port)
+{
+	static struct addrinfo hints;
+	int srv;
+	struct timeval tv;
+	struct linger ling;
+	static int yes = 1;
+	static int no = 0;
+	struct addrinfo *res, *r;
+	char portbuf[12];
+	sprintf(portbuf, "%d", port);
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	if(getaddrinfo(host, portbuf, &hints, &res) != 0) {
+		setError(MSG_IdentifyHost, host);
+		return -1;
+	}
+	for(r = res; r; r = r->ai_next) {
+		if((srv = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) == -1)
+			continue;
+
+// set some socket options.
+// Timer is intended to restrict connect, and shouldn't affect anything else.
+// In case you type in a bad domain or the server is down.
+// My reads are nonblocking, and I do the actual read
+// when I know there is something there.
+// Writes should go out quickly, I don't know why they wouldn't.
+// This code, from sic, tries all ip addresses for the domain, so time adds up.
+// I'll make the timeout relatively short.
+// Note you can hit ^c and it will not continue to the next ip address.
+		tv.tv_sec = 4;
+		tv.tv_usec = 0;
+		setsockopt(srv, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+		setsockopt(srv, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
+// we shouldn't be closing a socket unless we've finished the session.
+// If we are closing it for any other reason, if must be a failure leg.
+// May as well discard any pending data and close it quickly.
+		ling.l_onoff = 0;
+		ling.l_linger = 0;
+		fcntl(srv, F_SETFD, FD_CLOEXEC);
+		setsockopt(srv, SOL_SOCKET, SO_LINGER, (char *)&ling, sizeof(ling));
+
+		setsockopt(srv, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
+// I feel better setting REUSEPORT, but this option isn't available
+// on every system.  I hope it is the default.
+#ifdef SO_REUSEPORT
+		setsockopt(srv, SOL_SOCKET, SO_REUSEPORT, (char *)&yes, sizeof(yes));
+#endif
+// for now I don't see any advantage in keeping sockets warm.
+		setsockopt(srv, SOL_SOCKET, SO_KEEPALIVE, (char *)&no, sizeof(no));
+
+		if(connect(srv, r->ai_addr, r->ai_addrlen) == 0)
+			break;
+		close(srv);
+		if(intFlag) { r = 0; break; }
+	}
+	freeaddrinfo(res);
+
+	if(!r) {
+		setError(MSG_WebConnect, host);
+		return -1;
+	}
+
+// now that we're connected, up the timout to 10 seconds.
+	tv.tv_sec = 10;
+	tv.tv_usec = 0;
+	setsockopt(srv, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	setsockopt(srv, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
+	return srv;
+}
+
+// establish a secure connection, this is outside of curl.
+// Pass in the tcp connection, already set up. This is closed upon failure.
+static SSL_CTX *sslcx;		// the overall ssl context for secure sockets
+static SSL *ssl_connect(int fd, const char *domain)
+{
+	static bool first = true;
+	if(first) {
+		first = false;
+/*********************************************************************
+I am concerned about initializing and using openssl, for these raw irc sockets,
+while curl initializes and uses openssl for its secure protocols.
+Will there be collisions? Inconsistencies?
+Will this induce bugs that are very difficult to reproduce?
+*********************************************************************/
+		SSLeay_add_ssl_algorithms();
+		sslcx = SSL_CTX_new(SSLv23_client_method());
+		SSL_CTX_set_options(sslcx, SSL_OP_ALL);
+		SSL_CTX_load_verify_locations(sslcx, sslCerts, NULL);
+		SSL_CTX_set_default_verify_paths(sslcx);
+		SSL_CTX_set_mode(sslcx, SSL_MODE_AUTO_RETRY);
+	}
+// should we verify the certificate?
+	if(mustVerifyHost(domain))
+		SSL_CTX_set_verify(sslcx, SSL_VERIFY_PEER, NULL);
+	else
+		SSL_CTX_set_verify(sslcx, SSL_VERIFY_NONE, NULL);
+// create the secure stream
+	SSL* secstream = SSL_new(sslcx);
+	SSL_set_fd(secstream, fd);
+/* Do we need this?
+	secstream->options |= SSL_OP_NO_TLSv1;
+*/
+	int err = SSL_connect(secstream);
+	if (err != 1) {
+		err = ERR_peek_last_error();
+		ERR_clear_error();
+		SSL_free(secstream);
+		close(fd);
+		if (ERR_GET_REASON(err) == SSL_R_CERTIFICATE_VERIFY_FAILED)
+			setError(MSG_NoCertify, domain);
+		else
+			setError(MSG_SSLConnectError, err);
+		return 0;
+	}
+	return secstream;
+}
+
 static char irc_in[4096];
 static char irc_out[4096];
-static SSL_CTX *sslcx;		// the overall ssl context for irc sockets
 
 static void ircSend(const Window *win, char *fmt, ...)
 {
@@ -3741,80 +3862,6 @@ void ircRead(void)
 	}
 }
 
-static int ircDial(char *host, int port)
-{
-	static struct addrinfo hints;
-	int srv;
-	struct timeval tv;
-	struct linger ling;
-	static int yes = 1;
-	static int no = 0;
-	struct addrinfo *res, *r;
-	char portbuf[12];
-	sprintf(portbuf, "%d", port);
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	if(getaddrinfo(host, portbuf, &hints, &res) != 0) {
-		setError(MSG_IdentifyHost, host);
-		return -1;
-	}
-	for(r = res; r; r = r->ai_next) {
-		if((srv = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) == -1)
-			continue;
-
-// set some socket options.
-// Timer is intended to restrict connect, and shouldn't affect anything else.
-// In case you type in a bad domain or the server is down.
-// My reads are nonblocking, and I do the actual read
-// when I know there is something there.
-// Writes should go out quickly, I don't know why they wouldn't.
-// This code, from sic, tries all ip addresses for the domain, so time adds up.
-// I'll make the timeout relatively short.
-// Note you can hit ^c and it will not continue to the next ip address.
-		tv.tv_sec = 4;
-		tv.tv_usec = 0;
-		setsockopt(srv, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-		setsockopt(srv, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-
-// we shouldn't be closing a socket unless we've finished the session.
-// If we are closing it for any other reason, if must be a failure leg.
-// May as well discard any pending data and close it quickly.
-		ling.l_onoff = 0;
-		ling.l_linger = 0;
-		fcntl(srv, F_SETFD, FD_CLOEXEC);
-		setsockopt(srv, SOL_SOCKET, SO_LINGER, (char *)&ling, sizeof(ling));
-
-		setsockopt(srv, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
-// I feel better setting REUSEPORT, but this option isn't available
-// on every system.  I hope it is the default.
-#ifdef SO_REUSEPORT
-		setsockopt(srv, SOL_SOCKET, SO_REUSEPORT, (char *)&yes, sizeof(yes));
-#endif
-// for now I don't see any advantage in keeping sockets warm.
-		setsockopt(srv, SOL_SOCKET, SO_KEEPALIVE, (char *)&no, sizeof(no));
-
-		if(connect(srv, r->ai_addr, r->ai_addrlen) == 0)
-			break;
-		close(srv);
-		if(intFlag) { r = 0; break; }
-	}
-	freeaddrinfo(res);
-
-	if(!r) {
-		setError(MSG_WebConnect, host);
-		return -1;
-	}
-
-// now that we're connected, up the timout to 10 seconds.
-	tv.tv_sec = 10;
-	tv.tv_usec = 0;
-	setsockopt(srv, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	setsockopt(srv, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-
-	return srv;
-}
-
 bool ircSetup(char *line)
 {
 	int cxin, cxout, fd;
@@ -3895,50 +3942,11 @@ bool ircSetup(char *line)
 	if(domain[l-1] == '+')
 		domain[--l] = 0, win->ircChannels = true;
 
-	fd = ircDial(domain, port);
+	fd = tcp_connect(domain, port);
 	if(fd < 0) return false;
-	if(win->ircSecure) {
-		static bool first = true;
-		if(first) {
-			first = false;
-/*********************************************************************
-I am concerned about initializing and using openssl, for these raw irc sockets,
-while curl initializes and uses openssl for its secure protocols.
-Will there be collisions? Inconsistencies?
-Will this induce bugs that are very difficult to reproduce?
-*********************************************************************/
-			SSLeay_add_ssl_algorithms();
-			sslcx = SSL_CTX_new(SSLv23_client_method());
-			SSL_CTX_set_options(sslcx, SSL_OP_ALL);
-			SSL_CTX_load_verify_locations(sslcx, sslCerts, NULL);
-			SSL_CTX_set_default_verify_paths(sslcx);
-			SSL_CTX_set_mode(sslcx, SSL_MODE_AUTO_RETRY);
-		}
-// should we verify the certificate?
-		if(mustVerifyHost(domain))
-			SSL_CTX_set_verify(sslcx, SSL_VERIFY_PEER, NULL);
-		else
-			SSL_CTX_set_verify(sslcx, SSL_VERIFY_NONE, NULL);
-// create the secure stream
-		SSL* secstream = SSL_new(sslcx);
-		SSL_set_fd(secstream, fd);
-/* Do we need this?
-		secstream->options |= SSL_OP_NO_TLSv1;
-*/
-		int err = SSL_connect(secstream);
-		if (err != 1) {
-			err = ERR_peek_last_error();
-			ERR_clear_error();
-			SSL_free(secstream);
-			close(fd);
-			if (ERR_GET_REASON(err) == SSL_R_CERTIFICATE_VERIFY_FAILED)
-				setError(MSG_NoCertify, domain);
-			else
-				setError(MSG_SSLConnectError, err);
-			return false;
-		}
-		win->irc_ssl = secstream;
-	}
+	if(win->ircSecure &&
+		!(win->irc_ssl = ssl_connect(fd, domain)))
+		return false;
 
 	win->irc_fd = fd;
 	win->irciMode = true;

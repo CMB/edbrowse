@@ -11,11 +11,11 @@ hist/ and hist?
 up/ and down/
 bw/ bw? and bw#
 
-dld= command to preset the download filename
+dld= command to preset the download filename, for scripting purposes
 
 imask = to restrict imap folders presented.
 
-P to toggle and set prompt.
+P to toggle and set prompt, like ed.
 
 emoji combos in the config file
 
