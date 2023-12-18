@@ -766,7 +766,7 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 // We should check here that res1 is the right kind of error,
 // If some other error code then return false;
 // Let's at least print it out.
-	if(res1 != CURLE_OK && debugLevel >= 3) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
+	if(res1 != CURLE_OK && debugLevel >= 1) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
 	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
@@ -774,11 +774,11 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 	res2 = getMailData(handle);
 	nzFree(mailstring);
 	if(res2 == CURLE_OK) {
-		debugPrint(3, "reconnect to %s", f->path);
+		debugPrint(1, "reconnect to %s", f->path);
 		return true;
 	}
-	debugPrint(3, "reconnect to %s failed", f->path);
-	if(debugLevel >= 3) ebcurl_setError(res2, "mail://url-unspecified", 1, "fetchmail_ssl");
+	debugPrint(1, "reconnect to %s failed", f->path);
+	if(debugLevel >= 1) ebcurl_setError(res2, "mail://url-unspecified", 1, "fetchmail_ssl");
 	return false;
 }
 
@@ -793,7 +793,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	char key;
 	char cust_cmd[80];
 	char inputline[80];
-	bool delflag, retry;
+	bool delflag, retry, partread;
 
 	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
@@ -823,7 +823,7 @@ showmessages:
 reaction:
 		printEnvelope(mif);
 action:
-		delflag = retry = false;
+		delflag = retry = partread = false;
 		postkey = 0;
 		preferPlain = false;
 		if(isInteractive) printf("? ");
@@ -910,12 +910,19 @@ You'll see this after the perform function runs.
 			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 			undosOneMessage();
 			if (res != CURLE_OK) {
+				if(retry) { // second attempt
+// I'm just gonna take what we got, it's better than nothing.
+					partread = true;
+					i_printf(MSG_PartRead);
+					goto afterfetch;
+				}
 				nzFree(mailstring);
-				if(retry || !refolder(handle, f, res))
+				if(!refolder(handle, f, res))
 					goto abort;
 				retry = true;
 				goto redown;
 			}
+afterfetch:
 
 /* have to strip 2 fetch BODY lines off the front,
  * and ) A018 OK off the end. */
@@ -942,6 +949,7 @@ You'll see this after the perform function runs.
 			retry = false; // user has issued another command
 			postkey = 0;
 // presentMail has already freed mailstring
+			if(partread) key = 's';
 			if(key == 'g') goto dispmail;
 			if(strchr("wua", key)) goto reaction;
 		}
