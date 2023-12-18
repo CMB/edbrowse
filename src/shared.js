@@ -2579,6 +2579,11 @@ return;
 if(self.escodegen) {
 s.original = s.text;
 s.text = escodegen.generate(esprima.parse(s.text));
+// This is a crude workaround because codegen doesn't understand the syntax of extending a class.
+// There is a patch in demin.js that inserts 18392748934
+// We need to remove it here.
+// buildsourcestring will remove the space after colon if I'm not careful.
+s.text = s.text.replace(/:\s18392748934\n/g, "\n");
 s.expanded = true;
 alert3("expanded");
 } else {

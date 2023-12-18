@@ -597,6 +597,8 @@ Last update for esprima-next portion: 20231217
     body;
     generator;
     expression;
+// patch by Kevin Carhart
+//    async;
     
     constructor(params, body, expression, isAsync) {
       this.type = "ArrowFunctionExpression" /* ArrowFunctionExpression */;
@@ -7124,6 +7126,7 @@ Last update for esprima-next portion: 20231217
   };
 
 
+// patch by Kevin Carhart
 this.esprima = esprima_default;
 })();
 
@@ -9269,6 +9272,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       merge(CodeGenerator.prototype, CodeGenerator.Expression);
       CodeGenerator.prototype.generateExpression = function (expr, precedence, flags) {
         var result, type;
+// patch by Karl Dahlke
+  if(expr === null) return "18392748934";
         type = expr.type || Syntax.Property;
         if (extra.verbatim && expr.hasOwnProperty(extra.verbatim)) {
           return generateVerbatim(expr, precedence);
