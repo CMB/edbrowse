@@ -3010,7 +3010,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 			} else if ((q = strrchr(q, '.'))) {
 				static const char *const imagelist[] = {
 					"gif", "jpg", "tif", "bmp", "asc",
-					"png", 0
+					"png", "jpeg", 0
 				};
 // the asc isn't an image, it's a signature card.
 // Similarly for the winmail.dat
@@ -3048,6 +3048,19 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 				addToListBack(&w->components, child);
 			}
 			s = lastbound = q;
+		}
+		if(!endmode) {
+// Oops, final boundary was not found
+			int l;
+			i_printf(MSG_PartBoundary);
+			printf("boundary=");
+			for(l = 0; l < w->boundlen; ++l)
+				printf("%c", w->boundary[l]);
+			printf("\n");
+			if (lastbound) {
+				child = headerGlean(lastbound, w->end, false);
+				addToListBack(&w->components, child);
+			}
 		}
 		w->start = w->end = 0;
 		return w;

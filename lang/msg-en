@@ -206,7 +206,7 @@ warning: no sessions available to handle the ancillary window
 unexpected text after the q command
 cannot change the name of a directory
 cannot change the name of a table
-Warning! Mail is partly read, data may be incomplete.\n
+0
 no file specified
 cannot write to the directory; files are modified as you go
 cannot write to the database; rows are modified as you go
@@ -728,8 +728,8 @@ imask disabled
 imask enabled
 no imask
 buffer cannot receive text
-0
-0
+Warning! Mail is partly read, data may be incomplete.\n
+Warning! Mime component is partly read, data may be incomplete.\n
 0
 0
 0
