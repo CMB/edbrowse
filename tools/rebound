@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+
+# Manage an email that is partially read, or for some reason truncated.
+# rebound m1 shows you the boundaries open and close,
+# and prints ok if they balance.
+# rebound -p m1 > m2 prints the entire email with boundaries appended,
+# so that they balance.
+
+my $pf = 0; # print flag
+if($#ARGV >= 0 && $ARGV[0] eq "-p") {
+$pf = 1;
+shift @ARGV;
+}
+
+if($#ARGV != 0) {
+print "Usage: rebound [-p] file\n";
+exit 1;
+}
+my $filename = $ARGV[0];
+if(!open FH, $filename) {
+print "cannot open $filename\n";
+exit 1;
+}
+
+# stack of boundary lines
+my @stack;
+
+while(<FH>) {
+print if $pf;
+chomp;
+if(/^--.*--$/ and $#stack >= 0) {
+# look for closing boundary
+if($_ eq "--" . $stack[$#stack] . "--") {
+print "}\n" unless $pf;
+pop @stack;
+}
+next;
+}
+my $b = $_;
+# boundary on its own line
+if(/^\s+boundary\s*=/) {
+$b =~ s/^\s+boundary\s*=\s*"*//;
+$b =~ s/".*//;
+print "$b {\n" unless $pf;
+push @stack, $b;
+}
+# Content-Type: multipart/alternative; boundary=
+if(/multipart.*;\s*boundary\s*=/) {
+$b =~ s/^.*;\s*boundary\s*=\s*"*//;
+$b =~ s/".*//;
+print "$b {\n" unless $pf;
+push @stack, $b;
+}
+}
+
+if($pf) {
+while($#stack >= 0) {
+print "--" . $stack[$#stack] . "--\n";
+pop @stack;
+}
+} else {
+$#stack >= 0 or print "ok\n";
+}
