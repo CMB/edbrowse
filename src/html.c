@@ -94,6 +94,10 @@ void jSideEffects(void)
 	debugPrint(4, "jSideEffects ends");
 }
 
+static bool inputDisabled(const Tag *t);
+static bool inputHidden(const Tag *t);
+static bool inputReadonly(const Tag *t);
+
 static Tag *locateOptionByName(const Tag *sel,
 					  const char *name, int *pmc,
 					  bool exact)
@@ -103,10 +107,9 @@ static Tag *locateOptionByName(const Tag *sel,
 	const char *s;
 
 	for (t = cw->optlist; t; t = t->same) {
-		if (t->controller != sel)
-			continue;
-		if (!(s = t->textval))
-			continue;
+		if (t->controller != sel) continue;
+		if (!(s = t->textval)) continue;
+		if(inputHidden(t)) continue;
 		if (stringEqualCI(s, name)) {
 			em = t;
 			continue;
@@ -132,20 +135,15 @@ static Tag *locateOptionByNum(const Tag *sel, int n)
 	int cnt = 0;
 
 	for (t = cw->optlist; t; t = t->same) {
-		if (t->controller != sel)
-			continue;
-		if (!t->textval)
-			continue;
+		if (t->controller != sel) continue;
+		if (!t->textval) continue;
 		++cnt;
-		if (cnt == n)
-			return t;
+		if(inputHidden(t)) continue;
+		if (cnt == n) return t;
 	}
 	return 0;
 }
 
-static bool inputDisabled(const Tag *t);
-static bool inputHidden(const Tag *t);
-static bool inputReadonly(const Tag *t);
 static bool
 locateOptions(const Tag *sel, const char *input,
 	      char **disp_p, char **val_p, bool setcheck)
@@ -1479,6 +1477,7 @@ void infShow(int tagno, const char *search)
 		if (!v->textval)
 			continue;
 		++cnt;
+		if(inputHidden(v)) continue;
 		if (*search && !strcasestr(v->textval, search))
 			continue;
 		if(v->custom_h)
