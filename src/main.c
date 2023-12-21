@@ -1397,15 +1397,15 @@ void unreadConfigFile(void)
 
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
 #define MAILWORDS 0
-#define MIMEWORDS 13
-#define TABLEWORDS 21
-#define GLOBALWORDS 25
+#define MIMEWORDS 14
+#define TABLEWORDS 22
+#define GLOBALWORDS 26
 
 static const char *const keywords[] = {
 	"inserver", "outserver", "login", "password", "from", "reply",
 	"inport", "outport",
 	"to", "cc", "bcc", "attach",
-	"imask",
+	"imask", "isub",
 	"type", "desc", "suffix", "protocol", "program",
 	"content", "outtype", "urlmatch",
 	"tname", "tshort", "cols", "keycol",
@@ -1710,37 +1710,37 @@ inside:
 			cfgLine1(MSG_EBRC_NoAttr, s);
 
 		switch (n) {
-		case 0:	/* inserver */
+		case 0:	// inserver
 			act->inurl = v;
 			continue;
 
-		case 1:	/* outserver */
+		case 1:	// outserver
 			act->outurl = v;
 			continue;
 
-		case 2:	/* login */
+		case 2:	// login
 			act->login = v;
 			continue;
 
-		case 3:	/* password */
+		case 3:	// password
 			act->password = v;
 			continue;
 
-		case 4:	/* from */
+		case 4:	// from
 			act->from = v;
 			continue;
 
-		case 5:	/* reply */
+		case 5:	// reply
 			act->reply = v;
 			continue;
 
-		case 6:	/* inport */
+		case 6:	// inport
 			if (*v == '*')
 				act->inssl = 1, ++v;
 			act->inport = atoi(v);
 			continue;
 
-		case 7:	/* outport */
+		case 7:	// outport
 			if (*v == '+')
 				act->outssl = 4, ++v;
 			if (*v == '^')
@@ -1776,50 +1776,54 @@ inside:
 			}
 			continue;
 
-		case 13:	// type
+		case 13:	// isub
+			act->isub = v;
+			continue;
+
+		case 14:	// type
 			mt->type = v;
 			continue;
 
-		case 14:	// desc
+		case 15:	// desc
 			mt->desc = v;
 			continue;
 
-		case 15:	// suffix
+		case 16:	// suffix
 			mt->suffix = v;
 			continue;
 
-		case 16:	// protocol
+		case 17:	// protocol
 			mt->prot = v;
 			continue;
 
-		case 17:	// program
+		case 18:	// program
 			mt->program = v;
 			continue;
 
-		case 18:	// content
+		case 19:	// content
 			mt->content = v;
 			continue;
 
-		case 19:	// outtype
+		case 20:	// outtype
 			c = tolower(*v);
 			if (c != 'h' && c != 't')
 				cfgLine0(MSG_EBRC_Outtype);
 			mt->outtype = c;
 			continue;
 
-		case 20:	// urlmatch
+		case 21:	// urlmatch
 			mt->urlmatch = v;
 			continue;
 
-		case 21:	// tname
+		case 22:	// tname
 			td->name = v;
 			continue;
 
-		case 22:	// tshort
+		case 23:	// tshort
 			td->shortname = v;
 			continue;
 
-		case 23:	// cols
+		case 24:	// cols
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
 					cfgLine1(MSG_EBRC_ManyCols, MAXTCOLS);
@@ -1831,7 +1835,7 @@ inside:
 			}
 			continue;
 
-		case 24:	// keycol
+		case 25:	// keycol
 			if (!isdigitByte(*v))
 				cfgLine0(MSG_EBRC_KeyNotNb);
 			td->key1 = (uchar) strtol(v, &v, 10);
@@ -1841,7 +1845,7 @@ inside:
 				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
 			continue;
 
-		case 25:	/* downdir */
+		case 26:	// downdir
 			nzFree(downDir), downDir = 0; // in case called more than once
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1851,7 +1855,7 @@ inside:
 			downDir = v;
 			continue;
 
-		case 26:	/* maildir */
+		case 27:	// maildir
 			nzFree(mailDir), mailDir = 0;
 			nzFree(mailUnread), mailUnread = 0;
 			nzFree(mailReply), mailReply = 0;
@@ -1872,7 +1876,7 @@ inside:
 			sprintf(mailReply, "%s/.reply", v);
 			continue;
 
-		case 27:	/* agent */
+		case 28:	// agent
 			for (j = 0; j < MAXAGENT; ++j)
 				if (!userAgents[j])
 					break;
@@ -1881,7 +1885,7 @@ inside:
 			userAgents[j] = v;
 			continue;
 
-		case 28:	/* jar */
+		case 29:	// jar
 			nzFree(cookieFile), cookieFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1896,7 +1900,7 @@ inside:
 			cookieFile = v;
 			continue;
 
-		case 29:	/* nojs */
+		case 30:	// nojs
 			if (*v == '.')
 				++v;
 /* Is this essential?
@@ -1907,20 +1911,20 @@ inside:
 			add_ebhost(v, 'j');
 			continue;
 
-		case 30:	/* cachedir */
+		case 31:	// cachedir
 			nzFree(cacheDir);
 			cacheDir = cloneString(v);
 			continue;
 
-		case 31:	/* webtimer */
+		case 32:	// webtimer
 			webTimeout = atoi(v);
 			continue;
 
-		case 32:	/* mailtimer */
+		case 33:	// mailtimer
 			mailTimeout = atoi(v);
 			continue;
 
-		case 33:	/* certfile */
+		case 34:	// certfile
 			nzFree(sslCerts), sslCerts = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1934,15 +1938,15 @@ inside:
 			sslCerts = v;
 			continue;
 
-		case 34:	/* datasource */
+		case 35:	// datasource
 			setDataSource(v);
 			continue;
 
-		case 35:	/* proxy */
+		case 36:	// proxy
 			add_proxy(v);
 			continue;
 
-		case 36:	// agentsite
+		case 37:	// agentsite
 			spaceCrunch(v, true, true);
 			q = strchr(v, ' ');
 			if (!q || strchr(q + 1, ' ') ||
@@ -1957,19 +1961,19 @@ inside:
 			ebhosts[ebhosts_avail - 1].n = j;
 			continue;
 
-		case 37:	/* localizeweb */
+		case 38:	// localizeweb
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
 			continue;
 
-		case 38:	/* imap fetch limit */
+		case 39:	// imap fetch limit
 			imapfetch = atoi(v);
 			if (imapfetch < 1) imapfetch = 1;
 			if (imapfetch >= 1000) imapfetch = 1000;
 			continue;
 
-		case 39:	/* novs */
+		case 40:	// novs
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
@@ -1978,7 +1982,7 @@ inside:
 			add_ebhost(v, 'v');
 			continue;
 
-		case 40:	/* cachesize */
+		case 41:	// cachesize
 			cacheSize = atoi(v);
 			if (cacheSize <= 0)
 				cacheSize = 0;
@@ -1986,7 +1990,7 @@ inside:
 				cacheSize = 10000;
 			continue;
 
-		case 41:	// adbook
+		case 42:	// adbook
 			nzFree(addressFile), addressFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1996,11 +2000,11 @@ inside:
 			addressFile = v;
 			continue;
 
-		case 42:	// envelope
+		case 43:	// envelope
 			setEnvelopeFormat(v);
 			continue;
 
-		case 43: case 44:	// emojis
+		case 44: case 45:	// emojis
 			nzFree(emojiFile), emojiFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -2011,7 +2015,7 @@ inside:
 			loadEmojis();
 			continue;
 
-		case 45: // include
+		case 46: // include
 			v = envFileAlloc(v);
 			if(!v) continue;
 			if(!fileIntoMemory(v, &incbuf, &inclen, 0)) {
@@ -2038,7 +2042,7 @@ inside:
 			f = g;
 			goto top;
 
-		case 46:	/* js */
+		case 47:	// js
 			if (*v == '.')
 				++v;
 /* Is this essential?
@@ -2049,10 +2053,12 @@ inside:
 			add_ebhost(v, 'J');
 			continue;
 
-		case 47:	/* pubkey */
+		case 48:	// pubkey
+// this feature is undocumented
 			nzFree(pubKey), pubKey = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
+// error legs do not free v, who cares.
 			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_KeyNoFile, v);

@@ -13,7 +13,8 @@ bw/ bw? and bw#
 
 dld= command to preset the download filename, for scripting purposes
 
-imask = to restrict imap folders presented.
+imask= to restrict imap folders presented.
+isub= to lop off a substring from imap folders.
 
 P to toggle and set prompt, like ed.
 

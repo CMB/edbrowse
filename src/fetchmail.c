@@ -239,6 +239,19 @@ static struct FOLDER {
 	struct MIF *mlist;	/* allocated */
 } *topfolders;
 
+static const struct MACCOUNT *imap_a;
+static bool maskon;
+
+static const char *withoutSubstring(const struct FOLDER *f)
+{
+	int l;
+	const char *isub = imap_a->isub;
+	if(!isub) return f->path;
+	l = strlen(isub);
+	if(!strncmp(f->path, isub, l)) return f->path + l;
+	return f->path;
+}
+
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
 static bool move_capable = false;
@@ -365,7 +378,7 @@ static struct FOLDER *folderByName(char *line)
 
 	f = topfolders;
 	for (i = 0; i < n_folders; ++i, ++f)
-		if (strcasestr(f->path, line))
+		if (strcasestr(withoutSubstring(f), line))
 			++cnt, j = i;
 	if (cnt == 1)
 		return topfolders + j;
@@ -373,8 +386,8 @@ static struct FOLDER *folderByName(char *line)
 		i_printf(MSG_ManyFolderMatch, line);
 		f = topfolders;
 		for (i = 0; i < n_folders; ++i, ++f)
-			if (strcasestr(f->path, line))
-				printf("%2d %s\n", i+1, f->path);
+			if (strcasestr(withoutSubstring(f), line))
+				printf("%2d %s\n", i+1, withoutSubstring(f));
 	} else {
 		i_printf(MSG_NoFolderMatch, line);
 	}
@@ -774,10 +787,10 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 	res2 = getMailData(handle);
 	nzFree(mailstring);
 	if(res2 == CURLE_OK) {
-		debugPrint(1, "reconnect to %s", f->path);
+		debugPrint(1, "reconnect to %s", withoutSubstring(f));
 		return true;
 	}
-	debugPrint(1, "reconnect to %s failed", f->path);
+	debugPrint(1, "reconnect to %s failed", withoutSubstring(f));
 	if(debugLevel >= 1) ebcurl_setError(res2, "mail://url-unspecified", 1, "fetchmail_ssl");
 	return false;
 }
@@ -1490,9 +1503,6 @@ dosize:
 	}
 }
 
-static const struct MACCOUNT *imap_a;
-static bool maskon;
-
 // examine the specified folder, gather message envelopes
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
@@ -1544,7 +1554,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		j = f - topfolders + 1;
 		if(maskon && (j >= (int)sizeof(imap_a->maskfolder) || !imap_a->maskfolder[j]))
 			return; // not in mask, don't print
-		printf("%2d %s", j, f->path);
+		printf("%2d %s", j, withoutSubstring(f));
 /*
 		if (f->children)
 			printf(" with children");
