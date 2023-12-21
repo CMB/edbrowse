@@ -1402,6 +1402,8 @@ static void findAttributes(const char *start, const char *end)
 		t->rdonly = true;
 	if (stringInListCI(t->attributes, "disabled") >= 0)
 		t->disabled = true;
+	if (stringInListCI(t->attributes, "hidden") >= 0)
+		t->hidden = true;
 	if (stringInListCI(t->attributes, "multiple") >= 0)
 		t->multiple = true;
 	if (stringInListCI(t->attributes, "required") >= 0)
@@ -4103,6 +4105,10 @@ static void prerenderNode(Tag *t, bool opentag)
 			if(currentSel && currentSel->action == TAGACT_DATAL) {
 				nzFree(t->textval);
 				t->textval = cloneString(t->value);
+			} else {
+// otherwise the converse, empty value is replaced with the text
+				if(!t->value[0])
+					t->value = cloneString(t->textval);
 			}
 			a = attribVal(t, "label");
 			if(a && *a) {

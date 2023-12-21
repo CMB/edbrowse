@@ -144,6 +144,7 @@ static Tag *locateOptionByNum(const Tag *sel, int n)
 }
 
 static bool inputDisabled(const Tag *t);
+static bool inputHidden(const Tag *t);
 static bool inputReadonly(const Tag *t);
 static bool
 locateOptions(const Tag *sel, const char *input,
@@ -1498,6 +1499,13 @@ static bool inputDisabled(const Tag *t)
 	if (allowJS && t->jslink)
 		return get_property_bool_t(t, "disabled");
 	return t->disabled;
+}
+
+static bool inputHidden(const Tag *t)
+{
+	if (allowJS && t->jslink)
+		return get_property_bool_t(t, "hidden");
+	return t->hidden;
 }
 
 static bool inputReadonly(const Tag *t)
