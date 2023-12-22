@@ -200,7 +200,7 @@ locateOptions(const Tag *sel, const char *input,
 				setError(MSG_XOutOfRange, n);
 			else
 				setError(pmc + MSG_OptMatchNone, iopt);
-/* This should never happen when we're doing a set check */
+// This should never happen when we're doing a set check
 			if (setcheck) {
 				runningError(MSG_OptionSync, iopt);
 				continue;
@@ -209,6 +209,7 @@ locateOptions(const Tag *sel, const char *input,
 		}
 
 		if(inputDisabled(t) ||
+		inputDisabled(t->controller) ||
 		(t->parent && t->parent->action == TAGACT_OPTG && inputDisabled(t->parent))) {
 			setError(MSG_Disabled);
 			goto fail;
@@ -236,7 +237,7 @@ locateOptions(const Tag *sel, const char *input,
 					set_property_number_t(sel, "selectedIndex", t->lic);
 			}
 		}
-	}			/* loop over multiple options */
+	}			// loop over multiple options
 
 	if (val_p)
 		*val_p = val;
@@ -1489,7 +1490,9 @@ void infShow(int tagno, const char *search)
 		if(v->custom_h)
 			printf("    %s\n", v->custom_h);
 		show = true;
-		printf("%3d %s\n", cnt, v->textval);
+		printf("%3d %s", cnt, v->textval);
+		if(inputDisabled(v)) printf(" 🛑");
+		printf("\n");
 	}
 	if (!show) {
 		if (!*search)
@@ -4366,6 +4369,7 @@ static void renderNode(Tag *t, bool opentag)
 	char hnum[40];		// hidden number
 #define ns_hnum() stringAndString(&ns, &ns_l, hnum)
 #define ns_ic() stringAndChar(&ns, &ns_l, InternalCodeChar)
+#define checkDisabled(u) if(inputDisabled(u) || (u->itype > INP_SUBMIT && inputReadonly(u))) stringAndString(&ns, &ns_l, "🛑")
 	int j, l;
 	int itype;		// input type
 	const struct tagInfo *ti = t->info;
@@ -4858,9 +4862,9 @@ past_cell_paragraph:
 						i_message(MSG_Push));
 			ns_ic();
 			stringAndString(&ns, &ns_l, "0>");
+			if (endcolor) swapArrow();
+			checkDisabled(t);
 			if(j) stringAndChar(&ns, &ns_l, ' ');
-			if (endcolor)
-				swapArrow();
 			break;
 		}
 // value has to be something.
@@ -4885,6 +4889,7 @@ past_cell_paragraph:
 					InternalCodeChar, t->seqno,
 					InternalCodeChar);
 			ns_hnum();
+			checkDisabled(t);
 			break;
 		}
 		sprintf(hnum, "%c%d<", InternalCodeChar, tagno);
@@ -4922,6 +4927,7 @@ past_cell_paragraph:
 		}
 		ns_ic();
 		stringAndString(&ns, &ns_l, "0>");
+		checkDisabled(t);
 		break;
 
 	case TAGACT_LI:
@@ -5207,6 +5213,10 @@ unparen:
 			tagInStream(tagno);
 		break;
 	}			/* switch */
+
+#undef ns_hnum
+#undef ns_ic
+#undef checkDisabled
 }
 
 /* returns an allocated string */
