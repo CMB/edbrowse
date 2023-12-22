@@ -1487,8 +1487,12 @@ void infShow(int tagno, const char *search)
 		if(inputHidden(v)) continue;
 		if (*search && !strcasestr(v->textval, search))
 			continue;
-		if(v->custom_h)
-			printf("    %s\n", v->custom_h);
+		if(v->custom_h) {
+			printf("    %s", v->custom_h);
+			if(v->parent && v->parent->action == TAGACT_OPTG && inputDisabled(v->parent))
+				printf("🛑");
+			printf("\n");
+		}
 		show = true;
 		printf("%3d %s", cnt, v->textval);
 		if(inputDisabled(v)) printf(" 🛑");
@@ -5382,7 +5386,7 @@ bool showHeaders(int ln)
 				printf("%s", td_text);
 				nzFree(td_text);
 			}
-			printf("\n");
+			nl();
 			}
 		t = t->sibling;
 	}
