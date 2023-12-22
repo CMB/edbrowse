@@ -2791,7 +2791,7 @@ static const struct EJGROUP *ejGroupSearch(const char *s, int len)
 	if(g1)
 		return g1;
 fail:
-	i_printf(g1 ? MSG_Many : MSG_NoMatch);
+	i_printf(g1 ? MSG_Multiple : MSG_NoMatch);
 	printf(": ");
 	while(len--)
 		printf("%c", *s++);
@@ -2951,7 +2951,7 @@ char *selectEmoji(const char *p, int len)
 		if(p[dot] == '.') break;
 	if(dot == len)
 		dot = 0;
-	if(dot == len - 1)
+	if(dot && dot == len - 1)
 		dot = 0, --len;
 
 	g = ejGroupSearch(p, (dot ? dot : len));

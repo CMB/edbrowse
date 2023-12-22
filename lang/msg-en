@@ -69,9 +69,9 @@ no options
 form has been reset
 submitting form
 %s: line %d, outtype should be set to t or h
- multiple
+multiple
  recommended
-]
+0
 no options contain %s\n
 sending mail to %s\n
 Your information has been sent; watch for a reply via return mail.

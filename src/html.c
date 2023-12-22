@@ -1438,7 +1438,15 @@ void infShow(int tagno, const char *search)
 		s = "suggested select";
 	printf("%s", s);
 	if (t->multiple)
-		i_printf(MSG_Many);
+		printf(" multiple");
+	if (t->itype == INP_SELECT) {
+		for (v = cw->optlist; v; v = v->same) {
+			if (v->controller != t) continue;
+			if (!v->textval) continue;
+			if(inputHidden(v)) break;
+		}
+		if(v) printf(" with hidden options");
+	}
 	if (t->itype == INP_TEXT && t->lic)
 		printf("[%d]", t->lic);
 	if (t->itype_minor != INP_NO_MINOR)
@@ -1451,9 +1459,9 @@ void infShow(int tagno, const char *search)
 			printf("[%s×%s", rows, cols);
 			if (wrap && stringEqualCI(wrap, "virtual"))
 				i_printf(MSG_Recommended);
-			i_printf(MSG_Close);
+			printf("]");
 		}
-	}			/* text area */
+	}			// text area
 	if (inputReadonly(t))
 		printf(" readonly");
 	if (inputDisabled(t))
@@ -1467,15 +1475,13 @@ void infShow(int tagno, const char *search)
 	else if (t->itype != INP_SELECT)
 		return;
 
-/* display the options in a pick list */
-/* If a search string is given, display the options containing that string. */
+// display the options in a pick list
+// If a search string is given, display the options containing that string.
 	cnt = 0;
 	show = false;
 	for (v = cw->optlist; v; v = v->same) {
-		if (v->controller != t)
-			continue;
-		if (!v->textval)
-			continue;
+		if (v->controller != t) continue;
+		if (!v->textval) continue;
 		++cnt;
 		if(inputHidden(v)) continue;
 		if (*search && !strcasestr(v->textval, search))
