@@ -136,6 +136,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#filter> Mail Filtering </A>
 <LI><A HREF=#reply> Mail Reply </A>
 <LI><A HREF=#imap> Imap Client </A>
+<LI><A HREF=#iai> Imap Alternate Interface </A>
 </UL>
 
 <h2>Chapter 8, IRC Client</h2>
@@ -5691,6 +5692,39 @@ Warning - if you delete foo, all the messages in foo could disappear.
 This will depend on the imap server.
 You can rename a folder via `rename foo bar'.
 This command assumes there is no whitespace in a folder's name.
+
+<H2 id=iai> Imap Alternate Interface </h2>
+
+<p>
+Edbrowse presents an ed-like interface in almost everything it does: browsing, file manager, sql databbase, irc client, etc.
+In fact that is part of its appeal.
+So it is fair to ask, why doesn't it do this for imap?
+
+<p>
+Call up a server and there is one folder per line in a buffer.
+Type g to go to the folder, like it was a directory, or / to find the folder you want, or substitute to rename the folder, or a to add a new folder, or d to delete it.
+Within a folder, you will find the recent emails, with envelopes one per line.
+Type g to go to an email and it is in your buffer.
+From here the contents of an email, raw or browsed, could be written to another buffer, or searched with a regular expression, etc.
+Perhaps some new commands to save attachments; but most of the commands are the ones you already know.
+^ goes back up to the list of envelopes.
+Type d to delete that email.
+Maybe g/re/d to delete an entire swath of emails.
+It seems better, why don't we do that?
+
+<p>
+Well it's a little harder to do. That's a partial answer.
+I might do it some day.
+There are some differences though, whence it is not a perfect fit with the ed model.
+
+<p>
+The biggest difference is the search feature.
+/ in ed means a text search through the buffer.
+In imap, as it is implemented today, it performs a server side search.
+You might have 50 emails in the buffer, but thousands on the server, and / looks through all of them, which is what most people want.
+It also searches by subject, from, or body.
+Maybe we would have different commands for search within the buffer and search on the server.
+The interface would take some thought - before we wrote any code.
 
 <hr>
 <h1>Chapter 8, IRC Client</h1>
