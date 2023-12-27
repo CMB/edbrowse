@@ -1440,9 +1440,11 @@ curl_fail:
 		return false;
 	}
 
-	if ((g->code != 200 && g->code != 201 &&
-	     (g->foreground || debugLevel >= 2)) ||
-	    (g->code == 201 && debugLevel >= 3))
+// 200 ok 201 created 202 accepted 203 response may have been changed in some way 204 no content nostack
+// This is just printing the warning / error.
+// code outside the "ok" range, and foreground or db3
+	if ((g->code < 200 || g->code > 204 || g->code == 203) &&
+	     (g->foreground || debugLevel >= 3))
 		i_printf(MSG_HTTPError,
 			 g->code, message_for_response_code(g->code));
 
