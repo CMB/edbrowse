@@ -2924,7 +2924,7 @@ this.statusText = (code == 200 ? "OK" : "http error " + code);
 // And should we run it before the onreadystatechange function?
 var ct = this.getResponseHeader("^content-type$");
 if(ct) ct = ct.toLowerCase().replace(/;.*/,'');
-if(code == 200 && ct && (ct == "text/xml" || ct == "application/xml")) {
+if(code >= 200 && code < 300 && ct && (ct == "text/xml" || ct == "application/xml")) {
 alert3("parsing the response as xml");
 this.responseXML = (new (my$win().DOMParser)()).parseFromString(this.responseText, "text/xml");
 }
