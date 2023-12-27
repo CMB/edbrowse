@@ -3230,7 +3230,7 @@ static bool activeBelow(Tag *t)
 	return false;
 }
 
-static int hovcount, invcount, injcount;
+static int hovcount, invcount, injcount, rrcount;
 
 /* Rerender the buffer and notify of any lines that have changed */
 int rr_interval = 20;
@@ -3246,7 +3246,7 @@ void rerender(int rr_command)
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += rr_interval;
-	hovcount = invcount = injcount = 0;
+	hovcount = invcount = injcount = rrcount = 0;
 
 // not sure if we have to do this here
 	rebuildSelectors();
@@ -3266,6 +3266,7 @@ void rerender(int rr_command)
 	a = render();
 	newbuf = htmlReformat(a);
 	nzFree(a);
+	debugPrint(4, "%d nodes rendered", rrcount);
 
 	if (rr_command > 0 && debugLevel >= 3) {
 		char buf[120];
@@ -4386,6 +4387,7 @@ static void renderNode(Tag *t, bool opentag)
 	Tag *ltag;
 
 	debugPrint(6, "rend %c%s", (opentag ? ' ' : '/'), t->info->name);
+	if(opentag) ++rrcount;
 
 	if (deltag) {
 		if (t == deltag && !opentag)
