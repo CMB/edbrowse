@@ -4399,7 +4399,10 @@ li_hide:
 			++ltag->lic;
 		return;
 	}
+// nothing script or below should be rendered
+	if(action == TAGACT_SCRIPT) t->deleted = true;
 	if (t->deleted) {
+		debugPrint(6, "tag is deleted");
 		deltag = t;
 		goto li_hide;
 	}

@@ -2213,7 +2213,17 @@ ab:
 		t->controller = findOpenTag(t, TAGACT_TR);
 		break;
 
-	}			/* switch */
+	case TAGACT_TEXT:
+// if the text is in the child, push it up to the text attribute
+		if(parent->action == TAGACT_SCRIPT) {
+			char *u = get_property_string(cx, *((JSValue*)t->jv), "data");
+			if(u && *u)
+			set_property_string(cx, *((JSValue*)parent->jv), "text", u);
+			nzFree(u);
+		}
+		break;
+
+	}			// switch
 }
 
 // as above, with fewer parameters
