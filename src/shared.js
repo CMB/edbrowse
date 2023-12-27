@@ -2372,12 +2372,9 @@ p.removeChild(t);
 
 // There are subtle differences between contentText and textContent, which I don't grok.
 function textUnder(top, flavor) {
+if(top.nodeName == "#text") return top.data.trim();
+if(top.nodeName == "SCRIPT" || top.nodeName == "#cdata-section") return top.text;
 var answer = "", part, delim = "";
-if(top.nodeName == "#text") { // getElements won't find this one
-answer = top.data.trim();
-} else if(top.nodeName == "SCRIPT" || top.nodeName == "#cdata-section") {
-answer = top.text;
-}
 var t = top.querySelectorAll("cdata,text");
 for(var i=0; i<t.length; ++i) {
 var u = t[i];
