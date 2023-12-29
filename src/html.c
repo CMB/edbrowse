@@ -4399,8 +4399,6 @@ li_hide:
 			++ltag->lic;
 		return;
 	}
-// nothing script or below should be rendered
-	if(action == TAGACT_SCRIPT) t->deleted = true;
 	if (t->deleted) {
 		debugPrint(6, "tag is deleted");
 		deltag = t;
@@ -4515,6 +4513,7 @@ nocolorend:
 	if (invisible)
 		retainTag = false;
 	if (ti->bits & TAG_INVISIBLE) {
+		if(opentag) debugPrint(6, "tag is invisible");
 		retainTag = false;
 		invisible = opentag;
 /* special case for noscript with no js */
