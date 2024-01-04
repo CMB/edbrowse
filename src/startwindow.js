@@ -2399,11 +2399,7 @@ Object.defineProperty(Response.prototype, "type", {get:function(){alert3("Respon
 // should this beUrl or response URL?
 Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr.url;}})
 // json is the only method so far; I guess we write them as we need them.
-// Documentation says json() returns a promise object, I don't think that's right.
-// It's just inline processing from text to object; why would we need to
-// promise that. And nasa.gov wants just the object.
-// So I just return the object.
-Response.prototype.json = function(){return JSON.parse(this.body)}
+Response.prototype.json = function(){return Promise.resolve(JSON.parse(this.body))}
 
 function fetch(url, o) {
 var dopost = false;
