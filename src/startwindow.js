@@ -472,7 +472,7 @@ NodeList.prototype.dom$class = "NodeList";
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
 Element = HTMLElement = function(){};
 HTMLElement.prototype = new Node;
-HTMLElement.prototype.dom$class = "HTMLElement";
+HTMLElement.prototype.dom$class = "Element";
 Object.defineProperty(HTMLElement.prototype, "name", {
 get: function() {
 var isinput = (this.dom$class == "Input" || this.dom$class == "Button" || this.dom$class == "Select");
@@ -538,10 +538,10 @@ CharacterData = function(){};
 CharacterData.prototype.dom$class = "CharacterData";
 HTMLHeadElement = function(){};
 HTMLHeadElement.prototype = new HTMLElement;
-HTMLHeadElement.prototype.dom$class = "HTMLHeadElement";
+HTMLHeadElement.prototype.dom$class = "Head";
 HTMLMetaElement = function(){};
 HTMLMetaElement.prototype = new HTMLElement;
-HTMLMetaElement.prototype.dom$class = "HTMLMetaElement";
+HTMLMetaElement.prototype.dom$class = "Meta";
 z$Title = function(){};
 z$Title.prototype = new HTMLElement;
 z$Title.prototype.dom$class = "Title";
@@ -551,7 +551,7 @@ get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" &
 });
 HTMLLinkElement = function(){};
 HTMLLinkElement.prototype = new HTMLElement;
-HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
+HTMLLinkElement.prototype.dom$class = "Link";
 // It's a list but why would it ever be more than one?
 Object.defineProperty(HTMLLinkElement.prototype, "relList", {
 get: function() { var a = this.rel ? [this.rel] : [];
@@ -562,7 +562,7 @@ return a;
 
 HTMLBodyElement = function(){};
 HTMLBodyElement.prototype = new HTMLElement;
-HTMLBodyElement.prototype.dom$class = "HTMLBodyElement";
+HTMLBodyElement.prototype.dom$class = "Body";
 HTMLBodyElement.prototype.doScroll = eb$voidfunction;
 HTMLBodyElement.prototype.clientHeight = 768;
 HTMLBodyElement.prototype.clientWidth = 1024;
@@ -574,6 +574,10 @@ HTMLBodyElement.prototype.scrollTop = 0;
 HTMLBodyElement.prototype.scrollLeft = 0;
 // document.body.innerHTML =
 HTMLBodyElement.prototype.eb$dbih = function(s){this.innerHTML = s}
+
+ShadowRoot = function(){};
+ShadowRoot.prototype = new HTMLElement;
+ShadowRoot.prototype.dom$class = "ShadowRoot";
 
 HTMLBaseElement = function(){};
 HTMLBaseElement.prototype = new HTMLElement;
@@ -801,7 +805,7 @@ set:function(v) { this.setAttribute("multiple", v);}});
 
 Image = HTMLImageElement = function(){};
 HTMLImageElement.prototype = new HTMLElement;
-HTMLImageElement.prototype.dom$class = "HTMLImageElement";
+HTMLImageElement.prototype.dom$class = "Image";
 Object.defineProperty(HTMLImageElement.prototype, "alt", {
 get:function(){ var t = this.getAttribute("alt");
 return typeof t == "string" ? t : undefined},

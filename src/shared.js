@@ -76,7 +76,7 @@ if((nn == "BASE" || nn == "META" || nn == "LINK" ||nn == "#text" || nn == "IMAGE
 r += nn + extra + '\n';
 return r;
 }
-r += nn + " {" + extra + '\n';
+r += nn + "{" + extra + '\n';
 if(top.dom$class == "Frame") {
 if(top.eb$expf) r += top.contentWindow.dumptree(top.contentDocument);
 } else if(top.childNodes) {
@@ -1985,7 +1985,7 @@ var a, i, t;
 a = d.querySelectorAll("link,style");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.dom$class == "HTMLLinkElement") {
+if(t.dom$class == "Link") {
 if(t.css$data && (
 t.type && t.type.toLowerCase() == "text/css" ||
 t.rel && t.rel.toLowerCase() == "stylesheet")) {
