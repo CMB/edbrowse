@@ -385,21 +385,22 @@ Edbrowse does not display this text, but sometimes edbrowse gets it wrong,
 so if the website seems sparse, like you're missing something important,
 use the showall command to reveal all of this text,
 even some sections that might not be relevant to your situation.
-Formerly invisible text looks like this.
+Formerly invisible text might look like this.
 
-`{
 You are logged in as John Smith,
 if you are not John Smith please <log out>.
-}'
 
 This block might be invisible unless you are actually logged in.
+And of course the button won't work, unless you are actually logged in.
+
 All text is displayed if javascript is disabled via the js- command,
 because css doesn't run without javascript.
 
 ------------------------------------------------------------
 
 Use the help command for a quick list of all the edbrowse commands.
-This is a copy of the quick reference guide in usersguide.html.
+This is a copy of the quick reference guide in usersguide.html,
+built into edbrowse.
 
 ------------------------------------------------------------
 
@@ -412,4 +413,148 @@ document.body.firstChild is the first node under <body>, and so on.
 showscripts() shows all the javascripts, even those dynamically created.
 Such debugging is beyond the scope of this README file.
 Read the Debugging Javascript article in the edbrowse wiki.
+
+------------------------------------------------------------
+
+It is often asked why we don't use a headless browser,
+instead of trying to reinvent and maintain all that js machinery.
+Good question!
+How would we marry these very different creatures?
+Here is how it might play out.
+
+e blah.example.com  same as it works today.
+http fetch through curl.
+
+b (browse command)
+launch the browser, or activate a tab in the browser if it is already launched.
+I don't know if the headless interface allows for this.
+I don't want a new browser process running for every page in edbrowse.
+Hand the browser the url.
+Yeah we already have the page and in theory we could pass it the html directly,
+with a <base> tag, but it might be easier to just hand it the url and say go.
+It is going to maintain cookies as it browses,
+and there is sometimes a transient cookie that indicates session, the "session cookie",
+so the cookie we got is no good, and the only way for the browser to get a proper cookie for its session is to fetch the url itself.
+So we tolerate that small inefficiency.
+When the browser is done browsing,
+and already we're in trouble, how do we know?
+Some pages change all the time, refreshing and so on,
+so maybe we poll and watch for document.readyState or some such,
+and when it indicates done, we call document.body.outerHTML.
+That is the current html as rendered on the page, which could look nothing like the original page.
+Pass that to our parser, then skip the decorate phase, we don't mess with js objects at all,
+and don't run any scripts, no timers, and call render as we do today.
+There is your page! And someone else did all that javascript dom work.
+
+What actually shows on the screen? We have no idea!
+Some items are hidden by css, and sometimes they pop to life depending on what you do on the page.
+They are always there in html.
+We would show them all the time.
+Our page could be cluttered with everything it might have on it, and there isn't an easy way to fix that.
+
+As mentioned before, pages change all the time.
+Poll every 20 seconds and repeat the above.
+New html, a new tree, new render, compare with the old, report if anything changed.
+A lot of our software could be reused here.
+
+alert, prompt, console.log, and perhaps other inbuilt methods.
+These interact with the user on the screen.
+What would they do headless?
+Are there callback functions we can provide to manage these actions?
+
+i=xyz
+Set or change an input field.
+How do we pass this over to the browser?
+Use javascript, set the value of the input field to xyz.
+But how do we designate the input field in the browser?
+This is the correspondence problem.
+If the input field has an id that's easy.
+querySelector("#id").value = "xyz";
+But if it doesn't?
+We can't expect every checkbox and field to have an id.
+We could perhaps count the input fields leading up to this one. If there are 17 then
+QuerySelectorAll("input")[17].value = "xyz";
+That will usually work but not guaranteed.
+The page could have changed in some way since last we polled.
+Let's say it still lines up.
+This backdoor way doesn't call oninput or onchange etc,
+we have to call those methods ourselves.
+Or onclick() if it's a checkbox, you get the idea.
+So what about the onchange or onclick code?
+It could alert the user to a bad input, and I wrote about alerts and such above.
+More likely it puts the error message in the page.
+Or maybe not an error but maybe caused other things to change.
+Like a selection choosing a submenu.
+We need to rerender right after the action was taken, to see immediately what changed.
+But what do we mean by immediately?
+A millisecond? The changes might not have happened yet.
+Then we'd have to wait another 20 seconds to see the changes.
+Half a second? Still might not be enough time.
+8 seconds? That's awkward. Most of the time there aren't any changes, except the field we just changed, so we want to render right away.
+The browser is asynchronous from us, with no good way to coordinate, and that can cause headaches.
+this is the coordination problem.
+
+i*   push the button.
+The usual problems of designating the input field in the browser.
+If we can find it, call the methods onclick, onsubmit, and finally submit.
+If js finds a problem with the form, it will indicate this with an error message on the page.
+Same as before, when do we rerender, what is the optimal time to let js act?
+If it jumps to a new web page, as i* often does, how do we know?
+The next rerender, whenever it is, will completely replace the page, but that's not what we want.
+We want to push the current page on the stack and render the new one.
+Perhaps the polling process looks at window.location and compares it to our filename and if it's different,
+assume (and I kinda hate to assume) we have jumped to a new page.
+Push the old one on the stack and render the new one.
+But what do we do about raw html for the new page?
+We don't have it.
+We didn't fetch it.
+We could try to fetch it but that might confuse things, because the browser has already fetched it, with its session cookie, that we don't have.
+We might have to say no raw html available in this case.
+
+g   go to a hyperlink.
+onclick code, watch the return, determines whether we jump or not.
+The url itself may be javascript, it often is.
+If the page changes, how do we know? Just like the above.
+If it's a direct href=url I don't think there's a js backdoor.
+We have to tell the browser to go to this page, this url, not in a new tab but pushing the old page onto the history.
+Can we do that through headless?
+
+g goes to an internal anchor.  href=#blah
+We could use our machinery to jump,
+and push the prior location onto the stack for the & command.
+Do we find that tag in the browser and call onfocus()?
+
+Button says "go back to previous page".
+Implemented through the js history object.
+That's just a refocus to the previous page, it is an up command in the browser.
+How do we know to do the same?
+Do we compare window.location with all the locations on our stack, and go up if that is indicated, or push a new window if it's a new url?
+For that matter, how do we do our own up down and ^ commands?
+Use the history object in the browser for up and down, or window.close() for ^?
+
+Page has a plugin.
+For music and such we just do our own.
+That works 95% of the time, but not always, not if a session cookie is required to fetch that audio, then it's a big oops!
+That happens in audio captchas.
+Does the browser use the same plugin, mp3 player or whatever, coming out the same speakers?
+How do we know when it's done playing, or control it or pause it or stop it etc, it's not going through our plugin.
+A rendering plugin like pdf is even more problematic.
+Remember we don't have the raw data, and I don't know that we can always get the raw data,
+and if the browser runs its plugin, it certainly has a way to render pdf,
+that rendering is completely outside of anything we can get through the headless browser.
+
+Frames on the page make everything complicated.
+It looks seamless to the sighted user but it's not.
+i=xyz within a frame has to work within the context of that frame.
+And all the other commands.
+We have to run all the javascript, on the browser, within that frame.
+We do this in our world, we know the context,
+just not sure how to convey that to the headless browser as we interact.
+
+This is the beginning of the thought process. 🐣
+I don't know if it would come out better or worse than the path we are currently on.
+And the only way to find out might be to do it.  😱
+I love the idea of not maintaining all this js and dom client and interactions with the page and so on,
+but I'm concerned about coordinating with the asynchronous browser,
+and maintaining the text-based approach, that makes edbrowse great.
 

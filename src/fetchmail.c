@@ -959,10 +959,10 @@ afterfetch:
 			}
 
 			key = presentMail();
+// presentMail has already freed mailstring
 			retry = false; // user has issued another command
 			postkey = 0;
-// presentMail has already freed mailstring
-			if(partread) key = 's';
+			if(partread && !refolder(handle, f, res)) key = 's';
 			if(key == 'g') goto dispmail;
 			if(strchr("wua", key)) goto reaction;
 		}
