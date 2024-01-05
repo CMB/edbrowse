@@ -369,11 +369,13 @@ else e.insertBefore(b, e.childNodes[i]);
 }
 
 function getRootNode(o) {
+var composed = false;
 if(typeof o == "object" && o.composed)
-alert3("getRootNode shadow root not implemented")
+composed = true;
 var t = this;
 while(t) {
 if(t.nodeName == "#document") return t;
+if(!composed && t.nodeName == "SHADOWROOT") return t;
 t = t.parentNode;
 }
 alert3("getRootNode no root found");
@@ -2372,15 +2374,20 @@ p.removeChild(t);
 
 // There are subtle differences between contentText and textContent, which I don't grok.
 function textUnder(top, flavor) {
-if(top.nodeName == "#text") return top.data.trim();
-if(top.nodeName == "SCRIPT" || top.nodeName == "#cdata-section") return top.text;
+var nn = top.nodeName;
+if(nn == "#text") return top.data.trim();
+if(nn == "SCRIPT" || nn == "#cdata-section") return top.text;
+var pre = (nn=="PRE");
+// we should be more general here; this doesn't handle
+// <pre>hello<i>multi lined text in italics</i>world</pre>
 var answer = "", part, delim = "";
 var t = top.querySelectorAll("cdata,text");
 for(var i=0; i<t.length; ++i) {
 var u = t[i];
 if(u.parentNode && u.parentNode.nodeName == "OPTION") continue;
 // any other texts we should skip?
-part = (u.nodeName == "#text" ? u.data : u.text).trim();
+part = u.nodeName == "#text" ? u.data : u.text;
+if(!pre) part = part.trim(); // should we be doing this?
 if(!part) continue;
 if(answer) answer += delim;
 answer += part;

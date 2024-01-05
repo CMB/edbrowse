@@ -511,6 +511,33 @@ return t === null || t === false || t === "false" || t === 0 || t === '0' ? fals
 set:function(v) { this.setAttribute("disabled", v);}});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
+HTMLElement.prototype.attachShadow = function(o){
+// I should have a list of allowed tags here, but custom tags are allowed,
+// and I don't know how to determine that,
+// so I'll just reject a few tags.
+var nn = this.nodeName;
+if(nn == "A" || nn == "FRAME" || nn == "IFRAME" | nn == "#document" || nn == "#text" || nn == "#comment" ||
+nn == "TABLE" || nn == "TH" || nn == "TD" || nn == "TR" || nn == "FORM" || nn == "INPUT" ||
+nn == "SHADOWROOT") // no shadow root within a shadow root
+return null;
+var r = document.createElement("ShadowRoot");
+this.appendChild(r); // are we suppose to do this?
+r.mode = "open";
+r.delegatesFocus = false;
+r.slotAssignment = "";
+if(typeof o == "object") {
+if(o.mode) r.mode = o.mode;
+if(o.delegatesFocus) r.delegatesFocus = o.delegatesFocus;
+if(o.slotAssignment) r.slotAssignment = o.slotAssignment;
+}
+return r;
+}
+Object.defineProperty(HTMLElement.prototype, "shadowRoot", {
+get:function(){
+var r = this.firstChild;
+if(r && r.nodeName == "SHADOWROOT" && r.mode == "open") return r;
+return null;
+}});
 
 z$HTML = function(){};
 z$HTML.prototype = new HTMLElement;
@@ -2221,7 +2248,9 @@ return null;
 
 var unknown = false;
 switch(t) {
+case "shadowroot": c = new ShadowRoot; break;
 case "body": c = new HTMLBodyElement; break;
+// is it ok that head isn't here?
 case "object": c = new HtmlObj; break;
 case "a": c = new HTMLAnchorElement; break;
 case "area": c = new HTMLAreaElement; break;
