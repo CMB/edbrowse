@@ -2414,6 +2414,11 @@ XMLHttpRequest.prototype.onreadystatechange = XMLHttpRequest.prototype.onload = 
 XMLHttpRequest.prototype.overrideMimeType = function(t) {
 if(typeof t == "string") this.eb$mt = t;
 }
+XMLHttpRequest.prototype.eb$listen = eb$listen;
+XMLHttpRequest.prototype.eb$unlisten = eb$unlisten;
+XMLHttpRequest.prototype.addEventListener = addEventListener;
+XMLHttpRequest.prototype.removeEventListener = removeEventListener;
+XMLHttpRequest.prototype.dispatchEvent = mw$.dispatchEvent;
 XMLHttpRequest.prototype.eb$mt = null;
 XMLHttpRequest.prototype.async = false;
 XMLHttpRequest.prototype.readyState = 0;
