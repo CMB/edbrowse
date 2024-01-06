@@ -1397,15 +1397,15 @@ void unreadConfigFile(void)
 
 /* Order is important here: mail{}, mime{}, table{}, then global keywords */
 #define MAILWORDS 0
-#define MIMEWORDS 14
-#define TABLEWORDS 22
-#define GLOBALWORDS 26
+#define MIMEWORDS 15
+#define TABLEWORDS 23
+#define GLOBALWORDS 27
 
 static const char *const keywords[] = {
 	"inserver", "outserver", "login", "password", "from", "reply",
 	"inport", "outport",
 	"to", "cc", "bcc", "attach",
-	"imask", "isub",
+	"imask", "isub", "dx",
 	"type", "desc", "suffix", "protocol", "program",
 	"content", "outtype", "urlmatch",
 	"tname", "tshort", "cols", "keycol",
@@ -1780,50 +1780,67 @@ inside:
 			act->isub = v;
 			continue;
 
-		case 14:	// type
+		case 14:	// dx
+			memset(act->dxfolder, 0, sizeof(act->maskfolder));
+			j = 0; // first indicator
+			while (*v) {
+				n = strtol(v, &v, 10);
+				if(n > 0 && n < (int)sizeof(act->dxfolder)) {
+					act->dxfolder[n] = 1;
+					if(!j) act->dxtrash = n;
+					j = 1;
+				}
+				q = strchr(v, ',');
+				if (!q) break;
+				*q = 0;
+				v = q + 1;
+			}
+			continue;
+
+		case 15:	// type
 			mt->type = v;
 			continue;
 
-		case 15:	// desc
+		case 16:	// desc
 			mt->desc = v;
 			continue;
 
-		case 16:	// suffix
+		case 17:	// suffix
 			mt->suffix = v;
 			continue;
 
-		case 17:	// protocol
+		case 18:	// protocol
 			mt->prot = v;
 			continue;
 
-		case 18:	// program
+		case 19:	// program
 			mt->program = v;
 			continue;
 
-		case 19:	// content
+		case 20:	// content
 			mt->content = v;
 			continue;
 
-		case 20:	// outtype
+		case 21:	// outtype
 			c = tolower(*v);
 			if (c != 'h' && c != 't')
 				cfgLine0(MSG_EBRC_Outtype);
 			mt->outtype = c;
 			continue;
 
-		case 21:	// urlmatch
+		case 22:	// urlmatch
 			mt->urlmatch = v;
 			continue;
 
-		case 22:	// tname
+		case 23:	// tname
 			td->name = v;
 			continue;
 
-		case 23:	// tshort
+		case 24:	// tshort
 			td->shortname = v;
 			continue;
 
-		case 24:	// cols
+		case 25:	// cols
 			while (*v) {
 				if (td->ncols == MAXTCOLS)
 					cfgLine1(MSG_EBRC_ManyCols, MAXTCOLS);
@@ -1835,7 +1852,7 @@ inside:
 			}
 			continue;
 
-		case 25:	// keycol
+		case 26:	// keycol
 			if (!isdigitByte(*v))
 				cfgLine0(MSG_EBRC_KeyNotNb);
 			td->key1 = (uchar) strtol(v, &v, 10);
@@ -1845,7 +1862,7 @@ inside:
 				cfgLine1(MSG_EBRC_KeyOutRange, td->ncols);
 			continue;
 
-		case 26:	// downdir
+		case 27:	// downdir
 			nzFree(downDir), downDir = 0; // in case called more than once
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1855,7 +1872,7 @@ inside:
 			downDir = v;
 			continue;
 
-		case 27:	// maildir
+		case 28:	// maildir
 			nzFree(mailDir), mailDir = 0;
 			nzFree(mailUnread), mailUnread = 0;
 			nzFree(mailReply), mailReply = 0;
@@ -1876,7 +1893,7 @@ inside:
 			sprintf(mailReply, "%s/.reply", v);
 			continue;
 
-		case 28:	// agent
+		case 29:	// agent
 			for (j = 0; j < MAXAGENT; ++j)
 				if (!userAgents[j])
 					break;
@@ -1885,7 +1902,7 @@ inside:
 			userAgents[j] = v;
 			continue;
 
-		case 29:	// jar
+		case 30:	// jar
 			nzFree(cookieFile), cookieFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1900,7 +1917,7 @@ inside:
 			cookieFile = v;
 			continue;
 
-		case 30:	// nojs
+		case 31:	// nojs
 			if (*v == '.')
 				++v;
 /* Is this essential?
@@ -1911,20 +1928,20 @@ inside:
 			add_ebhost(v, 'j');
 			continue;
 
-		case 31:	// cachedir
+		case 32:	// cachedir
 			nzFree(cacheDir);
 			cacheDir = cloneString(v);
 			continue;
 
-		case 32:	// webtimer
+		case 33:	// webtimer
 			webTimeout = atoi(v);
 			continue;
 
-		case 33:	// mailtimer
+		case 34:	// mailtimer
 			mailTimeout = atoi(v);
 			continue;
 
-		case 34:	// certfile
+		case 35:	// certfile
 			nzFree(sslCerts), sslCerts = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -1938,15 +1955,15 @@ inside:
 			sslCerts = v;
 			continue;
 
-		case 35:	// datasource
+		case 36:	// datasource
 			setDataSource(v);
 			continue;
 
-		case 36:	// proxy
+		case 37:	// proxy
 			add_proxy(v);
 			continue;
 
-		case 37:	// agentsite
+		case 38:	// agentsite
 			spaceCrunch(v, true, true);
 			q = strchr(v, ' ');
 			if (!q || strchr(q + 1, ' ') ||
@@ -1961,19 +1978,19 @@ inside:
 			ebhosts[ebhosts_avail - 1].n = j;
 			continue;
 
-		case 38:	// localizeweb
+		case 39:	// localizeweb
 /* We should probably allow autodetection of language. */
 /* E.G., the keyword auto indicates that you want autodetection. */
 			setHTTPLanguage(v);
 			continue;
 
-		case 39:	// imap fetch limit
+		case 40:	// imap fetch limit
 			imapfetch = atoi(v);
 			if (imapfetch < 1) imapfetch = 1;
 			if (imapfetch >= 1000) imapfetch = 1000;
 			continue;
 
-		case 40:	// novs
+		case 41:	// novs
 			if (*v == '.')
 				++v;
 			q = strchr(v, '.');
@@ -1982,7 +1999,7 @@ inside:
 			add_ebhost(v, 'v');
 			continue;
 
-		case 41:	// cachesize
+		case 42:	// cachesize
 			cacheSize = atoi(v);
 			if (cacheSize <= 0)
 				cacheSize = 0;
@@ -1990,7 +2007,7 @@ inside:
 				cacheSize = 10000;
 			continue;
 
-		case 42:	// adbook
+		case 43:	// adbook
 			nzFree(addressFile), addressFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -2000,11 +2017,11 @@ inside:
 			addressFile = v;
 			continue;
 
-		case 43:	// envelope
+		case 44:	// envelope
 			setEnvelopeFormat(v);
 			continue;
 
-		case 44: case 45:	// emojis
+		case 45: case 46:	// emojis
 			nzFree(emojiFile), emojiFile = 0;
 			v = envFileAlloc(v);
 			if(!v) continue;
@@ -2015,7 +2032,7 @@ inside:
 			loadEmojis();
 			continue;
 
-		case 46: // include
+		case 47: // include
 			v = envFileAlloc(v);
 			if(!v) continue;
 			if(!fileIntoMemory(v, &incbuf, &inclen, 0)) {
@@ -2042,7 +2059,7 @@ inside:
 			f = g;
 			goto top;
 
-		case 47:	// js
+		case 48:	// js
 			if (*v == '.')
 				++v;
 /* Is this essential?
@@ -2053,7 +2070,7 @@ inside:
 			add_ebhost(v, 'J');
 			continue;
 
-		case 48:	// pubkey
+		case 49:	// pubkey
 // this feature is undocumented
 			nzFree(pubKey), pubKey = 0;
 			v = envFileAlloc(v);

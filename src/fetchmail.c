@@ -799,6 +799,7 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 static char postkey;
 static void scanFolder(CURL * handle, struct FOLDER *f)
 {
+	struct FOLDER *g;
 	struct MIF *mif, *mif2;
 	int j, j2, rc;
 	CURLcode res = CURLE_OK;
@@ -1015,7 +1016,7 @@ afterfetch:
 
 		if (key == 'b' || key == 'f') {
 			char subkey;
-			struct FOLDER *g = 0;
+			g = 0;
 			if (key == 'b')
 				i_printf(MSG_Batch);
 			else
@@ -1094,7 +1095,6 @@ rebulk:
 		}
 
 		if (key == 'm') {
-			struct FOLDER *g;
 			i_printf(MSG_MoveTo);
 			fflush(stdout);
 			if (!fgets(inputline, sizeof(inputline), stdin))
@@ -1140,9 +1140,18 @@ re_move:
 			i_puts(MSG_Delete);
 		}
 
-		if (!delflag)
-			continue;
+		if (!delflag) continue;
 redelete:
+// does delete really mean move to trash?
+		if(imap_a->dxtrash && !imap_a->dxfolder[topfolders - f + 1]) {
+			if(!move_capable) {
+				puts("not move capable");
+				goto action;
+			}
+			key = 'm', delflag = false;
+			g = topfolders + imap_a->dxtrash - 1;
+			goto re_move;
+		}
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = getMailData(handle);

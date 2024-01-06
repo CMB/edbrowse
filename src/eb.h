@@ -239,11 +239,13 @@ struct MACCOUNT { // email account, pop3 or imap
 	char *inurl, *outurl;
 	int inport, outport;
 	uchar inssl, outssl;
-	bool nofetch, imap, secure, maskon;
+	bool nofetch, imap, secure, maskon, dxon;
 	const char *cclist[MAXCC + 1]; // extra cc directives
 	uchar cctype[MAXCC]; // cc or bcc or attach
 	const char *isub; // substring of folders
 	uchar maskfolder[256];
+	uchar dxfolder[256];
+	uchar dxtrash;
 };
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */
