@@ -1030,7 +1030,7 @@ afterfetch:
 			}
 			if (subkey == 'd') {
 				i_puts(MSG_Delete);
-				if(imap_a->dxtrash && !imap_a->dxfolder[topfolders - f + 1]) {
+				if(imap_a->dxtrash && !imap_a->dxfolder[f + 1 - topfolders]) {
 					if(!move_capable) {
 						puts("not move capable");
 						goto reaction;
@@ -1153,7 +1153,7 @@ re_move:
 		if (!delflag) continue;
 redelete:
 // does delete really mean move to trash?
-		if(imap_a->dxtrash && !imap_a->dxfolder[topfolders - f + 1]) {
+		if(imap_a->dxtrash && !imap_a->dxfolder[f + 1 - topfolders]) {
 			if(!move_capable) {
 				puts("not move capable");
 				goto reaction;
