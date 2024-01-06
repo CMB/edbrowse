@@ -2411,6 +2411,10 @@ XMLHttpRequest.prototype.send = mw$.xml_send;
 XMLHttpRequest.prototype.parseResponse = mw$.xml_parse;
 XMLHttpRequest.prototype.abort = function(){ this.aborted = true}
 XMLHttpRequest.prototype.onreadystatechange = XMLHttpRequest.prototype.onload = XMLHttpRequest.prototype.onerror = eb$voidfunction;
+XMLHttpRequest.prototype.overrideMimeType = function(t) {
+if(typeof t == "string") this.eb$mt = t;
+}
+XMLHttpRequest.prototype.eb$mt = null;
 XMLHttpRequest.prototype.async = false;
 XMLHttpRequest.prototype.readyState = 0;
 XMLHttpRequest.prototype.responseText = "";

@@ -605,7 +605,7 @@ Perhaps restructure everything to use uuid.
 
 There may be other things going on in edbrowse, other files or websites,
 and we're tempted to leave this imap connection up and running.
-imap isn't designed to be up for hours. It's not like irc.
+imap isn't designed to be up for hours, or days. It's not like irc.
 To be sure, it lasts longer than pop3, which is intended to be a drive-by fetching,
 but after a time the imap socket drops, and produces errors if you try to use it.
 It is suppose to be a reasonably brief interaction, and the current implementation encourages that.
