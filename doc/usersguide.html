@@ -1651,20 +1651,21 @@ edbrowse [-d#] -f[#] (fetch mail)
 edbrowse  [-d#] -[p]m    (read pending mail)
 edbrowse  [-d#] -[p]fm[#]    (fetch mail and read pending mail)
 edbrowse  [-d#] -m[#] address1 address2 ... file [+attachments]
-edbrowse  [-c configfile] [-b] [-e] [-d#] file1 file2 ...
+edbrowse  [-c configfile] [-b] [-e] [-dn] file1 file2 ...
 Type help from within an edbrowse session for a summary of the common edbrowse commands.
 <!--</font>--></PRE>
 
 <p>
-The -dx option sets the debug level to x, where x is between 0 and 9.
+The -dn option sets the debug level to n, where n is between 0 and 9.
 The default is -d1,
 which prints the sizes of files as they are written and read.
 Some people like -d2, which prints the URLs
 as you jump to new web pages or submit forms online.
 Unless you are a developer, you probably don't want to go any higher than that.
-Remember, the debug level can be changed interactively by using the dbx command (x between 0 and 9).
+Remember, the debug level can be changed interactively by using the dbn command (n between 0 and 9).
 You can direct debugging output to a file by `db&gt;filename',
 and you probably want to for db5 or above.
+There's a lot of output.
 
 <p>
 The -e option causes edbrowse to exit when it encounters an error.
@@ -4550,6 +4551,20 @@ isub = substring
 Do not display this substring of the imap folder.
 Also, do not use this substring when searching for a folder.
 A typical substring is [Gmail]/  as seen in gmail accounts.
+
+<p>
+dx = 8,2,6
+<p>
+Hard delete from these folders in imap.
+d in any other folder moves to trash.
+Trash is assumed to be the first number in the dx line.
+In gmail, you can't delete an email from inbox directly anyways.
+If you try, it is still in all-mail.
+So moving it to trash, and then emptying the trash, is the only way to actually delete it.
+<p>
+Without a dx line, d is always a hard delete.
+This generally works on other (not gmail) servers.
+Though if you want to be safe, you still might choose to move emails to trash.
 
 <p>
 adbook = /home/mylogin/.ebsys/address-book

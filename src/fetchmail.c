@@ -1028,8 +1028,18 @@ afterfetch:
 				i_puts(MSG_Abort);
 				goto reaction;
 			}
-			if (subkey == 'd')
+			if (subkey == 'd') {
 				i_puts(MSG_Delete);
+				if(imap_a->dxtrash && !imap_a->dxfolder[topfolders - f + 1]) {
+					if(!move_capable) {
+						puts("not move capable");
+						goto reaction;
+					}
+					subkey = 'm';
+					g = topfolders + imap_a->dxtrash - 1;
+					goto rebulk;
+				}
+			}
 			if (subkey == 'm') {
 				i_printf(MSG_MoveTo);
 				fflush(stdout);
@@ -1146,7 +1156,7 @@ redelete:
 		if(imap_a->dxtrash && !imap_a->dxfolder[topfolders - f + 1]) {
 			if(!move_capable) {
 				puts("not move capable");
-				goto action;
+				goto reaction;
 			}
 			key = 'm', delflag = false;
 			g = topfolders + imap_a->dxtrash - 1;
