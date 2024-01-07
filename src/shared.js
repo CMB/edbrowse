@@ -4097,7 +4097,7 @@ var ENCODEINTO_BUILD = false;
   }
 })()
 
-function onmessage$$running() {
+function onmessage$$running() { 
 if(this.eb$pause && !this.onmessage) return;
 if(this.onmessage || (this.onmessage$$array && this.onmessage$$array.length)) { // handlers are ready
 while(this.onmessage$$queue.length) {

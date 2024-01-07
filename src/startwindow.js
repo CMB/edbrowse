@@ -2396,6 +2396,7 @@ XMLHttpRequest = function(){
     this.responseHeaders = {};
     this.aborted = false;//non-standard
     this.withCredentials = true;
+this.upload = new XMLHttpRequestUpload;
 };
 XMLHttpRequest.prototype.dom$class = "XHR";
 // this form of XMLHttpRequest is deprecated, but still used in places.
@@ -2426,8 +2427,6 @@ XMLHttpRequest.prototype.addEventListener = addEventListener;
 XMLHttpRequest.prototype.removeEventListener = removeEventListener;
 XMLHttpRequest.prototype.dispatchEvent = mw$.dispatchEvent;
 XMLHttpRequest.prototype.eb$mt = null;
-Object.defineProperty(XMLHttpRequest.prototype, "upload", {
-get:function(){return new XMLHttpRequestUpload}});
 XMLHttpRequest.prototype.async = false;
 XMLHttpRequest.prototype.readyState = 0;
 XMLHttpRequest.prototype.responseText = "";
