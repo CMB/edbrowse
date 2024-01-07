@@ -2939,12 +2939,10 @@ this.responseXML = (new (my$win().DOMParser)()).parseFromString(this.responseTex
 }
 
 // I'll do the load events, not loadstart or progress or loadend etc.
-var cl = this.getResponseHeader("^content-length$");
 var w = my$win();
 var e = new w.Event;
 e.initEvent("load", true, true);
-e.loaded = 0;
-if(cl.match(/^\d+$/)) e.loaded = cl;
+e.loaded = this.response.length;
 this.dispatchEvent(e);
 
 // does anyone call addEventListener for readystatechange?

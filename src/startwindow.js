@@ -2382,6 +2382,12 @@ Document.prototype.createDocumentFragment = document.createDocumentFragment;
 Document.prototype.createEvent = document.createEvent;
 Document.prototype.implementation = document.implementation;
 
+function XMLHttpRequestEventTarget(){};
+XMLHttpRequestEventTarget.prototype = new EventTarget;
+
+function XMLHttpRequestUpload(){}
+XMLHttpRequestUpload.prototype = new XMLHttpRequestEventTarget;
+
 // @author Originally implemented by Yehuda Katz
 // And since then, from envjs, by Thatcher et al
 
@@ -2420,6 +2426,8 @@ XMLHttpRequest.prototype.addEventListener = addEventListener;
 XMLHttpRequest.prototype.removeEventListener = removeEventListener;
 XMLHttpRequest.prototype.dispatchEvent = mw$.dispatchEvent;
 XMLHttpRequest.prototype.eb$mt = null;
+Object.defineProperty(XMLHttpRequest.prototype, "upload", {
+get:function(){return new XMLHttpRequestUpload}});
 XMLHttpRequest.prototype.async = false;
 XMLHttpRequest.prototype.readyState = 0;
 XMLHttpRequest.prototype.responseText = "";
