@@ -2820,7 +2820,6 @@ this.statusText = "";
 // warning: if you don't call open, just set variables, this won't be called;
 // but I think you're suppose to call open
 this.onreadystatechange();
-this.onload();
 };
 
 function xml_srh(header, value){
@@ -2939,13 +2938,17 @@ alert3("parsing the response as xml");
 this.responseXML = (new (my$win().DOMParser)()).parseFromString(this.responseText, "text/xml");
 }
 
-// When the major libraries are used, they overload XHR left and right.
-// Some versions use onreadystatechange.  This has been replaced by onload in,
-// for instance, newer versions of jquery.  It can cause problems to call the
-// one that is not being used at that moment, so my remedy here is to have
-// empty functions in the prototype so I can call both of them.
+// I'll do the load events, not loadstart or progress or loadend etc.
+var cl = this.getResponseHeader("^content-length$");
+var w = my$win();
+var e = new w.Event;
+e.initEvent("load", true, true);
+e.loaded = 0;
+if(cl.match(/^\d+$/)) e.loaded = cl;
+this.dispatchEvent(e);
+
+// does anyone call addEventListener for readystatechange?
 this.onreadystatechange();
-this.onload();
 } else {
 this.status = 0;
 this.statusText = "network error";
