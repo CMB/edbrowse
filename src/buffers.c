@@ -31,9 +31,9 @@ static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
-static const char imap1_cmd[] = "efghHklnpPvXz=<";
+static const char imap1_cmd[] = "efghHklnpPqvXz=<";
 // commands for imap envelopes
-static const char imap2_cmd[] = "efghHklnpPvXz=<";
+static const char imap2_cmd[] = "efghHklnpPqvXz=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHkMPqruwz=^<";
 // Commands that expect a space afterward
@@ -1007,6 +1007,7 @@ static void freeWindow(Window *w)
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
+	if(w->imap_h) curl_easy_cleanup(w->imap_h);
 	if(w->irciMode) {
 		Window *w2 = sessionList[w->ircOther].lw;
 // w2 should always be there
@@ -4881,6 +4882,7 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_IrcCommandS, line);
 			return false;
 		}
+// also error out if up5 would take you up past imap envelopes.
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
@@ -6184,7 +6186,7 @@ et_go:
 		madeChanges = true;
 		if(cw->dol) delText(1, cw->dol);
 		cw->changeMode = cw->undoable = false;
-		nzFree(cw->f0.fileName), cw->f0.fileName = 0;
+		nzFree(cf->fileName), cf->fileName = 0;
 		char *p = cloneString(line);
 		rc = imapBuffer(p);
 		nzFree(p);

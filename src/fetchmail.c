@@ -3813,15 +3813,13 @@ bool imapBuffer(char *line)
 // There's stuff to push into the buffer, but first set the mode,
 // so it doesn't think we can undo things later.
 	cw->imapMode1 = true;
+	cf->firstURL = cloneString(mailbox_url);
+	asprintf(&cf->fileName, "imap %d", act);
 	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
 	addTextToBackend(folderPaths);
 	nzFree(folderStream), nzFree(folderPaths);
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", fs_l);
-
-// Nothing else is supported, just give up.
-	curl_easy_cleanup(h);
-
 	return true;
 
 usage:

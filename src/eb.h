@@ -514,6 +514,7 @@ int ehsn;
 	ushort ircCount;
 	char *ircNick, *ircChannel;
 	time_t ircRespond;
+	CURL *imap_h; // imap server handle
 	struct DBTABLE *table;	// if in sqlMode
 	time_t nextrender;
 };
