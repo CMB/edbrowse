@@ -239,13 +239,13 @@ static struct FOLDER {
 	struct MIF *mlist;	/* allocated */
 } *topfolders;
 
-static struct MACCOUNT *imap_a;
+static struct MACCOUNT *active_a;
 static bool maskon;
 
 static const char *withoutSubstring(const struct FOLDER *f)
 {
 	int l;
-	const char *isub = imap_a->isub;
+	const char *isub = active_a->isub;
 	if(!isub) return f->path;
 	l = strlen(isub);
 	if(!strncmp(f->path, isub, l)) return f->path + l;
@@ -407,13 +407,13 @@ static CURLcode getMailData(CURL * handle)
 	mailstring = callback_data.buffer;
 	mailstring_l = callback_data.length;
 	callback_data.buffer = 0;
-	if (!imap_a->mc_set) {
-		move_capable = imap_a->move_capable = callback_data.move_capable;
+	if (!active_a->mc_set) {
+		move_capable = active_a->move_capable = callback_data.move_capable;
 		if (debugLevel < 4)
 			curl_easy_setopt(handle, CURLOPT_VERBOSE, 0);
 		debugPrint(3, "imap is %smove capable",
 			   (move_capable ? "" : "not "));
-		imap_a->mc_set = true;
+		active_a->mc_set = true;
 	}
 	return res;
 }
@@ -1029,13 +1029,13 @@ afterfetch:
 			}
 			if (subkey == 'd') {
 				i_puts(MSG_Delete);
-				if(imap_a->dxtrash && !imap_a->dxfolder[f + 1 - topfolders]) {
+				if(active_a->dxtrash && !active_a->dxfolder[f + 1 - topfolders]) {
 					if(!move_capable) {
 						puts("not move capable");
 						goto reaction;
 					}
 					subkey = 'm';
-					g = topfolders + imap_a->dxtrash - 1;
+					g = topfolders + active_a->dxtrash - 1;
 					goto rebulk;
 				}
 			}
@@ -1152,13 +1152,13 @@ re_move:
 		if (!delflag) continue;
 redelete:
 // does delete really mean move to trash?
-		if(imap_a->dxtrash && !imap_a->dxfolder[f + 1 - topfolders]) {
+		if(active_a->dxtrash && !active_a->dxfolder[f + 1 - topfolders]) {
 			if(!move_capable) {
 				puts("not move capable");
 				goto reaction;
 			}
 			key = 'm', delflag = false;
-			g = topfolders + imap_a->dxtrash - 1;
+			g = topfolders + active_a->dxtrash - 1;
 			goto re_move;
 		}
 		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
@@ -1570,7 +1570,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	nzFree(mailstring);
 	if (dostats) {
 		j = f - topfolders + 1;
-		if(maskon && (j >= (int)sizeof(imap_a->maskfolder) || !imap_a->maskfolder[j]))
+		if(maskon && (j >= (int)sizeof(active_a->maskfolder) || !active_a->maskfolder[j]))
 			return; // not in mask, don't print
 		printf("%2d %s", j, withoutSubstring(f));
 /*
@@ -1777,7 +1777,7 @@ refresh:
 		}
 
 		if (stringEqual(inputline, "imask")) {
-			if(!imap_a->maskon) { i_puts(MSG_NoMask); goto input; }
+			if(!active_a->maskon) { i_puts(MSG_NoMask); goto input; }
 			maskon ^= 1;
 			if(debugLevel > 0)
 				i_puts(MSG_ImaskOff + maskon);
@@ -1923,7 +1923,7 @@ int fetchMail(int account)
 	const char *url_for_error;
 	int message_count = 0, message_number;
 
-	if(isimap) imap_a = a, maskon = imap_a->maskon;
+	active_a = a, maskon = active_a->maskon;
 // remember the envelope format we got from the config file
 	strcpy(envelopeFormatDef, envelopeFormat);
 
@@ -3774,7 +3774,7 @@ bool imapBuffer(char *line)
 // reload address book on each imap setup; you might have changed it.
 // We do the same for each sendmail.
 	loadAddressBook();
-	imap_a = a;
+	active_a = a;
 	get_mailbox_url(a);
 	h = newFetchmailHandle(login, pass);
 	res = setCurlURL(h, mailbox_url);
