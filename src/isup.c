@@ -3225,6 +3225,10 @@ int playBuffer(const char *line, const char *playfile)
 		setError(MSG_AudioIrc);
 		return 0;
 	}
+	if (cw->imap1Mode | cw->imap2Mode) {
+		setError(MSG_AudioImap);
+		return 0;
+	}
 	if (cw->dirMode) {
 		setError(MSG_AudioDir);
 		return 0;
@@ -3902,7 +3906,7 @@ bool ircSetup(char *line)
 	if(!win) {
 		sideBuffer(cxin, emptyString, 0, 0);
 		win = sessionList[cxin].lw;
-	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode | win->irciMode | win->ircoMode) {
+	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode | win->irciMode | win->ircoMode | win->imap1Mode | win->imap2Mode) {
 		setError(MSG_IrcCompat, cxin);
 		return false;
 	}
@@ -3910,7 +3914,7 @@ bool ircSetup(char *line)
 	if(!wout) {
 		sideBuffer(cxout, emptyString, 0, 0);
 		wout = sessionList[cxout].lw;
-	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode) {
+	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode | wout->imap1Mode | wout->imap2Mode) {
 		setError(MSG_IrcCompat, cxout);
 		return false;
 	}

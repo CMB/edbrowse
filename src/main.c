@@ -602,9 +602,7 @@ int main(int argc, char **argv)
 			if (!maxAccount)
 				i_printfExit(MSG_NoMailAcc);
 			if (*s == 'f') {
-				account = 0;
-				dofetch = true;
-				++s;
+				account = 0, dofetch = true, ++s;
 				if (*s == 'm')
 					domail = true, ++s;
 			} else {
@@ -643,17 +641,15 @@ int main(int argc, char **argv)
 				int nfetch = 0;
 				if (account) {
 					isimap = accounts[account - 1].imap;
-					if (isimap)
-						domail = false;
+					if (isimap) domail = false;
 					nfetch = fetchMail(account);
+// fetchMail does not return in imap mode.
 				} else {
 					nfetch = fetchAllMail();
 				}
 				if (!domail) {
-					if (nfetch)
-						i_printf(MSG_MessagesX, nfetch);
-					else
-						i_puts(MSG_NoMail);
+					if (nfetch) i_printf(MSG_MessagesX, nfetch);
+					else i_puts(MSG_NoMail);
 				}
 			}
 

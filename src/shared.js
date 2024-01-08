@@ -2944,8 +2944,10 @@ var e = new w.Event;
 e.initEvent("load", true, true);
 e.loaded = this.response.length;
 this.dispatchEvent(e);
+// I don't understand the upload object at all
+this.upload.dispatchEvent(e);
 
-// does anyone call addEventListener for readystatechange?
+// does anyone call addEventListener for readystatechange? Hope not.
 this.onreadystatechange();
 } else {
 this.status = 0;

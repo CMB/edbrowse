@@ -507,6 +507,8 @@ int ehsn;
 	bool ircChannels:1; // show channel when displaying messages
 	bool ircSecure:1; // ssl connection
 	bool ircPingOut:1; // sent ping to server
+	bool imap1Mode:1;		// imap folders
+	bool imap2Mode:1;		// imap envelopes
 	int irc_fd; // file descriptor for socket
 	void *irc_ssl; // stream for a secure socket
 	ushort ircOther; // point to the output side

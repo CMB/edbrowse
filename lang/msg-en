@@ -71,7 +71,7 @@ submitting form
 %s: line %d, outtype should be set to t or h
 multiple
  recommended
-0
+imap mailAccountNumber
 no options contain %s\n
 sending mail to %s\n
 Your information has been sent; watch for a reply via return mail.
@@ -206,7 +206,7 @@ warning: no sessions available to handle the ancillary window
 unexpected text after the q command
 cannot change the name of a directory
 cannot change the name of a table
-0
+account is not imap
 no file specified
 cannot write to the directory; files are modified as you go
 cannot write to the database; rows are modified as you go
@@ -730,13 +730,13 @@ no imask
 buffer cannot receive text
 Warning! Mail is partly read, data may be incomplete.\n
 Warning! Mime component is partly read, data may be incomplete.\n
-0
-0
-0
-0
-0
-0
-0
+session is not compatible with imap
+%c not available in imap mode
+%s not available in imap mode
+cannot send mail in imap mode
+cannot reply in imap mode
+cannot play audio in imap mode
+cannot break lines in imap mode
 0
 0
 0

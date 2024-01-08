@@ -71,7 +71,7 @@ Formularfeld(er) versandt
 %s: Zeile %d, outtype sollte auf t oder h gesetzt sein
 viele
  empfohlen
-]
+0
 keine Option enthält die Zeichenkette %s\n
 verschicke Mail an %s\n
 Ihre Information wurde versendet, warten Sie auf eine Antwort-Email.
@@ -206,7 +206,7 @@ keine Puffer vorhanden um zusätzliches Fenster zu öffnen
 unerwarteter Text nach dem Kommando q
 kann den Namen eines Verzeichnisses nicht ändern
 kann den Namen einer Tabelle nicht ändern
-kann nicht an einen anderen Puffer anhängen
+0
 keine Datei angegeben
 kann Verzeichnis nicht schreiben, Dateien werden sofort verändert
 kann Datenbank nicht schreiben, Zeilen werden sofort geändert
@@ -700,7 +700,7 @@ Umbrechen von Zeilen im irc Modes nicht möglich
 kann den Namen irc nicht ändern
 itte schreiben Sie den gesamten Puffer nach irc
 irc m n Domäne[+][:[*]Port] Nickname[:Passwort] [Gruppe]
-Sitzung %d ist inkompatibel mit IRC
+Sitzung %d ist inkompatibel mit irc
 Debug-Ansicht deaktiviert
 Debug-Ansicht aktiviert
 keine eingabefelder vorhanden
@@ -730,13 +730,13 @@ keine imask
 Puffer kann Text nicht empfangen
 0
 0
-0
-0
-0
-0
-0
-0
-0
+Sitzung ist inkompatibel mit imap
+%c im imap Modes nicht verfügbar
+%s im imap Modes nicht verfügbar
+kann Email im imap Modus nicht verschicken
+Antworten im imap Modes unmöglich
+Audiowiedergabe im imap Modes unmöglich
+Umbrechen von Zeilen im imap Modes nicht möglich
 0
 0
 0

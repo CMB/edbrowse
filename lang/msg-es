@@ -71,7 +71,7 @@ enviando formulario
 %s: linea %d, el límite debe ser establecido por t o h
 multiple
  recomendado
-]
+0
 ninguna opción contiene %s\n
 enviando mail a %s\n
 Tu información ha sido enviada; espera la réplica por mail.
@@ -206,7 +206,7 @@ atención: no hay sesiones disponibles para manejar la ventana auxiliar
 inesperado texto después del comando q
 no se puede cambiar el nombre de un directorio
 no se puede cambiar el nombre de una tabla
-no se puede añadir a otro buffer
+0
 no hay archivo especificado
 no se puede escribir en el directorio: archivos son modificados a medida que avanza
 no se puede escribir en la base de datos: las filas son modificadas a medida que avanza
@@ -730,13 +730,13 @@ no existe imask
 buffer no puede recibir texto
 0
 0
-0
-0
-0
-0
-0
-0
-0
+sesión no es compatible con imap
+%c no está disponible en modo imap
+%s no está disponible en modo imap
+no se puede enviar un email en modo imap
+no se puede replicar en modo imap
+no se puede reproducir audio en modo imap
+no se pueden romper lineas en modo imap
 0
 0
 0

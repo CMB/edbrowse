@@ -69,6 +69,7 @@ bool emailTest(void);
 void mail64Error(int err);
 char *emailParse(char *buf);
 bool setupReply(bool all);
+bool imapBuffer(char *line);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);

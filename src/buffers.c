@@ -30,6 +30,10 @@ static const char dir_cmd[] = "AbdDefghHklMmnpPqstvwXz=^<";
 static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
+// commands for imap folders
+static const char imap1_cmd[] = "efghHklnpPvXz=<";
+// commands for imap envelopes
+static const char imap2_cmd[] = "efghHklnpPvXz=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHkMPqruwz=^<";
 // Commands that expect a space afterward
@@ -1205,7 +1209,7 @@ void addToMap(int nlines, int destl)
 		i_printfExit(MSG_LineLimit);
 
 // browse has no undo command
-	if (!(cw->browseMode | cw->dirMode | cw->ircoMode))
+	if (!(cw->browseMode | cw->dirMode | cw->ircoMode | cw->imap1Mode | cw->imap2Mode))
 		undoPush();
 
 /* move the labels */
@@ -4855,6 +4859,11 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_IrcCommandS, line);
 			return false;
 		}
+		if(cw->imap2Mode && !down) {
+			cmd = 'e';
+			setError(MSG_IrcCommandS, line);
+			return false;
+		}
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
@@ -5406,8 +5415,7 @@ et_go:
 		bool dosig = true;
 		int account = 0;
 		cmd = 'e';
-		if (*t == '-') {
-			dosig = false;
+		if (*t == '-') { dosig = false;
 			++t;
 		}
 		if (isdigitByte(*t))
@@ -6119,7 +6127,6 @@ et_go:
 		Window *w;
 		cmd = 'e';
 		if(cw->irciMode | cw->ircoMode) {
-			cmd = 'e';
 			setError(MSG_IrcCommand, 'e');
 			return false;
 		}
@@ -6146,6 +6153,25 @@ et_go:
 		rc = ircSetup(p);
 		nzFree(p);
 		if(rc && cw->ircoMode) {
+			undoCompare();
+			cw->undoable = cw->changeMode = false;
+		}
+		return rc;
+	}
+
+	if(!strncmp(line, "imap", 4) && (isspaceByte(line[4]) || line[4] == 0)) {
+		cmd = 'e';
+		if(!cxQuit(context, 0)) return false;
+		undoCompare();
+// erase anything in the buffer.
+		madeChanges = true;
+		if(cw->dol) delText(1, cw->dol);
+		cw->changeMode = cw->undoable = false;
+		nzFree(cw->f0.fileName), cw->f0.fileName = 0;
+		char *p = cloneString(line);
+		rc = imapBuffer(p);
+		nzFree(p);
+		if(rc && cw->imap1Mode) {
 			undoCompare();
 			cw->undoable = cw->changeMode = false;
 		}
@@ -6739,6 +6765,10 @@ range2:
 			setError(MSG_BreakIrc);
 			return false;
 		}
+		if (cw->imap1Mode || cw->imap2Mode) {
+			setError(MSG_BreakImap);
+			return false;
+		}
 		if (cw->browseMode) {
 			setError(MSG_BreakBrowse);
 			return false;
@@ -6937,6 +6967,16 @@ after_ib:
 
 	if (cw->ircoMode && !strchr(irco_cmd, cmd)) {
 		setError(MSG_IrcCommand, cmd);
+		return (globSub = false);
+	}
+
+	if (cw->imap1Mode && !strchr(imap1_cmd, cmd)) {
+		setError(MSG_ImapCommand, cmd);
+		return (globSub = false);
+	}
+
+	if (cw->imap2Mode && !strchr(imap2_cmd, cmd)) {
+		setError(MSG_ImapCommand, cmd);
 		return (globSub = false);
 	}
 
@@ -7352,8 +7392,7 @@ dest_ok:
 			}
 		}
 		saveSubstitutionStrings();
-		if (!cxQuit(cx, 2))
-			return false;
+		if (!cxQuit(cx, 2)) return false;
 		if (cx != context)
 			return true;
 /* look around for another active session */

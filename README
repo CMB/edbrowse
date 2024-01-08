@@ -140,8 +140,13 @@ e.g. in /etc/rc.d/rc.local, to create the directory with the sticky bit.
 The code in this project is indented via the script Lindent,
 which is in the tools directory, and is taken from the Linux kernel source.
 In other words, the indenting style is the same as the Linux kernel.
-If you modify some source, you may want to run it through
-../tools/Lindent before the commit.
+Except it isn't always.
+I've drifted away from it on occasion.
+If the statement under the if is just a break or continue or return,
+I may well put it on the same line.
+It's really not that important all in all, especially to blind developers.
+If you take over this project, or send patches,
+try to sort of follow our indenting style.
 
 ------------------------------------------------------------
 

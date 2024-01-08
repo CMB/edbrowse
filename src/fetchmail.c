@@ -1953,6 +1953,7 @@ int fetchMail(int account)
 	res = count_messages(mail_handle, &message_count);
 	if (res != CURLE_OK)
 		goto fetchmail_cleanup;
+// count_messages does not return on imap
 
 	for (message_number = 1; message_number <= message_count;
 	     message_number++) {
@@ -3502,6 +3503,10 @@ bool setupReply(bool all)
 		setError(MSG_ReIrc);
 		return false;
 	}
+	if (cw->imap1Mode | cw->imap2Mode) {
+		setError(MSG_ReImap);
+		return false;
+	}
 
 	if (!cw->dol) {
 		setError(MSG_ReEmpty);
@@ -3734,4 +3739,66 @@ found:
 	}
 
 	nzFree(buf);
+}
+
+bool imapBuffer(char *line)
+{
+	int act;
+	line += 4;
+	if(!*line) goto usage;
+	spaceCrunch(line, true, false);
+	if(!isdigitByte(*line)) goto usage;
+	act = strtol(line, &line, 10);
+	if(act < 0 || *line) goto usage;
+	if(!validAccount(act)) return false;
+	if(!accounts[act - 1].imap) {
+		setError(MSG_NotImap);
+		return false;
+}
+	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->imap1Mode | cw->imap2Mode) {
+		setError(MSG_ImapCompat);
+		return false;
+	}
+	if (!mailDir) {
+		setError(MSG_NoMailDir);
+		return false;
+	}
+
+// In case we haven't started curl yet.
+	if (!curlActive) {
+		eb_curl_global_init();
+// we don't need cookies and cache for email, but http might follow.
+		cookiesFromJar();
+		setupEdbrowseCache();
+	}
+
+	CURL *h;
+	const struct MACCOUNT *a = accounts + act - 1;
+	const char *login = a->login;
+	const char *pass = a->password;
+	CURLcode res = CURLE_OK;
+	const char *url_for_error;
+// remember the envelope format we got from the config file
+	strcpy(envelopeFormatDef, envelopeFormat);
+	get_mailbox_url(a);
+	url_for_error = mailbox_url;
+	h = newFetchmailHandle(login, pass);
+	res = setCurlURL(h, mailbox_url);
+	if (res != CURLE_OK) goto login_error;
+	res = getMailData(h);
+	if (res != CURLE_OK) goto login_error;
+	sleep(40);
+			curl_easy_cleanup(h);
+
+	cw->imap1Mode = true;
+	return true;
+
+usage:
+	setError(MSG_ImapUsage);
+	return false;
+
+login_error:
+	ebcurl_setError(res, url_for_error, 0, emptyString);
+	curl_easy_cleanup(h);
+	return false;
 }

@@ -71,7 +71,7 @@ submetendo formulário
 %s: linha %d, outtype tem que ser definido para t ou h
 muitos
  recomendado
-]
+0
 sem opções com a cadeia %s\n
 enviando carta para %s\n
 informação enviada; aguarde resposta por e-mail.
@@ -206,7 +206,7 @@ aviso: nenhum buffer disponível para gerir a janela auxiliar
 texto inesperado após o comando q
 impossível trocar o nome de um diretório
 impossível trocar o nome de uma tabela
-impossível adicionar a outro buffer
+0
 sem arquivo especificado
 impossível escrever no diretório; os arquivos são modificados conforme você tenta
 impossível escrever no banco de dados; as linhas são modificadas conforme você tenta
@@ -730,13 +730,13 @@ nenhum imask
 buffer não pode receber texto
 0
 0
-0
-0
-0
-0
-0
-0
-0
+sessão não é compatível com imap
+%c não disponível em modo imap
+%s não disponível em modo imap
+não posso enviar cartas em modo imap
+não é possível replicar em modo imap
+impossível reproduzir áudio em modo de imap
+impossível quebrar linhas em modo imap
 0
 0
 0

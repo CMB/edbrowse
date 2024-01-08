@@ -71,7 +71,7 @@ invio il form
 %s: riga %d, outtype deve essere settato a t o h
 molti
  raccomandato
-]
+0
 non ci sono opzioni che contengano la stringa %s\n
 invio mail a %s\n
 La tua informazione è stata inviata; attendi la risposta tramite una mail di ritorno.
@@ -206,7 +206,7 @@ avviso: non ci sono buffers disponibili per gestire la finestra ausiliaria
 testo non atteso dopo il comando q
 impossibile cambiare il nome di una cartella
 impossibile cambiare il nome di una tavola
-impossibile accodare ad un altro buffer
+0
 nessun file specificato
 impossibile scrivere sulla cartella; i files saranno modificati durante le operazioni
 impossibile scrivere sul database; le righe saranno modificate durante le operazioni
@@ -730,13 +730,13 @@ nessun imask
 buffer non può ricevere testo
 0
 0
-0
-0
-0
-0
-0
-0
-0
+la sessione non è compatibile con imap
+%c non disponibile in modalità imap
+%s non disponibile in modalità imap
+impossibile inviare mail in modalità imap
+impossibile rispondere in modalità imap
+impossibile attivare il playing dell'audio in modalità imap
+impossibile rompere righe in modalità imap
 0
 0
 0
