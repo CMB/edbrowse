@@ -1316,7 +1316,7 @@ static int text2linemap(const uchar *inbuf, int length, bool *nlflag)
 }
 
 // Add a block of text into the buffer; uses text2linemap() and addToMap().
-bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
+bool addTextToBuffer(const uchar *inbuf, int length, int destl, bool showtrail)
 {
 	bool nlflag;
 	int lines = text2linemap(inbuf, length, &nlflag);
@@ -1332,12 +1332,12 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 	return true;
 }
 
-bool addTextToBackend(const char *inbuf)
+void addTextToBackend(const char *inbuf)
 {
 	bool nlflag;
 	int length = strlen(inbuf);
 	int i, lines = text2linemap((const uchar *)inbuf, length, &nlflag);
-	if(!lines) return true;
+	if(!lines) return;
 	struct lineMap *newmap = allocMem((cw->dol + 2) * LMSIZE);
 	memset(newmap, 0, LMSIZE);
 	memcpy(newmap + 1, newpiece, lines * LMSIZE);
@@ -1351,7 +1351,6 @@ bool addTextToBackend(const char *inbuf)
 	cw->r_map = newmap;
 	nzFree(newpiece);
 	newpiece = 0;
-	return true;
 }
 
 // Pass input lines straight into the buffer until the user enters .

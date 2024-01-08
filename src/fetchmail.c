@@ -258,9 +258,11 @@ static char *tf_cbase;		/* base of strings for folder names and paths */
 static bool move_capable = false;
 
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
+static char *folderStream, *folderPaths;
+static int fs_l, fp_l;
 
-/* This routine mucks with the passed in string, which was allocated
- * to receive data from the imap server. So leave it allocated. */
+// This routine mucks with the passed in string, which was allocated
+// to receive data from the imap server. So leave it allocated.
 static void setFolders(CURL * handle)
 {
 	struct FOLDER *f;
@@ -268,6 +270,9 @@ static void setFolders(CURL * handle)
 	char *child, *lbrk;
 	char qc;		/* quote character */
 	int i;
+
+	folderStream = initString(&fs_l);
+	folderPaths = initString(&fp_l);
 
 // Reset things, in case called on refresh
 	nzFree(topfolders);
@@ -303,8 +308,7 @@ static void setFolders(CURL * handle)
 				continue;
 			t = child + 10;
 		}
-		while (*t == ' ')
-			++t;
+		while (*t == ' ') ++t;
 		while (*child != '\\')
 			--child;
 		if (child < s)	/* should never happen */
@@ -542,15 +546,13 @@ none:
 	}
 	t += 6;
 	cnt = 0;
-	while (*t == ' ')
-		++t;
+	while (*t == ' ') ++t;
 	u = t;
 	while (*u) {
 		if (!isdigitByte(*u))
 			break;
 		++cnt;
-		while (isdigitByte(*u))
-			++u;
+		while (isdigitByte(*u)) ++u;
 		skipWhite2(&u);
 	}
 	if (!cnt)
@@ -1570,6 +1572,15 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 
 	nzFree(mailstring);
 	if (dostats) {
+		if(!ismc) { // running within a buffer
+			char brief[12];
+			stringAndString(&folderStream, &fs_l, withoutSubstring(f));
+			sprintf(brief, ": %d\n", f->nmsgs);
+			stringAndString(&folderStream, &fs_l, brief);
+			stringAndString(&folderPaths, &fp_l, f->path);
+			stringAndChar(&folderPaths, &fp_l, '\n');
+			return;
+		}
 		j = f - topfolders + 1;
 		if(maskon && (j >= (int)sizeof(active_a->maskfolder) || !active_a->maskfolder[j]))
 			return; // not in mask, don't print
@@ -3784,10 +3795,33 @@ bool imapBuffer(char *line)
 	if (res != CURLE_OK) goto login_error;
 	res = getMailData(h);
 	if (res != CURLE_OK) goto login_error;
-	sleep(15);
-			curl_easy_cleanup(h);
 
+// setFolders() prints out the stats in mail client mode.
+// Here in the buffer, it builds strings, which we add to the current buffer.
+// For now there is stuff allocated that is never freed. This is just a concept.
+	setFolders(h);
+	if(!n_folders) {
+		setError(MSG_NoFolders);
+// in this case I'll clean house, though I don't think it ever happens.
+		nzFree(topfolders);
+		topfolders = 0;
+		nzFree(tf_cbase);
+		tf_cbase = 0;
+		curl_easy_cleanup(h);
+		return false;
+	}
+// There's stuff to push into the buffer, but first set the mode,
+// so it doesn't think we can undo things later.
 	cw->imapMode1 = true;
+	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
+	addTextToBackend(folderPaths);
+	nzFree(folderStream), nzFree(folderPaths);
+// a byte count, as though you had read a file.
+	debugPrint(1, "%d", fs_l);
+
+// Nothing else is supported, just give up.
+	curl_easy_cleanup(h);
+
 	return true;
 
 usage:
