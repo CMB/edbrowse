@@ -1273,7 +1273,7 @@ void addToMap(int nlines, int destl)
 	free(gflag), gflag = newg;
 }
 
-static int text2linemap(const pst inbuf, int length, bool *nlflag)
+static int text2linemap(const uchar *inbuf, int length, bool *nlflag)
 {
 	int i, j, lines = 0;
 	struct lineMap *t;
@@ -1329,6 +1329,28 @@ bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail)
 			i_puts(MSG_NoTrailing);
 	}
 	addToMap(lines, destl);
+	return true;
+}
+
+bool addTextToBackend(const char *inbuf)
+{
+	bool nlflag;
+	int length = strlen(inbuf);
+	int i, lines = text2linemap((const uchar *)inbuf, length, &nlflag);
+	if(!lines) return true;
+	struct lineMap *newmap = allocMem((cw->dol + 2) * LMSIZE);
+	memset(newmap, 0, LMSIZE);
+	memcpy(newmap + 1, newpiece, lines * LMSIZE);
+	memset(newmap + lines + 1, 0, LMSIZE);
+// these should be c strings not perl strings
+	for(i = 1; i <= lines; ++i) {
+		char *s = strchr((char*)newmap[i].text, '\n');
+		if(s) *s = 0;
+	}
+	if(cw->r_map) puts("r_map overwrite!");
+	cw->r_map = newmap;
+	nzFree(newpiece);
+	newpiece = 0;
 	return true;
 }
 

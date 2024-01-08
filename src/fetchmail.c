@@ -3076,10 +3076,12 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 // Oops, final boundary was not found
 			int l;
 			i_printf(MSG_PartBoundary);
-			printf("boundary=");
-			for(l = 0; l < w->boundlen; ++l)
-				printf("%c", w->boundary[l]);
-			printf("\n");
+			if(!ismc || debugLevel >= 3) {
+				printf("boundary=");
+				for(l = 0; l < w->boundlen; ++l)
+					printf("%c", w->boundary[l]);
+				printf("\n");
+			}
 			if (lastbound) {
 				child = headerGlean(lastbound, w->end, false);
 				addToListBack(&w->components, child);
