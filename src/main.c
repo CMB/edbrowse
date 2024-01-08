@@ -628,6 +628,7 @@ int main(int argc, char **argv)
 	}			// options
 
 	srand(time(0));
+	loadAddressBook();
 
 	if (ismc) {
 		char **reclist, **atlist;

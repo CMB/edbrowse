@@ -2761,7 +2761,9 @@ ebcurl_debug_handler(CURL * handle, curl_infotype info_desc, char *data,
 
 // There's a special case where this function is used
 // by the imap client to see if the server is move capable.
-	if (ismc & isimap && info_desc == CURLINFO_HEADER_IN &&
+// Unfortunately this check runns all the while we are at db4, even for http etc,
+// but how often are we at db4?
+	if (info_desc == CURLINFO_HEADER_IN &&
 	    size > 17 && !strncmp(data, "* CAPABILITY IMAP", 17)) {
 		char *s;
 // data may not be null terminated; can't use strstr

@@ -239,7 +239,7 @@ static struct FOLDER {
 	struct MIF *mlist;	/* allocated */
 } *topfolders;
 
-static const struct MACCOUNT *imap_a;
+static struct MACCOUNT *imap_a;
 static bool maskon;
 
 static const char *withoutSubstring(const struct FOLDER *f)
@@ -399,7 +399,6 @@ static struct i_get callback_data;
 
 static CURLcode getMailData(CURL * handle)
 {
-	static bool first_call = true;
 	CURLcode res;
 //  puts("get data");
 	callback_data.buffer = initString(&callback_data.length);
@@ -408,13 +407,13 @@ static CURLcode getMailData(CURL * handle)
 	mailstring = callback_data.buffer;
 	mailstring_l = callback_data.length;
 	callback_data.buffer = 0;
-	if (first_call) {
-		move_capable = callback_data.move_capable;
+	if (!imap_a->mc_set) {
+		move_capable = imap_a->move_capable = callback_data.move_capable;
 		if (debugLevel < 4)
 			curl_easy_setopt(handle, CURLOPT_VERBOSE, 0);
 		debugPrint(3, "imap is %smove capable",
 			   (move_capable ? "" : "not "));
-		first_call = false;
+		imap_a->mc_set = true;
 	}
 	return res;
 }
@@ -1663,26 +1662,21 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	return handle;
 }
 
-static void get_mailbox_url(const struct MACCOUNT *account)
+static void get_mailbox_url(const struct MACCOUNT *a)
 {
 	const char *scheme = "pop3";
 	char *url = NULL;
-
-	if (account->inssl)
+	if (a->inssl)
 		scheme = "pop3s";
-
-	if (isimap) {
-		scheme = (account->inssl ? "imaps" : "imap");
-		loadAddressBook();
-	}
-
+	if (a->imap)
+		scheme = (a->inssl ? "imaps" : "imap");
 	if (asprintf(&url,
-		     "%s://%s:%d/", scheme, account->inurl,
-		     account->inport) == -1) {
+		     "%s://%s:%d/", scheme, a->inurl,
+		     a->inport) == -1) {
 /* The byte count is a little white lie / guess, we don't know
  * how much asprintf *really* requested. */
 		i_printfExit(MSG_MemAllocError,
-			     strlen(scheme) + strlen(account->inurl) + 8);
+			     strlen(scheme) + strlen(a->inurl) + 8);
 	}
 	mailbox_url = url;
 }
@@ -1921,7 +1915,7 @@ refresh:
 int fetchMail(int account)
 {
 	CURL *mail_handle;
-	const struct MACCOUNT *a = accounts + account - 1;
+	struct MACCOUNT *a = accounts + account - 1;
 	const char *login = a->login;
 	const char *pass = a->password;
 	int nfetch = 0;		/* number of messages actually fetched */
@@ -2048,8 +2042,6 @@ void scanMail(void)
 		exit(0);
 	}
 	i_printf(MSG_MessagesX, nmsgs);
-
-	loadAddressBook();
 
 	preferPlain = false;
 	for (m = 1; m <= nmsgs; ++m) {
@@ -3773,21 +3765,23 @@ bool imapBuffer(char *line)
 	}
 
 	CURL *h;
-	const struct MACCOUNT *a = accounts + act - 1;
+	struct MACCOUNT *a = accounts + act - 1;
 	const char *login = a->login;
 	const char *pass = a->password;
 	CURLcode res = CURLE_OK;
-	const char *url_for_error;
 // remember the envelope format we got from the config file
 	strcpy(envelopeFormatDef, envelopeFormat);
+// reload address book on each imap setup; you might have changed it.
+// We do the same for each sendmail.
+	loadAddressBook();
+	imap_a = a;
 	get_mailbox_url(a);
-	url_for_error = mailbox_url;
 	h = newFetchmailHandle(login, pass);
 	res = setCurlURL(h, mailbox_url);
 	if (res != CURLE_OK) goto login_error;
 	res = getMailData(h);
 	if (res != CURLE_OK) goto login_error;
-	sleep(40);
+	sleep(15);
 			curl_easy_cleanup(h);
 
 	cw->imap1Mode = true;
@@ -3798,7 +3792,7 @@ usage:
 	return false;
 
 login_error:
-	ebcurl_setError(res, url_for_error, 0, emptyString);
+	ebcurl_setError(res, mailbox_url, 0, emptyString);
 	curl_easy_cleanup(h);
 	return false;
 }
