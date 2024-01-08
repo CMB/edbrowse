@@ -45,7 +45,7 @@ static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
 time_t intStart;
-bool ismc, isimap, passMail;
+bool ismc, passMail;
 // next two variables work around curl bug 7284
 bool inInput, inInitFunction, listNA;
 char *dbarea, *dblogin, *dbpw;	// to log into the database
@@ -641,8 +641,7 @@ int main(int argc, char **argv)
 			if (dofetch) {
 				int nfetch = 0;
 				if (account) {
-					isimap = accounts[account - 1].imap;
-					if (isimap) domail = false;
+					if (accounts[account - 1].imap) domail = false;
 					nfetch = fetchMail(account);
 // fetchMail does not return in imap mode.
 				} else {

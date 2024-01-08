@@ -241,6 +241,7 @@ static struct FOLDER {
 
 static struct MACCOUNT *active_a;
 static bool maskon;
+static bool isimap;
 
 static const char *withoutSubstring(const struct FOLDER *f)
 {
@@ -1923,7 +1924,7 @@ int fetchMail(int account)
 	const char *url_for_error;
 	int message_count = 0, message_number;
 
-	active_a = a, maskon = active_a->maskon;
+	active_a = a, maskon = a->maskon, isimap = a->imap;
 // remember the envelope format we got from the config file
 	strcpy(envelopeFormatDef, envelopeFormat);
 
@@ -3774,7 +3775,7 @@ bool imapBuffer(char *line)
 // reload address book on each imap setup; you might have changed it.
 // We do the same for each sendmail.
 	loadAddressBook();
-	active_a = a;
+	active_a = a, isimap = a->imap;
 	get_mailbox_url(a);
 	h = newFetchmailHandle(login, pass);
 	res = setCurlURL(h, mailbox_url);
