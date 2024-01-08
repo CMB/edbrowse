@@ -3225,7 +3225,7 @@ int playBuffer(const char *line, const char *playfile)
 		setError(MSG_AudioIrc);
 		return 0;
 	}
-	if (cw->imap1Mode | cw->imap2Mode) {
+	if (cw->imapMode1 | cw->imapMode2) {
 		setError(MSG_AudioImap);
 		return 0;
 	}
@@ -3842,10 +3842,6 @@ teardown:
 		if(--w2->ircCount == 0) {
 			w2->ircoMode = false;
 			nzFree(w2->f0.fileName), w2->f0.fileName = 0;
-/* retain the time stamps
-			freeWindowLines(w2->r_map);
-			w2->r_map = 0;
-*/
 		} else {
 // I have to clear the channel here so the file name comes out right.
 			nzFree(w->ircChannel), w->ircChannel = 0;
@@ -3906,7 +3902,7 @@ bool ircSetup(char *line)
 	if(!win) {
 		sideBuffer(cxin, emptyString, 0, 0);
 		win = sessionList[cxin].lw;
-	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode | win->irciMode | win->ircoMode | win->imap1Mode | win->imap2Mode) {
+	} else if(win->sqlMode | win->binMode | win->dirMode | win->browseMode | win->irciMode | win->ircoMode | win->imapMode1 | win->imapMode2) {
 		setError(MSG_IrcCompat, cxin);
 		return false;
 	}
@@ -3914,7 +3910,7 @@ bool ircSetup(char *line)
 	if(!wout) {
 		sideBuffer(cxout, emptyString, 0, 0);
 		wout = sessionList[cxout].lw;
-	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode | wout->imap1Mode | wout->imap2Mode) {
+	} else if(wout->sqlMode | wout->binMode | wout->dirMode | wout->browseMode | wout->irciMode | wout->imapMode1 | wout->imapMode2) {
 		setError(MSG_IrcCompat, cxout);
 		return false;
 	}

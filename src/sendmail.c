@@ -1332,7 +1332,7 @@ bool sendMailCurrent(int sm_account, bool dosig)
 		setError(MSG_MailIrc);
 		return false;
 	}
-	if (cw->imap1Mode | cw->imap2Mode) {
+	if (cw->imapMode1 | cw->imapMode2) {
 		setError(MSG_MailImap);
 		return false;
 	}

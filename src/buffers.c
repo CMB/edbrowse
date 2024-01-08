@@ -1014,10 +1014,6 @@ static void freeWindow(Window *w)
 			if(--w2->ircCount == 0) {
 				w2->ircoMode = false;
 				nzFree(w2->f0.fileName), w2->f0.fileName = 0;
-/* retain the time stamps
-				freeWindowLines(w2->r_map);
-				w2->r_map = 0;
-*/
 			} else {
 // I have to clear the channel here so the file name comes out right.
 				nzFree(w->ircChannel), w->ircChannel = 0;
@@ -1209,7 +1205,7 @@ void addToMap(int nlines, int destl)
 		i_printfExit(MSG_LineLimit);
 
 // browse has no undo command
-	if (!(cw->browseMode | cw->dirMode | cw->ircoMode | cw->imap1Mode | cw->imap2Mode))
+	if (!(cw->browseMode | cw->dirMode | cw->ircoMode | cw->imapMode1 | cw->imapMode2))
 		undoPush();
 
 /* move the labels */
@@ -1476,7 +1472,7 @@ void delText(int start, int end)
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
-	if ((cw->dirMode | cw->ircoMode1) && cw->r_map) {
+	if ((cw->dirMode | cw->ircoMode1 | cw->imapMode1) && cw->r_map) {
 // if you are looking at directories with ls-s or some such,
 // we have to delete the corresponding stat information.
 		for (ln = start; ln <= end; ++ln)
@@ -1513,7 +1509,7 @@ void delText(int start, int end)
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
-		if ((cw->dirMode | cw->ircoMode1) && cw->r_map) {
+		if ((cw->dirMode | cw->ircoMode1 | cw->imapMode1) && cw->r_map) {
 			free(cw->r_map);
 			cw->r_map = 0;
 		}
@@ -3540,7 +3536,7 @@ static bool doGlobal(const char *line)
 	setError(-1);
 
 // check for mass delete or mass join
-	if(cw->browseMode | cw->sqlMode | cw->ircoMode) goto nomass;
+	if(cw->browseMode | cw->sqlMode | cw->ircoMode | cw->imapMode1 | cw->imapMode2) goto nomass;
 	int block = -1, back = 0; // range for mass delete
 // atPartCracker() might overwrite comma with null, so p has to be char*
 	char *p = (char*)line;
@@ -4859,7 +4855,7 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_IrcCommandS, line);
 			return false;
 		}
-		if(cw->imap2Mode && !down) {
+		if(cw->imapMode2 && !down) {
 			cmd = 'e';
 			setError(MSG_IrcCommandS, line);
 			return false;
@@ -6171,7 +6167,7 @@ et_go:
 		char *p = cloneString(line);
 		rc = imapBuffer(p);
 		nzFree(p);
-		if(rc && cw->imap1Mode) {
+		if(rc && cw->imapMode1) {
 			undoCompare();
 			cw->undoable = cw->changeMode = false;
 		}
@@ -6765,7 +6761,7 @@ range2:
 			setError(MSG_BreakIrc);
 			return false;
 		}
-		if (cw->imap1Mode || cw->imap2Mode) {
+		if (cw->imapMode1 || cw->imapMode2) {
 			setError(MSG_BreakImap);
 			return false;
 		}
@@ -6970,12 +6966,12 @@ after_ib:
 		return (globSub = false);
 	}
 
-	if (cw->imap1Mode && !strchr(imap1_cmd, cmd)) {
+	if (cw->imapMode1 && !strchr(imap1_cmd, cmd)) {
 		setError(MSG_ImapCommand, cmd);
 		return (globSub = false);
 	}
 
-	if (cw->imap2Mode && !strchr(imap2_cmd, cmd)) {
+	if (cw->imapMode2 && !strchr(imap2_cmd, cmd)) {
 		setError(MSG_ImapCommand, cmd);
 		return (globSub = false);
 	}

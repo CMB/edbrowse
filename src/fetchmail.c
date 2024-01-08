@@ -3496,7 +3496,7 @@ bool setupReply(bool all)
 		setError(MSG_ReIrc);
 		return false;
 	}
-	if (cw->imap1Mode | cw->imap2Mode) {
+	if (cw->imapMode1 | cw->imapMode2) {
 		setError(MSG_ReImap);
 		return false;
 	}
@@ -3748,7 +3748,7 @@ bool imapBuffer(char *line)
 		setError(MSG_NotImap);
 		return false;
 }
-	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->imap1Mode | cw->imap2Mode) {
+	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->imapMode1 | cw->imapMode2) {
 		setError(MSG_ImapCompat);
 		return false;
 	}
@@ -3785,7 +3785,7 @@ bool imapBuffer(char *line)
 	sleep(15);
 			curl_easy_cleanup(h);
 
-	cw->imap1Mode = true;
+	cw->imapMode1 = true;
 	return true;
 
 usage:
