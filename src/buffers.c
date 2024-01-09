@@ -3557,7 +3557,7 @@ static bool doGlobal(const char *line)
 	setError(-1);
 
 // check for mass delete or mass join
-	if(cw->browseMode | cw->sqlMode | cw->ircoMode | cw->imapMode1 | cw->imapMode2) goto nomass;
+	if(cw->browseMode | cw->sqlMode | cw->ircoMode | cw->imapMode1 | cw->imapMode2 | cw->imapMode3) goto nomass;
 	int block = -1, back = 0; // range for mass delete
 // atPartCracker() might overwrite comma with null, so p has to be char*
 	char *p = (char*)line;

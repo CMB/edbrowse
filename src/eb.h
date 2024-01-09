@@ -506,6 +506,7 @@ int ehsn;
 	bool ircPingOut:1; // sent ping to server
 	bool imapMode1:1;		// imap folders
 	bool imapMode2:1;		// imap envelopes
+	bool imapMode3:1;		// reading an email
 	int irc_fd; // file descriptor for socket
 	void *irc_ssl; // stream for a secure socket
 	ushort ircOther; // point to the output side

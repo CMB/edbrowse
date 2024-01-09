@@ -606,7 +606,7 @@ And it has the next sequence number.
 But does it? That's not required, that's not spec, that's just how most servers work.
 If we're wrong, we pass that sequence number to the server and get the wrong email.
 A bit chancy.
-Perhaps restructure everything to use uuid.
+Perhaps restructure everything to use uid.
 
 There may be other things going on in edbrowse, other files or websites,
 and we're tempted to leave this imap connection up and running.

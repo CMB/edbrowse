@@ -1274,8 +1274,7 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 	for (j = 0; j < f->nfetch; ++j) {
 		struct MIF *mif = f->mlist + j;
 
-#if 0
-// nobody is using the uid, don't fetch it, save time.
+// capture the uid
 		sprintf(cust_cmd, "FETCH %d UID", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = getMailData(handle);
@@ -1288,7 +1287,6 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 				mif->uid = atoi(t);
 		}
 		nzFree(mailstring);
-#endif
 
 		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
@@ -1311,6 +1309,7 @@ We'll deal with that later.
 		curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 		curl_easy_setopt(handle, CURLOPT_HEADERDATA, NULL);
 		if (res != CURLE_OK) {
+abort:
 			ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
 			nzFree(mailstring), mailstring = 0;
 			return false;
