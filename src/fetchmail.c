@@ -3925,11 +3925,15 @@ bool folderDescend(const char *path, bool rf)
 	}
 	mif = f->mlist;
 	folderStream = initString(&fs_l); // actually holds envelopes
+	folderPaths = initString(&fp_l); // actually holds uids
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		char uidbuf[12];
 		printEnvelope(mif, &p);
 		stringAndString(&folderStream, &fs_l, p);
 		stringAndChar(&folderStream, &fs_l, '\n');
 		nzFree(p);
+		sprintf(uidbuf, "%d\n", mif->uid);
+		stringAndString(&folderPaths, &fp_l, uidbuf);
 	}
 	if(!rf) {
 // lop off stuff below
@@ -3949,8 +3953,12 @@ bool folderDescend(const char *path, bool rf)
 // if the folder is empty, you get an empty buffer.
 // I don't know how I feel about that.
 // It's not an error I suppose - but why did you go to a folder with 0 messages?
-	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
-	nzFree(folderStream);
+	if(f->nfetch) {
+		addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
+		addTextToBackend(folderPaths);
+		nzFree(folderStream);
+		nzFree(folderPaths);
+	}
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", fs_l);
 	cleanFolder(f);
