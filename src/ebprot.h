@@ -71,6 +71,8 @@ void mail64Error(int err);
 char *emailParse(char *buf);
 bool setupReply(bool all);
 bool imapBuffer(char *line);
+bool imap1rf();
+void folderDescend(const char *path);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);

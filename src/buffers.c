@@ -31,7 +31,7 @@ static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
-static const char imap1_cmd[] = "efghHklnpPqvXz=<";
+static const char imap1_cmd[] = "efghHklnpPqvwXz=<";
 // commands for imap envelopes
 static const char imap2_cmd[] = "efghHklnpPqvXz=<";
 // Commands that work at line number 0, in an empty file
@@ -1481,7 +1481,7 @@ void delText(int start, int end)
 	int *label = NULL;
 
 // browse / sql / irc has no undo command.
-	if (cw->browseMode | cw->sqlMode | cw->ircoMode) {
+	if (cw->browseMode | cw->sqlMode | cw->ircoMode | cw->imapMode1 | cw->imapMode2) {
 		for (ln = start; ln <= end; ++ln)
 			nzFree(cw->map[ln].text);
 	} else {
@@ -5156,6 +5156,8 @@ pwd:
 			setError(MSG_NoRefresh);
 			return false;
 		}
+// refresh the imap folders is special
+		if(cw->imapMode1) return imap1rf();
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = 2;
@@ -7462,6 +7464,10 @@ dest_ok:
 				setError(MSG_IrcRename);
 				return false;
 			}
+			if (cw->imapMode1 | cw->imapMode2) {
+				setError(MSG_ImapRename);
+				return false;
+			}
 			nzFree(cf->fileName);
 			cf->fileName = cloneString(line);
 		}
@@ -7739,7 +7745,20 @@ dest_ok:
 		return j;
 	}
 
-	/* go to a file in a directory listing */
+	// go to a folder in an imap listing
+	if (cmd == 'g' && cw->imapMode1 && !first) {
+		if (endRange > startRange) {
+			setError(MSG_RangeCmd, "g");
+			return false;
+		}
+		cw->dot = endRange;
+		p = (char *)cw->r_map[endRange].text; // path for the folder
+		cmd = 'e';
+		folderDescend(p);
+		return true;
+	}
+
+	// go to a file in a directory listing
 	if (cmd == 'g' && cw->dirMode && (!first || stringEqual(line, "-"))) {
 		char *dirline;
 		const struct MIMETYPE *gmt = 0;	/* the go mime type */
@@ -7785,7 +7804,7 @@ dest_ok:
 		for(i = 0; i < j; ++i)
 			if(!p[i])
 				goto past_g_file;
-		p[j] = 0;	/* temporary */
+		p[j] = 0;	// temporary
 		dirline = makeAbsPath(p);
 		p[j] = '\n';
 		if(!dirline || access(dirline, 4))
@@ -7802,7 +7821,7 @@ dest_ok:
 			else
 				return playBuffer("pb", dirline);
 		}
-/* I don't think we need to make a copy here. */
+// I don't think we need to make a copy here
 		line = dirline;
 		first = *line;
 	}

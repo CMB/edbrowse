@@ -1548,8 +1548,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		while (*t == ' ')
 			--t;
 		if (isdigitByte(*t)) {
-			while (isdigitByte(*t))
-				--t;
+			while (isdigitByte(*t)) --t;
 			++t;
 			f->nmsgs = atoi(t);
 		}
@@ -1936,9 +1935,6 @@ int fetchMail(int account)
 	int message_count = 0, message_number;
 
 	active_a = a, maskon = a->maskon, isimap = a->imap;
-// remember the envelope format we got from the config file
-	strcpy(envelopeFormatDef, envelopeFormat);
-
 	get_mailbox_url(a);
 	url_for_error = mailbox_url;
 
@@ -3783,8 +3779,6 @@ bool imapBuffer(char *line)
 	const char *login = a->login;
 	const char *pass = a->password;
 	CURLcode res = CURLE_OK;
-// remember the envelope format we got from the config file
-	strcpy(envelopeFormatDef, envelopeFormat);
 // reload address book on each imap setup; you might have changed it.
 // We do the same for each sendmail.
 	loadAddressBook();
@@ -3796,20 +3790,21 @@ bool imapBuffer(char *line)
 	res = getMailData(h);
 	if (res != CURLE_OK) goto login_error;
 
+	setFolders(h);
 // setFolders() prints out the stats in mail client mode.
 // Here in the buffer, it builds strings, which we add to the current buffer.
-// For now there is stuff allocated that is never freed. This is just a concept.
-	setFolders(h);
+// Clean up the structures that we don't use here.
+	nzFree(topfolders);
+	topfolders = 0;
+	nzFree(tf_cbase);
+	tf_cbase = 0;
 	if(!n_folders) {
 		setError(MSG_NoFolders);
-// in this case I'll clean house, though I don't think it ever happens.
-		nzFree(topfolders);
-		topfolders = 0;
-		nzFree(tf_cbase);
-		tf_cbase = 0;
 		curl_easy_cleanup(h);
 		return false;
 	}
+	cw->imap_h = h;
+	cw->imap_n = act;
 // There's stuff to push into the buffer, but first set the mode,
 // so it doesn't think we can undo things later.
 	cw->imapMode1 = true;
@@ -3830,4 +3825,51 @@ login_error:
 	ebcurl_setError(res, mailbox_url, 0, emptyString);
 	curl_easy_cleanup(h);
 	return false;
+}
+
+bool imap1rf(void)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	active_a = a, isimap = a->imap;
+	if(cw->dol) delText(1, cw->dol);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, 0);
+	res = getMailData(h);
+	if (res != CURLE_OK) {
+// error getting the folders, revert back to an empty buffer
+		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+teardown:
+		curl_easy_cleanup(h);
+		cw->imap_h = 0;
+		cw->imapMode1 = false;
+		nzFree(cf->firstURL), cf->firstURL = 0;
+		nzFree(cf->fileName), cf->fileName = 0;
+		return false;
+	}
+	setFolders(cw->imap_h);
+	nzFree(topfolders);
+	topfolders = 0;
+	nzFree(tf_cbase);
+	tf_cbase = 0;
+	if(!n_folders) {
+// there were folders before but none now? Should never happen!
+		setError(MSG_NoFolders);
+		goto teardown;
+	}
+	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
+	addTextToBackend(folderPaths);
+	nzFree(folderStream), nzFree(folderPaths);
+// a byte count, as though you had read a file.
+	debugPrint(1, "%d", fs_l);
+	return true;
+}
+
+void folderDescend(const char *path)
+{
+	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
+	f->path = path;
+	puts("not yet implemented");
+	free(f);
 }
