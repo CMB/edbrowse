@@ -255,7 +255,7 @@ static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
 static bool move_capable = false;
 
-static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
+static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
 static char *folderStream, *folderPaths;
 static int fs_l, fp_l;
 
@@ -463,7 +463,7 @@ static void undosOneMessage(void)
 }
 
 static char presentMail(void);
-static void envelopes(CURL * handle, struct FOLDER *f);
+static bool envelopes(CURL * handle, struct FOLDER *f);
 static void isoDecode(char *vl, char **vrp);
 
 static void cleanFolder(struct FOLDER *f)
@@ -1263,7 +1263,7 @@ char **name, char **addr)
 	return true;
 }
 
-static void envelopes(CURL * handle, struct FOLDER *f)
+static bool envelopes(CURL * handle, struct FOLDER *f)
 {
 	int j;
 	char *t, *u;
@@ -1311,7 +1311,9 @@ We'll deal with that later.
 		curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 		curl_easy_setopt(handle, CURLOPT_HEADERDATA, NULL);
 		if (res != CURLE_OK) {
-			ebcurl_setError(res, mailbox_url, 2, emptyString);
+			ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
+			nzFree(mailstring), mailstring = 0;
+			return false;
 		}
 
 /* have to strip the untagged line off the front,
@@ -1524,10 +1526,11 @@ dosize:
 		mif->size = atoi(t);
 
 	}
+	return true;
 }
 
 // examine the specified folder, gather message envelopes
-static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
+static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
 	int j;
 	int fl = (ismc ? fetchLimit : cw->imap_l);
@@ -1542,14 +1545,16 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res = getMailData(handle);
-	if (res != CURLE_OK)
-		ebcurl_setError(res, mailbox_url, 2, emptyString);
+	if (res != CURLE_OK) {
+		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
+		nzFree(mailstring), mailstring = 0;
+		return false;
+	}
 
 /* look for message count */
 	t = strstr(mailstring, " EXISTS");
 	if (t) {
-		while (*t == ' ')
-			--t;
+		while (*t == ' ') --t;
 		if (isdigitByte(*t)) {
 			while (isdigitByte(*t)) --t;
 			++t;
@@ -1581,11 +1586,11 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 			stringAndString(&folderStream, &fs_l, brief);
 			stringAndString(&folderPaths, &fp_l, f->path);
 			stringAndChar(&folderPaths, &fp_l, '\n');
-			return;
+			return true;
 		}
 		j = f - topfolders + 1;
 		if(maskon && (j >= (int)sizeof(active_a->maskfolder) || !active_a->maskfolder[j]))
-			return; // not in mask, don't print
+			return true; // not in mask, don't print
 		printf("%2d %s", j, withoutSubstring(f));
 /*
 		if (f->children)
@@ -1593,11 +1598,11 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 */
 		printf(", ");
 		i_printf(MSG_MessagesX, f->nmsgs);
-		return;
+		return true;
 	}
 
 	if (!f->nmsgs)
-		return;
+		return true;
 
 /* get some information on each message */
 	f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
@@ -1606,7 +1611,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		mif->seqno = f->start + j;
 	}
 
-	envelopes(handle, f);
+	if(!envelopes(handle, f)) return false;
 
 	if (debugLevel > 0 && ismc) {
 		if (f->nmsgs > f->nfetch)
@@ -1614,6 +1619,8 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		else
 			i_printf(MSG_MessagesX, f->nmsgs);
 	}
+
+	return true;
 }
 
 /* find the last mail in the local unread directory */
@@ -3893,7 +3900,7 @@ teardown:
 }
 
 // rf parameter means this is a refresh of envelopes
-void folderDescend(const char *path, bool rf)
+bool folderDescend(const char *path, bool rf)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
@@ -3910,7 +3917,13 @@ void folderDescend(const char *path, bool rf)
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // If this fails the whole program exits, which isn't great.
 // When it was just a mail client that sort of made sense.
-	examineFolder(h, f, false);
+	if(!examineFolder(h, f, false)) {
+//Oops, problem.
+		if(rf && cw->dol) delText(1, cw->dol);
+		cleanFolder(f);
+		free(f);
+		return false;
+	}
 	mif = f->mlist;
 	folderStream = initString(&fs_l); // actually holds envelopes
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
@@ -3943,4 +3956,5 @@ void folderDescend(const char *path, bool rf)
 	debugPrint(1, "%d", fs_l);
 	cleanFolder(f);
 	free(f);
+	return true;
 }

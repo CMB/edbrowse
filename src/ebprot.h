@@ -76,7 +76,7 @@ bool setupReply(bool all);
 bool imapBufferPresent(void);
 bool imapBuffer(char *line);
 bool imap1rf();
-void folderDescend(const char *path, bool rf);
+bool folderDescend(const char *path, bool rf);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);

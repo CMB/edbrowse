@@ -5182,8 +5182,7 @@ pwd:
 		if(cw->imapMode1) return imap1rf();
 		if(cw->imapMode2) {
 			const Window *pw = cw->prev; // previous
-			folderDescend((char*)pw->r_map[pw->dot].text, true);
-			return true;
+			return folderDescend((char*)pw->r_map[pw->dot].text, true);
 		}
 		if (cw->browseMode)
 			cmd = 'b';
@@ -7785,8 +7784,7 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // path for the folder
 		cmd = 'e';
-		folderDescend(p, false);
-		return true;
+		return folderDescend(p, false);
 	}
 
 	// go to a file in a directory listing
