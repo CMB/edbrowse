@@ -838,4 +838,5 @@ MSG_ImaskOn,
 	MSG_AudioImap,
 	MSG_BreakImap,
 	MSG_ImapRename,
+	MSG_ImapConfig,
 };

@@ -3744,6 +3744,25 @@ found:
 	nzFree(buf);
 }
 
+bool imapBufferPresent(void)
+{
+int i;
+	for(i = 1; i <= maxSession; ++i) {
+		struct ebSession *s = &sessionList[i];
+		Window *w = s->lw;
+	while (w) {
+			if(w->imapMode1) return true;
+			w = w->prev;
+		}
+		w = s->lw2;
+	while (w) {
+			if(w->imapMode1) return true;
+			w = w->prev;
+		}
+	}
+	return false;
+}
+
 bool imapBuffer(char *line)
 {
 	int act;

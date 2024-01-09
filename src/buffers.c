@@ -5213,6 +5213,10 @@ pwd:
 	}
 
 	if (stringEqual(line, "config")) {
+		if(imapBufferPresent()) {
+			setError(MSG_ImapConfig);
+			return false;
+		}
 		readConfigFile();
 		setupEdbrowseCache();
 		if (curlActive) {

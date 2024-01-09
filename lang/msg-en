@@ -738,7 +738,7 @@ cannot reply in imap mode
 cannot play audio in imap mode
 cannot break lines in imap mode
 cannot change the name of an imap server
-0
+cannot reconfig while imap sessions are running
 0
 0
 0

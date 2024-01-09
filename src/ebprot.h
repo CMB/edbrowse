@@ -71,6 +71,7 @@ bool emailTest(void);
 void mail64Error(int err);
 char *emailParse(char *buf);
 bool setupReply(bool all);
+bool imapBufferPresent(void);
 bool imapBuffer(char *line);
 bool imap1rf();
 void folderDescend(const char *path);
