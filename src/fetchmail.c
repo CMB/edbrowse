@@ -152,52 +152,51 @@ static char *mailstring;
 static int mailstring_l;
 static char *mailbox_url, *message_url;
 
-int imapfetch = 100;
+static int fetchLimit = 100;
 static bool earliest;
-static const char envelopeFormatChars[] = "tfsdzn";
+static const char envelopeFormatChars[8] = "tfsdzn";
 // to from subject date size number
-static char envelopeFormat[sizeof(envelopeFormatChars)] = {'f', 's'}; // default is from subject
-static char envelopeFormatDef[sizeof(envelopeFormatChars)] = { 'f', 's'};
+// default is from subject
+static const char envelopeFormatDef[8] = "fs";
+static char envelopeFormat[8] = "fs";
 
-bool setEnvelopeFormat(const char *s)
+void setEnvelopeFormat(const char *s)
 {
 	char c;
 	bool something = false;
 	int i, j;
-	char count[sizeof(envelopeFormatChars)];
+	char *p = (!cw || ismc ? envelopeFormat : cw->imap_env);
+	char count[8];
 
 // check
 	for(j=0; (c = s[j]); ++j) {
-		if(isspaceByte(c))
-			continue;
+		if(isspaceByte(c)) continue;
 		something = true;
 		if(!strchr(envelopeFormatChars, c))
-			return false;
+			return;
 	}
 
 // e command alone resurrects the default
 	if(!something) {
-		strcpy(envelopeFormat, envelopeFormatDef);
-		return true;
+		strcpy(p, envelopeFormatDef);
+		return;
 	}
 
 	memset(count, 0, sizeof(count));
 	for(i=0; (c = *s); ++s) {
-		if(isspaceByte(c))
-			continue;
+		if(isspaceByte(c)) continue;
 		j = strchr(envelopeFormatChars, c) - envelopeFormatChars;
-		if(count[j])
-			continue;
+		if(count[j]) continue;
 		count[j] = 1;
-		envelopeFormat[i++] = c;
+		p[i++] = c;
 	}
-	envelopeFormat[i] = 0;
-	return true;
+	p[i] = 0;
 }
 
-static void setLimit(const char *t)
+void setFetchLimit(const char *t)
 {
 	char early = false;
+	int *p = (!cw || ismc ? &fetchLimit : &cw->imap_l);
 	skipWhite(&t);
 	if(*t == '-')
 		early = true, ++t;
@@ -205,11 +204,10 @@ static void setLimit(const char *t)
 		i_puts(MSG_NumberExpected);
 		return;
 	}
-	imapfetch = atoi(t);
+	*p = atoi(t);
 	earliest = early;
-	if (imapfetch < 1) imapfetch = 1;
-	if (imapfetch > 1000) imapfetch = 1000;
-if (debugLevel > 0) 	i_printf(MSG_FetchN, imapfetch);
+	if (*p < 1) *p = 1;
+	if (*p > 1000) *p = 1000;
 }
 
 /* mail message in a folder */
@@ -492,6 +490,7 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	char *t, *u;
 	CURLcode res;
 	int cnt;
+	int fl = (ismc ? fetchLimit : cw->imap_l);
 	struct MIF *mif;
 	char cust_cmd[200];
 
@@ -561,8 +560,8 @@ none:
 	cleanFolder(f);
 
 	f->nmsgs = f->nfetch = cnt;
-	if (cnt > imapfetch)
-		f->nfetch = imapfetch;
+	if (cnt > fl)
+		f->nfetch = fl;
 	f->mlist = allocZeroMem(sizeof(struct MIF) * f->nfetch);
 	mif = f->mlist;
 	u = t;
@@ -597,7 +596,7 @@ static void printEnvelope(const struct MIF *mif)
 	if(mif->line2 && debugLevel >= 3)
 		stringAndString(&envp, &envp_l, "~ ");
 
-	for (i = 0; (c = envelopeFormat[i]); ++i) {
+	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i) {
 		if(i)
 			stringAndString(&envp, &envp_l, " | ");
 		switch(c) {
@@ -1091,9 +1090,9 @@ rebulk:
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
 			if (inputline[0] == '\n')
-				i_printf(MSG_FetchN, imapfetch);
+				i_printf(MSG_FetchN, (ismc ? fetchLimit : cw->imap_l));
 			else
-				setLimit(inputline);
+				setFetchLimit(inputline);
 			goto reaction;
 		}
 
@@ -1528,6 +1527,7 @@ dosize:
 static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
 	int j;
+	int fl = (ismc ? fetchLimit : cw->imap_l);
 	char *t;
 	CURLcode res;
 
@@ -1554,8 +1554,8 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 		}
 	}
 	f->nfetch = f->nmsgs;
-	if (f->nfetch > imapfetch)
-		f->nfetch = imapfetch;
+	if (f->nfetch > fl)
+		f->nfetch = fl;
 	f->start = 1;
 	if (f->nmsgs > f->nfetch && !earliest)
 		f->start += (f->nmsgs - f->nfetch);
@@ -1815,22 +1815,23 @@ refresh:
 		}
 
 		if (stringEqual(inputline, "l")) {
-			i_printf(MSG_FetchN, imapfetch);
+			i_printf(MSG_FetchN, fetchLimit);
 			goto input;
 		}
 
 		if (*t == 'l' && isspaceByte(t[1])) {
-			setLimit(t + 1);
+			setFetchLimit(t + 2);
 			goto input;
 		}
 
-		if (*t == 'e') {
-			if(!t[1]) {
-				setEnvelopeFormat("");
-				goto input;
-			}
-			if(isspaceByte(t[1]) && setEnvelopeFormat(t + 2))
-				goto input;
+		if (stringEqual(inputline, "e")) {
+			setEnvelopeFormat("");
+			goto input;
+		}
+
+		if (*t == 'l' && isspaceByte(t[1])) {
+			setEnvelopeFormat(t + 2);
+			goto input;
 		}
 
 		if (!strncmp(t, "create ", 7)) {
@@ -3810,6 +3811,8 @@ bool imapBuffer(char *line)
 	cw->imapMode1 = true;
 	cf->firstURL = cloneString(mailbox_url);
 	asprintf(&cf->fileName, "imap %d", act);
+	strcpy(cw->imap_env, envelopeFormat);
+	cw->imap_l = fetchLimit;
 	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
 	addTextToBackend(folderPaths);
 	nzFree(folderStream), nzFree(folderPaths);

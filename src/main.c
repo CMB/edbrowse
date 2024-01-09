@@ -1981,9 +1981,7 @@ inside:
 			continue;
 
 		case 40:	// imap fetch limit
-			imapfetch = atoi(v);
-			if (imapfetch < 1) imapfetch = 1;
-			if (imapfetch >= 1000) imapfetch = 1000;
+			if(stringIsNum(v)) setFetchLimit(v);
 			continue;
 
 		case 41:	// novs

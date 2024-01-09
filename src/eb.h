@@ -65,7 +65,6 @@ extern int ignore; // used to suppress warnings
 extern const char *jsSourceFile; // sourcefile providing the javascript
 extern int jsLineno; // js line number
 extern int undo1line; // special undo line number
-extern int imapfetch; // fetch this many envelopes in imap
 extern char frameContent[];
 	extern const char startWindowJS[];
 	extern const char deminJS[];
@@ -515,6 +514,8 @@ int ehsn;
 	char *ircNick, *ircChannel;
 	time_t ircRespond;
 	int imap_n; // imap account
+	char imap_env[8]; // envelope format
+	int imap_l; // fetch limit
 	CURL *imap_h; // imap server handle
 	struct DBTABLE *table;	// if in sqlMode
 	time_t nextrender;

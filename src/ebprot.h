@@ -62,7 +62,8 @@ bool ebConnect(void) ;
 int goSelect(int *startLine, char **rbuf) ;
 
 // sourcefile=fetchmail.c
-bool setEnvelopeFormat(const char *s);
+void setEnvelopeFormat(const char *s);
+void setFetchLimit(const char *s);
 int fetchMail(int account);
 int fetchAllMail(void);
 void scanMail(void);
