@@ -21,7 +21,9 @@ void printDot(void);
 void printPrompt(void);
 void initializeReadline(void);
 pst inputLine(const bool textEntry);
+Window *createWindow(void);
 void freeWindowLines(struct lineMap *map);
+void freeWindows(int cx, bool all);
 bool cxCompare(int cx) ;
 bool cxActive(int cx, bool error);
 bool cxQuit(int cx, int action) ;
@@ -74,7 +76,7 @@ bool setupReply(bool all);
 bool imapBufferPresent(void);
 bool imapBuffer(char *line);
 bool imap1rf();
-void folderDescend(const char *path);
+void folderDescend(const char *path, bool rf);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);

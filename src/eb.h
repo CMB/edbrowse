@@ -457,7 +457,6 @@ struct ebWindow {
 	char *mailInfo;
 	char lhs[MAXRE], rhs[MAXRE];	/* remembered substitution strings */
 	struct lineMap *map, *r_map;
-	struct listHead lines, r_lines;
 	char *dmap; // for directory listing
 /* The labels that you set with the k command, and access via 'x.
  * Basically, that's 26 line numbers.

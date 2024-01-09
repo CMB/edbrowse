@@ -580,7 +580,8 @@ none:
 	return 1;
 }
 
-static void printEnvelope(const struct MIF *mif)
+// the grab parameter grabs the string for the caller, instead of printing it
+static void printEnvelope(const struct MIF *mif, char **grab)
 {
 	char *envp;		// print the envelope concisely
 	char *envp_end;
@@ -593,8 +594,6 @@ static void printEnvelope(const struct MIF *mif)
 	if (!mif->seen)
 		stringAndChar(&envp, &envp_l, '*');
 #endif
-	if(mif->line2 && debugLevel >= 3)
-		stringAndString(&envp, &envp_l, "~ ");
 
 	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i) {
 		if(i)
@@ -628,9 +627,13 @@ static void printEnvelope(const struct MIF *mif)
 	isoDecode(envp, &envp_end);
 	*envp_end = 0;
 
+	if(!grab) {
 // Resulting line could contain utf8, use the portable puts routine.
-	eb_puts(envp);
-	nzFree(envp);
+		eb_puts(envp);
+		nzFree(envp);
+	} else {
+		*grab = envp;
+	}
 }
 
 static void viewAll(struct FOLDER *f)
@@ -639,7 +642,7 @@ static void viewAll(struct FOLDER *f)
 	struct MIF *mif = f->mlist;
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
 		if (!mif->gone)
-			printEnvelope(mif);
+			printEnvelope(mif, 0);
 	}
 }
 
@@ -836,7 +839,7 @@ showmessages:
 		if (mif->gone)
 			continue;
 reaction:
-		printEnvelope(mif);
+		printEnvelope(mif, 0);
 action:
 		delflag = retry = partread = false;
 		postkey = 0;
@@ -1274,13 +1277,11 @@ static void envelopes(CURL * handle, struct FOLDER *f)
 		sprintf(cust_cmd, "FETCH %d UID", mif->seqno);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = getMailData(handle);
-		if (res != CURLE_OK)
-			goto abort;
+		if (res != CURLE_OK) goto abort;
 		t = strstr(mailstring, "FETCH (UID ");
 		if (t) {
 			t += 11;
-			while (*t == ' ')
-				++t;
+			while (*t == ' ') ++t;
 			if (isdigitByte(*t))
 				mif->uid = atoi(t);
 		}
@@ -1605,7 +1606,7 @@ static void examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 
 	envelopes(handle, f);
 
-	if (debugLevel > 0) {
+	if (debugLevel > 0 && ismc) {
 		if (f->nmsgs > f->nfetch)
 			i_printf(MSG_ShowLast + earliest, f->nfetch, f->nmsgs);
 		else
@@ -1809,8 +1810,7 @@ refresh:
 		t = inputline;
 		if (t[0] == 'd' && t[1] == 'b' && isdigitByte(t[2]) && !t[3]) {
 			debugLevel = t[2] - '0';
-			curl_easy_setopt(handle, CURLOPT_VERBOSE,
-					 (debugLevel >= 4));
+			curl_easy_setopt(handle, CURLOPT_VERBOSE, (debugLevel >= 4));
 			goto input;
 		}
 
@@ -3857,6 +3857,8 @@ bool imap1rf(void)
 	struct MACCOUNT *a = accounts + act - 1;
 	active_a = a, isimap = a->imap;
 	if(cw->dol) delText(1, cw->dol);
+// in case you changed debug levels
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, 0);
 	res = getMailData(h);
 	if (res != CURLE_OK) {
@@ -3888,10 +3890,55 @@ teardown:
 	return true;
 }
 
-void folderDescend(const char *path)
+// rf parameter means this is a refresh of envelopes
+void folderDescend(const char *path, bool rf)
 {
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	Window *w;
+	struct MIF *mif;
+	char *p;
+	int j;
+
+	active_a = a, isimap = a->imap;
 	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
 	f->path = path;
-	puts("not yet implemented");
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+// If this fails the whole program exits, which isn't great.
+// When it was just a mail client that sort of made sense.
+	examineFolder(h, f, false);
+	mif = f->mlist;
+	folderStream = initString(&fs_l); // actually holds envelopes
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		printEnvelope(mif, &p);
+		stringAndString(&folderStream, &fs_l, p);
+		stringAndChar(&folderStream, &fs_l, '\n');
+		nzFree(p);
+	}
+	if(!rf) {
+// lop off stuff below
+		freeWindows(context, false);
+// make new window
+		w = createWindow();
+		w->imap_h = h;
+		w->imap_n = act;
+		w->imap_l = cw->imap_l;
+		strcpy(w->imap_env, cw->imap_env);
+		w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
+		cw->imapMode2 = true;
+		asprintf(&cf->fileName, "envelopes %s", f->path);
+	} else {
+		if(cw->dol) delText(1, cw->dol);
+	}
+// if the folder is empty, you get an empty buffer.
+// I don't know how I feel about that.
+// It's not an error I suppose - but why did you go to a folder with 0 messages?
+	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
+	nzFree(folderStream);
+// a byte count, as though you had read a file.
+	debugPrint(1, "%d", fs_l);
+	cleanFolder(f);
 	free(f);
 }

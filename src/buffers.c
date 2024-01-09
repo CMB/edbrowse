@@ -31,9 +31,9 @@ static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
-static const char imap1_cmd[] = "efghHklnpPqvwXz=<";
+static const char imap1_cmd[] = "efghHklnpPqvwXz^=<";
 // commands for imap envelopes
-static const char imap2_cmd[] = "efghHklnpPqvXz=<";
+static const char imap2_cmd[] = "efghHklnpPqvXz^=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHkMPqruwz=^<";
 // Commands that expect a space afterward
@@ -782,12 +782,10 @@ static void restoreSubstitutionStrings(Window *nw)
 }
 
 /* Create a new window, with default variables. */
-static Window *createWindow(void)
+Window *createWindow(void)
 {
 	Window *nw;	/* the new window */
 	nw = allocZeroMem(sizeof(Window));
-	initList(&nw->lines);
-	initList(&nw->r_lines);
 	saveSubstitutionStrings();
 	restoreSubstitutionStrings(nw);
 	nw->f0.gsn = ++gfsn;
@@ -1007,7 +1005,8 @@ static void freeWindow(Window *w)
 	nzFree(w->mailInfo);
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
-	if(w->imap_h) curl_easy_cleanup(w->imap_h);
+// only cleanup the curl handle on imapmode 1, if you try it again on 2 it will blow up.
+	if(w->imapMode1 && w->imap_h) curl_easy_cleanup(w->imap_h);
 	if(w->irciMode) {
 		Window *w2 = sessionList[w->ircOther].lw;
 // w2 should always be there
@@ -1035,7 +1034,7 @@ static void freeWindow(Window *w)
 	free(w);
 }
 
-static void freeWindows(int cx, bool all)
+void freeWindows(int cx, bool all)
 {
 	struct ebSession *s = &sessionList[cx];
 	Window *w = s->lw2;
@@ -4877,18 +4876,16 @@ static int twoLetter(const char *line, const char **runThis)
 			setError(MSG_IrcCommandS, line);
 			return false;
 		}
-		if(cw->imapMode2 && !down) {
-			cmd = 'e';
-			setError(MSG_IrcCommandS, line);
-			return false;
-		}
-// also error out if up5 would take you up past imap envelopes.
 		undoCompare();
 		cw->undoable = false;
 		undoSpecialClear();
 		cmd = 'e';
 		if(!down) { // up
-			for(k = 0, w = cw; w; w = w->prev, ++k) ;
+			for(k = 0, w = cw; w; w = w->prev, ++k)
+				if(w->imapMode2 && k < n) {
+					setError(MSG_ImapCommandS, line);
+					return false;
+				}
 			if(n >= k) {
 				setError(MSG_NoUp);
 				return false;
@@ -5158,6 +5155,11 @@ pwd:
 		}
 // refresh the imap folders is special
 		if(cw->imapMode1) return imap1rf();
+		if(cw->imapMode2) {
+			const Window *pw = cw->prev; // previous
+			folderDescend((char*)pw->r_map[pw->dot].text, true);
+			return true;
+		}
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = 2;
@@ -7758,7 +7760,7 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // path for the folder
 		cmd = 'e';
-		folderDescend(p);
+		folderDescend(p, false);
 		return true;
 	}
 
