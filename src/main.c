@@ -1981,7 +1981,7 @@ inside:
 			continue;
 
 		case 40:	// imap fetch limit
-			if(stringIsNum(v)) setFetchLimit(v);
+			if(stringIsNum(v) >= 0) setFetchLimit(v);
 			continue;
 
 		case 41:	// novs

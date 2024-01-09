@@ -596,8 +596,10 @@ static void printEnvelope(const struct MIF *mif, char **grab)
 #endif
 
 	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i) {
-		if(i)
-			stringAndString(&envp, &envp_l, " | ");
+// we don't honor n in a buffer, you already have the line numbers, just type n
+		if(c == 'n') continue;
+// put in the delimiter
+		if(i) stringAndString(&envp, &envp_l, " | ");
 		switch(c) {
 		case 'f':
 			stringAndString(&envp, &envp_l, mif->from[0] ? mif->from : mif->reply);

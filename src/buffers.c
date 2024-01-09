@@ -4834,6 +4834,35 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'l' && line[1] == ' ' &&
+	stringIsNum(line+2) >= 0) {
+		Window *w = 0;
+		setFetchLimit(line + 2);
+// find the other window
+		if(cw->imapMode2) w = cw->prev;
+		else w = sessionList[context].fw2;
+// and copy to the other window
+		if(w) w->imap_l = cw->imap_l;
+		return true;
+	}
+
+	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'e' && line[1] == ' ') {
+	const char *p = line + 2;
+	while(*p) {
+		if(!strchr("fstzd", *p)) break;
+		++p;
+	}
+	if(*p) goto no_action; // doesn't look like envelope format
+		Window *w = 0;
+		setEnvelopeFormat(line + 2);
+// find the other window
+		if(cw->imapMode2) w = cw->prev;
+		else w = sessionList[context].fw2;
+// and copy to the other window
+		if(w) strcpy(w->imap_env, cw->imap_env);
+		return true;
+	}
+
 	if(!strncmp(line, "up", 2) ||
 	!strncmp(line, "down", 4)) {
 		struct ebSession *s = &sessionList[context];
@@ -4881,11 +4910,7 @@ static int twoLetter(const char *line, const char **runThis)
 		undoSpecialClear();
 		cmd = 'e';
 		if(!down) { // up
-			for(k = 0, w = cw; w; w = w->prev, ++k)
-				if(w->imapMode2 && k < n) {
-					setError(MSG_ImapCommandS, line);
-					return false;
-				}
+			for(k = 0, w = cw; w; w = w->prev, ++k) ;
 			if(n >= k) {
 				setError(MSG_NoUp);
 				return false;
