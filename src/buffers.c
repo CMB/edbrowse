@@ -1493,7 +1493,7 @@ void delText(int start, int end)
 	memmove(cw->map + start, cw->map + end + 1,
 		(cw->dol - end + 1) * LMSIZE);
 
-	if ((cw->dirMode | cw->ircoMode1 | cw->imapMode1) && cw->r_map) {
+	if ((cw->dirMode | cw->ircoMode1 | cw->imapMode1 | cw->imapMode2) && cw->r_map) {
 // if you are looking at directories with ls-s or some such,
 // we have to delete the corresponding stat information.
 		for (ln = start; ln <= end; ++ln)
@@ -1530,7 +1530,7 @@ void delText(int start, int end)
 	if (!cw->dol) {
 		free(cw->map);
 		cw->map = 0;
-		if ((cw->dirMode | cw->ircoMode1 | cw->imapMode1) && cw->r_map) {
+		if ((cw->dirMode | cw->ircoMode1 | cw->imapMode1 | cw->imapMode2) && cw->r_map) {
 			free(cw->r_map);
 			cw->r_map = 0;
 		}
@@ -6239,6 +6239,9 @@ no_action:
 static int twoLetterG(const char *line, const char **runThis)
 {
 
+	if(cw->imapMode2 && (line[0] == 'm' || line[0] == 't') && line[1] == ' ')
+		return imapMovecopy(startRange, endRange, line[0], (char*)line+2);
+
 	if (stringEqual(line, "bw") || !strncmp(line, "bw/", 3) || !strncmp(line, "bw?", 3) || (!strncmp(line, "bw", 2) && isdigitByte(line[2]))) {
 		Window *lw;
 		if(!line[2]) lw = cw;
@@ -7000,11 +7003,10 @@ after_ib:
 
 // get the command
 	cmd = *line;
-	if (cmd)
-		++line;
-	else
-		cmd = 'p';
+	if (cmd) ++line;
+	else cmd = 'p';
 	icmd = cmd;
+	if(cw->imapMode2 && cmd == 't' && !*line) cmd = 'g';
 
 	if (!strchr(valid_cmd, cmd)) {
 		setError(MSG_UnknownCommand, cmd);
@@ -7797,7 +7799,7 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // uid and subject for the email
 		cmd = 'e';
-		return mailDescend(p, false);
+		return mailDescend(p, icmd);
 	}
 
 	// go to a file in a directory listing

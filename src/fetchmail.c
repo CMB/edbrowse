@@ -3946,7 +3946,7 @@ bool folderDescend(const char *path, bool rf)
 	return true;
 }
 
-bool mailDescend(const char *title, bool rf)
+bool mailDescend(const char *title, char cmd)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
@@ -3967,7 +3967,7 @@ bool mailDescend(const char *title, bool rf)
 	f0.path = path; // that's all we need in f0
 
 // t (text component) not yet implemented
-	preferPlain = false;
+	preferPlain = (cmd == 't');
 	res = downloadBody(h, &f0, uid);
 	if(res != CURLE_OK) {
 // A partial read of a big email doesn't return the error, though it does print an error.
@@ -3988,7 +3988,7 @@ bool mailDescend(const char *title, bool rf)
 	w = createWindow();
 	w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
 	cw->imapMode3 = true;
-	asprintf(&cf->fileName, "mail: %s", subj);
+	asprintf(&cf->fileName, "mail %s", subj);
 	vr = cf->fileName + strlen(cf->fileName);
 	isoDecode(cf->fileName, &vr);
 	*vr = 0;
@@ -4002,5 +4002,11 @@ bool mailDescend(const char *title, bool rf)
 		addTextToBuffer((pst) mailstring, mailstring_l, 0, false);
 	cw->changeMode = false;
 	browseCurrentBuffer(NULL);
+	return true;
+}
+
+bool imapMovecopy(int l1, int l2, char cmd, char *dest)
+{
+  puts("not implemented");
 	return true;
 }
