@@ -263,7 +263,6 @@ static const char *withoutSubstringPath(const char *p)
 
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
-static bool move_capable = false;
 
 static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
 static char *imapLines, *imapPaths;
@@ -454,11 +453,11 @@ static CURLcode getMailData(CURL * handle)
 	mailstring_l = callback_data.length;
 	callback_data.buffer = 0;
 	if (!active_a->mc_set) {
-		move_capable = active_a->move_capable = callback_data.move_capable;
+		active_a->move_capable = callback_data.move_capable;
 		if (debugLevel < 4)
 			curl_easy_setopt(handle, CURLOPT_VERBOSE, 0);
 		debugPrint(3, "imap is %smove capable",
-			   (move_capable ? "" : "not "));
+			   (active_a->move_capable ? "" : "not "));
 		active_a->mc_set = true;
 	}
 	return res;
@@ -728,7 +727,7 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 			continue;
 		if (subkey == 'm') {
 			if (asprintf(&t, "UID %s %d \"%s\"",
-				     (move_capable ? "MOVE" : "COPY"),
+				     (active_a->move_capable ? "MOVE" : "COPY"),
 				     mif->uid, destination->path) == -1)
 				i_printfExit(MSG_MemAllocError, 24);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
@@ -737,7 +736,7 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 			nzFree(mailstring);
 			if (res != CURLE_OK)
 				goto abort;
-			if (move_capable) mif->gone = true;
+			if (active_a->move_capable) mif->gone = true;
 			else delflag = true;
 		}
 
@@ -1031,7 +1030,7 @@ dispmail:
 			if (subkey == 'd') {
 				i_puts(MSG_Delete);
 				if(active_a->dxtrash && !active_a->dxfolder[f + 1 - topfolders]) {
-					if(!move_capable) {
+					if(!active_a->move_capable) {
 						puts("not move capable");
 						goto reaction;
 					}
@@ -1114,7 +1113,7 @@ rebulk:
 			if (g && g != f) {
 re_move:
 				if (asprintf(&t, "UID %s %d \"%s\"",
-					     (move_capable ? "MOVE" : "COPY"),
+					     (active_a->move_capable ? "MOVE" : "COPY"),
 					     mif->uid, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
@@ -1127,7 +1126,7 @@ re_move:
 					retry = true;
 					goto re_move;
 				}
-				if (move_capable) mif->gone = true;
+				if (active_a->move_capable) mif->gone = true;
 				else delflag = true;
 			} else{
 				if(g) i_puts(MSG_SameFolder);
@@ -1144,7 +1143,7 @@ re_move:
 redelete:
 // does delete really mean move to trash?
 		if(active_a->dxtrash && !active_a->dxfolder[f + 1 - topfolders]) {
-			if(!move_capable) {
+			if(!active_a->move_capable) {
 				puts("not move capable");
 				goto reaction;
 			}
@@ -4019,6 +4018,30 @@ bool mailDescend(const char *title, char cmd)
 
 bool imapMovecopy(int l1, int l2, char cmd, char *dest)
 {
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	const char *path;
+	const Window *pw = cw->prev; // previous
+	struct MACCOUNT *a = accounts + act - 1;
+
+	active_a = a, isimap = a->imap;
+	skipWhite2(&dest);
+	if(!*dest) { // nothing there
+baddest:
+		setError(MSG_BadDest);
+		return false;
+	}
+	path = folderByNameW(pw, dest);
+	if(!path) // already printed some helpful messages
+		goto baddest;
+	if(path == (char*)pw->r_map[pw->dot].text) {
+		i_puts(MSG_SameFolder);
+		goto baddest;
+	}
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+
   puts("not implemented");
 	return true;
 }
