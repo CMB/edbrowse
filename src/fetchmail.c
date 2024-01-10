@@ -3911,14 +3911,53 @@ bool mailDescend(const char *title, bool rf)
 	int uid = atoi(title);
 	const char *subj = strchr(title, '|') + 1;
 	const char *path;
-	Window *w;
+	char *vr;
 	struct MACCOUNT *a = accounts + act - 1;
+	Window *w;
+	struct FOLDER f0;
+
 	active_a = a, isimap = a->imap;
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // have to get the actual path from above
 	w = cw->prev;
 	path = (char*)w->r_map[w->dot].text;
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	f0.path = path; // that's all we need in f0
 
-	printf("grab %d %s from %s\n", uid, subj, path);
+// t (text component) not yet implemented
+	preferPlain = false;
+	res = downloadBody(h, &f0, uid);
+	if(res != CURLE_OK) {
+// A partial read of a big email doesn't return the error, though it does print an error.
+// In other words, we march along.
+		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		curl_easy_cleanup(h);
+		cw->imap_h = 0;
+		cw->imapMode1 = false;
+		nzFree(cf->firstURL), cf->firstURL = 0;
+		nzFree(cf->fileName), cf->fileName = 0;
+		return false;
+	}
+
+	debugPrint(1, "%d", mailstring_l);
+// lop off stuff below
+	freeWindows(context, false);
+// make new window
+	w = createWindow();
+	w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
+	cw->imapMode3 = true;
+	asprintf(&cf->fileName, "mail: %s", subj);
+	vr = cf->fileName + strlen(cf->fileName);
+	isoDecode(cf->fileName, &vr);
+	*vr = 0;
+	if (lastMailInfo)
+		freeMailInfo(lastMailInfo);
+	lastMailInfo = 0;
+	iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
+	if (mailu8)
+		addTextToBuffer((pst) mailu8, mailu8_l, 0, false);
+	else
+		addTextToBuffer((pst) mailstring, mailstring_l, 0, false);
+	cw->changeMode = false;
+	browseCurrentBuffer(NULL);
 	return true;
 }
