@@ -4045,6 +4045,7 @@ bool imapMovecopy(int l1, int l2, char cmd, char *dest)
 	const char *path;
 	const Window *pw = cw->prev; // previous
 	struct MACCOUNT *a = accounts + act - 1;
+	char cust_cmd[80];
 
 	active_a = a, isimap = a->imap;
 	skipWhite2(&dest);
@@ -4063,6 +4064,38 @@ baddest:
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 
-  puts("not implemented");
+// loop over lines in range
+	for(; l1 <= l2; ++l1) {
+		const char *title = (char*)cw->r_map[l1].text;
+		int uid = atoi(title);
+		char *t;
+	asprintf(&t, "UID %s %d \"%s\"",
+		     ((active_a->move_capable && cmd == 'm') ? "MOVE" : "COPY"),
+		     uid, path);
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
+		free(t);
+		res = getMailData(h);
+		nzFree(mailstring);
+		if (res != CURLE_OK) goto abort;
+		cw->dot = l1; // good so far
+		if(cmd == 'm' && !active_a->move_capable) {
+// move is copy + delete
+			sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
+			curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
+			res = getMailData(h);
+			nzFree(mailstring);
+			if (res != CURLE_OK) goto abort;
+// we could expunge after the loop, but this just doesn't happen -
+// everybody is move capable.
+			expunge(h);
+		}
+		if(cmd == 'm')
+				delText(l1, l1), --l1, --l2;
+	}
+
 	return true;
+
+abort:
+	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	return false;
 }

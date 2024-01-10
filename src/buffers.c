@@ -33,7 +33,7 @@ static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
 static const char imap1_cmd[] = "efghHklnpPqvwXz^=<";
 // commands for imap envelopes
-static const char imap2_cmd[] = "efghHklnpPqvXz^=<";
+static const char imap2_cmd[] = "efghHklmnpPqtvXz^=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHkMPqruwz=^<";
 // Commands that expect a space afterward
@@ -6236,12 +6236,6 @@ static int twoLetterG(const char *line, const char **runThis)
 {
 	bool rc;
 
-	if(cw->imapMode2 && (line[0] == 'm' || line[0] == 't') && line[1] == ' ') {
-		rc = imapMovecopy(startRange, endRange, line[0], (char*)line+2);
-		if(!rc) globSub = false;
-		return rc;
-	}
-
 	if (stringEqual(line, "bw") || !strncmp(line, "bw/", 3) || !strncmp(line, "bw?", 3) || (!strncmp(line, "bw", 2) && isdigitByte(line[2]))) {
 		Window *lw;
 		if(!line[2]) lw = cw;
@@ -7247,6 +7241,19 @@ after_ib:
 
 // move/copy destination, the third address
 	if (cmd == 't' || cmd == 'm') {
+
+// move or copy email to another folder
+		if(cw->imapMode2 && postSpace) {
+			rc = imapMovecopy(startRange, endRange, cmd, (char*)line);
+			if(!rc) globSub = false;
+			return rc;
+		}
+
+		if(cw->imapMode2) {
+			setError(MSG_ImapCommand, cmd);
+			return (globSub = false);
+		}
+
 		if (!first) {
 			if (cw->dirMode) {
 				setError(MSG_BadDest);
@@ -7279,7 +7286,7 @@ dest_ok:
 				return j;
 			}
 
-// normal destination for move or copy, in a text file
+// normal destination for move or copy in a text file
 			if (!getRangePart(line, &destLine, &line))
 				return (globSub = false);
 			first = *line;
