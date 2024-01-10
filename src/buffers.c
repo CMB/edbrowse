@@ -7788,6 +7788,18 @@ dest_ok:
 		return folderDescend(p, false);
 	}
 
+	// go to an email in an envelope listing
+	if (cmd == 'g' && cw->imapMode2 && !first) {
+		if (endRange > startRange) {
+			setError(MSG_RangeCmd, "g");
+			return false;
+		}
+		cw->dot = endRange;
+		p = (char *)cw->r_map[endRange].text; // uid and subject for the email
+		cmd = 'e';
+		return mailDescend(p, false);
+	}
+
 	// go to a file in a directory listing
 	if (cmd == 'g' && cw->dirMode && (!first || stringEqual(line, "-"))) {
 		char *dirline;

@@ -685,9 +685,9 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 		if (fromline && !stringEqual(fromline, mif->from))
 			continue;
 		if (subkey == 'm') {
-			if (asprintf(&t, "%s %d \"%s\"",
+			if (asprintf(&t, "UID %s %d \"%s\"",
 				     (move_capable ? "MOVE" : "COPY"),
-				     mif->seqno, destination->path) == -1)
+				     mif->uid, destination->path) == -1)
 				i_printfExit(MSG_MemAllocError, 24);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 			free(t);
@@ -802,7 +802,7 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 
 // download the email from the imap server
 static bool partread;
-static CURLcode downloadBody(CURL *h, struct FOLDER *f, const struct MIF *mif)
+static CURLcode downloadBody(CURL *h, struct FOLDER *f, int uid)
 {
 	char *t;
 	bool retry;
@@ -811,7 +811,7 @@ static CURLcode downloadBody(CURL *h, struct FOLDER *f, const struct MIF *mif)
 
 	retry = partread = false;
 redown:
-	sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
+	sprintf(cust_cmd, "UID FETCH %d BODY[]", uid);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	mailstring = initString(&mailstring_l);
 
@@ -972,7 +972,7 @@ dispmail:
 		if (key == ' ' || key == 'g' || key == 't') {
 			if(key == 't') preferPlain = true;
 
-			res = downloadBody(handle, f, mif);
+			res = downloadBody(handle, f, mif->uid);
 			if(res != CURLE_OK) goto abort;
 
 			key = presentMail();
@@ -1129,9 +1129,9 @@ rebulk:
 			g = folderByName(inputline);
 			if (g && g != f) {
 re_move:
-				if (asprintf(&t, "%s %d \"%s\"",
+				if (asprintf(&t, "UID %s %d \"%s\"",
 					     (move_capable ? "MOVE" : "COPY"),
-					     mif->seqno, g->path) == -1)
+					     mif->uid, g->path) == -1)
 					i_printfExit(MSG_MemAllocError, 24);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 				free(t);
@@ -1298,7 +1298,7 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 		}
 		nzFree(mailstring);
 
-		sprintf(cust_cmd, "FETCH %d ALL", mif->seqno);
+		sprintf(cust_cmd, "UID FETCH %d ALL", mif->uid);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 
 /*********************************************************************
@@ -3924,8 +3924,6 @@ bool folderDescend(const char *path, bool rf)
 	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
 	f->path = path;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-// If this fails the whole program exits, which isn't great.
-// When it was just a mail client that sort of made sense.
 	if(!examineFolder(h, f, false)) {
 //Oops, problem.
 		if(rf && cw->dol) delText(1, cw->dol);
@@ -3975,5 +3973,25 @@ bool folderDescend(const char *path, bool rf)
 	debugPrint(1, "%d", iml_l);
 	cleanFolder(f);
 	free(f);
+	return true;
+}
+
+bool mailDescend(const char *title, bool rf)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	int uid = atoi(title);
+	const char *subj = strchr(title, '|') + 1;
+	const char *path;
+	Window *w;
+	struct MACCOUNT *a = accounts + act - 1;
+	active_a = a, isimap = a->imap;
+// have to get the actual path from above
+	w = cw->prev;
+	path = (char*)w->r_map[w->dot].text;
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+
+	printf("grab %d %s from %s\n", uid, subj, path);
 	return true;
 }
