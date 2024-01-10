@@ -7494,7 +7494,7 @@ dest_ok:
 				setError(MSG_IrcRename);
 				return false;
 			}
-			if (cw->imapMode1 | cw->imapMode2) {
+			if (cw->imapMode1 | cw->imapMode2 | cw->imapMode3) {
 				setError(MSG_ImapRename);
 				return false;
 			}
@@ -7709,7 +7709,8 @@ dest_ok:
 		undoSpecialClear();
 		if((!scx && first != '0') || debugLevel >= 1)
 			i_printf(MSG_MovedSession, cx);
-/* Magic with pointers, hang on to your hat. */
+// Magic with pointers, hang on to your hat.
+		cw->imapMode3 = false;
 		sessionList[cx].fw = sessionList[cx].lw = cw;
 		cs->lw = cw->prev;
 		cw->prev = 0;

@@ -256,8 +256,8 @@ static char *tf_cbase;		/* base of strings for folder names and paths */
 static bool move_capable = false;
 
 static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
-static char *folderStream, *folderPaths;
-static int fs_l, fp_l;
+static char *imapLines, *imapPaths;
+static int iml_l, imp_l;
 
 // This routine mucks with the passed in string, which was allocated
 // to receive data from the imap server. So leave it allocated.
@@ -269,8 +269,8 @@ static void setFolders(CURL * handle)
 	char qc;		/* quote character */
 	int i;
 
-	folderStream = initString(&fs_l);
-	folderPaths = initString(&fp_l);
+	imapLines = initString(&iml_l);
+	imapPaths = initString(&imp_l);
 
 // Reset things, in case called on refresh
 	nzFree(topfolders);
@@ -706,8 +706,7 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 		}
 
 		if (subkey == 'd' || delflag) {
-			sprintf(cust_cmd, "STORE %d +Flags \\Deleted",
-				mif->seqno);
+			sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", mif->uid);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
 					 cust_cmd);
 			res = getMailData(handle);
@@ -778,7 +777,7 @@ abort:
 }
 
 // go back into a folder after a disconnect and reconnect
-static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
+static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 {
 	CURLcode res2;
 	char *t;
@@ -788,9 +787,9 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 	if(res1 != CURLE_OK && debugLevel >= 1) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
 	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
 		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
-	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
-	res2 = getMailData(handle);
+	res2 = getMailData(h);
 	nzFree(mailstring);
 	if(res2 == CURLE_OK) {
 		debugPrint(1, "reconnect to %s", withoutSubstring(f));
@@ -799,6 +798,77 @@ static bool refolder(CURL *handle, struct FOLDER *f, CURLcode res1)
 	debugPrint(1, "reconnect to %s failed", withoutSubstring(f));
 	if(debugLevel >= 1) ebcurl_setError(res2, "mail://url-unspecified", 1, "fetchmail_ssl");
 	return false;
+}
+
+// download the email from the imap server
+static bool partread;
+static CURLcode downloadBody(CURL *h, struct FOLDER *f, const struct MIF *mif)
+{
+	char *t;
+	bool retry;
+	CURLcode res;
+	char cust_cmd[80];
+
+	retry = partread = false;
+redown:
+	sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
+	mailstring = initString(&mailstring_l);
+
+/*********************************************************************
+I wanted to turn the write function off here, because we don't need it.
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, NULL);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, NULL);
+But turning it off and leaving HEADERFUNCTION on causes a seg fault,
+I have no idea why.
+I have to leave them both on.
+Unless I write more specialized code, this brings in both data and header info,
+so I have to strip some things off after the fact.
+You'll see this after the perform function runs.
+*********************************************************************/
+
+	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, imap_header_callback);
+	callback_data.buffer = initString(&callback_data.length);
+	res = curl_easy_perform(h);
+// and put things back
+	nzFree(callback_data.buffer);
+	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, NULL);
+	undosOneMessage();
+	if (res != CURLE_OK) {
+		if(retry) { // this is the second attempt
+// I'm just gonna take what we got, it's better than nothing.
+			partread = true;
+			i_printf(MSG_PartRead);
+			goto afterfetch;
+		}
+		nzFree(mailstring);
+		if(!refolder(h, f, res))
+			return res;
+		retry = true;
+		goto redown;
+	}
+afterfetch:
+
+// have to strip 2 fetch BODY lines off the front,
+// and ) A018 OK off the end.
+	t = strchr(mailstring, '\n');
+	if (t) t = strchr(t + 1, '\n');
+	if (t) {
+		++t;
+		mailstring_l -= (t - mailstring);
+		strmove(mailstring, t);
+	}
+	t = mailstring + mailstring_l;
+	if (t > mailstring && t[-1] == '\n')
+		t[-1] = 0, --mailstring_l;
+	t = strrchr(mailstring, '\n');
+	if (t && t - 2 >= mailstring &&
+	    !strncmp(t - 2, "\n)\n", 3) && strstr(t, " OK ")) {
+		--t;
+		*t = 0;
+		mailstring_l = t - mailstring;
+	}
+	return CURLE_OK;
 }
 
 // scan through the messages in a folder
@@ -813,7 +883,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	char key;
 	char cust_cmd[80];
 	char inputline[80];
-	bool delflag, retry, partread;
+	bool delflag, retry;
 
 	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
@@ -901,69 +971,9 @@ research:
 dispmail:
 		if (key == ' ' || key == 'g' || key == 't') {
 			if(key == 't') preferPlain = true;
-// download the email from the imap server
-redown:
-			sprintf(cust_cmd, "FETCH %d BODY[]", mif->seqno);
-			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
-					 cust_cmd);
-			mailstring = initString(&mailstring_l);
 
-/*********************************************************************
-I wanted to turn the write function off here, because we don't need it.
-	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, NULL);
-	curl_easy_setopt(handle, CURLOPT_WRITEDATA, NULL);
-But turning it off and leaving HEADERFUNCTION on causes a seg fault,
-I have no idea why.
-I have to leave them both on.
-Unless I write more specialized code, this brings in both data and header info,
-so I have to strip some things off after the fact.
-You'll see this after the perform function runs.
-*********************************************************************/
-
-			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION,
-					 imap_header_callback);
-			callback_data.buffer =
-			    initString(&callback_data.length);
-			res = curl_easy_perform(handle);
-/* and put things back */
-			nzFree(callback_data.buffer);
-			curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
-			undosOneMessage();
-			if (res != CURLE_OK) {
-				if(retry) { // second attempt
-// I'm just gonna take what we got, it's better than nothing.
-					partread = true;
-					i_printf(MSG_PartRead);
-					goto afterfetch;
-				}
-				nzFree(mailstring);
-				if(!refolder(handle, f, res))
-					goto abort;
-				retry = true;
-				goto redown;
-			}
-afterfetch:
-
-/* have to strip 2 fetch BODY lines off the front,
- * and ) A018 OK off the end. */
-			t = strchr(mailstring, '\n');
-			if (t)
-				t = strchr(t + 1, '\n');
-			if (t) {
-				++t;
-				mailstring_l -= (t - mailstring);
-				strmove(mailstring, t);
-			}
-			t = mailstring + mailstring_l;
-			if (t > mailstring && t[-1] == '\n')
-				t[-1] = 0, --mailstring_l;
-			t = strrchr(mailstring, '\n');
-			if (t && t - 2 >= mailstring &&
-			    !strncmp(t - 2, "\n)\n", 3) && strstr(t, " OK ")) {
-				--t;
-				*t = 0;
-				mailstring_l = t - mailstring;
-			}
+			res = downloadBody(handle, f, mif);
+			if(res != CURLE_OK) goto abort;
 
 			key = presentMail();
 // presentMail has already freed mailstring
@@ -1168,7 +1178,7 @@ redelete:
 			g = topfolders + active_a->dxtrash - 1;
 			goto re_move;
 		}
-		sprintf(cust_cmd, "STORE %d +Flags \\Deleted", mif->seqno);
+		sprintf(cust_cmd, "UID STORE %d +Flags \\Deleted", mif->uid);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = getMailData(handle);
 		nzFree(mailstring);
@@ -1580,11 +1590,11 @@ static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	if (dostats) {
 		if(!ismc) { // running within a buffer
 			char brief[12];
-			stringAndString(&folderStream, &fs_l, withoutSubstring(f));
+			stringAndString(&imapLines, &iml_l, withoutSubstring(f));
 			sprintf(brief, ": %d\n", f->nmsgs);
-			stringAndString(&folderStream, &fs_l, brief);
-			stringAndString(&folderPaths, &fp_l, f->path);
-			stringAndChar(&folderPaths, &fp_l, '\n');
+			stringAndString(&imapLines, &iml_l, brief);
+			stringAndString(&imapPaths, &imp_l, f->path);
+			stringAndChar(&imapPaths, &imp_l, '\n');
 			return true;
 		}
 		j = f - topfolders + 1;
@@ -3840,11 +3850,11 @@ bool imapBuffer(char *line)
 	asprintf(&cf->fileName, "imap %d", act);
 	strcpy(cw->imap_env, envelopeFormat);
 	cw->imap_l = fetchLimit;
-	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
-	addTextToBackend(folderPaths);
-	nzFree(folderStream), nzFree(folderPaths);
+	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
+	addTextToBackend(imapPaths);
+	nzFree(imapLines), nzFree(imapPaths);
 // a byte count, as though you had read a file.
-	debugPrint(1, "%d", fs_l);
+	debugPrint(1, "%d", iml_l);
 	return true;
 
 usage:
@@ -3890,11 +3900,11 @@ teardown:
 		setError(MSG_NoFolders);
 		goto teardown;
 	}
-	addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
-	addTextToBackend(folderPaths);
-	nzFree(folderStream), nzFree(folderPaths);
+	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
+	addTextToBackend(imapPaths);
+	nzFree(imapLines), nzFree(imapPaths);
 // a byte count, as though you had read a file.
-	debugPrint(1, "%d", fs_l);
+	debugPrint(1, "%d", iml_l);
 	return true;
 }
 
@@ -3924,16 +3934,18 @@ bool folderDescend(const char *path, bool rf)
 		return false;
 	}
 	mif = f->mlist;
-	folderStream = initString(&fs_l); // actually holds envelopes
-	folderPaths = initString(&fp_l); // actually holds uids
+	imapLines = initString(&iml_l);
+	imapPaths = initString(&imp_l);
 	for (j = 0; j < f->nfetch; ++j, ++mif) {
 		char uidbuf[12];
 		printEnvelope(mif, &p);
-		stringAndString(&folderStream, &fs_l, p);
-		stringAndChar(&folderStream, &fs_l, '\n');
+		stringAndString(&imapLines, &iml_l, p);
+		stringAndChar(&imapLines, &iml_l, '\n');
 		nzFree(p);
-		sprintf(uidbuf, "%d\n", mif->uid);
-		stringAndString(&folderPaths, &fp_l, uidbuf);
+		sprintf(uidbuf, "%d|", mif->uid);
+		stringAndString(&imapPaths, &imp_l, uidbuf);
+		stringAndString(&imapPaths, &imp_l, mif->subject);
+		stringAndChar(&imapPaths, &imp_l, '\n');
 	}
 	if(!rf) {
 // lop off stuff below
@@ -3954,13 +3966,13 @@ bool folderDescend(const char *path, bool rf)
 // I don't know how I feel about that.
 // It's not an error I suppose - but why did you go to a folder with 0 messages?
 	if(f->nfetch) {
-		addTextToBuffer((uchar *)folderStream, fs_l, 0, false);
-		addTextToBackend(folderPaths);
-		nzFree(folderStream);
-		nzFree(folderPaths);
+		addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
+		addTextToBackend(imapPaths);
+		nzFree(imapLines);
+		nzFree(imapPaths);
 	}
 // a byte count, as though you had read a file.
-	debugPrint(1, "%d", fs_l);
+	debugPrint(1, "%d", iml_l);
 	cleanFolder(f);
 	free(f);
 	return true;
