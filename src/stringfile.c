@@ -7,6 +7,7 @@
 #include <glob.h>
 #include <pwd.h>
 #include <grp.h>
+#include <utime.h>
 
 char emptyString[] = "";
 bool showHiddenFiles, isInteractive;
@@ -2109,6 +2110,13 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 					nzFree(rmbuf);
 					return false;
 				}
+
+// reset the time stamp, cause that's what cp does
+				struct utimbuf ub;
+				ub.modtime = fileTimeByName(path1);
+				ub.actime = time(0);
+				utime(path2, &ub);
+
 				nzFree(rmbuf);
 				if(origcmd == 'm')
 					unlink(path1);
