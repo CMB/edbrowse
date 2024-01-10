@@ -4834,16 +4834,20 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'l' && line[1] == ' ' &&
-	stringIsNum(line+2) >= 0) {
-		Window *w = 0;
-		setFetchLimit(line + 2);
+	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'l' && line[1] == ' ') {
+		const char *p = line + 2;
+		skipWhite(&p);
+		if(*p == '-') ++p;
+		if(	stringIsNum(p) >= 0) {
+			Window *w = 0;
+			setFetchLimit(line + 2);
 // find the other window
-		if(cw->imapMode2) w = cw->prev;
-		else w = sessionList[context].fw2;
+			if(cw->imapMode2) w = cw->prev;
+			else w = sessionList[context].fw2;
 // and copy to the other window
-		if(w) w->imap_l = cw->imap_l;
-		return true;
+			if(w) w->imap_l = cw->imap_l;
+			return true;
+		}
 	}
 
 	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'e' && line[1] == ' ') {

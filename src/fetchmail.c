@@ -153,7 +153,6 @@ static int mailstring_l;
 static char *mailbox_url, *message_url;
 
 static int fetchLimit = 100;
-static bool earliest;
 static const char envelopeFormatChars[8] = "tfsdzn";
 // to from subject date size number
 // default is from subject
@@ -165,7 +164,8 @@ void setEnvelopeFormat(const char *s)
 	char c;
 	bool something = false;
 	int i, j;
-	char *p = (!cw || ismc ? envelopeFormat : cw->imap_env);
+// This ugly code differentiates from the init function and changing limit during regular operation
+	char *p = (!cw || !(cw->imapMode1|cw->imapMode2) || ismc ? envelopeFormat : cw->imap_env);
 	char count[8];
 
 // check
@@ -196,7 +196,8 @@ void setEnvelopeFormat(const char *s)
 void setFetchLimit(const char *t)
 {
 	char early = false;
-	int *p = (!cw || ismc ? &fetchLimit : &cw->imap_l);
+// This ugly code differentiates from the init function and changing limit during regular operation
+	int *p = (!cw || !(cw->imapMode1|cw->imapMode2) || ismc ? &fetchLimit : &cw->imap_l);
 	skipWhite(&t);
 	if(*t == '-')
 		early = true, ++t;
@@ -205,9 +206,9 @@ void setFetchLimit(const char *t)
 		return;
 	}
 	*p = atoi(t);
-	earliest = early;
 	if (*p < 1) *p = 1;
 	if (*p > 1000) *p = 1000;
+	if(early) *p = -*p;
 }
 
 /* mail message in a folder */
@@ -533,9 +534,11 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	CURLcode res;
 	int cnt;
 	int fl = (ismc ? fetchLimit : cw->imap_l);
+	bool earliest = false;
 	struct MIF *mif;
 	char cust_cmd[200];
 
+	if(fl < 0) earliest = true, fl = -fl;
 	if (*line && line[1] == ' ' && strchr("sftb", *line)) {
 		searchtype = *line;
 		line += 2;
@@ -864,10 +867,13 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	CURLcode res = CURLE_OK;
 	char *t;
 	char key;
+	int fl = (ismc ? fetchLimit : cw->imap_l);
+	bool earliest = false;
 	char cust_cmd[80];
 	char inputline[80];
 	bool delflag, retry;
 
+	if(fl < 0) earliest = true, fl = -fl;
 	if (!f->nmsgs) {
 		i_puts(MSG_NoMessages);
 		return;
@@ -1088,9 +1094,13 @@ rebulk:
 			if (!fgets(inputline, sizeof(inputline), stdin))
 				goto imap_done;
 			if (inputline[0] == '\n')
-				i_printf(MSG_FetchN, (ismc ? fetchLimit : cw->imap_l));
-			else
+				i_printf(MSG_FetchN, fl);
+			else {
 				setFetchLimit(inputline);
+				fl = fetchLimit;
+				earliest = false;
+				if(fl < 0) earliest = true, fl = -fl;
+			}
 			goto reaction;
 		}
 
@@ -1512,9 +1522,11 @@ static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
 	int j;
 	int fl = (ismc ? fetchLimit : cw->imap_l);
+	bool earliest = false;
 	char *t;
 	CURLcode res;
 
+	if(fl < 0) earliest = true, fl = -fl;
 	cleanFolder(f);
 
 /* interrogate folder */
@@ -1729,7 +1741,10 @@ static CURLcode count_messages(CURL * handle, int *message_count)
 	CURLcode res = setCurlURL(handle, mailbox_url);
 	int i, num_messages = 0;
 	bool last_nl = true;
+	int fl = (ismc ? fetchLimit : cw->imap_l);
+	bool earliest = false;
 
+	if(fl < 0) earliest = true, fl = -fl;
 	if (res != CURLE_OK)
 		return res;
 
@@ -1802,12 +1817,15 @@ refresh:
 		}
 
 		if (stringEqual(inputline, "l")) {
-			i_printf(MSG_FetchN, fetchLimit);
+			i_printf(MSG_FetchN, fl);
 			goto input;
 		}
 
 		if (*t == 'l' && isspaceByte(t[1])) {
 			setFetchLimit(t + 2);
+			fl = fetchLimit;
+			earliest = false;
+			if(fl < 0) earliest = true, fl = -fl;
 			goto input;
 		}
 
@@ -1893,6 +1911,9 @@ refresh:
 			goto input;
 		examineFolder(handle, f, false);
 		scanFolder(handle, f);
+		fl = fetchLimit;
+		earliest = false;
+		if(fl < 0) earliest = true, fl = -fl;
 		goto input;
 	}
 
