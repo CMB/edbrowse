@@ -6214,18 +6214,10 @@ et_go:
 		cmd = 'e';
 		if(!cxQuit(context, 0)) return false;
 		undoCompare();
-// erase anything in the buffer.
-		madeChanges = true;
-		if(cw->dol) delText(1, cw->dol);
 		cw->changeMode = cw->undoable = false;
-		nzFree(cf->fileName), cf->fileName = 0;
 		char *p = cloneString(line);
 		rc = imapBuffer(p);
 		nzFree(p);
-		if(rc && cw->imapMode1) {
-			undoCompare();
-			cw->undoable = cw->changeMode = false;
-		}
 		return rc;
 	}
 
@@ -6238,9 +6230,13 @@ no_action:
 // There aren't very many of them.
 static int twoLetterG(const char *line, const char **runThis)
 {
+	bool rc;
 
-	if(cw->imapMode2 && (line[0] == 'm' || line[0] == 't') && line[1] == ' ')
-		return imapMovecopy(startRange, endRange, line[0], (char*)line+2);
+	if(cw->imapMode2 && (line[0] == 'm' || line[0] == 't') && line[1] == ' ') {
+		rc = imapMovecopy(startRange, endRange, line[0], (char*)line+2);
+		if(!rc) globSub = false;
+		return rc;
+	}
 
 	if (stringEqual(line, "bw") || !strncmp(line, "bw/", 3) || !strncmp(line, "bw?", 3) || (!strncmp(line, "bw", 2) && isdigitByte(line[2]))) {
 		Window *lw;

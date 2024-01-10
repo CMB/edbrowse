@@ -3765,7 +3765,7 @@ bool imapBuffer(char *line)
 		setError(MSG_NotImap);
 		return false;
 }
-	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->imapMode1 | cw->imapMode2) {
+	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->imapMode2) {
 		setError(MSG_ImapCompat);
 		return false;
 	}
@@ -3773,6 +3773,20 @@ bool imapBuffer(char *line)
 		setError(MSG_NoMailDir);
 		return false;
 	}
+
+	freeWindows(context, false); // lop off stuff below
+
+	if(cw->imapMode1) {
+// changing from one server to another; tear the first one down
+		curl_easy_cleanup(cw->imap_h);
+		cw->imap_h = 0;
+	}
+	cw->imapMode1 = true; // temporary
+// erase anything in the buffer.
+		if(cw->dol) delText(1, cw->dol);
+		nzFree(cf->fileName), cf->fileName = 0;
+		nzFree(cf->firstURL), cf->firstURL = 0;
+	cw->imapMode1 = false;
 
 // In case we haven't started curl yet.
 	if (!curlActive) {
@@ -3916,8 +3930,7 @@ bool folderDescend(const char *path, bool rf)
 		stringAndChar(&imapPaths, &imp_l, '\n');
 	}
 	if(!rf) {
-// lop off stuff below
-		freeWindows(context, false);
+		freeWindows(context, false); // lop off stuff below
 // make new window
 		w = createWindow();
 		w->imap_h = h;
@@ -3982,8 +3995,7 @@ bool mailDescend(const char *title, char cmd)
 	}
 
 	debugPrint(1, "%d", mailstring_l);
-// lop off stuff below
-	freeWindows(context, false);
+	freeWindows(context, false); // lop off stuff below
 // make new window
 	w = createWindow();
 	w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;

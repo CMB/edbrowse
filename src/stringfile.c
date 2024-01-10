@@ -2112,10 +2112,12 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 				}
 
 // reset the time stamp, cause that's what cp does
-				struct utimbuf ub;
-				ub.modtime = fileTimeByName(path1);
-				ub.actime = time(0);
-				utime(path2, &ub);
+				struct stat buf;
+				if (!stat(path1, &buf)) {
+// we can march on if the time isn't adjusted
+					struct timespec times[2] = {buf.st_atim, buf.st_mtim};
+					utimensat(AT_FDCWD, path2, times, 0);
+				}
 
 				nzFree(rmbuf);
 				if(origcmd == 'm')
