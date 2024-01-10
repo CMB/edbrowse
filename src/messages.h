@@ -839,4 +839,5 @@ MSG_ImaskOn,
 	MSG_BreakImap,
 	MSG_ImapRename,
 	MSG_ImapConfig,
+	MSG_NMC,
 };

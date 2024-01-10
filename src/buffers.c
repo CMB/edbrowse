@@ -33,7 +33,7 @@ static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
 static const char imap1_cmd[] = "efghHklnpPqvwXz^=<";
 // commands for imap envelopes
-static const char imap2_cmd[] = "efghHklmnpPqtvXz^=<";
+static const char imap2_cmd[] = "dDefghHklmnpPqtvXz^=<";
 // Commands that work at line number 0, in an empty file
 static const char zero_cmd[] = "aAbefhHkMPqruwz=^<";
 // Commands that expect a space afterward
@@ -8479,6 +8479,12 @@ redirect:
 	}
 
 	if (cmd == 'd' || cmd == 'D') {
+		if (cw->imapMode2) {
+			rc = imapDelete(startRange, endRange, cmd);
+			if(!rc) globSub = false;
+			return rc;
+		}
+
 		if (cw->dirMode) {
 			j = delFiles(startRange, endRange, true, icmd, &cmd);
 			undoCompare();
@@ -8486,16 +8492,19 @@ redirect:
 			undoSpecialClear();
 			goto afterdelete;
 		}
+
 		if (cw->sqlMode) {
 			j = sqlDelRows(startRange, endRange);
 			undoCompare();
 			cw->undoable = false;
 			goto afterdelete;
 		}
+
 		if (cw->browseMode) {
 			delTags(startRange, endRange);
 			undoSpecialClear();
 		}
+
 		delText(startRange, endRange);
 		j = 1;
 afterdelete:

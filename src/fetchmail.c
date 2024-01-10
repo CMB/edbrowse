@@ -4099,3 +4099,48 @@ abort:
 	ebcurl_setError(res, cf->firstURL, 0, emptyString);
 	return false;
 }
+
+bool imapDelete(int l1, int l2, char cmd)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	const Window *pw = cw->prev;
+	char cust_cmd[80];
+
+	active_a = a, isimap = a->imap;
+// does delete really mean move?
+	if(active_a->dxtrash && !active_a->dxfolder[pw->dot]) {
+		char destn[8];
+		if(!active_a->move_capable) {
+			setError(MSG_NMC);
+			return false;
+		}
+		sprintf(destn, "%d", active_a->dxtrash);
+		if(!imapMovecopy(l1, l2, 'm', destn)) return false;
+		goto D_check;
+	}
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+// loop over lines in range
+	for(; l1 <= l2; ++l1) {
+		const char *title = (char*)cw->r_map[l1].text;
+		int uid = atoi(title);
+		sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		res = getMailData(h);
+		nzFree(mailstring);
+		if (res != CURLE_OK) goto abort;
+		delText(l1, l1), --l1, --l2;
+	}
+	expunge(h);
+
+D_check:
+	if(cmd == 'D') printDot();
+	return true;
+
+abort:
+	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	return false;
+}
