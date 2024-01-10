@@ -666,8 +666,8 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 	char cust_cmd[80];
 	int j;
 	struct MIF *mif = f->mlist;
-	int ex_cnt = 0;		// expunge count
 	char *t, *fromline = 0;
+	bool deleted = false;
 
 	if (key == 'f') {
 		fromline = this_mif->from;
@@ -681,7 +681,6 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 		bool delflag = false;
 		if (mif->gone)
 			continue;
-		mif->seqno -= ex_cnt;
 		if (fromline && !stringEqual(fromline, mif->from))
 			continue;
 		if (subkey == 'm') {
@@ -695,81 +694,23 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 			nzFree(mailstring);
 			if (res != CURLE_OK)
 				goto abort;
-// The move command shifts all the sequence numbers down.
-			if (move_capable) {
-				mif->gone = true;
-				++ex_cnt;
-			} else {
-// we did copy not move, so delete
-				delflag = true;
-			}
+			if (move_capable) mif->gone = true;
+			else delflag = true;
 		}
 
 		if (subkey == 'd' || delflag) {
 			sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", mif->uid);
-			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST,
-					 cust_cmd);
+			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 			res = getMailData(handle);
 			nzFree(mailstring);
 			if (res != CURLE_OK)
 				goto abort;
+			deleted = true;
 			mif->gone = true;
-
-/*********************************************************************
-We have thus far marked thismessage for delete, but it's not really gone
-until we expunge. In contrast, moving a message always expunges it.
-It is after all somewhere else.
-Expunge means the message is not here, and the server resequences the numbers,
-and we have to do the same in our representation of the folder.
-If we don't stay in sync with the server, the next command could read or move
-or delete the wrong message. Ouch!
-ex_cnt is an expunge count, how many messages expunged,
-how far should we shift our sequence numbers to stay in sync with the server?
-At this point, this message is marked for deletion but not expunged,
-don't increment ex_cnt.
-At the end of the folder we can command the server to expunge,
-and the deleted messages will all go away.
-Fine, but, if you issue move and delete commands in one pass,
-imap servers behave in very different ways.
-Sometimes the move command expunges messages that were marked for deletion,
-along with the message being moved.
-Sometimes it doesn't. And sometimes it depends
-on whether the deleted message comes before or after the moved message.
-And sometimes it depends on the folder.
-We can't possibly predict the behavior of the server,
-and adjust our sequence numbers accordingly.
-There are two ways around this: the right way and the easy way.
-We can watch the curl traffic and look for
-* n EXPUNGE
-and each time we see that, decrement the sequence numbers beyond n,
-for message n is gone.
-Or, we can expunge after every delete. That forces the server
-to behave in a predictable manner, whence we can follow along.
-And that's what I do.
-Unfortunately, d is now an irreversible command.
-Type d and the message is gone.
-You can't say "oops I didn't mean to delete that" and q to quit
-and log back in and it will still be there.
-A hybrid solution might be to remember the deletes and then expunge at end of
-folder or when a move command is issued.
-Now d is reversible again.
-I may implement that some day, but it's not as easy as it seems.
-On some servers move is actually copy + delete, and in that case
-we want to delete + expunge.
-So 'd' means mark for delete; delete implied from 'm' means delete + expunge.
-I haven't worked all this out, so for now let's just expunge every time.
-A hybrid solution wouldn't be implemented here anyways,
-this is bulk move or bulk delete.
-Bear in mind, d irreversible is consistent with the pop3 interface,
-so maybe it's not such a bad thihng after all.
-*********************************************************************/
-
-			debugPrint(3, "` %d EXPUNGE", mif->seqno);
-			if(!expunge(handle)) goto abort;
-			++ex_cnt;
 		}
 	}
 
+	if(deleted && !expunge(handle)) goto abort;
 	return true;
 
 abort:
@@ -1143,18 +1084,8 @@ re_move:
 					retry = true;
 					goto re_move;
 				}
-// The move command shifts all the sequence numbers down.
-				if (move_capable) {
-					mif->gone = true;
-					j2 = j + 1;
-					mif2 = mif + 1;
-					while (j2 < f->nfetch) {
-						--mif2->seqno;
-						++j2, ++mif2;
-					}
-				} else {
-					delflag = true;
-				}
+				if (move_capable) mif->gone = true;
+				else delflag = true;
 			} else{
 				if(g) i_puts(MSG_SameFolder);
 				goto reaction;
@@ -1189,14 +1120,8 @@ redelete:
 			goto redelete;
 		}
 		mif->gone = true;
-		debugPrint(3, "` %d EXPUNGE", mif->seqno);
+		debugPrint(3, "` %d EXPUNGE", mif->uid);
 		if(!expunge(handle)) goto abort;
-		j2 = j + 1;
-		mif2 = mif + 1;
-		while (j2 < f->nfetch) {
-			--mif2->seqno;
-			++j2, ++mif2;
-		}
 	}
 
 	i_puts(MSG_EndFolder);
@@ -1298,6 +1223,8 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 		}
 		nzFree(mailstring);
 
+// At this point we don't use, and don't need, the sequence numbers. It's all uid.
+		mif->seqno = 0;
 		sprintf(cust_cmd, "UID FETCH %d ALL", mif->uid);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 
