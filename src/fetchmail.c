@@ -251,6 +251,16 @@ static const char *withoutSubstring(const struct FOLDER *f)
 	return f->path;
 }
 
+static const char *withoutSubstringPath(const char *p)
+{
+	int l;
+	const char *isub = active_a->isub;
+	if(!isub) return p;
+	l = strlen(isub);
+	if(!strncmp(p, isub, l)) return p + l;
+	return p;
+}
+
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
 static bool move_capable = false;
@@ -372,8 +382,7 @@ static struct FOLDER *folderByName(char *line)
 	int cnt = 0;
 
 	stripWhite(line);
-	if (!line[0])
-		return 0;
+	if (!line[0]) return 0;
 
 	i = stringIsNum(line);
 	if (i > 0 && i <= n_folders)
@@ -391,6 +400,40 @@ static struct FOLDER *folderByName(char *line)
 		for (i = 0; i < n_folders; ++i, ++f)
 			if (strcasestr(withoutSubstring(f), line))
 				printf("%2d %s\n", i+1, withoutSubstring(f));
+	} else {
+		i_printf(MSG_NoFolderMatch, line);
+	}
+	return 0;
+}
+
+// same as above but use the paths in the window
+static const char *folderByNameW(const Window *w, char *line)
+{
+	int i, j;
+	int cnt = 0;
+	const char *p;
+
+	stripWhite(line);
+	if (!line[0]) return 0;
+
+	i = stringIsNum(line);
+	if (i > 0 && i <= w->dol)
+		return (char*)w->r_map[i].text;
+
+	for (i = 1; i <= w->dol; ++i) {
+		p = (char*)w->r_map[i].text;
+		if (strcasestr(withoutSubstringPath(p), line))
+			++cnt, j = i;
+	}
+	if (cnt == 1)
+		return (char*)w->r_map[j].text;
+	if (cnt) {
+		i_printf(MSG_ManyFolderMatch, line);
+		for (i = 1; i <= w->dol; ++i) {
+		p = (char*)w->r_map[i].text;
+			if (strcasestr(withoutSubstringPath(p), line))
+				printf("%2d %s\n", i, withoutSubstringPath(p));
+		}
 	} else {
 		i_printf(MSG_NoFolderMatch, line);
 	}
@@ -3932,9 +3975,9 @@ bool mailDescend(const char *title, bool rf)
 		ebcurl_setError(res, cf->firstURL, 0, emptyString);
 		curl_easy_cleanup(h);
 		cw->imap_h = 0;
-		cw->imapMode1 = false;
-		nzFree(cf->firstURL), cf->firstURL = 0;
-		nzFree(cf->fileName), cf->fileName = 0;
+		cw->imapMode2 = false;
+		cw->prev->imap_h = 0;
+		cw->prev->imapMode1 = false;
 		return false;
 	}
 
