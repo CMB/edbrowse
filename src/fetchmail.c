@@ -836,6 +836,9 @@ You'll see this after the perform function runs.
 		goto redown;
 	}
 afterfetch:
+#if 0
+	FILE *z; z = fopen("msb", "w"); fprintf(z, "%s", mailstring); fclose(z);
+#endif
 
 // have to strip 2 fetch BODY lines off the front,
 // and ) A018 OK off the end.
@@ -1330,7 +1333,7 @@ abort:
 		return false;
 	}
 #if 0
-	z = fopen("ms2", "w"); fprintf(z, "%s", mailstring); fclose(z);
+	FILE *z; z = fopen("ms2", "w"); fprintf(z, "%s", mailstring); fclose(z);
 #endif
 
 // Don't free mailstring, we're using pieces of it
@@ -4041,6 +4044,7 @@ bool imapMovecopy(int l1, int l2, char cmd, char *dest)
 	const char *path;
 	const Window *pw = cw->prev; // previous
 	struct MACCOUNT *a = accounts + act - 1;
+	int l0;
 	char cust_cmd[80];
 
 	active_a = a, isimap = a->imap;
@@ -4059,35 +4063,51 @@ baddest:
 	}
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-
-// loop over lines in range
-	for(; l1 <= l2; ++l1) {
+	imapLines = initString(&iml_l);
+	sprintf(cust_cmd, "UID %s ",
+	     ((active_a->move_capable && cmd == 'm') ? "MOVE" : "COPY"));
+	stringAndString(&imapLines, &iml_l, cust_cmd);
+// loop over lines in range, is there a limit to the length of the resulting
+// imap line, with its comma separated list of uids?
+	for(l0 = l1; l1 <= l2; ++l1) {
 		const char *title = (char*)cw->r_map[l1].text;
 		int uid = atoi(title);
-		char *t;
-	asprintf(&t, "UID %s %d \"%s\"",
-		     ((active_a->move_capable && cmd == 'm') ? "MOVE" : "COPY"),
-		     uid, path);
-		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
-		free(t);
-		res = getMailData(h);
-		nzFree(mailstring);
-		if (res != CURLE_OK) goto abort;
-		cw->dot = l1; // good so far
-		if(cmd == 'm' && !active_a->move_capable) {
-// move is copy + delete
-			sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
-			curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
-			res = getMailData(h);
-			nzFree(mailstring);
-			if (res != CURLE_OK) goto abort;
-// we could expunge after the loop, but this just doesn't happen -
-// everybody is move capable.
-			expunge(h);
-		}
-		if(cmd == 'm')
-				delText(l1, l1), --l1, --l2;
+		stringAndNum(&imapLines, &iml_l, uid);
+		if(l1 < l2)
+			stringAndChar(&imapLines, &iml_l, ',');
 	}
+	stringAndString(&imapLines, &iml_l, " \"");
+	stringAndString(&imapLines, &iml_l, path);
+	stringAndChar(&imapLines, &iml_l, '"');
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
+	nzFree(imapLines);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) goto abort;
+
+	if(cmd == 'm' && !active_a->move_capable) {
+// move is copy + delete, this is the delete part.
+// You'll see it again in the next function.
+		imapLines = initString(&iml_l);
+		stringAndString(&imapLines, &iml_l, "uid STORE ");
+		for(l1 = l0; l1 <= l2; ++l1) {
+			const char *title = (char*)cw->r_map[l1].text;
+			int uid = atoi(title);
+			stringAndNum(&imapLines, &iml_l, uid);
+			if(l1 < l2)
+				stringAndChar(&imapLines, &iml_l, ',');
+		}
+		stringAndString(&imapLines, &iml_l, " +Flags \\Deleted");
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
+		nzFree(imapLines);
+		res = getMailData(h);
+		nzFree(mailstring), mailstring = 0;
+		if (res != CURLE_OK) goto abort;
+		if(!expunge(h)) return false;
+	}
+
+	if(cmd == 'm')
+		delText(l0, l2);
 
 	return true;
 
@@ -4134,7 +4154,7 @@ bool imapDelete(int l1, int l2, char cmd)
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
 	nzFree(imapLines);
 	res = getMailData(h);
-	nzFree(mailstring);
+	nzFree(mailstring), mailstring = 0;
 	if (res != CURLE_OK) goto abort;
 	if(!expunge(h)) return false;
 	delText(l0, l2);
