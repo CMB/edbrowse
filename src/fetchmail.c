@@ -1323,6 +1323,9 @@ abort:
 			mailstring_l = t - mailstring;
 		}
 
+// Don't free mailstring, we're using pieces of it
+// instead of continue we go to next_m,
+// which sets mailstring = 0 so we don't free it later
 		mif->cbase = mailstring;
 		mif->startlist = f->mlist;
 		mif->subject = emptyString;
@@ -1350,14 +1353,11 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 "=?UTF-8?Q?BLlSSY?=" NIL "WeCare4U" "cateringadvetiser.com")) ((NIL NIL "kwnre" "comcast.net")) NIL NIL NIL "<01010184dc3e266d-c67755c2-facc-4650-9375-f85825069dd6-000000@us-west-2.amazonses.com>"))
 *********************************************************************/
 
+// if no envelope then nothing to do really
 		t = strstr(mailstring, "ENVELOPE (");
-		if (!t) {
-			nzFree(mailstring);
-			continue;
-		}
+		if (!t) goto next_m;
 
 // pull out subject, reply, etc
-// Don't free mailstring, we're using pieces of it
 		t += 10;
 		while (*t == ' ')
 			++t;
@@ -1368,11 +1368,9 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 		if(!strncmp(t, "NIL", 3)) {
 			t += 3;
 		} else {
-			if (*t != '"')
-				continue;
+			if (*t != '"') goto next_m;
 			t = strchr(++t, '"');
-			if (!t)
-				continue;
+			if (!t) goto next_m;
 			++t;
 	}
 
@@ -1407,8 +1405,7 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 				u = 0;
 		}
 
-		if (!u)
-			continue;
+		if (!u) goto next_m;
 		*u = 0;
 		if (*t == '[' && u[-1] == ']')
 			++t, u[-1] = 0;
@@ -1506,14 +1503,15 @@ dodate:
 
 dosize:
 		u = strstr(t, "SIZE ");
-		if (!u)
-			continue;
+		if (!u) goto next_m;
 		t = u + 5;
-		if (!isdigitByte(*t))
-			continue;
+		if (!isdigitByte(*t)) goto next_m;
 		mif->size = atoi(t);
 
+next_m:
+		mailstring = 0;
 	}
+
 	return true;
 }
 
@@ -1834,7 +1832,7 @@ refresh:
 			goto input;
 		}
 
-		if (*t == 'l' && isspaceByte(t[1])) {
+		if (*t == 'e' && isspaceByte(t[1])) {
 			setEnvelopeFormat(t + 2);
 			goto input;
 		}
