@@ -4103,7 +4103,7 @@ bool imapDelete(int l1, int l2, char cmd)
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
 	const Window *pw = cw->prev;
-	char cust_cmd[80];
+	int l0;
 
 	active_a = a, isimap = a->imap;
 // does delete really mean move?
@@ -4119,18 +4119,25 @@ bool imapDelete(int l1, int l2, char cmd)
 	}
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-// loop over lines in range
-	for(; l1 <= l2; ++l1) {
+	imapLines = initString(&iml_l);
+	stringAndString(&imapLines, &iml_l, "uid STORE ");
+// loop over lines in range, is there a limit to the length of the resulting
+// imap line, with its comma separated list of uids?
+	for(l0 = l1; l1 <= l2; ++l1) {
 		const char *title = (char*)cw->r_map[l1].text;
 		int uid = atoi(title);
-		sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
-		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		res = getMailData(h);
-		nzFree(mailstring);
-		if (res != CURLE_OK) goto abort;
-		delText(l1, l1), --l1, --l2;
+		stringAndNum(&imapLines, &iml_l, uid);
+		if(l1 < l2)
+			stringAndChar(&imapLines, &iml_l, ',');
 	}
-	expunge(h);
+	stringAndString(&imapLines, &iml_l, " +Flags \\Deleted");
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
+	nzFree(imapLines);
+	res = getMailData(h);
+	nzFree(mailstring);
+	if (res != CURLE_OK) goto abort;
+	if(!expunge(h)) return false;
+	delText(l0, l2);
 
 D_check:
 	if(cmd == 'D') printDot();
