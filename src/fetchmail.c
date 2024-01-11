@@ -564,14 +564,10 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	strcpy(cust_cmd, "SEARCH ");
 	if (cons_utf8)
 		strcat(cust_cmd, "CHARSET UTF-8 ");
-	if (searchtype == 's')
-		strcat(cust_cmd, "SUBJECT");
-	if (searchtype == 'f')
-		strcat(cust_cmd, "FROM");
-	if (searchtype == 't')
-		strcat(cust_cmd, "TO");
-	if (searchtype == 'b')
-		strcat(cust_cmd, "BODY");
+	if (searchtype == 's') strcat(cust_cmd, "SUBJECT");
+	if (searchtype == 'f') strcat(cust_cmd, "FROM");
+	if (searchtype == 't') strcat(cust_cmd, "TO");
+	if (searchtype == 'b') strcat(cust_cmd, "BODY");
 	strcat(cust_cmd, " \"");
 	strcat(cust_cmd, line);
 	strcat(cust_cmd, "\"");
@@ -579,15 +575,15 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	res = getMailData(handle);
 	if (res != CURLE_OK) {
 		*res_p = res;
-		nzFree(mailstring);
+		nzFree(mailstring), mailstring = 0;
 		return -1;
 	}
 
 	t = strstr(mailstring, "SEARCH ");
 	if (!t) {
 none:
-		nzFree(mailstring);
-		i_puts(MSG_NoMatch);
+		nzFree(mailstring), mailstring = 0;
+		if(ismc) i_puts(MSG_NoMatch); else setError(MSG_NoMatch);
 		return 0;
 	}
 	t += 6;
@@ -595,14 +591,12 @@ none:
 	while (*t == ' ') ++t;
 	u = t;
 	while (*u) {
-		if (!isdigitByte(*u))
-			break;
+		if (!isdigitByte(*u)) break;
 		++cnt;
 		while (isdigitByte(*u)) ++u;
 		skipWhite2(&u);
 	}
-	if (!cnt)
-		goto none;
+	if (!cnt) goto none;
 
 	cleanFolder(f);
 
@@ -614,7 +608,8 @@ none:
 	u = t;
 	while (*u && cnt) {
 		int seqno = strtol(u, &u, 10);
-		if (cnt <= f->nfetch) {
+		if ((!earliest && cnt <= f->nfetch) ||
+		(earliest && mif - f->mlist < f->nfetch)) {
 			mif->seqno = seqno;
 			++mif;
 		}
@@ -776,7 +771,7 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res2 = getMailData(h);
-	nzFree(mailstring);
+	nzFree(mailstring), mailstring = 0;
 	if(res2 == CURLE_OK) {
 		debugPrint(1, "reconnect to %s", withoutSubstring(f));
 		return true;
@@ -1261,10 +1256,36 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 	char nf[24]; // next fetch
 	char *sfp; // start fetch pointer
 	char *nfp; // next fetch pointer
+	struct MIF *mif;
 
+// when this comes from a search, not a normal descend,
+// the emails are not in order, and we can't use a range.
+// Check for this and build a list instead.
+	imapLines = initString(&iml_l);
+	mif = f->mlist;
+	if(mif->seqno == f->start) {
+		for (j = 1, ++mif; j < f->nfetch; ++j, ++mif)
+			if(mif->seqno != mif[-1].seqno + 1) break;
+		if(j == f->nfetch) goto range;
+	}
+
+// Ouch! Make the list.
+	mif = f->mlist;
+	for (j = 0; j < f->nfetch; ++j, ++mif) {
+		if(j) stringAndChar(&imapLines, &iml_l, ',');
+	stringAndNum(&imapLines, &iml_l, mif->seqno);
+	}
+
+range:
 // capture the uids
-	sprintf(cust_cmd, "FETCH %d:%d UID", f->start, f->start + f->nfetch - 1);
-	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+	if(*imapLines) {
+		asprintf(&t, "FETCH %s UID", imapLines);
+	} else {
+		sprintf(cust_cmd, "FETCH %d:%d UID", f->start, f->start + f->nfetch - 1);
+		t = cust_cmd;
+	}
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+	if(*imapLines) free(t);
 	res = getMailData(handle);
 	if (res != CURLE_OK) goto abort;
 #if 0
@@ -1273,7 +1294,7 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 
 	t = mailstring;
 	for (j = 0; j < f->nfetch; ++j) {
-		struct MIF *mif = f->mlist + j;
+		mif = f->mlist + j;
 // defaults
 		mif->startlist = f->mlist;
 		mif->subject = emptyString;
@@ -1297,8 +1318,14 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 		nzFree(mailstring), mailstring = 0;
 
 // get envelopes
-	sprintf(cust_cmd, "FETCH %d:%d ALL", f->start, f->start + f->nfetch - 1);
-	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+	if(*imapLines) {
+		asprintf(&t, "FETCH %s ALL", imapLines);
+	} else {
+		sprintf(cust_cmd, "FETCH %d:%d ALL", f->start, f->start + f->nfetch - 1);
+		t = cust_cmd;
+	}
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
+	if(*imapLines) free(t);
 
 /*********************************************************************
 Originally I used the WRITEFUNCTION to get the envelope data.
@@ -1324,6 +1351,7 @@ I have to use a stub function. You'll see below.
 	curl_easy_setopt(handle, CURLOPT_HEADERDATA, NULL);
 	if (res != CURLE_OK) {
 abort:
+		nzFree(imapLines);
 		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
 		nzFree(mailstring), mailstring = 0;
 		return false;
@@ -1338,8 +1366,9 @@ abort:
 	mailstring = 0;
 
 	for (j = 0; j < f->nfetch; ++j) {
-		struct MIF *mif = f->mlist + j;
-		sprintf(nf, "* %d FETCH ", f->start + j + 1);
+		mif = f->mlist + j;
+		nfp = 0;
+		if(j < f->nfetch - 1) sprintf(nf, "* %d FETCH ", mif[1].seqno);
 		nfp = strstr(sfp, nf); // find next fetch
 		if(nfp) nfp[-1] = 0;
 
@@ -1509,6 +1538,7 @@ next_m:
 	sfp = nfp;
 	}
 
+	nzFree(imapLines); // in case it was a list
 	return true;
 }
 
@@ -3896,29 +3926,11 @@ teardown:
 	return true;
 }
 
-// rf parameter means this is a refresh of envelopes
-bool folderDescend(const char *path, bool rf)
+static void makeLinesAndUids(const struct FOLDER *f)
 {
-	CURLcode res;
-	CURL *h = cw->imap_h;
-	int act = cw->imap_n;
-	struct MACCOUNT *a = accounts + act - 1;
-	Window *w;
-	struct MIF *mif;
-	char *p;
 	int j;
-
-	active_a = a, isimap = a->imap;
-	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
-	f->path = path;
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-	if(!examineFolder(h, f, false)) {
-//Oops, problem.
-		if(rf && cw->dol) delText(1, cw->dol);
-		cleanFolder(f);
-		free(f);
-		return false;
-	}
+	const struct MIF *mif;
+	char *p;
 	mif = f->mlist;
 	imapLines = initString(&iml_l);
 	imapPaths = initString(&imp_l);
@@ -3933,6 +3945,29 @@ bool folderDescend(const char *path, bool rf)
 		stringAndString(&imapPaths, &imp_l, mif->subject);
 		stringAndChar(&imapPaths, &imp_l, '\n');
 	}
+}
+
+// rf parameter means this is a refresh of envelopes
+bool folderDescend(const char *path, bool rf)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	Window *w;
+
+	active_a = a, isimap = a->imap;
+	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
+	f->path = path;
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	if(!examineFolder(h, f, false)) {
+//Oops, problem.
+		if(rf && cw->dol) delText(1, cw->dol);
+		cleanFolder(f);
+		free(f);
+		return false;
+	}
+	makeLinesAndUids(f);
 	if(!rf) {
 		freeWindows(context, false); // lop off stuff below
 // make new window
@@ -3956,6 +3991,75 @@ bool folderDescend(const char *path, bool rf)
 		nzFree(imapLines);
 		nzFree(imapPaths);
 	}
+// a byte count, as though you had read a file.
+	debugPrint(1, "%d", iml_l);
+	cleanFolder(f);
+	free(f);
+	return true;
+}
+
+bool folderSearch(const char *path, char *search, bool rf)
+{
+	CURLcode res = CURLE_OK;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	Window *w;
+	const char *t = search + 2;
+	char *u;
+
+	skipWhite2(&t);
+	if(!*t) {
+		setError(MSG_Empty);
+		return false;
+	}
+	if (strchr(t, '"')) {
+		setError(MSG_SearchQuote);
+		return false;
+	}
+	if(strlen(t) > 160) {
+		setError(MSG_RexpLong);
+		return false;
+	}
+
+	active_a = a, isimap = a->imap;
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+// We have to select the folder first, then search
+	asprintf(&u, "SELECT \"%s\"", path);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
+	free(u);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if(res != CURLE_OK) {
+		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		return false;
+	}
+
+	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
+	f->path = path;
+	if(imapSearch(h, f, search, &res) <= 0) {
+		cleanFolder(f);
+		free(f);
+		if(res != CURLE_OK)
+			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		return false;
+	}
+
+	freeWindows(context, false); // lop off stuff below
+// make new window
+	w = createWindow();
+	w->imap_h = h;
+	w->imap_n = act;
+	w->imap_l = cw->imap_l;
+	strcpy(w->imap_env, cw->imap_env);
+	w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
+	cw->imapMode2 = true;
+	asprintf(&cf->fileName, "envelopes %s", path);
+	makeLinesAndUids(f);
+	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
+	addTextToBackend(imapPaths);
+	nzFree(imapLines);
+	nzFree(imapPaths);
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
 	cleanFolder(f);

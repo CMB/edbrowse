@@ -79,6 +79,7 @@ bool imapBufferPresent(void);
 bool imapBuffer(char *line);
 bool imap1rf();
 bool folderDescend(const char *path, bool rf);
+bool folderSearch(const char *path, char *search, bool rf);
 bool mailDescend(const char *path, char cmd);
 bool imapMovecopy(int l1, int l2, char cmd, char *dest);
 bool imapDelete(int l1, int l2, char cmd);

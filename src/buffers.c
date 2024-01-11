@@ -6676,8 +6676,7 @@ bool runCommand(const char *line)
 		line = newline;
 	}
 
-	startRange = endRange = cw->dot;	/* default range */
-/* Just hit return to read the next line. */
+	startRange = endRange = cw->dot;	// default range
 	first = *line;
 	if (first == 0) {
 		didRange = true;
@@ -6686,6 +6685,12 @@ bool runCommand(const char *line)
 			setError(MSG_EndBuffer);
 			return false;
 		}
+	}
+
+// search the imap server, not a local regexp search
+	if(cw->imapMode1 && first == '/' && cw->dot &&
+	line[1] && strchr("fstb", line[1]) && line[2] == ' ') {
+		return folderSearch((char*)cw->r_map[cw->dol].text, (char*)line + 1, false);
 	}
 
 	if (first == ',') {
