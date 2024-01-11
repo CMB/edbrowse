@@ -753,7 +753,7 @@ static struct {
 	char temp_lhs[MAXRE], temp_rhs[MAXRE];
 } globalSubs;
 
-static void saveSubstitutionStrings(void)
+void saveSubstitutionStrings(void)
 {
 	if (!searchStringsAll)
 		return;
@@ -767,7 +767,7 @@ static void saveSubstitutionStrings(void)
 	strcpy(globalSubs.rhs, cw->rhs);
 }
 
-static void restoreSubstitutionStrings(Window *nw)
+void restoreSubstitutionStrings(Window *nw)
 {
 	if (!searchStringsAll)
 		return;
@@ -8481,6 +8481,12 @@ redirect:
 	if (cmd == 'd' || cmd == 'D') {
 		if (cw->imapMode2) {
 			rc = imapDelete(startRange, endRange, cmd);
+			if(!rc) globSub = false;
+			return rc;
+		}
+
+		if (cw->imapMode3) {
+			rc = imapDeleteWhileReading();
 			if(!rc) globSub = false;
 			return rc;
 		}

@@ -3751,6 +3751,11 @@ found:
 	nzFree(buf);
 }
 
+/*********************************************************************
+Functions beyond this point support integrated imap,
+reading your email from within an edbrowse buffer.
+*********************************************************************/
+
 bool imapBufferPresent(void)
 {
 int i;
@@ -3991,7 +3996,6 @@ bool mailDescend(const char *title, char cmd)
 	Window *w;
 	struct FOLDER f0;
 
-	active_a = a, isimap = a->imap;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // have to get the actual path from above
 	w = cw->prev;
@@ -4047,7 +4051,6 @@ bool imapMovecopy(int l1, int l2, char cmd, char *dest)
 	int l0;
 	char cust_cmd[80];
 
-	active_a = a, isimap = a->imap;
 	skipWhite2(&dest);
 	if(!*dest) { // nothing there
 baddest:
@@ -4065,7 +4068,7 @@ baddest:
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	imapLines = initString(&iml_l);
 	sprintf(cust_cmd, "UID %s ",
-	     ((active_a->move_capable && cmd == 'm') ? "MOVE" : "COPY"));
+	     ((a->move_capable && cmd == 'm') ? "MOVE" : "COPY"));
 	stringAndString(&imapLines, &iml_l, cust_cmd);
 // loop over lines in range, is there a limit to the length of the resulting
 // imap line, with its comma separated list of uids?
@@ -4085,7 +4088,7 @@ baddest:
 	nzFree(mailstring), mailstring = 0;
 	if (res != CURLE_OK) goto abort;
 
-	if(cmd == 'm' && !active_a->move_capable) {
+	if(cmd == 'm' && !a->move_capable) {
 // move is copy + delete, this is the delete part.
 // You'll see it again in the next function.
 		imapLines = initString(&iml_l);
@@ -4125,15 +4128,14 @@ bool imapDelete(int l1, int l2, char cmd)
 	const Window *pw = cw->prev;
 	int l0;
 
-	active_a = a, isimap = a->imap;
 // does delete really mean move?
-	if(active_a->dxtrash && !active_a->dxfolder[pw->dot]) {
+	if(a->dxtrash && !a->dxfolder[pw->dot]) {
 		char destn[8];
-		if(!active_a->move_capable) {
+		if(!a->move_capable) {
 			setError(MSG_NMC);
 			return false;
 		}
-		sprintf(destn, "%d", active_a->dxtrash);
+		sprintf(destn, "%d", a->dxtrash);
 		if(!imapMovecopy(l1, l2, 'm', destn)) return false;
 		goto D_check;
 	}
@@ -4167,3 +4169,82 @@ abort:
 	ebcurl_setError(res, cf->firstURL, 0, emptyString);
 	return false;
 }
+
+bool imapMovecopyWhileReading(char cmd, char *dest)
+{
+	CURLcode res;
+	const Window *pw = cw->prev;
+	const Window *pw2 = pw->prev;
+	const char *title = (char*)pw->r_map[pw->dot].text;
+	int uid = atoi(title);
+	CURL *h = pw->imap_h;
+	int act = pw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	const char *path;
+	char cust_cmd[80];
+
+	skipWhite2(&dest);
+	if(!*dest) { // nothing there
+baddest:
+		setError(MSG_BadDest);
+		return false;
+	}
+	path = folderByNameW(pw2, dest);
+	if(!path) // already printed some helpful messages
+		goto baddest;
+	if(path == (char*)pw2->r_map[pw2->dot].text) {
+		i_puts(MSG_SameFolder);
+		goto baddest;
+	}
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+  puts("not yet implemented");
+	return true;
+}
+
+bool imapDeleteWhileReading(void)
+{
+	CURLcode res;
+	Window *pw = cw->prev;
+	const char *title = (char*)pw->r_map[pw->dot].text;
+	int uid = atoi(title);
+	CURL *h = pw->imap_h;
+	int act = pw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	char cust_cmd[80];
+
+// does delete really mean move?
+	if(a->dxtrash && !a->dxfolder[pw->dot]) {
+		char destn[8];
+		if(!a->move_capable) {
+			setError(MSG_NMC);
+			return false;
+		}
+		sprintf(destn, "%d", a->dxtrash);
+		return imapMovecopyWhileReading('m', destn);
+	}
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) goto abort;
+	if(!expunge(h)) return false;
+
+	undoSpecialClear();
+	saveSubstitutionStrings();
+	if (!cxQuit(context, 1))
+		return false;
+	sessionList[context].lw = cw = pw;
+	restoreSubstitutionStrings(cw);
+	delText(cw->dot, cw->dot);
+	if(debugLevel >= 1)
+		printDot();
+	return true;
+
+abort:
+	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	return false;
+}
+

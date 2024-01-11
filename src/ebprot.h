@@ -21,6 +21,8 @@ void printDot(void);
 void printPrompt(void);
 void initializeReadline(void);
 pst inputLine(const bool textEntry);
+void saveSubstitutionStrings(void);
+void restoreSubstitutionStrings(Window *nw);
 Window *createWindow(void);
 void freeWindowLines(struct lineMap *map);
 void freeWindows(int cx, bool all);
@@ -80,6 +82,8 @@ bool folderDescend(const char *path, bool rf);
 bool mailDescend(const char *path, char cmd);
 bool imapMovecopy(int l1, int l2, char cmd, char *dest);
 bool imapDelete(int l1, int l2, char cmd);
+bool imapMovecopyWhileReading(char cmd, char *dest);
+bool imapDeleteWhileReading(void);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);
