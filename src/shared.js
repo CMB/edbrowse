@@ -285,7 +285,7 @@ if(l < x.length) r += "...";
 r += '}';
 return r;
 }
-if(x instanceof w.URL || x.dom$class === "URL") return "URL(" + x.toString() + ")";
+if(x.dom$class === "URL") return "URL(" + x.toString() + ")";
 if(x.nodeType == 1 && x.childNodes && x.nodeName) { // html element
 var s = "<" + x.nodeName + ">";
 var y = x.getAttribute("id");
