@@ -355,7 +355,9 @@ static char *get_property_url(JSContext *cx, JSValueConst owner, bool action)
 	}
 	if (JS_IsUndefined(uo))
 		return 0;
-	s = get_property_string(cx, uo, "href$val");
+// Don't use href$val, that's our baby, and lots of websites overload the URL
+// class with their own, which doesn't have the internal workings of ours.
+	s = get_property_string(cx, uo, "href");
 	JS_Release(cx, uo);
 	return s;
 }
