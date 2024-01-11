@@ -3,6 +3,8 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.9
 dx to specify hard delete in imap folders.
 
+Integrate imap into edbrowse. Emails and envelopes in the buffer.
+
 3.8.8
 Read and write blocks of text amongst the buffers on the current stack.
 .w+1@'c     r-1@'a,'b

@@ -21,7 +21,8 @@ static bool bad_utf8_alert;
 // The valid edbrowse commands
 static const char valid_cmd[] = "aAbBcdDefghHijJklmMnpPqrstuvwWXz=^&<";
 // Commands that can be done in browse mode
-static const char browse_cmd[] = "AbBdDefghHiklMnpPqsvwXz=^&<";
+// m and t are only here for moving an imap email that you are browsing
+static const char browse_cmd[] = "AbBdDefghHiklmMnpPqtsvwXz=^&<";
 // Commands for sql mode
 static const char sql_cmd[] = "AadDefghHiklmnpPqrsvwXz=^<";
 // Commands for directory mode
@@ -7196,6 +7197,10 @@ after_ib:
 		setError(MSG_BrowseCommand, icmd);
 		return (globSub = false);
 	}
+	if (cw->browseMode && (cmd  == 'm' || cmd == 't') && !cw->imapMode3) {
+		setError(MSG_BrowseCommand, icmd);
+		return (globSub = false);
+	}
 
 	if (startRange == 0 && !strchr(zero_cmd, cmd)) {
 		setError(MSG_AtLine0);
@@ -7245,6 +7250,13 @@ after_ib:
 // move or copy email to another folder
 		if(cw->imapMode2 && postSpace) {
 			rc = imapMovecopy(startRange, endRange, cmd, (char*)line);
+			if(!rc) globSub = false;
+			return rc;
+		}
+
+// move or copy the current mail to another folder
+		if(cw->imapMode3 && postSpace) {
+			rc = imapMovecopyWhileReading(cmd, (char*)line);
 			if(!rc) globSub = false;
 			return rc;
 		}

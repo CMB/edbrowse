@@ -136,7 +136,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#filter> Mail Filtering </A>
 <LI><A HREF=#reply> Mail Reply </A>
 <LI><A HREF=#imap> Imap Client </A>
-<LI><A HREF=#iai> Imap Alternate Interface </A>
+<LI><A HREF=#iai> Imap Within Edbrowse </A>
 </UL>
 
 <h2>Chapter 8, IRC Client</h2>
@@ -5709,38 +5709,56 @@ This will depend on the imap server.
 You can rename a folder via `rename foo bar'.
 This command assumes there is no whitespace in a folder's name.
 
-<H2 id=iai> Imap Alternate Interface </h2>
+<H2 id=iai> Imap Within Edbrowse </h2>
 
 <p>
 Edbrowse presents an ed-like interface in almost everything it does: browsing, file manager, sql databbase, irc client, etc.
 In fact that is part of its appeal.
-So it is fair to ask, why doesn't it do this for imap?
+Thus we try to do this for imap as well.
+This presents a seamless user experience, as seen in other browsers.
+While reading an email, you can go to a hyperlink, issue a reply, delete the email, save its attachments, etc.
+The stand-alone client is faster for some things, but you can't perform all these integrated operations.
 
 <p>
-Call up a server and there is one folder per line in a buffer.
-Type g to go to the folder, like it was a directory, or / to find the folder you want, or substitute to rename the folder, or a to add a new folder, or d to delete it.
-Within a folder, you will find the recent emails, with envelopes one per line.
-Type g to go to an email and it is in your buffer.
-From here the contents of an email, raw or browsed, could be written to another buffer, or searched with a regular expression, etc.
-Perhaps some new commands to save attachments; but most of the commands are the ones you already know.
-^ goes back up to the list of envelopes.
-Type d to delete that email.
-Maybe g/re/d to delete an entire swath of emails.
-It seems better, why don't we do that?
+Call up a server by the "imap n" command.
+n is the number of the mail block in your config file.
+If the connection is made successfully, there is one folder per line in the buffer.
+Type g to go to the folder, like it was a directory, or / to find the folder you want.
+In a new buffer, (the folders are still up one level in your history), you will find the most recent emails,
+one envelope per line.
+Type g to go to an email, and it is in your buffer.
+From here the contents of an email, raw or browsed, can be manipulated in the usual way.
+If a link interests you, go to it; you couldn't do that from the imap client.
 
 <p>
-Well it's a little harder to do. That's a partial answer.
-I might do it some day.
-There are some differences though, whence it is not a perfect fit with the ed model.
+^ goes back up to the list of envelopes, and ^ again goes back up to the folders.
 
 <p>
-The biggest difference is the search feature.
-/ in ed means a text search through the buffer.
-In imap, as it is implemented today, it performs a server side search.
-You might have 50 emails in the buffer, but thousands on the server, and / looks through all of them, which is what most people want.
-It also searches by subject, from, or body.
-Maybe we would have different commands for search within the buffer and search on the server.
-The interface would take some thought - before we wrote any code.
+d deletes an email, either the email you are reading, or the email indicated by the current envelope.
+In the page of envelopes, you can delete a range of emails, or a collection of emails via g/re/d.
+Be careful, there is no undo.
+However, delete might not actually delete on the server, depending on the server -
+and you can use the dx directive, as described before,
+to make d act like a move to trash in certain folders.
+
+<p>
+d removes the envelope you are on, but does not adjust the page above.
+Back up to folders and the message count is still what it was before.
+Type rf to get a new, accurate message count on all the folders.
+
+<p>
+When viewing the folders or the envelopes, "l number" will change the fetch limit, how many envelopes fetched at a time,
+and "e format" changes the format of the envelope.
+These are the same as the imap client.
+For instance, "e fstd" shows from, to, subject, and date.
+If you are on the envelopes page, you might want to refresh, so you can see them in the new format.
+
+<p>
+A limit of -n fetches the first n emails, rather than the most recent.
+This makes it easy to clear out the old emails.
+
+<p>
+More features coming soon.
 
 <hr>
 <h1>Chapter 8, IRC Client</h1>

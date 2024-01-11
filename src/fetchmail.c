@@ -731,10 +731,9 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 		if (fromline && !stringEqual(fromline, mif->from))
 			continue;
 		if (subkey == 'm') {
-			if (asprintf(&t, "UID %s %d \"%s\"",
+			asprintf(&t, "UID %s %d \"%s\"",
 				     (active_a->move_capable ? "MOVE" : "COPY"),
-				     mif->uid, destination->path) == -1)
-				i_printfExit(MSG_MemAllocError, 24);
+				     mif->uid, destination->path);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 			free(t);
 			res = getMailData(handle);
@@ -773,8 +772,7 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 // If some other error code then return false;
 // Let's at least print it out.
 	if(res1 != CURLE_OK && debugLevel >= 1) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
-	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
-		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
+	asprintf(&t, "SELECT \"%s\"", f->path);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res2 = getMailData(h);
@@ -885,8 +883,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	}
 
 /* tell the server to descend into this folder */
-	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
-		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
+	asprintf(&t, "SELECT \"%s\"", f->path);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res = getMailData(handle);
@@ -1127,10 +1124,9 @@ rebulk:
 			g = folderByName(inputline);
 			if (g && g != f) {
 re_move:
-				if (asprintf(&t, "UID %s %d \"%s\"",
+				asprintf(&t, "UID %s %d \"%s\"",
 					     (active_a->move_capable ? "MOVE" : "COPY"),
-					     mif->uid, g->path) == -1)
-					i_printfExit(MSG_MemAllocError, 24);
+					     mif->uid, g->path);
 				curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 				free(t);
 				res = getMailData(handle);
@@ -1529,8 +1525,7 @@ static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	cleanFolder(f);
 
 /* interrogate folder */
-	if (asprintf(&t, "SELECT \"%s\"", f->path) == -1)
-		i_printfExit(MSG_MemAllocError, strlen(f->path) + 12);
+	asprintf(&t, "SELECT \"%s\"", f->path);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res = getMailData(handle);
@@ -1680,14 +1675,7 @@ static void get_mailbox_url(const struct MACCOUNT *a)
 		scheme = "pop3s";
 	if (a->imap)
 		scheme = (a->inssl ? "imaps" : "imap");
-	if (asprintf(&url,
-		     "%s://%s:%d/", scheme, a->inurl,
-		     a->inport) == -1) {
-/* The byte count is a little white lie / guess, we don't know
- * how much asprintf *really* requested. */
-		i_printfExit(MSG_MemAllocError,
-			     strlen(scheme) + strlen(a->inurl) + 8);
-	}
+	asprintf(&url,      "%s://%s:%d/", scheme, a->inurl,      a->inport);
 	mailbox_url = url;
 }
 
@@ -1844,8 +1832,7 @@ refresh:
 			stripWhite(t);
 			if (!*t)
 				goto input;
-			if (asprintf(&w, "CREATE \"%s\"", t) < 0)
-				goto imap_done;
+			asprintf(&w, "CREATE \"%s\"", t);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
 			res = getMailData(handle);
 			free(w);
@@ -1864,8 +1851,7 @@ refresh:
 			stripWhite(t);
 			if (!*t)
 				goto input;
-			if (asprintf(&w, "DELETE \"%s\"", t) < 0)
-				goto imap_done;
+			asprintf(&w, "DELETE \"%s\"", t);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
 			res = getMailData(handle);
 			free(w);
@@ -1891,8 +1877,7 @@ refresh:
 			stripWhite(u);
 			if (!*u)
 				goto input;
-			if (asprintf(&w, "RENAME \"%s\" \"%s\"", t, u) < 0)
-				goto imap_done;
+			asprintf(&w, "RENAME \"%s\" \"%s\"", t, u);
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
 			res = getMailData(handle);
 			free(w);
@@ -1967,12 +1952,7 @@ int fetchMail(int account)
 
 	for (message_number = 1; message_number <= message_count;
 	     message_number++) {
-		if (asprintf(&message_url, "%s%u", mailbox_url, message_number)
-		    == -1) {
-/* Again, the byte count in the error message is a bit of a fib. */
-			i_printfExit(MSG_MemAllocError,
-				     strlen(mailbox_url) + 11);
-		}
+		asprintf(&message_url, "%s%u", mailbox_url, message_number);
 		res = fetchOneMessage(mail_handle, message_number);
 		if (res != CURLE_OK)
 			goto fetchmail_cleanup;
@@ -4173,7 +4153,7 @@ abort:
 bool imapMovecopyWhileReading(char cmd, char *dest)
 {
 	CURLcode res;
-	const Window *pw = cw->prev;
+	Window *pw = cw->prev;
 	const Window *pw2 = pw->prev;
 	const char *title = (char*)pw->r_map[pw->dot].text;
 	int uid = atoi(title);
@@ -4181,6 +4161,7 @@ bool imapMovecopyWhileReading(char cmd, char *dest)
 	int act = pw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
 	const char *path;
+	char *t;
 	char cust_cmd[80];
 
 	skipWhite2(&dest);
@@ -4198,8 +4179,38 @@ baddest:
 	}
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-  puts("not yet implemented");
+	asprintf(&t, "UID %s %d \"%s\"", 	     ((a->move_capable && cmd == 'm') ? "MOVE" : "COPY"), uid, path);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
+	nzFree(t);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) goto abort;
+
+	if(cmd == 'm' && !a->move_capable) {
+		sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		res = getMailData(h);
+		nzFree(mailstring), mailstring = 0;
+		if (res != CURLE_OK) goto abort;
+		if(!expunge(h)) return false;
+	}
+
+	if(cmd == 't') return true; // copy, nothing else to do
+
+	undoSpecialClear();
+	saveSubstitutionStrings();
+	if (!cxQuit(context, 1))
+		return false;
+	sessionList[context].lw = cw = pw;
+	restoreSubstitutionStrings(cw);
+	delText(cw->dot, cw->dot);
+	if(debugLevel >= 1)
+		printDot();
 	return true;
+
+abort:
+	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	return false;
 }
 
 bool imapDeleteWhileReading(void)
