@@ -217,7 +217,6 @@ struct MIF {
 	int seqno;
 	int size;
 	struct MIF *startlist;
-	char *cbase;		/* allocated string containing the following */
 	char *subject, *from, *to, *reply;
 // references, principal recipient, carbon recipient
 	char *refer, *prec, *ccrec;
@@ -236,6 +235,7 @@ static struct FOLDER {
 	int start;
 	int uidnext;		/* uid of next message */
 	struct MIF *mlist;	/* allocated */
+	char *cbase; // allocated
 } *topfolders;
 
 static struct MACCOUNT *active_a;
@@ -486,6 +486,13 @@ static size_t imap_header_callback(char *i, size_t size,
 	return b;
 }
 
+static size_t imap_null_callback(char *i, size_t size,
+				   size_t nitems, void *data)
+{
+	size_t b = nitems * size;
+	return b;
+}
+
 /* after the email has been fetched via pop3 or imap */
 static void undosOneMessage(void)
 {
@@ -511,13 +518,8 @@ static void isoDecode(char *vl, char **vrp);
 
 static void cleanFolder(struct FOLDER *f)
 {
-	int j;
-	struct MIF *mif;
-	if (!f->mlist)
-		return;
-	mif = f->mlist;
-	for (j = 0; j < f->nfetch; ++j, ++mif)
-		nzFree(mif->cbase);
+	nzFree(f->cbase);
+	f->cbase = NULL;
 	nzFree(f->mlist);
 	f->mlist = NULL;
 	f->nmsgs = f->nfetch = f->unread = 0;
@@ -642,7 +644,7 @@ static void printEnvelope(const struct MIF *mif, char **grab)
 
 	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i) {
 // we don't honor n in a buffer, you already have the line numbers, just type n
-		if(c == 'n') continue;
+		if(c == 'n' && !ismc) continue;
 // put in the delimiter
 		if(i) stringAndString(&envp, &envp_l, " | ");
 		switch(c) {
@@ -1257,12 +1259,18 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 	CURLcode res;
 	int sublength;
 	char cust_cmd[80];
+	char nf[24]; // next fetch
+	char *sfp; // start fetch pointer
+	char *nfp; // next fetch pointer
 
-// capture the uid
+// capture the uids
 	sprintf(cust_cmd, "FETCH %d:%d UID", f->start, f->start + f->nfetch - 1);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	res = getMailData(handle);
 	if (res != CURLE_OK) goto abort;
+#if 0
+	FILE *z; z = fopen("ms1", "w"); fprintf(z, "%s", mailstring); fclose(z);
+#endif
 
 	t = mailstring;
 	for (j = 0; j < f->nfetch; ++j) {
@@ -1287,61 +1295,54 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 		else
 			printf("mail %d has no uid, operations will not work!", mif->seqno);
 	}
-		nzFree(mailstring);
+		nzFree(mailstring), mailstring = 0;
 
-	for (j = 0; j < f->nfetch; ++j) {
-		struct MIF *mif = f->mlist + j;
-		if(!mif->uid) continue;
-		sprintf(cust_cmd, "UID FETCH %d ALL", mif->uid);
-		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+// get envelopes
+	sprintf(cust_cmd, "FETCH %d:%d ALL", f->start, f->start + f->nfetch - 1);
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 
 /*********************************************************************
 Originally I used the WRITEFUNCTION to get the envelope data.
 That returns the untagged line, and that was right 99% of the time.
 That held the entire envelope.
-But once ina while the envelope continued on the next line,
-the bodyline, the other line, whatever you call it.
+But once in a while the envelope continued on the next line,
+the body line, the other line, whatever you call it.
 For that eventuality I have to use the HEADERFUNCTION as well.
 Both do the same thing, the same function, gather data.
 But now I get the untagged line twice.
-We'll deal with that later.
+I need to use the header function without the write function.
+If I leave the write function null, curl core dumps.
+I have to use a stub function. You'll see below.
 *********************************************************************/
 
-		curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, eb_curl_callback);
-		curl_easy_setopt(handle, CURLOPT_HEADERDATA, &callback_data);
-		res = getMailData(handle);
-		curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
-		curl_easy_setopt(handle, CURLOPT_HEADERDATA, NULL);
-		if (res != CURLE_OK) {
+	curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, eb_curl_callback);
+	curl_easy_setopt(handle, CURLOPT_HEADERDATA, &callback_data);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, imap_null_callback);
+	res = getMailData(handle);
+// and put things back
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
+	curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
+	curl_easy_setopt(handle, CURLOPT_HEADERDATA, NULL);
+	if (res != CURLE_OK) {
 abort:
-			ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
-			nzFree(mailstring), mailstring = 0;
-			return false;
-		}
+		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
+		nzFree(mailstring), mailstring = 0;
+		return false;
+	}
+#if 0
+	z = fopen("ms2", "w"); fprintf(z, "%s", mailstring); fclose(z);
+#endif
 
-/* have to strip the untagged line off the front,
- * as it appears twice,
- * and A018 OK off the end. */
-		t = strchr(mailstring, '\n');
-		if (t) {
-			++t;
-			mailstring_l -= (t - mailstring);
-			strmove(mailstring, t);
-		}
-		t = mailstring + mailstring_l;
-		if (t > mailstring && t[-1] == '\n')
-			t[-1] = 0, --mailstring_l;
-		t = strrchr(mailstring, '\n');
-		if (t && strstr(t, " OK ")) {
-			++t;
-			*t = 0;
-			mailstring_l = t - mailstring;
-		}
-
-		mif->cbase = mailstring;
 // Don't free mailstring, we're using pieces of it
-// instead of continue we go to next_m,
-// which sets mailstring = 0 so we don't free it later
+	f->cbase = mailstring;
+	sfp = mailstring;
+	mailstring = 0;
+
+	for (j = 0; j < f->nfetch; ++j) {
+		struct MIF *mif = f->mlist + j;
+		sprintf(nf, "* %d FETCH ", f->start + j + 1);
+		nfp = strstr(sfp, nf); // find next fetch
+		if(nfp) nfp[-1] = 0;
 
 /*********************************************************************
 Before we start cracking, here are a couple of illustrative examples.
@@ -1362,13 +1363,12 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 *********************************************************************/
 
 // if no envelope then nothing to do really
-		t = strstr(mailstring, "ENVELOPE (");
+		t = strstr(sfp, "ENVELOPE (");
 		if (!t) goto next_m;
 
 // pull out subject, reply, etc
 		t += 10;
-		while (*t == ' ')
-			++t;
+		while (*t == ' ') ++t;
 // date first, and it must be quoted.
 // We don't use this date because it isn't standardized,
 // it's whatever the sender's email client puts on the Date field.
@@ -1383,9 +1383,7 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 	}
 
 // subject next, I'll assume it is always quoted
-		while (*t == ' ')
-			++t;
-
+		while (*t == ' ') ++t;
 		if(!strncmp(t, "NIL ", 4)) { // missing subject
 			t += 4;
 			goto doreply;
@@ -1401,16 +1399,14 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 			while(isspaceByte(*t)) ++t;
 		}
 
-//  printf("%d,%d,%d|%s|\n", mailstring_l, t-mailstring, strlen(t), t);
-
 		if (*t == '"') {
 			++t;
 			u = nextRealQuote(t);
 		} else {
 			mif->line2 = true;
 			u = t + sublength;
-			if(sublength <= 0 || u - mailstring >= mailstring_l)
-				u = 0;
+			if(sublength <= 0 || sublength >= (int)strlen(t))
+				u = 0; // out of bounds
 		}
 
 		if (!u) goto next_m;
@@ -1421,8 +1417,7 @@ Plan Offers, Medicare NIL "deck" "uniqueencrypter.com")) ((NIL NIL "kwnre" "comc
 		t = u + 1;
 
 doreply:
-		while (*t == ' ')
-			++t;
+		while (*t == ' ') ++t;
 		if (t[0] != '(' || t[1] != '(')
 			goto doref;
 		t += 2;
@@ -1433,16 +1428,13 @@ doreply:
 // Don't know what is in blocks 2 and 3.
 // shouldn't we be checking for (( or NIL here?
 		u = strstr(t, "(("); // block 2
-		if(!u)
-			goto doref;
+		if(!u) goto doref;
 		t = u + 2;
 		u = strstr(t, "(("); // block 3
-		if(!u)
-			goto doref;
+		if(!u) goto doref;
 		t = u + 2;
 		u = strstr(t, "(("); // block 4
-		if(!u)
-			goto doref;
+		if(!u) goto doref;
 		t = u + 2;
 		if (!grabEmailFromEnvelope(&t, &mif->to, &mif->prec))
 			goto doref;
@@ -1453,24 +1445,23 @@ doreply:
 #if 0
 		u = strstr(t, ")) (("); // block 5
 		u = strstr(t, ")) NIL (("); // block 6
-		if(!u)
-			goto doref;
+		if(!u) goto doref;
 		t = u + 5;
 		if (!grabEmailFromEnvelope(&t, &f->ccrec, 0))
 			goto doref;
 #endif
 
-//  printf("%s %s %s %s\n", mif->from, mif->reply, mif->to, mif->prec);
+#if 0
+		printf("%d,%d:%s|%s|%s|%s|%s\n", j, mif->seqno, mif->from, mif->reply, mif->to, mif->prec, mif->subject);
+#endif
 
 doref:
 /* find the reference string, for replies */
 		u = strstr(t, " \"<");
-		if (!u)
-			goto doflags;
+		if (!u) goto doflags;
 		t = u + 2;
 		u = strchr(t, '"');
-		if (!u)
-			goto doflags;
+		if (!u) goto doflags;
 		*u = 0;
 		mif->refer = t;	// not used
 		t = u + 1;
@@ -1481,7 +1472,7 @@ doflags:
 		if(!u) {
 // sometimes flags and stuff comes at the beginning.
 // It should be somewhere!
-			t = mailstring;
+			t = sfp;
 			u = strstr(t, "FLAGS (");
 		}
 		if (!u)
@@ -1494,8 +1485,7 @@ doflags:
 
 dodate:
 		u = strstr(t, "INTERNALDATE ");
-		if (!u)
-			goto dosize;
+		if (!u) goto dosize;
 		t = u + 13;
 		while (*t == ' ')
 			++t;
@@ -1503,8 +1493,7 @@ dodate:
 			goto dosize;
 		++t;
 		u = strchr(t, '"');
-		if (!u)
-			goto dosize;
+		if (!u) goto dosize;
 		*u = 0;
 		mif->sent = parseHeaderDate(t);
 		t = u + 1;
@@ -1517,7 +1506,8 @@ dosize:
 		mif->size = atoi(t);
 
 next_m:
-		mailstring = 0;
+	if(!nfp) break;
+	sfp = nfp;
 	}
 
 	return true;
@@ -2695,7 +2685,7 @@ copy:
 finish:
 	for (s = vl; s < vr; ++s) {
 		c = *s;
-		if (c == 0 || c == '\t')
+		if (c == 0 || isspace(c))
 			*s = ' ';
 	}
 
