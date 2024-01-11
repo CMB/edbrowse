@@ -1258,30 +1258,45 @@ static bool envelopes(CURL * handle, struct FOLDER *f)
 	int sublength;
 	char cust_cmd[80];
 
+// capture the uid
+	sprintf(cust_cmd, "FETCH %d:%d UID", f->start, f->start + f->nfetch - 1);
+	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+	res = getMailData(handle);
+	if (res != CURLE_OK) goto abort;
+
+	t = mailstring;
 	for (j = 0; j < f->nfetch; ++j) {
 		struct MIF *mif = f->mlist + j;
+// defaults
+		mif->startlist = f->mlist;
+		mif->subject = emptyString;
+		mif->from = emptyString;
+		mif->to = emptyString;
+		mif->reply = emptyString;
+		mif->prec = emptyString;
+		mif->ccrec = emptyString;
 
-// capture the uid
-		sprintf(cust_cmd, "FETCH %d UID", mif->seqno);
-		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
-		res = getMailData(handle);
-		if (res != CURLE_OK) goto abort;
-		t = strstr(mailstring, "FETCH (UID ");
-		if (t) {
-			t += 11;
-			while (*t == ' ') ++t;
-			if (isdigitByte(*t))
-				mif->uid = atoi(t);
+		if(!t || !(t = strstr(t, "FETCH (UID "))) {
+			printf("mail %d has no uid, operations will not work!", mif->seqno);
+			continue;
 		}
+		t += 11;
+		while (*t == ' ') ++t;
+		if (isdigitByte(*t))
+			mif->uid = atoi(t);
+		else
+			printf("mail %d has no uid, operations will not work!", mif->seqno);
+	}
 		nzFree(mailstring);
 
-// At this point we don't use, and don't need, the sequence numbers. It's all uid.
-		mif->seqno = 0;
+	for (j = 0; j < f->nfetch; ++j) {
+		struct MIF *mif = f->mlist + j;
+		if(!mif->uid) continue;
 		sprintf(cust_cmd, "UID FETCH %d ALL", mif->uid);
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 
 /*********************************************************************
-Originally I used the WRITEFUNCTION to ge the enveloope data.
+Originally I used the WRITEFUNCTION to get the envelope data.
 That returns the untagged line, and that was right 99% of the time.
 That held the entire envelope.
 But once ina while the envelope continued on the next line,
@@ -1323,17 +1338,10 @@ abort:
 			mailstring_l = t - mailstring;
 		}
 
+		mif->cbase = mailstring;
 // Don't free mailstring, we're using pieces of it
 // instead of continue we go to next_m,
 // which sets mailstring = 0 so we don't free it later
-		mif->cbase = mailstring;
-		mif->startlist = f->mlist;
-		mif->subject = emptyString;
-		mif->from = emptyString;
-		mif->to = emptyString;
-		mif->reply = emptyString;
-		mif->prec = emptyString;
-		mif->ccrec = emptyString;
 
 /*********************************************************************
 Before we start cracking, here are a couple of illustrative examples.
