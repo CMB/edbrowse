@@ -5751,7 +5751,8 @@ Type rf to get a new, accurate message count on all the folders.
 When viewing the folders or the envelopes, "l number" will change the fetch limit, how many envelopes fetched at a time,
 and "e format" changes the format of the envelope.
 These are the same as the imap client.
-For instance, "e fstd" shows from, to, subject, and date.
+For instance, "e fstd" shows from,
+subject, to, and date.
 If you are on the envelopes page, you might want to refresh, so you can see them in the new format.
 
 <p>
@@ -5767,17 +5768,17 @@ For the folder on the current line, the following searches apply.
 <br>
 /t wilma : emails that were sent to Wilma
 <br>
-/s paypal transfer : emails with paypal and transfer in the subject
+/s paypal transfer : emails with paypal and transfer in the subject line
 <br>
 /b baseball : emails that mention baseball anywhere in the body
 
 <p>
-Any other /expression is just a search through the buffer like usual.
+Any other /expression is just a text search through the buffer as usual.
 
 <p>
 The envelope and fetch limits still apply.
 You can ask for the first 20, or last 30, emails of this search, showing from, subject, and size, for example.
-You might use the to field, in the search and the envelope,
+You might use the to field in the search,
 if you are searching through the Sent or Drafts folders, and want the emails that you sent to a particular person.
 
 <p>
@@ -5789,13 +5790,16 @@ This leaves you where you are.
 On the page of envelopes, you can move or copy a range of emails, or a collection via g/re/m abc.
 
 <p>
-If you happen to have the abc folder open in another buffer, and you move an email into that folder, it will not appear in that list of envelopes.
-It can't, because it acquires a new uid from the imap server when it moves.
-The uid is how edbrowse accesses that email, to perform any operations.
-You must refresh the abc envelope to see that email.
-It will be the most recent, even if it was send years earlier.
+Numbers are also valid in the move and copy commands.
+If abc is the third folder, you can type "m 3" or "t 3".
+It is probably safer and easier however, to type in the name of the folder or a fragment of its name.
 
 <p>
+If you happen to have the abc folder open in another buffer, and you move an email into that folder, it will not appear in that list of envelopes.
+It can't, because it acquires a new uid from the imap server once it moves.
+The uid is how edbrowse accesses that email, to perform any operations.
+You must refresh the abc envelopes to see that email.
+It will be the most recent, even if it was send years ago.
 In that sense, it probably doesn't help to have multiple folders open simultaneously.
 Descend into a folder, do some work, go back up, descend into another folder, etc.
 

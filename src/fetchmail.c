@@ -818,11 +818,16 @@ You'll see this after the perform function runs.
 	if (res != CURLE_OK) {
 		if(retry) { // this is the second attempt
 // I'm just gonna take what we got, it's better than nothing.
+// Well, unless we got nothing!
+			if(mailstring_l < 4000) {
+				nzFree(mailstring), mailstring = 0;
+				return res;
+			}
 			partread = true;
 			i_printf(MSG_PartRead);
 			goto afterfetch;
 		}
-		nzFree(mailstring);
+		nzFree(mailstring), mailstring = 0;
 		if(!refolder(h, f, res))
 			return res;
 		retry = true;
@@ -2167,6 +2172,39 @@ static int saveFormattedMail(int fh)
 	return fsize;
 }
 
+// assumes lastMailInfo has been created, and is present
+static const char*defaultSaveFilename(char *key_p, bool *delflag_p)
+{
+	const char *redirect;
+	if (!passMail) {
+		redirect = mailRedirect(lastMailInfo->to, lastMailInfo->from, lastMailInfo->reply, lastMailInfo->subject);
+	}
+
+	if (redirect) {
+		if (!isimap) {
+// pop3 client
+			*delflag_p = true;
+			*key_p = 'w';
+// leading - indicates save unformatted
+			if (*redirect == '-')
+				++redirect, *key_p = 'u';
+			if (stringEqual(redirect, "x")) {
+				i_printf(MSG_Junk);
+				printf("[%s]\n", lastMailInfo->subject);
+			} else
+				printf("> %s\n", redirect);
+		} else {
+// imap client or in-buffer
+// - is to be ignored here, because you already specified raw or formatted
+			if (*redirect == '-') ++redirect;
+// discarding is ignored, because you are in control
+			if (stringEqual(redirect, "x")) redirect = NULL;
+		}
+	}
+
+	return redirect;
+}
+
 // a mail message is in mailstring, present it to the user
 // Return the key that was pressed.
 // stop is only meaningful for imap.
@@ -2204,31 +2242,7 @@ static char presentMail(void)
 
 	browseCurrentBuffer(NULL);
 
-	if (!passMail) {
-		redirect = mailRedirect(lastMailInfo->to,
-					lastMailInfo->from,
-					lastMailInfo->reply,
-					lastMailInfo->subject);
-	}
-
-	if (redirect) {
-		if (!isimap) {
-			delflag = true;
-			key = 'w';
-			if (*redirect == '-')
-				++redirect, key = 'u';
-			if (stringEqual(redirect, "x")) {
-				i_printf(MSG_Junk);
-				printf("[%s]\n", lastMailInfo->subject);
-			} else
-				printf("> %s\n", redirect);
-		} else {
-			if (*redirect == '-')
-				++redirect;
-			if (stringEqual(redirect, "x"))
-				redirect = NULL;
-		}
-	}
+	redirect = defaultSaveFilename(&key, &delflag);
 
 /* display the next page of mail and get a command from the keyboard */
 	displine = 1;
@@ -3852,7 +3866,7 @@ bool imapBuffer(char *line)
 // reload address book on each imap setup; you might have changed it.
 // We do the same for each sendmail.
 	loadAddressBook();
-	active_a = a, isimap = a->imap;
+	active_a = a, isimap = true;
 	get_mailbox_url(a);
 	h = newFetchmailHandle(login, pass);
 	res = setCurlURL(h, mailbox_url);
@@ -3905,7 +3919,7 @@ bool imap1rf(void)
 	CURL *h = cw->imap_h;
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
-	active_a = a, isimap = a->imap;
+	active_a = a, isimap = true;
 	if(cw->dol) delText(1, cw->dol);
 // in case you changed debug levels
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
@@ -3970,7 +3984,7 @@ bool folderDescend(const char *path, bool rf)
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
 
-	active_a = a, isimap = a->imap;
+	active_a = a, isimap = true;
 	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
 	f->path = path;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
@@ -4036,7 +4050,7 @@ bool folderSearch(const char *path, char *search, bool rf)
 		return false;
 	}
 
-	active_a = a, isimap = a->imap;
+	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // We have to select the folder first, then search
 	asprintf(&u, "SELECT \"%s\"", path);
