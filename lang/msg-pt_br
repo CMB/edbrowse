@@ -71,7 +71,7 @@ submetendo formulário
 %s: linha %d, outtype tem que ser definido para t ou h
 muitos
  recomendado
-0
+Imap numeroDaContaDeEmail
 sem opções com a cadeia %s\n
 enviando carta para %s\n
 informação enviada; aguarde resposta por e-mail.
@@ -206,7 +206,7 @@ aviso: nenhum buffer disponível para gerir a janela auxiliar
 texto inesperado após o comando q
 impossível trocar o nome de um diretório
 impossível trocar o nome de uma tabela
-0
+conta não é imap
 sem arquivo especificado
 impossível escrever no diretório; os arquivos são modificados conforme você tenta
 impossível escrever no banco de dados; as linhas são modificadas conforme você tenta
@@ -728,8 +728,8 @@ imask desligado
 imask ligado
 nenhum imask
 buffer não pode receber texto
-0
-0
+Alerta! E-mail está parcialmente lido; dados podem estar incompletos.\n
+Alerta! Componente Mime está parcialmente lido; dados podem estar incompletos.\n
 sessão não é compatível com imap
 %c não disponível em modo imap
 %s não disponível em modo imap
@@ -738,8 +738,8 @@ não é possível replicar em modo imap
 impossível reproduzir áudio em modo de imap
 impossível quebrar linhas em modo imap
 impossível trocar o nome de imap
-0
-0
+Não posso reconfigurar enquanto sessões imap estão executando
+não é possível mexer
 0
 0
 0

@@ -4115,10 +4115,13 @@ bool mailDescend(const char *title, char cmd)
 		freeMailInfo(lastMailInfo);
 	lastMailInfo = 0;
 	iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
-	if (mailu8)
+	if(mailu8) {
 		addTextToBuffer((pst) mailu8, mailu8_l, 0, false);
-	else
+		cw->mail_raw = mailu8, nzFree(mailstring);
+	} else {
 		addTextToBuffer((pst) mailstring, mailstring_l, 0, false);
+	}
+	mailstring = 0;
 	cw->changeMode = false;
 	browseCurrentBuffer(NULL);
 	return true;

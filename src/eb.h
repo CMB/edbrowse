@@ -517,6 +517,7 @@ int ehsn;
 	char imap_env[8]; // envelope format
 	int imap_l; // fetch limit
 	CURL *imap_h; // imap server handle
+	char *mail_raw; // the email you're looking at
 	struct DBTABLE *table;	// if in sqlMode
 	time_t nextrender;
 };

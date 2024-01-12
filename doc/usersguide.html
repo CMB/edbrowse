@@ -5759,7 +5759,45 @@ A limit of -n fetches the first n emails, rather than the most recent.
 This makes it easy to clear out the old emails.
 
 <p>
-More features coming soon.
+edbrowse can perform a remote search on the imap server.
+This isn't just a search through the emails in your buffer; the search takes place on the server, through all of your emails.
+For the folder on the current line, the following searches apply.
+<p>
+/f fred : emails that come from Fred
+<br>
+/t wilma : emails that were sent to Wilma
+<br>
+/s paypal transfer : emails with paypal and transfer in the subject
+<br>
+/b baseball : emails that mention baseball anywhere in the body
+
+<p>
+Any other /expression is just a search through the buffer like usual.
+
+<p>
+The envelope and fetch limits still apply.
+You can ask for the first 20, or last 30, emails of this search, showing from, subject, and size, for example.
+You might use the to field, in the search and the envelope,
+if you are searching through the Sent or Drafts folders, and want the emails that you sent to a particular person.
+
+<p>
+When viewing an envelope, or reading the associated mail, "m abc" will move the email to the folder whose name contains abc.
+Because the email is gone, edbrowse automatically pops the window, and puts you back in the envelopes.
+The envelope for this email is also gone.
+"t abc" copies the email to the abc folder.
+This leaves you where you are.
+On the page of envelopes, you can move or copy a range of emails, or a collection via g/re/m abc.
+
+<p>
+If you happen to have the abc folder open in another buffer, and you move an email into that folder, it will not appear in that list of envelopes.
+It can't, because it acquires a new uid from the imap server when it moves.
+The uid is how edbrowse accesses that email, to perform any operations.
+You must refresh the abc envelope to see that email.
+It will be the most recent, even if it was send years earlier.
+
+<p>
+In that sense, it probably doesn't help to have multiple folders open simultaneously.
+Descend into a folder, do some work, go back up, descend into another folder, etc.
 
 <hr>
 <h1>Chapter 8, IRC Client</h1>
