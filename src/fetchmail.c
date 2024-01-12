@@ -3788,6 +3788,13 @@ int i;
 bool imapBuffer(char *line)
 {
 	int act;
+
+	if (!umf) {
+		umf = allocMem(strlen(mailUnread) + 12);
+		sprintf(umf, "%s/", mailUnread);
+		umf_end = umf + strlen(umf);
+	}
+
 	line += 4;
 	if(!*line) goto usage;
 	spaceCrunch(line, true, false);
@@ -4117,9 +4124,10 @@ bool mailDescend(const char *title, char cmd)
 	iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
 	if(mailu8) {
 		addTextToBuffer((pst) mailu8, mailu8_l, 0, false);
-		cw->mail_raw = mailu8, nzFree(mailstring);
+		cw->mail_raw = mailu8, cw->imap_l = mailu8_l, nzFree(mailstring);
 	} else {
 		addTextToBuffer((pst) mailstring, mailstring_l, 0, false);
+		cw->mail_raw = mailstring, cw->imap_l = mailstring_l;
 	}
 	mailstring = 0;
 	cw->changeMode = false;
