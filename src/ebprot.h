@@ -85,6 +85,7 @@ bool imapMovecopy(int l1, int l2, char cmd, char *dest);
 bool imapDelete(int l1, int l2, char cmd);
 bool imapMovecopyWhileReading(char cmd, char *dest);
 bool imapDeleteWhileReading(void);
+bool saveEmailWhileReading(char key, const char *name);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);

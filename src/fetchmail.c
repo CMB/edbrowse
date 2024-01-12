@@ -44,6 +44,7 @@ static char *fm;		// formatted mail string
 static int fm_l;
 static struct MHINFO *lastMailInfo;
 static char *lastMailText;
+static int lastMailWindowId;
 
 static void freeMailInfo(struct MHINFO *w)
 {
@@ -229,6 +230,7 @@ static struct FOLDER {
 	const char *name;
 	const char *path;
 	bool children;
+	bool skip; // because of imask
 	int nmsgs;		/* number of messages in this folder */
 	int nfetch;		/* how many to fetch */
 	int unread;		/* how many not yet seen */
@@ -239,7 +241,6 @@ static struct FOLDER {
 } *topfolders;
 
 static struct MACCOUNT *active_a;
-static bool maskon;
 static bool isimap;
 
 static const char *withoutSubstring(const struct FOLDER *f)
@@ -359,7 +360,9 @@ static void setFolders(CURL * handle)
 		if (s == t)
 			continue;
 		s = t + 1;
-/* successfully built this folder, move on to the next one */
+		if(active_a->maskactive && !active_a->maskfolder[f - topfolders + 1])
+			f->skip = true;
+// successfully built this folder, move on to the next one
 		++f;
 	}
 
@@ -371,8 +374,17 @@ static void setFolders(CURL * handle)
 	mailstring = 0;
 
 	f = topfolders;
-	for (i = 0; i < n_folders; ++i, ++f)
-		examineFolder(handle, f, true);
+	for (i = 0; i < n_folders; ++i, ++f) {
+		if(!f->skip) {
+			examineFolder(handle, f, true);
+			continue;
+		}
+		if(ismc) continue;
+		stringAndString(&imapLines, &iml_l, withoutSubstring(f));
+		stringAndString(&imapLines, &iml_l, ": ?\n");
+		stringAndString(&imapPaths, &imp_l, f->path);
+		stringAndChar(&imapPaths, &imp_l, '\n');
+	}
 }
 
 static struct FOLDER *folderByName(char *line)
@@ -1608,7 +1620,7 @@ static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 			return true;
 		}
 		j = f - topfolders + 1;
-		if(maskon && (j >= (int)sizeof(active_a->maskfolder) || !active_a->maskfolder[j]))
+		if(active_a->maskactive && (j >= (int)sizeof(active_a->maskfolder) || !active_a->maskfolder[j]))
 			return true; // not in mask, don't print
 		printf("%2d %s", j, withoutSubstring(f));
 /*
@@ -1814,10 +1826,10 @@ refresh:
 
 		if (stringEqual(inputline, "imask")) {
 			if(!active_a->maskon) { i_puts(MSG_NoMask); goto input; }
-			maskon ^= 1;
+			active_a->maskactive ^= 1;
 			if(debugLevel > 0)
-				i_puts(MSG_ImaskOff + maskon);
-			goto input;
+				i_puts(MSG_ImaskOff + active_a->maskactive);
+			goto refresh;
 		}
 
 		if (stringEqual(inputline, "q")
@@ -1962,7 +1974,7 @@ int fetchMail(int account)
 	const char *url_for_error;
 	int message_count = 0, message_number;
 
-	active_a = a, maskon = a->maskon, isimap = a->imap;
+	active_a = a, isimap = a->imap;
 	get_mailbox_url(a);
 	url_for_error = mailbox_url;
 
@@ -3508,6 +3520,7 @@ char *emailParse(char *buf)
 	} else {
 		lastMailInfo = w;
 		lastMailText = buf;
+		lastMailWindowId = cw->f0.gsn;
 	}
 	return fm;
 }
@@ -4395,3 +4408,24 @@ abort:
 	return false;
 }
 
+bool saveEmailWhileReading(char key, const char *name)
+{
+	CURLcode res;
+	Window *pw = cw->prev; // envelopes
+	CURL *h = pw->imap_h;
+	int act = pw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	const char *redirect = 0;
+
+	if(!name[0]) {
+		name = 0;
+// get a default name if we have the information
+		if(lastMailInfo && lastMailWindowId == cw->f0.gsn)
+			redirect = defaultSaveFilename(0, 0);
+	}
+
+	active_a = a, isimap = true;
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+
+	return true;
+}

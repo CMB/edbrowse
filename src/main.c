@@ -1760,7 +1760,7 @@ inside:
 			continue;
 
 		case 12:	// imask
-			act->maskon = true;
+			act->maskon = act->maskactive = true;
 			memset(act->maskfolder, 0, sizeof(act->maskfolder));
 			while (*v) {
 				n = strtol(v, &v, 10);

@@ -238,7 +238,7 @@ struct MACCOUNT { // email account, pop3 or imap
 	char *inurl, *outurl;
 	int inport, outport;
 	uchar inssl, outssl;
-	bool nofetch, imap, secure, maskon, dxon, move_capable, mc_set;
+	bool nofetch, imap, secure, maskon, maskactive, dxon, move_capable, mc_set;
 	const char *cclist[MAXCC + 1]; // extra cc directives
 	uchar cctype[MAXCC]; // cc or bcc or attach
 	const char *isub; // substring of folders

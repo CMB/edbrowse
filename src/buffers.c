@@ -785,7 +785,7 @@ void restoreSubstitutionStrings(Window *nw)
 /* Create a new window, with default variables. */
 Window *createWindow(void)
 {
-	Window *nw;	/* the new window */
+	Window *nw;	// the new window
 	nw = allocZeroMem(sizeof(Window));
 	saveSubstitutionStrings();
 	restoreSubstitutionStrings(nw);
@@ -4836,6 +4836,15 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
+	if(cw->imapMode1 && stringEqual(line, "imask")) {
+		struct MACCOUNT *a = accounts + cw->imap_n - 1;
+		if(!a->maskon) { setError(MSG_NoMask); return false; }
+		a->maskactive ^= 1;
+		if(debugLevel > 0)
+			i_puts(MSG_ImaskOff + a->maskactive);
+		return true;
+	}
+
 	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'l' && line[1] == ' ') {
 		const char *p = line + 2;
 		skipWhite(&p);
@@ -4867,6 +4876,12 @@ static int twoLetter(const char *line, const char **runThis)
 // and copy to the other window
 		if(w) strcpy(w->imap_env, cw->imap_env);
 		return true;
+	}
+
+	if(cw->imapMode3 && strchr("wWuU", line[0]) && (line[1] == 0 || line[1] == ' ')) {
+		char key = *line++;
+		skipWhite(&line);
+		return saveEmailWhileReading(key, line);
 	}
 
 	if(!strncmp(line, "up", 2) ||
