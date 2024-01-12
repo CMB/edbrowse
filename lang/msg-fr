@@ -71,7 +71,7 @@ formulaire en cours de soumission
 %s: ligne %d, outtype devrait être t ou h
 beaucoup
  recommendé
-0
+imap numéro du compte mail
 aucune option ne contient la chaîne %s\n
 envoi du courrier à %s\n
 Envoi effectué; attendez une réponse par retour de courrier.
@@ -206,7 +206,7 @@ attention : pas de tampon pour gérer la fenêtre auxiliaire
 texte inattendu après la commande q
 impossible de renommer le répertoire
 impossible de renommer la table
-0
+le compte n'est pas imap
 pas de fichier spécifié
 ne peut mettre à jour le répertoire; les fichiers seront modifiés quand vous quitterez
 ne peut mettre à jour la base de données; les lignes seront modifiées quand vous quitterez
@@ -728,8 +728,8 @@ imask désactivé
 imask activé
 pas de imask
 tampon ne peut recevoir du texte
-0
-0
+Attention ! Le courrier est partiellement lu, les données peuvent être incomplètes.
+Attention ! Le composant Mime est partiellement lu, les données peuvent être incomplètes.
 la session est incompatible avec l'imap
 %c impossible en mode imap
 %s impossible en mode imap
@@ -738,8 +738,8 @@ impossible de répondre en mode imap
 lecture audio impossible en mode imap
 impossible de découper les lignes en mode imap
 impossible de renommer imap
-0
-0
+impossible de reconfigurer pendant les sessions imap
+déplacement impossible
 0
 0
 0

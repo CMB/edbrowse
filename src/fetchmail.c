@@ -3789,12 +3789,6 @@ bool imapBuffer(char *line)
 {
 	int act;
 
-	if (!umf) {
-		umf = allocMem(strlen(mailUnread) + 12);
-		sprintf(umf, "%s/", mailUnread);
-		umf_end = umf + strlen(umf);
-	}
-
 	line += 4;
 	if(!*line) goto usage;
 	spaceCrunch(line, true, false);

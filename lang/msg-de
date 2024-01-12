@@ -71,7 +71,7 @@ Formularfeld(er) versandt
 %s: Zeile %d, outtype sollte auf t oder h gesetzt sein
 viele
  empfohlen
-0
+imap Nummer des IMAP-Kontos
 keine Option enthält die Zeichenkette %s\n
 verschicke Mail an %s\n
 Ihre Information wurde versendet, warten Sie auf eine Antwort-Email.
@@ -206,7 +206,7 @@ keine Puffer vorhanden um zusätzliches Fenster zu öffnen
 unerwarteter Text nach dem Kommando q
 kann den Namen eines Verzeichnisses nicht ändern
 kann den Namen einer Tabelle nicht ändern
-0
+dies ist kein IMAP-Konto
 keine Datei angegeben
 kann Verzeichnis nicht schreiben, Dateien werden sofort verändert
 kann Datenbank nicht schreiben, Zeilen werden sofort geändert
@@ -728,8 +728,8 @@ imask deaktiviert
 imask aktiviert
 keine imask
 Puffer kann Text nicht empfangen
-0
-0
+Warnung! E-Mail wurde nur teilweise gelesen, Daten sind unvollständig.\n
+Warnung! MIME-Informationen nur teilweise gelesen, Daten sind wahrscheinlich unvollständig.\n
 Sitzung ist inkompatibel mit imap
 %c im imap Modes nicht verfügbar
 %s im imap Modes nicht verfügbar
@@ -738,8 +738,8 @@ Antworten im imap Modes unmöglich
 Audiowiedergabe im imap Modes unmöglich
 Umbrechen von Zeilen im imap Modes nicht möglich
 kann den Namen imap nicht ändern
-0
-0
+kann nicht während laufender IMAP-Sitzung neu konfigurieren
+unterstützt nicht die \"Move\"-Funktionalität
 0
 0
 0
