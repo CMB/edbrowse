@@ -64,14 +64,14 @@ uwaga, katalog jest niedostępny - lista zawartości będzie pusta
 katastrofa, długość wiadomości o błędzie %d - zbyt duża
 wiersz %d: 
 nie jesteś w tryb katalogu
-bufor %d został zaktualizowany\n
+sesja %d została zaktualizowana\n
 brak opcji
 formularz został zresetowany
 wysyłanie formularza
 %s: wiersz %d, 'outtype' powinno mieć wartość 't' lub 'h'
 wiele
  zalecane
-0
+imap mailAccountNumber
 żadna opcja nie zawiera ciągu znaków %s\n
 wysyłanie wiadomości do %s\n
 Twoje informacje zostały wysłane; oczekuj odpowiedzi emailem zwrotnym.
@@ -95,7 +95,7 @@ nie można utworzyć pliku %s, załącznik odrzucony\n
 nie można zapisać pliku %s, załącznik odrzucony\n
 brak poczty
 %d wiadomości\n
-nie można otworzyć plik konfiguracyjny %s\n
+nie można otworzyć pliku konfiguracyjnego %s\n
 niedozwolone znaki po poleceniu 'ls'
 h\twydrukuj ten wątek pomocy\nq\tzakończ ten program\nspacja\tczytaj więcej z tej wiadomości\nn\tprzejdź do następnej wiadomości pocztowej\nd\tusuń tę wiadomość\nw\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją
 nie można utworzyć pliku %s\n
@@ -146,7 +146,7 @@ brak zamykającego nawiasu kwadratowego ']'
 brak zamykającego nawiasu ')'
 pusty bufor
 błąd w wyrażeniu regularnym, %s
-nie można pobrać lokalnego html fragment\n
+nie można pobrać lokalnego fragmentu html\n
 nie znaleziono frazy wyszukiwania
 numer wiersza zbyt duży
 ujemny numer wiersza
@@ -169,14 +169,14 @@ nie można odtworzyć dźwięku w trybie bazy danych
 plik nie ma rozszerzenia, użyj 'pb.xxx' aby określić własne rozszerzenie
 rozszerzenie jest ogranicznone do 5 znaków
 rozszerzenie .%s nie jest rozpoznawanym typem MIME, sprawdź swój plik konfiguracyjny
-brak nazwy pliku lub URLa do odświeżenia
+brak nazwy pliku lub URL do odświeżenia
 nie jesteś w trybie bazy danych
 nie jesteś w trybie przeglądania
 nazwa pliku nie zawiera '/'
 nazwa pliku kończy się znakiem '/'
 niedozwolone znaki po poleceniu 'sm'
 musisz podać dokładnie jedno z '%s' po poleceniu 'B'
-nie można dołączyć pod adresem URL
+nie można dodać do adresu URL
 zarówno %c jak i %c nie są domknięte w tym wierszu, spróbuj B%c lub B%c
 wiersz nie zawiera niedomkniętych nawiasów zwykłych, klamrowych ani kwadratowych
 nie można znaleźć wiersza z domknięciem %c
@@ -200,13 +200,13 @@ niewłaściwa lokalizacja docelowa dla przenoszenia/kopiowania
 nieoczekiwany tekst po poleceniu %c
 nie ma czego cofnąć
 proszę, wprowadź 'k[a-z]'
-nie można zaetykietować całego zakresu
+nie można oznaczyć całego zakresu
 nie można wykonać kopii zapasowej 0
-uwaga: brak dostępnych buforów dla obsługi okna pomocniczego
+uwaga: brak dostępnych sesji dla obsługi okna pomocniczego
 nieoczekiwany tekst po poleceniu 'q'
 nie można zmienić nazwy katalogu
 nie można zmienić nazwy tabeli
-0
+konto nie jest typu IMAP
 nie podano pliku
 nie można zapisać w katalogu; pliki będą modyfikowane na bieżąco
 nie można zapisać w bazie danych; rekordy będą modyfikowane na bieżąco
@@ -219,30 +219,30 @@ nie można zastosować polecenia '%s' do zakresu
 polecenie 'g' niedostępne w trybie bazy danych
 nie można zastosować polecenia 'i%c' do zakresu
 nie można użyć 'i<' w poleceniu globalnym
-bufor %d jest pusty
-bufor %d zawiera więcej niż jeden wiersz
+sesja %d jest pusta
+sesja %d zawiera więcej niż jeden wiersz
 nie można otworzyć %s
 nie można wczytać %s
 protokół %s nie jest wspierany przez %s
 wiersz zawiera znak powrotu karetki
-ściąganie gopher: 
+ściąganie przez protokół gopher: 
 plik jest obecnie w buforze - użyj polecenia 'rf' by odświeżyć
 nie można przeglądać pliku binarnego
 nie można przeglądać pustego pliku
-to nie wygląda jak przeglądalny tekst
+to nie wygląda jak tekst, który można przeglądać
 już przeglądasz
 etykieta %s nie znaleziona
-0
+niepoprawny adres email w wierszu %d książki adresowej
 nie można wywołać polecenia wstawienia z funkcji edbrowse
-wiersze od z %d na %d zostały zaktualizowane\n
+wiersze od %d do %d zostały zaktualizowane\n
 polecenie %c nie zaimplementowane
 %d jest poza zakresem
 żadna opcja nie zawiera ciągu %s
 wiele opcji zawiera ciąg %s
-to jest przycisk; użyj 'i*' aby go przycisnąć
-to jest przycisk wysyłania formularza; użyj 'i*' aby go przycisnąć
-to jest przycisk resetowania; użyj 'i*' aby go przycisnąć
-0
+to jest przycisk; użyj 'i*' aby go nacisnąć
+to jest przycisk wysyłania formularza; użyj 'i*' aby go nacisnąć
+to jest przycisk resetowania; użyj 'i*' aby go nacisnąć
+plik jest większy niż 2GB
 pole tylko do odczytu
 pole wprowadzania nie może zawierać znaku końca linii
 tekst zbyt długi, limit %d znaków
@@ -252,11 +252,11 @@ nie możesz wyczyścić przycisku radio; musisz wybrać inne pole
 oczekiwano liczby
 sesja %d zawiera znaki zerowe
 wysyłanie pliku wymaga parametrów method=post i enctype=multipart/form-data
-nie przycisk
+to nie jest przycisk
 ten przycisk nie jest częścią formularza
-brak JavaScriptu powiązanego z tym przyciskiem
-formularz nie zawiera docelowego URLa
-akcja tego formularza nie jest URLem
+brak kodu JavaScript powiązanego z tym przyciskiem
+formularz nie zawiera docelowego adresu URL
+akcja tego formularza nie jest adresem URL
 JavaScript jest wyłączony, nie można aktywować formularza
 Ten formularz zmienił się z http na https i nie jest teraz bezpieczny
 nie można wysłać używając protokołu %s
@@ -277,33 +277,33 @@ nie można zmienić nazwy pliku na %s
 pole wprowadzania nie może zawierać znaków zerowych
 pole wprowadzania nie może zawierać znaków końca linii
 błąd połączenia SSL %d
-0
-0
+początek historii
+koniec historii
 %s niedostępne w trybie irc
-0
-nie można pobrać html fragment z %s, kod %ld\n
+nieprawidłowy kod UTF-8, rozważ ustawienie su8-
+nie można pobrać fragmentu HTML z %s, kod %ld\n
 nie udało się wczytać danych z serwera
-%s nie jest URLem
+%s nie jest adresem URL
 pobieranie zakończone.
 nie można zidentyfikować %s w sieci
-0
+zwykły tekst niedostępny
 uwaga: nie można załadować <bufora %d> z tekstem początkowym\n
 pobieranie w toku
 nie można się połączyć z %s
 pobieranie: 
 Ceryfikat hosta %s nie mógł być zweryfikowany - połączenie SSL anulowane
-nie można odczytać
+niedostępne
 h\tpokaż treść tej pomocy\nq\tzakończ ten program\ns\tzakończ czytanie poczty z tego katalogu\nspace\tprzeczytaj dalszą część tej wiadomości\nn\tprzejdź do następnej wiadomości\np\tprzejdź do poprzedniej wiadomości\nd\tusuń tę wiadomość\nm\tprzenieś tę wiadomość do innego katalogu\nv\tpokaż wszystko\nb\tprzenieś lub usuń zbiorczo\nf\tprzenieś lub usuń wiadomości od nadawcy\nw\tzapisz tę wiadomość do pliku\nW\tzapisz tę wiadomość do pliku i usuń ją\nu\tzapisz tę wiadomość do pliku w postaci niesformatowanej\nU\tzapisz tę wiadomość do pliku w postaci niesformatowanej i usuń ją\na\tprzeskanuj i zapisz załączniki
 strona wymaga autoryzacji
 logowanie anulowane
 fraza wyszukiwania nie może zawierać cudzysłowów
 koniec katalogu
-pobieranie w głównym procesie
-pobieranie w tle
+pobierz pliki (synchronicznie)
+pobierz pliki w tle
 ukończono
 niepowodzenie
-ftp: nie można połączyć się ze zdalnym hostem
-ftp: transfer zakończony niepowodzeniem
+FTP: nie można połączyć się ze zdalnym hostem
+FTP: transfer zakończony niepowodzeniem
 brak katalogów
 Wybierz katalog wg. numeru lub części nazwy.\n'q' by zakończyć, 'rf' by odświeżyć, 'l' by zmienić limity pobierania.
 w toku
@@ -320,8 +320,8 @@ brakujący ':' w wierszu książki adresowej %d
 alias w wierszu książki adresowej %d jest zbyt długi, limit %d znaków
 email w wierszu książki adresowej %d jest zbyt długi, limit %d znaków
 email w wierszu książki adresowej %d nie zawiera '@'
-w emailu nie może być spacji, wiersz %d książki adresowej
-niedrukowalny znak w Twoim aliasie lub emailu, wiersz %d książki adresowej
+w adresie email nie może być spacji, wiersz %d książki adresowej
+niedrukowalny znak w Twoim aliasie lub adresie email, wiersz %d książki adresowej
 ostatni wiersz Twojej książki adresowej nie jest zakończony
 żaden katalog nie zawiera %s\n
 wiele katalogów zawiera %s\n
@@ -332,12 +332,12 @@ uwaga: URL formularza podaje sekcję %s, która zostanie zignorowana\n
 plik %s jest pusty
 Twoja wiadomość powinna zaczynać się od 'subject:'
 brak wizualizacji postępu
-wiersz tematu zbyt długi, limit %d znaków
+temat zbyt długi, limit %d znaków
 wizualizacja postępu za pomocą kropek
 '.signature' nie jest regularnym plikiem
 nie można odczytać pliku '.signature'
 nie można wysyłać wiadomości w trybie irc
-albo żaden albo wszystkie załączniki powinny być zadeklarowane jako \"alternative\"
+deklaracja \"alternative\" wymagana na wszystkich załącznikach lub na żadnym
 zbyt wielu odbiorców, limit %d
 Nie podano książki adresowej, sprawdź swój plik konfiguracyjny
 alias %s nie znaleziony w Twojej książce adresowej
@@ -350,8 +350,8 @@ wiersz następujący po %d został usunięty\n
 %d wierszy następujących po %d zostało usuniętych\n
 wiersz %d został dodany\n
 wiersze od %d do %d zostały dodane\n
-postęp
-nie podano żadnych kont pocztowych, sprawdź swój plik konfiguracyjny
+wskaźnik postępu
+nie skonfigurowano żadnych kont pocztowych, sprawdź swój plik konfiguracyjny
 niewłaściwy numer konta %d, użyj liczby od 1 do %d
 nie można wysyłać wiadomości w trybie przeglądarki
 nie można wysyłać wiadomości w trybie bazy danych
@@ -362,7 +362,7 @@ brak odbiorcy w wierszu %d
 nie można dodać pierwszego odbiorcy do 'cc' lub 'bcc'
 brak załącznika w wierszu %d
 błędny numer konta w wierszu %d
-brak tymczasowego katalogu
+brak tymczasowego katalogu Edbrowse
 wiersz %d powinien zaczynać się od 'attach:', 'alt:', 'account:' lub 'subject:'
 konwersja do UTF-16
 nie podano odbiorców, umieść 'to: <email>' na początku swojego pliku
@@ -386,8 +386,8 @@ zbyt wiele tabel SQL w pamięci podręcznej, limit %d
 konwersja do UTF-32
 nie można wczytać zawartości %s
 nie można odczytać %s
-$%s nie jest zdefiniowana
-~%s nie jest zdefiniowana
+$%s nie jest zdefiniowane
+~%s nie jest zdefiniowane
 Idź
 dane w ramce to nie HTML
  bezpieczne
@@ -402,7 +402,7 @@ nie można połączyć się z bazą danych - błąd %d
 błąd bazy danych %d
 brak klucza głównego dla tej tabeli
 nazwa kolumny %s jest zbyt długa, limit %d znaków
-błąd składniowy w wyrażeniu 'where'
+błąd składniowy w wyrażeniu 'WHERE'
 kolumna %d poza zakresem
 wiele kolumn pasuje do %s
 żadna kolumna nie pasuje do %s
@@ -426,7 +426,7 @@ inny rekord w bazie danych zależy od tego rekordu
 rekord lub tabela są zablokowane
 nie masz uprawnień by zmodyfikować bazę danych w ten sposób
 wykryto blokadę wzajemną (deadlock)
-umieszczono znak zerowy (null) w kolumnie, w której jest to niedozwolone
+umieszczono pustą wartość (NULL) w kolumnie, w której jest to niedozwolone
 sprawdzić naruszenie więzów
 przekroczenie czasu dostępu do bazy danych
 nie można zmodyfikować widoku
@@ -436,8 +436,8 @@ autoryzacja curl SPNEGO włączona
 nie można pobrać lokalnego CSS\n
 nie można pobrać CSS z %s, kod %ld\n
 nie można pobrać CSS\n
-nie deminifikuj (deminify) JavaScriptu
-deminifikuj (deminify) JavaScript
+nie deminimalizuj (deminify) kodu JavaScript
+deminimalizuj (deminify) kod JavaScript
 wyłączone debugowanie błędów JS
 włączone debugowanie błędów JS
 wyłączone debugowanie CSS
@@ -481,9 +481,9 @@ uwaga: błąd HTTP %ld, %s\n
 brak ramek do rozwinięcia
 brak ramek do zwinięcia
 wiadomości pomocnicze włączone
-ściąganie ftp: 
+ściąganie FTP: 
 anulowane
-ściąganie scp: 
+ściąganie SCP: 
 %s: znaki zerowe w wierszu %d
 %s: brak nazwy funkcji w wierszu %d
 %s: nazwa funkcji w wierszu %d zaczyna się od cyfry
@@ -505,7 +505,7 @@ anulowane
 %s: wiersz %d, klucz powinien być postaci 'liczba' lub 'liczba,liczba'
 %s: wiersz %d, klucz poza zasięgiem; podano tylko %d kolumn
 %s: książka adresowa %s nie jest regularnym plikiem
-javascript błąd składniowy
+błąd składniowy JavaScript
 %s: %s nie jest katalogiem
 %s: wiersz %d, zbyt wiele agentów użytkownika, limit %d
 %s: plik ciastek %s nie jest regularnym plikiem
@@ -580,8 +580,8 @@ lista = 0 w tagFromJavaVar()
 debugowanie zdarzeń wyłączone
 debugowanie zdarzeń włączone
 nie można utworzyć kontekstu JavaScript
-pobieranie javascript w głównym procesie
-pobieranie javascript w tle
+pobieranie JavaScript w głównym procesie
+pobieranie JavaScript w tle
 nie można skopiować %s
 timery wyłączone
 timery włączone
@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 zerowy wskaźnik w pstLength
 nie można użyć ioctl() aby zarządzać konsolą (tty)
-0
+'!' wymagany po poleceniu 'W'
 nie można utworzyć lub zapisać %s
 wywołanie fopen() z niewłaściwym trybem %s
 '/' w złym miejscu w getDirURL(%s)
@@ -678,68 +678,68 @@ plik emoji zawiera nieprawidłowy kod Unicode w linii %d\n
 plik emoji, błąd składni w linii %d\n
 żadna opcja nie zaczyna się od %s
 wiele opcji zaczyna się od %s
-0
-0
-0
-0
-0
-wyrażenie regularne perl
-wyrażenie regularne edbrowse
+pole nie może kończyć się lewym ukośnikiem (backslash)
+nie można zaktualizować nazwy kolumny
+uwaga, zostanie zaznaczonych jedynie pierwszych %d kolumn
+przeniesienie zniszczy strukturę rozwiniętego wiersza
+nie można usunąć rozwiniętego wiersza
+wyrażenie regularne Perl
+wyrażenie regularne Edbrowse
 sesja + jest poza dozwoloną granicą: %d
 sesja - jest poza dozwoloną granicą: %d
-0
-0
-0
-0
-0
-0
-0
-0
+%s: plik klucza publicznego %s nie jest regularnym plikiem
+%s: plik klucza publicznego %s nie istnieje lub nie ma uprawnień odczytu
+listing katalogu, dane uzupełniające
+listing katalogu, jedynie nazwy
+wyłączono debugowanie skanera HTML
+włączono debugowanie skanera HTML
+nie używaj format=flowed
+używaj format=flowed
 nie można odtworzyć dźwięku w trybie irc
 nie można łamać linii w trybie irc
 nie można zmienić nazwy irc
-0
-0
-0
-0
-0
+proszę, zapisz cały bufor do irc
+irc m n domena[+][:[*]port] nick[:hasło] [grupa]
+sesja %d nie jest kompatybilna z irc
+włączono układ debugowania
+wyłączono układ debugowania
 brak pól wprowadzania
 brak odnośników
 brak przycisków
+brak obrazów
 0
+wiele pól wprowadzania, użyj %s1 do %s%d
+wiele odnośników, użyj %s1 do %s%d
+wiele przycisków, użyj %s1 do %s%d
+wiele obrazów, użyj %s1 do %s%d
 0
-wiele pól wprowadzania obecnych, użyj %s1 do %s%d
-wiele odnośników obecnych, użyj %s1 do %s%d
-wiele przycisków obecnych, użyj %s1 do %s%d
-0
-0
-nie można pobrać html fragment\n
-0
-0
-0
-0
-0
-0
-0
-0
-0
+nie można pobrać fragmentu HTML\n
+nie aktualizuj zmiennych środowiskowych
+aktualizuj zmienne środowiskowe
+błąd komendy powłoki
+ten sam katalog
+HTTP - internet
+HTTP - lokalny
+nieprawidłowy tryb w sesji %d
+brak autora
+brak generatora
 nieoczekiwany tekst po poleceniu 'bw'
 imask włączony
 imask wyłączony
 brak imask
 bufor nie może przyjąć tekstu
-0
-0
-0
-%c niedostępne w trybie imap
-%s niedostępne w trybie imap
-nie można wysyłać wiadomości w trybie imap
-nie można odpowiadać w trybie imap
-nie można odtworzyć dźwięku w trybie imap
-nie można łamać linii w trybie imap
-nie można zmienić nazwy imap
-0
-0
+Uwaga: Wiadomość wczytana częściowo, dane mogą być niekompletne.\n
+Uwaga: Komponent MIME wczytany częściowo, dane mogą być niekompletne.\n
+sesja niekompatybilna z IMAP
+%c niedostępne w trybie IMAP
+%s niedostępne w trybie IMAP
+nie można wysyłać wiadomości w trybie IMAP
+nie można odpowiadać w trybie IMAP
+nie można odtworzyć dźwięku w trybie IMAP
+nie można łamać linii w trybie IMAP
+nie można zmienić nazwy serwera IMAP
+nie można rekonfigurować przy aktywnych sesjach IMAP
+nie można przenieść
 0
 0
 0
