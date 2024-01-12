@@ -2091,9 +2091,85 @@ void scanMail(void)
 	exit(0);
 }
 
-/* a mail message is in mailstring, present it to the user */
-/* Return the key that was pressed.
- * stop is only meaningful for imap. */
+// this doesn't print error messages if anything goes wrong; it probably should
+// though we do leave stashNumber = -1
+static int stashNumber;
+static void saveRawMail(const char *buf, int length)
+{
+	stashNumber = -1;
+	if(!mailStash) return; // nowhere to put it
+
+	char *rmf;	// raw mail file
+	int rmfh;	// file handle
+	int j, k;
+
+/* I want a fairly easy filename, in case I want to go look at the original.
+* Not a 30 character message ID that I am forced to cut&paste.
+* 4 or 5 digits would be nice.
+* So the filename looks like /home/foo/.Trash/rawmail/36921
+* I pick the digits randomly.
+* Please don't accumulate 100,000 emails before you empty your trash.
+* It's good to have a cron job empty the trash early Sunday morning. */
+
+	k = strlen(mailStash);
+	rmf = allocMem(k + 12);
+// Try 20 times, then give up.
+	for (j = 0; j < 20; ++j) {
+		int rn = rand() % 100000;	// random number
+		sprintf(rmf, "%s/%05d", mailStash, rn);
+		if (fileTypeByName(rmf, 0)) continue;
+// dump the original mail into the file
+		rmfh =     open(rmf,  O_WRONLY | O_TEXT | O_CREAT | O_APPEND,  MODE_rw);
+		if (rmfh < 0)
+			break;
+		if (write(rmfh, buf, length) <     length) {
+			close(rmfh);
+			unlink(rmf);
+			break;
+		}
+		close(rmfh);
+// written successfully, remember the stash number
+		stashNumber = rn;
+		break;
+	}
+}
+
+// this writes from the current window.
+// receives a file handle, file is already open.
+// It's unix-like, so return size of the write, or -1 for error
+static int saveFormattedMail(int fh)
+{
+	int j, k;
+	int fsize = 0;
+	for (j = 1; j <= cw->dol; ++j) {
+		char *showline = (char *)fetchLine(j, 1);
+		int len = pstLength((pst)showline);
+		if (write(fh, showline, len) < len) {
+			nzFree(showline);
+			return -1;
+		}
+		nzFree(showline);
+		fsize += len;
+	}
+
+	if (stashNumber >= 0) {
+		char addstash[60];
+		int minor = rand() % 100000;
+		sprintf(addstash, "\nUnformatted %05d.%05d\n", stashNumber, minor);
+		k = strlen(addstash);
+		if (write(fh, addstash, k) < k)
+			return -1;
+		fsize += k;
+// write the mailInfo data to the mail reply file
+		addstash[k - 1] = ':';
+		writeReplyInfo(addstash + k - 12);
+	}
+	return fsize;
+}
+
+// a mail message is in mailstring, present it to the user
+// Return the key that was pressed.
+// stop is only meaningful for imap.
 static char presentMail(void)
 {
 	int j, k;
@@ -2103,7 +2179,6 @@ static char presentMail(void)
 	bool delflag = false;	/* delete this mail */
 	bool scanat = false;	/* scan for attachments */
 	int displine;
-	int stashNumber = -1;
 	char exists;
 	int fsize;		/* file size */
 	int fh;
@@ -2272,6 +2347,7 @@ saveMail:
 	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, MODE_rw);
 	if (fh < 0) {
 		i_printf(MSG_NoCreate, atname);
+		atname = 0;
 		goto saveMail;
 	}
 	if (exists)
@@ -2281,83 +2357,20 @@ saveMail:
 badsave:
 			i_printf(MSG_NoWrite, atname);
 			close(fh);
+			atname = 0;
 			goto saveMail;
 		}
 		close(fh);
 		fsize = mailstring_l;
 	} else {
 
-/* key = w, write the file and save the original unformatted */
-		if (mailStash) {
-			char *rmf;	/* raw mail file */
-			int rmfh;	/* file handle to same */
-/* I want a fairly easy filename, in case I want to go look at the original.
-* Not a 30 character message ID that I am forced to cut&paste.
-* 4 or 5 digits would be nice.
-* So the filename looks like /home/foo/.Trash/rawmail/36921
-* I pick the digits randomly.
-* Please don't accumulate 100,000 emails before you empty your trash.
-* It's good to have a cron job empty the trash early Sunday morning.
-*/
-
-			k = strlen(mailStash);
-			rmf = allocMem(k + 12);
-/* Try 20 times, then give up. */
-			for (j = 0; j < 20; ++j) {
-				int rn = rand() % 100000;	/* random number */
-				sprintf(rmf, "%s/%05d", mailStash, rn);
-				if (fileTypeByName(rmf, 0))
-					continue;
-/* dump the original mail into the file */
-				rmfh =
-				    open(rmf,
-					 O_WRONLY | O_TEXT | O_CREAT | O_APPEND,
-					 MODE_rw);
-				if (rmfh < 0)
-					break;
-				if (write(rmfh, mailstring, mailstring_l) <
-				    mailstring_l) {
-					close(rmfh);
-					unlink(rmf);
-					break;
-				}
-				close(rmfh);
-/* written successfully, remember the stash number */
-				stashNumber = rn;
-				break;
-			}
-		}
-
-		fsize = 0;
-		for (j = 1; j <= cw->dol; ++j) {
-			char *showline = (char *)fetchLine(j,
-							   1);
-			int len = pstLength((pst)
-					    showline);
-			if (write(fh, showline, len) < len)
-				goto badsave;
-			nzFree(showline);
-			fsize += len;
-		}		/* loop over lines */
-
-		if (stashNumber >= 0) {
-			char addstash[60];
-			int minor = rand() % 100000;
-			sprintf(addstash, "\nUnformatted %05d.%05d\n",
-				stashNumber, minor);
-			k = strlen(addstash);
-			if (write(fh, addstash, k) < k)
-				goto badsave;
-			fsize += k;
-/* write the mailInfo data to the mail reply file */
-			addstash[k - 1] = ':';
-			writeReplyInfo(addstash + k - 12);
-		}
-
+// key = w, write the file and save the original unformatted
+		saveRawMail(mailstring, mailstring_l);
+		fsize = saveFormattedMail(fh);
+		if(fsize < 0) goto badsave;
 		close(fh);
 
 attachOnly:
-
 		if (nattach)
 			writeAttachments(lastMailInfo);
 		else if (scanat)
