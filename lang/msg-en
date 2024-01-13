@@ -740,7 +740,7 @@ cannot break lines in imap mode
 cannot change the name of an imap server
 cannot reconfig while imap sessions are running
 server is not move capable
-0
+session is not compatible with imap 0
 0
 0
 0

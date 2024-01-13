@@ -840,4 +840,5 @@ MSG_ImaskOn,
 	MSG_ImapRename,
 	MSG_ImapConfig,
 	MSG_NMC,
+	MSG_ImapCompat0,
 };

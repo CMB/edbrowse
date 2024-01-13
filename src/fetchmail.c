@@ -3848,7 +3848,10 @@ bool imapBuffer(char *line)
 	act = strtol(line, &line, 10);
 	if(act < 0 || *line) goto usage;
 	if(act == 0) { // special shutdown code
-		if(!cw->imapMode1) return true;
+		if(!cw->imapMode1) {
+			setError(MSG_ImapCompat0);
+			return false;
+		}
 		freeWindows(context, false); // lop off stuff below
 		if(cw->dol) delText(1, cw->dol);
 		curl_easy_cleanup(cw->imap_h);

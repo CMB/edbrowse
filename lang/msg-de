@@ -740,7 +740,7 @@ Umbrechen von Zeilen im imap Modes nicht möglich
 kann den Namen imap nicht ändern
 kann nicht während laufender IMAP-Sitzung neu konfigurieren
 unterstützt nicht die \"Move\"-Funktionalität
-0
+Sitzung ist inkompatibel mit imap 0
 0
 0
 0

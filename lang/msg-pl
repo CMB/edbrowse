@@ -730,7 +730,7 @@ brak imask
 bufor nie może przyjąć tekstu
 Uwaga: Wiadomość wczytana częściowo, dane mogą być niekompletne.\n
 Uwaga: Komponent MIME wczytany częściowo, dane mogą być niekompletne.\n
-sesja niekompatybilna z IMAP
+sesja niekompatybilna z imap
 %c niedostępne w trybie IMAP
 %s niedostępne w trybie IMAP
 nie można wysyłać wiadomości w trybie IMAP
@@ -740,7 +740,7 @@ nie można łamać linii w trybie IMAP
 nie można zmienić nazwy serwera IMAP
 nie można rekonfigurować przy aktywnych sesjach IMAP
 nie można przenieść
-0
+sesja niekompatybilna z imap 0
 0
 0
 0
