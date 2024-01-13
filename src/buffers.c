@@ -7849,7 +7849,7 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // uid and subject for the email
 		cmd = 'e';
-		return mailDescend(p, icmd, true);
+		return mailDescend(p, icmd);
 	}
 
 	// go to a file in a directory listing

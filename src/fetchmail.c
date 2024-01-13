@@ -4134,7 +4134,30 @@ bool folderSearch(const char *path, char *search, bool rf)
 	return true;
 }
 
-bool mailDescend(const char *title, char cmd, bool showcount)
+// Remove the "unseen" * from a line.
+// This will, sadly, remove the leading * from a subject field.
+// So we need to improve this some day.
+// n is the line number.
+static void unstar(int n)
+{
+	char *s;
+	int i, l;
+
+	s = (char*)cw->map[cw->dot].text;
+	l = pstLength((uchar*)s);
+	if(*s == '*') {
+		memmove(s, s+1, l-1);
+	} else {
+		for(i = 0; i < l - 3; ++i, ++s) {
+			if(s[0] != '|' || s[1] != ' ' || s[2] != '*') continue;
+			i += 2, s += 2;
+			memmove(s, s + 1, l - i - 1);
+			break;
+		}
+	}
+}
+
+bool mailDescend(const char *title, char cmd)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
@@ -4145,9 +4168,8 @@ bool mailDescend(const char *title, char cmd, bool showcount)
 	char *vr;
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
+	bool showcount = (cmd == 'g' || cmd == 't');
 	struct FOLDER f0;
-	char *s;
-	int i, l;
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // have to get the actual path from above
@@ -4172,22 +4194,7 @@ bool mailDescend(const char *title, char cmd, bool showcount)
 
 	if(showcount) debugPrint(1, "%d", mailstring_l);
 
-// Remove the "unseen" *
-// This will, sadly, remove the leading * from a subject field.
-// So we need to improve this some day.
-	s = (char*)cw->map[cw->dot].text;
-	l = pstLength((uchar*)s);
-	if(*s == '*') {
-		memmove(s, s+1, l-1);
-	} else {
-		for(i = 0; i < l - 3; ++i, ++s) {
-			if(s[0] != '|' || s[1] != ' ' || s[2] != '*') continue;
-			i += 2, s += 2;
-			memmove(s, s + 1, l - i - 1);
-			break;
-		}
-	}
-
+	unstar(cw->dot);
 	freeWindows(context, false); // lop off stuff below
 // make new window
 	w = createWindow();
@@ -4207,7 +4214,10 @@ bool mailDescend(const char *title, char cmd, bool showcount)
 	}
 	mailstring = 0;
 	cw->changeMode = false;
+// I have to fake out the browse routine, so it doesn't try to write attachments.
+	ismc = true;
 	browseCurrentBuffer(NULL);
+	ismc = false; // put it back
 	if(!showcount) fileSize = -1;
 	return true;
 }
@@ -4335,6 +4345,43 @@ bool imapDelete(int l1, int l2, char cmd)
 
 D_check:
 	if(cmd == 'D') printDot();
+	return true;
+
+abort:
+	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	return false;
+}
+
+bool imapMarkRead(int l1, int l2)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	const Window *pw = cw->prev;
+	int l0;
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	imapLines = initString(&iml_l);
+	stringAndString(&imapLines, &iml_l, "uid STORE ");
+// loop over lines in range, is there a limit to the length of the resulting
+// imap line, with its comma separated list of uids?
+	for(l0 = l1; l1 <= l2; ++l1) {
+		const char *title = (char*)cw->r_map[l1].text;
+		int uid = atoi(title);
+		stringAndNum(&imapLines, &iml_l, uid);
+		if(l1 < l2)
+			stringAndChar(&imapLines, &iml_l, ',');
+	}
+	stringAndString(&imapLines, &iml_l, " +Flags \\Seen");
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
+	nzFree(imapLines);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) goto abort;
+
+	for(l1 = l0; l1 <= l2; ++l1)
+		unstar(l1);
 	return true;
 
 abort:
@@ -4509,7 +4556,7 @@ badsave:
 bool saveEmailWhileEnvelopes(char key, const char *name)
 {
 	const char *title = (char*)cw->r_map[cw->dot].text;
-	if(!mailDescend(title, 'g', false)) return false;
+	if(!mailDescend(title, tolower(key))) return false;
 	if(!saveEmailWhileReading(key, name)) return false;
 // if lower case, we didn't delete the email, and didn't pop,
 // but we should still be on the envelope page so pop back up now.
