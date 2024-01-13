@@ -2647,10 +2647,14 @@ static void ctExtras(struct MHINFO *w, const char *s, const char *t)
 static void isoDecode(char *vl, char **vrp)
 {
 	char *vr = *vrp;
+#if 0
+	char *z = pullString1(vl,vr); printf("iso<%s>\n", z); nzFree(z);
+#endif
 	char *start, *end;	/* section being decoded */
 	char *s, *t, c, d, code;
 	int len;
 	uchar val, leftover, mod;
+	bool byteExpand = false;
 
 	start = vl;
 restart:
@@ -2665,6 +2669,7 @@ restart:
 	    !memEqualCI(start, "cp1252", 6) &&
 	    !memEqualCI(start, "gb", 2) && !memEqualCI(start, "windows-", 8))
 		goto restart;
+	if(strchr("wW", *start)) byteExpand = true;
 	s = strchr(start, '?');
 	if (!s || s > vr - 5 || s[2] != '?')
 		goto restart;
@@ -2688,7 +2693,13 @@ restart:
 				d = s[1];
 				if (isxdigit(c) && isxdigit(d)) {
 					d = fromHex(c, d);
-					*t++ = d;
+					if(!byteExpand || !(d&0x80)) {
+						*t++ = d;
+					} else {
+// convert to utf8
+						*t++ = (((d>>6) & 3) | 0xc0);
+						*t++ = ((d&0x3f) | 0x80);
+					}
 					s += 2;
 					continue;
 				}
@@ -3818,6 +3829,31 @@ found:
 Functions beyond this point support integrated imap,
 reading your email from within an edbrowse buffer.
 *********************************************************************/
+
+// bad utf8 disrupts searching through the buffer, but sometimes isoDecode()
+// creaates it. Here line could end in null or \n
+static void stripBadUtf8(uchar *line)
+{
+	uchar *s, *t, c, e;
+	int j;
+	for(s = t =  line; (c = *s) && c != '\n'; ++s) {
+		if(!(c & 0x80)) goto copy; // ascii
+		if(!(c & 0x40)) goto skip;
+		e = ((c&0xfe)<<1), j = 0;
+		while(e & 0x80) {
+			if((s[++j]&0xc0) != 0x80) goto skip;
+			e <<= 1;
+		}
+// this is valid utf8
+		memmove(t, s, ++j);
+		t += j, s += j, --s; continue;
+copy: *t++ = c;
+skip: ;
+	}
+
+	*t = c;
+	if(c) t[1] = 0;
+}
 
 bool imapBufferPresent(void)
 {
