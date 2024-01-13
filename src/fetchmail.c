@@ -3907,10 +3907,6 @@ bool imapBuffer(char *line)
 		setError(MSG_ImapCompat);
 		return false;
 	}
-	if (!mailDir) {
-		setError(MSG_NoMailDir);
-		return false;
-	}
 
 	freeWindows(context, false); // lop off stuff below
 
