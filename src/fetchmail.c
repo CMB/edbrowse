@@ -4143,7 +4143,7 @@ static void unstar(int n)
 	char *s;
 	int i, l;
 
-	s = (char*)cw->map[cw->dot].text;
+	s = (char*)cw->map[n].text;
 	l = pstLength((uchar*)s);
 	if(*s == '*') {
 		memmove(s, s+1, l-1);

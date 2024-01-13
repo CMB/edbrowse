@@ -7054,6 +7054,11 @@ after_ib:
 		return (globSub = false);
 	}
 
+	if(cmd == 'r' && cw->imapMode2 && !*line) {
+		cw->dot = endRange;
+		return imapMarkRead(startRange, endRange);
+	}
+
 	if (cw->imapMode2 && !strchr(imap2_cmd, cmd)) {
 		setError(MSG_ImapCommand, cmd);
 		return (globSub = false);
