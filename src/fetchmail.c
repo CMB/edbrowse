@@ -861,6 +861,7 @@ afterfetch:
 
 // have to strip fetch BODY line off the front,
 // and take ) A018 OK stuff off the end.
+// If this lopping off code doesn't work, #if1 the above to see the original mailstring
 	t = strchr(mailstring, '\n');
 	if (t) {
 // should always happen

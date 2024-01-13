@@ -6716,7 +6716,7 @@ bool runCommand(const char *line)
 // search the imap server, not a local regexp search
 	if(cw->imapMode1 && first == '/' && cw->dot &&
 	line[1] && strchr("fstb", line[1]) && line[2] == ' ') {
-		return folderSearch((char*)cw->r_map[cw->dol].text, (char*)line + 1, false);
+		return folderSearch((char*)cw->r_map[cw->dot].text, (char*)line + 1, false);
 	}
 
 	if (first == ',') {
