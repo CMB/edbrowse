@@ -710,7 +710,7 @@ static bool expunge(CURL * handle)
 	CURLcode res;
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
 	res = getMailData(handle);
-	nzFree(mailstring);
+	nzFree(mailstring), mailstring = 0;
 	return res == CURLE_OK;
 }
 
@@ -831,6 +831,9 @@ You'll see this after the perform function runs.
 // and put things back
 //	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, NULL);
+// If you print callback_data.buffer, it is the fetch command, or commands.
+// Things that must be lopped off.
+//	printf("%s", callback_data.buffer);
 	nzFree(callback_data.buffer);
 	undosOneMessage();
 	if (res != CURLE_OK) {
@@ -856,11 +859,11 @@ afterfetch:
 	t = 0; FILE *z; z = fopen("msb", "w"); fprintf(z, "%s", mailstring); fclose(z);
 #endif
 
-// have to strip 2 fetch BODY lines off the front,
-// and ) A018 OK off the end.
+// have to strip fetch BODY line off the front,
+// and take ) A018 OK stuff off the end.
 	t = strchr(mailstring, '\n');
-	if (t) t = strchr(t + 1, '\n');
 	if (t) {
+// should always happen
 		++t;
 		mailstring_l -= (t - mailstring);
 		strmove(mailstring, t);
@@ -869,12 +872,18 @@ afterfetch:
 	if (t > mailstring && t[-1] == '\n')
 		t[-1] = 0, --mailstring_l;
 	t = strrchr(mailstring, '\n');
-	if (t && t - 2 >= mailstring &&
-	    !strncmp(t - 2, "\n)\n", 3) && strstr(t, " OK ")) {
-		--t;
-		*t = 0;
-		mailstring_l = t - mailstring;
+	if(!t || !strstr(t, " OK ")) goto done;
+// we should always be here; lop off last OK line
+	*t = 0, mailstring_l = t - mailstring;
+	while((t = strrchr(mailstring, '\n')) && strstr(t, " FETCH (")) {
+// lop off last FETCH line
+		*t = 0, mailstring_l = t - mailstring;
 	}
+	t = strrchr(mailstring, '\n');
+	if(t && t[1] == ')' && t[2] == 0) // this should always happen
+		t[1] = 0, --mailstring_l;
+
+done:
 	return CURLE_OK;
 }
 
