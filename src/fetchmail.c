@@ -2088,9 +2088,7 @@ void scanMail(void)
 
 	preferPlain = false;
 	for (m = 1; m <= nmsgs; ++m) {
-		nzFree(lastMailText);
-		lastMailText = 0;
-/* Now grab the entire message */
+// Now grab the entire message
 		unreadStats();
 		sprintf(umf_end, "%d", unreadMin);
 		if (!fileIntoMemory(umf, &mailstring, &mailstring_l, 0))
@@ -2232,11 +2230,6 @@ static char presentMail(void)
 	char exists;
 	int fsize;		/* file size */
 	int fh;
-
-/* clear things out from the last message */
-	if (lastMailInfo)
-		freeMailInfo(lastMailInfo);
-	lastMailInfo = 0;
 
 	if (sessionList[1].lw)
 		cxQuit(1, 2);
@@ -3514,14 +3507,18 @@ char *emailParse(char *buf)
 		w->cclist, w->ref, w->mid);
 	if (!ismc) {
 		writeAttachments(w);
-		freeMailInfo(w);
-		nzFree(buf);
 		debugPrint(5, "mailInfo: %s", cw->mailInfo);
-	} else {
-		lastMailInfo = w;
-		lastMailText = buf;
-		lastMailWindowId = cw->f0.gsn;
 	}
+	if (lastMailInfo) {
+		freeMailInfo(lastMailInfo);
+		lastMailInfo = 0;
+		nzFree(lastMailText);
+		lastMailText = 0;
+	}
+// it's clear, assign the new stuff
+	lastMailInfo = w;
+	lastMailWindowId = cw->f0.gsn;
+	lastMailText = buf;
 	return fm;
 }
 
@@ -4418,24 +4415,53 @@ abort:
 
 bool saveEmailWhileReading(char key, const char *name)
 {
-	CURLcode res;
-	Window *pw = cw->prev; // envelopes
-	CURL *h = pw->imap_h;
-	int act = pw->imap_n;
-	struct MACCOUNT *a = accounts + act - 1;
 	const char *redirect = 0;
-
+	int fh;
+	bool exists, delflag = false;
+	if(isupper(key)) key = tolower(key), delflag = true;
 	if(!name[0]) {
 		name = 0;
 // get a default name if we have the information
-		if(lastMailInfo) printf("gsn %d,%d\n", lastMailWindowId, cw->f0.gsn);
 		if(lastMailInfo && lastMailWindowId == cw->f0.gsn)
 			redirect = defaultSaveFilename(0, 0);
 	}
 
-	active_a = a, isimap = true;
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+saveMail:
+	if (!name)
+		name = getFileName(MSG_FileName, redirect, false, false);
+	if (stringEqual(name, "x"))
+		return true;
+	exists = fileTypeByName(name, 0);
+	fh = open(name, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, MODE_rw);
+	if (fh < 0) {
+		i_printf(MSG_NoCreate, name);
+		name = 0;
+		goto saveMail;
+	}
+	if (exists)
+		ignore = write(fh, "======================================================================\n", 71);
+	if (key == 'u') {
+		if (write(fh, cw->mail_raw, cw->imap_l) < cw->imap_l) {
+badsave:
+			i_printf(MSG_NoWrite, name);
+			close(fh);
+			name = 0;
+			goto saveMail;
+		}
+	} else {
+// key = w, write the file and save the original unformatted
+		saveRawMail(cw->mail_raw, cw->imap_l);
+		if(saveFormattedMail(fh) < 0) goto badsave;
+	}
+	close(fh);
 
-  printf("test %s,%s not implemented\n", name?name:"none", redirect?redirect:"none");
+	if(key == 'w') {
+		ignoreImages = false;
+		if(lastMailInfo && lastMailWindowId == cw->f0.gsn)
+			writeAttachments(lastMailInfo);
+	}
+
+	if(delflag) return imapDeleteWhileReading();
+
 	return true;
 }

@@ -5722,6 +5722,7 @@ The stand-alone client is faster for some things, but you can't perform all thes
 <p>
 Call up a server by the "imap n" command.
 n is the number of the mail block in your config file.
+(imap 0 closes down the connection and clears the buffer.)
 
 <p>
 If the connection is made successfully, there is one folder per line in the buffer.
@@ -5820,6 +5821,49 @@ You must refresh the abc envelopes to see that email.
 It will be the most recent, even if it was send years ago.
 In that sense, it probably doesn't help to have multiple folders open simultaneously.
 Descend into a folder, do some work, go back up, descend into another folder, etc.
+
+<p>
+When reading an email, there is a write command that mirrors the imap client.
+"w foo" writes the email formatted to the file foo, and saves the raw email in the directory ~/.trash/rawmail.
+This is what the mail client does, although it places your files in the mailbox directory, while this session saves the files wherever you are.
+Attachments are also saved, one by one, with their default filenames, or different filenames if you prefer.
+Type x to skip an attachment, and X to skip all image attachments.
+If you have worked with the imap client before, this will seem familiar.
+
+<p>
+The w command alone, without a filename, may select a default filename based on your address book.
+If it comes from an email address that is associated with the alias fred, edbrowse will ask you if you want to use fred.
+Of course you can change the filename to something else.
+
+<p>
+If the file already exists, the new email is appended, with a line of equal signs separating them.
+However, an attachment will not append.
+It might be a binary executable; appending one to another would make no sense.
+Each attachment must save in a stand-alone file.
+
+<p>
+The u command saves the email unformatted.
+Type "u filename" to specify a filename, otherwise edbrowse prompts you for one.
+You are not prompted to save attachments, because you have the raw email in hand.
+You can always browse it and save the attachments later.
+
+<p>
+Capital W and U perform the functions of w and u, and then delete the email,
+just like the imap client.
+This necessarily takes you back up to the envelopes page, whereupon the envelope for this email will also be gone.
+
+<p>
+This is a special feature of an email that is in-buffer, indicated by a leading w or u.
+Anything else is interpreted in the usual way.
+If you want to write the text somewhere with no backup email in ~/.trash/rawmail, and no attachments, type ",w filename".
+
+<p>
+If you move the email away with the M command, this special functionality is lost.
+u means undo as usual.
+You can still save the raw email if you wish, by ub and then w.
+Or save the attachments by ub and then b.
+The imap client shortcuts are lost, and that's not a big deal, as long as you are aware of it.
+It's probably best to leave the email where it is.
 
 <hr>
 <h1>Chapter 8, IRC Client</h1>
