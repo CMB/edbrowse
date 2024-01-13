@@ -7302,6 +7302,11 @@ after_ib:
 			return (globSub = false);
 		}
 
+		if(cw->browseMode) {
+			setError(MSG_BrowseCommand, cmd);
+			return (globSub = false);
+		}
+
 		if (!first) {
 			if (cw->dirMode) {
 				setError(MSG_BadDest);
