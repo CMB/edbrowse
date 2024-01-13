@@ -5087,7 +5087,7 @@ down_again:
 	if (stringEqual(line, "re") || stringEqual(line, "rea")) {
 		undoCompare();
 		cw->undoable = false;
-		cmd = 'e';	/* so error messages are printed */
+		cmd = 'e';	// so error messages are printed
 		rc = setupReply(line[2] == 'a');
 		if (rc && cw->browseMode) {
 			ub = false;
@@ -5375,6 +5375,7 @@ et_go:
 		}
 		freeTags(cw);
 		cw->mustrender = false;
+		cw->imapMode3 = false;
 		for (f = &cw->f0; f; f = fnext) {
 			fnext = f->next;
 			delTimers(f);
