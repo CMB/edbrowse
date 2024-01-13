@@ -4133,6 +4133,8 @@ bool mailDescend(const char *title, char cmd, bool showcount)
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
 	struct FOLDER f0;
+	char *s;
+	int i, l;
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // have to get the actual path from above
@@ -4156,6 +4158,23 @@ bool mailDescend(const char *title, char cmd, bool showcount)
 	}
 
 	if(showcount) debugPrint(1, "%d", mailstring_l);
+
+// Remove the "unseen" *
+// This will, sadly, remove the leading * from a subject field.
+// So we need to improve this some day.
+	s = (char*)cw->map[cw->dot].text;
+	l = pstLength((uchar*)s);
+	if(*s == '*') {
+		memmove(s, s+1, l-1);
+	} else {
+		for(i = 0; i < l - 3; ++i, ++s) {
+			if(s[0] != '|' || s[1] != ' ' || s[2] != '*') continue;
+			i += 2, s += 2;
+			memmove(s, s + 1, l - i - 1);
+			break;
+		}
+	}
+
 	freeWindows(context, false); // lop off stuff below
 // make new window
 	w = createWindow();
