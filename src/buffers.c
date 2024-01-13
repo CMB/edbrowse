@@ -4864,7 +4864,7 @@ static int twoLetter(const char *line, const char **runThis)
 	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'e' && line[1] == ' ') {
 	const char *p = line + 2;
 	while(*p) {
-		if(!strchr("fstzd", *p)) break;
+		if(!strchr("fstzdu", *p)) break;
 		++p;
 	}
 	if(*p) goto no_action; // doesn't look like envelope format
@@ -4876,6 +4876,13 @@ static int twoLetter(const char *line, const char **runThis)
 // and copy to the other window
 		if(w) strcpy(w->imap_env, cw->imap_env);
 		return true;
+	}
+
+	if(cw->imapMode2 && line[0] && strchr("wWuU", line[0]) && (line[1] == 0 || line[1] == ' ')) {
+		char key = *line++;
+		skipWhite(&line);
+		if(!cw->dot) { setError(MSG_AtLine0); return false; }
+		return saveEmailWhileEnvelopes(key, line);
 	}
 
 	if(cw->imapMode3 && line[0] && strchr("wWuU", line[0]) && (line[1] == 0 || line[1] == ' ')) {
@@ -7839,7 +7846,7 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // uid and subject for the email
 		cmd = 'e';
-		return mailDescend(p, icmd);
+		return mailDescend(p, icmd, true);
 	}
 
 	// go to a file in a directory listing

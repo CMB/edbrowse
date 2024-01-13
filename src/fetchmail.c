@@ -154,7 +154,7 @@ static int mailstring_l;
 static char *mailbox_url, *message_url;
 
 static int fetchLimit = 100;
-static const char envelopeFormatChars[8] = "tfsdzn";
+static const char envelopeFormatChars[8] = "tfsdznu";
 // to from subject date size number
 // default is from subject
 static const char envelopeFormatDef[8] = "fs";
@@ -641,7 +641,7 @@ static void printEnvelope(const struct MIF *mif, char **grab)
 	char *envp_end;
 	int envp_l;
 	int i, j;
-	char c;
+	char c, c0;
 	const struct MIF *m2;
 	envp = initString(&envp_l);
 #if 0
@@ -649,14 +649,19 @@ static void printEnvelope(const struct MIF *mif, char **grab)
 		stringAndChar(&envp, &envp_l, '*');
 #endif
 
-	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i) {
+	c0 = 0;
+	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i, c0 = c) {
 // we don't honor n in a buffer, you already have the line numbers, just type n
 		if(c == 'n' && !ismc) continue;
 // put in the delimiter
-		if(i) stringAndString(&envp, &envp_l, " | ");
+		if(i && c0 != 'u') stringAndString(&envp, &envp_l, " | ");
 		switch(c) {
 		case 'f':
 			stringAndString(&envp, &envp_l, mif->from[0] ? mif->from : mif->reply);
+			break;
+		case 'u':
+			if(!mif->seen)
+				stringAndChar(&envp, &envp_l, '*');
 			break;
 		case 't':
 			stringAndString(&envp, &envp_l, mif->to[0] ? mif->to : mif->prec);
@@ -4116,7 +4121,7 @@ bool folderSearch(const char *path, char *search, bool rf)
 	return true;
 }
 
-bool mailDescend(const char *title, char cmd)
+bool mailDescend(const char *title, char cmd, bool showcount)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
@@ -4150,7 +4155,7 @@ bool mailDescend(const char *title, char cmd)
 		return false;
 	}
 
-	debugPrint(1, "%d", mailstring_l);
+	if(showcount) debugPrint(1, "%d", mailstring_l);
 	freeWindows(context, false); // lop off stuff below
 // make new window
 	w = createWindow();
@@ -4171,6 +4176,7 @@ bool mailDescend(const char *title, char cmd)
 	mailstring = 0;
 	cw->changeMode = false;
 	browseCurrentBuffer(NULL);
+	if(!showcount) fileSize = -1;
 	return true;
 }
 
@@ -4416,7 +4422,7 @@ abort:
 bool saveEmailWhileReading(char key, const char *name)
 {
 	const char *redirect = 0;
-	int fh;
+	int fh, fsize;
 	bool exists, delflag = false;
 	if(isupper(key)) key = tolower(key), delflag = true;
 	if(!name[0]) {
@@ -4448,12 +4454,14 @@ badsave:
 			name = 0;
 			goto saveMail;
 		}
+		fsize = cw->imap_l;
 	} else {
 // key = w, write the file and save the original unformatted
 		saveRawMail(cw->mail_raw, cw->imap_l);
-		if(saveFormattedMail(fh) < 0) goto badsave;
+		if((fsize = saveFormattedMail(fh)) < 0) goto badsave;
 	}
 	close(fh);
+	debugPrint(1, "%ld", fsize);
 
 	if(key == 'w') {
 		ignoreImages = false;
@@ -4463,5 +4471,21 @@ badsave:
 
 	if(delflag) return imapDeleteWhileReading();
 
+	return true;
+}
+
+bool saveEmailWhileEnvelopes(char key, const char *name)
+{
+	const char *title = (char*)cw->r_map[cw->dot].text;
+	if(!mailDescend(title, 'g', false)) return false;
+	if(!saveEmailWhileReading(key, name)) return false;
+// if lower case, we didn't delete the email, and didn't pop,
+// but we should still be on the envelope page so pop back up now.
+	if(islower(key)) {
+		Window *pw = cw->prev;
+		cxQuit(context, 1);
+		sessionList[context].lw = cw = pw;
+		printDot();
+	}
 	return true;
 }
