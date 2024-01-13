@@ -709,7 +709,6 @@ static bool expunge(CURL * handle)
 {
 	CURLcode res;
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "EXPUNGE");
-	mailstring = initString(&mailstring_l);
 	res = getMailData(handle);
 	nzFree(mailstring);
 	return res == CURLE_OK;
@@ -817,18 +816,22 @@ I wanted to turn the write function off here, because we don't need it.
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, NULL);
 But turning it off and leaving HEADERFUNCTION on causes a seg fault,
 I have no idea why.
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, imap_null_callback);
+doesn't seg fault but doesn't change anything either.
 I have to leave them both on.
 Unless I write more specialized code, this brings in both data and header info,
 so I have to strip some things off after the fact.
 You'll see this after the perform function runs.
 *********************************************************************/
 
+//	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, imap_null_callback);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, imap_header_callback);
 	callback_data.buffer = initString(&callback_data.length);
 	res = curl_easy_perform(h);
 // and put things back
-	nzFree(callback_data.buffer);
+//	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, NULL);
+	nzFree(callback_data.buffer);
 	undosOneMessage();
 	if (res != CURLE_OK) {
 		if(retry) { // this is the second attempt
@@ -850,7 +853,7 @@ You'll see this after the perform function runs.
 	}
 afterfetch:
 #if 0
-	FILE *z; z = fopen("msb", "w"); fprintf(z, "%s", mailstring); fclose(z);
+	t = 0; FILE *z; z = fopen("msb", "w"); fprintf(z, "%s", mailstring); fclose(z);
 #endif
 
 // have to strip 2 fetch BODY lines off the front,
