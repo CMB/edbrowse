@@ -401,9 +401,15 @@ static struct FOLDER *folderByName(char *line)
 		return topfolders + i - 1;
 
 	f = topfolders;
-	for (i = 0; i < n_folders; ++i, ++f)
+	for (i = 0; i < n_folders; ++i, ++f) {
+		if (stringEqualCI(withoutSubstring(f), line)) {
+// this is the winner
+			cnt = 1, j = i;
+			break;
+		}
 		if (strcasestr(withoutSubstring(f), line))
 			++cnt, j = i;
+	}
 	if (cnt == 1)
 		return topfolders + j;
 	if (cnt) {
