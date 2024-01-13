@@ -641,20 +641,15 @@ static void printEnvelope(const struct MIF *mif, char **grab)
 	char *envp_end;
 	int envp_l;
 	int i, j;
-	char c, c0;
+	const char *fs; // format string
+	char c;
 	const struct MIF *m2;
-	envp = initString(&envp_l);
-#if 0
-	if (!mif->seen)
-		stringAndChar(&envp, &envp_l, '*');
-#endif
 
-	c0 = 0;
-	for (i = 0; (c = (ismc ? envelopeFormat : cw->imap_env)[i]); ++i, c0 = c) {
+	envp = initString(&envp_l);
+	fs = (ismc ? envelopeFormat : cw->imap_env);
+	for (i = 0; (c = fs[i]); ++i) {
 // we don't honor n in a buffer, you already have the line numbers, just type n
 		if(c == 'n' && !ismc) continue;
-// put in the delimiter
-		if(i && c0 != 'u') stringAndString(&envp, &envp_l, " | ");
 		switch(c) {
 		case 'f':
 			stringAndString(&envp, &envp_l, mif->from[0] ? mif->from : mif->reply);
@@ -682,6 +677,9 @@ static void printEnvelope(const struct MIF *mif, char **grab)
 			stringAndNum(&envp, &envp_l, j);
 			break;
 		}
+// put in the delimiter
+		if(c != 'u' && fs[i + 1] && !stringEqual(fs + i + 1, "n"))
+			stringAndString(&envp, &envp_l, " | ");
 	}
 
 	envp_end = envp + envp_l;
