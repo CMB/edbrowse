@@ -4052,6 +4052,7 @@ bool folderDescend(const char *path, bool rf)
 	return true;
 }
 
+// rf parameter means refresh
 bool folderSearch(const char *path, char *search, bool rf)
 {
 	CURLcode res = CURLE_OK;
@@ -4079,14 +4080,18 @@ bool folderSearch(const char *path, char *search, bool rf)
 	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // We have to select the folder first, then search
-	asprintf(&u, "SELECT \"%s\"", path);
-	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
-	free(u);
-	res = getMailData(h);
-	nzFree(mailstring), mailstring = 0;
-	if(res != CURLE_OK) {
-		ebcurl_setError(res, cf->firstURL, 0, emptyString);
-		return false;
+	if(!rf) {
+		asprintf(&u, "SELECT \"%s\"", path);
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
+		free(u);
+		res = getMailData(h);
+		nzFree(mailstring), mailstring = 0;
+		if(res != CURLE_OK) {
+			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			return false;
+		}
+	} else {
+		if(cw->dol) delText(1, cw->dol);
 	}
 
 	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
@@ -4099,21 +4104,29 @@ bool folderSearch(const char *path, char *search, bool rf)
 		return false;
 	}
 
-	freeWindows(context, false); // lop off stuff below
+	if(!rf) {
+		freeWindows(context, false); // lop off stuff below
 // make new window
-	w = createWindow();
-	w->imap_h = h;
-	w->imap_n = act;
-	w->imap_l = cw->imap_l;
-	strcpy(w->imap_env, cw->imap_env);
-	w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
-	cw->imapMode2 = true;
-	asprintf(&cf->fileName, "envelopes %s", path);
+		w = createWindow();
+		w->imap_h = h;
+		w->imap_n = act;
+		w->imap_l = cw->imap_l;
+		strcpy(w->imap_env, cw->imap_env);
+		w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
+		cw->imapMode2 = true;
+		asprintf(&cf->fileName, "envelopes %s", path);
+	}
 	makeLinesAndUids(f);
 	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
 	addTextToBackend(imapPaths);
 	nzFree(imapLines);
 	nzFree(imapPaths);
+
+	if(!rf) {
+// I'm overloading this field abit, it's obviously not an email
+		cw->mail_raw = cloneString(search);
+	}
+
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
 	cleanFolder(f);

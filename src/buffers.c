@@ -5210,7 +5210,10 @@ pwd:
 		if(cw->imapMode1) return imap1rf();
 		if(cw->imapMode2) {
 			const Window *pw = cw->prev; // previous
-			return folderDescend((char*)pw->r_map[pw->dot].text, true);
+			if(cw->mail_raw) // result of a search
+				return folderSearch((char*)pw->r_map[pw->dol].text, cw->mail_raw, true);
+			else
+				return folderDescend((char*)pw->r_map[pw->dot].text, true);
 		}
 		if (cw->browseMode)
 			cmd = 'b';
