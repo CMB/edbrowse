@@ -4878,7 +4878,7 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if(cw->imapMode3 && strchr("wWuU", line[0]) && (line[1] == 0 || line[1] == ' ')) {
+	if(cw->imapMode3 && line[0] && strchr("wWuU", line[0]) && (line[1] == 0 || line[1] == ' ')) {
 		char key = *line++;
 		skipWhite(&line);
 		return saveEmailWhileReading(key, line);

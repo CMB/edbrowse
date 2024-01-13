@@ -3489,7 +3489,7 @@ static void formatMail(struct MHINFO *w, bool top)
 	}
 }
 
-/* Browse the email file. */
+// Browse the email file.
 char *emailParse(char *buf)
 {
 	struct MHINFO *w;
@@ -3835,6 +3835,17 @@ bool imapBuffer(char *line)
 	if(!isdigitByte(*line)) goto usage;
 	act = strtol(line, &line, 10);
 	if(act < 0 || *line) goto usage;
+	if(act == 0) { // special shutdown code
+		if(!cw->imapMode1) return true;
+		freeWindows(context, false); // lop off stuff below
+		if(cw->dol) delText(1, cw->dol);
+		curl_easy_cleanup(cw->imap_h);
+		cw->imap_h = 0;
+		cw->imapMode1 = false;
+		nzFree(cf->firstURL), cf->firstURL = 0;
+		nzFree(cf->fileName), cf->fileName = 0;
+		return true;
+	}
 	if(!validAccount(act)) return false;
 	if(!accounts[act - 1].imap) {
 		setError(MSG_NotImap);
@@ -4152,9 +4163,6 @@ bool mailDescend(const char *title, char cmd)
 	vr = cf->fileName + strlen(cf->fileName);
 	isoDecode(cf->fileName, &vr);
 	*vr = 0;
-	if (lastMailInfo)
-		freeMailInfo(lastMailInfo);
-	lastMailInfo = 0;
 	iuReformat(mailstring, mailstring_l, &mailu8, &mailu8_l);
 	if(mailu8) {
 		addTextToBuffer((pst) mailu8, mailu8_l, 0, false);
@@ -4420,6 +4428,7 @@ bool saveEmailWhileReading(char key, const char *name)
 	if(!name[0]) {
 		name = 0;
 // get a default name if we have the information
+		if(lastMailInfo) printf("gsn %d,%d\n", lastMailWindowId, cw->f0.gsn);
 		if(lastMailInfo && lastMailWindowId == cw->f0.gsn)
 			redirect = defaultSaveFilename(0, 0);
 	}
@@ -4427,5 +4436,6 @@ bool saveEmailWhileReading(char key, const char *name)
 	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 
+  printf("test %s,%s not implemented\n", name?name:"none", redirect?redirect:"none");
 	return true;
 }

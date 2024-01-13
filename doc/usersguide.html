@@ -4543,7 +4543,7 @@ Present folders 3 and 5 when accessing this account.
 imap is assumed here.
 You can toggle this masking feature on and off interactively with the imask command.
 When searching for a folder by number or by substring, all folders are searched, not just the ones presented on screen.
-Thus you can still access folders that are not presented.
+Thus you can still access folders that are not presented or preselected.
 
 <p>
 isub = substring
@@ -5722,8 +5722,26 @@ The stand-alone client is faster for some things, but you can't perform all thes
 <p>
 Call up a server by the "imap n" command.
 n is the number of the mail block in your config file.
+
+<p>
 If the connection is made successfully, there is one folder per line in the buffer.
-Type g to go to the folder, like it was a directory, or / to find the folder you want.
+This line will have the message count, so many messages in the folder;
+unless that folder is excluded by an imask directive in its mail block.
+In that case the count is simply a question mark.
+This behavior is similar to, though not identical to, the stand-alone mail client.
+The client doesn't print the excluded folders at all.
+In an edbrowse buffer, you have complete control, so we include all the folders, with counts by those that are active.
+
+<p>
+The imask command toggles the imask feature on and off.
+It is only available in this window, and is per account.
+
+<p>
+Type /expression to find the folder you want, then type g to go to it,
+like it was a directory.
+You can do this even if the folder is excluded by imask.
+
+<p>
 In a new buffer, (the folders are still up one level in your history), you will find the most recent emails,
 one envelope per line.
 These are in time order, with the newest email at the bottom.
