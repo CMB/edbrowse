@@ -2322,6 +2322,28 @@ gopher_transfer_fail:
 	return true;
 }
 
+/*********************************************************************
+Get a suggested download filename from the <a> tag.
+The result is allocated, and cleaned up for security.
+It's fair to ask whether the download protocol should call this function,
+or whether it is more general - whether it should be called from readFile()
+after httpConnect();
+Also, we can't defer to javascript, because we're in a new window.
+If js called setAttribute("download") I'm not sure what we do.
+*********************************************************************/
+
+static char *suggestedDownloadName(const Tag *t)
+{
+	char *e, *f;
+	const char *e0;
+	if(!t) return 0;
+	e0 = attribVal(t, "download");
+	if(e0 && *e0) e = cloneString(e0); else return 0;
+	for(f = e; *f; ++f)
+		if(*f == '/' || *f == '\\') *f = '_';
+	return e;
+}
+
 static bool dataConnect(struct i_get *g)
 {
 	char *copy = cloneString(g->url);
@@ -2331,7 +2353,7 @@ static bool dataConnect(struct i_get *g)
 	if(!comma) { // should never happen
 		debugPrint(3, "data has no comma");
 		nzFree(copy);
-		return 0;
+		return false;
 	}
 	*comma++ = 0;
 	unpercentString(comma);
@@ -2364,6 +2386,7 @@ static bool dataConnect(struct i_get *g)
 	debugPrint(4, "content length %lld", g->hcl);
 	nzFree(copy);
 	g->cfn = cloneString("data:");
+	g->cfn = suggestedDownloadName(g->gotag);
 	return true;
 }
 

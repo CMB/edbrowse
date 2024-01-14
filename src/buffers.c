@@ -1874,7 +1874,7 @@ static bool joinTextG(char action, int n, int back, const char *fs)
 // Read a file, or url, into the current buffer.
 static bool readFile(const char *filename, bool newwin,
 		     int fromframe, const char *fromthis, const char *orig_head,
-uchar prebrowse)
+uchar prebrowse, const Tag *gotag)
 {
 	char *rbuf;		// the read buffer
 	int readSize;		// should agree with fileSize
@@ -1920,6 +1920,7 @@ uchar prebrowse)
 		uchar sxfirst;
 		struct i_get g;
 		memset(&g, 0, sizeof(g));
+		g.gotag = gotag;
 		if (newwin)
 			g.down_ok = true;
 		if (fromframe <= 1) {
@@ -2199,7 +2200,7 @@ bool readFileArgv(const char *filename, int fromframe, const char *orig_head)
 	bool newwin = !fromframe;
 	cmd = 'e';
 	return readFile(filename, newwin, fromframe,
-			(newwin ? 0 : cw->f0.fileName), orig_head, 0);
+			(newwin ? 0 : cw->f0.fileName), orig_head, 0, 0);
 }
 
 // Skip the file: protocol, if present.
@@ -6643,6 +6644,7 @@ bool runCommand(const char *line)
 	bool postSpace = false, didRange = false;
 	char first;
 	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
+	const Tag *gotag = 0;
 	int tagno;
 	int newloc_count = 0;
 	const char *s = NULL;
@@ -8031,7 +8033,7 @@ past_g_file:
 				return false;
 			}
 			cw->dot = endRange;
-			jumptag = tag;
+			jumptag = gotag = tag;
 			if (cw->browseMode && h[0] == '#')
 				emode = false, cmd = 'b';
 			jsh = memEqualCI(h, "javascript:", 11);
@@ -8352,10 +8354,10 @@ we have to make sure it has a protocol. Every url needs a protocol.
 				debugPrint(2, "*%s", line);
 // emode suppresses plugins, as well as browsing
 			save_pg = pluginsOn;
-			if (emode)
-				pluginsOn = false;
+			if (emode) pluginsOn = false;
 			j = readFile(line, (cmd != 'r'), 0,
-				     thisfile, 0, prebrowse);
+				     thisfile, 0, prebrowse,
+			(icmd == 'g' ? gotag : 0));
 			pluginsOn = save_pg;
 		}
 		w->undoable = w->changeMode = false;
@@ -8630,7 +8632,7 @@ afterdelete:
 				strmove(strchr(newline + 1, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, false, 0, 0, 0, cw->browseMode);
+			j = readFile(line, false, 0, 0, 0, cw->browseMode, 0);
 			if (!serverData)
 				fileSize = -1;
 			return j;

@@ -195,6 +195,7 @@ struct i_get {
 	char *referrer;
 	CURL *h;
 	struct ebFrame *cf; // current frame
+	const struct htmlTag *gotag; // <a> tag
 	int tsn; // thread sequence number
 // State of download to disk, see http.c for state values.
 	int down_state;
