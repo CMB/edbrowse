@@ -4171,8 +4171,8 @@ bool folderDescend(const char *path, bool rf)
 	if(f->nfetch) {
 		addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
 		addTextToBackend(imapPaths);
-		nzFree(imapLines);
-		nzFree(imapPaths);
+		nzFree(imapLines), imapLines = 0;
+		nzFree(imapPaths), imapPaths = 0;
 	}
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
@@ -4209,25 +4209,26 @@ bool folderSearch(const char *path, char *search, bool rf)
 	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // We have to select the folder first, then search
-	if(!rf) {
-		asprintf(&u, "SELECT \"%s\"", path);
-		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
-		free(u);
-		res = getMailData(h);
-		nzFree(mailstring), mailstring = 0;
-		if(res != CURLE_OK) {
-			ebcurl_setError(res, cf->firstURL, 0, emptyString);
-			return false;
-		}
-	} else {
+// Technically we don't have to on refresh, but I will anyways,
+// in case it's been a long time and we logged out and need to reselect.
+	asprintf(&u, "SELECT \"%s\"", path);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
+	free(u);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if(res != CURLE_OK) {
+		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		return false;
+	}
+	if(rf) {
 		if(cw->dol) delText(1, cw->dol);
 	}
 
-	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
-	f->path = path;
-	if(imapSearch(h, f, search, &res) <= 0) {
-		cleanFolder(f);
-		free(f);
+	struct FOLDER f0;
+	memset(&f0, 0, sizeof(f0));
+	f0.path = path;
+	if(imapSearch(h, &f0, search, &res) <= 0) {
+		cleanFolder(&f0);
 		if(res != CURLE_OK)
 			ebcurl_setError(res, cf->firstURL, 0, emptyString);
 		return false;
@@ -4245,11 +4246,11 @@ bool folderSearch(const char *path, char *search, bool rf)
 		cw->imapMode2 = true;
 		asprintf(&cf->fileName, "envelopes %s", path);
 	}
-	makeLinesAndUids(f);
+	makeLinesAndUids(&f0);
 	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
 	addTextToBackend(imapPaths);
-	nzFree(imapLines);
-	nzFree(imapPaths);
+	nzFree(imapLines), imapLines = 0;
+	nzFree(imapPaths), imapPaths = 0;
 
 	if(!rf) {
 // I'm overloading this field abit, it's obviously not an email
@@ -4258,8 +4259,7 @@ bool folderSearch(const char *path, char *search, bool rf)
 
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
-	cleanFolder(f);
-	free(f);
+	cleanFolder(&f0);
 	return true;
 }
 
@@ -4342,16 +4342,17 @@ bool mailDescend(const char *title, char cmd)
 	char *vr;
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
+	const Window *pw = cw->prev;
 	bool showcount = (cmd == 'g' || cmd == 't');
 	struct FOLDER f0;
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // have to get the actual path from above
-	w = cw->prev;
-	path = (char*)w->r_map[w->dot].text;
+	path = (char*)pw->r_map[pw->dot].text;
 	f0.path = path; // that's all we need in f0
 
 	preferPlain = (cmd == 't');
+// downloadBody has a retry feature in it
 	res = downloadBody(h, &f0, uid);
 	if(res != CURLE_OK) {
 // A partial read of a big email doesn't return the error, though it does print an error.
@@ -4436,11 +4437,22 @@ baddest:
 	stringAndChar(&imapLines, &iml_l, '"');
 	stringAndString(&imapLines, &iml_l, path);
 	stringAndChar(&imapLines, &iml_l, '"');
+
+	bool retry = false;
+again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-	nzFree(imapLines);
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) goto abort;
+	if (res != CURLE_OK) {
+		struct FOLDER f0;
+		memset(&f0, 0, sizeof(f0));
+		f0.path = (char*)pw->r_map[pw->dot].text;
+		if(retry || !refolder(h, &f0, res))
+			goto abort;
+		retry = true;
+		goto again;
+	}
+	nzFree(imapLines), imapLines = 0;
 
 	if(cmd == 'm' && !a->move_capable) {
 // move is copy + delete, this is the delete part.
@@ -4454,12 +4466,13 @@ baddest:
 			stringAndChar(&imapLines, &iml_l, (l1 < l2 ? ',' : ' '));
 		}
 		stringAndString(&imapLines, &iml_l, "+Flags \\Deleted");
+// I don't do the retry here; we just succeeded above so we should be ok.
 		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-		nzFree(imapLines);
+		nzFree(imapLines), imapLines = 0;
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) goto abort;
-		if(!expunge(h)) return false;
+	expunge(h);
 	}
 
 	if(cmd == 'm')
@@ -4468,6 +4481,7 @@ baddest:
 	return true;
 
 abort:
+	nzFree(imapLines), imapLines = 0;
 	ebcurl_setError(res, cf->firstURL, 0, emptyString);
 	return false;
 }
@@ -4639,7 +4653,8 @@ abort:
 bool imapDeleteWhileReading(void)
 {
 	CURLcode res;
-	Window *pw = cw->prev;
+	const Window *pw = cw->prev;
+	const Window *pw2 = pw->prev;
 	const char *title = (char*)pw->r_map[pw->dot].text;
 	int uid = atoi(title);
 	CURL *h = pw->imap_h;
@@ -4648,7 +4663,7 @@ bool imapDeleteWhileReading(void)
 	char cust_cmd[80];
 
 // does delete really mean move?
-	if(a->dxtrash && !a->dxfolder[pw->dot]) {
+	if(a->dxtrash && !a->dxfolder[pw2->dot]) {
 		char destn[8];
 		if(!a->move_capable) {
 			setError(MSG_NMC);
@@ -4658,19 +4673,29 @@ bool imapDeleteWhileReading(void)
 		return imapMovecopyWhileReading('m', destn);
 	}
 
+	bool retry = false;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
+again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) goto abort;
-	if(!expunge(h)) return false;
+	if (res != CURLE_OK) {
+		struct FOLDER f0;
+		memset(&f0, 0, sizeof(f0));
+		f0.path = (char*)pw2->r_map[pw2->dot].text;
+		if(retry || !refolder(h, &f0, res))
+			goto abort;
+		retry = true;
+		goto again;
+	}
+	 expunge(h);
 
 	undoSpecialClear();
 	saveSubstitutionStrings();
 	if (!cxQuit(context, 1))
 		return false;
-	sessionList[context].lw = cw = pw;
+	sessionList[context].lw = cw = (Window*)pw;
 	restoreSubstitutionStrings(cw);
 	delText(cw->dot, cw->dot);
 	if(debugLevel >= 1)
