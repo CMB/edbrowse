@@ -153,6 +153,7 @@ static void writeAttachments(struct MHINFO *w)
 
 static void linkAttachment(struct MHINFO *w)
 {
+	char *e;
 	if(w->ct == CT_TEXT && w->ce <= CE_8BIT) {
 		debugPrint(3, "text attachment length %d is presented inline", w->end - w->start);
 		return;
@@ -166,8 +167,9 @@ static void linkAttachment(struct MHINFO *w)
 // turn it into binary when you click on the hyperlink.
 	stringAndString(&imapLines, &iml_l, "<br><a href='data:");
 // can't we pull content-type out of the attachment and put it in here?
+	stringAndString(&imapLines, &iml_l,  "unknown");
 	stringAndString(&imapLines, &iml_l, ";base64,");
-	char *e = base64Encode(w->start, w->end - w->start, false);
+	e = base64Encode(w->start, w->end - w->start, false);
 // Bad news, + is interpreted by the url machinery, need to %encode.
 	int pc = 0; // plus count
 	const char *f;
@@ -187,10 +189,18 @@ static void linkAttachment(struct MHINFO *w)
 	}
 	stringAndString(&imapLines, &iml_l, e);
 	nzFree(e);
+	if (w->cfn[0]) {
+		stringAndString(&imapLines, &iml_l,  "' download='");
+		e = htmlEscape0(w->cfn, true);
+		stringAndString(&imapLines, &iml_l,  e);
+		nzFree(e);
+	}
 	stringAndString(&imapLines, &iml_l, "'>Attachment");
 	if (w->cfn[0]) {
 		stringAndChar(&imapLines, &iml_l,  ' ');
-		stringAndString(&imapLines, &iml_l,  w->cfn);
+		e = htmlEscape0(w->cfn, true);
+		stringAndString(&imapLines, &iml_l,  e);
+		nzFree(e);
 	}
 	stringAndString(&imapLines, &iml_l,  "</a> ");
 	stringAndString(&imapLines, &iml_l,  conciseSize(w->end - w->start));
