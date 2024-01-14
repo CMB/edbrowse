@@ -4209,6 +4209,51 @@ static void unstar(int n)
 	}
 }
 
+// Put stars back after messages are marked unread.
+// Unlike the above, this assumes the envelope has not changed since you
+// loaded the lines in the buffer. (Otherwise it's not practical.)
+// Thus we know where the * should be.
+// Remember that the * might already be there.
+static void restar(int n)
+{
+	const char *s, *t;
+	char *newline;
+	int i, j, l;
+	const char *fs = cw->imap_env;
+
+	for(i = j = 0; fs[i]; ++i) {
+		if(fs[i] == 'u') break;
+		if(fs[i] != 'n') ++j;
+	}
+if(!fs[i]) return; // no u
+// j is the number of delimiters before the *
+
+	s = t = (char*)cw->map[n].text;
+	l = pstLength((uchar*)s);
+	while(j) {
+// step ahead to next delimiter
+		while(*t != '\n') {
+			if(*t == '|' && t > s && t[-1] == ' ' && t[1] == ' ') {
+				--j, t += 2;
+				break;
+			}
+			++t;
+		}
+		if(*t == '\n') return; // not enough delimiters
+	}
+
+	if(*t == '*') return; // * already there
+
+	newline = allocMem(l + 2);
+	j = t - s;
+	memcpy(newline, s, j);
+	newline[j] = '*';
+	memcpy(newline + j + 1, t, l - j);
+	newline[l + 1] = 0;
+	cnzFree(s);
+	cw->map[n].text = (uchar*)newline;
+}
+
 bool mailDescend(const char *title, char cmd)
 {
 	CURLcode res;
@@ -4310,10 +4355,9 @@ baddest:
 		const char *title = (char*)cw->r_map[l1].text;
 		int uid = atoi(title);
 		stringAndNum(&imapLines, &iml_l, uid);
-		if(l1 < l2)
-			stringAndChar(&imapLines, &iml_l, ',');
+		stringAndChar(&imapLines, &iml_l, (l1 < l2 ? ',' : ' '));
 	}
-	stringAndString(&imapLines, &iml_l, " \"");
+	stringAndChar(&imapLines, &iml_l, '"');
 	stringAndString(&imapLines, &iml_l, path);
 	stringAndChar(&imapLines, &iml_l, '"');
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
@@ -4331,10 +4375,9 @@ baddest:
 			const char *title = (char*)cw->r_map[l1].text;
 			int uid = atoi(title);
 			stringAndNum(&imapLines, &iml_l, uid);
-			if(l1 < l2)
-				stringAndChar(&imapLines, &iml_l, ',');
+			stringAndChar(&imapLines, &iml_l, (l1 < l2 ? ',' : ' '));
 		}
-		stringAndString(&imapLines, &iml_l, " +Flags \\Deleted");
+		stringAndString(&imapLines, &iml_l, "+Flags \\Deleted");
 		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
 		nzFree(imapLines);
 		res = getMailData(h);
@@ -4383,10 +4426,9 @@ bool imapDelete(int l1, int l2, char cmd)
 		const char *title = (char*)cw->r_map[l1].text;
 		int uid = atoi(title);
 		stringAndNum(&imapLines, &iml_l, uid);
-		if(l1 < l2)
-			stringAndChar(&imapLines, &iml_l, ',');
+		stringAndChar(&imapLines, &iml_l, (l1 < l2 ? ',' : ' '));
 	}
-	stringAndString(&imapLines, &iml_l, " +Flags \\Deleted");
+	stringAndString(&imapLines, &iml_l, "+Flags \\Deleted");
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
 	nzFree(imapLines);
 	res = getMailData(h);
@@ -4404,7 +4446,7 @@ abort:
 	return false;
 }
 
-bool imapMarkRead(int l1, int l2)
+bool imapMarkRead(int l1, int l2, char sign)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
@@ -4413,6 +4455,7 @@ bool imapMarkRead(int l1, int l2)
 	const Window *pw = cw->prev;
 	int l0;
 
+	if(sign == 0) sign = '+';
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	imapLines = initString(&iml_l);
 	stringAndString(&imapLines, &iml_l, "uid STORE ");
@@ -4422,10 +4465,10 @@ bool imapMarkRead(int l1, int l2)
 		const char *title = (char*)cw->r_map[l1].text;
 		int uid = atoi(title);
 		stringAndNum(&imapLines, &iml_l, uid);
-		if(l1 < l2)
-			stringAndChar(&imapLines, &iml_l, ',');
+		stringAndChar(&imapLines, &iml_l, (l1 < l2 ? ',' : ' '));
 	}
-	stringAndString(&imapLines, &iml_l, " +Flags \\Seen");
+	stringAndChar(&imapLines, &iml_l, sign);
+	stringAndString(&imapLines, &iml_l, "Flags \\Seen");
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
 	nzFree(imapLines);
 	res = getMailData(h);
@@ -4433,7 +4476,7 @@ bool imapMarkRead(int l1, int l2)
 	if (res != CURLE_OK) goto abort;
 
 	for(l1 = l0; l1 <= l2; ++l1)
-		unstar(l1);
+		if(sign == '+') unstar(l1); else restar(l1);
 	return true;
 
 abort:
