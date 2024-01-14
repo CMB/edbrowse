@@ -3514,7 +3514,6 @@ static void formatMail(struct MHINFO *w, bool top)
 	debugPrint(5, "format mail content %d subject %s", ct,    w->subject);
 	stringAndString(&fm, &fm_l, headerShow(w, top));
 
-#if 0
 	if(top && nattach && mailIsHtml) {
 		imapLines = initString(&iml_l);
 		linkAttachments(w);
@@ -3522,7 +3521,6 @@ static void formatMail(struct MHINFO *w, bool top)
 		nzFree(imapLines), imapLines = 0;
 		stringAndString(&fm, &fm_l, "<p>");
 	}
-#endif
 
 	if (ct < CT_MULTI) {
 		char *start = w->start;
@@ -3608,10 +3606,9 @@ char *emailParse(char *buf)
 		     strlen(w->reply) + 6);
 	sprintf(cw->mailInfo, "%s>%s>%s>%s>%s>", w->reply, w->tolist,
 		w->cclist, w->ref, w->mid);
-	if (!ismc) {
+	if (!ismc && !mailIsHtml)
 		writeAttachments(w);
-		debugPrint(5, "mailInfo: %s", cw->mailInfo);
-	}
+	debugPrint(5, "mailInfo: %s", cw->mailInfo);
 	if (lastMailInfo) {
 		freeMailInfo(lastMailInfo);
 		lastMailInfo = 0;
@@ -4721,7 +4718,7 @@ badsave:
 
 	if(key == 'w') {
 		ignoreImages = false;
-		if(lastMailInfo && lastMailWindowId == cw->f0.gsn)
+		if(lastMailInfo && lastMailWindowId == cw->f0.gsn && !mailIsHtml)
 			writeAttachments(lastMailInfo);
 	}
 
