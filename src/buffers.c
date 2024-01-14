@@ -5088,6 +5088,11 @@ down_again:
 		undoCompare();
 		cw->undoable = false;
 		cmd = 'e';	// so error messages are printed
+		if(cw->imapMode2 && cw->dol) {
+// basically g and re
+			char *p = (char *)cw->r_map[cw->dot].text; // uid and subject for the email
+			if(! mailDescend(p, 'g')) return false;
+		}
 		rc = setupReply(line[2] == 'a');
 		if (rc && cw->browseMode) {
 			ub = false;

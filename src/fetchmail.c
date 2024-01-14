@@ -3578,7 +3578,7 @@ bool setupReply(bool all)
 	char *out, *s, *t;
 	bool rc;
 
-/* basic sanity */
+// basic sanity
 	if (cw->dirMode) {
 		setError(MSG_ReDir);
 		return false;
