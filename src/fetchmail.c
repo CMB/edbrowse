@@ -37,6 +37,7 @@ struct MHINFO {
 
 static int nattach;		// number of attachments
 static int nimages;		// number of attached images
+static bool ignoreImages;
 static char *firstAttach;	// name of first file
 static bool mailIsHtml;
 static bool preferPlain;
@@ -45,6 +46,10 @@ static int fm_l;
 static struct MHINFO *lastMailInfo;
 static char *lastMailText;
 static int lastMailWindowId;
+// this string is rather overloaded, and used for different things,
+// hopefully not at the same time.
+static char *imapLines, *imapPaths;
+static int iml_l, imp_l;
 
 static void freeMailInfo(struct MHINFO *w)
 {
@@ -59,8 +64,6 @@ static void freeMailInfo(struct MHINFO *w)
 	if(w->startAllocated) nzFree(w->start);
 	nzFree(w);
 }
-
-static bool ignoreImages;
 
 static void writeAttachment(struct MHINFO *w)
 {
@@ -145,6 +148,65 @@ static void writeAttachments(struct MHINFO *w)
 	} else {
 		foreach(v, w->components)
 		    writeAttachments(v);
+	}
+}
+
+static void linkAttachment(struct MHINFO *w)
+{
+	if(w->ct == CT_TEXT && w->ce <= CE_8BIT) {
+		debugPrint(3, "text attachment length %d is presented inline", w->end - w->start);
+		return;
+	}
+	        if (w->start == w->end) {
+		debugPrint(3, "skipping empty attachment");
+		return;
+	}
+// The irony - it probably came in base64, I turned it into binary,
+// now I'm turning it back into base64, so that edbrowse can once again
+// turn it into binary when you click on the hyperlink.
+	stringAndString(&imapLines, &iml_l, "<br><a href='data:");
+// can't we pull content-type out of the attachment and put it in here?
+	stringAndString(&imapLines, &iml_l, ";base64,");
+	char *e = base64Encode(w->start, w->end - w->start, false);
+// Bad news, + is interpreted by the url machinery, need to %encode.
+	int pc = 0; // plus count
+	const char *f;
+	for(f = e; *f; ++f)
+		if(*f == '+') ++pc;
+	if(pc) {
+		int l = strlen(e);
+		char *e2 = allocMem(l + pc*2 + 2);
+		char *f2 = e2;
+		for(f = e; *f; ++f) {
+			if(*f != '+') { *f2++ = *f; continue; }
+			strcpy(f2, "%2b");
+			f2 += 3;
+		}
+		*f2 = 0;
+		nzFree(e), e = e2;
+	}
+	stringAndString(&imapLines, &iml_l, e);
+	nzFree(e);
+	stringAndString(&imapLines, &iml_l, "'>Attachment");
+	if (w->cfn[0]) {
+		stringAndChar(&imapLines, &iml_l,  ' ');
+		stringAndString(&imapLines, &iml_l,  w->cfn);
+	}
+	stringAndString(&imapLines, &iml_l,  "</a> ");
+	stringAndString(&imapLines, &iml_l,  conciseSize(w->end - w->start));
+	if(w->error64)
+		stringAndString(&imapLines, &iml_l, " with base64 encoding errors");
+	stringAndChar(&imapLines, &iml_l,  '\n');
+}
+
+static void linkAttachments(struct MHINFO *w)
+{
+	struct MHINFO *v;
+	if (w->doAttach) {
+		linkAttachment(w);
+	} else {
+		foreach(v, w->components)
+		    linkAttachments(v);
 	}
 }
 
@@ -267,8 +329,6 @@ static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
 
 static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
-static char *imapLines, *imapPaths;
-static int iml_l, imp_l;
 
 // This routine mucks with the passed in string, which was allocated
 // to receive data from the imap server. So leave it allocated.
@@ -3454,6 +3514,16 @@ static void formatMail(struct MHINFO *w, bool top)
 	debugPrint(5, "format mail content %d subject %s", ct,    w->subject);
 	stringAndString(&fm, &fm_l, headerShow(w, top));
 
+#if 0
+	if(top && nattach && mailIsHtml) {
+		imapLines = initString(&iml_l);
+		linkAttachments(w);
+		stringAndString(&fm, &fm_l, imapLines);
+		nzFree(imapLines), imapLines = 0;
+		stringAndString(&fm, &fm_l, "<p>");
+	}
+#endif
+
 	if (ct < CT_MULTI) {
 		char *start = w->start;
 		char *end = w->end;
@@ -4274,7 +4344,6 @@ bool mailDescend(const char *title, char cmd)
 	path = (char*)w->r_map[w->dot].text;
 	f0.path = path; // that's all we need in f0
 
-// t (text component) not yet implemented
 	preferPlain = (cmd == 't');
 	res = downloadBody(h, &f0, uid);
 	if(res != CURLE_OK) {
@@ -4469,17 +4538,30 @@ bool imapMarkRead(int l1, int l2, char sign)
 	}
 	stringAndChar(&imapLines, &iml_l, sign);
 	stringAndString(&imapLines, &iml_l, "Flags \\Seen");
+
+	bool retry = false;
+again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-	nzFree(imapLines);
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) goto abort;
+	if (res != CURLE_OK) {
+		const Window *pw = cw->prev;
+		struct FOLDER f0;
+		memset(&f0, 0, sizeof(f0));
+		f0.path = (char*)pw->r_map[pw->dot].text;
+		if(retry || !refolder(h, &f0, res))
+			goto abort;
+		retry = true;
+		goto again;
+	}
+	nzFree(imapLines), imapLines = 0;
 
 	for(l1 = l0; l1 <= l2; ++l1)
 		if(sign == '+') unstar(l1); else restar(l1);
 	return true;
 
 abort:
+	nzFree(imapLines), imapLines = 0;
 	ebcurl_setError(res, cf->firstURL, 0, emptyString);
 	return false;
 }
