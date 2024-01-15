@@ -246,6 +246,7 @@ struct MACCOUNT { // email account, pop3 or imap
 	uchar maskfolder[256];
 	uchar dxfolder[256];
 	uchar dxtrash;
+	char lastletter;
 };
 extern struct MACCOUNT accounts[];	/* all the email accounts */
 extern int maxAccount;		/* how many email accounts specified */

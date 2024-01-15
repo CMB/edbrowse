@@ -982,6 +982,11 @@ afterfetch:
 	t = strrchr(mailstring, '\n');
 	if(!t || !strstr(t, " OK ")) goto done;
 // we should always be here; lop off last OK line
+// but first, check for reconnect, for debugging purposes
+	if(t[1] != active_a->lastletter) {
+		active_a->lastletter = t[1];
+		debugPrint(2, "connect %c", t[1]);
+	}
 	*t = 0, mailstring_l = t - mailstring;
 	while((t = strrchr(mailstring, '\n')) && strstr(t, " FETCH (")) {
 // lop off last FETCH line
@@ -4377,6 +4382,7 @@ bool mailDescend(const char *title, char cmd)
 	bool showcount = (cmd == 'g' || cmd == 't');
 	struct FOLDER f0;
 
+	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // have to get the actual path from above
 	path = (char*)pw->r_map[pw->dot].text;
