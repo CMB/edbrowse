@@ -4519,12 +4519,23 @@ bool imapDelete(int l1, int l2, char cmd)
 		stringAndChar(&imapLines, &iml_l, (l1 < l2 ? ',' : ' '));
 	}
 	stringAndString(&imapLines, &iml_l, "+Flags \\Deleted");
+
+	bool retry = false;
+again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-	nzFree(imapLines);
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) goto abort;
-	if(!expunge(h)) return false;
+	if (res != CURLE_OK) {
+		struct FOLDER f0;
+		memset(&f0, 0, sizeof(f0));
+		f0.path = (char*)pw->r_map[pw->dot].text;
+		if(retry || !refolder(h, &f0, res))
+			goto abort;
+		retry = true;
+		goto again;
+	}
+	nzFree(imapLines), imapLines = 0;
+	expunge(h);
 	delText(l0, l2);
 
 D_check:
@@ -4532,6 +4543,7 @@ D_check:
 	return true;
 
 abort:
+	nzFree(imapLines), imapLines = 0;
 	ebcurl_setError(res, cf->firstURL, 0, emptyString);
 	return false;
 }
@@ -4566,7 +4578,6 @@ again:
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
 	if (res != CURLE_OK) {
-		const Window *pw = cw->prev;
 		struct FOLDER f0;
 		memset(&f0, 0, sizeof(f0));
 		f0.path = (char*)pw->r_map[pw->dot].text;
@@ -4590,7 +4601,7 @@ abort:
 bool imapMovecopyWhileReading(char cmd, char *dest)
 {
 	CURLcode res;
-	Window *pw = cw->prev;
+	const Window *pw = cw->prev;
 	const Window *pw2 = pw->prev;
 	const char *title = (char*)pw->r_map[pw->dot].text;
 	int uid = atoi(title);
@@ -4617,11 +4628,21 @@ baddest:
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	asprintf(&t, "UID %s %d \"%s\"", 	     ((a->move_capable && cmd == 'm') ? "MOVE" : "COPY"), uid, path);
+	bool retry = false;
+again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
-	nzFree(t);
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) goto abort;
+	if (res != CURLE_OK) {
+		struct FOLDER f0;
+		memset(&f0, 0, sizeof(f0));
+		f0.path = (char*)pw2->r_map[pw2->dot].text;
+		if(retry || !refolder(h, &f0, res))
+			goto abort;
+		retry = true;
+		goto again;
+	}
+	nzFree(t), t = 0;
 
 	if(cmd == 'm' && !a->move_capable) {
 		sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
@@ -4629,16 +4650,15 @@ baddest:
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) goto abort;
-		if(!expunge(h)) return false;
+		expunge(h);
 	}
 
 	if(cmd == 't') return true; // copy, nothing else to do
 
 	undoSpecialClear();
 	saveSubstitutionStrings();
-	if (!cxQuit(context, 1))
-		return false;
-	sessionList[context].lw = cw = pw;
+	if (!cxQuit(context, 1)) return false;
+	sessionList[context].lw = cw = (Window*)pw;
 	restoreSubstitutionStrings(cw);
 	delText(cw->dot, cw->dot);
 	if(debugLevel >= 1)
@@ -4646,6 +4666,7 @@ baddest:
 	return true;
 
 abort:
+	nzFree(t);
 	ebcurl_setError(res, cf->firstURL, 0, emptyString);
 	return false;
 }
@@ -4673,9 +4694,9 @@ bool imapDeleteWhileReading(void)
 		return imapMovecopyWhileReading('m', destn);
 	}
 
-	bool retry = false;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
+	bool retry = false;
 again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	res = getMailData(h);
