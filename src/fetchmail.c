@@ -4755,3 +4755,12 @@ bool saveEmailWhileEnvelopes(char key, const char *name)
 	}
 	return true;
 }
+
+bool rfWhileReading()
+{
+	Window *pw = cw->prev;
+// pop and go
+		cxQuit(context, 1);
+		sessionList[context].lw = cw = pw;
+	return mailDescend((char*)cw->r_map[cw->dot].text, 'g');
+}

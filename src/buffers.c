@@ -5221,6 +5221,8 @@ pwd:
 			else
 				return folderDescend((char*)pw->r_map[pw->dot].text, true);
 		}
+		if(cw->imapMode3)
+			return rfWhileReading();
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = 2;
