@@ -4071,7 +4071,8 @@ const Tag *v; // table tag above
 		if(v->action == TAGACT_TABLE) break;
 	if(!v) return 0; // this should never happen
 	role = attribVal(v, "role");
-	if(role && stringEqual(role, "presentation")) return 2;
+	if(stringEqual(role, "presentation")) return 2;
+	if(stringEqual(role, "table")) return 1;
 // if this table contains another one it has to be presentation
 	if(tableUnder(v)) return 2;
 // if there is a caption or thead section, probably data
