@@ -871,6 +871,37 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 	return false;
 }
 
+// Try a command, not intended to return data, twice,
+// the second time selecting the folder after a possible disconnect.
+// path is the internal name of the folder.
+// If no good after the second attempt, set the curl error and return false.
+static bool tryTwice(CURL *h, const char *path, const char *cmd)
+{
+	struct FOLDER f0;
+	memset(&f0, 0, sizeof(f0));
+	f0.path = path;
+	CURLcode res;
+	bool retry = false;
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+
+again:
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cmd);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) {
+		if(retry || !refolder(h, &f0, res))
+			goto abort;
+		retry = true;
+		goto again;
+	}
+return true;
+
+abort:
+	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	return false;
+}
+
 // download the email from the imap server
 static bool partread;
 static CURLcode downloadBody(CURL *h, struct FOLDER *f, int uid)
@@ -4406,6 +4437,7 @@ bool imapMovecopy(int l1, int l2, char cmd, char *dest)
 	struct MACCOUNT *a = accounts + act - 1;
 	int l0;
 	char cust_cmd[80];
+	bool rc;
 
 	skipWhite2(&dest);
 	if(!*dest) { // nothing there
@@ -4421,7 +4453,6 @@ baddest:
 		goto baddest;
 	}
 
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	imapLines = initString(&iml_l);
 	sprintf(cust_cmd, "UID %s ",
 	     ((a->move_capable && cmd == 'm') ? "MOVE" : "COPY"));
@@ -4438,21 +4469,9 @@ baddest:
 	stringAndString(&imapLines, &iml_l, path);
 	stringAndChar(&imapLines, &iml_l, '"');
 
-	bool retry = false;
-again:
-	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-	res = getMailData(h);
-	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) {
-		struct FOLDER f0;
-		memset(&f0, 0, sizeof(f0));
-		f0.path = (char*)pw->r_map[pw->dot].text;
-		if(retry || !refolder(h, &f0, res))
-			goto abort;
-		retry = true;
-		goto again;
-	}
+	rc = tryTwice(h, (char*)pw->r_map[pw->dot].text, imapLines);
 	nzFree(imapLines), imapLines = 0;
+	if(!rc) return false;
 
 	if(cmd == 'm' && !a->move_capable) {
 // move is copy + delete, this is the delete part.
@@ -4471,19 +4490,16 @@ again:
 		nzFree(imapLines), imapLines = 0;
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
-		if (res != CURLE_OK) goto abort;
+		if (res != CURLE_OK) {
+			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			return false;
+		}
 	expunge(h);
 	}
 
 	if(cmd == 'm')
 		delText(l0, l2);
-
 	return true;
-
-abort:
-	nzFree(imapLines), imapLines = 0;
-	ebcurl_setError(res, cf->firstURL, 0, emptyString);
-	return false;
 }
 
 bool imapDelete(int l1, int l2, char cmd)
@@ -4494,6 +4510,7 @@ bool imapDelete(int l1, int l2, char cmd)
 	struct MACCOUNT *a = accounts + act - 1;
 	const Window *pw = cw->prev;
 	int l0;
+	bool rc;
 
 // does delete really mean move?
 	if(a->dxtrash && !a->dxfolder[pw->dot]) {
@@ -4507,7 +4524,6 @@ bool imapDelete(int l1, int l2, char cmd)
 		goto D_check;
 	}
 
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	imapLines = initString(&iml_l);
 	stringAndString(&imapLines, &iml_l, "uid STORE ");
 // loop over lines in range, is there a limit to the length of the resulting
@@ -4520,32 +4536,15 @@ bool imapDelete(int l1, int l2, char cmd)
 	}
 	stringAndString(&imapLines, &iml_l, "+Flags \\Deleted");
 
-	bool retry = false;
-again:
-	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-	res = getMailData(h);
-	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) {
-		struct FOLDER f0;
-		memset(&f0, 0, sizeof(f0));
-		f0.path = (char*)pw->r_map[pw->dot].text;
-		if(retry || !refolder(h, &f0, res))
-			goto abort;
-		retry = true;
-		goto again;
-	}
+	rc = tryTwice(h, (char*)pw->r_map[pw->dot].text, imapLines);
 	nzFree(imapLines), imapLines = 0;
+	if(!rc) return false;
 	expunge(h);
 	delText(l0, l2);
 
 D_check:
 	if(cmd == 'D') printDot();
 	return true;
-
-abort:
-	nzFree(imapLines), imapLines = 0;
-	ebcurl_setError(res, cf->firstURL, 0, emptyString);
-	return false;
 }
 
 bool imapMarkRead(int l1, int l2, char sign)
@@ -4556,9 +4555,9 @@ bool imapMarkRead(int l1, int l2, char sign)
 	struct MACCOUNT *a = accounts + act - 1;
 	const Window *pw = cw->prev;
 	int l0;
+	bool rc;
 
 	if(sign == 0) sign = '+';
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	imapLines = initString(&iml_l);
 	stringAndString(&imapLines, &iml_l, "uid STORE ");
 // loop over lines in range, is there a limit to the length of the resulting
@@ -4572,30 +4571,13 @@ bool imapMarkRead(int l1, int l2, char sign)
 	stringAndChar(&imapLines, &iml_l, sign);
 	stringAndString(&imapLines, &iml_l, "Flags \\Seen");
 
-	bool retry = false;
-again:
-	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, imapLines);
-	res = getMailData(h);
-	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) {
-		struct FOLDER f0;
-		memset(&f0, 0, sizeof(f0));
-		f0.path = (char*)pw->r_map[pw->dot].text;
-		if(retry || !refolder(h, &f0, res))
-			goto abort;
-		retry = true;
-		goto again;
-	}
+	rc = tryTwice(h, (char*)pw->r_map[pw->dot].text, imapLines);
 	nzFree(imapLines), imapLines = 0;
+	if(!rc) return false;
 
 	for(l1 = l0; l1 <= l2; ++l1)
 		if(sign == '+') unstar(l1); else restar(l1);
 	return true;
-
-abort:
-	nzFree(imapLines), imapLines = 0;
-	ebcurl_setError(res, cf->firstURL, 0, emptyString);
-	return false;
 }
 
 bool imapMovecopyWhileReading(char cmd, char *dest)
@@ -4610,6 +4592,7 @@ bool imapMovecopyWhileReading(char cmd, char *dest)
 	struct MACCOUNT *a = accounts + act - 1;
 	const char *path;
 	char *t;
+	bool rc;
 	char cust_cmd[80];
 
 	skipWhite2(&dest);
@@ -4626,30 +4609,20 @@ baddest:
 		goto baddest;
 	}
 
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	asprintf(&t, "UID %s %d \"%s\"", 	     ((a->move_capable && cmd == 'm') ? "MOVE" : "COPY"), uid, path);
-	bool retry = false;
-again:
-	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
-	res = getMailData(h);
-	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) {
-		struct FOLDER f0;
-		memset(&f0, 0, sizeof(f0));
-		f0.path = (char*)pw2->r_map[pw2->dot].text;
-		if(retry || !refolder(h, &f0, res))
-			goto abort;
-		retry = true;
-		goto again;
-	}
+	rc = tryTwice(h, (char*)pw2->r_map[pw2->dot].text, t);
 	nzFree(t), t = 0;
+	if(!rc) return false;
 
 	if(cmd == 'm' && !a->move_capable) {
 		sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
 		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
-		if (res != CURLE_OK) goto abort;
+		if (res != CURLE_OK) {
+			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			return false;
+		}
 		expunge(h);
 	}
 
@@ -4664,11 +4637,6 @@ again:
 	if(debugLevel >= 1)
 		printDot();
 	return true;
-
-abort:
-	nzFree(t);
-	ebcurl_setError(res, cf->firstURL, 0, emptyString);
-	return false;
 }
 
 bool imapDeleteWhileReading(void)
@@ -4681,6 +4649,7 @@ bool imapDeleteWhileReading(void)
 	CURL *h = pw->imap_h;
 	int act = pw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
+	bool rc;
 	char cust_cmd[80];
 
 // does delete really mean move?
@@ -4694,22 +4663,9 @@ bool imapDeleteWhileReading(void)
 		return imapMovecopyWhileReading('m', destn);
 	}
 
-	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
-	bool retry = false;
-again:
-	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, cust_cmd);
-	res = getMailData(h);
-	nzFree(mailstring), mailstring = 0;
-	if (res != CURLE_OK) {
-		struct FOLDER f0;
-		memset(&f0, 0, sizeof(f0));
-		f0.path = (char*)pw2->r_map[pw2->dot].text;
-		if(retry || !refolder(h, &f0, res))
-			goto abort;
-		retry = true;
-		goto again;
-	}
+	rc = tryTwice(h, (char*)pw2->r_map[pw2->dot].text, cust_cmd);
+	if(!rc) return false;
 	 expunge(h);
 
 	undoSpecialClear();
@@ -4722,10 +4678,6 @@ again:
 	if(debugLevel >= 1)
 		printDot();
 	return true;
-
-abort:
-	ebcurl_setError(res, cf->firstURL, 0, emptyString);
-	return false;
 }
 
 bool saveEmailWhileReading(char key, const char *name)
@@ -4779,7 +4731,6 @@ badsave:
 	}
 
 	if(delflag) return imapDeleteWhileReading();
-
 	return true;
 }
 
