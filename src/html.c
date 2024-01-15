@@ -4047,45 +4047,48 @@ static void swapArrow(void)
 	}
 }
 
+// look for table winthin table, recursive
+static bool tableUnder(const Tag *top)
+{
+	const Tag *t;
+	for(t = top->firstchild; t; t = t->sibling) {
+		if(t->action == TAGACT_TABLE) return true;
+		if(tableUnder(t)) return true;
+	}
+	return false;
+}
+
 // Is this table a matrix of data, or just for layout purposes?
 // 0 means we can't tell, 1 is data, 2 is presentation
 // t is a cell or a row.
 int tableType(const Tag *t)
 {
 	const char *role;
-	if(stringEqual(t->info->name, "th"))
-		return 1;
-	if(t->action == TAGACT_TD)
-		t = t->parent;
-// no containing row; don't know
-	if(!t || t->action != TAGACT_TR)
-		return 0;
-// row header = data
-	if(t->firstchild && stringEqual(t->firstchild->info->name, "th"))
-		return 1;
-	while((t = t->parent)) {
-		if(t->action == TAGACT_TABLE)
-			break;
-	}
-	if(!t) // no table
-		return 0;
-	role = attribVal(t, "role");
-	if(role && stringEqual(role, "presentation"))
-		return 2;
-// descend and look for caption or thead
-	for(t = t->firstchild; t; t = t->sibling) {
-		if(t->action == TAGACT_THEAD ||
-		stringEqual(t->info->name, "caption"))
+const Tag *v; // table tag above
+	const Tag *b; // tbody
+// find the containing table
+	for(v = t; v; v = v->parent)
+		if(v->action == TAGACT_TABLE) break;
+	if(!v) return 0; // this should never happen
+	role = attribVal(v, "role");
+	if(role && stringEqual(role, "presentation")) return 2;
+// if this table contains another one it has to be presentation
+	if(tableUnder(v)) return 2;
+// if there is a caption or thead section, probably data
+	for(b = v->firstchild; b; b = b->sibling) {
+		if(b->action == TAGACT_THEAD ||
+		stringEqual(b->info->name, "caption"))
 			return 1;
-		if(t->action == TAGACT_TBODY) break;
+		if(b->action == TAGACT_TBODY) break;
 	}
-	if(!t) return 0;
-// a table of data can be entirely in the body,
-// check and see if first row starts with <th>.
-	if((t = t->firstchild) && t->action == TAGACT_TR
+	if(!b) b = v;
+// check and see if first row has at least two headings
+	if((t = b->firstchild) && t->action == TAGACT_TR
 	&& (t = t->firstchild) && t->action == TAGACT_TD
-	&& t->info->name[1] == 'h')
+	&& t->info->name[1] == 'h' && (t = t->sibling)
+	&& t->action == TAGACT_TD && t->info->name[1] == 'h')
 		return 1;
+// I give up
 	return 0;
 }
 
