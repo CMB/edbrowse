@@ -556,7 +556,6 @@ static void folderlistByName(const char *line, uchar *list, uchar *first)
 		if(j >= (int)sizeof(single)) --j;
 		memcpy(single, s, j);
 		single[j] = 0;
-  puts(single);
 		if((f = folderByName(single))) {
 			j = f - topfolders + 1;
 			if(j < 256) {
