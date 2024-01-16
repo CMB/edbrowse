@@ -6116,17 +6116,17 @@ et_go:
 		return true;
 	}
 
-	if (stringEqual(line, "imgatt")) {
-		imgatt ^= 1;
+	if (stringEqual(line, "attimg")) {
+		attimg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
-			i_puts(imgatt + MSG_ImgAttOff);
+			i_puts(attimg + MSG_AttImgOff);
 		return true;
 	}
 
-	if (stringEqual(line, "imgatt+") || stringEqual(line, "imgatt-")) {
-		imgatt = (line[6] == '+');
+	if (stringEqual(line, "attimg+") || stringEqual(line, "attimg-")) {
+		attimg = (line[6] == '+');
 		if (helpMessagesOn)
-			i_puts(imgatt + MSG_ImgAttOff);
+			i_puts(attimg + MSG_AttImgOff);
 		return true;
 	}
 

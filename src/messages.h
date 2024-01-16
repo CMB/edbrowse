@@ -841,6 +841,6 @@ MSG_ImaskOn,
 	MSG_ImapConfig,
 	MSG_NMC,
 	MSG_ImapCompat0,
-	MSG_ImgAttOff,
-	MSG_ImgAttOn,
+	MSG_AttImgOff,
+	MSG_AttImgOn,
 };

@@ -741,8 +741,8 @@ cannot change the name of an imap server
 cannot reconfig while imap sessions are running
 server is not move capable
 session is not compatible with imap 0
-ignore image attachments
-show image attachments
+ignore attached images
+show attached images
 0
 0
 0
