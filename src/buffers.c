@@ -1233,30 +1233,42 @@ void addToMap(int nlines, int destl)
 		       (svdol - destl + 1) * LMSIZE);
 	else
 		memset(newmap + destl + nlines + 1, 0, LMSIZE);
-
 	nzFree(cw->map);
 	cw->map = newmap;
 	free(newpiece);
 	newpiece = 0;
 
-	if(cw->ircoMode1) {
+	if(cw->ircoMode1 || cw->imapMode1) {
 // capture the time stamp of the added lines in irc mode.
 // This isn't very space efficient, but an irc buffer isn't going to get very large.
 		int i;
 		time_t t;
 		const char *timestring;
-		if(!cw->r_map) {
-			cw->r_map = allocZeroMem(LMSIZE * (cw->dol + 2));
-			for(i = 1; i <= svdol; ++i)
-				cw->r_map[i].text = (uchar*)emptyString;
-		} else {
-			cw->r_map = reallocMem(cw->r_map, LMSIZE * (cw->dol + 2));
-		}
 		time(&t);
 		timestring = conciseTime(t);
-		for(i=svdol + 1; i <= cw->dol; ++i)
-			cw->r_map[i].text = cw->ircoMode ? (uchar*)cloneString(timestring) : (uchar*)emptyString;
-		cw->r_map[i].text = 0;
+// this is just like what we did above with map
+		newmap = allocZeroMem((cw->dol + 2) * LMSIZE);
+		if (destl) {
+// part that was already there
+			if(cw->r_map) {
+				memcpy(newmap, cw->r_map, (destl + 1) * LMSIZE);
+			} else {
+				for(i = 1; i <= destl; ++i)
+					newmap[i].text = (uchar*)emptyString;
+			}
+		}
+// the added lines
+		for(i = 1; i <= nlines; ++i)
+			newmap[destl + i].text = cw->ircoMode ? (uchar*)cloneString(timestring) : (uchar*)emptyString;
+// put on the last piece
+		if (destl < svdol) {
+// Stuff is not going in at the end, means this is not the first irc,
+// or the first imap, means r_map should be there!
+			memcpy(newmap + destl + nlines + 1, cw->r_map + destl + 1,
+			       (svdol - destl + 1) * LMSIZE);
+		}
+		nzFree(cw->r_map);
+		cw->r_map = newmap;
 	}
 
 	if(!gflag) return;

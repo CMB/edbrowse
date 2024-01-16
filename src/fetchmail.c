@@ -565,7 +565,8 @@ static void folderlistByName(const char *line, uchar *list, uchar *first)
 				printf("folder index for %s >= 256\n", single);
 			}
 		} else {
-			i_printf(MSG_NoFolderMatch, single);
+			if(single[0])
+				i_printf(MSG_NoFolderMatch, single);
 		}
 		if(*t == ',') ++t;
 		s = t;
