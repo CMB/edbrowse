@@ -45,7 +45,7 @@ static struct DBTABLE dbtables[MAXDBT];
 static int numTables;
 volatile bool intFlag;
 time_t intStart;
-bool ismc, passMail;
+bool ismc, passMail, imgatt;
 // next two variables work around curl bug 7284
 bool inInput, inInitFunction, listNA;
 char *dbarea, *dblogin, *dbpw;	// to log into the database

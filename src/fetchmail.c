@@ -68,7 +68,7 @@ static void freeMailInfo(struct MHINFO *w)
 static void writeAttachment(struct MHINFO *w)
 {
 	const char *atname;
-	if ((ismc | ignoreImages) && w->atimage)
+	if ((ismc | ignoreImages | !imgatt) && w->atimage)
 		return;		/* image ignored */
 	if (w->pgp)
 		return;		/* Ignore PGP signatures. */
@@ -160,6 +160,10 @@ static void linkAttachment(struct MHINFO *w)
 	}
 	        if (w->start == w->end) {
 		debugPrint(3, "skipping empty attachment");
+		return;
+	}
+	if(!imgatt && w->atimage) {
+		debugPrint(3, "skipping image attachment");
 		return;
 	}
 // The irony - it probably came in base64, I turned it into binary,

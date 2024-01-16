@@ -5327,7 +5327,6 @@ When a plain text version is available, it can be simpler than the html version.
 The last two commands, w and u, require a filename, which you enter.
 The reserved filename, "x" or "X", is essentially /dev/null,
 whence the mail message is discarded.
-You can save the mail message to x (discard) and still save the attachments.
 If the file is anything other than x,
 and edbrowse cannot write to the specified file, it asks you for a new filename.
 
@@ -5508,7 +5507,16 @@ type x and it will go away.
 If the image has a recognizable suffix, such as gif, I discard it automatically.
 If you really want these images, you'll have to save the email unformatted and browse it later.
 When browsing an email inside the editor,
-edbrowse offers you all the attachments, be they images or not.
+edbrowse offers you all the attachments,
+as hyperlinks that you can go to, for an html email, or interactively, for a text email.
+The vast majority of emails with attachments are in html, so you will usually see them as hyperlinks.
+Type g to put the attachment into a buffer, then do whatever you like with it.
+
+<p>
+If imgatt is set, image attachments are presented as hyperlinks, or interactively.
+If this mode is clear, (the default), image attachments are skipped.
+This is a bit like hidden files in directory mode.
+If images are offered interactively,
 You can discard a single attachment by entering x,
 or all the image attachments by entering capital X.
 Type e to put the attachment in another edbrowse session.

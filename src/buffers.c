@@ -6116,6 +6116,20 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "imgatt")) {
+		imgatt ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(imgatt + MSG_ImgAttOff);
+		return true;
+	}
+
+	if (stringEqual(line, "imgatt+") || stringEqual(line, "imgatt-")) {
+		imgatt = (line[6] == '+');
+		if (helpMessagesOn)
+			i_puts(imgatt + MSG_ImgAttOff);
+		return true;
+	}
+
 	if (stringEqual(line, "showall")) {
 		showall ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
