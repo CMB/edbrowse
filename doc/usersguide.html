@@ -824,6 +824,31 @@ sm : send mail [account number]
 <br>rea : reply to all
 <br>flow : send mail with format=flowed (toggle)
 <br>attimg : show attached images (toggle)
+<br>imap n : establish an imap connection
+<br>imap 0 : tear down the imap connection
+<br>rf : refresh the folders and their message counts
+<br>l 40 : fetch 40 envelopes at a time
+<br>e ufs : envelope format is unseen, from, subject
+<br>g : go into a folder, similar to directory mode
+<br>rf : refresh the envelopes in this buffer
+<br>d : delete this email
+<br>m abc : move email to folder abc
+<br>t abc : copy email to folder abc
+<br>r : mark email as read
+<br>r- : mark email as not read
+<br> u filename : write this email unformatted to a file
+<br> U filename : same as above but delete the email
+<br> w filename : write this email formatted to a file, and an unformatted copy in ~/.trash/rawmail
+<br> W filename : same as above but delete the email
+<br>g : go into this email for reading
+<br>t : go to the plain text component of this email
+<br>rf : refresh the email you are reading
+<br>d : delete the email you are reading
+<br>m abc : move the email you are reading
+<br>u filename : save the email you are reading, unformatted
+<br>w filename : save the email you are reading, formatted
+<br>^ : back up to envelopes
+<br>^ : back up to folders
 <p>
 IRC Client
 <p>
@@ -831,6 +856,7 @@ irc m n domain nickname : set up irc chat using sessions m and n with the specif
 <br>irc m n domain nickname group : set up irc chat and join the specified group
 <br>irc m n domain:port nickname:password group : specify a port and a password
 <br>irc m n domain+:port* nickname:password group : show this channel in the output buffer, and use secure sockets
+<br>showchan : show channels as messages are displayed (toggle)
 <p>
 Plugins
 <p>
