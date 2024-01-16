@@ -1761,15 +1761,7 @@ inside:
 
 		case 12:	// imask
 			act->maskon = act->maskactive = true;
-			memset(act->maskfolder, 0, sizeof(act->maskfolder));
-			while (*v) {
-				n = strtol(v, &v, 10);
-				if(n > 0 && n < (int)sizeof(act->maskfolder)) act->maskfolder[n] = 1;
-				q = strchr(v, ',');
-				if (!q) break;
-				*q = 0;
-				v = q + 1;
-			}
+			act->masktext = v;
 			continue;
 
 		case 13:	// isub
@@ -1777,20 +1769,8 @@ inside:
 			continue;
 
 		case 14:	// dx
-			memset(act->dxfolder, 0, sizeof(act->maskfolder));
-			j = 0; // first indicator
-			while (*v) {
-				n = strtol(v, &v, 10);
-				if(n > 0 && n < (int)sizeof(act->dxfolder)) {
-					act->dxfolder[n] = 1;
-					if(!j) act->dxtrash = n;
-					j = 1;
-				}
-				q = strchr(v, ',');
-				if (!q) break;
-				*q = 0;
-				v = q + 1;
-			}
+			act->dxon = true;
+			act->dxtext = v;
 			continue;
 
 		case 15:	// type

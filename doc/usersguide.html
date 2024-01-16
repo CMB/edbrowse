@@ -4574,6 +4574,13 @@ When searching for a folder by number or by substring, all folders are searched,
 Thus you can still access folders that are not presented or preselected.
 
 <p>
+imask = ju,inbox
+<p>
+You can use folder names or unique substrings in the imask directive.
+Note that there are sometimes multiple folders with the substring inbox, so if you want inbox, specify inbox, not just box, so you get an exact match.
+Edbrowse searches for an exact match first, then substring.
+
+<p>
 isub = substring
 <p>
 Do not display this substring of the imap folder.
@@ -4594,6 +4601,8 @@ You can use bulk delete to empty the trash efficiently in imap.
 Without a dx line, d is always a hard delete.
 This generally works on other (not gmail) servers.
 Still, if you want to be safe, you might choose to move emails to trash.
+<p>
+You can use folder names or unique substrings in the dx directive.
 
 <p>
 adbook = /home/mylogin/.ebsys/address-book

@@ -342,6 +342,7 @@ static const char *withoutSubstringPath(const char *p)
 static int n_folders;
 static char *tf_cbase;		/* base of strings for folder names and paths */
 
+static void folderlistByName(const char *line, uchar *list, uchar *first);
 static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats);
 
 // This routine mucks with the passed in string, which was allocated
@@ -434,8 +435,6 @@ static void setFolders(CURL * handle)
 		if (s == t)
 			continue;
 		s = t + 1;
-		if(active_a->maskactive && !active_a->maskfolder[f - topfolders + 1])
-			f->skip = true;
 // successfully built this folder, move on to the next one
 		++f;
 	}
@@ -447,8 +446,18 @@ static void setFolders(CURL * handle)
 	tf_cbase = mailstring;
 	mailstring = 0;
 
+	if(active_a->maskon) {
+		folderlistByName(active_a->masktext, active_a->maskfolder, 0);
+	}
+	if(active_a->dxon) {
+		active_a->dxtrash = 0;
+		folderlistByName(active_a->dxtext, active_a->dxfolder, &active_a->dxtrash);
+	}
+
 	f = topfolders;
 	for (i = 0; i < n_folders; ++i, ++f) {
+		if(active_a->maskactive && !active_a->maskfolder[i + 1])
+			f->skip = true;
 		if(!f->skip) {
 			examineFolder(handle, f, true);
 			continue;
@@ -530,6 +539,38 @@ static const char *folderByNameW(const Window *w, char *line)
 		i_printf(MSG_NoFolderMatch, line);
 	}
 	return 0;
+}
+
+// convert a comma separated list of folder names
+static void folderlistByName(const char *line, uchar *list, uchar *first)
+{
+	const char *s = line, *t;
+	int j;
+	const struct FOLDER *f;
+	char single[80];
+	memset(list, 0, 256);
+	while(*s) {
+		t = strchr(s, ',');
+		if(!t) t = s + strlen(s);
+		j = t - s;
+		if(j >= (int)sizeof(single)) --j;
+		memcpy(single, s, j);
+		single[j] = 0;
+  puts(single);
+		if((f = folderByName(single))) {
+			j = f - topfolders + 1;
+			if(j < 256) {
+				list[j] = true;
+				if(first && !*first) *first = j;
+			} else {
+				printf("folder index for %s >= 256\n", single);
+			}
+		} else {
+			i_printf(MSG_NoFolderMatch, single);
+		}
+		if(*t == ',') ++t;
+		s = t;
+	}
 }
 
 /* data block for the curl ccallback write function in http.c */

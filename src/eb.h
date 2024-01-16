@@ -243,7 +243,9 @@ struct MACCOUNT { // email account, pop3 or imap
 	const char *cclist[MAXCC + 1]; // extra cc directives
 	uchar cctype[MAXCC]; // cc or bcc or attach
 	const char *isub; // substring of folders
+	const char *masktext;
 	uchar maskfolder[256];
+	const char *dxtext;
 	uchar dxfolder[256];
 	uchar dxtrash;
 	char lastletter;
