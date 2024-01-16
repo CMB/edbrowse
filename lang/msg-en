@@ -743,9 +743,9 @@ server is not move capable
 session is not compatible with imap 0
 ignore attached images
 show attached images
-0
-0
-0
+do not show channels
+show channels
+not in irc send mode
 0
 0
 0

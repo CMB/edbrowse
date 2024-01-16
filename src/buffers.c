@@ -6130,6 +6130,22 @@ et_go:
 		return true;
 	}
 
+	if (stringEqual(line, "showchan")) {
+		if(!cw->irciMode) { setError(MSG_NotIrcSend); return false; }
+		cw->ircChannels ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(cw->ircChannels + MSG_ShowChanOff);
+		return true;
+	}
+
+	if (stringEqual(line, "showchan+") || stringEqual(line, "showchan-")) {
+		if(!cw->irciMode) { setError(MSG_NotIrcSend); return false; }
+		cw->ircChannels = (line[8] == '+');
+		if (helpMessagesOn)
+			i_puts(cw->ircChannels + MSG_ShowChanOff);
+		return true;
+	}
+
 	if (stringEqual(line, "showall")) {
 		showall ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)

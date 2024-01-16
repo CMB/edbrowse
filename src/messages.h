@@ -843,4 +843,7 @@ MSG_ImaskOn,
 	MSG_ImapCompat0,
 	MSG_AttImgOff,
 	MSG_AttImgOn,
+	MSG_ShowChanOff,
+	MSG_ShowChanOn,
+	MSG_NotIrcSend,
 };
