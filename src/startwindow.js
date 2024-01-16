@@ -509,6 +509,10 @@ Object.defineProperty(HTMLElement.prototype, "disabled", {
 get:function(){ var t = this.getAttribute("disabled");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("disabled", v);}});
+Object.defineProperty(HTMLElement.prototype, "hidden", {
+get:function(){ var t = this.getAttribute("hidden");
+return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
+set:function(v) { this.setAttribute("hidden", v);}});
 HTMLElement.prototype.ownerDocument = document;
 HTMLElement.prototype.nodeType = 1;
 HTMLElement.prototype.attachShadow = function(o){
