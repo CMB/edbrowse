@@ -4470,6 +4470,7 @@ bool mailDescend(const char *title, char cmd)
 	ismc = true;
 	browseCurrentBuffer(NULL);
 	ismc = false; // put it back
+	preferPlain = false;
 	if(!showcount) fileSize = -1;
 	return true;
 }

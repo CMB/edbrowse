@@ -1237,7 +1237,7 @@ void addToMap(int nlines, int destl)
 	free(newpiece);
 	newpiece = 0;
 
-	if(cw->ircoMode1 || cw->imapMode1) {
+	if(cw->ircoMode1) {
 // capture the time stamp of the added lines in irc mode.
 // This isn't very space efficient, but an irc buffer isn't going to get very large.
 		int i;
