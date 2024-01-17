@@ -359,10 +359,8 @@ static void setFolders(CURL * handle)
 	imapPaths = initString(&imp_l);
 
 // Reset things, in case called on refresh
-	nzFree(topfolders);
-	topfolders = 0;
-	nzFree(tf_cbase);
-	tf_cbase = 0;
+	nzFree(topfolders), topfolders = 0;
+	nzFree(tf_cbase), tf_cbase = 0;
 	n_folders = 0;
 
 	s = mailstring;
@@ -576,20 +574,20 @@ static void folderlistByName(const char *line, uchar *list, uchar *first)
 /* data block for the curl ccallback write function in http.c */
 static struct i_get callback_data;
 
-static CURLcode getMailData(CURL * handle)
+static CURLcode getMailData(CURL * h)
 {
 	CURLcode res;
 //  puts("get data");
 	callback_data.buffer = initString(&callback_data.length);
 	callback_data.move_capable = false;
-	res = curl_easy_perform(handle);
+	res = curl_easy_perform(h);
 	mailstring = callback_data.buffer;
 	mailstring_l = callback_data.length;
 	callback_data.buffer = 0;
 	if (!active_a->mc_set) {
 		active_a->move_capable = callback_data.move_capable;
 		if (debugLevel < 4)
-			curl_easy_setopt(handle, CURLOPT_VERBOSE, 0);
+			curl_easy_setopt(h, CURLOPT_VERBOSE, 0);
 		debugPrint(3, "imap is %smove capable",
 			   (active_a->move_capable ? "" : "not "));
 		active_a->mc_set = true;
@@ -651,10 +649,8 @@ static void isoDecode(char *vl, char **vrp);
 
 static void cleanFolder(struct FOLDER *f)
 {
-	nzFree(f->cbase);
-	f->cbase = NULL;
-	nzFree(f->mlist);
-	f->mlist = NULL;
+	nzFree(f->cbase), f->cbase = NULL;
+	nzFree(f->mlist), f->mlist = NULL;
 	f->nmsgs = f->nfetch = f->unread = 0;
 }
 
@@ -867,7 +863,7 @@ static bool bulkMoveDelete(CURL * handle, struct FOLDER *f,
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 			free(t);
 			res = getMailData(handle);
-			nzFree(mailstring);
+			nzFree(mailstring), mailstring = 0;
 			if (res != CURLE_OK)
 				goto abort;
 			if (active_a->move_capable) mif->gone = true;
@@ -901,14 +897,14 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 // We should check here that res1 is the right kind of error,
 // If some other error code then return false;
 // Let's at least print it out.
-	if(res1 != CURLE_OK && debugLevel >= 1) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
+	if(res1 != CURLE_OK && debugLevel >= 3) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
 	asprintf(&t, "SELECT \"%s\"", f->path);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res2 = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
 	if(res2 == CURLE_OK) {
-		debugPrint(1, "reconnect to %s", withoutSubstring(f));
+		debugPrint(2, "reconnect to %s", withoutSubstring(f));
 		return true;
 	}
 	debugPrint(1, "reconnect to %s failed", withoutSubstring(f));
@@ -2056,7 +2052,7 @@ refresh:
 			curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, w);
 			res = getMailData(handle);
 			free(w);
-			nzFree(mailstring);
+			nzFree(mailstring), mailstring = 0;
 			if (res != CURLE_OK) {
 				i_printf(MSG_NoCreate2, t);
 				nl();
@@ -4808,4 +4804,55 @@ bool rfWhileReading()
 		cxQuit(context, 1);
 		sessionList[context].lw = cw = pw;
 	return mailDescend((char*)cw->r_map[cw->dot].text, 'g');
+}
+
+bool addFolders(int ln)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int act = cw->imap_n;
+	struct MACCOUNT *a = accounts + act - 1;
+	active_a = a, isimap = true;
+	int l;
+	uchar *line1, *t;
+	char *line2, *v;
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	if (linePending) line1 = linePending;
+	else line1 = inputLine(true);
+
+	while (line1[0] != '.' || line1[1] != '\n') {
+// clean up any bad characters
+		for(l = 0, t = line1; *t != '\n'; ++t, ++l) {
+			if(*t == '"') *t = '\'';
+			if(*t < ' ') *t = ' ';
+		}
+		line2 = allocMem(++l);
+		memcpy(line2, line1, l);
+		line2[l - 1] = 0;
+		asprintf(&v, "CREATE \"%s\"", line2);
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
+		free(v);
+		res = getMailData(h);
+		nzFree(mailstring), mailstring = 0;
+		if (res != CURLE_OK) {
+			setError(MSG_NoCreate2, line2);
+			nzFree(line2);
+			nzFree(linePending), linePending = 0;
+			return false;
+		}
+		addTextToBuffer(line1, l, ln, false);
+		++ln;
+// Now let's set the path, but what is the path?
+// If you create snork under gmail, does it become [Gmail]/snork?
+// I don't know, and even if I did, that doesn't speak to other imap servers.
+// So you might create this folder and be unable to access it because the path is wrong.
+// Maybe we should refresh, to know for sure.
+// If you do that then you don't need this next code.
+		cw->r_map[ln].text = (uchar*)line2;
+		line1 = inputLine(true);
+	}
+
+	nzFree(linePending), linePending = 0;
+	return true;
 }

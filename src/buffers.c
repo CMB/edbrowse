@@ -398,8 +398,7 @@ top:
 	intFlag = false;
 	inInput = true;
 	intStart = 0;
-	nzFree(last_rl);
-	last_rl = 0;
+	nzFree(last_rl), last_rl = 0;
 	s = 0;
 
 	if (timerWait(&delay_sec, &delay_ms)) {
