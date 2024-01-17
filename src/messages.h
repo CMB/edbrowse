@@ -846,4 +846,5 @@ MSG_ImaskOn,
 	MSG_ShowChanOff,
 	MSG_ShowChanOn,
 	MSG_NotIrcSend,
+	MSG_DotMoved,
 };

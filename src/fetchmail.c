@@ -4217,17 +4217,17 @@ bool folderDescend(const char *path, bool rf)
 	Window *w;
 
 	active_a = a, isimap = true;
-	struct FOLDER *f = allocZeroMem(sizeof(struct FOLDER));
-	f->path = path;
+	struct FOLDER f0;
+	memset(&f0, 0, sizeof(f0));
+	f0.path = rf ? cw->baseDirName : path;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-	if(!examineFolder(h, f, false)) {
+	if(!examineFolder(h, &f0, false)) {
 //Oops, problem.
 		if(rf && cw->dol) delText(1, cw->dol);
-		cleanFolder(f);
-		free(f);
+		cleanFolder(&f0);
 		return false;
 	}
-	makeLinesAndUids(f);
+	makeLinesAndUids(&f0);
 	if(!rf) {
 		freeWindows(context, false); // lop off stuff below
 // make new window
@@ -4236,16 +4236,16 @@ bool folderDescend(const char *path, bool rf)
 		w->imap_n = act;
 		w->imap_l = cw->imap_l;
 		strcpy(w->imap_env, cw->imap_env);
+		w->baseDirName = cloneString(path);
+		w->r_dot = cw->dot;
 		w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
 		cw->imapMode2 = true;
-		asprintf(&cf->fileName, "envelopes %s", f->path);
+		asprintf(&cf->fileName, "envelopes %s", path);
 	} else {
 		if(cw->dol) delText(1, cw->dol);
 	}
-// if the folder is empty, you get an empty buffer.
-// I don't know how I feel about that.
-// It's not an error I suppose - but why did you go to a folder with 0 messages?
-	if(f->nfetch) {
+// if the folder is empty you get an empty buffer.
+	if(f0.nfetch) {
 		addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
 		addTextToBackend(imapPaths);
 		nzFree(imapLines), imapLines = 0;
@@ -4253,8 +4253,7 @@ bool folderDescend(const char *path, bool rf)
 	}
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
-	cleanFolder(f);
-	free(f);
+	cleanFolder(&f0);
 	return true;
 }
 
@@ -4288,6 +4287,7 @@ bool folderSearch(const char *path, char *search, bool rf)
 // We have to select the folder first, then search
 // Technically we don't have to on refresh, but I will anyways,
 // in case it's been a long time and we logged out and need to reselect.
+	if(rf) path = cw->baseDirName;
 	asprintf(&u, "SELECT \"%s\"", path);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
 	free(u);
@@ -4319,6 +4319,10 @@ bool folderSearch(const char *path, char *search, bool rf)
 		w->imap_n = act;
 		w->imap_l = cw->imap_l;
 		strcpy(w->imap_env, cw->imap_env);
+		w->baseDirName = cloneString(path);
+		w->r_dot = cw->dot;
+// I'm overloading this field abit, it's obviously not an email
+		w->mail_raw = cloneString(search);
 		w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
 		cw->imapMode2 = true;
 		asprintf(&cf->fileName, "envelopes %s", path);
@@ -4328,11 +4332,6 @@ bool folderSearch(const char *path, char *search, bool rf)
 	addTextToBackend(imapPaths);
 	nzFree(imapLines), imapLines = 0;
 	nzFree(imapPaths), imapPaths = 0;
-
-	if(!rf) {
-// I'm overloading this field abit, it's obviously not an email
-		cw->mail_raw = cloneString(search);
-	}
 
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
@@ -4419,14 +4418,12 @@ bool mailDescend(const char *title, char cmd)
 	char *vr;
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
-	const Window *pw = cw->prev;
 	bool showcount = (cmd == 'g' || cmd == 't');
 	struct FOLDER f0;
 
 	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-// have to get the actual path from above
-	path = (char*)pw->r_map[pw->dot].text;
+	path = cw->baseDirName;
 	f0.path = path; // that's all we need in f0
 
 	preferPlain = (cmd == 't');
@@ -4450,6 +4447,7 @@ bool mailDescend(const char *title, char cmd)
 	freeWindows(context, false); // lop off stuff below
 // make new window
 	w = createWindow();
+	w->imap_n = uid;
 	w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
 	cw->imapMode3 = true;
 	asprintf(&cf->fileName, "mail %s", subj);
@@ -4496,7 +4494,7 @@ baddest:
 	path = folderByNameW(pw, dest);
 	if(!path) // already printed some helpful messages
 		goto baddest;
-	if(path == (char*)pw->r_map[pw->dot].text) {
+	if(stringEqual(path, cw->baseDirName)) {
 		i_puts(MSG_SameFolder);
 		goto baddest;
 	}
@@ -4517,7 +4515,7 @@ baddest:
 	stringAndString(&imapLines, &iml_l, path);
 	stringAndChar(&imapLines, &iml_l, '"');
 
-	rc = tryTwice(h, (char*)pw->r_map[pw->dot].text, imapLines);
+	rc = tryTwice(h, cw->baseDirName, imapLines);
 	nzFree(imapLines), imapLines = 0;
 	if(!rc) return false;
 
@@ -4556,12 +4554,11 @@ bool imapDelete(int l1, int l2, char cmd)
 	CURL *h = cw->imap_h;
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
-	const Window *pw = cw->prev;
 	int l0;
 	bool rc;
 
 // does delete really mean move?
-	if(a->dxtrash && !a->dxfolder[pw->dot]) {
+	if(a->dxtrash && !a->dxfolder[cw->r_dot]) {
 		char destn[8];
 		if(!a->move_capable) {
 			setError(MSG_NMC);
@@ -4584,7 +4581,7 @@ bool imapDelete(int l1, int l2, char cmd)
 	}
 	stringAndString(&imapLines, &iml_l, "+Flags \\Deleted");
 
-	rc = tryTwice(h, (char*)pw->r_map[pw->dot].text, imapLines);
+	rc = tryTwice(h, cw->baseDirName, imapLines);
 	nzFree(imapLines), imapLines = 0;
 	if(!rc) return false;
 	expunge(h);
@@ -4601,7 +4598,6 @@ bool imapMarkRead(int l1, int l2, char sign)
 	CURL *h = cw->imap_h;
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
-	const Window *pw = cw->prev;
 	int l0;
 	bool rc;
 
@@ -4619,7 +4615,7 @@ bool imapMarkRead(int l1, int l2, char sign)
 	stringAndChar(&imapLines, &iml_l, sign);
 	stringAndString(&imapLines, &iml_l, "Flags \\Seen");
 
-	rc = tryTwice(h, (char*)pw->r_map[pw->dot].text, imapLines);
+	rc = tryTwice(h, cw->baseDirName, imapLines);
 	nzFree(imapLines), imapLines = 0;
 	if(!rc) return false;
 
@@ -4633,8 +4629,7 @@ bool imapMovecopyWhileReading(char cmd, char *dest)
 	CURLcode res;
 	const Window *pw = cw->prev;
 	const Window *pw2 = pw->prev;
-	const char *title = (char*)pw->r_map[pw->dot].text;
-	int uid = atoi(title);
+	int uid = cw->imap_n;
 	CURL *h = pw->imap_h;
 	int act = pw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
@@ -4652,13 +4647,13 @@ baddest:
 	path = folderByNameW(pw2, dest);
 	if(!path) // already printed some helpful messages
 		goto baddest;
-	if(path == (char*)pw2->r_map[pw2->dot].text) {
+	if(stringEqual(path, pw->baseDirName)) {
 		i_puts(MSG_SameFolder);
 		goto baddest;
 	}
 
 	asprintf(&t, "UID %s %d \"%s\"", 	     ((a->move_capable && cmd == 'm') ? "MOVE" : "COPY"), uid, path);
-	rc = tryTwice(h, (char*)pw2->r_map[pw2->dot].text, t);
+	rc = tryTwice(h, pw->baseDirName, t);
 	nzFree(t), t = 0;
 	if(!rc) return false;
 
@@ -4681,9 +4676,15 @@ baddest:
 	if (!cxQuit(context, 1)) return false;
 	sessionList[context].lw = cw = (Window*)pw;
 	restoreSubstitutionStrings(cw);
-	delText(cw->dot, cw->dot);
-	if(debugLevel >= 1)
-		printDot();
+// don't delete anything if dot has moved
+	if(uid == atoi((char*)cw->r_map[cw->dot].text)) {
+		delText(cw->dot, cw->dot);
+		if(debugLevel >= 1)
+			printDot();
+	} else {
+		if(debugLevel >= 1)
+			i_puts(MSG_DotMoved);
+	}
 	return true;
 }
 
@@ -4691,9 +4692,7 @@ bool imapDeleteWhileReading(void)
 {
 	CURLcode res;
 	const Window *pw = cw->prev;
-	const Window *pw2 = pw->prev;
-	const char *title = (char*)pw->r_map[pw->dot].text;
-	int uid = atoi(title);
+	int uid = cw->imap_n;
 	CURL *h = pw->imap_h;
 	int act = pw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
@@ -4701,7 +4700,7 @@ bool imapDeleteWhileReading(void)
 	char cust_cmd[80];
 
 // does delete really mean move?
-	if(a->dxtrash && !a->dxfolder[pw2->dot]) {
+	if(a->dxtrash && !a->dxfolder[pw->r_dot]) {
 		char destn[8];
 		if(!a->move_capable) {
 			setError(MSG_NMC);
@@ -4712,7 +4711,7 @@ bool imapDeleteWhileReading(void)
 	}
 
 	sprintf(cust_cmd, "uid STORE %d +Flags \\Deleted", uid);
-	rc = tryTwice(h, (char*)pw2->r_map[pw2->dot].text, cust_cmd);
+	rc = tryTwice(h, pw->baseDirName, cust_cmd);
 	if(!rc) return false;
 	 expunge(h);
 
@@ -4722,9 +4721,15 @@ bool imapDeleteWhileReading(void)
 		return false;
 	sessionList[context].lw = cw = (Window*)pw;
 	restoreSubstitutionStrings(cw);
-	delText(cw->dot, cw->dot);
-	if(debugLevel >= 1)
-		printDot();
+// don't delete anything if dot has moved
+	if(uid == atoi((char*)cw->r_map[cw->dot].text)) {
+		delText(cw->dot, cw->dot);
+		if(debugLevel >= 1)
+			printDot();
+	} else {
+		if(debugLevel >= 1)
+			i_puts(MSG_DotMoved);
+	}
 	return true;
 }
 
@@ -4804,6 +4809,7 @@ bool rfWhileReading()
 // pop and go
 		cxQuit(context, 1);
 		sessionList[context].lw = cw = pw;
+// if you went up and moved dot, you will be refreshing into a new email.
 	return mailDescend((char*)cw->r_map[cw->dot].text, 'g');
 }
 

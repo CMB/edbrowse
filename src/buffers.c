@@ -5226,11 +5226,10 @@ pwd:
 // refresh the imap folders is special
 		if(cw->imapMode1) return imap1rf();
 		if(cw->imapMode2) {
-			const Window *pw = cw->prev; // previous
 			if(cw->mail_raw) // result of a search
-				return folderSearch((char*)pw->r_map[pw->dol].text, cw->mail_raw, true);
+				return folderSearch(0, cw->mail_raw, true);
 			else
-				return folderDescend((char*)pw->r_map[pw->dot].text, true);
+				return folderDescend(0, true);
 		}
 		if(cw->imapMode3)
 			return rfWhileReading();
