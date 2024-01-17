@@ -4166,13 +4166,13 @@ teardown:
 		cw->imapMode1 = false;
 		nzFree(cf->firstURL), cf->firstURL = 0;
 		nzFree(cf->fileName), cf->fileName = 0;
+// envelopes below don't mean anything
+		freeWindows(context, false);
 		return false;
 	}
 	setFolders(cw->imap_h);
-	nzFree(topfolders);
-	topfolders = 0;
-	nzFree(tf_cbase);
-	tf_cbase = 0;
+	nzFree(topfolders), topfolders = 0;
+	nzFree(tf_cbase), tf_cbase = 0;
 	if(!n_folders) {
 // there were folders before but none now? Should never happen!
 		setError(MSG_NoFolders);
@@ -4418,8 +4418,8 @@ bool mailDescend(const char *title, char cmd)
 	char *vr;
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
-	bool lookmode = (cmd == 'u');
-	if(lookmode) cmd = 'g';
+	bool emode = (cmd == 'u'); // just edit don't browse
+	if(emode) cmd = 'g';
 	bool showcount = (cmd == 'g' || cmd == 't');
 	struct FOLDER f0;
 
@@ -4466,7 +4466,7 @@ bool mailDescend(const char *title, char cmd)
 	mailstring = 0;
 	cw->changeMode = false;
 
-	if(!lookmode) {
+	if(!emode) {
 // I have to fake out the browse routine, so it doesn't try to write attachments.
 		ismc = true;
 		browseCurrentBuffer(NULL);

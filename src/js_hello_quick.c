@@ -8,20 +8,21 @@
 // stubs needed by other edbrowse functions that we are pulling in.
 int context; // edbrowse context, not js
 struct ebWindow *cw;
-struct ebSession sessionList[TOP];
+struct ebSession sessionList[TOP], *cs;
+int maxSession = TOP;
 volatile bool intFlag;
 bool inInput;
 bool cxCompare(int cx) { return false; }
 bool cxActive(int cx, bool error) { return false; }
 bool cxQuit(int cx, int action) { return true; }
 void cxSwitch(int cx, bool interactive) {}
-bool browseCurrentBuffer(void) { return false; }
+bool browseCurrentBuffer(const char *suffix) { return false; }
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname){ return 0; }
 void undoSpecialClear(void){}
 pst fetchLine(int n, int show){ return (uchar*)emptyString; }
 void delText(int start, int end) {}
 void addToMap(int nlines, int destl){}
-bool addTextToBuffer(const pst inbuf, int length, int destl, bool showtrail) { return true; }
+bool addTextToBuffer(const uchar *inbuf, int length, int destl, bool showtrail) { return true; }
 void printDot(void){}
 int tableType(const Tag *t) { return 0; }
 void eeCheck(void){}

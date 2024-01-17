@@ -7298,6 +7298,17 @@ after_ib:
 		browseSuffix = line + 1;
 		first = 0;
 		line += strlen(line);
+// let's check suffix here.
+		if(strlen(browseSuffix) > 5) {
+			setError(MSG_SuffixLong);
+			cmd = 'e';
+			return false;
+		}
+		if(!findMimeBySuffix(browseSuffix)) {
+			setError(MSG_SuffixBad, browseSuffix);
+			cmd = 'e';
+			return false;
+		}
 	}
 
 // eat spaces after the command, but not after J
@@ -7913,46 +7924,18 @@ dest_ok:
 		return mailDescend(p, icmd);
 	}
 
-	// go to a file in a directory listing
-	if (cmd == 'g' && cw->dirMode && (!first || stringEqual(line, "-"))) {
+// Go to a file if in directory mode, or text mode and the line
+// exactly matches the name of a local file.
+	if (cmd == 'g' && (!first || stringEqual(line, "-")) &&
+	!(cw->binMode | cw->browseMode | cw->binMode | cw->sqlMode)) {
 		char *dirline;
 		const struct MIMETYPE *gmt = 0;	/* the go mime type */
 		emode = (first == '-');
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "g");
+			cmd = 'e';
 			return false;
 		}
-		cw->dot = endRange;
-		p = (char *)fetchLine(endRange, -1);
-		j = pstLength((pst) p);
-		--j;
-		p[j] = 0;	/* temporary */
-		dirline = makeAbsPath(p);
-		p[j] = '\n';
-		cmd = 'e';
-		if (!dirline)
-			return false;
-		stripDotDot(dirline);
-		if (!emode)
-			gmt = findMimeByFile(dirline);
-		if (pluginsOn && gmt) {
-			if (gmt->outtype)
-				cmd = 'b';
-			else
-				return playBuffer("pb", dirline);
-		}
-/* I don't think we need to make a copy here. */
-		line = dirline;
-		first = *line;
-	}
-
-// A similar version if you're just in text mode,
-// and the line is the filename.
-	if (cmd == 'g' && (!first || stringEqual(line, "-")) &&
-	startRange == endRange && startRange &&
-	!(cw->dirMode | cw->binMode | cw->browseMode | cw->binMode | cw->sqlMode)) {
-		char *dirline;
-		const struct MIMETYPE *gmt = 0;	/* the go mime type */
 		p = (char *)fetchLine(endRange, -1);
 		j = pstLength((pst) p);
 		--j;
@@ -7962,11 +7945,14 @@ dest_ok:
 		p[j] = 0;	// temporary
 		dirline = makeAbsPath(p);
 		p[j] = '\n';
-		if(!dirline || access(dirline, 4))
-			goto past_g_file;
-		emode = (first == '-');
-		cw->dot = endRange;
-		cmd = 'e';
+		if(cw->dirMode) {
+			cw->dot = endRange, cmd = 'e';
+			if(!dirline) return false;
+		} else {
+			if(!dirline || access(dirline, 4))
+				goto past_g_file;
+		}
+		cw->dot = endRange, cmd = 'e';
 		stripDotDot(dirline);
 		if (!emode)
 			gmt = findMimeByFile(dirline);
@@ -8794,10 +8780,8 @@ bool browseCurrentBuffer(const char *suffix)
 		if (remote) {
 			mt = findMimeByURL(cf->fileName, &sxfirst);
 		} else if(suffix) {
-			if(!(mt = findMimeBySuffix(suffix))) {
-				setError(MSG_SuffixBad, suffix);
-				return false;
-			}
+// we already checked for valid suffix
+			mt = findMimeBySuffix(suffix);
 		} else {
 			mt = findMimeByFile(cf->fileName);
 		}
