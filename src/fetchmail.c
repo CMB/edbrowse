@@ -4418,6 +4418,8 @@ bool mailDescend(const char *title, char cmd)
 	char *vr;
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
+	bool lookmode = (cmd == 'u');
+	if(lookmode) cmd = 'g';
 	bool showcount = (cmd == 'g' || cmd == 't');
 	struct FOLDER f0;
 
@@ -4442,7 +4444,6 @@ bool mailDescend(const char *title, char cmd)
 	}
 
 	if(showcount) debugPrint(1, "%d", mailstring_l);
-
 	unstar(cw->dot);
 	freeWindows(context, false); // lop off stuff below
 // make new window
@@ -4464,12 +4465,15 @@ bool mailDescend(const char *title, char cmd)
 	}
 	mailstring = 0;
 	cw->changeMode = false;
+
+	if(!lookmode) {
 // I have to fake out the browse routine, so it doesn't try to write attachments.
-	ismc = true;
-	browseCurrentBuffer(NULL);
-	ismc = false; // put it back
+		ismc = true;
+		browseCurrentBuffer(NULL);
+		ismc = false; // put it back
+	}
 	preferPlain = false;
-	if(!showcount) fileSize = -1;
+	if(!showcount) fileSize = -1; // don't print byte count
 	return true;
 }
 

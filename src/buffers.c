@@ -7901,7 +7901,7 @@ dest_ok:
 	}
 
 	// go to an email in an envelope listing
-	if (cmd == 'g' && cw->imapMode2 && !first) {
+	if (cmd == 'g' && cw->imapMode2 && (!first || (first == '-' && !line[1]))) {
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "g");
 			return false;
@@ -7909,6 +7909,7 @@ dest_ok:
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // uid and subject for the email
 		cmd = 'e';
+		if(first) icmd = 'u'; // code to leave the email unformatted
 		return mailDescend(p, icmd);
 	}
 
