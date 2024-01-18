@@ -4489,6 +4489,11 @@ bool imapMovecopy(int l1, int l2, char cmd, char *dest)
 	char cust_cmd[80];
 	bool rc;
 
+	if(!l1) {
+		setError(MSG_AtLine0);
+		return false;
+	}
+
 	skipWhite2(&dest);
 	if(!*dest) { // nothing there
 baddest:
@@ -4561,6 +4566,11 @@ bool imapDelete(int l1, int l2, char cmd)
 	int l0;
 	bool rc;
 
+	if(!l1) {
+		setError(MSG_AtLine0);
+		return false;
+	}
+
 // does delete really mean move?
 	if(a->dxtrash && !a->dxfolder[cw->r_dot]) {
 		char destn[8];
@@ -4604,6 +4614,11 @@ bool imapMarkRead(int l1, int l2, char sign)
 	struct MACCOUNT *a = accounts + act - 1;
 	int l0;
 	bool rc;
+
+	if(!l1) {
+		setError(MSG_AtLine0);
+		return false;
+	}
 
 	if(sign == 0) sign = '+';
 	imapLines = initString(&iml_l);
