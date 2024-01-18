@@ -4063,7 +4063,7 @@ bool imapBuffer(char *line)
 		setError(MSG_NotImap);
 		return false;
 }
-	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->imapMode2) {
+	if(cw->sqlMode | cw->binMode | cw->dirMode | cw->browseMode | cw->irciMode | cw->ircoMode | cw->imapMode2) {
 		setError(MSG_ImapCompat);
 		return false;
 	}
@@ -4110,10 +4110,8 @@ bool imapBuffer(char *line)
 // setFolders() prints out the stats in mail client mode.
 // Here in the buffer, it builds strings, which we add to the current buffer.
 // Clean up the structures that we don't use here.
-	nzFree(topfolders);
-	topfolders = 0;
-	nzFree(tf_cbase);
-	tf_cbase = 0;
+	nzFree(topfolders), topfolders = 0;
+	nzFree(tf_cbase), tf_cbase = 0;
 	if(!n_folders) {
 		setError(MSG_NoFolders);
 		curl_easy_cleanup(h);
@@ -4152,6 +4150,7 @@ bool imap1rf(void)
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
 	active_a = a, isimap = true;
+	freeWindows(context, false);
 	if(cw->dol) delText(1, cw->dol);
 // in case you changed debug levels
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
@@ -4166,8 +4165,6 @@ teardown:
 		cw->imapMode1 = false;
 		nzFree(cf->firstURL), cf->firstURL = 0;
 		nzFree(cf->fileName), cf->fileName = 0;
-// envelopes below don't mean anything
-		freeWindows(context, false);
 		return false;
 	}
 	setFolders(cw->imap_h);
