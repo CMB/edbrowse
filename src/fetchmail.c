@@ -195,14 +195,14 @@ static void linkAttachment(struct MHINFO *w)
 	nzFree(e);
 	if (w->cfn[0]) {
 		stringAndString(&imapLines, &iml_l,  "' download='");
-		e = htmlEscape0(w->cfn, true);
+		e = htmlEscape(w->cfn);
 		stringAndString(&imapLines, &iml_l,  e);
 		nzFree(e);
 	}
 	stringAndString(&imapLines, &iml_l, "'>Attachment");
 	if (w->cfn[0]) {
 		stringAndChar(&imapLines, &iml_l,  ' ');
-		e = htmlEscape0(w->cfn, true);
+		e = htmlEscape(w->cfn);
 		stringAndString(&imapLines, &iml_l,  e);
 		nzFree(e);
 	}
@@ -3615,18 +3615,28 @@ static void formatMail(struct MHINFO *w, bool top)
 		int newlen;
 /* If mail is not in html, reformat it */
 		if (start < end) {
-			if (ct == CT_TEXT) {
+			if (!mailIsHtml && ct == CT_TEXT) {
+// html isn't going to format this section, so we should.
 				breakLineSetup();
 				if (breakLine(start, end - start, &newlen)) {
 					start = breakLineResult;
 					end = start + newlen;
 				}
 			}
-			if (mailIsHtml && ct != CT_HTML)
-				stringAndString(&fm, &fm_l, "<pre>");
-			stringAndBytes(&fm, &fm_l, start, end - start);
-			if (mailIsHtml && ct != CT_HTML)
-				stringAndString(&fm, &fm_l, "</pre>\n");
+			if (mailIsHtml && ct != CT_HTML) {
+#if 0
+				char *z = pullString1(start, end); printf("%s", z); nzFree(z);
+#endif
+				stringAndString(&fm, &fm_l, "<!-- text section converted to html -->\n ");
+				char endc = *end;
+				*end = 0;
+				char *e = htmlEscape0(start, true);
+				stringAndString(&fm, &fm_l, e);
+				nzFree(e);
+				*end = endc;
+			} else {
+				stringAndBytes(&fm, &fm_l, start, end - start);
+			}
 		} // text present
 
 		// There could be a mail message inline
@@ -3680,6 +3690,9 @@ char *emailParse(char *buf)
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf), true);
 	mailIsHtml = (mailTextType(w) == CT_HTML);
+// As an experiment, declare every email as html.
+// That way we can always turn attachments into hyperlinks.
+	mailIsHtml = true;
 	if(mailIsHtml & preferPlain) i_puts(MSG_NoPlain);
 	if (mailIsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");

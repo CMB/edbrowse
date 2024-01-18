@@ -363,9 +363,8 @@ void unpercentURL(char *url) ;
 void unpercentString(char *s) ;
 char *percentURL(const char *start, const char *end);
 bool looksPercented(const char *start, const char *end);
-char *htmlEscape0(const char *s, bool do_and);
-#define htmlEscape(s) htmlEscape0((s), true)
-#define htmlEscapeTextarea(s) htmlEscape0((s), false)
+char *htmlEscape0(const char *s, bool para);
+#define htmlEscape(s) htmlEscape0((s), false)
 bool isURL(const char *url) ;
 bool isSQL(const char *url);
 bool isBrowseableURL(const char *url) ;

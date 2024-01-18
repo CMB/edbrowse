@@ -651,8 +651,8 @@ static bool spacesInInput(void)
 
 static void appendSpaceChunk(const char *chunk, int len, bool premode)
 {
-	int nlc = pre_cr;	/* newline count */
-	int spc = 0;		/* space count */
+	int nlc = pre_cr;	// newline count
+	int spc = 0;		// space count
 	int i, j;
 	char c, d, e;
 
@@ -676,7 +676,8 @@ static void appendSpaceChunk(const char *chunk, int len, bool premode)
 // gather stats on the whitespace chunk
 	for (i = 0; i < len; ++i) {
 		c = chunk[i];
-		if (c == '\n' || c == '\r') {
+// a newline or an isolated return
+		if (c == '\n' || (c == '\r' && (i == len || chunk[i+1] != '\n'))) {
 			++nlc, spc = 0;
 			continue;
 		}

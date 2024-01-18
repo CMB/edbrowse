@@ -221,7 +221,7 @@ bool looksPercented(const char *start, const char *end)
 }
 
 /* escape & < > for display on a web page */
-char *htmlEscape0(const char *s, bool do_and)
+char *htmlEscape0(const char *s, bool para)
 {
 	char *t;
 	int l;
@@ -231,20 +231,38 @@ char *htmlEscape0(const char *s, bool do_and)
 		return emptyString;
 	t = initString(&l);
 	for (; *s; ++s) {
-		if (*s == '&' && do_and) {
+		if (*s == '&') {
 			stringAndString(&t, &l, "&amp;");
 			continue;
 		}
-		if (*s == '\'' && do_and) {
+// don't know if we really need this one
+		if (*s == '\'') {
 			stringAndString(&t, &l, "&apos;");
 			continue;
 		}
+// sure as heck need this one!
 		if (*s == '<') {
 			stringAndString(&t, &l, "&lt;");
 			continue;
 		}
 		if (*s == '>') {
+			if(para && l && s[-1] == '\n' && (isspace(s[1]) || s[1] == '>'))
+				stringAndString(&t, &l, "<br>");
 			stringAndString(&t, &l, "&gt;");
+			continue;
+		}
+		if(para && (*s == '\n' || *s == '\f')) {
+			int nl = 0;
+			const char *u;
+			for(u = s; *u && isspace(*u); ++u) {
+				if(*u == '\f') nl = 2;
+				if(*u == '\n') ++nl;
+			}
+			s = u - 1;
+			if(nl == 1)
+				stringAndChar(&t, &l, '\n');
+			else
+				stringAndString(&t, &l, "\n<p>\n");
 			continue;
 		}
 		stringAndChar(&t, &l, *s);
