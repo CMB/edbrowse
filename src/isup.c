@@ -3002,6 +3002,8 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	bool has_o = false;
 	char param[64];
 
+	if(!m) { puts("runPlugin with m = 0"); return false; }
+
 	if(outdata)
 		*outdata = 0;
 	if(outlength)
@@ -3193,7 +3195,8 @@ int playBuffer(const char *line, const char *playfile)
 
 	if (playfile) {
 // play the file passed in
-		mt = findMimeByFile(playfile);
+		if(c) mt = findMimeBySuffix(line + 3);
+		else mt = findMimeByFile(playfile);
 // We wouldn't be here unless the file was playable,
 // so this check and error return isn't really necessary.
 #if 0

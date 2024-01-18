@@ -410,6 +410,7 @@ struct ebFrame {
 	const char *charset;		// charset for this page
 	bool render1; // rendered via protocol or urlmatch
 	bool render2; // rendered via suffix
+	bool render3; // rendered before load, only once
 	bool render1b;
 	bool baseset; // <base> tag has been seen
 	bool uriEncoded; // filename is url encoded

@@ -2134,8 +2134,7 @@ badfile:
 // just going to process it.
 	if (cf->mt && cf->mt->outtype && pluginsOn && !access(filename, 4)
 	    && !fileprot && cmd == 'b' && newwin) {
-		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf,
-				      &readSize);
+		rc = runPluginCommand(cf->mt, 0, filename, 0, 0, &rbuf, &readSize);
 		fileSize = readSize;
 		cf->render1 = cf->render2 = true;
 // browse command ran the plugin, but if it generates text,
@@ -7293,8 +7292,10 @@ after_ib:
 		return (globSub = false);
 	}
 
-// special code for b.pdf
-	if(cmd == 'b' && first == '.') {
+// code for b.pdf and g.pdf
+	if((cmd == 'b' || cmd == 'g')
+	&& !(cw->browseMode | cw->sqlMode | cw->imapMode1 | cw->imapMode2 | cw->irciMode | cw->ircoMode)
+	&& first == '.') {
 		browseSuffix = line + 1;
 		first = 0;
 		line += strlen(line);
@@ -7956,11 +7957,57 @@ dest_ok:
 		stripDotDot(dirline);
 		if (!emode)
 			gmt = findMimeByFile(dirline);
+		if(browseSuffix)
+			gmt = findMimeBySuffix(browseSuffix);
 		if (pluginsOn && gmt) {
-			if (gmt->outtype)
-				cmd = 'b';
-			else
-				return playBuffer("pb", dirline);
+			if (gmt->outtype) {
+// need to call runPluginCommand directly here, because the data is already in a local file
+				char *outbuf;
+				int outlen;
+				if (!cxQuit(context, 0))
+					return false;
+				undoCompare();
+				cw->undoable = cw->changeMode = false;
+				undoSpecialClear();
+				if(!noStack) freeWindows(context, false);
+				if(!runPluginCommand(gmt, 0, dirline, 0, 0, &outbuf, &outlen))
+					return false;
+// unfortunately this replicates some push&load code below
+				w = createWindow();
+				w->sno = context;
+				cw = w;		// we might wind up putting this back
+				selfFrame();
+					cf->fileName = (char*)fetchLine(endRange, 0);
+					cf->fileName[j] = 0;
+				addTextToBuffer((uchar*)outbuf, outlen, 0, false);
+				debugPrint(1, "%d", outlen); fileSize = -1;
+				cw->undoable = cw->changeMode = false;
+				nzFree(outbuf);
+				cw = cs->lw;	// put it back, for now
+				selfFrame();
+				if (noStack) {
+					w->prev = cw->prev;
+					nzFree(w->f0.firstURL);
+					w->f0.firstURL = cf->firstURL;
+					cf->firstURL = 0;
+					cxQuit(context, 1);
+				} else {
+					w->prev = cw;
+				}
+				cs->lw = cw = w;
+				selfFrame();
+				if (!w->prev)
+					cs->fw = w;
+				cf->render2 = cf->render3 = true;
+				if(gmt->outtype == 'h') browseCurrentBuffer(NULL);
+				return true;
+			} else {
+				char pb_how[12];
+				strcpy(pb_how, "pb");
+				if(browseSuffix)
+					sprintf(pb_how, "pb.%s", browseSuffix);
+				return playBuffer(pb_how, dirline);
+			}
 		}
 // I don't think we need to make a copy here
 		line = dirline;
@@ -8390,7 +8437,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 			pluginsOn = save_pg;
 		}
 		w->undoable = w->changeMode = false;
-		cw = cs->lw;	/* put it back, for now */
+		cw = cs->lw;	// put it back, for now
 		selfFrame();
 /* Don't push a new session if we were trying to read a url,
  * and didn't get anything. */
@@ -8776,7 +8823,7 @@ bool browseCurrentBuffer(const char *suffix)
 
 	remote = isURL(cf->fileName);
 
-	if (!cf->render2 && (cf->fileName || suffix)) {
+	if (!(cf->render2|cf->render3) && (cf->fileName || suffix)) {
 		if (remote) {
 			mt = findMimeByURL(cf->fileName, &sxfirst);
 		} else if(suffix) {
