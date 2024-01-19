@@ -39,7 +39,7 @@ static int nattach;		// number of attachments
 static int nimages;		// number of attached images
 static bool ignoreImages;
 static char *firstAttach;	// name of first file
-static bool mailIsHtml;
+static bool mailIsHtml, mailShowsHtml;
 static bool preferPlain;
 static char *fm;		// formatted mail string
 static int fm_l;
@@ -3416,7 +3416,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 {
 	static char buf[(MHLINE + 30) * 4];
 	static char lastsubject[MHLINE];
-	char *s;
+	char *s, *e;
 	bool lines = false;
 	buf[0] = 0;
 
@@ -3439,22 +3439,16 @@ static char *headerShow(struct MHINFO *w, bool top)
 			}
 		} else
 			strcat(buf, " with no subject");
-		if (mailIsHtml) {	/* trash & < > */
-			for (s = buf; *s; ++s) {
-/* This is quick and stupid */
-				if (*s == '<')
-					*s = '(';
-				if (*s == '>')
-					*s = ')';
-				if (*s == '&')
-					*s = '*';
-			}
+		if (mailShowsHtml) {
+			e = htmlEscape(buf);
+			strcpy(buf, e);
+			nzFree(e);
 		}
-/* need a dot at the end? */
+// need a dot at the end
 		s = buf + strlen(buf);
 		if (isalnumByte(s[-1]))
 			*s++ = '.';
-		strcpy(s, mailIsHtml ? "\n<br>" : "\n");
+		strcpy(s, mailShowsHtml ? "\n<br>" : "\n");
 		if (w->date[0]) {
 			strcat(buf, "Sent ");
 			strcat(buf, w->date);
@@ -3473,26 +3467,30 @@ static char *headerShow(struct MHINFO *w, bool top)
 
 // This is at the top of the file
 		if (w->subject[0]) {
+			e = w->subject;
+			if(mailShowsHtml) e = htmlEscape(e);
 // the <pre nowspc keeps the subject on one line
 			sprintf(buf, "%sSubject: %s%s\n",
-			(mailIsHtml ? "<pre nowspc>" : ""),
-			w->subject,
-			(mailIsHtml ? "</pre>" : ""));
+			(mailShowsHtml ? "<pre nowspc>" : ""),
+			e,
+			(mailShowsHtml ? "</pre>" : ""));
+			if(mailShowsHtml) nzFree(e);
 			lines = true;
 		}
+// do we have to escape from or reply lines?
 		if (w->from[0]) {
-			if (lines & mailIsHtml)
+			if (lines & mailShowsHtml)
 				strcat(buf, "<br>");
 			lines = true;
 // it's very rare for a from line to break; you have to have a small fll value.
-			if(mailIsHtml) strcat(buf, "<pre nowspc>");
+			if(mailShowsHtml) strcat(buf, "<pre nowspc>");
 			strcat(buf, "From ");
 			strcat(buf, w->from);
-			if(mailIsHtml) strcat(buf, "</pre>");
+			if(mailShowsHtml) strcat(buf, "</pre>");
 			strcat(buf, "\n");
 		}
 		if (w->reply[0]) {
-			if (lines & mailIsHtml)
+			if (lines & mailShowsHtml)
 				strcat(buf, "<br>");
 			lines = true;
 			strcat(buf, "Reply to ");
@@ -3500,7 +3498,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 			strcat(buf, "\n");
 		}
 		if (w->date[0] && !ismc) {
-			if (lines & mailIsHtml)
+			if (lines & mailShowsHtml)
 				strcat(buf, "<br>");
 			lines = true;
 			strcat(buf, "Mail sent ");
@@ -3508,7 +3506,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 			strcat(buf, "\n");
 		}
 		if (w->to[0] && !ismc) {
-			if (lines & mailIsHtml)
+			if (lines & mailShowsHtml)
 				strcat(buf, "<br>");
 			lines = true;
 			strcat(buf, "To ");
@@ -3519,7 +3517,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 		}
 		if (nattach && !ismc) {
 			char atbuf[20];
-			if (lines & mailIsHtml)
+			if (lines & mailShowsHtml)
 				strcat(buf, "<br>");
 			lines = true;
 			if (nimages) {
@@ -3547,7 +3545,7 @@ static char *headerShow(struct MHINFO *w, bool top)
 	}
 
 	if (lines)
-		strcat(buf, mailIsHtml ? "<P>\n" : "\n");
+		strcat(buf, mailShowsHtml ? "<P>\n" : "\n");
 	strcpy(lastsubject, w->subject);
 	return buf;
 }
@@ -3595,13 +3593,13 @@ static void formatMail(struct MHINFO *w, bool top)
 	if (w->doAttach) {
 		if(w->ct != CT_TEXT || w->ce > CE_8BIT)
 			return;
-		stringAndString(&fm, &fm_l, mailIsHtml ? "Attachment:<br>\n" : "Attachment:\n");
+		stringAndString(&fm, &fm_l, mailShowsHtml ? "Attachment:<br>\n" : "Attachment:\n");
 	}
 
 	debugPrint(5, "format mail content %d subject %s", ct,    w->subject);
 	stringAndString(&fm, &fm_l, headerShow(w, top));
 
-	if(top && nattach && mailIsHtml) {
+	if(top && nattach && mailShowsHtml) {
 		imapLines = initString(&iml_l);
 		linkAttachments(w);
 		stringAndString(&fm, &fm_l, imapLines);
@@ -3615,7 +3613,7 @@ static void formatMail(struct MHINFO *w, bool top)
 		int newlen;
 /* If mail is not in html, reformat it */
 		if (start < end) {
-			if (!mailIsHtml && ct == CT_TEXT) {
+			if (!mailShowsHtml && ct == CT_TEXT) {
 // html isn't going to format this section, so we should.
 				breakLineSetup();
 				if (breakLine(start, end - start, &newlen)) {
@@ -3623,7 +3621,7 @@ static void formatMail(struct MHINFO *w, bool top)
 					end = start + newlen;
 				}
 			}
-			if (mailIsHtml && ct != CT_HTML) {
+			if (mailShowsHtml && ct != CT_HTML) {
 #if 0
 				char *z = pullString1(start, end); printf("%s", z); nzFree(z);
 #endif
@@ -3643,7 +3641,7 @@ static void formatMail(struct MHINFO *w, bool top)
 		foreach(v, w->components) {
 			if (end > start)
 				stringAndString(&fm, &fm_l,
-						mailIsHtml ? "<P>\n" : "\n");
+						mailShowsHtml ? "<P>\n" : "\n");
 			formatMail(v, false);
 		}
 
@@ -3686,15 +3684,15 @@ char *emailParse(char *buf)
 	struct MHINFO *w;
 	nattach = nimages = 0;
 	firstAttach = 0;
-	mailIsHtml = ignoreImages = false;
+	mailIsHtml = mailShowsHtml = ignoreImages = false;
 	fm = initString(&fm_l);
 	w = headerGlean(buf, buf + strlen(buf), true);
-	mailIsHtml = (mailTextType(w) == CT_HTML);
+	mailIsHtml = mailShowsHtml = (mailTextType(w) == CT_HTML);
 // As an experiment, declare every email as html.
 // That way we can always turn attachments into hyperlinks.
-	mailIsHtml = true;
+	mailShowsHtml = true;
 	if(mailIsHtml & preferPlain) i_puts(MSG_NoPlain);
-	if (mailIsHtml)
+	if (mailShowsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
 	formatMail(w, true);
 /* Remember, we always need a nonzero buffer */
@@ -3706,7 +3704,7 @@ char *emailParse(char *buf)
 		     strlen(w->reply) + 6);
 	sprintf(cw->mailInfo, "%s>%s>%s>%s>%s>", w->reply, w->tolist,
 		w->cclist, w->ref, w->mid);
-	if (!ismc && !mailIsHtml)
+	if (!ismc && !mailShowsHtml)
 		writeAttachments(w);
 	debugPrint(5, "mailInfo: %s", cw->mailInfo);
 	if (lastMailInfo) {
@@ -4804,7 +4802,7 @@ badsave:
 
 	if(key == 'w') {
 		ignoreImages = false;
-		if(lastMailInfo && lastMailWindowId == cw->f0.gsn && !mailIsHtml)
+		if(lastMailInfo && lastMailWindowId == cw->f0.gsn && !mailShowsHtml)
 			writeAttachments(lastMailInfo);
 	}
 
