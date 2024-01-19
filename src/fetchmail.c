@@ -3480,7 +3480,44 @@ static char *headerShow(struct MHINFO *w, bool top)
 			(mailIsHtml ? "</pre>" : ""));
 			lines = true;
 		}
-		if (nattach && ismc) {
+		if (w->from[0]) {
+			if (lines & mailIsHtml)
+				strcat(buf, "<br>");
+			lines = true;
+// it's very rare for a from line to break; you have to have a small fll value.
+			if(mailIsHtml) strcat(buf, "<pre nowspc>");
+			strcat(buf, "From ");
+			strcat(buf, w->from);
+			if(mailIsHtml) strcat(buf, "</pre>");
+			strcat(buf, "\n");
+		}
+		if (w->reply[0]) {
+			if (lines & mailIsHtml)
+				strcat(buf, "<br>");
+			lines = true;
+			strcat(buf, "Reply to ");
+			strcat(buf, w->reply);
+			strcat(buf, "\n");
+		}
+		if (w->date[0] && !ismc) {
+			if (lines & mailIsHtml)
+				strcat(buf, "<br>");
+			lines = true;
+			strcat(buf, "Mail sent ");
+			strcat(buf, w->date);
+			strcat(buf, "\n");
+		}
+		if (w->to[0] && !ismc) {
+			if (lines & mailIsHtml)
+				strcat(buf, "<br>");
+			lines = true;
+			strcat(buf, "To ");
+			strcat(buf, w->to);
+			if (w->andOthers)
+				strcat(buf, " and others");
+			strcat(buf, "\n");
+		}
+		if (nattach && !ismc) {
 			char atbuf[20];
 			if (lines & mailIsHtml)
 				strcat(buf, "<br>");
@@ -3505,43 +3542,6 @@ static char *headerShow(struct MHINFO *w, bool top)
 					nattach - nimages);
 				strcat(buf, atbuf);
 			}
-			strcat(buf, "\n");
-		}
-		if (w->to[0] && !ismc) {
-			if (lines & mailIsHtml)
-				strcat(buf, "<br>");
-			lines = true;
-			strcat(buf, "To ");
-			strcat(buf, w->to);
-			if (w->andOthers)
-				strcat(buf, " and others");
-			strcat(buf, "\n");
-		}
-		if (w->from[0]) {
-			if (lines & mailIsHtml)
-				strcat(buf, "<br>");
-			lines = true;
-// it's very rare for a from line to break; you have to have a small fll value.
-			if(mailIsHtml) strcat(buf, "<pre nowspc>");
-			strcat(buf, "From ");
-			strcat(buf, w->from);
-			if(mailIsHtml) strcat(buf, "</pre>");
-			strcat(buf, "\n");
-		}
-		if (w->date[0] && !ismc) {
-			if (lines & mailIsHtml)
-				strcat(buf, "<br>");
-			lines = true;
-			strcat(buf, "Mail sent ");
-			strcat(buf, w->date);
-			strcat(buf, "\n");
-		}
-		if (w->reply[0]) {
-			if (lines & mailIsHtml)
-				strcat(buf, "<br>");
-			lines = true;
-			strcat(buf, "Reply to ");
-			strcat(buf, w->reply);
 			strcat(buf, "\n");
 		}
 	}
@@ -4476,12 +4476,8 @@ bool mailDescend(const char *title, char cmd)
 	mailstring = 0;
 	cw->changeMode = false;
 
-	if(!emode) {
-// I have to fake out the browse routine, so it doesn't try to write attachments.
-		ismc = true;
+	if(!emode)
 		browseCurrentBuffer(NULL);
-		ismc = false; // put it back
-	}
 	preferPlain = false;
 	if(!showcount) fileSize = -1; // don't print byte count
 	return true;
