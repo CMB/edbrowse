@@ -747,9 +747,9 @@ do not show channels
 show channels
 not in irc send mode
 dot has moved
-0
-0
-0
+cannot create %s\n
+cannot delete %s\n
+cannot rename %s\n
 0
 0
 0

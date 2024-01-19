@@ -4842,9 +4842,6 @@ bool addFolders()
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
-	int act = cw->imap_n;
-	struct MACCOUNT *a = accounts + act - 1;
-	active_a = a, isimap = true;
 	int l, nlines = 0;
 	uchar *line1, *t;
 	char *line2, *v;
@@ -4868,7 +4865,7 @@ bool addFolders()
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) {
-			i_printf(MSG_NoCreate, line2);
+			i_printf(MSG_NoCreate3, line2);
 			nzFree(line2);
 			goto done;
 		}
@@ -4890,5 +4887,38 @@ imask and dx have been compiled to be bits in an array, corresponding to the fol
 This has to be recompiled based on the folders in their new positions.
 The easiest way to do that is to refresh - so here we go.
 *********************************************************************/
-	return imap1rf();
+	if(nlines) return imap1rf();
+	return true;
+}
+
+bool deleteFolders(int l1, int l2)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	int l, nlines = 0;
+	char *v;
+	uchar *p;
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	for(; l1 <= l2; ++l1) {
+		p = fetchLine(l1, -1);
+		l = pstLength(p);
+		p[l - 1] = 0; // I'll put it back
+		asprintf(&v, "DELETE \"%s\"", p);
+		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
+		free(v);
+		res = getMailData(h);
+		nzFree(mailstring), mailstring = 0;
+		if (res != CURLE_OK) {
+			i_printf(MSG_NoDelete3, p);
+			p[l - 1] = '\n';
+			goto done;
+		}
+		++nlines;
+		p[l - 1] = '\n';
+	}
+
+done:
+	if(nlines) return imap1rf();
+	return true;
 }

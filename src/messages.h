@@ -847,4 +847,7 @@ MSG_ImaskOn,
 	MSG_ShowChanOn,
 	MSG_NotIrcSend,
 	MSG_DotMoved,
+	MSG_NoCreate3,
+	MSG_NoDelete3,
+	MSG_NoRename3,
 };
