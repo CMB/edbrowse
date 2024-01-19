@@ -1239,6 +1239,11 @@ return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADE
 onmessage$$queue = [];
 function  postMessage(message,target_origin, transfer) {
 var locstring = this.location.protocol + "//" + this.location.hostname + ":" + this.location.port;
+if(!this.location.port) {
+// paste on a default port
+var standard_port = mw$.setDefaultPort(this.location.protocol);
+locstring += standard_port;
+}
 if(target_origin != '*' && !target_origin.match(/:\d*$/)) {
 // paste on a default port
 var target_protocol = target_origin.replace(/:.*/, ":");
