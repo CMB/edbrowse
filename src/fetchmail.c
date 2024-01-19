@@ -4838,14 +4838,14 @@ bool rfWhileReading()
 	return mailDescend((char*)cw->r_map[cw->dot].text, 'g');
 }
 
-bool addFolders(int ln)
+bool addFolders()
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
 	active_a = a, isimap = true;
-	int l;
+	int l, nlines = 0;
 	uchar *line1, *t;
 	char *line2, *v;
 
@@ -4868,23 +4868,27 @@ bool addFolders(int ln)
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) {
-			setError(MSG_NoCreate2, line2);
+			i_printf(MSG_NoCreate, line2);
 			nzFree(line2);
-			nzFree(linePending), linePending = 0;
-			return false;
+			goto done;
 		}
-		addTextToBuffer(line1, l, ln, false);
-		++ln;
-// Now let's set the path, but what is the path?
-// If you create snork under gmail, does it become [Gmail]/snork?
-// I don't know, and even if I did, that doesn't speak to other imap servers.
-// So you might create this folder and be unable to access it because the path is wrong.
-// Maybe we should refresh, to know for sure.
-// If you do that then you don't need this next code.
-		cw->r_map[ln].text = (uchar*)line2;
+		++nlines;
+		nzFree(line2);
 		line1 = inputLine(true);
 	}
 
+done:
 	nzFree(linePending), linePending = 0;
-	return true;
+/*********************************************************************
+Why do we need to refresh?
+If you create snork under gmail, does it become [Gmail]/snork?
+I don't know, and even if I did, that doesn't speak to other imap servers.
+You might create snork and be unable to access it because the path is wrong.
+Furthermore, if we simply add snork to the buffer, the positions of the folders shift.
+trash may be in position 9 instead of 8.
+imask and dx have been compiled to be bits in an array, corresponding to the folders.
+This has to be recompiled based on the folders in their new positions.
+The easiest way to do that is to refresh - so here we go.
+*********************************************************************/
+	return imap1rf();
 }

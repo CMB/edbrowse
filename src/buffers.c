@@ -32,7 +32,7 @@ static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
-static const char imap1_cmd[] = "efghHklnpPqvwXz^=<";
+static const char imap1_cmd[] = "aefghHklnpPqvwXz^=<";
 // commands for imap envelopes
 static const char imap2_cmd[] = "dDefghHklmnpPqtvXz^=<";
 // Commands that work at line number 0, in an empty file
@@ -7462,17 +7462,15 @@ dest_ok:
 			endRange = cw->dol;
 	}
 
-	/* the a+ feature, when you thought you were in append mode */
+	// the a+ feature, when you thought you were in append mode
 	if (cmd == 'a') {
-		if (stringEqual(line, "+"))
+		if (stringEqual(line, "+")) {
 			++line, first = 0;
-		else {
-			nzFree(linePending);
-			linePending = 0;
+		} else {
+			nzFree(linePending), linePending = 0;
 		}
 	} else {
-		nzFree(linePending);
-		linePending = 0;
+		nzFree(linePending), linePending = 0;
 	}
 
 	if (first && strchr(nofollow_cmd, cmd)) {
@@ -8612,6 +8610,8 @@ redirect:
 		}
 		if (cw->sqlMode)
 			return sqlAddRows(endRange);
+		if (cw->imapMode1)
+			return addFolders();
 		return inputLinesIntoBuffer();
 	}
 
