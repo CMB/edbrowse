@@ -32,7 +32,7 @@ static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
 static const char irco_cmd[] = "BdDefghHklnpPvwXz=<";
 // commands for imap folders
-static const char imap1_cmd[] = "aefghHklnpPqvwXz^=<";
+static const char imap1_cmd[] = "adefghHklnpPqsvwXz^=<";
 // commands for imap envelopes
 static const char imap2_cmd[] = "dDefghHklmnpPqtvXz^=<";
 // Commands that work at line number 0, in an empty file
@@ -8616,6 +8616,19 @@ redirect:
 	}
 
 	if (cmd == 'd' || cmd == 'D') {
+		if (cw->imapMode1) {
+			if (globSub) {
+				setError(MSG_GlobalCommand, icmd);
+				return (globSub = false);
+			}
+			if (endRange > startRange) {
+				setError(MSG_RangeCmd, "d");
+				return false;
+			}
+			puts("delete folder not yet implemented");
+			return true;
+		}
+
 		if (cw->imapMode2) {
 			rc = imapDelete(startRange, endRange, cmd);
 			if(!rc) globSub = false;
@@ -8623,9 +8636,8 @@ redirect:
 		}
 
 		if (cw->imapMode3) {
-			rc = imapDeleteWhileReading();
-			if(!rc) globSub = false;
-			return rc;
+			globSub = false;
+			return imapDeleteWhileReading();
 		}
 
 		if (cw->dirMode) {
@@ -8718,6 +8730,19 @@ afterdelete:
 	}
 
 	if (cmd == 's') {
+		if (cw->imapMode1) {
+			if (globSub) {
+				setError(MSG_GlobalCommand, icmd);
+				return (globSub = false);
+			}
+			if (endRange > startRange) {
+				setError(MSG_RangeCmd, "s");
+				return false;
+			}
+			puts("rename folder not yet implemented");
+			return true;
+		}
+
 		pst p;
 		j = substituteText(line);
 // special case, if last line became empty and nlMode is true.
