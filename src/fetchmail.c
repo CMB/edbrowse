@@ -4891,7 +4891,7 @@ The easiest way to do that is to refresh - so here we go.
 	return true;
 }
 
-bool deleteFolders(int l1, int l2)
+bool deleteFolder(int ln)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
@@ -4900,23 +4900,21 @@ bool deleteFolders(int l1, int l2)
 	uchar *p;
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-	for(; l1 <= l2; ++l1) {
-		p = fetchLine(l1, -1);
-		l = pstLength(p);
-		p[l - 1] = 0; // I'll put it back
-		asprintf(&v, "DELETE \"%s\"", p);
-		curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
-		free(v);
-		res = getMailData(h);
-		nzFree(mailstring), mailstring = 0;
-		if (res != CURLE_OK) {
-			i_printf(MSG_NoDelete3, p);
-			p[l - 1] = '\n';
-			goto done;
-		}
-		++nlines;
+	p = fetchLine(ln, -1);
+	l = pstLength(p);
+	p[l - 1] = 0; // I'll put it back
+	asprintf(&v, "DELETE \"%s\"", p);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
+	free(v);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) {
+		i_printf(MSG_NoDelete3, p);
 		p[l - 1] = '\n';
+		goto done;
 	}
+	++nlines;
+	p[l - 1] = '\n';
 
 done:
 	if(nlines) return imap1rf();

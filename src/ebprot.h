@@ -90,7 +90,7 @@ bool saveEmailWhileReading(char key, const char *name);
 bool saveEmailWhileEnvelopes(char key, const char *name);
 bool rfWhileReading();
 bool addFolders();
-bool deleteFolders(int l1, int l2);
+bool deleteFolder(int ln);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);
