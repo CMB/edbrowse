@@ -26,10 +26,11 @@ l = strlen(line);
 line[--l] = 0; // chomp
 if(!strcmp(line, "q")) break;
 r = JS_Eval(cx, line, l, "snork", JS_EVAL_TYPE_GLOBAL);
-// no checks for errors or exceptions or anything
+        if(!JS_IsException(r)) {
 s = JS_ToCString(cx, r);
 puts(s);
 JS_FreeCString(cx, s);
+} else puts("error");
 JS_FreeValue(cx, r);
 }
 
