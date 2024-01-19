@@ -105,5 +105,8 @@ js_hello_v8 : js_hello_v8.cpp
 js_hello_quick : js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o
 	$(CC) -I$(QUICKJS_INCLUDE) $(CFLAGS) js_hello_quick.c stringfile.o msg-strings.o ebrc.o format.o $(QUICKJS_LDFLAGS) -o js_hello_quick -lm -lpthread
 
-hello: js_hello_quick
+js0: js0.c
+	$(CC) -I$(QUICKJS_INCLUDE) js0.c $(QUICKJS_LIB)/libquickjs.a -lm -latomic -o js0
+
+hello: js_hello_quick js0
 
