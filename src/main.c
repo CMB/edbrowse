@@ -909,7 +909,7 @@ static int *argl_ptr;
 static int *rb_ln, *rb_ln2, *rb_b;
 
 struct ebSettings {
-	bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow;
+	bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow, attimg;
 	uchar dw, ls_sort;
 	char lsformat[12], showProgress;
 	char *currentAgent;
@@ -928,6 +928,7 @@ static void saveEbSettings(struct ebSettings *s)
 	s->dno = dno;
 	s->ebvar = ebvar;
 	s->flow = flow;
+	s->attimg = attimg;
 	s->ls_sort = ls_sort;
 	strcpy(s->lsformat, lsformat);
 	s->showProgress = showProgress;
@@ -971,6 +972,7 @@ static void restoreEbSettings(struct ebSettings *s)
 	dno = s->dno;
 	ebvar = s->ebvar;
 	flow = s->flow;
+	attimg = s->attimg;
 	ls_sort = s->ls_sort;
 	strcpy(lsformat, s->lsformat);
 	showProgress = s->showProgress;
