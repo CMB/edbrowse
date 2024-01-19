@@ -91,6 +91,7 @@ bool saveEmailWhileEnvelopes(char key, const char *name);
 bool rfWhileReading();
 bool addFolders();
 bool deleteFolder(int ln);
+bool renameFolder(const char *src, const char *dest);
 
 // sourcefile=format.c
 void prepareForBrowse(char *h, int h_len);

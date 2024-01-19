@@ -850,4 +850,5 @@ MSG_ImaskOn,
 	MSG_NoCreate3,
 	MSG_NoDelete3,
 	MSG_NoRename3,
+	MSG_FolderNameBad,
 };

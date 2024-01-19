@@ -946,7 +946,7 @@ static void undoPush(void)
 // if in browse mode, we really shouldn't be here at all!
 // But we could if substituting on an input field, since substitute is also
 // a regular ed command.
-	if (cw->browseMode | cw->sqlMode | cw->dirMode | cw->ircoMode)
+	if (cw->browseMode | cw->sqlMode | cw->dirMode | cw->ircoMode | cw->imapMode1 | cw->imapMode2)
 		return;
 	if (madeChanges)
 		return;
@@ -4219,7 +4219,7 @@ static int substituteText(const char *line)
 	char *re;		// the parsed regular expression
 	int ln, ln2;			// line number
 	int dol2 = 0, alloc2 = 0;
-	int j, linecount, slashcount, nullcount, tagno, total, realtotal;
+	int j, linecount, slashcount, nullcount, foldercount, tagno, total, realtotal;
 	char lhs[MAXRE], rhs[MAXRE];
 	struct lineMap *mptr, *newmap = 0;
 	bool *newg = 0;
@@ -4318,7 +4318,7 @@ static int substituteText(const char *line)
 	ln2 = 0;
 	for (ln = startRange; ln <= endRange; ++ln) {
 		char *p;
-		int len;
+		int len, imaplen;
 
 		if(newmap) {
 			newmap[ln2] = cw->map[ln];
@@ -4334,6 +4334,8 @@ static int substituteText(const char *line)
 
 		p = (char *)fetchLine(ln, -1);
 		len = pstLength((pst) p);
+		if(cw->imapMode1)
+			imaplen = strrchr(p,':') - p; // this should always work
 
 		if (bl_mode) {
 			int newlen;
@@ -4384,7 +4386,7 @@ static int substituteText(const char *line)
 				j = replaceText(s, t - s, rhs, nth,
 						g_mode, last_mode, ln);
 			} else {
-				j = replaceText(p, len - 1, rhs, nth,
+				j = replaceText(p, (cw->imapMode1 ? imaplen : len - 1), rhs, nth,
 						g_mode, last_mode, ln);
 			}
 			if (j < 0)
@@ -4394,7 +4396,7 @@ static int substituteText(const char *line)
 
 // Did we split this line into many lines?
 		replaceStringEnd = replaceString + replaceStringLength;
-		linecount = slashcount = nullcount = 0;
+		linecount = slashcount = nullcount = foldercount = 0;
 		for (t = replaceString; t < replaceStringEnd; ++t) {
 			c = *t;
 			if (c == '\n')
@@ -4403,6 +4405,8 @@ static int substituteText(const char *line)
 				++nullcount;
 			if (c == '/')
 				++slashcount;
+			if ((uchar)c < ' ' || c == '"')
+				++foldercount;
 		}
 
 		if (cw->sqlMode) {
@@ -4456,6 +4460,26 @@ static int substituteText(const char *line)
 			}	// source and dest are different
 } // dir mode
 
+		if (cw->imapMode1) {
+			if (foldercount || replaceStringEnd == replaceString) {
+				setError(MSG_FolderNameBad);
+				goto abort;
+			}
+			p[imaplen] = 0;	// temporary
+			*replaceStringEnd = 0;
+			if (!stringEqual(p, replaceString)) {
+				if (!renameFolder(p, replaceString)) {
+// renameFolder will set the error
+					p[imaplen] = ':';
+					goto abort;
+				}
+				cw->dot = ln;
+			}	// source and dest are different
+			p[imaplen] = ':';
+// this function will replace foo: 127 with bar, no message count,
+// but it doesn't matter cause we're going to refresh anyways.
+		} // imap mode
+
 		if (cw->browseMode) {
 			if (nullcount) {
 				setError(MSG_InputNull2);
@@ -4482,7 +4506,7 @@ static int substituteText(const char *line)
 			if (!linecount) {
 // normal substitute
 				mptr = newmap ? newmap + ln2 : cw->map + ln;
-				if(cw->sqlMode)
+				if(cw->sqlMode | cw->imapMode1)
 					nzFree(mptr->text);
 				mptr->text = allocMem(replaceStringLength + 1);
 				memcpy(mptr->text, replaceString,
@@ -8608,10 +8632,13 @@ redirect:
 			setError(MSG_InsertFunction);
 			return false;
 		}
+
 		if (cw->sqlMode)
 			return sqlAddRows(endRange);
+
 		if (cw->imapMode1)
 			return addFolders();
+
 		return inputLinesIntoBuffer();
 	}
 
@@ -8739,8 +8766,11 @@ afterdelete:
 				setError(MSG_RangeCmd, "s");
 				return false;
 			}
-			puts("rename folder not yet implemented");
-			return true;
+// substituteText will handle the imap folder rename
+			j = substituteText(line);
+			if(j <= 0) return false;
+// success, but we have to refresh.
+			return imap1rf();
 		}
 
 		pst p;

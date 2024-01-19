@@ -4866,6 +4866,7 @@ bool addFolders()
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) {
 			i_printf(MSG_NoCreate3, line2);
+			ebcurl_setError(res, cf->firstURL, 0, emptyString);
 			nzFree(line2);
 			goto done;
 		}
@@ -4918,5 +4919,25 @@ bool deleteFolder(int ln)
 
 done:
 	if(nlines) return imap1rf();
+	return true;
+}
+
+bool renameFolder(const char *src, const char *dest)
+{
+	CURLcode res;
+	CURL *h = cw->imap_h;
+	char *v;
+
+	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+	asprintf(&v, "RENAME \"%s\" \"%s\"", src, dest);
+	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
+	free(v);
+	res = getMailData(h);
+	nzFree(mailstring), mailstring = 0;
+	if (res != CURLE_OK) {
+		i_printf(MSG_NoRename3, src);
+		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		return false;
+	}
 	return true;
 }
