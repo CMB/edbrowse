@@ -130,7 +130,17 @@ static const struct specialtag {
 {"title", 0, 0, 1, 0},
 {"base", 1, 0, 1, 0},
 {"link", 1, 0, 1, 0},
-{"br", 1, 0, 0, 0},
+/*********************************************************************
+The next line allows <br> in the head section, and that is a kludge,
+because of the way I crank out an email in html.
+I want to put a header in front, and allow their html to run,
+and they might start with a head section, so I don't want to distrupt that.
+Any tag I include in my header has to be allowed in <head>,
+so it doesn't push us over into <body>, whence their <head> would be invalid.
+I also use <pre> so that has to be allowed.
+*********************************************************************/
+{"br", 1, 0, 1, 0},
+{"pre", 0, 0, 1, 0},
 {"hr", 1, 0, 0, 0},
 {"img", 1, 0, 0, 0},
 {"area", 1, 0, 0, 0},
@@ -152,7 +162,7 @@ static const struct specialtag {
 {"center",0,1, 0, 0},
 {"font",0,1, 0, 0},
 {"span",0,1, 0, 0},
-{"p",0,0, 0, "blockquote"},
+{"p",0,0, 1, "blockquote"},
 {0, 0,0,0, 0},
 };
 
