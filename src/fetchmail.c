@@ -4897,11 +4897,21 @@ bool deleteFolder(int ln)
 	CURL *h = cw->imap_h;
 	int l;
 	char *v, *p;
+	char inbuf[80];
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 	p = (char*)fetchLine(ln, -1);
 	l = strchr(p, ':') - p; // this should always work
 	p[l] = 0; // I'll put it back
+// This is too consequential to just do it.
+	printf("Are you sure you want to delete %s, and all emails therein? ", p);
+	fflush(stdout);
+	if (!fgets(inbuf, sizeof(inbuf), stdin))
+		exit(1);
+	if(!stringEqual(inbuf, "y\n") && !stringEqual(inbuf, "yes\n")) {
+		p[l] = ':';
+		return true;
+	}
 	asprintf(&v, "DELETE \"%s\"", p);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
 	free(v);
