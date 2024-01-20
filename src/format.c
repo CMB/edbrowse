@@ -3052,15 +3052,23 @@ We roll our own international messages in this file, so you wouldn't think
 we need setlocale, but pcre needs the locale for expressions like \w,
 and for ranges like [A-z],
 and to convert to upper or lower case etc.
-So I set LC_ALL, which covers both LC_CTYPE and LC_COLLATE.
-By calling strcoll, the directory scan is in the same order as ls.
-See dircmp_alph() in stringfile.c
-*********************************************************************/
-	setlocale(LC_ALL, "");
+I think we want a standard behavior here, so I'm going with C.
 
-/* But LC_TIME controls time/date formatting, I.E., strftime.  The one
- * place we do that, we need standard day/month abbreviations, not
- * localized ones.  So LC_TIME needs to be C. */
+By calling strcoll, the directory scan is in the same order as ls.
+But only if we get our collation information from the environment, as ls does.
+
+quickjs parses numbers according to locale, and that has to be
+standard C numbers, or all the javascript on the internet won't run.
+
+LC_TIME controls time/date formatting, I.E., strftime.  The place we do that,
+sendmail.c, we need standard day/month abbreviations, not  localized ones.
+Agrees with the rfc standards.
+So LC_TIME needs to be C.
+*********************************************************************/
+
+	setlocale(LC_CTYPE, "C");
+	setlocale(LC_COLLATE, "");
+	setlocale(LC_NUMERIC, "C");
 	setlocale(LC_TIME, "C");
 
 	strncpy(eb_language, s, 7);
@@ -3302,7 +3310,7 @@ bool helpUtility(void)
 		return false;
 	cxSwitch(cx, false);
 	i_printf(MSG_MovedSession, cx);
-	browseCurrentBuffer(NULL);
+	browseCurrentBuffer(NULL, false);
 	cw->dot = 1;
 	return true;
 }

@@ -8021,7 +8021,7 @@ dest_ok:
 				if (!w->prev)
 					cs->fw = w;
 				cf->render2 = cf->render3 = true;
-				if(gmt->outtype == 'h') browseCurrentBuffer(NULL);
+				if(gmt->outtype == 'h') browseCurrentBuffer(NULL, false);
 				return true;
 			} else {
 				char pb_how[12];
@@ -8529,7 +8529,7 @@ browse:
 				debugPrint(1, "%lld", fileSize);
 				fileSize = -1;
 			}
-			if (!browseCurrentBuffer(browseSuffix)) {
+			if (!browseCurrentBuffer(browseSuffix, false)) {
 				if (icmd == 'b')
 					return false;
 				return true;
@@ -8866,7 +8866,7 @@ void freeEmptySideBuffer(int n)
 	cxQuit(n, 3);
 }
 
-bool browseCurrentBuffer(const char *suffix)
+bool browseCurrentBuffer(const char *suffix, bool plain)
 {
 	char *rawbuf, *newbuf, *tbuf;
 	int rawsize, tlen, j;
@@ -8964,7 +8964,7 @@ bool browseCurrentBuffer(const char *suffix)
 	}
 
 	if (bmode == 1) {
-		newbuf = emailParse(rawbuf);
+		newbuf = emailParse(rawbuf, plain);
 		j = strlen(newbuf);
 
 /* mail could need utf8 conversion, after qp decode */

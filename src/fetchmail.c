@@ -2414,7 +2414,7 @@ static char presentMail(void)
 			showErrorAbort();
 	}
 
-	browseCurrentBuffer(NULL);
+	browseCurrentBuffer(NULL, false);
 
 	redirect = defaultSaveFilename(&key, &delflag);
 
@@ -3679,7 +3679,7 @@ static void formatMail(struct MHINFO *w, bool top)
 }
 
 // Browse the email file.
-char *emailParse(char *buf)
+char *emailParse(char *buf, bool plain)
 {
 	struct MHINFO *w;
 	nattach = nimages = 0;
@@ -4475,7 +4475,7 @@ bool mailDescend(const char *title, char cmd)
 	cw->changeMode = false;
 
 	if(!emode)
-		browseCurrentBuffer(NULL);
+		browseCurrentBuffer(NULL, (cmd == 't'));
 	preferPlain = false;
 	if(!showcount) fileSize = -1; // don't print byte count
 	return true;

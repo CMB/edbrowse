@@ -16,7 +16,7 @@ bool cxCompare(int cx) { return false; }
 bool cxActive(int cx, bool error) { return false; }
 bool cxQuit(int cx, int action) { return true; }
 void cxSwitch(int cx, bool interactive) {}
-bool browseCurrentBuffer(const char *suffix) { return false; }
+bool browseCurrentBuffer(const char *suffix, bool present) { return false; }
 int sideBuffer(int cx, const char *text, int textlen, const char *bufname){ return 0; }
 void undoSpecialClear(void){}
 pst fetchLine(int n, int show){ return (uchar*)emptyString; }
