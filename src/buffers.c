@@ -6716,6 +6716,7 @@ bool runCommand(const char *line)
 		char *p;
 	char *thisfile;
 	const char *browseSuffix = 0;
+	bool plainMail = false;
 	static char newline[MAXTTYLINE];
 
 	selfFrame();
@@ -7329,7 +7330,9 @@ after_ib:
 			cmd = 'e';
 			return false;
 		}
-		if(!findMimeBySuffix(browseSuffix)) {
+		if(stringEqual(browseSuffix, "plain"))
+			browseSuffix = NULL, plainMail = true;
+		else if(!findMimeBySuffix(browseSuffix)) {
 			setError(MSG_SuffixBad, browseSuffix);
 			cmd = 'e';
 			return false;
@@ -8529,7 +8532,7 @@ browse:
 				debugPrint(1, "%lld", fileSize);
 				fileSize = -1;
 			}
-			if (!browseCurrentBuffer(browseSuffix, false)) {
+			if (!browseCurrentBuffer(browseSuffix, plainMail)) {
 				if (icmd == 'b')
 					return false;
 				return true;
