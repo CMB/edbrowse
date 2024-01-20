@@ -70,7 +70,7 @@ void setEnvelopeFormat(const char *s);
 void setFetchLimit(const char *s);
 int fetchMail(int account);
 int fetchAllMail(void);
-void scanMail(void);
+void scanUnreadMail(void);
 bool emailTest(void);
 void mail64Error(int err);
 char *emailParse(char *buf, bool plain);

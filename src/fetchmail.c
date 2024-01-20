@@ -643,7 +643,7 @@ static void undosOneMessage(void)
 	mailstring[k] = 0;
 }
 
-static char presentMail(void);
+static char presentMail(bool *plain);
 static bool envelopes(CURL * handle, struct FOLDER *f);
 static void isoDecode(char *vl, char **vrp);
 
@@ -1051,6 +1051,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	CURLcode res = CURLE_OK;
 	char *t;
 	char key;
+	bool plain = false;
 	int fl = (ismc ? fetchLimit : cw->imap_l);
 	bool earliest = false;
 	char cust_cmd[80];
@@ -1087,7 +1088,6 @@ reaction:
 action:
 		delflag = retry = partread = false;
 		postkey = 0;
-		preferPlain = false;
 		if(isInteractive) printf("? ");
 		fflush(stdout);
 // include +-^$ for some other options
@@ -1142,12 +1142,12 @@ research:
 
 dispmail:
 		if (key == ' ' || key == 'g' || key == 't') {
-			if(key == 't') preferPlain = true;
+			if(key == 't') plain = true;
 
 			res = downloadBody(handle, f, mif->uid);
 			if(res != CURLE_OK) goto abort;
 
-			key = presentMail();
+			key = presentMail(&plain);
 // presentMail has already freed mailstring
 			retry = false; // user has issued another command
 			postkey = 0;
@@ -2227,10 +2227,13 @@ int fetchAllMail(void)
 static void readReplyInfo(void);
 static void writeReplyInfo(const char *addstring);
 
-void scanMail(void)
+// Scan through read and manage the emails in mailbox/unread. This is from the -m option,
+// or -fm7 where account 7 is pop3. This is not imap.
+void scanUnreadMail(void)
 {
 	int nmsgs, m;
 	char key;
+	bool plain = false;
 
 	if (!isInteractive)
 		i_printfExit(MSG_FetchNotBackgnd);
@@ -2255,7 +2258,6 @@ void scanMail(void)
 	}
 	i_printf(MSG_MessagesX, nmsgs);
 
-	preferPlain = false;
 	for (m = 1; m <= nmsgs; ++m) {
 // Now grab the entire message
 		unreadStats();
@@ -2264,12 +2266,12 @@ void scanMail(void)
 			showErrorAbort();
 		unreadBase = unreadMin;
 
-		key = presentMail();
+		key = presentMail(&plain);
 		if(key == 'g') { --m, --unreadBase; continue; }
-		if(key == 't') { preferPlain ^= 1; --m, --unreadBase; continue; }
+		if(key == 't') { plain ^= 1; --m, --unreadBase; continue; }
 		if (key == 'd')
 			unlink(umf);
-		preferPlain = false;
+		plain = false;
 	}			// loop over mail messages
 
 	exit(0);
@@ -2387,7 +2389,7 @@ static const char*defaultSaveFilename(char *key_p, bool *delflag_p)
 // a mail message is in mailstring, present it to the user
 // Return the key that was pressed.
 // stop is only meaningful for imap.
-static char presentMail(void)
+static char presentMail(bool *plain)
 {
 	int j, k;
 	const char *redirect = NULL;	/* send mail elsewhere */
@@ -2414,7 +2416,7 @@ static char presentMail(void)
 			showErrorAbort();
 	}
 
-	browseCurrentBuffer(NULL, false);
+	browseCurrentBuffer(NULL, *plain);
 
 	redirect = defaultSaveFilename(&key, &delflag);
 
@@ -2466,7 +2468,7 @@ key_command:
 
 	case 't':
 		i_puts(MSG_Restart);
-		preferPlain ^= 1;
+		*plain ^= 1;
 		key = 'g';
 		goto afterinput;
 
@@ -3683,6 +3685,7 @@ char *emailParse(char *buf, bool plain)
 {
 	struct MHINFO *w;
 	nattach = nimages = 0;
+	preferPlain = plain;
 	firstAttach = 0;
 	mailIsHtml = mailShowsHtml = ignoreImages = false;
 	fm = initString(&fm_l);
@@ -3691,7 +3694,7 @@ char *emailParse(char *buf, bool plain)
 // As an experiment, declare every email as html.
 // That way we can always turn attachments into hyperlinks.
 	mailShowsHtml = true;
-	if(mailIsHtml & preferPlain) i_puts(MSG_NoPlain);
+	if(mailIsHtml & plain) i_puts(MSG_NoPlain);
 	if (mailShowsHtml)
 		stringAndString(&fm, &fm_l, "<html>\n");
 	formatMail(w, true);
@@ -4436,7 +4439,6 @@ bool mailDescend(const char *title, char cmd)
 	path = cw->baseDirName;
 	f0.path = path; // that's all we need in f0
 
-	preferPlain = (cmd == 't');
 // downloadBody has a retry feature in it
 	res = downloadBody(h, &f0, uid);
 	if(res != CURLE_OK) {
@@ -4476,7 +4478,6 @@ bool mailDescend(const char *title, char cmd)
 
 	if(!emode)
 		browseCurrentBuffer(NULL, (cmd == 't'));
-	preferPlain = false;
 	if(!showcount) fileSize = -1; // don't print byte count
 	return true;
 }

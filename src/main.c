@@ -653,9 +653,8 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if (domail) {
-				scanMail();
-			}
+			if (domail)
+				scanUnreadMail();
 
 			exit(0);
 		}
