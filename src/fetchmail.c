@@ -4895,14 +4895,13 @@ bool deleteFolder(int ln)
 {
 	CURLcode res;
 	CURL *h = cw->imap_h;
-	int l, nlines = 0;
-	char *v;
-	uchar *p;
+	int l;
+	char *v, *p;
 
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
-	p = fetchLine(ln, -1);
-	l = pstLength(p);
-	p[l - 1] = 0; // I'll put it back
+	p = (char*)fetchLine(ln, -1);
+	l = strchr(p, ':') - p; // this should always work
+	p[l] = 0; // I'll put it back
 	asprintf(&v, "DELETE \"%s\"", p);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, v);
 	free(v);
@@ -4910,15 +4909,12 @@ bool deleteFolder(int ln)
 	nzFree(mailstring), mailstring = 0;
 	if (res != CURLE_OK) {
 		i_printf(MSG_NoDelete3, p);
-		p[l - 1] = '\n';
-		goto done;
+		p[l] = ':';
+		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		return false;
 	}
-	++nlines;
-	p[l - 1] = '\n';
-
-done:
-	if(nlines) return imap1rf();
-	return true;
+	p[l] = ':';
+	return imap1rf();
 }
 
 bool renameFolder(const char *src, const char *dest)

@@ -8655,8 +8655,7 @@ redirect:
 				setError(MSG_RangeCmd, "d");
 				return false;
 			}
-			puts("delete folder not yet implemented");
-			return true;
+			return deleteFolder(endRange);
 		}
 
 		if (cw->imapMode2) {

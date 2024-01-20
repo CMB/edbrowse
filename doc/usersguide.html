@@ -835,6 +835,7 @@ sm : send mail [account number]
 <br>e ufs : envelope format is unseen, from, subject
 <br>a : add folders, like append mode, . when finished
 <br>s/x/y/ : rename a folder - but not a system folder!
+<br>d : delete a folder - but not a system folder! All email in that folder is lost.
 <br>g : go into a folder, similar to directory mode
 <br>rf : refresh the envelopes in this buffer
 <br>d : delete this email
@@ -847,13 +848,14 @@ sm : send mail [account number]
 <br> w filename : write this email formatted to a file, and an unformatted copy in ~/.trash/rawmail
 <br> W filename : same as above but delete the email
 <br>g : go into this email for reading
-<br>t : go to the plain text component of this email
+<br>t : go into this email but present the plain text mime component
 <br>g- : go to this email but do not browse
 <br>rf : refresh the email you are reading
 <br>d : delete the email you are reading
 <br>m abc : move the email you are reading
-<br>u filename : save the email you are reading, unformatted
-<br>w filename : save the email you are reading, formatted
+<br>t abc : copy the email you are reading
+<br>u filename : save the email you are reading unformatted
+<br>w filename : save the email you are reading formatted
 <br>^ : back up to envelopes
 <br>^ : back up to folders
 <p>
