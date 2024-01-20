@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+
+# Put entry debug statements on functions
+# usage fnentry file.js >temp.js
+# intended for shared.js and startwindow.js, and only for debugging purposes
+
+open FH, $ARGV[0];
+while(<FH>) {
+# foo = function(params) {
+s/([\w\$]+) = function *\(([\w\$, ]*)\) *{$/$1 = function($2) {alert3("enter $1");/;
+# function foo(params) {
+s/\bfunction +([\w\$]+) *\(([\w\$, ]*)\) *{$/function $1($2) {alert3("enter $1");/;
+print;
+}

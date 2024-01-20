@@ -4904,12 +4904,13 @@ bool deleteFolder(int ln)
 	l = strchr(p, ':') - p; // this should always work
 	p[l] = 0; // I'll put it back
 // This is too consequential to just do it.
-	printf("Are you sure you want to delete %s, and all emails therein? ", p);
+	printf("Are you sure you want to delete the folder %s, and all emails therein? ", p);
 	fflush(stdout);
 	if (!fgets(inbuf, sizeof(inbuf), stdin))
 		exit(1);
 	if(!stringEqual(inbuf, "y\n") && !stringEqual(inbuf, "yes\n")) {
 		p[l] = ':';
+		i_puts(MSG_Abort);
 		return true;
 	}
 	asprintf(&v, "DELETE \"%s\"", p);
