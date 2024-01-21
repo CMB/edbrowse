@@ -3596,20 +3596,41 @@ static void ircAddLine(Window *win, const char *channel, bool show, const char *
 		}
 	}
 
-	if(strncmp(irc_out, ">< 353 (", 8)) goto regular;
+	const char *e1, *e2;
+	int l;
 	if(!win->ircChannel) goto regular;
+	if(strncmp(irc_out, ">< JOIN (", 9)) goto quit;
+	e1 = strchr(irc_out, '(');
+	e2 = strchr(irc_out, ')');
+// e1 and e2 should always be valid
+	if(!e1 || !e2) goto regular;
+	++e1;
+	l = e2 - e1;
+	if(l != (int)strlen(win->ircChannel)) goto regular;
+	if(memcmp(e1, win->ircChannel, l)) goto regular;
+	debugPrint(3, "join detected");
+	goto regular;
+
+quit:
+	if(strncmp(irc_out, ">< QUIT (", 9)) goto names;
+	debugPrint(3, "quit detected");
+	goto regular;
+
+names:
+	if(strncmp(irc_out, ">< 353 (", 8)) goto regular;
 // list of participants, check channel, it should always match, shouldn't it?
 // I've seen delimiters of @ and =, are there others?
-	const char *e1 = strpbrk(irc_out, "@=");
-	const char *e2 = strchr(irc_out, ')');
+	e1 = strpbrk(irc_out, "@=");
+	e2 = strchr(irc_out, ')');
 // e1 and e2 should always be valid
 	if(!e1 || !e2) goto regular;
 	++e1;
 	while(*e1 == ' ') ++e1;
-	int l = e2 - e1;
+	l = e2 - e1;
 	if(l != (int)strlen(win->ircChannel)) goto regular;
 	if(memcmp(e1, win->ircChannel, l)) goto regular;
 	++e2;
+	if(*e2 == ':') ++e2;
 	while(*e2 == ' ') ++e2;
 	debugPrint(3, "names detected");
 // compare with prior list, but not yet implemented
