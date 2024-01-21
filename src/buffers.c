@@ -1006,6 +1006,9 @@ static void freeWindow(Window *w)
 	nzFree(w->referrer);
 	nzFree(w->baseDirName);
 	nzFree(w->mail_raw);
+// I know we're freeing the window and we don't care, but ircClose will
+// also try to free mail_raw.
+	w->mail_raw = 0;
 // only cleanup the curl handle on imapmode 1, if you try it again on 2 it will blow up.
 	if(w->imapMode1 && w->imap_h) curl_easy_cleanup(w->imap_h);
 	if(w->irciMode) {

@@ -3575,7 +3575,7 @@ static char * ircEat(char *s, int (*p)(int), int r)
 
 // This uses addTextToBuffer to place the line, and so,
 // cw has to be set to the receiving window.
-static void ircAddLine(const char *channel, bool show, const char *fmt, ...)
+static void ircAddLine(Window *win, const char *channel, bool show, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -3595,6 +3595,28 @@ static void ircAddLine(const char *channel, bool show, const char *fmt, ...)
 			memcpy(irc_out, channel, l1);
 		}
 	}
+
+	if(strncmp(irc_out, ">< 353 (", 8)) goto regular;
+	if(!win->ircChannel) goto regular;
+// list of participants, check channel, it should always match, shouldn't it?
+// I've seen delimiters of @ and =, are there others?
+	const char *e1 = strpbrk(irc_out, "@=");
+	const char *e2 = strchr(irc_out, ')');
+// e1 and e2 should always be valid
+	if(!e1 || !e2) goto regular;
+	++e1;
+	while(*e1 == ' ') ++e1;
+	int l = e2 - e1;
+	if(l != (int)strlen(win->ircChannel)) goto regular;
+	if(memcmp(e1, win->ircChannel, l)) goto regular;
+	++e2;
+	while(*e2 == ' ') ++e2;
+	debugPrint(3, "names detected");
+// compare with prior list, but not yet implemented
+	nzFree(win->mail_raw);
+	win->mail_raw = (char*)clonePstring((uchar*)e2);
+
+regular:
 	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
 }
 
@@ -3625,13 +3647,13 @@ static void ircPrepLine(Window *win, Window *wout, char *line)
 // going to call ircAddLine below
 	save_cw = cw, cw = wout;
 	if(stringEqual("PRIVMSG", line))
-		ircAddLine(par, win->ircChannels, "<%s> %s", usr, txt);
+		ircAddLine(win, par, win->ircChannels, "<%s> %s", usr, txt);
 	else if(stringEqual("PING", line)) {
 		ircSend(win, "PONG %s", txt);
 		debugPrint(4, "PING PONG %s", txt);
 	}
 	else {
-		ircAddLine(usr, win->ircChannels, ">< %s (%s): %s", line, par, txt);
+		ircAddLine(win, usr, win->ircChannels, ">< %s (%s): %s", line, par, txt);
 		if(stringEqual("NICK", line) && stringEqual(usr, win->ircNick)) {
 			nzFree(win->ircNick);
 			win->ircNick = cloneString(txt);
@@ -3649,7 +3671,7 @@ static void ircMessage(Window *wout, const char *receiver, const char *msg)
 		return;
 	}
 	cw = wout;
-	ircAddLine(receiver, win->ircChannels, "<%s> %s",
+	ircAddLine(win, receiver, win->ircChannels, "<%s> %s",
 	(win->ircNick ? win->ircNick : emptyString), msg);
 	cw = win;
 	ircSend(win, "PRIVMSG %s :%s", receiver, msg);
@@ -3732,6 +3754,8 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 // leaving the channel we are currently sending on,
 // what are we suppose to do?
 				ircSetChannel(win, 0);
+				win->imap_l = 0;
+				nzFree(win->mail_raw), win->mail_raw = 0;
 			}
 			return;
 		case 'm':
@@ -3743,6 +3767,8 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 			return;
 		case 's':
 			ircSetChannel(win, p);
+			win->imap_l = 0;
+			nzFree(win->mail_raw), win->mail_raw = 0;
 			return;
 		}
 	}
@@ -3858,7 +3884,7 @@ teardown:
 	if(w2) {
 		Window *save_cw = cw;
 		cw = w2;
-		ircAddLine(w->ircChannel, true, emsg);
+		ircAddLine(w, w->ircChannel, true, emsg);
 		cw = save_cw;
 		if(--w2->ircCount == 0) {
 			w2->ircoMode = false;
@@ -4015,6 +4041,9 @@ void ircClose(Window *w)
 	nzFree(w->ircChannel), w->ircChannel = 0;
 	nzFree(w->f0.fileName), w->f0.fileName = 0;
 	nzFree(w->f0.hbase), w->f0.hbase = 0;
+// fields overloaded
+	w->imap_l = 0;
+	nzFree(w->mail_raw), w->mail_raw = 0;
 }
 
 /*********************************************************************
