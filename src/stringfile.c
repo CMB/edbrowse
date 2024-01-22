@@ -2115,7 +2115,11 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 				struct stat buf;
 				if (!stat(path1, &buf)) {
 // we can march on if the time isn't adjusted
+#if defined(__APPLE__)
+					struct timespec times[2] = {buf.st_atimespec, buf.st_mtimespec};
+#else
 					struct timespec times[2] = {buf.st_atim, buf.st_mtim};
+#endif
 					utimensat(AT_FDCWD, path2, times, 0);
 				}
 
