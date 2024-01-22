@@ -3,9 +3,13 @@ Here are some changes introduced by recent versions of edbrowse.
 3.8.9
 dx to specify hard delete in imap folders.
 
-Integrate imap into edbrowse. Emails and envelopes in the buffer.
+Integrate imap into edbrowse. Emails and envelopes are held in the buffers.
 
-g.suffix,  much like b.suffix, indicate a plugin.
+g.suffix,  much like b.suffix, indicate a plugin as you go.
+
+Improved JOIN, PART, and QUIT messages in irc.
+
+Complete the Polish and Russian messages.
 
 3.8.8
 Read and write blocks of text amongst the buffers on the current stack.

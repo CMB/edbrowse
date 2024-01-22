@@ -6307,8 +6307,7 @@ et_go:
 		rc = ircSetup(p);
 		nzFree(p);
 		if(rc && cw->ircoMode) {
-			undoCompare();
-			cw->undoable = cw->changeMode = false;
+			cw->changeMode = false;
 		}
 		return rc;
 	}

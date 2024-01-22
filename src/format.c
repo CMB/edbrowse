@@ -3062,8 +3062,7 @@ standard C numbers, or all the javascript on the internet won't run.
 
 LC_TIME controls time/date formatting, I.E., strftime.  The place we do that,
 sendmail.c, we need standard day/month abbreviations, not  localized ones.
-Agrees with the rfc standards.
-So LC_TIME needs to be C.
+According to the rfc standards. So LC_TIME needs to be C.
 *********************************************************************/
 
 	setlocale(LC_CTYPE, "C");

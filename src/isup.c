@@ -1229,7 +1229,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 {
 	const char *s, *n, *t;
 	char *ns = 0, *w = 0;
-	int j = 0;
+	int j = 0, j2;
 	char c;
 
 	if (!seqno && !name)
@@ -3535,6 +3535,58 @@ Will this induce bugs that are very difficult to reproduce?
 static char irc_in[4096];
 static char irc_out[4096];
 
+char *irclog;
+static void ircLoad(void)
+{
+	FILE *f;
+	char *lines;
+	int lines_l, j, j2, l;
+	const char *timestring;
+
+	if(!irclog) return; // no log file
+	if(!(f = fopen(irclog, "r"))) return; // cannot open
+
+#define CHUNK 200
+	time_t stamps[CHUNK];
+	j = 0;
+	lines = initString(&lines_l);
+	while(fgets(irc_in, sizeof(irc_in), f)) {
+		char *delim = strrchr(irc_in, '|');
+		if(!delim) continue; // should never happen
+		*delim++ = '\n';
+// As I write this, on my pi, I'm casting a long long into a long.
+// This will cause trouble eventually; hopefully they will change time_t before then.
+		stamps[j] = strtoll(delim, 0, 10);
+		stringAndBytes(&lines, &lines_l, irc_in, delim - irc_in);
+		if(++j < CHUNK) continue;
+		addTextToBuffer((uchar*)lines, lines_l, cw->dol, false);
+		for(j = 0; j < CHUNK; ++j) {
+			timestring = conciseTime(stamps[j]);
+			l = cw->dol - CHUNK + 1 + j;
+			nzFree(cw->r_map[l].text);
+			cw->r_map[l].text = (uchar*)cloneString(timestring);
+		}
+		nzFree(lines);
+		lines = initString(&lines_l);
+		j = 0;
+	}
+	fclose(f);
+#undef CHUNK
+
+	if((j2 = j)) {
+		addTextToBuffer((uchar*)lines, lines_l, cw->dol, false);
+		for(j = 0; j < j2; ++j) {
+			timestring = conciseTime(stamps[j]);
+			l = cw->dol - j2 + 1 + j;
+			nzFree(cw->r_map[l].text);
+			cw->r_map[l].text = (uchar*)cloneString(timestring);
+		}
+		nzFree(lines);
+	}
+
+	cw->dot = cw->dol;
+}
+
 static void ircSend(const Window *win, char *fmt, ...)
 {
 	int l;
@@ -3614,6 +3666,18 @@ static void ircAddLine(Window *win, const char *channel, bool show, const char *
 
 regular:
 	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
+
+// opening the log every time is a bit inefficient, but this doesnn't
+// happen very often.
+	FILE *f;
+	if(irclog && (f = fopen(irclog, "a"))) {
+		time_t now;
+		time(&now);
+// chop off \n so we can add in the time stamp
+		irc_out[strlen(irc_out) - 1] = 0;
+		fprintf(f, "%s|%lld\n", irc_out, (long long)now);
+		fclose(f);
+	}
 }
 
 static void ircPrepLine(Window *win, Window *wout, char *line)
@@ -3989,6 +4053,7 @@ bool ircSetup(char *line)
 
 	win->irc_fd = fd;
 	win->irciMode = true;
+	bool was_irc = wout->ircoMode1;
 	wout->ircoMode = wout->ircoMode1 = true;
 	wout->ircCount++;
 	win->ircOther = cxout;
@@ -4014,6 +4079,11 @@ bool ircSetup(char *line)
 		ircSetChannel(win, join);
 	}
 // And hopefully that worked.
+
+// switch to the output buffer
+	cxSwitch(cxout, false);
+	if(!was_irc) ircLoad();
+
 	return true;
 
 usage:
