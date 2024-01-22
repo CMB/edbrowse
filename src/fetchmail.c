@@ -3917,6 +3917,7 @@ nextline:
 	t = strchr(s, '>');
 	if (t[1] == '>') {
 		i_puts(MSG_ReNoID);
+		s = t + 2;
 	} else {
 		stringAndString(&out, &j, "References: <");
 		if (*s != '>') {
@@ -3925,8 +3926,16 @@ nextline:
 		}
 		s = t + 1;
 		t = strchr(s, '>');
-		if(t) // should always happen
+		if(t) { // should always happen
 			stringAndBytes(&out, &j, s, ++t - s);
+			s = t;
+		} else s = s + strlen(s);
+		stringAndChar(&out, &j, '\n');
+	}
+	int n = strtol(s, &s, 10);
+	if(n > 0 && *s == '>') {
+		stringAndString(&out, &j, "Account: ");
+		stringAndNum(&out, &j, n);
 		stringAndChar(&out, &j, '\n');
 	}
 
