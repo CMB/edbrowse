@@ -3238,6 +3238,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		printf("from: %s\n", w->from);
 		printf("date: %s\n", w->date);
 		printf("reply: %s\n", w->reply);
+		printf("to: %s\n", w->to);
 		printf("tolist: %s\n", w->tolist);
 		printf("cclist: %s\n", w->cclist);
 		printf("reference: %s\n", w->ref);
@@ -3703,12 +3704,8 @@ char *emailParse(char *buf, bool plain)
 /* Remember, we always need a nonzero buffer */
 	if (!fm_l || fm[fm_l - 1] != '\n')
 		stringAndChar(&fm, &fm_l, '\n');
-	cw->mailInfo =
-	    allocMem(strlen(w->ref) + strlen(w->mid) +
-		     strlen(w->tolist) + strlen(w->cclist) +
-		     strlen(w->reply) + 6);
-	sprintf(cw->mailInfo, "%s>%s>%s>%s>%s>", w->reply, w->tolist,
-		w->cclist, w->ref, w->mid);
+	asprintf(&cw->mailInfo, "%s>%s>%s>%s>%s>%s>", w->reply, w->tolist,
+		w->cclist, w->ref, w->mid, w->to);
 	if (!ismc && !mailShowsHtml)
 		writeAttachments(w);
 	debugPrint(5, "mailInfo: %s", cw->mailInfo);
@@ -3924,7 +3921,10 @@ nextline:
 			stringAndBytes(&out, &j, s, t - s);
 			stringAndString(&out, &j, "> <");
 		}
-		stringAndString(&out, &j, t + 1);
+		s = t + 1;
+		t = strchr(s, '>');
+		if(t) // should always happen
+			stringAndBytes(&out, &j, s, ++t - s);
 		stringAndChar(&out, &j, '\n');
 	}
 

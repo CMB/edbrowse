@@ -5451,8 +5451,7 @@ et_go:
 		cw->htmlgen = 0;
 		nzFree(cw->htmlkey);
 		cw->htmlkey = 0;
-		nzFree(cw->mailInfo);
-		cw->mailInfo = 0;
+		nzFree(cw->mailInfo), cw->mailInfo = 0;
 		if (ub)
 			fileSize = bufferSize(context, false);
 		return true;

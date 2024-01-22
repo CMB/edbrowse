@@ -1283,7 +1283,7 @@ static void cutDuplicateEmail(char *line, const char *dup, int duplen)
 	while (*line) {
 		s = strchr(line, ',');
 		if (!s)
-			return;	/* should never happen */
+			return;	// should never happen
 		if (duplen == s - line && memEqualCI(line, dup, duplen)) {
 			++s;
 			strmove(line, s);
@@ -1308,7 +1308,7 @@ void cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 	while (*s) {
 		t = strchr(s, ',');
 		if (!t)
-			break;	/* should never happen */
+			break;	// should never happen
 		len = t - s;
 		++t;
 		cutDuplicateEmail(t, s, len);
@@ -1320,15 +1320,15 @@ void cutDuplicateEmails(char *tolist, char *cclist, const char *reply)
 	while (*s) {
 		t = strchr(s, ',');
 		if (!t)
-			break;	/* should never happen */
+			break;	// should never happen
 		len = t - s;
 		++t;
 		cutDuplicateEmail(t, s, len);
 		s = t;
 	}
 
-/* If your email address is on the to or cc list, drop it.
- * But retain it if it is the reply, in case you sent mail to yourself. */
+// If your email address is on the to or cc list, drop it.
+// But retain it if it is the reply, in case you sent mail to yourself.
 	if (reply[0]) {
 		struct MACCOUNT *m = accounts;
 		int i;
@@ -1372,7 +1372,7 @@ bool isEmailAddress(const char *s)
 	return atfound & dotfound;
 }
 
-/* Check for a list of email addresses separated by commas. */
+// Check for a list of email addresses separated by commas.
 bool isEmailAddressList(char *s)
 {
 	if (!s || !*s)
@@ -1388,7 +1388,7 @@ bool isEmailAddressList(char *s)
 	return false;
 }
 
-/* return 1 for utf16, 2 for utf32, ored with 4 for big endian */
+// return 1 for utf16, 2 for utf32, ored with 4 for big endian
 int byteOrderMark(const uchar * buf, int buflen)
 {
 	if (buflen < 2)
