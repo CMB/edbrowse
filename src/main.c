@@ -1378,6 +1378,7 @@ void unreadConfigFile(void)
 
 	nzFree(addressFile), addressFile = 0;
 	nzFree(emojiFile), emojiFile = 0, clearEmojis();
+	nzFree(irclog), irclog = 0;
 	nzFree(cookieFile), cookieFile = 0;
 	nzFree(sslCerts), sslCerts = 0;
 	nzFree(pubKey), pubKey = 0;
@@ -1411,7 +1412,7 @@ static const char *const keywords[] = {
 	"webtimer", "mailtimer", "certfile", "datasource", "proxy",
 	"agentsite", "localizeweb", "imapfetch", "novs", "cachesize",
 	"adbook", "envelope", "emojis", "emoji",
-"include", "js", "pubkey", 0};
+"include", "js", "pubkey", "irclog", 0};
 
 /* Read the config file and populate the corresponding data structures. */
 /* This routine succeeds, or aborts via one of these macros. */
@@ -2059,6 +2060,11 @@ inside:
 				cfgAbort1(MSG_EBRC_KeyNoRead, v);
 			close(j);
 			pubKey = v;
+			continue;
+
+		case 50:	// irclog
+			nzFree(irclog), irclog = 0;
+			irclog = envFileAlloc(v);
 			continue;
 
 		default:

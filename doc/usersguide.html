@@ -4652,6 +4652,13 @@ You can use environment variables or the ~ notation in this, and other pathnames
 emoji = ~/.ebsys/Emojis.txt
 
 <p>
+irclog = /home/mylogin/.ebsys/irclog
+<p>
+Specify a log for all your irc chats.
+This log is pulled back into the output buffer when irc is resumed.
+See the section on the Irc Client for more details.
+
+<p>
 include = ~/.ebsys/plugins
 <p>
 Include another file, like #include in C, or include() in m4.
@@ -5975,10 +5982,12 @@ You will have to send :j group to the server to join a group.
 Note, these groups are also called channels in the irc world. I may use these terms interchangeably.
 
 <p>
-Sessions 8 and 9 are created or commandeered for this irc chat.
+Sessions 8 and 9 are created or commandeered for this irc chat,
+and you will be left in session 9.
 Session 9 is readonly; although you can delete lines if you wish.
-IRC comments are appended to this buffer as they arrive.
-If you are at the end of buffer, just hit return to see if anything new has come in.
+IRC comments are appended to this buffer as they arrive,
+and to the log if irc logging is enabled.
+If you are at the end of the buffer, just hit return to see if anything new has come in.
 Switch to other sessions, do some work, then go back to session 9 and hit return.
 You may want an instance of edbrowse running in its own console, to manage all your irc sessions.
 
@@ -5987,8 +5996,8 @@ Session 8 is for your input.
 Create some text, then type w to send.
 The text will go away as it is sent to the server.
 Switch to session 9 and you will see your comments, and then any replies from your friends.
-Switch to session 8 to send more text. etc.
-You will probably want a function to switch to session 8 for you and send one line as entered.
+Switch to session 8 to send more text, and so on.
+You will probably want a function to switch to session 8 on your behalf, and send one line as entered.
 You can switch to session 8 manually when you want to compose a paragraph, or read in some lines that you want to send, or otherwise use the power of the editor.
 
 <p>

@@ -359,6 +359,7 @@ extern pst linePending;
 extern char *changeFileName;
 extern char *addressFile;	// your address book
 extern char *emojiFile;	// your library of emojis
+extern char *irclog; // log all your irc sessions
 extern int redirect_count;
 extern char *serverData;
 extern int serverDataLen;
