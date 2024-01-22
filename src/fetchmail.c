@@ -1733,7 +1733,7 @@ static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 {
 	int j;
 	int fl = (ismc ? fetchLimit : cw->imap_l);
-	bool earliest = false;
+	bool earliest = false, retry = false;
 	char *t;
 	CURLcode res;
 
@@ -1741,13 +1741,15 @@ static bool examineFolder(CURL * handle, struct FOLDER *f, bool dostats)
 	cleanFolder(f);
 
 /* interrogate folder */
+again:
 	asprintf(&t, "SELECT \"%s\"", f->path);
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
 	res = getMailData(handle);
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
 		nzFree(mailstring), mailstring = 0;
+		if(!retry) { retry = true; goto again; }
+		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
 		return false;
 	}
 
