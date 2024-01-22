@@ -3704,8 +3704,10 @@ char *emailParse(char *buf, bool plain)
 /* Remember, we always need a nonzero buffer */
 	if (!fm_l || fm[fm_l - 1] != '\n')
 		stringAndChar(&fm, &fm_l, '\n');
-	asprintf(&cw->mailInfo, "%s>%s>%s>%s>%s>%s>", w->reply, w->tolist,
-		w->cclist, w->ref, w->mid, w->to);
+	int n = 0;
+	if(cw->imapMode3) n = cw->prev->imap_n;
+	asprintf(&cw->mailInfo, "%s>%s>%s>%s>%s>%d>%s>", w->reply, w->tolist,
+		w->cclist, w->ref, w->mid, n, w->to);
 	if (!ismc && !mailShowsHtml)
 		writeAttachments(w);
 	debugPrint(5, "mailInfo: %s", cw->mailInfo);
