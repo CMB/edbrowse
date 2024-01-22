@@ -4165,14 +4165,18 @@ bool imap1rf(void)
 	CURL *h = cw->imap_h;
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
+	bool retry = false;
 	active_a = a, isimap = true;
 	freeWindows(context, false);
 	if(cw->dol) delText(1, cw->dol);
 // in case you changed debug levels
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
+again:
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, 0);
 	res = getMailData(h);
 	if (res != CURLE_OK) {
+		nzFree(mailstring), mailstring = 0;
+		if(!retry) { retry = true; goto again; }
 // error getting the folders, revert back to an empty buffer
 		ebcurl_setError(res, cf->firstURL, 0, emptyString);
 teardown:
