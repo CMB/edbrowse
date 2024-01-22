@@ -3577,6 +3577,7 @@ static char * ircEat(char *s, int (*p)(int), int r)
 // cw has to be set to the receiving window.
 static void ircAddLine(Window *win, const char *channel, bool show, const char *fmt, ...)
 {
+	unsigned l1, l2;
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(irc_out, sizeof irc_out - 1, fmt, ap);
@@ -3587,7 +3588,7 @@ static void ircAddLine(Window *win, const char *channel, bool show, const char *
 // If you happen to send out a message that starts with >, well then, false positive.
 	if(channel && show && irc_out[0] != '>') {
 // only if there's room, which there should be!
-		unsigned l1 = strlen(channel), l2 = strlen(irc_out);
+		l1 = strlen(channel), l2 = strlen(irc_out);
 		if(l1 + l2 < sizeof irc_out) {
 // This is quick and dirty, just paste them together.
 // We may do something more nuanced later.
@@ -3596,46 +3597,19 @@ static void ircAddLine(Window *win, const char *channel, bool show, const char *
 		}
 	}
 
-	const char *e1, *e2;
-	int l;
-	if(!win->ircChannel) goto regular;
-	if(strncmp(irc_out, ">< JOIN (", 9)) goto quit;
-	e1 = strchr(irc_out, '(');
-	e2 = strchr(irc_out, ')');
-// e1 and e2 should always be valid
-	if(!e1 || !e2) goto regular;
-	++e1;
-	l = e2 - e1;
-	if(l != (int)strlen(win->ircChannel)) goto regular;
-	if(memcmp(e1, win->ircChannel, l)) goto regular;
-	debugPrint(3, "join detected");
-	goto regular;
+	if(!channel) goto regular; // should not happen
 
-quit:
-	if(strncmp(irc_out, ">< QUIT (", 9)) goto names;
-	debugPrint(3, "quit detected");
-	goto regular;
-
-names:
-	if(strncmp(irc_out, ">< 353 (", 8)) goto regular;
-// list of participants, check channel, it should always match, shouldn't it?
-// I've seen delimiters of @ and =, are there others?
-	e1 = strpbrk(irc_out, "@=");
-	e2 = strchr(irc_out, ')');
-// e1 and e2 should always be valid
-	if(!e1 || !e2) goto regular;
-	++e1;
-	while(*e1 == ' ') ++e1;
-	l = e2 - e1;
-	if(l != (int)strlen(win->ircChannel)) goto regular;
-	if(memcmp(e1, win->ircChannel, l)) goto regular;
-	++e2;
-	if(*e2 == ':') ++e2;
-	while(*e2 == ' ') ++e2;
-	debugPrint(3, "names detected");
-// compare with prior list, but not yet implemented
-	nzFree(win->mail_raw);
-	win->mail_raw = (char*)clonePstring((uchar*)e2);
+	if(strncmp(irc_out, ">< JOIN (", 9) &&
+	strncmp(irc_out, ">< QUIT (", 9)) goto regular;
+	if(debugLevel < 2) return;
+// get rid of extraneous stuff after (
+	irc_out[8] = '\n';
+	irc_out[9] = 0;
+	l1 = strlen(channel), l2 = strlen(irc_out);
+	if(l1 + l2 < sizeof irc_out) {
+		strcpy(irc_out + l2 - 1, channel);
+		strcat(irc_out, "\n");
+	}
 
 regular:
 	addTextToBuffer((uchar*)irc_out, strlen(irc_out), cw->dol, false);
@@ -3775,8 +3749,6 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 // leaving the channel we are currently sending on,
 // what are we suppose to do?
 				ircSetChannel(win, 0);
-				win->imap_l = 0;
-				nzFree(win->mail_raw), win->mail_raw = 0;
 			}
 			return;
 		case 'm':
@@ -3788,8 +3760,6 @@ static void ircPrepSend(Window *win, Window *wout, char *s)
 			return;
 		case 's':
 			ircSetChannel(win, p);
-			win->imap_l = 0;
-			nzFree(win->mail_raw), win->mail_raw = 0;
 			return;
 		}
 	}
@@ -4062,9 +4032,6 @@ void ircClose(Window *w)
 	nzFree(w->ircChannel), w->ircChannel = 0;
 	nzFree(w->f0.fileName), w->f0.fileName = 0;
 	nzFree(w->f0.hbase), w->f0.hbase = 0;
-// fields overloaded
-	w->imap_l = 0;
-	nzFree(w->mail_raw), w->mail_raw = 0;
 }
 
 /*********************************************************************
