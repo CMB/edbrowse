@@ -5988,16 +5988,26 @@ Create some text, then type w to send.
 The text will go away as it is sent to the server.
 Switch to session 9 and you will see your comments, and then any replies from your friends.
 Switch to session 8 to send more text. etc.
+You will probably want a function to switch to session 8 for you and send one line as entered.
+You can switch to session 8 manually when you want to compose a paragraph, or read in some lines that you want to send, or otherwise use the power of the editor.
 
 <p>
 If you quit either session, the socket is closed, and the other session is no longer in irc mode. It is simply text.
-However, q is not allowed in session 8.
+However, q is not allowed in either of these sessions.
 It is too easy to send some text and then quit by accident, typing w and then q out of habit.
 I've done it many times.
-If you wish to quit session 8, and keep session 9, retaining a log of the irc chat, type q8 from any session other than 8.
+If you wish to quit session 8, and keep session 9, retaining a log of the irc chat, type q8 from session 1.
 
 <p>
-This capability uses sockets directly, and does not go through curl.
+At debug level 0 or 1 you will see the conversations, your comments and those of the other participants.
+Debug level 2 brings in the JOIN, QUIT, and PART notifications as other people join and leave the channel.
+Debug level 4 prints the ping pong messages to and from the server.
+These are not logged, just printed.
+This is like the http headers that appear at level 4,
+i.e. the metadata that supports the transport of the actual data.
+
+<p>
+Irc uses sockets directly, and does not go through curl.
 Secure sockets use openssl, which is also used by some instances of curl, though others use gnutls.
 We hope that irc and curl will not collide in any way, as they both use openssl.
 

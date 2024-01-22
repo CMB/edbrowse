@@ -3600,6 +3600,7 @@ static void ircAddLine(Window *win, const char *channel, bool show, const char *
 	if(!channel) goto regular; // should not happen
 
 	if(strncmp(irc_out, ">< JOIN (", 9) &&
+	strncmp(irc_out, ">< PART (", 9) &&
 	strncmp(irc_out, ">< QUIT (", 9)) goto regular;
 	if(debugLevel < 2) return;
 // get rid of extraneous stuff after (
