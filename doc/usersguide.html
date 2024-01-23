@@ -143,6 +143,7 @@ p.cen { text-align: center; }
 
 <ul>
 <li><a href=#irc>Using IRC</a>
+<li><a href=#irclog>IRC Log</a>
 </ul>
 
 <h2>Chapter 9, Database Access</h2>
@@ -6075,6 +6076,32 @@ The lst command lists the mod time of the file on the current line, when you are
 Similarly, lst gives the time of the current message in irc mode.
 Thus you can determine when things were said on the channel.
 The other ls commands do not apply here.
+
+<h2 id=irclog> IRC Log </h2>
+
+<p>
+Set irclog = filename in your config file, to log your irc sessions.
+This makes certain assumptions about how you use irc.
+It assumes all your irc output merges into one session on one instance of edbrowse.
+Each message comes into the buffer, and is also appended onto the log file.
+If you close or lose your irc session, and restart it, the log is loaded back into the buffer.
+It is a faithful representation of what you just saw.
+Furthermore, the reload preserves the time stamps on each line, so lst still provides the time of each message.
+
+<p>
+Now, let's ask what happens if you don't use irc in this manner.
+Separate channels have their output in separate buffers, perhaps in multiple instances of edbrowse running on separate consoles.
+Each message is still appended to the one and only log file.
+If a session closes, and then irc restarts, the log file is loaded into that buffer.
+This is a merge of all the irc channels you were monitoring,
+as if they all went into one buffer.
+The same thing happens if you restart irc in another edbrowse process.
+It too will have the same log, all your irc traffic merged together.
+
+<p>
+If you continue to monitor channels in separate buffers, each buffer will continue on with its own separate chat, but the log file will grow with all the messages merged together, as it did before.
+This is not a harmful or unreasonable behavior, and it was the easiest to implement.
+However, most users find it simpler to monitor all their irc channels in one place, whence the log faithfully represents what they are seeing in real time.
 
 <hr>
 <h1>Chapter 9, Database Access</h1>
