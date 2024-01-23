@@ -4648,6 +4648,10 @@ If the prefix of the email address contains special characters, like colon or gr
 "this:&gt;that"@gmail.com
 
 <p>
+On a multi-user system, create this file mode 600, or put it in a directory that is mode 700,
+so that others cannot see all your contacts.
+
+<p>
 emoji = /home/mylogin/.ebsys/Emojis.txt
 <p>
 Specify a library of emojis for edbrowse.
@@ -6117,6 +6121,10 @@ It too will have the same log, all your irc traffic merged together.
 If you continue to monitor channels in separate buffers, each buffer will continue on with its own separate chat, but the log file will grow with all the messages merged together, as it did before.
 This is not a harmful or unreasonable behavior, and it was the easiest to implement.
 However, most users find it simpler to monitor all their irc channels in one place, whence the log faithfully represents what they are seeing in real time.
+
+<p>
+On a multi-user system, create this log file mode 600, or put it in a directory that is mode 700,
+so that others cannot read your irc chats.
 
 <hr>
 <h1>Chapter 9, Database Access</h1>

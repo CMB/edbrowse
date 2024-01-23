@@ -3707,6 +3707,7 @@ char *emailParse(char *buf, bool plain)
 		stringAndChar(&fm, &fm_l, '\n');
 	int n = 0;
 	if(cw->imapMode3) n = cw->prev->imap_n;
+	if(ismc && active_a) n = active_a - accounts + 1;
 	asprintf(&cw->mailInfo, "%s>%s>%s>%s>%s>%d>", w->reply, w->tolist,
 		w->cclist, w->ref, w->mid, n);
 // We could also add in w->to but so far there isn't a need for it.
