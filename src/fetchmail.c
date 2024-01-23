@@ -2133,7 +2133,8 @@ refresh:
 	return CURLE_OK;
 }
 
-/* Returns number of messages fetched */
+// Returns number of messages fetched, but if this is imap,
+// it doesn't return at all.
 int fetchMail(int account)
 {
 	CURL *mail_handle;
@@ -3951,6 +3952,7 @@ nextline:
 static void writeReplyInfo(const char *addstring)
 {
 	int rfh;		/* reply file handle */
+	if(!mailReply) return;
 	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
 	if (rfh < 0)
 		return;
@@ -4158,6 +4160,7 @@ bool imapBuffer(char *line)
 	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);
 	addTextToBackend(imapPaths);
 	nzFree(imapLines), nzFree(imapPaths);
+	if(!mailReply) debugPrint(1, "maildir is missing, some information may not be stored for future replies.");
 // a byte count, as though you had read a file.
 	debugPrint(1, "%d", iml_l);
 	return true;

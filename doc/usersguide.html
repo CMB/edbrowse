@@ -839,7 +839,10 @@ sm : send mail [account number]
 <br>s/x/y/ : rename a folder - but not a system folder!
 <br>d : delete a folder - but not a system folder! All email in that folder is lost.
 <br>g : go into a folder, similar to directory mode
-<br>rf : refresh the envelopes in this buffer
+<p>
+Envelopes
+<p>
+rf : refresh the envelopes in this buffer
 <br>d : delete this email
 <br>m abc : move email to folder abc
 <br>t abc : copy email to folder abc
@@ -852,14 +855,17 @@ sm : send mail [account number]
 <br>g : go into this email for reading
 <br>t : go into this email but present the plain text mime component
 <br>g- : go to this email but do not browse
-<br>rf : refresh the email you are reading
+<p>
+Reading an email beneath Imap
+<p>
+rf : refresh the email you are reading
 <br>d : delete the email you are reading
 <br>m abc : move the email you are reading
 <br>t abc : copy the email you are reading
 <br>u filename : save the email you are reading unformatted
 <br>w filename : save the email you are reading formatted
 <br>^ : back up to envelopes
-<br>^ : back up to folders
+<br>^^ : back up to folders
 <p>
 IRC Client
 <p>
@@ -5803,6 +5809,15 @@ In an edbrowse buffer, you have complete control, so we include all the folders,
 <p>
 The imask command toggles the imask feature on and off.
 It is only available in this window, and is per account.
+
+<p>
+The a command adds new folders, the s command renames a folder, and the d command deletes a folder.
+These are the ed commands you already know, with the expected side effects.
+Since d is drastic and irreversible, edbrowse asks if you are sure you want to delete.
+Type y or yes if you really want to delete that folder, and all emails therein.
+I have no idea what happens if you delete a system folder, like Trash or INBOX.
+I don't recommend it!
+Only rename or delete the folders that you have created.
 
 <p>
 Type /expression to find the folder you want, then type g to go to it,
