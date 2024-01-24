@@ -741,16 +741,16 @@ kann den Namen imap nicht ändern
 kann nicht während laufender IMAP-Sitzung neu konfigurieren
 unterstützt nicht die \"Move\"-Funktionalität
 Sitzung ist inkompatibel mit imap 0
-0
-0
-0
-0
-0
-0
+ignoriere angehängte Bilder
+zeige angehängte Bilder
+zeige keine Kanäle
+zeige Kanäle
+nicht im IRC-Senden-Modus
+Punkt wurde verschoben
 kann %s nicht erstellen
 kann %s nicht Löschen
 kann %s nicht umbenennen
-0
+ungültige Zeichen im Ordnernamen
 0
 0
 0

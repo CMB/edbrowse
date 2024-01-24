@@ -5,6 +5,9 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
+# make sure pkg-config is installed
+if ! type pkg-config >/dev/null 2>&1 ; then echo pkg-config-not-installed; exit 0; fi
+
 cmd="$1"
 shift
 case "${cmd}" in

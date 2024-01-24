@@ -3707,7 +3707,11 @@ char *emailParse(char *buf, bool plain)
 		stringAndChar(&fm, &fm_l, '\n');
 	int n = 0;
 	if(cw->imapMode3) n = cw->prev->imap_n;
-	if(ismc && active_a) n = active_a - accounts + 1;
+// Setting the account doesn't always work in pop3, only imap.
+// In pop3 I fetch from comcast, then gmail, so the current account is gmail, then I scan through all the emails and ask what you want to do with them.
+// If you save them or such I store the account for all those emails as gmail, which is wrong.
+// So screw it and only invoke this feature for imap.
+	if(ismc && isimap && active_a) n = active_a - accounts + 1;
 	asprintf(&cw->mailInfo, "%s>%s>%s>%s>%s>%d>", w->reply, w->tolist,
 		w->cclist, w->ref, w->mid, n);
 // We could also add in w->to but so far there isn't a need for it.
