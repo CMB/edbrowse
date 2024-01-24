@@ -3619,26 +3619,28 @@ static void formatMail(struct MHINFO *w, bool top)
 		int newlen;
 /* If mail is not in html, reformat it */
 		if (start < end) {
-			if (!mailShowsHtml && ct == CT_TEXT) {
-// html isn't going to format this section, so we should.
+			if (ct == CT_TEXT) {
+#if 0
+				char *z = pullString1(start, end); printf("%s", z); nzFree(z);
+#endif
 				breakLineSetup();
 				if (breakLine(start, end - start, &newlen)) {
 					start = breakLineResult;
 					end = start + newlen;
 				}
 			}
-			if (mailShowsHtml && ct != CT_HTML) {
-#if 0
-				char *z = pullString1(start, end); printf("%s", z); nzFree(z);
-#endif
-				stringAndString(&fm, &fm_l, "<!-- text section converted to html -->\n ");
+			if (mailShowsHtml && ct == CT_TEXT) {
+				stringAndString(&fm, &fm_l, "<!-- text section converted to html -->\n<pre>\n ");
+// This null termination is only needed if breakLine fails.
 				char endc = *end;
 				*end = 0;
-				char *e = htmlEscape0(start, true);
+				char *e = htmlEscape(start);
 				stringAndString(&fm, &fm_l, e);
 				nzFree(e);
 				*end = endc;
+				stringAndString(&fm, &fm_l, "</pre>\n");
 			} else {
+// shoveling text into text or html into html, don't change anything
 				stringAndBytes(&fm, &fm_l, start, end - start);
 			}
 		} // text present
