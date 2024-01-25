@@ -4320,7 +4320,7 @@ bool folderSearch(const char *path, char *search, bool rf)
 	if(*t == 'u') ++t, unseen = true;
 	if(*t) ++t;
 	skipWhite2(&t);
-	if(!*t && !unseen) {
+	if(!*t && (!unseen || (search[1] && !isspace(search[1])))) {
 		setError(MSG_Empty);
 		return false;
 	}
