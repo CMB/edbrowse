@@ -8324,11 +8324,9 @@ past_js:
 					cf = save_cf;
 					if (!c)
 						return false;
-					if (newlocation)
-						goto redirect;
-/* No url means it was a reset button */
-					if (!allocatedLine)
-						return true;
+					if (newlocation) goto redirect;
+// No url means it was a reset button
+					if (!allocatedLine) return true;
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
@@ -8398,7 +8396,7 @@ rebrowse:
 		startRange = endRange = 0;
 		if(!noStack) freeWindows(context, false);
 		changeFileName = 0;	// should already be zero
-		thisfile = (icmd == 'g' ? cf->fileName : 0);
+		thisfile = ((icmd == 'g' || icmd == 'i' || icmd == 'I') ? cf->fileName : 0);
 		jumptag = 0;
 		w = createWindow();
 		w->sno = context;

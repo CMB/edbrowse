@@ -4353,8 +4353,8 @@ again:
 	struct FOLDER f0;
 	memset(&f0, 0, sizeof(f0));
 	f0.path = path;
-	if(*search == 'u') unseen = true, ++search;
-	if(imapSearch(h, &f0, search, unseen, &res) <= 0) {
+	if(*search == 'u') unseen = true;
+	if(imapSearch(h, &f0, search + unseen, unseen, &res) <= 0) {
 		cleanFolder(&f0);
 		if(res != CURLE_OK)
 			ebcurl_setError(res, cf->firstURL, 0, emptyString);
