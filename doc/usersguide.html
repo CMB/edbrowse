@@ -6025,11 +6025,31 @@ If you quit either session, the socket is closed, and the other session is no lo
 However, q is not allowed in either of these sessions.
 It is too easy to send some text and then quit by accident, typing w and then q out of habit.
 I've done it many times.
-If you wish to quit session 8, and keep session 9, retaining a log of the irc chat, type q8 from session 1.
+If you wish to quit session 8, and keep session 9, retaining a log of the irc chat, type .w8 from session 9.
+This blows away session 8, and the irc connection associated with it.
+If that was the only irc channel feeding into session 9, then it has become a text buffer, and you can quit that session as well.
+
+<p>
+If you sent several lines of text to Fred, only to discover he was offf line, and you want to send them again, mark the block of text in session 9 with labels a and b, and do this.
+<p>
+'a,'bw8@0
+<br>
+e8
+<br>
+,s/^.*?&gt; *//
+<br>
+w
+<br>
+e9
+
+<p>
+When you write text back into session 8, the at syntax adds to the buffer, and does not blow it away.
+You can then get rid of your nickname at the start of every line, and send it again.
 
 <p>
 At debug level 0 or 1 you will see the conversations, your comments and those of the other participants.
 Debug level 2 brings in the JOIN, QUIT, and PART notifications as other people join and leave the channel.
+This can be useful, knowing whether Fred is still online.
 Debug level 4 prints the ping pong messages to and from the server.
 These are not logged, just printed.
 This is like the http headers that appear at level 4,
