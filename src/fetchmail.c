@@ -658,16 +658,16 @@ static void cleanFolder(struct FOLDER *f)
 // Return 1 if the search ran successfully and found some messages.
 // Return 0 for no messages and -1 for error.
 static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
-	CURLcode *res_p)
+	bool unseen, CURLcode *res_p)
 {
-	char searchtype = 's';
+	char searchtype = 0;
 	char *t, *u;
 	CURLcode res;
 	int cnt;
 	int fl = (ismc ? fetchLimit : cw->imap_l);
 	bool earliest = false;
 	struct MIF *mif;
-	char cust_cmd[200];
+	char cust_cmd[240];
 
 	if(fl < 0) earliest = true, fl = -fl;
 	if (*line && line[1] == ' ' && strchr("sftb", *line)) {
@@ -680,6 +680,9 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	}
 
 	stripWhite(line);
+// some differences between client and integrated
+// integrated can search for unseen messages, without subject or from conjunct
+	if(ismc && !searchtype) searchtype = 's';
 	if (!line[0]) {
 		i_puts(MSG_Empty);
 		return 0;
@@ -691,15 +694,18 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	}
 
 	strcpy(cust_cmd, "SEARCH ");
-	if (cons_utf8)
+	if (searchtype && cons_utf8)
 		strcat(cust_cmd, "CHARSET UTF-8 ");
+	if(unseen) strcat(cust_cmd, "UNSEEN ");
 	if (searchtype == 's') strcat(cust_cmd, "SUBJECT");
 	if (searchtype == 'f') strcat(cust_cmd, "FROM");
 	if (searchtype == 't') strcat(cust_cmd, "TO");
 	if (searchtype == 'b') strcat(cust_cmd, "BODY");
-	strcat(cust_cmd, " \"");
-	strcat(cust_cmd, line);
-	strcat(cust_cmd, "\"");
+	if(searchtype) {
+		strcat(cust_cmd, " \"");
+		strcat(cust_cmd, line);
+		strcat(cust_cmd, "\"");
+	}
 	curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
 	res = getMailData(handle);
 	if (res != CURLE_OK) {
@@ -1120,7 +1126,7 @@ imap_done:
 				goto imap_done;
 			if(!isInteractive) printf("%s", inputline);
 research:
-			j2 = imapSearch(handle, f, inputline, &res);
+			j2 = imapSearch(handle, f, inputline, false, &res);
 			if(j2 == 0) goto reaction;
 			if(j2 < 0) {
 				if(retry || !refolder(handle, f, res))
@@ -4307,6 +4313,7 @@ bool folderSearch(const char *path, char *search, bool rf)
 	Window *w;
 	const char *t = search + 2;
 	char *u;
+	bool unseen = false, retry = false;
 
 	skipWhite2(&t);
 	if(!*t) {
@@ -4322,29 +4329,32 @@ bool folderSearch(const char *path, char *search, bool rf)
 		return false;
 	}
 
+	if(rf && cw->dol)
+		delText(1, cw->dol);
+
 	active_a = a, isimap = true;
 	curl_easy_setopt(h, CURLOPT_VERBOSE, (debugLevel >= 4));
 // We have to select the folder first, then search
 // Technically we don't have to on refresh, but I will anyways,
 // in case it's been a long time and we logged out and need to reselect.
 	if(rf) path = cw->baseDirName;
+again:
 	asprintf(&u, "SELECT \"%s\"", path);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, u);
 	free(u);
 	res = getMailData(h);
 	nzFree(mailstring), mailstring = 0;
 	if(res != CURLE_OK) {
+		if(!retry) { retry = true; goto again; }
 		ebcurl_setError(res, cf->firstURL, 0, emptyString);
 		return false;
-	}
-	if(rf) {
-		if(cw->dol) delText(1, cw->dol);
 	}
 
 	struct FOLDER f0;
 	memset(&f0, 0, sizeof(f0));
 	f0.path = path;
-	if(imapSearch(h, &f0, search, &res) <= 0) {
+	if(*search == 'u') unseen = true, ++search;
+	if(imapSearch(h, &f0, search, unseen, &res) <= 0) {
 		cleanFolder(&f0);
 		if(res != CURLE_OK)
 			ebcurl_setError(res, cf->firstURL, 0, emptyString);

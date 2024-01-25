@@ -728,8 +728,8 @@ imask desactivado
 imask activado
 no existe imask
 buffer no puede recibir texto
-0
-0
+¡Atención! El correo está sólo parcialmente leído, los datos pueden estar incompletos.\n
+¡Advertencia! El componente Mime se ha leído sólo parcialmente, los datos pueden estar incompletos. \n
 sesión no es compatible con imap
 %c no está disponible en modo imap
 %s no está disponible en modo imap
@@ -738,19 +738,19 @@ no se puede replicar en modo imap
 no se puede reproducir audio en modo imap
 no se pueden romper lineas en modo imap
 no se puede cambiar el nombre de un servidor imap
-0
-0
+no se puede reconfigurar mientras hay sesiones imap en ejecución
+el servidor no es capaz de moverse
 sesión no es compatible con imap 0
-0
-0
-0
-0
-0
-0
+ignorar imágenes adjuntas
+mostrar imágenes adjuntas
+no mostrar canales
+mostrar canales
+no está en modo de envío irc
+el punto de lectura actual se ha movido
 no se puede crear %s\n
 no se puede borrar %s\n
 no se puede renombrar %s\n
-0
+caracteres no válidos en el nombre de la carpeta
 0
 0
 0

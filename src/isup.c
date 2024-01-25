@@ -3563,6 +3563,10 @@ static void ircLoad(void)
 		for(j = 0; j < CHUNK; ++j) {
 			timestring = conciseTime(stamps[j]);
 			l = cw->dol - CHUNK + 1 + j;
+// I'm pretty sure we don't have to do all this free malloc stuf. We already
+// have current time in place, so just copy timestring into it.
+// Assumes everything from conciseTime() is the same length, which I think it is.
+// But I haven't proved it to my satisfaction, so here comes free and malloc.
 			nzFree(cw->r_map[l].text);
 			cw->r_map[l].text = (uchar*)cloneString(timestring);
 		}
