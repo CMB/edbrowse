@@ -682,10 +682,12 @@ static int imapSearch(CURL * handle, struct FOLDER *f, char *line,
 	stripWhite(line);
 // some differences between client and integrated
 // integrated can search for unseen messages, without subject or from conjunct
-	if(ismc && !searchtype) searchtype = 's';
-	if (!line[0]) {
-		i_puts(MSG_Empty);
-		return 0;
+	if(ismc) {
+		if(!searchtype) searchtype = 's';
+		if (!line[0]) {
+			i_puts(MSG_Empty);
+				return 0;
+		}
 	}
 
 	if (strchr(line, '"')) {
@@ -4311,12 +4313,14 @@ bool folderSearch(const char *path, char *search, bool rf)
 	int act = cw->imap_n;
 	struct MACCOUNT *a = accounts + act - 1;
 	Window *w;
-	const char *t = search + 2;
+	const char *t = search;
 	char *u;
 	bool unseen = false, retry = false;
 
+	if(*t == 'u') ++t, unseen = true;
+	if(*t) ++t;
 	skipWhite2(&t);
-	if(!*t) {
+	if(!*t && !unseen) {
 		setError(MSG_Empty);
 		return false;
 	}
@@ -4353,7 +4357,6 @@ again:
 	struct FOLDER f0;
 	memset(&f0, 0, sizeof(f0));
 	f0.path = path;
-	if(*search == 'u') unseen = true;
 	if(imapSearch(h, &f0, search + unseen, unseen, &res) <= 0) {
 		cleanFolder(&f0);
 		if(res != CURLE_OK)

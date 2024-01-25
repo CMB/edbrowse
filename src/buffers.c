@@ -6787,7 +6787,10 @@ bool runCommand(const char *line)
 
 // search the imap server, not a local regexp search
 	if(cw->imapMode1 && first == '/' && cw->dot &&
-	line[1] && strchr("fstb", line[1]) && line[2] == ' ') {
+// there are some different syntaxes here
+	(stringEqual(line, "/u") ||
+	(line[1] && strchr("fstb", line[1]) && line[2] == ' ')  ||
+	(line[1] == 'u' && line[2] && strchr("fstb", line[2]) && line[3] == ' '))) {
 		return folderSearch((char*)cw->r_map[cw->dot].text, (char*)line + 1, false);
 	}
 
@@ -8396,7 +8399,7 @@ rebrowse:
 		startRange = endRange = 0;
 		if(!noStack) freeWindows(context, false);
 		changeFileName = 0;	// should already be zero
-		thisfile = ((icmd == 'g' || icmd == 'i' || icmd == 'I') ? cf->fileName : 0);
+		thisfile = ((icmd == 'g' || icmd == 'i') ? cf->fileName : 0);
 		jumptag = 0;
 		w = createWindow();
 		w->sno = context;
