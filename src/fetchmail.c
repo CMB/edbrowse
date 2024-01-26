@@ -4378,7 +4378,7 @@ again:
 		w->mail_raw = cloneString(search);
 		w->prev = cw, cw = w, sessionList[context].lw = cw, cf = &cw->f0;
 		cw->imapMode2 = true;
-		asprintf(&cf->fileName, "envelopes %s", path);
+		asprintf(&cf->fileName, "envelopes %s /%s", path, search);
 	}
 	makeLinesAndUids(&f0);
 	addTextToBuffer((uchar *)imapLines, iml_l, 0, false);

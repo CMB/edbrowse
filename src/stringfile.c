@@ -1122,7 +1122,8 @@ char *conciseSize(size_t n)
 
 char *conciseTime(time_t t)
 {
-	static char buffer[22];
+	static char buffer[24];
+// longest month is 5 bytes
 	static const char *const englishMonths[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
