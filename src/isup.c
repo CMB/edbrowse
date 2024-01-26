@@ -164,7 +164,7 @@ This function is used to sanitize user-supplied URLs.
  * Google has commas in encoded URLs, and wikipedia has parentheses,
  * so those are (sort of) ok. */
 static const char percentable[] = "'\"<>";
-static const char hexdigits[] = "0123456789abcdef";
+static const char hexdigits[] = "0123456789ABCDEF";
 #define ESCAPED_CHAR_LENGTH 3
 
 char *percentURL(const char *start, const char *end)
@@ -189,9 +189,7 @@ char *percentURL(const char *start, const char *end)
 	new_copy = allocMem(bytes_to_alloc);
 	out_pointer = new_copy;
 	for (in_pointer = start; in_pointer < end; in_pointer++) {
-		if (*in_pointer == '\\')
-			*out_pointer++ = '/';
-		else if (*(signed char *)in_pointer <= ' ' || strchr(percentable, *in_pointer)) {
+		if (*(signed char *)in_pointer <= ' ' || strchr(percentable, *in_pointer)) {
 			*out_pointer++ = '%';
 			*out_pointer++ =
 			    hexdigits[(uchar) (*in_pointer & 0xf0) >> 4];
