@@ -151,8 +151,7 @@ start and end delimit the input string.
 Return value: A new string with the url encoded.
 There is an extra byte, room for / at the end.
 This function copies its input to a dynamically-allocated buffer,
-while performing the following transformation.  Change backslash to slash,
-and percent-escape some of the reserved characters as per RFC3986.
+while percent-escaping some of the reserved characters as per RFC3986.
 Some of the chars retain their reserved semantics and should not be changed.
 This is a friggin guess!
 All characters in the area between start and end, not including end,

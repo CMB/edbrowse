@@ -1442,7 +1442,9 @@ static void findAttributes(const char *start, const char *end)
 	}
 	if ((j = stringInListCI(t->attributes, "value")) >= 0) {
 		v = t->atvals[j];
-		if (v && !*v) v = 0;
+// empty value is like no value, I think, but not for <option>
+// empty value has a meaning, pass no value on submit.
+		if (v && !*v && action != TAGACT_OPTION) v = 0;
 		t->value = cloneString(v);
 		t->rvalue = cloneString(v);
 	}
@@ -4111,13 +4113,14 @@ static void prerenderNode(Tag *t, bool opentag)
 		if (!opentag) {
 			currentOpt = 0;
 			optg = 0;
-// in datalist, the value becomes the text
+// in datalist, the text becomes the value
 			if(currentSel && currentSel->action == TAGACT_DATAL) {
+				if(!t->value) t->value = emptyString;
 				nzFree(t->textval);
 				t->textval = cloneString(t->value);
 			} else {
 // otherwise the converse, empty value is replaced with the text
-				if(!t->value[0])
+				if(!t->value)
 					t->value = cloneString(t->textval);
 			}
 			a = attribVal(t, "label");
@@ -4127,11 +4130,10 @@ static void prerenderNode(Tag *t, bool opentag)
 			}
 			break;
 		}
+// this is open tag
 		currentOpt = t;
 		t->controller = currentSel;
 		t->lic = 0;
-		if (!t->value)
-			t->value = emptyString;
 		t->textval = emptyString;
 		if (!currentSel) {
 			debugPrint(3, "option appears outside a select statement");

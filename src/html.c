@@ -2147,16 +2147,12 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 skip_encode:
 
 	for (t = cw->inputlist; t; t = t->same) {
-		if (t->controller != form)
-			continue;
+		if (t->controller != form) continue;
 		itype = t->itype;
-		if (itype <= INP_SUBMIT && t != submit)
-			continue;
-		if (inputDisabled(t))
-			continue;
+		if (itype <= INP_SUBMIT && t != submit) continue;
+		if (inputDisabled(t)) continue;
 		name = t->name;
-		if (!name || !*name)
-			continue;
+		if (!name || !*name) continue;
 
 		if (t == submit) {	/* the submit button you pushed */
 			int namelen;
@@ -2284,9 +2280,9 @@ skip_encode:
 			rc = locateOptions(t, display, 0, &dynamicvalue, false);
 			nzFree(display);
 			if (!rc)
-				goto fail;	/* this should never happen */
-/* option could have an empty value, usually the null choice,
- * before you have made a selection. */
+				goto fail;	// this should never happen
+// option could have an empty value, usually the null choice,
+// before you have made a selection.
 			if (!*dynamicvalue) {
 				if(t->required)
 					goto required;
