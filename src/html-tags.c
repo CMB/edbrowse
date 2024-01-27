@@ -4120,6 +4120,7 @@ static void prerenderNode(Tag *t, bool opentag)
 				t->textval = cloneString(t->value);
 			} else {
 // otherwise the converse, empty value is replaced with the text
+//				printf("val<%s>text<%s>\n", t->value, t->textval);
 				if(!t->value)
 					t->value = cloneString(t->textval);
 			}

@@ -150,7 +150,7 @@ locateOptions(const Tag *sel, const char *input,
 {
 	Tag *t;
 	char *disp, *val;
-	int disp_l, val_l;
+	int disp_l, val_l, val_count;
 	int len = strlen(input);
 	int n, pmc;
 	const char *s, *e;	/* start and end of an option */
@@ -159,6 +159,7 @@ locateOptions(const Tag *sel, const char *input,
 	iopt = (char *)allocMem(len + 1);
 	disp = initString(&disp_l);
 	val = initString(&val_l);
+	val_count = 0;
 
 	if (setcheck) {
 /* Uncheck all existing options, then check the ones selected. */
@@ -216,9 +217,10 @@ locateOptions(const Tag *sel, const char *input,
 		}
 
 		if (val_p) {
-			if (*val)
+			if (val_count)
 				stringAndChar(&val, &val_l, '\1');
 			stringAndString(&val, &val_l, t->value);
+			++val_count;
 		}
 
 		if (disp_p) {
@@ -240,7 +242,7 @@ locateOptions(const Tag *sel, const char *input,
 	}			// loop over multiple options
 
 	if (val_p)
-		*val_p = val;
+		*val_p = val_count ? val : 0;
 	if (disp_p)
 		*disp_p = disp;
 	free(iopt);
@@ -2028,7 +2030,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 		stringAndChar(&pfs, &pfs_l, '"');
 /* I'm leaving nl off, in case we need ; filename */
 		break;
-	}			/* switch */
+	}			// switch
 
 	if (!*val && fsep == '&')
 		return true;
@@ -2266,6 +2268,17 @@ skip_encode:
 			continue;
 		}
 
+/*********************************************************************
+Here is a small page to test some of these select option cases.
+<body><form action=http://www.eklhad.net/cgi-bin/testperl>
+<select name=snork multiple>
+<option value=y>Yes</option>
+<option value="" selected>No</option>
+<option>Maybe</option>
+<input type=submit>
+</select></form></body>
+*********************************************************************/
+
 		if (itype == INP_SELECT) {
 			char *display = getFieldFromBuffer(t->seqno, 0);
 			char *s, *e;
@@ -2278,21 +2291,23 @@ skip_encode:
 				display = displayOptions(t);
 			}
 			rc = locateOptions(t, display, 0, &dynamicvalue, false);
+//			printf("disp<%s>dyn<%s>\n", display, dynamicvalue);
 			nzFree(display);
 			if (!rc)
 				goto fail;	// this should never happen
-// option could have an empty value, usually the null choice,
-// before you have made a selection.
-			if (!*dynamicvalue) {
+// unlike display, value can return null, if no choice was made
+			if (!dynamicvalue) {
 				if(t->required)
 					goto required;
+/* if it is not a multiple select, should we post the empty value? idk
 				if (!t->multiple)
-					postNameVal(name, dynamicvalue, fsep, false);
+					postNameVal(name, emptyString, fsep, false);
+*/
 				continue;
 			}
-/* Step through the options */
-			for (s = dynamicvalue; *s; s = e) {
-				char more;
+// Step through the options
+			char more = 1;
+			for (s = dynamicvalue; more; s = e) {
 				e = 0;
 				if (t->multiple)
 					e = strchr(s, '\1');
