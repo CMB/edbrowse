@@ -2103,7 +2103,7 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 	const char *eo1; // enctype override from attribute
 	char *eo2; // enctype override from js
 
-/* js could rebuild an option list then submit the form. */
+// js could rebuild an option list then submit the form.
 	rebuildSelectors();
 
 	if (form->bymail)
@@ -2299,12 +2299,17 @@ Here is a small page to test some of these select option cases.
 			if (!dynamicvalue) {
 				if(t->required)
 					goto required;
-/* if it is not a multiple select, should we post the empty value? idk
-				if (!t->multiple)
-					postNameVal(name, emptyString, fsep, false);
-*/
+// multiple select could be zero select
+				if (t->multiple) continue;
+// single select must choose the first option
+				const Tag *u = locateOptionByNum(t, 1);
+				if(!u) continue; // empty list
+					postNameVal(name, u->value, fsep, false);
 				continue;
 			}
+// single select cannot select a blank value
+			if(t->required && !t->multiple && !*dynamicvalue)
+				goto required;
 // Step through the options
 			char more = 1;
 			for (s = dynamicvalue; more; s = e) {
@@ -4963,6 +4968,9 @@ past_cell_paragraph:
 		goto nop;
 
 	case TAGACT_HR:
+// <hr> can be in the midst of options, as a separater between options.
+// We sure don't want that here.
+		if(findOpenTag(t, TAGACT_INPUT)) break;
 		liCheck(t);
 		if (retainTag) {
 			tagInStream(tagno);
