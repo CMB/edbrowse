@@ -5256,6 +5256,10 @@ pwd:
 		}
 		if(cw->imapMode3)
 			return rfWhileReading();
+		if (cw->irciMode | cw->ircoMode1) {
+			setError(MSG_IrcCommandS, "rf");
+			return false;
+		}
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = 2;
