@@ -2339,7 +2339,7 @@ break;
 
 function htmlString(t) {
 if(t.nodeType == 3) return t.data;
-if(t.dom$class == "Cdata") return "<![Cdata[" + t.text + "]]>";
+if(t.dom$class == "XMLCdata") return "<![Cdata[" + t.text + "]]>";
 if(t.nodeType != 1) return "";
 var s = "<" + (t.nodeName ? t.nodeName : "x");
 /* defer to the setAttribute system

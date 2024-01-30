@@ -63,6 +63,9 @@ sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
 // unseen, but changeable
 swm2 = function(k, v) { Object.defineProperty(window, k, {value:v, writable:true, configurable:true})}
 sdm2 = function(k, v) { Object.defineProperty(document, k, {value:v, writable:true, configurable:true})}
+// set protocol dom$class
+spdc = function(c) { var v = c.replace(/^z\$/, "");
+Object.defineProperty(window[c].prototype, "dom$class", {value:v})}
 
 // the third party deminimization stuff is in mw$, the master window.
 // Other stuff too, that can be shared.
@@ -404,7 +407,7 @@ if(arguments.length == 2) h= mw$.resolveURL(arguments[1], arguments[0]);
 this.href = h;
 })
 swm("z$URL", URL)
-Object.defineProperty(URL.prototype, "dom$class", {value:"URL"})
+spdc("URL")
 Object.defineProperty(URL.prototype, "rebuild", {value:mw$.url_rebuild})
 
 Object.defineProperty(URL.prototype, "protocol", {
@@ -514,19 +517,19 @@ Do we support appendchild?   etc.
 *********************************************************************/
 
 swm("Node", function(){})
-Node.prototype.dom$class = "Node";
+spdc("Node")
 
 // a node list is and isn't an array; I don't really understand it.
 // I'll just have it inherit from array, until someone tells me I'm wrong.
 swm("NodeList", function(){})
 NodeList.prototype = new Array;
-NodeList.prototype.dom$class = "NodeList";
+spdc("NodeList")
 
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
 swm("HTMLElement", function(){})
 swm2("Element", HTMLElement)
 HTMLElement.prototype = new Node;
-HTMLElement.prototype.dom$class = "HTMLElement";
+spdc("HTMLElement")
 Object.defineProperty(HTMLElement.prototype, "name", {
 get: function() {
 var isinput = (this.dom$class == "HTMLInputElement" || this.dom$class == "HTMLButtonElement" || this.dom$class == "HTMLSelectElement");
@@ -599,7 +602,7 @@ return null;
 
 swm("z$HTML", function(){})
 z$HTML.prototype = new HTMLElement;
-z$HTML.prototype.dom$class = "HTML";
+spdc("z$HTML")
 Object.defineProperty(z$HTML.prototype, "eb$win", {get: function(){return this.parentNode ? this.parentNode.defaultView : undefined}});
 // Some screen attributes that are suppose to be there.
 z$HTML.prototype.doScroll = eb$voidfunction;
@@ -615,28 +618,28 @@ z$HTML.prototype.scrollLeft = 0;
 // is there a difference between DocType ad DocumentType?
 swm("z$DocType", function(){ this.nodeType = 10, this.nodeName = "DOCTYPE"})
 z$DocType.prototype = new HTMLElement;
-z$DocType.prototype.dom$class = "DocType";
+spdc("z$DocType")
 swm("DocumentType", function(){})
 DocumentType.prototype = new HTMLElement;
-DocumentType.prototype.dom$class = "DocumentType";
+spdc("DocumentType")
 swm("CharacterData", function(){})
-CharacterData.prototype.dom$class = "CharacterData";
+spdc("CharacterData")
 swm("HTMLHeadElement", function(){})
 HTMLHeadElement.prototype = new HTMLElement;
-HTMLHeadElement.prototype.dom$class = "HTMLHeadElement";
+spdc("HTMLHeadElement")
 swm("HTMLMetaElement", function(){})
 HTMLMetaElement.prototype = new HTMLElement;
-HTMLMetaElement.prototype.dom$class = "HTMLMetaElement";
+spdc("HTMLMetaElement")
 swm("z$Title", function(){})
 z$Title.prototype = new HTMLElement;
-z$Title.prototype.dom$class = "Title";
+spdc("z$Title")
 Object.defineProperty(z$Title.prototype, "text", {
 get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
 // setter should change the title of the document, not yet implemented
 });
 swm("HTMLLinkElement", function(){})
 HTMLLinkElement.prototype = new HTMLElement;
-HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
+spdc("HTMLLinkElement")
 // It's a list but why would it ever be more than one?
 Object.defineProperty(HTMLLinkElement.prototype, "relList", {
 get: function() { var a = this.rel ? [this.rel] : [];
@@ -647,7 +650,7 @@ return a;
 
 swm("HTMLBodyElement", function(){})
 HTMLBodyElement.prototype = new HTMLElement;
-HTMLBodyElement.prototype.dom$class = "HTMLBodyElement";
+spdc("HTMLBodyElement")
 HTMLBodyElement.prototype.doScroll = eb$voidfunction;
 HTMLBodyElement.prototype.clientHeight = 768;
 HTMLBodyElement.prototype.clientWidth = 1024;
@@ -662,21 +665,21 @@ HTMLBodyElement.prototype.eb$dbih = function(s){this.innerHTML = s}
 
 swm("ShadowRoot", function(){})
 ShadowRoot.prototype = new HTMLElement;
-ShadowRoot.prototype.dom$class = "ShadowRoot";
+spdc("ShadowRoot")
 
 swm("HTMLBaseElement", function(){})
 HTMLBaseElement.prototype = new HTMLElement;
-HTMLBaseElement.prototype.dom$class = "HTMLBaseElement";
+spdc("HTMLBaseElement")
 
 swm("HTMLFormElement", function(){this.elements = []})
 HTMLFormElement.prototype = new HTMLElement;
-HTMLFormElement.prototype.dom$class = "HTMLFormElement";
+spdc("HTMLFormElement")
 HTMLFormElement.prototype.submit = eb$formSubmit;
 HTMLFormElement.prototype.reset = eb$formReset;
 Object.defineProperty(HTMLFormElement.prototype, "length", { get: function() { return this.elements.length;}});
 
 swm("Validity", function(){})
-Validity.prototype.dom$class = "Validity";
+spdc("Validity")
 /*********************************************************************
 All these should be getters, or should they?
 Consider the tooLong attribute.
@@ -741,7 +744,7 @@ alert3("textarea.innerHTML is too complicated for me to render");
 
 swm("HTMLSelectElement", function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[]; this.options=[];this.validity = new Validity, this.validity.owner = this})
 HTMLSelectElement.prototype = new HTMLElement;
-HTMLSelectElement.prototype.dom$class = "HTMLSelectElement";
+spdc("HTMLSelectElement")
 Object.defineProperty(HTMLSelectElement.prototype, "value", {
 get: function() {
 var a = this.options;
@@ -783,7 +786,7 @@ if(cn2[j].selected) a.push(cn2[j]);
 
 swm("HTMLInputElement", function(){this.validity = new Validity, this.validity.owner = this})
 HTMLInputElement.prototype = new HTMLElement;
-HTMLInputElement.prototype.dom$class = "HTMLInputElement";
+spdc("HTMLInputElement")
 HTMLInputElement.prototype.selectionStart = 0;
 HTMLInputElement.prototype.selectionEnd = -1;
 HTMLInputElement.prototype.selectionDirection = "none";
@@ -849,7 +852,7 @@ set:function(v) { this.setAttribute("size", v);}});
 
 swm("HTMLButtonElement", function(){})
 HTMLButtonElement.prototype = new HTMLElement;
-HTMLButtonElement.prototype.dom$class = "HTMLButtonElement";
+spdc("HTMLButtonElement")
 HTMLButtonElement.prototype.click = mw$.clickfn;
 // type property is automatically in the getAttribute system, acid test 59
 Object.defineProperty(HTMLButtonElement.prototype, "type", {
@@ -860,7 +863,7 @@ set:function(v) { this.setAttribute("type", v);}});
 
 swm("HTMLTextAreaElement", function(){})
 HTMLTextAreaElement.prototype = new HTMLElement;
-HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
+spdc("HTMLTextAreaElement")
 Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
 get: function() { return this.value},
 set: function(t) { this.value = t }});
@@ -882,7 +885,7 @@ set:function(v) { this.setAttribute("readonly", v);}});
 
 swm("z$Datalist", function() {})
 z$Datalist.prototype = new HTMLElement;
-z$Datalist.prototype.dom$class = "Datalist";
+spdc("z$Datalist")
 Object.defineProperty(z$Datalist.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
@@ -891,7 +894,7 @@ set:function(v) { this.setAttribute("multiple", v);}});
 swm("HTMLImageElement", function(){})
 swm2("Image", HTMLImageElement)
 HTMLImageElement.prototype = new HTMLElement;
-HTMLImageElement.prototype.dom$class = "HTMLImageElement";
+spdc("HTMLImageElement")
 Object.defineProperty(HTMLImageElement.prototype, "alt", {
 get:function(){ var t = this.getAttribute("alt");
 return typeof t == "string" ? t : undefined},
@@ -900,59 +903,59 @@ set:function(v) { this.setAttribute("alt", v);
 
 swm("HTMLFrameElement", function(){})
 HTMLFrameElement.prototype = new HTMLElement;
-HTMLFrameElement.prototype.dom$class = "HTMLFrameElement";
+spdc("HTMLFrameElement")
 HTMLFrameElement.prototype.is$frame = true;
 Object.defineProperty(HTMLFrameElement.prototype, "contentDocument", { get: eb$getter_cd});
 Object.defineProperty(HTMLFrameElement.prototype, "contentWindow", { get: eb$getter_cw});
 // These may be different but for now I'm calling them the same.
 swm("HTMLIFrameElement", function(){})
 HTMLIFrameElement.prototype = new HTMLFrameElement;
-HTMLIFrameElement.prototype.dom$class = "HTMLIFrameElement";
+spdc("HTMLIFrameElement")
 
 swm("HTMLAnchorElement", function(){})
 HTMLAnchorElement.prototype = new HTMLElement;
-HTMLAnchorElement.prototype.dom$class = "HTMLAnchorElement";
+spdc("HTMLAnchorElement")
 swm("HTMLOListElement", function(){})
 HTMLOListElement.prototype = new HTMLElement;
-HTMLOListElement.prototype.dom$class = "HTMLOListElement";
+spdc("HTMLOListElement")
 swm("HTMLUListElement", function(){})
 HTMLUListElement.prototype = new HTMLElement;
-HTMLUListElement.prototype.dom$class = "HTMLUListElement";
+spdc("HTMLUListElement")
 swm("HTMLDListElement", function(){})
 HTMLDListElement.prototype = new HTMLElement;
-HTMLDListElement.prototype.dom$class = "HTMLDListElement";
+spdc("HTMLDListElement")
 swm("HTMLLIElement", function(){})
 HTMLLIElement.prototype = new HTMLElement;
-HTMLLIElement.prototype.dom$class = "HTMLLIElement";
+spdc("HTMLLIElement")
 
 swm("HTMLTableSectionElement", function(){})
 HTMLTableSectionElement.prototype = new HTMLElement;
-HTMLTableSectionElement.prototype.dom$class = "HTMLTableSectionElement";
+spdc("HTMLTableSectionElement")
 swm("z$tBody", function(){ this.rows = []})
 z$tBody.prototype = new HTMLTableSectionElement;
-z$tBody.prototype.dom$class = "tBody";
+spdc("z$tBody")
 swm("z$tHead", function(){ this.rows = []})
 z$tHead.prototype = new HTMLTableSectionElement;
-z$tHead.prototype.dom$class = "tHead";
+spdc("z$tHead")
 swm("z$tFoot", function(){ this.rows = []})
 z$tFoot.prototype = new HTMLTableSectionElement;
-z$tFoot.prototype.dom$class = "tFoot";
+spdc("z$tFoot")
 
 swm("z$tCap", function(){})
 z$tCap.prototype = new HTMLElement;
-z$tCap.prototype.dom$class = "tCap";
+spdc("z$tCap")
 swm("HTMLTableElement", function(){ this.rows = []; this.tBodies = []})
 HTMLTableElement.prototype = new HTMLElement;
-HTMLTableElement.prototype.dom$class = "HTMLTableElement";
+spdc("HTMLTableElement")
 swm("HTMLTableRowElement", function(){ this.cells = []})
 HTMLTableRowElement.prototype = new HTMLElement;
-HTMLTableRowElement.prototype.dom$class = "HTMLTableRowElement";
+spdc("HTMLTableRowElement")
 swm("HTMLTableCellElement", function(){})
 HTMLTableCellElement.prototype = new HTMLElement;
-HTMLTableCellElement.prototype.dom$class = "HTMLTableCellElement";
+spdc("HTMLTableCellElement")
 swm("HTMLDivElement", function(){})
 HTMLDivElement.prototype = new HTMLElement;
-HTMLDivElement.prototype.dom$class = "HTMLDivElement";
+spdc("HTMLDivElement")
 HTMLDivElement.prototype.doScroll = eb$voidfunction;
 HTMLDivElement.prototype.align = "left";
 HTMLDivElement.prototype.click = function() {
@@ -964,38 +967,38 @@ this.dispatchEvent(e);
 
 swm("HTMLLabelElement", function(){})
 HTMLLabelElement.prototype = new HTMLElement;
-HTMLLabelElement.prototype.dom$class = "HTMLLabelElement";
+spdc("HTMLLabelElement")
 Object.defineProperty(HTMLLabelElement.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
 swm("HtmlObj", function(){})
 HtmlObj.prototype = new HTMLElement;
-HtmlObj.prototype.dom$class = "HtmlObj";
+spdc("HtmlObj")
 swm("HTMLAreaElement", function(){})
 HTMLAreaElement.prototype = new HTMLElement;
-HTMLAreaElement.prototype.dom$class = "HTMLAreaElement";
+spdc("HTMLAreaElement")
 
 swm("HTMLSpanElement", function(){})
 HTMLSpanElement.prototype = new HTMLElement;
-HTMLSpanElement.prototype.dom$class = "HTMLSpanElement";
+spdc("HTMLSpanElement")
 HTMLSpanElement.prototype.doScroll = eb$voidfunction;
 // should this click be on HTMLElement?
 HTMLSpanElement.prototype.click = HTMLDivElement.prototype.click;
 
 swm("HTMLParagraphElement", function(){})
 HTMLParagraphElement.prototype = new HTMLElement;
-HTMLParagraphElement.prototype.dom$class = "HTMLParagraphElement";
+spdc("HTMLParagraphElement")
 
 swm("HTMLHeadingElement", function(){})
 HTMLHeadingElement.prototype = new HTMLElement;
-HTMLHeadingElement.prototype.dom$class = "HTMLHeadingElement";
+spdc("HTMLHeadingElement")
 swm("z$Header", function(){})
 z$Header.prototype = new HTMLElement;
-z$Header.prototype.dom$class = "Header";
+spdc("z$Header")
 swm("z$Footer", function(){})
 z$Footer.prototype = new HTMLElement;
-z$Footer.prototype.dom$class = "Footer";
+spdc("z$Footer")
 swm("HTMLScriptElement", function(){})
 HTMLScriptElement.prototype = new HTMLElement;
-HTMLScriptElement.prototype.dom$class = "HTMLScriptElement";
+spdc("HTMLScriptElement")
 Object.defineProperty(HTMLScriptElement.prototype, "async", {
 get:function(){ var t = this.getAttribute("async");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
@@ -1008,10 +1011,10 @@ HTMLScriptElement.prototype.type = "";
 HTMLScriptElement.prototype.text = "";
 
 swm("z$Timer", function(){this.nodeName = "TIMER"})
-z$Timer.prototype.dom$class = "Timer";
+spdc("z$Timer")
 swm("HTMLMediaElement", function(){})
 HTMLMediaElement.prototype = new HTMLElement;
-HTMLMediaElement.prototype.dom$class = "HTMLMediaElement";
+spdc("HTMLMediaElement")
 HTMLMediaElement.prototype.autoplay = false;
 HTMLMediaElement.prototype.muted = false;
 HTMLMediaElement.prototype.defaultMuted = false;
@@ -1032,11 +1035,11 @@ if(typeof t == "object") this.src = t.toString();
 })
 swm("Audio", HTMLAudioElement)
 HTMLAudioElement.prototype = new HTMLMediaElement;
-HTMLAudioElement.prototype.dom$class = "HTMLAudioElement";
+spdc("HTMLAudioElement")
 
 swm("HTMLTemplateElement", function(){})
 HTMLTemplateElement.prototype = new HTMLElement;
-HTMLTemplateElement.prototype.dom$class = "HTMLTemplateElement";
+spdc("HTMLTemplateElement")
 // I'm doing the content fudging here, on demand; it's easier than in C.
 Object.defineProperty(HTMLTemplateElement.prototype, "content", {
 get: function() {
@@ -1287,7 +1290,7 @@ strokeText: eb$nullfunction,
 transform: eb$nullfunction,
 translate: eb$nullfunction }}})
 HTMLCanvasElement.prototype = new HTMLElement;
-HTMLCanvasElement.prototype.dom$class = "HTMLCanvasElement";
+spdc("HTMLCanvasElement")
 HTMLCanvasElement.prototype.toDataURL = function() {
 if(this.height === 0  || this.width === 0) return "data:,";
 // this is just a stub
@@ -1350,19 +1353,19 @@ this.createMediaStreamTrackSource = eb$voidfunction;
 this.suspend = eb$voidfunction;
 this.close = eb$voidfunction;
 })
-AudioContext.prototype.dom$class = "AudioContext";
+spdc("AudioContext")
 
 // Document class, I don't know what to make of this,
 // but my stubs for frames needs it.
 swm("Document", function(){})
 Document.prototype = new HTMLElement;
-Document.prototype.dom$class = "Document";
+spdc("Document")
 Document.prototype.nodeName = Document.prototype.tagName = "#document";
 Document.prototype.nodeType = 9;
 
 swm("DocumentFragment", function(){})
 DocumentFragment.prototype = new HTMLElement;
-DocumentFragment.prototype.dom$class = "DocumentFragment";
+spdc("DocumentFragment")
 DocumentFragment.prototype.nodeType = 11;
 DocumentFragment.prototype.nodeName = DocumentFragment.prototype.tagName = "#document-fragment";
 
@@ -1374,7 +1377,7 @@ swm("CSSRuleList", function(){})
 CSSRuleList.prototype = new Array;
 
 swm("CSSStyleSheet", function() { this.cssRules = new CSSRuleList})
-CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";
+spdc("CSSStyleSheet")
 CSSStyleSheet.prototype.insertRule = function(r, idx) {
 var list = this.cssRules;
 (typeof idx == "number" && idx >= 0 && idx <= list.length || (idx = 0));
@@ -1400,7 +1403,7 @@ swm("CSSStyleDeclaration", function(){
         this.style = this;
 })
 CSSStyleDeclaration.prototype = new HTMLElement;
-CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
+spdc("CSSStyleDeclaration")
 // sheet on demand
 Object.defineProperty(CSSStyleDeclaration.prototype, "sheet", { get: function(){ if(!this.sheet$2) this.sheet$2 = new CSSStyleSheet; return this.sheet$2; }});
 
@@ -1537,7 +1540,7 @@ return this[pri] ? "important" : "";
 
 swm("HTMLStyleElement", function(){})
 HTMLStyleElement.prototype = new HTMLElement;
-HTMLStyleElement.prototype.dom$class = "HTMLStyleElement";
+spdc("HTMLStyleElement")
 // Kind of a hack to make this like the link element
 Object.defineProperty(HTMLStyleElement.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
@@ -1629,7 +1632,7 @@ this.data$2 += arguments[0];
 }
 })
 TextNode.prototype = new HTMLElement;
-TextNode.prototype.dom$class = "TextNode";
+spdc("TextNode")
 TextNode.prototype.nodeName = TextNode.prototype.tagName = "#text";
 TextNode.prototype.nodeType = 3;
 
@@ -1659,13 +1662,13 @@ swm("Comment", function(t) {
 this.data = t;
 })
 Comment.prototype = new HTMLElement;
-Comment.prototype.dom$class = "Comment";
+spdc("Comment")
 Comment.prototype.nodeName = Comment.prototype.tagName = "#comment";
 Comment.prototype.nodeType = 8;
 
 swm("XMLCdata", function(t) {})
 XMLCdata.prototype = new HTMLElement;
-XMLCdata.prototype.dom$class = "Cdata";
+spdc("XMLCdata")
 XMLCdata.prototype.nodeName = XMLCdata.prototype.tagName = "#cdata-section";
 XMLCdata.prototype.nodeType = 4;
 
@@ -1685,9 +1688,9 @@ this.text = arguments[0];
 if(arguments.length > 1)
 this.value = arguments[1];
 })
+HTMLOptionElement.prototype = new HTMLElement;
+spdc("HTMLOptionElement")
 swm2("Option", HTMLOptionElement)
-Option.prototype = new HTMLElement;
-Option.prototype.dom$class = "HTMLOptionElement";
 Option.prototype.selected = false;
 Option.prototype.defaultSelected = false;
 Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
@@ -1695,7 +1698,7 @@ Option.prototype.text = Option.prototype.value = "";
 
 swm("HTMLOptGroupElement", function() {})
 HTMLOptGroupElement.prototype = new HTMLElement;
-HTMLOptGroupElement.prototype.dom$class = "HTMLOptGroupElement";
+spdc("HTMLOptGroupElement")
 HTMLOptGroupElement.prototype.nodeName = HTMLOptGroupElement.prototype.tagName = "OPTGROUP";
 
 sdm("getBoundingClientRect", function(){
@@ -1708,13 +1711,13 @@ width: 0, height: 0
 
 // The Attr class and getAttributeNode().
 swm("Attr", function(){ this.owner = null; this.name = ""})
-Attr.prototype.dom$class = "Attr";
+spdc("Attr")
 Attr.prototype.isId = function() { return this.name === "id"; }
 
 // this is sort of an array and sort of not.
 // For one thing, you can call setAttribute("length", "snork"), so I can't use length.
 swm("NamedNodeMap", function() { this.length = 0})
-NamedNodeMap.prototype.dom$class = "NamedNodeMap";
+spdc("NamedNodeMap")
 NamedNodeMap.prototype.push = function(s) { this[this.length++] = s; }
 NamedNodeMap.prototype.item = function(n) { return this[n]; }
 NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerCase()]; }
@@ -1761,7 +1764,7 @@ swm("Event", function(etype){
     this.timeStamp = new Date().getTime();
 if(typeof etype == "string") this.type = etype;
 })
-Event.prototype.dom$class = "Event";
+spdc("Event")
 
 Event.prototype.preventDefault = function(){ this.defaultPrevented = true; }
 
@@ -1785,7 +1788,7 @@ swm("HashChangeEvent", function(){
 this.type = "hashchange";
 })
 // says we inherit from event but I can't think of any event methods we would want to use
-HashChangeEvent.prototype.dom$class = "HashChangeEvent";
+spdc("HashChangeEvent")
 
 swm("MouseEvent", function(etype){
     this.bubbles =     this.cancelable = true;
@@ -1839,7 +1842,7 @@ this.eb$unlisten = eb$unlisten;
 this.addListener = function(f) { this.addEventListener("mediaChange", f, false); }
 this.removeListener = function(f) { this.removeEventListener("mediaChange", f, false); }
 })
-MediaQueryList.prototype.dom$class = "MediaQueryList";
+spdc("MediaQueryList")
 
 swm("matchMedia", function(s) {
 var q = new MediaQueryList;
@@ -2468,7 +2471,7 @@ swm("XMLHttpRequest", function(){
     this.withCredentials = true;
 this.upload = new XMLHttpRequestUpload;
 })
-XMLHttpRequest.prototype.dom$class = "XMLHttpRequest";
+spdc("XMLHttpRequest")
 // this form of XMLHttpRequest is deprecated, but still used in places.
 XDomainRequest = XMLHttpRequest;
 
@@ -2737,7 +2740,7 @@ this.callback = (typeof f == "function" ? f : eb$voidfunction);
 this.active = false;
 this.target = null;
 })
-MutationObserver.prototype.dom$class = "MutationObserver";
+spdc("MutationObserver")
 MutationObserver.prototype.disconnect = function() { this.active = false; }
 MutationObserver.prototype.observe = function(target, cfg) {
 if(typeof target != "object" || typeof cfg != "object" || !target.nodeType || target.nodeType != 1) {
@@ -2754,7 +2757,7 @@ this.active = true;
 MutationObserver.prototype.takeRecords = function() { return []}
 
 swm("MutationRecord", function(){})
-MutationRecord.prototype.dom$class = "MutationRecord";
+spdc("MutationRecord")
 
 swm("mutList", [])
 
@@ -2827,3 +2830,4 @@ delete swm;
 delete sdm;
 delete swm2;
 delete sdm2;
+delete spdc;
