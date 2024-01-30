@@ -1037,7 +1037,9 @@ afterfetch:
 		debugPrint(2, "connect %c", t[1]);
 	}
 	*t = 0, mailstring_l = t - mailstring;
-	while((t = strrchr(mailstring, '\n')) && strstr(t, " FETCH (")) {
+	while((t = strrchr(mailstring, '\n')) &&
+	(strstr(t, " FETCH (") ||
+	strstr(t, " EXISTS"))) {
 // lop off last FETCH line
 		*t = 0, mailstring_l = t - mailstring;
 	}
