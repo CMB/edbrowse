@@ -2,7 +2,6 @@
 
 #include "eb.h"
 
-#include <pthread.h>
 #include <signal.h>
 
 // Define the globals that are declared in eb.h.

@@ -1007,7 +1007,7 @@ static void freeWindow(Window *w)
 	nzFree(w->baseDirName);
 	nzFree(w->mail_raw);
 // only cleanup the curl handle on imapmode 1, if you try it again on 2 it will blow up.
-	if(w->imapMode1 && w->imap_h) curl_easy_cleanup(w->imap_h);
+	if(w->imapMode1 && w->imap_h) imapCleanupInBackground(w->imap_h);
 	if(w->irciMode) {
 		Window *w2 = sessionList[w->ircOther].lw;
 // w2 should always be there

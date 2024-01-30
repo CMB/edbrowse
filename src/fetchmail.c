@@ -4099,7 +4099,7 @@ bool imapBuffer(char *line)
 		}
 		freeWindows(context, false); // lop off stuff below
 		if(cw->dol) delText(1, cw->dol);
-		curl_easy_cleanup(cw->imap_h);
+		imapCleanupInBackground(cw->imap_h);
 		cw->imap_h = 0;
 		cw->imapMode1 = false;
 		nzFree(cf->firstURL), cf->firstURL = 0;
@@ -4120,7 +4120,7 @@ bool imapBuffer(char *line)
 
 	if(cw->imapMode1) {
 // changing from one server to another; tear the first one down
-		curl_easy_cleanup(cw->imap_h);
+		imapCleanupInBackground(cw->imap_h);
 		cw->imap_h = 0;
 	}
 	cw->imapMode1 = true; // temporary
@@ -4162,7 +4162,7 @@ bool imapBuffer(char *line)
 	nzFree(tf_cbase), tf_cbase = 0;
 	if(!n_folders) {
 		setError(MSG_NoFolders);
-		curl_easy_cleanup(h);
+		imapCleanupInBackground(h);
 		return false;
 	}
 	cw->imap_h = h;
@@ -4188,7 +4188,7 @@ usage:
 
 login_error:
 	ebcurl_setError(res, mailbox_url, 0, emptyString);
-	curl_easy_cleanup(h);
+	imapCleanupInBackground(h);
 	return false;
 }
 
@@ -4213,7 +4213,7 @@ again:
 // error getting the folders, revert back to an empty buffer
 		ebcurl_setError(res, cf->firstURL, 0, emptyString);
 teardown:
-		curl_easy_cleanup(h);
+		imapCleanupInBackground(h);
 		cw->imap_h = 0;
 		cw->imapMode1 = false;
 		nzFree(cf->firstURL), cf->firstURL = 0;
@@ -4489,7 +4489,7 @@ bool mailDescend(const char *title, char cmd)
 // A partial read of a big email doesn't return the error, though it does print an error.
 // In other words, we march along.
 		ebcurl_setError(res, cf->firstURL, 0, emptyString);
-		curl_easy_cleanup(h);
+		imapCleanupInBackground(h);
 		cw->imap_h = 0;
 		cw->imapMode2 = false;
 		cw->prev->imap_h = 0;
@@ -4990,4 +4990,25 @@ bool renameFolder(const char *src, const char *dest)
 		return false;
 	}
 	return true;
+}
+
+// cleanup of an imap session can take over a minute, in some cases, we don't know why.
+// The client just exits, but we can't, so we push the cleanup into another thread.
+static void *imapCleanupThread(void *ptr)
+{
+	CURL **box = ptr;
+	CURL *h = *box;
+	curl_easy_cleanup(h);
+	debugPrint(3, "imap close");
+	free(box);
+	return NULL;
+}
+
+void imapCleanupInBackground(CURL *h)
+{
+// If this causes any trouble than just easy_cleanup and return
+	pthread_t tid;
+	CURL **box = allocMem(sizeof(CURL*));
+	*box = h;
+	pthread_create(&tid, NULL, imapCleanupThread, (void *)box);
 }
