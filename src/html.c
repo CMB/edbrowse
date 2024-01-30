@@ -2274,6 +2274,7 @@ Here is a small page to test some of these select option cases.
 <select name=snork multiple>
 <option value=y>Yes</option>
 <option value="" selected>No</option>
+<hr>
 <option>Maybe</option>
 <input type=submit>
 </select></form></body>

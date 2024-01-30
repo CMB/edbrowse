@@ -1049,6 +1049,10 @@ tag_ok:
 			const struct opentag *hold;
 			for(k = stack; k; k = hold) {
 				hold = k->next;
+// special exception for <p><select><hr></select></p>
+// separating options must not close the containing paragraph
+				if(stringEqual(lowname, "hr") &&
+				stringEqual(k->lowname, "select")) break;
 				if(isCrossclose(k->lowname)) {
 					scannerInfo2("cross close %s", k->name);
 					makeTag(k->name, k->lowname, true, lt);
