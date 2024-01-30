@@ -169,18 +169,18 @@ document.ownerDocument = null;
 document.defaultView = window;
 
 // produce a stack for debugging purposes
-step$stack = function(){
+swm("step$stack", function(){
 var s = "you shouldn't see this";
 try { 'use strict'; eval("yyz$"); } catch(e) { s = e.stack; }
 // Lop off some leading lines that don't mean anything.
 for(var i = 0; i<5; ++i)
 s = s.replace(/^.*\n/, "");
 return s;
-}
+})
 
 if(top == window) {
-step$l = 0;
-step$go = "";
+swm2("step$l", 0)
+swm2("step$go", "")
 // First line of js in the base file of your snapshot might be
 // step$l = 0, step$go = "c275";
 // to start tracing at c275
@@ -192,7 +192,7 @@ Object.defineProperty(window, "step$go", {get:function(){return top.step$go}, se
 // I don't use this trick on step$exp, because an expression should really live within its frame
 }
 
-$zct = {}; // counters for trace points
+swm("$zct", {}) // counters for trace points
 
 document.open = function() { return this }
 
@@ -2713,7 +2713,7 @@ swm("constructor", Window)
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: mw$.cssTextGet,
 set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); delete w.soj$; } });
 
-function eb$qs$start() { mw$.cssGather(true); mw$.frames$rebuild(window); }
+swm("eb$qs$start", function() { mw$.cssGather(true); mw$.frames$rebuild(window);})
 
 swm("DOMParser", mw$.DOMParser)
 
