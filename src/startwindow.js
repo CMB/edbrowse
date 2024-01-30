@@ -94,7 +94,8 @@ window.nodeName = "WINDOW"; // in case you want to start at the top.
 document.nodeName = "#document"; // in case you want to start at document.
 document.tagName = "document";
 document.nodeType = 9;
-document.ownerDocument = document;
+document.ownerDocument = null;
+document.defaultView = window;
 
 if(mw$.share) {
 alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
@@ -1487,8 +1488,6 @@ HTMLStyleElement.prototype.dom$class = "HTMLStyleElement";
 Object.defineProperty(HTMLStyleElement.prototype, "css$data", {
 get: function() { var s = ""; for(var i=0; i<this.childNodes.length; ++i) if(this.childNodes[i].nodeName == "#text") s += this.childNodes[i].data; return s; }});
 Object.defineProperty(HTMLStyleElement.prototype, "sheet", { get: function(){ if(!this.sheet$2) this.sheet$2 = new CSSStyleSheet; return this.sheet$2; }});
-
-document.defaultView = window;
 
 HTMLTableElement.prototype.insertRow = mw$.insertRow;
 HTMLTableSectionElement.prototype.insertRow = mw$.insertRow;
