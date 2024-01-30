@@ -1979,6 +1979,7 @@ if(!pageload && newwin && newwin.eb$visible) w = newwin;
 var d =w.document;
 var css_all = "";
 w.cssSource = [];
+Object.defineProperty(w, "cssSource", {enumerable:false});
 var a, i, t;
 
 a = d.querySelectorAll("link,style");
@@ -2007,6 +2008,7 @@ if(!pageload && css_all == w.last$css_all)
 return;
 
 w.last$css_all = css_all;
+Object.defineProperty(w, "last$css", {enumerable:false});
 w.css$ver++;
 cssDocLoad(w.eb$ctx, css_all, pageload);
 }

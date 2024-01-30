@@ -143,9 +143,11 @@ swm("scrollTo", eb$voidfunction)
 swm("scrollBy", eb$voidfunction)
 swm("scrollByLines", eb$voidfunction)
 swm("scrollByPages", eb$voidfunction)
-document.close = eb$voidfunction;
-blur = document.blur = function(){document.activeElement=null}
-focus = document.focus = function(){document.activeElement=document.body}
+sdm("close", eb$voidfunction)
+sdm("blur", function(){document.activeElement=null})
+sdm("focus", function(){document.activeElement=document.body})
+swm("blur", document.blur)
+swm("focus", document.focus)
 
 Object.defineProperty(window, "window", {enumerable:false});
 swm("self", window)
@@ -263,7 +265,7 @@ Object.defineProperty(document, "scrollingElement", {get: mw$.getBody});
 // document should always have children, but...
 sdm("hasChildNodes", mw$.hasChildNodes)
 // This is set to body after browse.
-document.activeElement = null;
+sdm2("activeElement", null)
 
 swm("navigator", {})
 navigator.appName = "edbrowse";
@@ -2725,8 +2727,8 @@ XMLSerializer.prototype.serializeToString = function(root) {
 alert3("trying to use XMLSerializer");
 return "<div>XMLSerializer not yet implemented</div>"; }
 
-css$ver = 0;
-document.xmlVersion = 0;
+swm2("css$ver", 0)
+sdm("xmlVersion", 0)
 
 swm("MutationObserver", function(f) {
 var w = my$win();
