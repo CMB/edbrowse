@@ -136,6 +136,7 @@ swm("toString$nat", toString);
 // toString has to be replaceable by other websites,
 // this happens more often than you think.
 toString = Object.prototype.toString = function() { return this.dom$class ? "[object "+this.dom$class+"]" : toString$nat.call(this);}
+Object.defineProperty(window, "toString", {enumerable:false})
 
 swm("scroll", eb$voidfunction)
 swm("scrollTo", eb$voidfunction)
@@ -146,7 +147,8 @@ document.close = eb$voidfunction;
 blur = document.blur = function(){document.activeElement=null}
 focus = document.focus = function(){document.activeElement=document.body}
 
-self = window;
+Object.defineProperty(window, "window", {enumerable:false});
+swm("self", window)
 Object.defineProperty(window, "parent", {get: eb$parent});
 Object.defineProperty(window, "top", {get: eb$top});
 Object.defineProperty(window, "frameElement", {get: eb$frameElement});
@@ -2204,7 +2206,7 @@ var evs = ["onload", "onunload", "onclick", "onchange", "oninput",
 "onsubmit", "onreset", "onmessage"];
 for(var j=0; j<evs.length; ++j) {
 var evname = evs[j];
-eval(cn + '["' + evname + '$$watch"] = true');
+eval('Object.defineProperty(' + cn + ', "' + evname + '$$watch", {value:true})');
 eval('Object.defineProperty(' + cn + ', "' + evname + '", { \
 get: function() { return this.' + evname + '$2; }, \
 set: function(f) { if(db$flags(1)) alert3((this.'+evname+'?"clobber ":"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".' + evname + '"); \
@@ -2218,7 +2220,7 @@ if(typeof f == "function") { this.' + evname + '$2 = f}}})')
 var cnlist = ["HTMLBodyElement.prototype", "window"];
 for(var i=0; i<cnlist.length; ++i) {
 var cn = cnlist[i];
-eval(cn + '["onhashchange$$watch"] = true');
+eval('Object.defineProperty(' + cn + ', "onhashchange$$watch", {value:true})');
 eval('Object.defineProperty(' + cn + ', "onhashchange", { \
 get: function() { return this.onhashchange$2; }, \
 set: function(f) { if(db$flags(1)) alert3((this.onhashchange?"clobber ":"create ") + (this.nodeName ? this.nodeName : "+"+this.dom$class) + ".onhashchange"); \
