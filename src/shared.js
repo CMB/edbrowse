@@ -554,12 +554,9 @@ Third arg is not used cause I don't understand it.
 It calls a lower level function to do the work, which is also called by
 attachEvent, as these are almost exactly the same functions.
 A similar design applies for removeEventListener and detachEvent.
-However, attachEvent is deprecated, and probably shouldn't be used.
-I have it enabled for now...
+However, attachEvent is deprecated, and not implemented here.
 This is frickin complicated, so set eventDebug to debug it.
 *********************************************************************/
-
-attachOn = false;
 
 function eb$listen(ev, handler, iscapture, addon) {
 if(addon) ev = "on" + ev;

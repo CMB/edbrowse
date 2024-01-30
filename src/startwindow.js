@@ -28,33 +28,38 @@ eb$ctx = 77;
 // or console.log, or anything present in the command line js interpreter.
 if(!window.print) print = console.log;
 alert = print;
-eb$nullfunction = function() { return null; }
+eb$nullfunction = function() { return null}
 eb$voidfunction = function() { }
-eb$truefunction = function() { return true; }
-eb$falsefunction = function() { return false; }
+eb$truefunction = function() { return true}
+eb$falsefunction = function() { return false}
 db$flags = eb$falsefunction;
-eb$newLocation = function (s) { print("new location " + s); }
-eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse"); }
+eb$newLocation = function (s) { print("new location " + s)}
+eb$logElement = function(o, tag) { print("pass tag " + tag + " to edbrowse")}
 eb$playAudio = eb$voidfunction;
-eb$getcook = function() { return "cookies"; }
-eb$setcook = function(value) { print(" new cookie " + value); }
-eb$parent = function() { return this; }
-eb$top = function() { return this; }
-eb$frameElement = function() { return this; }
-eb$getter_cd = function() { return null; }
-eb$getter_cw = function() { return null; }
-eb$formSubmit = function() { print("submit"); }
-eb$formReset = function() { print("reset"); }
+eb$getcook = function() { return "cookies"}
+eb$setcook = function(value) { print(" new cookie " + value)}
+eb$parent = function() { return this}
+eb$top = function() { return this}
+eb$frameElement = function() { return this}
+eb$getter_cd = function() { return null}
+eb$getter_cw = function() { return null}
+eb$formSubmit = function() { print("submit")}
+eb$formReset = function() { print("reset")}
 eb$listen = eb$unlisten = addEventListener = removeEventListener = eb$voidfunction;
-my$win = function() { return window; }
-my$doc = function() { return document; }
+my$win = function() { return window}
+my$doc = function() { return document}
 document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
 // other browsers don't have querySelectorAll under window
-querySelectorAll = function() { return [] ; }
-querySelector = function() { return {} ; }
-querySelector0 = function() { return false; }
+querySelectorAll = function() { return [] }
+querySelector = function() { return {} }
+querySelector0 = function() { return false}
 eb$cssText = function(){}
 }
+
+// set window member, unseen, unchanging
+swm = function(k, v) { Object.defineProperty(window, k, {value:v})}
+// set document member, unseen, unchanging
+sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
 
 // the third party deminimization stuff is in mw$, the master window.
 // Other stuff too, that can be shared.
@@ -63,16 +68,68 @@ if(!window.mw$)
 mw$ = {share:false, URL:{}};
 
 if(mw$.share) { // point to native methods in the master window
-my$win = mw$.my$win, my$doc = mw$.my$doc;
-natok = mw$.natok, db$flags = mw$.db$flags;
-eb$voidfunction = mw$.eb$voidfunction, eb$nullfunction = mw$.eb$nullfunction, eb$truefunction = mw$.eb$truefunction, eb$falsefunction = mw$.eb$falsefunction;
-close = mw$.win$close;
-eb$visible = mw$.eb$visible;
-atob = mw$.atob, btoa = mw$.btoa;
-prompt = mw$.prompt, confirm = mw$.confirm;
-eb$newLocation = mw$.eb$newLocation, eb$logElement = mw$.eb$logElement;
+swm("my$win", mw$.my$win)
+swm("my$doc", mw$.my$doc)
+swm("natok", mw$.natok)
+swm("db$flags", mw$.db$flags)
+swm("eb$voidfunction", mw$.eb$voidfunction)
+swm("eb$nullfunction", mw$.eb$nullfunction)
+swm("eb$truefunction", mw$.eb$truefunction)
+swm("eb$falsefunction", mw$.eb$falsefunction)
+swm("close", mw$.win$close)
+swm("eb$visible", mw$.eb$visible)
+swm("atob", mw$.atob)
+swm("btoa", mw$.btoa)
+swm("prompt", mw$.prompt)
+swm("confirm", mw$.confirm)
+swm("eb$newLocation", mw$.eb$newLocation)
+swm("eb$logElement", mw$.eb$logElement)
+swm("alert", mw$.alert)
+swm("alert3", mw$.alert3)
+swm("alert4", mw$.alert4)
+swm("dumptree", mw$.dumptree)
+swm("uptrace", mw$.uptrace)
+swm("by_esn", mw$.by_esn)
+swm("showscripts", mw$.showscripts)
+swm("searchscripts", mw$.searchscripts)
+swm("showframes", mw$.showframes)
+swm("snapshot", mw$.snapshot)
+swm("aloop", mw$.aloop)
+swm("showarg", mw$.showarg)
+swm("showarglist", mw$.showarglist)
+swm("set_location_hash", mw$.set_location_hash)
+sdm("getRootNode", mw$.getRootNode)
+sdm("getElementsByTagName", mw$.getElementsByTagName)
+sdm("getElementsByName", mw$.getElementsByName)
+sdm("getElementsByClassName", mw$.getElementsByClassName)
+sdm("getElementById", mw$.getElementById)
+sdm("nodeContains", mw$.nodeContains)
+sdm("dispatchEvent", mw$.dispatchEvent)
+// make sure to wrap global dispatchEvent, so this becomes this window,
+// and not the shared window.
+swm("dispatchEvent", function(e) { return mw$.dispatchEvent.call(window, e)})
+swm("addEventListener", function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true)})
+sdm("addEventListener", addEventListener)
+swm("removeEventListener", function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true)})
+sdm("removeEventListener", removeEventListener)
+swm("eb$listen", mw$.eb$listen)
+sdm("eb$listen", mw$.eb$listen)
+swm("eb$unlisten", mw$.eb$unlisten)
+sdm("eb$unlisten", mw$.eb$unlisten)
+swm("NodeFilter", mw$.NodeFilter)
+sdm("createNodeIterator", mw$.createNodeIterator)
+sdm("createTreeWalker", mw$.createTreeWalker)
+swm("rowReindex", mw$.rowReindex)
+swm("getComputedStyle", mw$.getComputedStyle.bind(window))
+swm("mutFixup", mw$.mutFixup)
+swm("makeSheets", mw$.makeSheets)
 }
-scroll = scrollTo = scrollBy = scrollByLines = scrollByPages = eb$voidfunction;
+swm("dom$class", "Window")
+swm("scroll", eb$voidfunction)
+swm("scrollTo", eb$voidfunction)
+swm("scrollBy", eb$voidfunction)
+swm("scrollByLines", eb$voidfunction)
+swm("scrollByPages", eb$voidfunction)
 document.close = eb$voidfunction;
 blur = document.blur = function(){document.activeElement=null}
 focus = document.focus = function(){document.activeElement=document.body}
@@ -96,35 +153,6 @@ document.tagName = "document";
 document.nodeType = 9;
 document.ownerDocument = null;
 document.defaultView = window;
-
-if(mw$.share) {
-alert = mw$.alert, alert3 = mw$.alert3, alert4 = mw$.alert4;
-dumptree = mw$.dumptree, uptrace = mw$.uptrace;
-by_esn = mw$.by_esn;
-showscripts = mw$.showscripts, searchscripts = mw$.searchscripts, showframes = mw$.showframes;
-snapshot = mw$.snapshot, aloop = mw$.aloop;
-showarg = mw$.showarg, showarglist = mw$.showarglist;
-set_location_hash = mw$.set_location_hash;
-document.getRootNode = mw$.getRootNode;
-document.getElementsByTagName = mw$.getElementsByTagName, document.getElementsByName = mw$.getElementsByName, document.getElementsByClassName = mw$.getElementsByClassName, document.getElementById = mw$.getElementById;
-document.nodeContains = mw$.nodeContains;
-document.dispatchEvent = mw$.dispatchEvent;
-// make sure to wrap global dispatchEvent, so this becomes this window,
-// and not the shared window.
-dispatchEvent = function(e) { return mw$.dispatchEvent.call(window, e);}
-addEventListener = document.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
-removeEventListener = document.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
-if(mw$.attachOn) {
-attachEvent = document.attachEvent = function(ev, handler) { this.eb$listen(ev,handler, true, false); }
-detachEvent = document.detachEvent = function(ev, handler) { this.eb$unlisten(ev,handler, true, false); }
-}
-eb$listen = document.eb$listen = mw$.eb$listen;
-eb$unlisten = document.eb$unlisten = mw$.eb$unlisten;
-NodeFilter = mw$.NodeFilter, document.createNodeIterator = mw$.createNodeIterator, document.createTreeWalker = mw$.createTreeWalker;
-rowReindex = mw$.rowReindex, getComputedStyle = mw$.getComputedStyle.bind(window);
-mutFixup = mw$.mutFixup;
-makeSheets = mw$.makeSheets;
-}
 
 // produce a stack for debugging purposes
 step$stack = function(){
@@ -199,11 +227,11 @@ availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
 colorDepth: 24};
 
 console = {
-debug: function(obj) { mw$.logtime(3, "debug", obj); },
-log: function(obj) { mw$.logtime(3, "log", obj); },
-info: function(obj) { mw$.logtime(3, "info", obj); },
-warn: function(obj) { mw$.logtime(3, "warn", obj); },
-error: function(obj) { mw$.logtime(3, "error", obj); },
+debug: function(obj) { mw$.logtime(3, "debug", obj)},
+log: function(obj) { mw$.logtime(3, "log", obj)},
+info: function(obj) { mw$.logtime(3, "info", obj)},
+warn: function(obj) { mw$.logtime(3, "warn", obj)},
+error: function(obj) { mw$.logtime(3, "error", obj)},
 timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new Date).getTime(); }
 };
 
@@ -261,7 +289,7 @@ forward: eb$voidfunction,
 go: eb$voidfunction,
 pushState: eb$voidfunction,
 replaceState: eb$voidfunction,
-toString: function() {  return "Sorry, edbrowse does not maintain a browsing history."; }
+toString: function() {  return "Sorry, edbrowse does not maintain a browsing history."}
 }
 
 /* some base arrays - lists of things we'll probably need */
@@ -2764,3 +2792,6 @@ Object.defineProperty(AbortController.prototype, "signal",
 AbortController.prototype.abort = function(){
 alert3("abort dom request not implemented"); }
 
+// don't need these any more
+delete swm;
+delete sdm;
