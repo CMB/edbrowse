@@ -124,7 +124,16 @@ swm("getComputedStyle", mw$.getComputedStyle.bind(window))
 swm("mutFixup", mw$.mutFixup)
 swm("makeSheets", mw$.makeSheets)
 }
+
 swm("dom$class", "Window")
+// use dom$class to make our own toString function, so that
+// document.createElement("div").toString() says "[object HTMLDiv?Element]" as it should
+// This is important to some websites!
+swm("toString$nat", toString);
+// toString has to be replaceable by other websites,
+// this happens more often than you think.
+toString = Object.prototype.toString = function() { return this.dom$class ? "[object "+this.dom$class+"]" : toString$nat.call(this);}
+
 swm("scroll", eb$voidfunction)
 swm("scrollTo", eb$voidfunction)
 swm("scrollBy", eb$voidfunction)
