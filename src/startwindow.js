@@ -516,7 +516,8 @@ NodeList.prototype = new Array;
 NodeList.prototype.dom$class = "NodeList";
 
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
-Element = HTMLElement = function(){};
+swm("HTMLElement", function(){})
+swm2("Element", HTMLElement)
 HTMLElement.prototype = new Node;
 HTMLElement.prototype.dom$class = "HTMLElement";
 Object.defineProperty(HTMLElement.prototype, "name", {
@@ -539,7 +540,7 @@ if(!f.elements[n]) f.elements[n] = this;
 }
 this.setAttribute("name", n);
 }});
-id$hash={};
+swm("id$hash", {})
 Object.defineProperty(HTMLElement.prototype, "id", {
 get:function(){ var t = this.getAttribute("id");
 return typeof t == "string" ? t : undefined; },
@@ -589,7 +590,7 @@ if(r && r.nodeName == "SHADOWROOT" && r.mode == "open") return r;
 return null;
 }});
 
-z$HTML = function(){};
+swm("z$HTML", function(){})
 z$HTML.prototype = new HTMLElement;
 z$HTML.prototype.dom$class = "HTML";
 Object.defineProperty(z$HTML.prototype, "eb$win", {get: function(){return this.parentNode ? this.parentNode.defaultView : undefined}});
@@ -605,28 +606,28 @@ z$HTML.prototype.scrollTop = 0;
 z$HTML.prototype.scrollLeft = 0;
 
 // is there a difference between DocType ad DocumentType?
-z$DocType = function(){ this.nodeType = 10, this.nodeName = "DOCTYPE";};
+swm("z$DocType", function(){ this.nodeType = 10, this.nodeName = "DOCTYPE"})
 z$DocType.prototype = new HTMLElement;
 z$DocType.prototype.dom$class = "DocType";
-DocumentType = function(){};
+swm("DocumentType", function(){})
 DocumentType.prototype = new HTMLElement;
 DocumentType.prototype.dom$class = "DocumentType";
-CharacterData = function(){};
+swm("CharacterData", function(){})
 CharacterData.prototype.dom$class = "CharacterData";
-HTMLHeadElement = function(){};
+swm("HTMLHeadElement", function(){})
 HTMLHeadElement.prototype = new HTMLElement;
 HTMLHeadElement.prototype.dom$class = "HTMLHeadElement";
-HTMLMetaElement = function(){};
+swm("HTMLMetaElement", function(){})
 HTMLMetaElement.prototype = new HTMLElement;
 HTMLMetaElement.prototype.dom$class = "HTMLMetaElement";
-z$Title = function(){};
+swm("z$Title", function(){})
 z$Title.prototype = new HTMLElement;
 z$Title.prototype.dom$class = "Title";
 Object.defineProperty(z$Title.prototype, "text", {
 get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" && this.firstChild.data || "";}
 // setter should change the title of the document, not yet implemented
 });
-HTMLLinkElement = function(){};
+swm("HTMLLinkElement", function(){})
 HTMLLinkElement.prototype = new HTMLElement;
 HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
 // It's a list but why would it ever be more than one?
@@ -637,7 +638,7 @@ a.supports = function(s) { return s === "stylesheet"; }
 return a;
 }});
 
-HTMLBodyElement = function(){};
+swm("HTMLBodyElement", function(){})
 HTMLBodyElement.prototype = new HTMLElement;
 HTMLBodyElement.prototype.dom$class = "HTMLBodyElement";
 HTMLBodyElement.prototype.doScroll = eb$voidfunction;
@@ -652,22 +653,22 @@ HTMLBodyElement.prototype.scrollLeft = 0;
 // document.body.innerHTML =
 HTMLBodyElement.prototype.eb$dbih = function(s){this.innerHTML = s}
 
-ShadowRoot = function(){};
+swm("ShadowRoot", function(){})
 ShadowRoot.prototype = new HTMLElement;
 ShadowRoot.prototype.dom$class = "ShadowRoot";
 
-HTMLBaseElement = function(){};
+swm("HTMLBaseElement", function(){})
 HTMLBaseElement.prototype = new HTMLElement;
 HTMLBaseElement.prototype.dom$class = "HTMLBaseElement";
 
-HTMLFormElement = function(){this.elements = []}
+swm("HTMLFormElement", function(){this.elements = []})
 HTMLFormElement.prototype = new HTMLElement;
 HTMLFormElement.prototype.dom$class = "HTMLFormElement";
 HTMLFormElement.prototype.submit = eb$formSubmit;
 HTMLFormElement.prototype.reset = eb$formReset;
 Object.defineProperty(HTMLFormElement.prototype, "length", { get: function() { return this.elements.length;}});
 
-Validity = function(){};
+swm("Validity", function(){})
 Validity.prototype.dom$class = "Validity";
 /*********************************************************************
 All these should be getters, or should they?
@@ -714,7 +715,7 @@ which is another setter, writtten in C.
 If all this works I'll be amazed.
 *********************************************************************/
 
-textarea$html$crossover = function(t) {
+swm("textarea$html$crossover", function(t) {
 if(!t || t.dom$class != "HTMLElement" || t.type != "textarea")
 return;
 t.value = "";
@@ -729,9 +730,9 @@ t.removeChild(tn);
 return;
 }
 alert3("textarea.innerHTML is too complicated for me to render");
-}
+})
 
-HTMLSelectElement = function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[]; this.options=[];this.validity = new Validity, this.validity.owner = this};
+swm("HTMLSelectElement", function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[]; this.options=[];this.validity = new Validity, this.validity.owner = this})
 HTMLSelectElement.prototype = new HTMLElement;
 HTMLSelectElement.prototype.dom$class = "HTMLSelectElement";
 Object.defineProperty(HTMLSelectElement.prototype, "value", {
@@ -773,7 +774,7 @@ if(cn2[j].selected) a.push(cn2[j]);
 }
 }
 
-HTMLInputElement = function(){this.validity = new Validity, this.validity.owner = this};
+swm("HTMLInputElement", function(){this.validity = new Validity, this.validity.owner = this})
 HTMLInputElement.prototype = new HTMLElement;
 HTMLInputElement.prototype.dom$class = "HTMLInputElement";
 HTMLInputElement.prototype.selectionStart = 0;
@@ -839,7 +840,7 @@ var y = typeof t;
 return y == "number" || y == "string" ? t : undefined},
 set:function(v) { this.setAttribute("size", v);}});
 
-HTMLButtonElement = function(){}
+swm("HTMLButtonElement", function(){})
 HTMLButtonElement.prototype = new HTMLElement;
 HTMLButtonElement.prototype.dom$class = "HTMLButtonElement";
 HTMLButtonElement.prototype.click = mw$.clickfn;
@@ -850,7 +851,7 @@ get:function(){ var t = this.getAttribute("type");
 return typeof t == "string" ? t.toLowerCase() : "submit"; },
 set:function(v) { this.setAttribute("type", v);}});
 
-HTMLTextAreaElement = function(){};
+swm("HTMLTextAreaElement", function(){})
 HTMLTextAreaElement.prototype = new HTMLElement;
 HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
 Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
@@ -872,7 +873,7 @@ get:function(){ var t = this.getAttribute("readonly");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("readonly", v);}});
 
-z$Datalist = function() {}
+swm("z$Datalist", function() {})
 z$Datalist.prototype = new HTMLElement;
 z$Datalist.prototype.dom$class = "Datalist";
 Object.defineProperty(z$Datalist.prototype, "multiple", {
@@ -880,7 +881,8 @@ get:function(){ var t = this.getAttribute("multiple");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
 
-Image = HTMLImageElement = function(){};
+swm("HTMLImageElement", function(){})
+swm2("Image", HTMLImageElement)
 HTMLImageElement.prototype = new HTMLElement;
 HTMLImageElement.prototype.dom$class = "HTMLImageElement";
 Object.defineProperty(HTMLImageElement.prototype, "alt", {
@@ -889,59 +891,59 @@ return typeof t == "string" ? t : undefined},
 set:function(v) { this.setAttribute("alt", v);
 }});
 
-HTMLFrameElement = function(){};
+swm("HTMLFrameElement", function(){})
 HTMLFrameElement.prototype = new HTMLElement;
 HTMLFrameElement.prototype.dom$class = "HTMLFrameElement";
 HTMLFrameElement.prototype.is$frame = true;
 Object.defineProperty(HTMLFrameElement.prototype, "contentDocument", { get: eb$getter_cd});
 Object.defineProperty(HTMLFrameElement.prototype, "contentWindow", { get: eb$getter_cw});
 // These may be different but for now I'm calling them the same.
-HTMLIFrameElement = function(){};
+swm("HTMLIFrameElement", function(){})
 HTMLIFrameElement.prototype = new HTMLFrameElement;
 HTMLIFrameElement.prototype.dom$class = "HTMLIFrameElement";
 
-HTMLAnchorElement = function(){};
+swm("HTMLAnchorElement", function(){})
 HTMLAnchorElement.prototype = new HTMLElement;
 HTMLAnchorElement.prototype.dom$class = "HTMLAnchorElement";
-HTMLOListElement = function(){};
+swm("HTMLOListElement", function(){})
 HTMLOListElement.prototype = new HTMLElement;
 HTMLOListElement.prototype.dom$class = "HTMLOListElement";
-HTMLUListElement = function(){};
+swm("HTMLUListElement", function(){})
 HTMLUListElement.prototype = new HTMLElement;
 HTMLUListElement.prototype.dom$class = "HTMLUListElement";
-HTMLDListElement = function(){};
+swm("HTMLDListElement", function(){})
 HTMLDListElement.prototype = new HTMLElement;
 HTMLDListElement.prototype.dom$class = "HTMLDListElement";
-HTMLLIElement = function(){};
+swm("HTMLLIElement", function(){})
 HTMLLIElement.prototype = new HTMLElement;
 HTMLLIElement.prototype.dom$class = "HTMLLIElement";
 
-HTMLTableSectionElement = function(){}
+swm("HTMLTableSectionElement", function(){})
 HTMLTableSectionElement.prototype = new HTMLElement;
 HTMLTableSectionElement.prototype.dom$class = "HTMLTableSectionElement";
-z$tBody = function(){ this.rows = []};
+swm("z$tBody", function(){ this.rows = []})
 z$tBody.prototype = new HTMLTableSectionElement;
 z$tBody.prototype.dom$class = "tBody";
-z$tHead = function(){ this.rows = []};
+swm("z$tHead", function(){ this.rows = []})
 z$tHead.prototype = new HTMLTableSectionElement;
 z$tHead.prototype.dom$class = "tHead";
-z$tFoot = function(){ this.rows = []};
+swm("z$tFoot", function(){ this.rows = []})
 z$tFoot.prototype = new HTMLTableSectionElement;
 z$tFoot.prototype.dom$class = "tFoot";
 
-z$tCap = function(){};
+swm("z$tCap", function(){})
 z$tCap.prototype = new HTMLElement;
 z$tCap.prototype.dom$class = "tCap";
-HTMLTableElement = function(){ this.rows = []; this.tBodies = []};
+swm("HTMLTableElement", function(){ this.rows = []; this.tBodies = []})
 HTMLTableElement.prototype = new HTMLElement;
 HTMLTableElement.prototype.dom$class = "HTMLTableElement";
-HTMLTableRowElement = function(){ this.cells = []};
+swm("HTMLTableRowElement", function(){ this.cells = []})
 HTMLTableRowElement.prototype = new HTMLElement;
 HTMLTableRowElement.prototype.dom$class = "HTMLTableRowElement";
-HTMLTableCellElement = function(){};
+swm("HTMLTableCellElement", function(){})
 HTMLTableCellElement.prototype = new HTMLElement;
 HTMLTableCellElement.prototype.dom$class = "HTMLTableCellElement";
-HTMLDivElement = function(){};
+swm("HTMLDivElement", function(){})
 HTMLDivElement.prototype = new HTMLElement;
 HTMLDivElement.prototype.dom$class = "HTMLDivElement";
 HTMLDivElement.prototype.doScroll = eb$voidfunction;
@@ -953,38 +955,38 @@ e.initEvent("click", true, true);
 this.dispatchEvent(e);
 }
 
-HTMLLabelElement = function(){};
+swm("HTMLLabelElement", function(){})
 HTMLLabelElement.prototype = new HTMLElement;
 HTMLLabelElement.prototype.dom$class = "HTMLLabelElement";
 Object.defineProperty(HTMLLabelElement.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
-HtmlObj = function(){};
+swm("HtmlObj", function(){})
 HtmlObj.prototype = new HTMLElement;
 HtmlObj.prototype.dom$class = "HtmlObj";
-HTMLAreaElement = function(){};
+swm("HTMLAreaElement", function(){})
 HTMLAreaElement.prototype = new HTMLElement;
 HTMLAreaElement.prototype.dom$class = "HTMLAreaElement";
 
-HTMLSpanElement = function(){};
+swm("HTMLSpanElement", function(){})
 HTMLSpanElement.prototype = new HTMLElement;
 HTMLSpanElement.prototype.dom$class = "HTMLSpanElement";
 HTMLSpanElement.prototype.doScroll = eb$voidfunction;
 // should this click be on HTMLElement?
 HTMLSpanElement.prototype.click = HTMLDivElement.prototype.click;
 
-HTMLParagraphElement = function(){};
+swm("HTMLParagraphElement", function(){})
 HTMLParagraphElement.prototype = new HTMLElement;
 HTMLParagraphElement.prototype.dom$class = "HTMLParagraphElement";
 
-HTMLHeadingElement = function(){};
+swm("HTMLHeadingElement", function(){})
 HTMLHeadingElement.prototype = new HTMLElement;
 HTMLHeadingElement.prototype.dom$class = "HTMLHeadingElement";
-z$Header = function(){};
+swm("z$Header", function(){})
 z$Header.prototype = new HTMLElement;
 z$Header.prototype.dom$class = "Header";
-z$Footer = function(){};
+swm("z$Footer", function(){})
 z$Footer.prototype = new HTMLElement;
 z$Footer.prototype.dom$class = "Footer";
-HTMLScriptElement = function(){};
+swm("HTMLScriptElement", function(){})
 HTMLScriptElement.prototype = new HTMLElement;
 HTMLScriptElement.prototype.dom$class = "HTMLScriptElement";
 Object.defineProperty(HTMLScriptElement.prototype, "async", {
@@ -1000,7 +1002,7 @@ HTMLScriptElement.prototype.text = "";
 
 swm("z$Timer", function(){this.nodeName = "TIMER"})
 z$Timer.prototype.dom$class = "Timer";
-HTMLMediaElement = function(){}
+swm("HTMLMediaElement", function(){})
 HTMLMediaElement.prototype = new HTMLElement;
 HTMLMediaElement.prototype.dom$class = "HTMLMediaElement";
 HTMLMediaElement.prototype.autoplay = false;
@@ -1016,15 +1018,16 @@ HTMLMediaElement.prototype.volume = 1.0;
 HTMLMediaElement.prototype.play = eb$playAudio;
 HTMLMediaElement.prototype.load = eb$voidfunction;
 HTMLMediaElement.prototype.pause = eb$voidfunction;
-Audio = HTMLAudioElement = function(t){
+swm("HTMLAudioElement", function(t){
 // arg to constructor is the url of the audio
 if(typeof t == "string") this.src = t;
 if(typeof t == "object") this.src = t.toString();
-}
+})
+swm("Audio", HTMLAudioElement)
 HTMLAudioElement.prototype = new HTMLMediaElement;
 HTMLAudioElement.prototype.dom$class = "HTMLAudioElement";
 
-HTMLTemplateElement = function(){}
+swm("HTMLTemplateElement", function(){})
 HTMLTemplateElement.prototype = new HTMLElement;
 HTMLTemplateElement.prototype.dom$class = "HTMLTemplateElement";
 // I'm doing the content fudging here, on demand; it's easier than in C.
@@ -1038,9 +1041,9 @@ return frag;
 }});
 
 // the performance registry
-pf$registry = {mark:{},measure:{},measure0:{},resourceTiming:{}};
+swm("pf$registry", {mark:{},measure:{},measure0:{},resourceTiming:{}})
 Object.defineProperty(pf$registry, "measure0", {enumerable:false});
-Performance = function(){}
+swm("Performance", function(){})
 Performance.prototype = {
 // timeOrigin is the start time of this window, I guess
 timeOrigin: Date.now(),
@@ -1087,14 +1090,14 @@ timing:{},
 Object.defineProperty(window, "performance", {get: function(){return new Performance}});
 
 // this is a stub, I hope I don't have to implement this stuff.
-PerformanceObserver = {
+swm("PerformanceObserver", {
 supportedEntryTypes: {
 // no types are supported
 includes: eb$falsefunction
 }
-};
+})
 
-cel$registry = {}; // custom elements registry
+swm("cel$registry", {}) // custom elements registry
 Object.defineProperty(window, "customElements", {get:function(){ return {
 define:mw$.cel_define,
 get:mw$.cel_get,
@@ -1206,7 +1209,7 @@ Watch out! If the script has inline text, it is a proper child of the script,
 and should not be moved. Check for eb$nomove.
 *********************************************************************/
 
-eb$uplift = function(s) {
+swm("eb$uplift", function(s) {
 var p = s.parentNode;
 if(!p) return; // should never happen
 var before = s.nextSibling;
@@ -1218,13 +1221,13 @@ if(before) p.insertBefore(c, before);
 else p.appendChild(c);
 c = hold;
 }
-}
+})
 
 // Canvas method draws a picture. That's meaningless for us,
 // but it still has to be there.
 // Because of the canvas element, I can't but the monster getContext function
 // into the prototype, I have to set it in the constructor.
-HTMLCanvasElement = function() {
+swm("HTMLCanvasElement", function() {
 this.getContext = function(x) { return {
 canvas: this,
  addHitRegion: eb$nullfunction,
@@ -1275,7 +1278,7 @@ stroke: eb$nullfunction,
 strokeRect: eb$nullfunction,
 strokeText: eb$nullfunction,
 transform: eb$nullfunction,
-translate: eb$nullfunction }}}
+translate: eb$nullfunction }}})
 HTMLCanvasElement.prototype = new HTMLElement;
 HTMLCanvasElement.prototype.dom$class = "HTMLCanvasElement";
 HTMLCanvasElement.prototype.toDataURL = function() {
@@ -1284,8 +1287,8 @@ if(this.height === 0  || this.width === 0) return "data:,";
 return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADElEQVQImWNgoBMAAABpAAFEI8ARAAAAAElFTkSuQmCC";
 }
 
-onmessage$$queue = [];
-function  postMessage(message,target_origin, transfer) {
+swm("onmessage$$queue", [])
+swm("postMessage", function (message,target_origin, transfer) {
 var locstring = this.location.protocol + "//" + this.location.hostname + ":" + this.location.port;
 if(!this.location.port) {
 // paste on a default port
@@ -1320,11 +1323,8 @@ alert3("postMessage mismatch " + locstring + " | " + target_origin + " carrying 
 (message.length >= 200 ? "long" : message)
 + "↑");
 }
-}
-Object.defineProperty(window, "onmessage$$queue", {writable:false,configurable:false});
-onmessage$$running = mw$.onmessage$$running;
-Object.defineProperty(window, "onmessage$$running", {writable:false,configurable:false});
-Object.defineProperty(window, "postMessage", {writable:false,configurable:false});
+})
+swm("onmessage$$running", mw$.onmessage$$running)
 
 /*********************************************************************
 AudioContext, for playing music etc.
@@ -1334,7 +1334,7 @@ you might not want to hear it, you might rather see the url, or have a button
 to push, and then you call up the music only if / when you want it.
 Not sure what to do, so it's pretty much stubs for now.
 *********************************************************************/
-AudioContext = function() {
+swm("AudioContext", function() {
 this.outputLatency = 1.0;
 this.createMediaElementSource = eb$voidfunction;
 this.createMediaStreamSource = eb$voidfunction;
@@ -1342,31 +1342,31 @@ this.createMediaStreamDestination = eb$voidfunction;
 this.createMediaStreamTrackSource = eb$voidfunction;
 this.suspend = eb$voidfunction;
 this.close = eb$voidfunction;
-}
+})
 AudioContext.prototype.dom$class = "AudioContext";
 
 // Document class, I don't know what to make of this,
 // but my stubs for frames needs it.
-Document = function(){};
+swm("Document", function(){})
 Document.prototype = new HTMLElement;
 Document.prototype.dom$class = "Document";
 Document.prototype.nodeName = Document.prototype.tagName = "#document";
 Document.prototype.nodeType = 9;
 
-DocumentFragment = function(){};
+swm("DocumentFragment", function(){})
 DocumentFragment.prototype = new HTMLElement;
 DocumentFragment.prototype.dom$class = "DocumentFragment";
 DocumentFragment.prototype.nodeType = 11;
 DocumentFragment.prototype.nodeName = DocumentFragment.prototype.tagName = "#document-fragment";
 
-CSSRule = function(){this.cssText=""}
+swm("CSSRule", function(){this.cssText=""})
 CSSRule.prototype.toString = function(){return this.cssText}
 
-CSSRuleList = function(){}
+swm("CSSRuleList", function(){})
 // This isn't really right, but it's easy
 CSSRuleList.prototype = new Array;
 
-CSSStyleSheet = function() { this.cssRules = new CSSRuleList};
+swm("CSSStyleSheet", function() { this.cssRules = new CSSRuleList})
 CSSStyleSheet.prototype.dom$class = "CSSStyleSheet";
 CSSStyleSheet.prototype.insertRule = function(r, idx) {
 var list = this.cssRules;
@@ -1388,10 +1388,10 @@ else
 list.splice(idx, 0, r);
 }
 
-CSSStyleDeclaration = function(){
+swm("CSSStyleDeclaration", function(){
         this.element = null;
         this.style = this;
-};
+})
 CSSStyleDeclaration.prototype = new HTMLElement;
 CSSStyleDeclaration.prototype.dom$class = "CSSStyleDeclaration";
 // sheet on demand
@@ -1528,7 +1528,7 @@ var pri = p + "$pri";
 return this[pri] ? "important" : "";
 };
 
-HTMLStyleElement = function(){};
+swm("HTMLStyleElement", function(){})
 HTMLStyleElement.prototype = new HTMLElement;
 HTMLStyleElement.prototype.dom$class = "HTMLStyleElement";
 // Kind of a hack to make this like the link element
@@ -1614,13 +1614,13 @@ HTMLTableElement.prototype.deleteTFoot = function() {
 if(this.tFoot) this.removeChild(this.tFoot);
 }
 
-TextNode = function() {
+swm("TextNode", function() {
 this.data$2 = "";
 if(arguments.length > 0) {
 // data always has to be a string
 this.data$2 += arguments[0];
 }
-}
+})
 TextNode.prototype = new HTMLElement;
 TextNode.prototype.dom$class = "TextNode";
 TextNode.prototype.nodeName = TextNode.prototype.tagName = "#text";
@@ -1648,15 +1648,15 @@ eb$logElement(c, "text");
 return c;
 }
 
-Comment = function(t) {
+swm("Comment", function(t) {
 this.data = t;
-}
+})
 Comment.prototype = new HTMLElement;
 Comment.prototype.dom$class = "Comment";
 Comment.prototype.nodeName = Comment.prototype.tagName = "#comment";
 Comment.prototype.nodeType = 8;
 
-XMLCdata = function(t) {}
+swm("XMLCdata", function(t) {})
 XMLCdata.prototype = new HTMLElement;
 XMLCdata.prototype.dom$class = "Cdata";
 XMLCdata.prototype.nodeName = XMLCdata.prototype.tagName = "#cdata-section";
@@ -1672,12 +1672,13 @@ return c;
 }
 
 // The Option class, these are choices in a dropdown list.
-Option = HTMLOptionElement = function() {
+swm("HTMLOptionElement", function() {
 if(arguments.length > 0)
 this.text = arguments[0];
 if(arguments.length > 1)
 this.value = arguments[1];
-}
+})
+swm2("Option", HTMLOptionElement)
 Option.prototype = new HTMLElement;
 Option.prototype.dom$class = "HTMLOptionElement";
 Option.prototype.selected = false;
@@ -1685,27 +1686,27 @@ Option.prototype.defaultSelected = false;
 Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
 Option.prototype.text = Option.prototype.value = "";
 
-HTMLOptGroupElement = function() {}
+swm("HTMLOptGroupElement", function() {})
 HTMLOptGroupElement.prototype = new HTMLElement;
 HTMLOptGroupElement.prototype.dom$class = "HTMLOptGroupElement";
 HTMLOptGroupElement.prototype.nodeName = HTMLOptGroupElement.prototype.tagName = "OPTGROUP";
 
-document.getBoundingClientRect = function(){
+sdm("getBoundingClientRect", function(){
 return {
 top: 0, bottom: 0, left: 0, right: 0,
 x: 0, y: 0,
 width: 0, height: 0
 }
-}
+})
 
 // The Attr class and getAttributeNode().
-Attr = function(){ this.owner = null; this.name = ""};
+swm("Attr", function(){ this.owner = null; this.name = ""})
 Attr.prototype.dom$class = "Attr";
 Attr.prototype.isId = function() { return this.name === "id"; }
 
 // this is sort of an array and sort of not.
 // For one thing, you can call setAttribute("length", "snork"), so I can't use length.
-NamedNodeMap = function() { this.length = 0};
+swm("NamedNodeMap", function() { this.length = 0})
 NamedNodeMap.prototype.dom$class = "NamedNodeMap";
 NamedNodeMap.prototype.push = function(s) { this[this.length++] = s; }
 NamedNodeMap.prototype.item = function(n) { return this[n]; }
@@ -1713,21 +1714,21 @@ NamedNodeMap.prototype.getNamedItem = function(name) { return this[name.toLowerC
 NamedNodeMap.prototype.setNamedItem = function(name, v) { this.owner.setAttribute(name, v);}
 NamedNodeMap.prototype.removeNamedItem = function(name) { this.owner.removeAttribute(name);}
 
-document.getAttribute = mw$.getAttribute;
-document.hasAttribute = mw$.hasAttribute;
-document.getAttributeNames = mw$.getAttributeNames;
-document.getAttributeNS = mw$.getAttributeNS;
-document.hasAttributeNS = mw$.hasAttributeNS;
-document.setAttribute = mw$.setAttribute;
-document.setAttributeNS = mw$.setAttributeNS;
-document.removeAttribute = mw$.removeAttribute;
-document.removeAttributeNS = mw$.removeAttributeNS;
-document.getAttributeNode = mw$.getAttributeNode;
+sdm("getAttribute", mw$.getAttribute)
+sdm("hasAttribute", mw$.hasAttribute)
+sdm("getAttributeNames", mw$.getAttributeNames)
+sdm("getAttributeNS", mw$.getAttributeNS)
+sdm("hasAttributeNS", mw$.hasAttributeNS)
+sdm("setAttribute", mw$.setAttribute)
+sdm("setAttributeNS", mw$.setAttributeNS)
+sdm("removeAttribute", mw$.removeAttribute)
+sdm("removeAttributeNS", mw$.removeAttributeNS)
+sdm("getAttributeNode", mw$.getAttributeNode)
 
-document.cloneNode = function(deep) {
+sdm("cloneNode", function(deep) {
 cloneRoot1 = this;
 return mw$.clone1 (this,deep);
-}
+})
 
 /*********************************************************************
 importNode seems to be the same as cloneNode, except it is copying a tree
@@ -1738,9 +1739,9 @@ If bar is in another context that's ok, we read those objects and create
 copies of them in the current context.
 *********************************************************************/
 
-document.importNode = function(src, deep) { return src.cloneNode(deep); }
+sdm("importNode", function(src, deep) { return src.cloneNode(deep)})
 
-Event = function(etype){
+swm("Event", function(etype){
     // event state is kept read-only by forcing
     // a new object for each event.  This may not
     // be appropriate in the long run and we'll
@@ -1752,7 +1753,7 @@ Event = function(etype){
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
 if(typeof etype == "string") this.type = etype;
-};
+})
 Event.prototype.dom$class = "Event";
 
 Event.prototype.preventDefault = function(){ this.defaultPrevented = true; }
@@ -1770,23 +1771,23 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 
 document.createEvent = function(unused) { return new Event; }
 
-HashChangeEvent = function(){
+swm("HashChangeEvent", function(){
     this.currentTarget =     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
 this.type = "hashchange";
-};
+})
 // says we inherit from event but I can't think of any event methods we would want to use
 HashChangeEvent.prototype.dom$class = "HashChangeEvent";
 
-MouseEvent = function(etype){
+swm("MouseEvent", function(etype){
     this.bubbles =     this.cancelable = true;
     this.cancelled = this.defaultPrevented = false;
     this.currentTarget =     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
 if(typeof etype == "string") this.type = etype;
-};
+})
 MouseEvent.prototype = new Event;
 MouseEvent.prototype.altKey = false;
 MouseEvent.prototype.ctrlKey = false;
@@ -1794,17 +1795,17 @@ MouseEvent.prototype.shiftKey = false;
 MouseEvent.prototype.metaKey = false;
 MouseEvent.prototype.initMouseEvent = function() { this.initEvent.apply(this, arguments)}
 
-PromiseRejectionEvent = function(etype){
+swm("PromiseRejectionEvent", function(etype){
     this.bubbles =     this.cancelable = true;
     this.cancelled = this.defaultPrevented = false;
     this.currentTarget =     this.target = null;
     this.eventPhase = 0;
     this.timeStamp = new Date().getTime();
 if(typeof etype == "string") this.type = etype;
-};
+})
 PromiseRejectionEvent.prototype = new Event;
 
-CustomEvent = function(etype, o){
+swm("CustomEvent", function(etype, o){
 alert3("customEvent " + etype + " " + typeof o);
     this.bubbles =     this.cancelable = true;
     this.cancelled = this.defaultPrevented = false;
@@ -1816,10 +1817,10 @@ if(typeof etype == "string") this.type = etype;
 // I'm basing it on some js I saw in the wild.
 if(typeof o == "object")
 this.name = o.name, this.detail = o.detail;
-};
+})
 CustomEvent.prototype = new Event;
 
-MediaQueryList = function() {
+swm("MediaQueryList", function() {
 this.nodeName = "MediaQueryList";
 this.matches = false;
 this.media = "";
@@ -1830,17 +1831,17 @@ this.eb$listen = eb$listen;
 this.eb$unlisten = eb$unlisten;
 this.addListener = function(f) { this.addEventListener("mediaChange", f, false); }
 this.removeListener = function(f) { this.removeEventListener("mediaChange", f, false); }
-}
+})
 MediaQueryList.prototype.dom$class = "MediaQueryList";
 
-matchMedia = function(s) {
+swm("matchMedia", function(s) {
 var q = new MediaQueryList;
 q.media = s;
 q.matches = eb$media(s);
 return q;
-}
+})
 
-document.insertAdjacentHTML = mw$.insertAdjacentHTML;
+sdm("insertAdjacentHTML", mw$.insertAdjacentHTML)
 
 /*********************************************************************
 Add prototype methods to the standard nodes, nodes that have children,
@@ -2384,7 +2385,7 @@ var c = this.createElement("fragment");
 return c;
 }
 
-document.implementation = {
+sdm("implementation", {
 owner: document,
 /*********************************************************************
 This is my tentative implementation of hasFeature:
@@ -2422,7 +2423,7 @@ doc.appendChild(below);
 doc.documentElement = below;
 return doc;
 }
-};
+})
 
 // Extra things, beyond Node, that should be in Document.prototype
 Document.prototype.getElementById = mw$.getElementById;
@@ -2437,22 +2438,29 @@ Document.prototype.createDocumentFragment = document.createDocumentFragment;
 Document.prototype.createEvent = document.createEvent;
 Document.prototype.implementation = document.implementation;
 
-function XMLHttpRequestEventTarget(){};
+swm("EventTarget", function() {})
+EventTarget.prototype.eb$listen = eb$listen;
+EventTarget.prototype.eb$unlisten = eb$unlisten;
+EventTarget.prototype.addEventListener = addEventListener;
+EventTarget.prototype.removeEventListener = removeEventListener;
+EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
+
+swm("XMLHttpRequestEventTarget", function(){})
 XMLHttpRequestEventTarget.prototype = new EventTarget;
 
-function XMLHttpRequestUpload(){}
+swm("XMLHttpRequestUpload", function(){})
 XMLHttpRequestUpload.prototype = new XMLHttpRequestEventTarget;
 
 // @author Originally implemented by Yehuda Katz
 // And since then, from envjs, by Thatcher et al
 
-XMLHttpRequest = function(){
+swm("XMLHttpRequest", function(){
     this.headers = {};
     this.responseHeaders = {};
     this.aborted = false;//non-standard
     this.withCredentials = true;
 this.upload = new XMLHttpRequestUpload;
-};
+})
 XMLHttpRequest.prototype.dom$class = "XMLHttpRequest";
 // this form of XMLHttpRequest is deprecated, but still used in places.
 XDomainRequest = XMLHttpRequest;
@@ -2491,7 +2499,7 @@ XMLHttpRequest.prototype.status = 0;
 XMLHttpRequest.prototype.statusText = "";
 
 // response to a fetch() request
-function Response(){this.xhr = null, this.bodyUsed = false}
+swm("Response", function(){this.xhr = null, this.bodyUsed = false})
 Object.defineProperty(Response.prototype, "body", {get:function(){this.bodyUsed=true;return this.xhr.responseText;}})
 Object.defineProperty(Response.prototype, "headers", {get:function(){return this.xhr.responseHeaders;}})
 Object.defineProperty(Response.prototype, "ok", {get:function(){return this.xhr.status >= 200 && this.xhr.status <= 299;}})
@@ -2505,7 +2513,7 @@ Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr
 // json is the only method so far; I guess we write them as we need them.
 Response.prototype.json = function(){return Promise.resolve(JSON.parse(this.body))}
 
-function fetch(url, o) {
+swm("fetch", function(url, o) {
 var dopost = false;
 if(o && o.method && o.method.toLowerCase() == "post") dopost = true;
 var body = "";
@@ -2518,28 +2526,33 @@ if(o && o.credentials) alert3("fetch credentials " + o.credentials + " not suppo
 xhr.send(body, 0);
 var r = new Response; r.xhr = xhr;
 return Promise.resolve(r);
-}
+})
 
 // pages seem to want document.style to exist
 document.style = new CSSStyleDeclaration;
 document.style.element = document;
 document.style.bgcolor = "white";
 
-document.ELEMENT_NODE = 1, document.TEXT_NODE = 3, document.COMMENT_NODE = 8, document.DOCUMENT_NODE = 9, document.DOCUMENT_TYPE_NODE = 10, document.DOCUMENT_FRAGMENT_NODE = 11;
+sdm("ELEMENT_NODE", 1)
+sdm("TEXT_NODE", 3)
+sdm("COMMENT_NODE", 8)
+sdm("DOCUMENT_NODE", 9)
+sdm("DOCUMENT_TYPE_NODE", 10)
+sdm("DOCUMENT_FRAGMENT_NODE", 11)
 
 // originally ms extension pre-DOM, we don't fully support it
 //but offer the legacy document.all.tags method.
-document.all = {};
+sdm("all", {})
 document.all.tags = function(s) {
 return mw$.eb$gebtn(document.body, s.toLowerCase());
 }
 
-eb$demin = mw$.deminimize;
-eb$watch = mw$.addTrace;
-$uv = [];
-$uv$sn = 0;
-$jt$c = 'z';
-$jt$sn = 0;
+swm("eb$demin", mw$.deminimize)
+swm("eb$watch", mw$.addTrace)
+swm("$uv", [])
+swm("$uv$sn", 0)
+swm("$jt$c", 'z')
+swm("$jt$sn", 0)
 
 document.querySelectorAll = querySelectorAll;
 document.querySelector = querySelector;
@@ -2579,7 +2592,7 @@ Put in a stub handler that returns true or something.
 So maybe it's worth having a specific try catch here.
 *********************************************************************/
 
-function handle$cc(f, t) {
+swm("handle$cc", function(f, t) {
 var cf; // the compiled function
 try {
 cf = eval("(function(){" + f + " }.bind(t))");
@@ -2592,12 +2605,12 @@ alert3("handler syntax error <" + f + ">");
 cf.body = f;
 cf.toString = function() { return this.body; }
 return cf;
-}
+})
 
 // Local storage, this is per window.
 // Then there's sessionStorage, and honestly I don't understand the difference.
 // This is NamedNodeMap, to take advantage of preexisting methods.
-localStorage = {}
+swm("localStorage", {})
 localStorage.attributes = new NamedNodeMap;
 localStorage.attributes.owner = localStorage;
 // tell me we don't have to do NS versions of all these.
@@ -2613,7 +2626,7 @@ while(l = localStorage.attributes.length)
 localStorage.removeItem(localStorage.attributes[l-1].name);
 }
 
-sessionStorage = {}
+swm("sessionStorage", {})
 sessionStorage.attributes = new NamedNodeMap;
 sessionStorage.attributes.owner = sessionStorage;
 sessionStorage.getAttribute = mw$.getAttribute;
@@ -2672,7 +2685,7 @@ Object.defineProperty(document.location,'eb$ctx',{value:eb$ctx});
 
 // Window constructor, passes the url back to edbrowse
 // so it can open a new web page.
-Window = function() {
+swm("Window", function() {
 var newloc = "";
 var winname = "";
 if(arguments.length > 0) newloc = arguments[0];
@@ -2682,17 +2695,17 @@ if(arguments.length > 1) winname = arguments[1];
 if(newloc.length)
 eb$newLocation('p' + eb$ctx + newloc+ '\n' + winname);
 this.opener = window;
-}
+})
 
-/* window.open is the same as new window, just pass the args through */
-function open() {
+// window.open is the same as new window, just pass the args through
+swm("open", function() {
 return Window.apply(this, arguments);
-}
+})
 
 // nasa.gov and perhaps other sites check for self.constructor == Window.
 // That is, Window should be the constructor of window.
 // The constructor is Object by default.
-window.constructor = Window;
+swm("constructor", Window)
 
 // Apply rules to a given style object, which is this.
 Object.defineProperty(CSSStyleDeclaration.prototype, "cssText", { get: mw$.cssTextGet,
@@ -2700,9 +2713,9 @@ set: function(h) { var w = my$win(); w.soj$ = this; eb$cssText.call(this,h); del
 
 function eb$qs$start() { mw$.cssGather(true); mw$.frames$rebuild(window); }
 
-DOMParser = mw$.DOMParser;
+swm("DOMParser", mw$.DOMParser)
 
-XMLSerializer = function(){}
+swm("XMLSerializer", function(){})
 XMLSerializer.prototype.serializeToString = function(root) {
 alert3("trying to use XMLSerializer");
 return "<div>XMLSerializer not yet implemented</div>"; }
@@ -2710,13 +2723,13 @@ return "<div>XMLSerializer not yet implemented</div>"; }
 css$ver = 0;
 document.xmlVersion = 0;
 
-MutationObserver = function(f) {
+swm("MutationObserver", function(f) {
 var w = my$win();
 w.mutList.push(this);
 this.callback = (typeof f == "function" ? f : eb$voidfunction);
 this.active = false;
 this.target = null;
-}
+})
 MutationObserver.prototype.dom$class = "MutationObserver";
 MutationObserver.prototype.disconnect = function() { this.active = false; }
 MutationObserver.prototype.observe = function(target, cfg) {
@@ -2733,12 +2746,12 @@ this.active = true;
 }
 MutationObserver.prototype.takeRecords = function() { return []}
 
-MutationRecord = function(){};
+swm("MutationRecord", function(){})
 MutationRecord.prototype.dom$class = "MutationRecord";
 
-mutList = [];
+swm("mutList", [])
 
-crypto = {};
+swm("crypto", {})
 crypto.getRandomValues = function(a) {
 if(typeof a != "object") return NULL;
 var l = a.length;
@@ -2746,36 +2759,36 @@ for(var i=0; i<l; ++i) a[i] = Math.floor(Math.random()*0x100000000);
 return a;
 }
 
-ra$step = 0;
-requestAnimationFrame = function() {
+swm2("ra$step", 0)
+swm("requestAnimationFrame", function() {
 // This absolutely doesn't do anything. What is edbrowse suppose to do with animation?
 return ++ra$step;
-}
+})
 
-cancelAnimationFrame = eb$voidfunction;
+swm("cancelAnimationFrame", eb$voidfunction)
 
 // link in the blob code
-Blob = mw$.Blob
-File = mw$.File
-FileReader = mw$.FileReader
+swm("Blob", mw$.Blob)
+swm("File", mw$.File)
+swm("FileReader", mw$.FileReader)
 URL.createObjectURL = mw$.URL.createObjectURL
 URL.revokeObjectURL = mw$.URL.revokeObjectURL
-FormData = mw$.FormData
-TextEncoder = mw$.TextEncoder
-TextDecoder = mw$.TextDecoder
-MessagePort = mw$.MessagePort;
-MessageChannel = mw$.MessageChannel;
-mp$registry = []; // MessagePort registry
-URLSearchParams = mw$.URLSearchParams
+swm("FormData", mw$.FormData)
+swm("TextEncoder", mw$.TextEncoder)
+swm("TextDecoder", mw$.TextDecoder)
+swm("MessagePort", mw$.MessagePort)
+swm("MessageChannel", mw$.MessageChannel)
+swm("mp$registry", []) // MessagePort registry
+swm("URLSearchParams", mw$.URLSearchParams)
 
-trustedTypes = function(){};
+swm("trustedTypes", function(){})
 trustedTypes.createPolicy = function(pn,po){
 var x = {policyName: pn};
 for (var i in po) { x[i] = po[i]}
 return x;
 }
 
-function DOMException(m, n) { // constructor
+swm("DOMException", function(m, n) { // constructor
 this.message = typeof m == "string" ? m : "";
 this.code = 0;
 if(typeof n == "string") {
@@ -2783,16 +2796,9 @@ this.name = n;
 // we need to set code here, based on standard names, not yet implemented.
 alert3("DOMException name " + n);
 }
-}
+})
 
-function EventTarget() {}
-EventTarget.prototype.eb$listen = eb$listen;
-EventTarget.prototype.eb$unlisten = eb$unlisten;
-EventTarget.prototype.addEventListener = addEventListener;
-EventTarget.prototype.removeEventListener = removeEventListener;
-EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
-
-function AbortSignal(){}
+swm("AbortSignal", function(){})
 AbortSignal.prototype = new EventTarget;
 AbortSignal.prototype.aborted = false;
 AbortSignal.prototype.reason = 0;
@@ -2803,7 +2809,7 @@ AbortSignal.timeout = function(ms){ var c = new AbortSignal();
 if(typeof ms == "number") alert3("abort after " + ms + "ms not implemented");
 return c; }
 
-function AbortController(){}
+swm("AbortController", function(){})
 Object.defineProperty(AbortController.prototype, "signal",
 {get:function(){return new AbortSignal}});
 AbortController.prototype.abort = function(){
