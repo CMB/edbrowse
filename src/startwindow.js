@@ -60,6 +60,9 @@ eb$cssText = function(){}
 swm = function(k, v) { Object.defineProperty(window, k, {value:v})}
 // set document member, unseen, unchanging
 sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
+// unseen, but changeable
+swm2 = function(k, v) { Object.defineProperty(window, k, {value:v, writable:true, configurable:true})}
+sdm2 = function(k, v) { Object.defineProperty(document, k, {value:v, writable:true, configurable:true})}
 
 // the third party deminimization stuff is in mw$, the master window.
 // Other stuff too, that can be shared.
@@ -381,14 +384,18 @@ it can't, because the toString that is next in the prototype chain is readonly.
 I don't know if this is javascript standard or quick js.
 It sort of makes sense if you think about it, but it means
 I don't have any practical way to share this class. So here we go.
+Note the use of swm2, people will replace with their own URL class.
+If they do, I remember this URL class and all its methods with z$URL.
+I don't know if that's a good idea or not.
 *********************************************************************/
 
-z$URL = URL = function() {
+swm2("URL", function() {
 var h = "";
 if(arguments.length == 1) h= arguments[0];
 if(arguments.length == 2) h= mw$.resolveURL(arguments[1], arguments[0]);
 this.href = h;
-}
+})
+swm("z$URL", URL)
 Object.defineProperty(URL.prototype, "dom$class", {value:"URL"})
 Object.defineProperty(URL.prototype, "rebuild", {value:mw$.url_rebuild})
 
@@ -2804,3 +2811,5 @@ alert3("abort dom request not implemented"); }
 // don't need these any more
 delete swm;
 delete sdm;
+delete swm2;
+delete sdm2;
