@@ -256,11 +256,11 @@ Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
 // scrollingElement makes no sense in edbrowse, I think body is our best bet
 Object.defineProperty(document, "scrollingElement", {get: mw$.getBody});
 // document should always have children, but...
-document.hasChildNodes = mw$.hasChildNodes;
+sdm("hasChildNodes", mw$.hasChildNodes)
 // This is set to body after browse.
 document.activeElement = null;
 
-navigator = {};
+swm("navigator", {})
 navigator.appName = "edbrowse";
 navigator["appCode Name"] = "edbrowse C/quickjs";
 /* not sure what product is about */
@@ -290,9 +290,9 @@ addEventListener: eb$voidfunction,
 removeEventListener: eb$voidfunction,
 };
 
-/* There's no history in edbrowse. */
-/* Only the current file is known, hence length is 1. */
-history = {
+// There's no history in edbrowse.
+// Only the current file is known, hence length is 1.
+swm("history", {
 length: 1,
 next: "",
 previous: "",
@@ -302,27 +302,27 @@ go: eb$voidfunction,
 pushState: eb$voidfunction,
 replaceState: eb$voidfunction,
 toString: function() {  return "Sorry, edbrowse does not maintain a browsing history."}
-}
+})
 
-/* some base arrays - lists of things we'll probably need */
-document.heads = [];
-document.bases = [];
-document.links = [];
-document.metas = [];
-document.styles = [];
-document.bodies = [];
-document.forms = [];
-document.elements = [];
-document.divs = [];
-document.labels = [];
-document.htmlobjs = [];
-document.scripts = [];
-document.paragraphs = [];
-document.headers = [];
-document.footers = [];
-document.tables = [];
-document.spans = [];
-document.images = [];
+// some base arrays - lists of things we'll probably need
+sdm("heads", [])
+sdm("bases", [])
+sdm("links", [])
+sdm("metas", [])
+sdm("styles", [])
+sdm("bodies", [])
+sdm("forms", [])
+sdm("elements", [])
+sdm("divs", [])
+sdm("labels", [])
+sdm("htmlobjs", [])
+sdm("scripts", [])
+sdm("paragraphs", [])
+sdm("headers", [])
+sdm("footers", [])
+sdm("tables", [])
+sdm("spans", [])
+sdm("images", [])
 // styleSheets is a placeholder for now; I don't know what to do with it.
 document.styleSheets = [];
 
@@ -331,17 +331,18 @@ frames = {};
 Object.defineProperty(frames, "length", {get:function(){return frames$2.length}});
 
 // to debug a.href = object or other weird things.
-hrefset$p = []; hrefset$a = [];
+swm("hrefset$p", [])
+swm("hrefset$a", [])
 // pending jobs, mostly to debug promise functions.
-$pjobs = [];
+swm("$pjobs", [])
 
 // symbolic constants for compareDocumentPosition
-DOCUMENT_POSITION_DISCONNECTED = mw$.DOCUMENT_POSITION_DISCONNECTED;
-DOCUMENT_POSITION_PRECEDING = mw$.DOCUMENT_POSITION_PRECEDING;
-DOCUMENT_POSITION_FOLLOWING = mw$.DOCUMENT_POSITION_FOLLOWING;
-DOCUMENT_POSITION_CONTAINS = mw$.DOCUMENT_POSITION_CONTAINS;
-DOCUMENT_POSITION_CONTAINED_BY = mw$.DOCUMENT_POSITION_CONTAINED_BY;
-document.compareDocumentPosition = mw$.compareDocumentPosition;
+swm("DOCUMENT_POSITION_DISCONNECTED", 1)
+swm("DOCUMENT_POSITION_PRECEDING", 2)
+swm("DOCUMENT_POSITION_FOLLOWING", 4)
+swm("DOCUMENT_POSITION_CONTAINS", 8)
+swm("DOCUMENT_POSITION_CONTAINED_BY", 16)
+sdm("compareDocumentPosition", mw$.compareDocumentPosition)
 
 // This should be in the native string class
 String.prototype.at = function(n) {
@@ -505,12 +506,12 @@ which methods all the nodes possess?
 Do we support appendchild?   etc.
 *********************************************************************/
 
-Node = function(){};
+swm("Node", function(){})
 Node.prototype.dom$class = "Node";
 
 // a node list is and isn't an array; I don't really understand it.
 // I'll just have it inherit from array, until someone tells me I'm wrong.
-NodeList = function(){}
+swm("NodeList", function(){})
 NodeList.prototype = new Array;
 NodeList.prototype.dom$class = "NodeList";
 
@@ -997,7 +998,7 @@ set:function(v) { this.setAttribute("defer", v);}});
 HTMLScriptElement.prototype.type = "";
 HTMLScriptElement.prototype.text = "";
 
-z$Timer = function(){this.nodeName = "TIMER"};
+swm("z$Timer", function(){this.nodeName = "TIMER"})
 z$Timer.prototype.dom$class = "Timer";
 HTMLMediaElement = function(){}
 HTMLMediaElement.prototype = new HTMLElement;
