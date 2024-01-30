@@ -473,19 +473,19 @@ NodeList.prototype.dom$class = "NodeList";
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
 Element = HTMLElement = function(){};
 HTMLElement.prototype = new Node;
-HTMLElement.prototype.dom$class = "Element";
+HTMLElement.prototype.dom$class = "HTMLElement";
 Object.defineProperty(HTMLElement.prototype, "name", {
 get: function() {
-var isinput = (this.dom$class == "Input" || this.dom$class == "Button" || this.dom$class == "Select");
+var isinput = (this.dom$class == "HTMLInputElement" || this.dom$class == "HTMLButtonElement" || this.dom$class == "HTMLSelectElement");
 if(!isinput) return this.name$2 ;
 // name property is automatically in the getAttribute system, acid test 53
 var t = this.getAttribute("name");
 return typeof t == "string" ? t : undefined}, 
 set: function(n) {
-var isinput = (this.dom$class == "Input" || this.dom$class == "Button" || this.dom$class == "Select");
+var isinput = (this.dom$class == "HTMLInputElement" || this.dom$class == "HTMLButtonElement" || this.dom$class == "HTMLSelectElement");
 if(!isinput) { this.name$2 = n; return; }
 var f = this.form;
-if(f && f.dom$class == "Form") {
+if(f && f.dom$class == "HTMLFormElement") {
 var oldname = this.getAttribute("name");
 if(oldname && f[oldname] == this) delete f[oldname];
 if(oldname && f.elements[oldname] == this) delete f.elements[oldname];
@@ -570,10 +570,10 @@ CharacterData = function(){};
 CharacterData.prototype.dom$class = "CharacterData";
 HTMLHeadElement = function(){};
 HTMLHeadElement.prototype = new HTMLElement;
-HTMLHeadElement.prototype.dom$class = "Head";
+HTMLHeadElement.prototype.dom$class = "HTMLHeadElement";
 HTMLMetaElement = function(){};
 HTMLMetaElement.prototype = new HTMLElement;
-HTMLMetaElement.prototype.dom$class = "Meta";
+HTMLMetaElement.prototype.dom$class = "HTMLMetaElement";
 z$Title = function(){};
 z$Title.prototype = new HTMLElement;
 z$Title.prototype.dom$class = "Title";
@@ -583,7 +583,7 @@ get: function(){ return this.firstChild && this.firstChild.nodeName == "#text" &
 });
 HTMLLinkElement = function(){};
 HTMLLinkElement.prototype = new HTMLElement;
-HTMLLinkElement.prototype.dom$class = "Link";
+HTMLLinkElement.prototype.dom$class = "HTMLLinkElement";
 // It's a list but why would it ever be more than one?
 Object.defineProperty(HTMLLinkElement.prototype, "relList", {
 get: function() { var a = this.rel ? [this.rel] : [];
@@ -594,7 +594,7 @@ return a;
 
 HTMLBodyElement = function(){};
 HTMLBodyElement.prototype = new HTMLElement;
-HTMLBodyElement.prototype.dom$class = "Body";
+HTMLBodyElement.prototype.dom$class = "HTMLBodyElement";
 HTMLBodyElement.prototype.doScroll = eb$voidfunction;
 HTMLBodyElement.prototype.clientHeight = 768;
 HTMLBodyElement.prototype.clientWidth = 1024;
@@ -617,7 +617,7 @@ HTMLBaseElement.prototype.dom$class = "HTMLBaseElement";
 
 HTMLFormElement = function(){this.elements = []}
 HTMLFormElement.prototype = new HTMLElement;
-HTMLFormElement.prototype.dom$class = "Form";
+HTMLFormElement.prototype.dom$class = "HTMLFormElement";
 HTMLFormElement.prototype.submit = eb$formSubmit;
 HTMLFormElement.prototype.reset = eb$formReset;
 Object.defineProperty(HTMLFormElement.prototype, "length", { get: function() { return this.elements.length;}});
@@ -670,7 +670,7 @@ If all this works I'll be amazed.
 *********************************************************************/
 
 textarea$html$crossover = function(t) {
-if(!t || t.dom$class != "Element" || t.type != "textarea")
+if(!t || t.dom$class != "HTMLElement" || t.type != "textarea")
 return;
 t.value = "";
 // It's a textarea - what is below?
@@ -688,7 +688,7 @@ alert3("textarea.innerHTML is too complicated for me to render");
 
 HTMLSelectElement = function() { this.selectedIndex = -1; this.value = ""; this.selectedOptions=[]; this.options=[];this.validity = new Validity, this.validity.owner = this};
 HTMLSelectElement.prototype = new HTMLElement;
-HTMLSelectElement.prototype.dom$class = "Select";
+HTMLSelectElement.prototype.dom$class = "HTMLSelectElement";
 Object.defineProperty(HTMLSelectElement.prototype, "value", {
 get: function() {
 var a = this.options;
@@ -730,7 +730,7 @@ if(cn2[j].selected) a.push(cn2[j]);
 
 HTMLInputElement = function(){this.validity = new Validity, this.validity.owner = this};
 HTMLInputElement.prototype = new HTMLElement;
-HTMLInputElement.prototype.dom$class = "Input";
+HTMLInputElement.prototype.dom$class = "HTMLInputElement";
 HTMLInputElement.prototype.selectionStart = 0;
 HTMLInputElement.prototype.selectionEnd = -1;
 HTMLInputElement.prototype.selectionDirection = "none";
@@ -796,7 +796,7 @@ set:function(v) { this.setAttribute("size", v);}});
 
 HTMLButtonElement = function(){}
 HTMLButtonElement.prototype = new HTMLElement;
-HTMLButtonElement.prototype.dom$class = "Button";
+HTMLButtonElement.prototype.dom$class = "HTMLButtonElement";
 HTMLButtonElement.prototype.click = mw$.clickfn;
 // type property is automatically in the getAttribute system, acid test 59
 Object.defineProperty(HTMLButtonElement.prototype, "type", {
@@ -807,7 +807,7 @@ set:function(v) { this.setAttribute("type", v);}});
 
 HTMLTextAreaElement = function(){};
 HTMLTextAreaElement.prototype = new HTMLElement;
-HTMLTextAreaElement.prototype.dom$class = "TextArea";
+HTMLTextAreaElement.prototype.dom$class = "HTMLTextAreaElement";
 Object.defineProperty(HTMLTextAreaElement.prototype, "innerText", {
 get: function() { return this.value},
 set: function(t) { this.value = t }});
@@ -837,7 +837,7 @@ set:function(v) { this.setAttribute("multiple", v);}});
 
 Image = HTMLImageElement = function(){};
 HTMLImageElement.prototype = new HTMLElement;
-HTMLImageElement.prototype.dom$class = "Image";
+HTMLImageElement.prototype.dom$class = "HTMLImageElement";
 Object.defineProperty(HTMLImageElement.prototype, "alt", {
 get:function(){ var t = this.getAttribute("alt");
 return typeof t == "string" ? t : undefined},
@@ -846,12 +846,14 @@ set:function(v) { this.setAttribute("alt", v);
 
 HTMLFrameElement = function(){};
 HTMLFrameElement.prototype = new HTMLElement;
-HTMLFrameElement.prototype.dom$class = "Frame";
+HTMLFrameElement.prototype.dom$class = "HTMLFrameElement";
+HTMLFrameElement.prototype.is$frame = true;
 Object.defineProperty(HTMLFrameElement.prototype, "contentDocument", { get: eb$getter_cd});
 Object.defineProperty(HTMLFrameElement.prototype, "contentWindow", { get: eb$getter_cw});
 // These may be different but for now I'm calling them the same.
 HTMLIFrameElement = function(){};
 HTMLIFrameElement.prototype = new HTMLFrameElement;
+HTMLIFrameElement.prototype.dom$class = "HTMLIFrameElement";
 
 HTMLAnchorElement = function(){};
 HTMLAnchorElement.prototype = new HTMLElement;
@@ -871,7 +873,7 @@ HTMLLIElement.prototype.dom$class = "HTMLLIElement";
 
 HTMLTableSectionElement = function(){}
 HTMLTableSectionElement.prototype = new HTMLElement;
-HTMLTableSectionElement.prototype.dom$class = "TableSection";
+HTMLTableSectionElement.prototype.dom$class = "HTMLTableSectionElement";
 z$tBody = function(){ this.rows = []};
 z$tBody.prototype = new HTMLTableSectionElement;
 z$tBody.prototype.dom$class = "tBody";
@@ -887,13 +889,13 @@ z$tCap.prototype = new HTMLElement;
 z$tCap.prototype.dom$class = "tCap";
 HTMLTableElement = function(){ this.rows = []; this.tBodies = []};
 HTMLTableElement.prototype = new HTMLElement;
-HTMLTableElement.prototype.dom$class = "Table";
+HTMLTableElement.prototype.dom$class = "HTMLTableElement";
 HTMLTableRowElement = function(){ this.cells = []};
 HTMLTableRowElement.prototype = new HTMLElement;
-HTMLTableRowElement.prototype.dom$class = "Row";
+HTMLTableRowElement.prototype.dom$class = "HTMLTableRowElement";
 HTMLTableCellElement = function(){};
 HTMLTableCellElement.prototype = new HTMLElement;
-HTMLTableCellElement.prototype.dom$class = "Cell";
+HTMLTableCellElement.prototype.dom$class = "HTMLTableCellElement";
 HTMLDivElement = function(){};
 HTMLDivElement.prototype = new HTMLElement;
 HTMLDivElement.prototype.dom$class = "HTMLDivElement";
@@ -955,7 +957,7 @@ z$Timer = function(){this.nodeName = "TIMER"};
 z$Timer.prototype.dom$class = "Timer";
 HTMLMediaElement = function(){}
 HTMLMediaElement.prototype = new HTMLElement;
-HTMLMediaElement.prototype.dom$class = "Media";
+HTMLMediaElement.prototype.dom$class = "HTMLMediaElement";
 HTMLMediaElement.prototype.autoplay = false;
 HTMLMediaElement.prototype.muted = false;
 HTMLMediaElement.prototype.defaultMuted = false;
@@ -975,11 +977,11 @@ if(typeof t == "string") this.src = t;
 if(typeof t == "object") this.src = t.toString();
 }
 HTMLAudioElement.prototype = new HTMLMediaElement;
-HTMLAudioElement.prototype.dom$class = "Audio";
+HTMLAudioElement.prototype.dom$class = "HTMLAudioElement";
 
 HTMLTemplateElement = function(){}
 HTMLTemplateElement.prototype = new HTMLElement;
-HTMLTemplateElement.prototype.dom$class = "Template";
+HTMLTemplateElement.prototype.dom$class = "HTMLTemplateElement";
 // I'm doing the content fudging here, on demand; it's easier than in C.
 Object.defineProperty(HTMLTemplateElement.prototype, "content", {
 get: function() {
@@ -1101,7 +1103,7 @@ var last_href = (this.href$2 ? this.href$2.toString() : null); \
 this.setAttribute("' + u +'",h); \
 /* special code for setting frame.src, redirect to a new page. */ \
 h = this.href$2.href$val; \
-if(this.dom$class == "Frame" && this.eb$expf && last_href != h) { \
+if(this.is$frame && this.eb$expf && last_href != h) { \
 /* There is a nasty corner case here, dont know if it ever happens. What if we are replacing the running frame? window.parent.src = new_url; See if we can get around it this way. */ \
 if(w == this.contentWindow) { w.location = h; return; } \
 delete this.eb$expf; \
@@ -1308,7 +1310,7 @@ Document.prototype.nodeType = 9;
 
 DocumentFragment = function(){};
 DocumentFragment.prototype = new HTMLElement;
-DocumentFragment.prototype.dom$class = "Fragment";
+DocumentFragment.prototype.dom$class = "DocumentFragment";
 DocumentFragment.prototype.nodeType = 11;
 DocumentFragment.prototype.nodeName = DocumentFragment.prototype.tagName = "#document-fragment";
 
@@ -1502,7 +1504,7 @@ HTMLTableSectionElement.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
-if(newobj.dom$class == "Row") // shouldn't be anything other than TR
+if(newobj.dom$class == "HTMLTableRowElement") // shouldn't be anything other than TR
 this.rows.push(newobj), rowReindex(this);
 return newobj;
 }
@@ -1513,7 +1515,7 @@ if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
-if(newobj.dom$class == "Row")
+if(newobj.dom$class == "HTMLTableRowElement")
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 0, newobj);
@@ -1527,7 +1529,7 @@ HTMLTableSectionElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
-if(item.dom$class == "Row")
+if(item.dom$class == "HTMLTableRowElement")
 for(var i=0; i<this.rows.length; ++i)
 if(this.rows[i] == item) {
 this.rows.splice(i, 1);
@@ -1632,7 +1634,7 @@ if(arguments.length > 1)
 this.value = arguments[1];
 }
 Option.prototype = new HTMLElement;
-Option.prototype.dom$class = "Option";
+Option.prototype.dom$class = "HTMLOptionElement";
 Option.prototype.selected = false;
 Option.prototype.defaultSelected = false;
 Option.prototype.nodeName = Option.prototype.tagName = "OPTION";
@@ -1640,7 +1642,7 @@ Option.prototype.text = Option.prototype.value = "";
 
 HTMLOptGroupElement = function() {}
 HTMLOptGroupElement.prototype = new HTMLElement;
-HTMLOptGroupElement.prototype.dom$class = "OptGroup";
+HTMLOptGroupElement.prototype.dom$class = "HTMLOptGroupElement";
 HTMLOptGroupElement.prototype.nodeName = HTMLOptGroupElement.prototype.tagName = "OPTGROUP";
 
 document.getBoundingClientRect = function(){
@@ -1951,7 +1953,7 @@ so I don't even know if this makes sense.
 HTMLSelectElement.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 // should only be options!
-if(!(newobj.dom$class == "Option")) return newobj;
+if(!(newobj.dom$class == "HTMLOptionElement")) return newobj;
 mw$.isabove(newobj, this);
 if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 var l = this.childNodes.length;
@@ -1965,7 +1967,7 @@ HTMLSelectElement.prototype.insertBefore = function(newobj, item) {
 var i;
 if(!newobj) return null;
 if(!item) return this.appendChild(newobj);
-if(!(newobj.dom$class == "Option")) return newobj;
+if(!(newobj.dom$class == "HTMLOptionElement")) return newobj;
 mw$.isabove(newobj, this);
 if(newobj.parentNode) newobj.parentNode.removeChild(newobj);
 for(i=0; i<this.childNodes.length; ++i)
@@ -2014,7 +2016,7 @@ HTMLTableElement.prototype.appendChild = function(newobj) {
 if(!newobj) return null;
 if(newobj.nodeType == 11) return mw$.appendFragment(this, newobj);
 this.appendChildNative(newobj);
-if(newobj.dom$class == "Row") rowReindex(this);
+if(newobj.dom$class == "HTMLTableRowElement") rowReindex(this);
 if(newobj.dom$class == "tBody") {
 this.tBodies.push(newobj);
 if(newobj.rows.length) rowReindex(this);
@@ -2037,7 +2039,7 @@ if(!item) return this.appendChild(newobj);
 if(newobj.nodeType == 11) return mw$.insertFragment(this, newobj, item);
 var r = this.insertBeforeNative(newobj, item);
 if(!r) return null;
-if(newobj.dom$class == "Row") rowReindex(this);
+if(newobj.dom$class == "HTMLTableRowElement") rowReindex(this);
 if(newobj.dom$class == "tBody")
 for(var i=0; i<this.tBodies.length; ++i)
 if(this.tBodies[i] == item) {
@@ -2061,7 +2063,7 @@ HTMLTableElement.prototype.removeChild = function(item) {
 if(!item) return null;
 if(!this.removeChildNative(item))
 return null;
-if(item.dom$class == "Row") rowReindex(this);
+if(item.dom$class == "HTMLTableRowElement") rowReindex(this);
 if(item.dom$class == "tBody")
 for(var i=0; i<this.tBodies.length; ++i)
 if(this.tBodies[i] == item) {
@@ -2406,7 +2408,7 @@ XMLHttpRequest = function(){
     this.withCredentials = true;
 this.upload = new XMLHttpRequestUpload;
 };
-XMLHttpRequest.prototype.dom$class = "XHR";
+XMLHttpRequest.prototype.dom$class = "XMLHttpRequest";
 // this form of XMLHttpRequest is deprecated, but still used in places.
 XDomainRequest = XMLHttpRequest;
 

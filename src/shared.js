@@ -77,7 +77,7 @@ r += nn + extra + '\n';
 return r;
 }
 r += nn + "{" + extra + '\n';
-if(top.dom$class == "Frame") {
+if(top.is$frame) {
 if(top.eb$expf) r += top.contentWindow.dumptree(top.contentDocument);
 } else if(top.childNodes) {
 for(var i=0; i<top.childNodes.length; ++i) {
@@ -408,7 +408,7 @@ a.push(top);
 if(top.childNodes) {
 // don't descend into another frame.
 // The frame has no children through childNodes, so we don't really need this line.
-if(top.dom$class != "Frame")
+if(!top.is$frame)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(eb$gebtn(c, s, false));
@@ -430,7 +430,7 @@ var a = new (my$win().Array);
 if(!first && (s === '*' || top.name === s))
 a.push(top);
 if(top.childNodes) {
-if(top.dom$class != "Frame")
+if(!top.is$frame)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(eb$gebn(c, s, false));
@@ -473,7 +473,7 @@ if(!top.classList.contains(w)) { ok = false; break; }
 if(ok) a.push(top);
 }
 if(top.childNodes) {
-if(top.dom$class != "Frame")
+if(!top.is$frame)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
 a = a.concat(eb$gebcn(c, sa, false));
@@ -487,7 +487,7 @@ function nodeContains(n) {  return eb$cont(this, n); }
 function eb$cont(top, n) {
 if(top === n) return true;
 if(!top.childNodes) return false;
-if(top.dom$class == "Frame") return false;
+if(top.is$frame) return false;
 for(var i=0; i<top.childNodes.length; ++i)
 if(eb$cont(top.childNodes[i], n)) return true;
 return false;
@@ -983,7 +983,7 @@ var list = w.mutList;
 // and the thing added or removed is a frame or an array or it has frames below.
 if(!isattr && (w2 = isRooted(b))) {
 var j = typeof y == "object" ? y : z;
-if(Array.isArray(j) || j.dom$class == "Frame" || (j.childNodes&&j.getElementsByTagName("iframe").length))
+if(Array.isArray(j) || j.is$frame || (j.childNodes&&j.getElementsByTagName("iframe").length))
 frames$rebuild(w2);
 }
 // most of the time there are no observers, so loop over that first
@@ -1370,8 +1370,8 @@ return item;
 // It's crude, but just reindex all the rows in a table
 function rowReindex(t) {
 // climb up to find Table
-while(t.dom$class != "Table") {
-if(t.dom$class == "Frame") return;
+while(t.dom$class != "HTMLTableElement") {
+if(t.is$frame) return;
 t = t.parentNode;
 if(!t) return;
 }
@@ -1395,7 +1395,7 @@ t.rows.push(s.rows[j]), s.rows[j].rowIndex = n++, s.rows[j].sectionRowIndex = j;
 
 j = 0;
 for(s=t.firstChild; s; s=s.nextSibling)
-if(s.dom$class == "Row")
+if(s.dom$class == "HTMLTableRowElement")
 t.rows.push(s), s.rowIndex = n++, s.sectionRowIndex = j;
 }
 
@@ -1410,7 +1410,7 @@ if(idx > nrows) return null;
 // Should this be ownerDocument, the context that created the table,
 // or my$doc(), the running context. I think the latter is safer.
 var r = my$doc().createElement("tr");
-if(t.dom$class != "Table") {
+if(t.dom$class != "HTMLTableElement") {
 if(idx == nrows) t.appendChild(r);
 else t.insertBefore(r, t.rows[idx]);
 } else {
@@ -1429,7 +1429,7 @@ return r;
 }
 
 function deleteRow(r) {
-if(r.dom$class != "Row") return;
+if(r.dom$class != "HTMLTableRowElement") return;
 this.removeChild(r);
 }
 
@@ -1463,16 +1463,16 @@ I call these implicit members, we shouldn't mess with them.
 *********************************************************************/
 
 function implicitMember(o, name) {
-return name === "elements" && o.dom$class == "Form" ||
-name === "rows" && (o.dom$class == "Table" || o.dom$class == "tBody" || o.dom$class == "tHead" || o.dom$class == "tFoot") ||
-name === "tBodies" && o.dom$class == "Table" ||
-(name === "cells" || name === "rowIndex" || name === "sectionRowIndex") && o.dom$class == "Row" ||
+return name === "elements" && o.dom$class == "HTMLFormElement" ||
+name === "rows" && (o.dom$class == "HTMLTableElement" || o.dom$class == "tBody" || o.dom$class == "tHead" || o.dom$class == "tFoot") ||
+name === "tBodies" && o.dom$class == "HTMLTableElement" ||
+(name === "cells" || name === "rowIndex" || name === "sectionRowIndex") && o.dom$class == "HTMLTableRowElement" ||
 name === "className" ||
 // no clue what getAttribute("style") is suppose to do
 name === "style" ||
 name === "htmlFor" && o.dom$class == "HTMLLabelElement" ||
-name === "options" && o.dom$class == "Select" ||
-name === "selectedOptions" && o.dom$class == "Select";
+name === "options" && o.dom$class == "HTMLSelectElement" ||
+name === "selectedOptions" && o.dom$class == "HTMLSelectElement";
 }
 
 function spilldown(name) {
@@ -1737,7 +1737,7 @@ if(Array.isArray(node1[item])) {
 if(item.match(/^on[a-zA-Z]+\$\$array$/)) continue;
 
 // live arrays
-if((item == "options" || item == "selectedOptions") && node1.dom$class == "Select") continue;
+if((item == "options" || item == "selectedOptions") && node1.dom$class == "HTMLSelectElement") continue;
 
 /*********************************************************************
 Ok we need some special code here for form.elements,
@@ -1752,8 +1752,8 @@ does it for us, as side effects, for these various classes.
 node2[item] = new w.Array;
 
 // special code here for an array of radio buttons within a form.
-if(node1.dom$class == "Form" && node1[item].length &&
-node1[item][0].dom$class == "Input" && node1[item][0].name == item) {
+if(node1.dom$class == "HTMLFormElement" && node1[item].length &&
+node1[item][0].dom$class == "HTMLInputElement" && node1[item][0].name == item) {
 var a1 = node1[item];
 var a2 = node2[item];
 if(debug) alert3("linking form.radio " + item + " with " + a1.length + " buttons");
@@ -1830,7 +1830,7 @@ continue;
 if(item == "innerText")
 continue;
 if(item == "value" &&
-!Array.isArray(node1) && !(node1.dom$class == "Option"))
+!Array.isArray(node1) && !(node1.dom$class == "HTMLOptionElement"))
 continue;
 if(debug) {
 var showstring = node1[item];
@@ -1987,7 +1987,7 @@ var a, i, t;
 a = d.querySelectorAll("link,style");
 for(i=0; i<a.length; ++i) {
 t = a[i];
-if(t.dom$class == "Link") {
+if(t.dom$class == "HTMLLinkElement") {
 if(t.css$data && (
 t.type && t.type.toLowerCase() == "text/css" ||
 t.rel && t.rel.toLowerCase() == "stylesheet")) {
@@ -2414,7 +2414,7 @@ var e = new w.Event;
 e.initEvent("click", true, true);
 if(!this.dispatchEvent(e)) return;
 // do what the tag says to do
-if(this.form && this.form.dom$class == "Form") {
+if(this.form && this.form.dom$class == "HTMLFormElement") {
 if(t == "submit") {
 e.initEvent("submit", true, true);
 if(this.dispatchEvent(e) && this.form.submit)
