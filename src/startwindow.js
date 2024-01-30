@@ -159,7 +159,8 @@ Object.defineProperty(window, "frameElement", {get: eb$frameElement});
  * mnemonic command that I could type in quickly.
  * If a web page creates an ok function it will override this one.
 And that does happen, e.g. the react system, so $ok is an alias for this. */
-ok = $ok = Object.keys;
+swm2("ok", Object.keys)
+swm2("$ok", ok)
 
 window.nodeName = "WINDOW"; // in case you want to start at the top.
 document.nodeName = "#document"; // in case you want to start at document.
@@ -199,22 +200,24 @@ document.open = function() { return this }
 /* Some visual attributes of the window.
  * These are simulations as edbrowse has no screen.
  * Better to have something than nothing at all. */
-height = 768;
-width = 1024;
-pageXOffset = scrollX = 0;
-pageYOffset = scrollY = 0;
-devicePixelRatio = 1.0;
+swm("height", 768)
+swm("width", 1024)
+swm("pageXOffset", 0)
+swm("scrollX", 0)
+swm("pageYOffset", 0)
+swm("scrollY", 0)
+swm("devicePixelRatio", 1.0)
 // document.status is removed because it creates a conflict with
 // the status property of the XMLHttpRequest implementation
-defaultStatus = 0;
-returnValue = true;
-menubar = true;
-scrollbars = true;
-toolbar = true;
-resizable = true;
-directories = false;
+swm("defaultStatus", 0)
+swm("returnValue", true)
+swm("menubar", true)
+swm("scrollbars", true)
+swm("toolbar", true)
+swm("resizable", true)
+swm("directories", false)
 if(window == top) {
-name = "unspecifiedFrame";
+swm("name", "unspecifiedFrame")
 } else {
 Object.defineProperty(window, "name", {get:function(){return frameElement.name}});
 // there is no setter here, should there be? Can we set name to something?
@@ -235,10 +238,10 @@ document.onreadystatechange$$fn(e);
 }
 }
 
-screen = {
+swm("screen", {
 height: 768, width: 1024,
 availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
-colorDepth: 24};
+colorDepth: 24})
 
 console = {
 debug: function(obj) { mw$.logtime(3, "debug", obj)},
