@@ -60,6 +60,9 @@ eb$cssText = function(){}
 swm = function(k, v) { Object.defineProperty(window, k, {value:v})}
 // set document member, unseen, unchanging
 sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
+// visible, but still protected
+swm1 = function(k, v) { Object.defineProperty(window, k, {value:v,enumerable:true})}
+sdm1 = function(k, v) { Object.defineProperty(document, k, {value:v,enumerable:true})}
 // unseen, but changeable
 swm2 = function(k, v) { Object.defineProperty(window, k, {value:v, writable:true, configurable:true})}
 sdm2 = function(k, v) { Object.defineProperty(document, k, {value:v, writable:true, configurable:true})}
@@ -86,15 +89,15 @@ swm("eb$voidfunction", mw$.eb$voidfunction)
 swm("eb$nullfunction", mw$.eb$nullfunction)
 swm("eb$truefunction", mw$.eb$truefunction)
 swm("eb$falsefunction", mw$.eb$falsefunction)
-swm("close", mw$.win$close)
+swm1("close", mw$.win$close)
 swm("eb$visible", mw$.eb$visible)
-swm("atob", mw$.atob)
-swm("btoa", mw$.btoa)
-swm("prompt", mw$.prompt)
-swm("confirm", mw$.confirm)
+swm1("atob", mw$.atob)
+swm1("btoa", mw$.btoa)
+swm1("prompt", mw$.prompt)
+swm1("confirm", mw$.confirm)
 swm("eb$newLocation", mw$.eb$newLocation)
 swm("eb$logElement", mw$.eb$logElement)
-swm("alert", mw$.alert)
+swm1("alert", mw$.alert)
 swm("alert3", mw$.alert3)
 swm("alert4", mw$.alert4)
 swm("dumptree", mw$.dumptree)
@@ -130,7 +133,7 @@ swm("NodeFilter", mw$.NodeFilter)
 sdm2("createNodeIterator", mw$.createNodeIterator)
 sdm2("createTreeWalker", mw$.createTreeWalker)
 swm("rowReindex", mw$.rowReindex)
-swm("getComputedStyle", mw$.getComputedStyle.bind(window))
+swm1("getComputedStyle", mw$.getComputedStyle.bind(window))
 swm("mutFixup", mw$.mutFixup)
 swm("makeSheets", mw$.makeSheets)
 }
@@ -145,22 +148,22 @@ swm("toString$nat", toString);
 toString = Object.prototype.toString = function() { return this.dom$class ? "[object "+this.dom$class+"]" : toString$nat.call(this);}
 Object.defineProperty(window, "toString", {enumerable:false})
 
-swm("scroll", eb$voidfunction)
-swm("scrollTo", eb$voidfunction)
-swm("scrollBy", eb$voidfunction)
-swm("scrollByLines", eb$voidfunction)
-swm("scrollByPages", eb$voidfunction)
+swm1("scroll", eb$voidfunction)
+swm1("scrollTo", eb$voidfunction)
+swm1("scrollBy", eb$voidfunction)
+swm1("scrollByLines", eb$voidfunction)
+swm1("scrollByPages", eb$voidfunction)
 sdm("close", eb$voidfunction)
 sdm("blur", function(){document.activeElement=null})
 sdm("focus", function(){document.activeElement=document.body})
-swm("blur", document.blur)
-swm("focus", document.focus)
+swm1("blur", document.blur)
+swm1("focus", document.focus)
 
 Object.defineProperty(window, "window", {enumerable:false});
-swm("self", window)
-Object.defineProperty(window, "parent", {get: eb$parent});
-Object.defineProperty(window, "top", {get: eb$top});
-Object.defineProperty(window, "frameElement", {get: eb$frameElement});
+swm1("self", window)
+Object.defineProperty(window, "parent", {get: eb$parent,enumerable:true});
+Object.defineProperty(window, "top", {get: eb$top,enumerable:true});
+Object.defineProperty(window, "frameElement", {get: eb$frameElement,enumerable:true});
 
 /* An ok (object keys) function for javascript/dom debugging.
  * This is in concert with the jdb command in edbrowse.
@@ -211,22 +214,22 @@ sdm("open", function() { return this })
  * Better to have something than nothing at all. */
 swm("height", 768)
 swm("width", 1024)
-swm("pageXOffset", 0)
-swm("scrollX", 0)
-swm("pageYOffset", 0)
-swm("scrollY", 0)
-swm("devicePixelRatio", 1.0)
+swm1("pageXOffset", 0)
+swm1("scrollX", 0)
+swm1("pageYOffset", 0)
+swm1("scrollY", 0)
+swm1("devicePixelRatio", 1.0)
 // document.status is removed because it creates a conflict with
 // the status property of the XMLHttpRequest implementation
 swm("defaultStatus", 0)
 swm("returnValue", true)
-swm("menubar", true)
-swm("scrollbars", true)
-swm("toolbar", true)
+swm1("menubar", true)
+swm1("scrollbars", true)
+swm1("toolbar", true)
 swm("resizable", true)
 swm("directories", false)
 if(window == top) {
-swm("name", "unspecifiedFrame")
+swm1("name", "unspecifiedFrame")
 } else {
 Object.defineProperty(window, "name", {get:function(){return frameElement.name}});
 // there is no setter here, should there be? Can we set name to something?
@@ -247,7 +250,7 @@ document.onreadystatechange$$fn(e);
 }
 }
 
-swm("screen", {
+swm1("screen", {
 height: 768, width: 1024,
 availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
 colorDepth: 24})
@@ -274,7 +277,7 @@ sdm("hasChildNodes", mw$.hasChildNodes)
 // This is set to body after browse.
 sdm2("activeElement", null)
 
-swm("navigator", {})
+swm1("navigator", {})
 navigator.appName = "edbrowse";
 navigator["appCode Name"] = "edbrowse C/quickjs";
 /* not sure what product is about */
@@ -306,7 +309,7 @@ removeEventListener: eb$voidfunction,
 
 // There's no history in edbrowse.
 // Only the current file is known, hence length is 1.
-swm("history", {
+swm1("history", {
 length: 1,
 next: "",
 previous: "",
@@ -1010,7 +1013,7 @@ return frag;
 // the performance registry
 swm("pf$registry", {mark:{},measure:{},measure0:{},resourceTiming:{}})
 Object.defineProperty(pf$registry, "measure0", {enumerable:false});
-swm("Performance", function(){})
+swm1("Performance", function(){})
 Performance.prototype = {
 // timeOrigin is the start time of this window, I guess
 timeOrigin: Date.now(),
@@ -1068,7 +1071,7 @@ swm("cel$registry", {}) // custom elements registry
 Object.defineProperty(window, "customElements", {get:function(){ return {
 define:mw$.cel_define,
 get:mw$.cel_get,
-}}});
+}},enumerable:true});
 
 /*********************************************************************
 If foo is an anchor, then foo.href = blah
@@ -1254,7 +1257,7 @@ return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAADE
 }
 
 swm("onmessage$$queue", [])
-swm("postMessage", function (message,target_origin, transfer) {
+swm1("postMessage", function (message,target_origin, transfer) {
 var locstring = this.location.protocol + "//" + this.location.hostname + ":" + this.location.port;
 if(!this.location.port) {
 // paste on a default port
@@ -1698,7 +1701,7 @@ copies of them in the current context.
 
 sdm("importNode", function(src, deep) { return src.cloneNode(deep)})
 
-swm("Event", function(etype){
+swm1("Event", function(etype){
     // event state is kept read-only by forcing
     // a new object for each event.  This may not
     // be appropriate in the long run and we'll
@@ -1791,7 +1794,7 @@ this.removeListener = function(f) { this.removeEventListener("mediaChange", f, f
 })
 spdc("MediaQueryList", null)
 
-swm("matchMedia", function(s) {
+swm1("matchMedia", function(s) {
 var q = new MediaQueryList;
 q.media = s;
 q.matches = eb$media(s);
@@ -2466,7 +2469,7 @@ Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr
 // json is the only method so far; I guess we write them as we need them.
 Response.prototype.json = function(){return Promise.resolve(JSON.parse(this.body))}
 
-swm("fetch", function(url, o) {
+swm1("fetch", function(url, o) {
 var dopost = false;
 if(o && o.method && o.method.toLowerCase() == "post") dopost = true;
 var body = "";
@@ -2651,7 +2654,7 @@ this.opener = window;
 })
 
 // window.open is the same as new window, just pass the args through
-swm("open", function() {
+swm1("open", function() {
 return Window.apply(this, arguments);
 })
 
@@ -2704,7 +2707,7 @@ spdc("MutationRecord", null)
 
 swm("mutList", [])
 
-swm("crypto", {})
+swm1("crypto", {})
 crypto.getRandomValues = function(a) {
 if(typeof a != "object") return NULL;
 var l = a.length;
@@ -2713,12 +2716,12 @@ return a;
 }
 
 swm2("ra$step", 0)
-swm("requestAnimationFrame", function() {
+swm1("requestAnimationFrame", function() {
 // This absolutely doesn't do anything. What is edbrowse suppose to do with animation?
 return ++ra$step;
 })
 
-swm("cancelAnimationFrame", eb$voidfunction)
+swm1("cancelAnimationFrame", eb$voidfunction)
 
 // link in the blob code
 swm("Blob", mw$.Blob)
@@ -2771,6 +2774,8 @@ alert3("abort dom request not implemented"); }
 // don't need these any more
 delete swm;
 delete sdm;
+delete swm1;
+delete sdm1;
 delete swm2;
 delete sdm2;
 delete spdc;
