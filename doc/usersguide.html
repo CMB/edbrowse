@@ -2851,8 +2851,8 @@ Most people never read technical web pages, but if you do...
 
 <p>
 A subscript, as indicated by html tags, is enclosed in brackets.
-Thus x&lt;span class=sub&gt;n&lt;/span&gt; becomes x[n].
-(span.sub should render the subscript properly in your css file - lower and in a smaller font.)
+Thus x&lt;sub&gt;n&lt;/sub&gt; becomes x[n].
+(sub should render the subscript properly in your css file - lower and in a smaller font.)
 This transformation is not done if the subscript is a one or two digit number.
 Thus x subscript 1 is rendered x1, just like your professor would say it.
 This is not ambiguous, as you might first think;
@@ -2862,14 +2862,22 @@ Even 17a3b3 is not ambiguous;
 it is a translation of 17 times a[3] times b[3].
 
 <p>
-Superscripts, as indicated by &lt;span class=sup&gt;, are enclosed in parentheses with a preceding arrow.
+Superscripts, as indicated by &lt;sup&gt;, are enclosed in parentheses with a preceding arrow.
 The parentheses are omitted if the superscript is a number.
 Thus x cubed looks like x^3,
 while x to the n-1 power looks like x^(n-1).
-Again, your css file should define span.sup.
+Again, your css file should define sup,
+but even if it doesn't, most browsers will do the right thing, putting the text above and in a smaller font.
 
 <p>
-Edbrowse supports the translation of certain &amp;word; constructs in html,
+The sup and sub tags are honored in other browsers and screen readers,
+so it is best to use these tags,
+rather than spans with css that places the text visually above or below the line.
+The sup and sub tags preserve the semantics of the relationship,
+so that edbrowse, and other browsers, can read the text in a helpful manner.
+
+<p>
+Edbrowse supports the translation of the &amp;word; constructs in html,
 such as &amp;lt; for the less than sign,
 along with &amp;#code: or &amp;#xcode; for direct inclusion of unicodes in html.
 The Greek letter theta can be encoded as &amp;theta;
