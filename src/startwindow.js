@@ -127,8 +127,8 @@ sdm("eb$listen", mw$.eb$listen)
 swm("eb$unlisten", mw$.eb$unlisten)
 sdm("eb$unlisten", mw$.eb$unlisten)
 swm("NodeFilter", mw$.NodeFilter)
-sdm("createNodeIterator", mw$.createNodeIterator)
-sdm("createTreeWalker", mw$.createTreeWalker)
+sdm2("createNodeIterator", mw$.createNodeIterator)
+sdm2("createTreeWalker", mw$.createTreeWalker)
 swm("rowReindex", mw$.rowReindex)
 swm("getComputedStyle", mw$.getComputedStyle.bind(window))
 swm("mutFixup", mw$.mutFixup)
@@ -171,12 +171,12 @@ And that does happen, e.g. the react system, so $ok is an alias for this. */
 swm2("ok", Object.keys)
 swm2("$ok", ok)
 
-window.nodeName = "WINDOW"; // in case you want to start at the top.
-document.nodeName = "#document"; // in case you want to start at document.
-document.tagName = "document";
-document.nodeType = 9;
-document.ownerDocument = null;
-document.defaultView = window;
+swm("nodeName", "WINDOW") // in case you want to start at the top.
+sdm("nodeName", "#document") // in case you want to start at document.
+sdm("tagName", "document")
+sdm("nodeType", 9)
+sdm2("ownerDocument", null)
+sdm("defaultView", window)
 
 // produce a stack for debugging purposes
 swm("step$stack", function(){
@@ -204,7 +204,7 @@ Object.defineProperty(window, "step$go", {get:function(){return top.step$go}, se
 
 swm("$zct", {}) // counters for trace points
 
-document.open = function() { return this }
+sdm("open", function() { return this })
 
 /* Some visual attributes of the window.
  * These are simulations as edbrowse has no screen.
@@ -233,10 +233,10 @@ Object.defineProperty(window, "name", {get:function(){return frameElement.name}}
 // Should it propagate back up to the frame element name?
 }
 
-document.bgcolor = "white";
-document.contentType = "text/html";
-document.visibilityState = "visible";
-document.readyState = "interactive";
+sdm("bgcolor", "white")
+sdm("contentType", "text/html")
+sdm("visibilityState", "visible")
+sdm2("readyState", "interactive");
 function readyStateComplete() { document.readyState = "complete"; document.activeElement = document.body;
 if(document.onreadystatechange$$fn) {
 var e = new Event;
@@ -1594,7 +1594,7 @@ Object.defineProperty(TextNode.prototype, "data", {
 get: function() { return this.data$2; },
 set: function(s) { this.data$2 = s + ""; }});
 
-document.createTextNode = function(t) {
+sdm2("createTextNode", function(t) {
 if(t == undefined) t = "";
 var c = new TextNode(t);
 /* A text node chould never have children, and does not need childNodes array,
@@ -1607,7 +1607,7 @@ c.parentNode = null;
 if(this.eb$xml) c.eb$xml = true;
 eb$logElement(c, "text");
 return c;
-}
+})
 
 swm("Comment", function(t) {
 this.data = t;
@@ -1621,14 +1621,14 @@ spdc("XMLCdata", HTMLElement)
 XMLCdata.prototype.nodeName = XMLCdata.prototype.tagName = "#cdata-section";
 XMLCdata.prototype.nodeType = 4;
 
-document.createComment = function(t) {
+sdm2("createComment", function(t) {
 if(t == undefined) t = "";
 var c = new Comment(t);
 c.childNodes = [];
 c.parentNode = null;
 eb$logElement(c, "comment");
 return c;
-}
+})
 
 // The Option class, these are choices in a dropdown list.
 swm("HTMLOptionElement", function() {
@@ -1726,7 +1726,7 @@ this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = d
 Event.prototype.initCustomEvent = function(t, bubbles, cancel, detail) {
 this.type = t, this.bubbles = bubbles, this.cancelable = cancel, this.detail = detail; }
 
-document.createEvent = function(unused) { return new Event; }
+sdm2("createEvent", function(unused) { return new Event; })
 
 swm("HashChangeEvent", function(){
     this.currentTarget =     this.target = null;
@@ -1893,10 +1893,6 @@ p.eb$listen = eb$listen;
 p.eb$unlisten = eb$unlisten;
 p.addEventListener = addEventListener;
 p.removeEventListener = removeEventListener;
-if(mw$.attachOn) {
-p.attachEvent = attachEvent;
-p.detachEvent = detachEvent;
-}
 p.dispatchEvent = mw$.dispatchEvent;
 p.insertAdjacentHTML = mw$.insertAdjacentHTML;
 // outerHTML is dynamic; should innerHTML be?
@@ -2191,7 +2187,7 @@ if(typeof f == "function") { this.onhashchange$2 = f}}})')
 // that leads to confusion; use the get  method.
 // get: function() { return this.onhashchange$2 ? this.onhashchange$2 : eb$voidfunction; }
 
-document.createElementNS = function(nsurl,s) {
+sdm2("createElementNS", function(nsurl,s) {
 var mismatch = false;
 var u = this.createElement(s);
 if(!u) return null;
@@ -2226,9 +2222,9 @@ alert3("bad createElementNS(" + nsurl + "," + s + ')');
 return null;
 }
 return u;
-}
+})
 
-document.createElement = function(s) {
+sdm2("createElement", function(s) {
 var c;
 if(!s) { // a null or missing argument
 alert3("bad createElement( type" + typeof s + ')');
@@ -2335,12 +2331,12 @@ c.name = c.type = "";
 }
 eb$logElement(c, s);
 return c;
-} 
+} )
 
-document.createDocumentFragment = function() {
+sdm2("createDocumentFragment", function() {
 var c = this.createElement("fragment");
 return c;
-}
+})
 
 sdm("implementation", {
 owner: document,
@@ -2511,8 +2507,8 @@ swm("$uv$sn", 0)
 swm("$jt$c", 'z')
 swm("$jt$sn", 0)
 
-document.querySelectorAll = querySelectorAll;
-document.querySelector = querySelector;
+sdm("querySelectorAll", querySelectorAll)
+sdm("querySelector", querySelector)
 document.childNodes = [];
 // We'll make another childNodes array belowe every node in the tree.
 // document should always and only have two children: DOCTYPE and HTML
