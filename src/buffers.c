@@ -8669,6 +8669,10 @@ redirect:
 
 		if (cw->imapMode3) {
 			globSub = false;
+			if(endRange > startRange) {
+				setError(MSG_RangeCmd, "d");
+				return false;
+			}
 			return imapDeleteWhileReading();
 		}
 

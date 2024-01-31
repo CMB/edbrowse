@@ -100,6 +100,7 @@ swm("eb$logElement", mw$.eb$logElement)
 swm1("alert", mw$.alert)
 swm("alert3", mw$.alert3)
 swm("alert4", mw$.alert4)
+print = function() { alert("javascript is trying to print this document")}
 swm("dumptree", mw$.dumptree)
 swm("uptrace", mw$.uptrace)
 swm("by_esn", mw$.by_esn)
@@ -341,7 +342,7 @@ sdm("tables", [])
 sdm("spans", [])
 sdm("images", [])
 // styleSheets is a placeholder for now; I don't know what to do with it.
-document.styleSheets = [];
+sdm("styleSheets", [])
 
 frames$2 = [];
 frames = {};
@@ -2485,7 +2486,7 @@ return Promise.resolve(r);
 })
 
 // pages seem to want document.style to exist
-document.style = new CSSStyleDeclaration;
+sdm("style", new CSSStyleDeclaration)
 document.style.element = document;
 document.style.bgcolor = "white";
 
@@ -2512,7 +2513,7 @@ swm("$jt$sn", 0)
 
 sdm("querySelectorAll", querySelectorAll)
 sdm("querySelector", querySelector)
-document.childNodes = [];
+sdm("childNodes", [])
 // We'll make another childNodes array belowe every node in the tree.
 // document should always and only have two children: DOCTYPE and HTML
 Object.defineProperty(document, "firstChild", {
