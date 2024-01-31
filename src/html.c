@@ -1822,10 +1822,8 @@ char *displayOptions(const Tag *sel)
 
 	opt = initString(&opt_l);
 	for (t = cw->optlist; t; t = t->same) {
-		if (t->controller != sel)
-			continue;
-		if (!t->checked)
-			continue;
+		if (t->controller != sel) continue;
+		if (!t->checked) continue;
 		if (*opt)
 			stringAndChar(&opt, &opt_l, selsep);
 		stringAndString(&opt, &opt_l, t->textval);
@@ -2298,14 +2296,7 @@ Here is a small page to test some of these select option cases.
 				goto fail;	// this should never happen
 // unlike display, value can return null, if no choice was made
 			if (!dynamicvalue) {
-				if(t->required)
-					goto required;
-// multiple select could be zero select
-				if (t->multiple) continue;
-// single select must choose the first option
-				const Tag *u = locateOptionByNum(t, 1);
-				if(!u) continue; // empty list
-					postNameVal(name, u->value, fsep, false);
+				if(t->required) goto required;
 				continue;
 			}
 // single select cannot select a blank value

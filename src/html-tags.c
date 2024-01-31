@@ -3943,6 +3943,22 @@ void htmlInputHelper(Tag *t)
 	formControl(t, (itype > INP_SUBMIT));
 }
 
+static void fillEmptySelect(Tag *sel)
+{
+	Tag *t;
+	if(sel->multiple) return;
+	if(sel->lic) return;
+	for (t = cw->optlist; t; t = t->same) {
+		if (t->controller != sel) continue;
+		if (t->disabled) continue;
+// this is the first option
+		break;
+	}
+	if(!t) return; // no options possible
+	t->checked = t->rchecked = true;
+	sel->lic = 1; // now 1 item selected
+}
+
 static void prerenderNode(Tag *t, bool opentag)
 {
 	int itype;		/* input type */
@@ -4177,6 +4193,10 @@ static void prerenderNode(Tag *t, bool opentag)
 		} else {
 			currentSel = 0;
 			if(action == TAGACT_SELECT) {
+// If a single select, and nothing selected, the browser
+// selects the first viable option for you.
+				fillEmptySelect(t);
+// from here on it is called an input tag, to join the other input tags
 				t->action = TAGACT_INPUT;
 				t->value = displayOptions(t);
 			}
