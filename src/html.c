@@ -4762,14 +4762,14 @@ nocolor:
 			--listnest;
 // If this is <ul> with one item or no items below,
 // and in the cell of a data table,
-// indicate with lic = -1. We will suppresss it.
+// indicate with lic = -2. We will suppresss it.
 		j = 0;
 		for(ltag = t->firstchild; ltag; ltag = ltag->sibling)
 			if(ltag->action == TAGACT_LI) ++j;
 		if(j <= 1 && action == TAGACT_UL &&
 		t->parent && t->parent->action == TAGACT_TD &&
 		tableType(t->parent) == 1) {
-			t->lic = -1;
+			t->lic = -2;
 			break;
 		}
 // falling through is just fine, but sometimes generates a cc warning, so...
@@ -4795,7 +4795,7 @@ nop:
 
 // defense against <td><p>stuff</p></td>
 // or even <td><i><font size=-1><p>stuff</p></font></i></td>
-// Supress linebreak if this is first or last child of a cell.
+// Suppress linebreak if this is first or last child of a cell.
 		if(j) {
 			const Tag *y = t, *z, *x;
 			while((z = y->parent)) {
@@ -4967,9 +4967,9 @@ past_cell_paragraph:
 
 	case TAGACT_LI:
 		if ((ltag = findOpenList(t))) {
-			if(ltag->lic < 0) break; // suppressed
+			if(ltag->lic == -2) break; // suppressed
 			ltag->post = true;
-/* borrow ninp to store the tag number of <li> */
+// borrow ninp to store the tag number of <li>
 			ltag->ninp = t->seqno;
 		}
 		goto nop;
