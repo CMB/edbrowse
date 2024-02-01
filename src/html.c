@@ -212,6 +212,11 @@ locateOptions(const Tag *sel, const char *input,
 		if(inputDisabled(t) ||
 		inputDisabled(t->controller) ||
 		(t->parent && t->parent->action == TAGACT_OPTG && inputDisabled(t->parent))) {
+// If we are gathering values, to submit the form,
+// then somehow all these options have been selected.
+// The user can't select a disabled option but somebody did,
+// perhaps js, so let it ride.
+			if(val_p) continue;
 			setError(MSG_Disabled);
 			goto fail;
 		}
