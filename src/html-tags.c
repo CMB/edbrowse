@@ -162,6 +162,8 @@ I also use <pre> so that has to be allowed.
 {"center",0,1, 0, 0},
 {"font",0,1, 0, 0},
 {"span",0,1, 0, 0},
+{"sub",0,1, 0, 0},
+{"sup",0,1, 0, 0},
 {"p",0,0, 1, "blockquote"},
 {0, 0,0,0, 0},
 };
