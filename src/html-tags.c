@@ -3948,11 +3948,13 @@ void htmlInputHelper(Tag *t)
 static void fillEmptySelect(Tag *sel)
 {
 	Tag *t;
-	if(sel->multiple) return;
+	if(sel->multiple | sel->disabled) return;
 	if(sel->lic) return;
 	for (t = cw->optlist; t; t = t->same) {
 		if (t->controller != sel) continue;
-		if (t->disabled) continue;
+		if(t->disabled ||
+		(t->parent && t->parent->action == TAGACT_OPTG && t->parent->disabled))
+			continue;
 // this is the first option
 		break;
 	}
