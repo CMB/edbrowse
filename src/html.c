@@ -2296,18 +2296,28 @@ Here is a small page to test some of these select option cases.
 			}
 			rc = locateOptions(t, display, 0, &dynamicvalue, false);
 //			printf("disp<%s>dyn<%s>\n", display, dynamicvalue);
-			nzFree(display);
-			if (!rc)
-				goto fail;	// this should never happen
+			if (!rc) { // this should never happen
+				nzFree(display);
+				goto fail;
+			}
 // unlike display, value can return null, if no choice was made
 			if (!dynamicvalue) {
+				nzFree(display);
 				if(t->required) goto required;
 				continue;
 			}
-// single select cannot select a blank value
-			if(t->required && !t->multiple && !*dynamicvalue)
-				goto required;
-// Step through the options
+// Single select cannot select a blank value
+// if the option selected is first in list. Wow.
+			if(t->required && !t->multiple && !*dynamicvalue) {
+				const Tag *u = locateOptionByNum(t, 1);
+				if(u && stringEqual(u->textval, display) && !*u->value) {
+					nzFree(display);
+					goto required;
+				}
+			}
+			nzFree(display);
+
+// Now step through the options
 			char more = 1;
 			for (s = dynamicvalue; more; s = e) {
 				e = 0;
