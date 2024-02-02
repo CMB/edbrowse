@@ -1933,11 +1933,11 @@ return c;
 }
 
 // symbolic constants for compareDocumentPosition
-Object.defineProperty(this,"DOCUMENT_POSITION_DISCONNECTED",{writable:false,configurable:false,value:1});
-Object.defineProperty(this,"DOCUMENT_POSITION_PRECEDING",{writable:false,configurable:false,value:2});
-Object.defineProperty(this,"DOCUMENT_POSITION_FOLLOWING",{writable:false,configurable:false,value:4});
-Object.defineProperty(this,"DOCUMENT_POSITION_CONTAINS",{writable:false,configurable:false,value:8});
-Object.defineProperty(this,"DOCUMENT_POSITION_CONTAINED_BY",{writable:false,configurable:false,value:16});
+Object.defineProperty(this,"DOCUMENT_POSITION_DISCONNECTED",{value:1});
+Object.defineProperty(this,"DOCUMENT_POSITION_PRECEDING",{value:2});
+Object.defineProperty(this,"DOCUMENT_POSITION_FOLLOWING",{value:4});
+Object.defineProperty(this,"DOCUMENT_POSITION_CONTAINS",{value:8});
+Object.defineProperty(this,"DOCUMENT_POSITION_CONTAINED_BY",{value:16});
 
 /*********************************************************************
 compareDocumentPosition:
@@ -1972,6 +1972,10 @@ if(t === this) return DOCUMENT_POSITION_CONTAINS;
 }
 return DOCUMENT_POSITION_DISCONNECTED;
 }
+
+// for toolbar menubar etc
+generalbar = {}
+Object.defineProperty(generalbar, "visible", {value:true})
 
 function cssGather(pageload, newwin) {
 var w = my$win();
@@ -5042,7 +5046,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "setAttribute",  "setAttributeNS",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
-"compareDocumentPosition",
+"compareDocumentPosition", "generalbar",
 "cssGather", "cssApply", "cssDocLoad",
 "makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "injectSetup", "eb$visible",
