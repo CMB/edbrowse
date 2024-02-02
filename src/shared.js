@@ -1979,7 +1979,6 @@ if(!pageload && newwin && newwin.eb$visible) w = newwin;
 var d =w.document;
 var css_all = "";
 w.cssSource = [];
-Object.defineProperty(w, "cssSource", {enumerable:false});
 var a, i, t;
 
 a = d.querySelectorAll("link,style");

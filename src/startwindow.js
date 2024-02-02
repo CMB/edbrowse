@@ -344,9 +344,10 @@ sdm("images", [])
 // styleSheets is a placeholder for now; I don't know what to do with it.
 sdm("styleSheets", [])
 
-frames$2 = [];
-frames = {};
-Object.defineProperty(frames, "length", {get:function(){return frames$2.length}});
+swm2("frames$2", []);
+swm1("frames", {})
+Object.defineProperty(frames, "length", {get:function(){return frames$2.length}})
+Object.defineProperty(window, "length", {get:function(){return frames$2.length},enumerable:true})
 
 // to debug a.href = object or other weird things.
 swm("hrefset$p", [])
@@ -2618,12 +2619,13 @@ window.location$2 = new z$URL(h);
 } else {
 window.location$2.href = h;
 }
-}});
+}, enumerable:true});
 // We need location$2 so we can define origin and replace etc
-location$2 = new URL;
+swm2("location$2", new URL)
 Object.defineProperty(location$2, "origin", {get:function(){
 return this.protocol ? this.protocol + "//" + this.host : null}});
 Object.defineProperty(window, "origin", {get: function(){return location.origin}});
+sdm("location$2", new URL)
 Object.defineProperty(document, "location", {
 get: function() { return this.location$2; },
 set: function(h) {
@@ -2632,8 +2634,7 @@ this.location$2 = new z$URL(h);
 } else {
 this.location$2.href = h;
 }
-}});
-document.location$2 = new URL;
+}, enumerable:true});
     location.replace = document.location.replace = function(s) { this.href = s};
 Object.defineProperty(window.location,'replace',{enumerable:false});
 Object.defineProperty(document.location,'replace',{enumerable:false});
@@ -2678,6 +2679,9 @@ alert3("trying to use XMLSerializer");
 return "<div>XMLSerializer not yet implemented</div>"; }
 
 swm2("css$ver", 0)
+swm2("css_all", "")
+swm2("last$css_all", "")
+swm2("cssSource", [])
 sdm("xmlVersion", 0)
 
 swm("MutationObserver", function(f) {
