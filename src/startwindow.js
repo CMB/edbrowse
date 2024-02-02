@@ -160,7 +160,6 @@ sdm("focus", function(){document.activeElement=document.body})
 swm1("blur", document.blur)
 swm1("focus", document.focus)
 
-Object.defineProperty(window, "window", {enumerable:false});
 swm1("self", window)
 Object.defineProperty(window, "parent", {get: eb$parent,enumerable:true});
 Object.defineProperty(window, "top", {get: eb$top,enumerable:true});
@@ -224,9 +223,11 @@ swm1("devicePixelRatio", 1.0)
 // the status property of the XMLHttpRequest implementation
 swm("defaultStatus", 0)
 swm("returnValue", true)
-swm1("menubar", true)
-swm1("scrollbars", true)
-swm1("toolbar", true)
+swm1("menubar", {visible:true})
+swm1("statusbar", {visible:true})
+swm1("scrollbars", {visible:true})
+swm1("toolbar", {visible:true})
+swm1("personalbar", {visible:true})
 swm("resizable", true)
 swm("directories", false)
 if(window == top) {
@@ -256,14 +257,14 @@ height: 768, width: 1024,
 availHeight: 768, availWidth: 1024, availTop: 0, availLeft: 0,
 colorDepth: 24})
 
-console = {
+swm("console", {
 debug: function(obj) { mw$.logtime(3, "debug", obj)},
 log: function(obj) { mw$.logtime(3, "log", obj)},
 info: function(obj) { mw$.logtime(3, "info", obj)},
 warn: function(obj) { mw$.logtime(3, "warn", obj)},
 error: function(obj) { mw$.logtime(3, "error", obj)},
 timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new Date).getTime(); }
-};
+})
 
 Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
