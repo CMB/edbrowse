@@ -3948,8 +3948,13 @@ void htmlInputHelper(Tag *t)
 static void fillEmptySelect(Tag *sel)
 {
 	Tag *t;
+	const char *z;
+	int zv;
 	if(sel->multiple | sel->disabled) return;
 	if(sel->lic) return;
+// setting size to something > 1 disables this behavior.
+	if((z = attribVal(sel, "size")) && (zv = stringIsNum(z)) && zv > 1)
+		return;
 	for (t = cw->optlist; t; t = t->same) {
 		if (t->controller != sel) continue;
 		if(t->disabled ||

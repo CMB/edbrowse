@@ -778,6 +778,11 @@ Object.defineProperty(HTMLSelectElement.prototype, "multiple", {
 get:function(){ var t = this.getAttribute("multiple");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("multiple", v);}});
+Object.defineProperty(HTMLSelectElement.prototype, "size", {
+get:function(){ var t = this.getAttribute("size");
+if(typeof t == "number") return t;
+return this.multiple ? 4 : 1;},
+set:function(v) { this.setAttribute("size", v);}});
 Object.defineProperty(HTMLSelectElement.prototype, "required", {
 get:function(){ var t = this.getAttribute("required");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},

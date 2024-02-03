@@ -2306,15 +2306,21 @@ Here is a small page to test some of these select option cases.
 				if(t->required) goto required;
 				continue;
 			}
+
 // Single select cannot select a blank value
 // if the option selected is first in list. Wow.
-			if(t->required && !t->multiple && !*dynamicvalue) {
-				const Tag *u = locateOptionByNum(t, 1);
-				if(u && stringEqual(u->textval, display) && !*u->value) {
-					nzFree(display);
-					goto required;
-				}
+			if(!t->required || t->multiple || *dynamicvalue)
+				goto options_ok;
+			const char *z; int zv;
+// setting size to something > 1 disables this behavior.
+			if((z = attribVal(t, "size")) && (zv = stringIsNum(z)) && zv > 1)
+				goto options_ok;
+			const Tag *u = locateOptionByNum(t, 1);
+			if(u && stringEqual(u->textval, display) && !*u->value) {
+				nzFree(display);
+				goto required;
 			}
+options_ok:
 			nzFree(display);
 
 // Now step through the options
