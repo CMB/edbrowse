@@ -2298,6 +2298,7 @@ case "cssstyledeclaration":
 c = new CSSStyleDeclaration; c.element = null; break;
 case "style": c = new HTMLStyleElement; break;
 case "script": c = new HTMLScriptElement; break;
+case "template": c = new HTMLTemplateElement; break;
 case "div": c = new HTMLDivElement; break;
 case "span": c = new HTMLSpanElement; break;
 case "label": c = new HTMLLabelElement; break;
