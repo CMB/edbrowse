@@ -57,16 +57,18 @@ querySelector0 = function() { return false}
 eb$cssText = function(){}
 }
 
+// the third party deminimization stuff is in mw$, the master window.
+// Other stuff too, that can be shared.
+// The window should just be there from C, but in case it isn't.
+if(!window.mw$)
+mw$ = {share:false, URL:{}};
+
 // set window member, unseen, unchanging
 swm = function(k, v) { Object.defineProperty(window, k, {value:v})}
-// set document member, unseen, unchanging
-sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
 // visible, but still protected
 swm1 = function(k, v) { Object.defineProperty(window, k, {value:v,enumerable:true})}
-sdm1 = function(k, v) { Object.defineProperty(document, k, {value:v,enumerable:true})}
 // unseen, but changeable
 swm2 = function(k, v) { Object.defineProperty(window, k, {value:v, writable:true, configurable:true})}
-sdm2 = function(k, v) { Object.defineProperty(document, k, {value:v, writable:true, configurable:true})}
 
 // this is called as each html element is built
 // establish the prototype for inheritance, then set dom$class
@@ -75,11 +77,49 @@ spdc = function(c, inherit) { var v = c.replace(/^z\$/, "");
 if(inherit) Object.defineProperty(window[c], "prototype", {value:new inherit})
 Object.defineProperty(window[c].prototype, "dom$class", {value:v})}
 
-// the third party deminimization stuff is in mw$, the master window.
-// Other stuff too, that can be shared.
-// The window should just be there from C, but in case it isn't.
-if(!window.mw$)
-mw$ = {share:false, URL:{}};
+// The first DOM class is Node, at the head of all else.
+swm("Node", function(){})
+spdc("Node", null)
+
+// a node list is and isn't an array; I don't really understand it.
+// I'll just have it inherit from array, until someone tells me I'm wrong.
+swm("NodeList", function(){})
+spdc("NodeList", Array)
+
+swm("eb$listen", mw$.eb$listen)
+swm("eb$unlisten", mw$.eb$unlisten)
+// make sure to wrap global dispatchEvent, so this becomes this window,
+// and not the shared window.
+swm("dispatchEvent", function(e) { return mw$.dispatchEvent.call(window, e)})
+swm("addEventListener", function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true)})
+swm("removeEventListener", function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true)})
+
+swm("EventTarget", function() {})
+spdc("EventTarget", Node)
+EventTarget.prototype.eb$listen = eb$listen;
+EventTarget.prototype.eb$unlisten = eb$unlisten;
+EventTarget.prototype.addEventListener = addEventListener;
+EventTarget.prototype.removeEventListener = removeEventListener;
+EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
+
+swm("Document", function(){this.children=[]})
+spdc("Document", EventTarget)
+Document.prototype.activeElement = null;
+Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
+Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
+Document.prototype.querySelector = querySelector;
+Document.prototype.querySelectorAll = querySelectorAll;
+
+// set document member, analogs of the set window member functions
+sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
+sdm1 = function(k, v) { Object.defineProperty(document, k, {value:v,enumerable:true})}
+sdm2 = function(k, v) { Object.defineProperty(document, k, {value:v, writable:true, configurable:true})}
+
+// if document becomes Document we won't need these
+sdm("eb$listen", mw$.eb$listen)
+sdm("eb$unlisten", mw$.eb$unlisten)
+sdm("addEventListener", addEventListener)
+sdm("removeEventListener", removeEventListener)
 
 if(mw$.share) { // point to native methods in the master window
 swm("my$win", mw$.my$win)
@@ -121,17 +161,6 @@ sdm("getElementsByClassName", mw$.getElementsByClassName)
 sdm("getElementById", mw$.getElementById)
 sdm("nodeContains", mw$.nodeContains)
 sdm("dispatchEvent", mw$.dispatchEvent)
-// make sure to wrap global dispatchEvent, so this becomes this window,
-// and not the shared window.
-swm("dispatchEvent", function(e) { return mw$.dispatchEvent.call(window, e)})
-swm("addEventListener", function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true)})
-sdm("addEventListener", addEventListener)
-swm("removeEventListener", function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true)})
-sdm("removeEventListener", removeEventListener)
-swm("eb$listen", mw$.eb$listen)
-sdm("eb$listen", mw$.eb$listen)
-swm("eb$unlisten", mw$.eb$unlisten)
-sdm("eb$unlisten", mw$.eb$unlisten)
 swm("NodeFilter", mw$.NodeFilter)
 sdm2("createNodeIterator", mw$.createNodeIterator)
 sdm2("createTreeWalker", mw$.createTreeWalker)
@@ -529,36 +558,6 @@ URL.prototype.charCodeAt = function(n) { return this.toString().charCodeAt(n); }
 Object.defineProperty(URL.prototype, "charCodeAt", {enumerable:false});
 URL.prototype.trim = function() { return this.toString().trim(); }
 Object.defineProperty(URL.prototype, "trim", {enumerable:false});
-
-/*********************************************************************
-Here are the DOM classes with their constructors.
-Some live in shared.js.
-Not sure which ones will be here and which there.
-*********************************************************************/
-
-swm("Node", function(){})
-spdc("Node", null)
-
-// a node list is and isn't an array; I don't really understand it.
-// I'll just have it inherit from array, until someone tells me I'm wrong.
-swm("NodeList", function(){})
-spdc("NodeList", Array)
-
-swm("EventTarget", function() {})
-spdc("EventTarget", Node)
-EventTarget.prototype.eb$listen = eb$listen;
-EventTarget.prototype.eb$unlisten = eb$unlisten;
-EventTarget.prototype.addEventListener = addEventListener;
-EventTarget.prototype.removeEventListener = removeEventListener;
-EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
-
-swm("Document", function(){this.children=[]})
-spdc("Document", EventTarget)
-Document.prototype.activeElement = null;
-Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
-Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
-Document.prototype.querySelector = querySelector;
-Document.prototype.querySelectorAll = querySelectorAll;
 
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
 swm("HTMLElement", function(){})
