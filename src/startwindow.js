@@ -1321,6 +1321,13 @@ this.close = eb$voidfunction;
 })
 spdc("AudioContext", null)
 
+// Document class, I don't know what to make of this.
+swm("Document", function(){this.children=[]})
+spdc("Document", null)
+Document.prototype.activeElement = null;
+Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
+Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
+
 swm("DocumentFragment", function(){})
 spdc("DocumentFragment", HTMLElement)
 DocumentFragment.prototype.nodeType = 11;
@@ -2794,6 +2801,9 @@ website to load anything you might ever look at or scroll down to,
 making edbrowse even slower than it already is. But it's a start.
 *********************************************************************/
 IntersectionObserver.prototype.observe = function(t) {
+var alertstring = "intersect with " + t;
+if(t.eb$seqno) alertstring += "." + t.eb$seqno;
+alert3(alertstring);
 var e = new IntersectionObserverEntry;
 e.target = t;
 e.isIntersecting = true; // target is visible
