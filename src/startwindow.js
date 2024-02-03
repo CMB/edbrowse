@@ -1327,11 +1327,15 @@ spdc("Document", null)
 Document.prototype.activeElement = null;
 Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
 Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
+Document.prototype.querySelector = querySelector;
+Document.prototype.querySelectorAll = querySelectorAll;
 
 swm("DocumentFragment", function(){})
 spdc("DocumentFragment", HTMLElement)
 DocumentFragment.prototype.nodeType = 11;
 DocumentFragment.prototype.nodeName = DocumentFragment.prototype.tagName = "#document-fragment";
+DocumentFragment.prototype.querySelector = querySelector;
+DocumentFragment.prototype.querySelectorAll = querySelectorAll;
 
 swm("CSSRule", function(){this.cssText=""})
 CSSRule.prototype.toString = function(){return this.cssText}
