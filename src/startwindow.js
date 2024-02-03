@@ -2819,6 +2819,13 @@ this.callback([e]);
 // We don't have to remember target or the conditions of intersection etc.
 }
 
+// more visual stuff. But nothing resizes in edbrowse, ever,
+// so this should be easy to stub out.
+swm("ResizeObserver", function(){})
+ResizeObserver.prototype.disconnect = eb$voidfunction;
+ResizeObserver.prototype.observe = eb$voidfunction;
+ResizeObserver.prototype.unobserve = eb$voidfunction;
+
 // don't need these any more
 delete swm;
 delete sdm;
