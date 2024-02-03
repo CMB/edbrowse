@@ -4721,7 +4721,7 @@ Needless to say that's not good!
 		break;
 
 	case TAGACT_OBJECT:
-		domLink(t, "HtmlObj", "htmlobjs", 0, 4);
+		domLink(t, "HTMLObjectElement", "htmlobjs", 0, 4);
 		break;
 
 	case TAGACT_UNKNOWN:

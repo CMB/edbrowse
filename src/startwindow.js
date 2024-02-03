@@ -101,6 +101,7 @@ swm1("alert", mw$.alert)
 swm("alert3", mw$.alert3)
 swm("alert4", mw$.alert4)
 print = function() { alert("javascript is trying to print this document")}
+stop = function() { alert("javascript is trying to stop the browse process")}
 swm("dumptree", mw$.dumptree)
 swm("uptrace", mw$.uptrace)
 swm("by_esn", mw$.by_esn)
@@ -140,6 +141,7 @@ swm("makeSheets", mw$.makeSheets)
 }
 
 swm("dom$class", "Window")
+sdm("dom$class", "HTMLDocument")
 // use dom$class to make our own toString function, so that
 // document.createElement("div").toString() says "[object HTMLDiv?Element]" as it should
 // This is important to some websites!
@@ -943,8 +945,10 @@ this.dispatchEvent(e);
 swm("HTMLLabelElement", function(){})
 spdc("HTMLLabelElement", HTMLElement)
 Object.defineProperty(HTMLLabelElement.prototype, "htmlFor", { get: function() { return this.getAttribute("for"); }, set: function(h) { this.setAttribute("for", h); }});
-swm("HtmlObj", function(){})
-spdc("HtmlObj", HTMLElement)
+swm("HTMLUnknownElement", function(){})
+spdc("HTMLUnknownElement", HTMLElement)
+swm("HTMLObjectElement", function(){})
+spdc("HTMLObjectElement", HTMLElement)
 swm("HTMLAreaElement", function(){})
 spdc("HTMLAreaElement", HTMLElement)
 
@@ -1316,13 +1320,6 @@ this.suspend = eb$voidfunction;
 this.close = eb$voidfunction;
 })
 spdc("AudioContext", null)
-
-// Document class, I don't know what to make of this,
-// but my stubs for frames needs it.
-swm("Document", function(){})
-spdc("Document", HTMLElement)
-Document.prototype.nodeName = Document.prototype.tagName = "#document";
-Document.prototype.nodeType = 9;
 
 swm("DocumentFragment", function(){})
 spdc("DocumentFragment", HTMLElement)
@@ -1932,8 +1929,6 @@ p.offsetWidth = 120;
 p.dir = "auto";
 })();
 
-Document.prototype.eb$apch1 = document.eb$apch1;
-
 HTMLFormElement.prototype.appendChildNative = mw$.appendChild;
 HTMLFormElement.prototype.appendChild = mw$.formAppendChild;
 HTMLFormElement.prototype.insertBeforeNative = mw$.insertBefore;
@@ -2266,7 +2261,7 @@ switch(t) {
 case "shadowroot": c = new ShadowRoot; break;
 case "body": c = new HTMLBodyElement; break;
 // is it ok that head isn't here?
-case "object": c = new HtmlObj; break;
+case "object": c = new HTMLObjectElement; break;
 case "a": c = new HTMLAnchorElement; break;
 case "area": c = new HTMLAreaElement; break;
 case "image": t = "img";
@@ -2297,7 +2292,6 @@ case "thead": c = new z$tHead; break;
 case "tfoot": c = new z$tFoot; break;
 case "canvas": c = new HTMLCanvasElement; break;
 case "audio": case "video": c = new HTMLAudioElement; break;
-case "document": c = new Document; break;
 case "fragment": c = new DocumentFragment; break;
 case "frame": c = new HTMLFrameElement; break;
 case "iframe": c = new HTMLIFrameElement; break;
@@ -2319,7 +2313,7 @@ case "button": c = new HTMLButtonElement; break;
 default:
 unknown = true;
 // alert("createElement default " + s);
-c = new HTMLElement;
+c = new HTMLUnknownElement;
 }
 
 c.childNodes = [];
@@ -2383,19 +2377,6 @@ doc.documentElement = below;
 return doc;
 }
 })
-
-// Extra things, beyond Node, that should be in Document.prototype
-Document.prototype.getElementById = mw$.getElementById;
-Document.prototype.nodeContains = mw$.nodeContains;
-Document.prototype.createNodeIterator = mw$.createNodeIterator;
-Document.prototype.createTreeWalker = mw$.createTreeWalker;
-Document.prototype.createElement = document.createElement;
-Document.prototype.createElementNS = document.createElementNS;
-Document.prototype.createTextNode = document.createTextNode;
-Document.prototype.createComment = document.createComment;
-Document.prototype.createDocumentFragment = document.createDocumentFragment;
-Document.prototype.createEvent = document.createEvent;
-Document.prototype.implementation = document.implementation;
 
 swm("EventTarget", function() {})
 EventTarget.prototype.eb$listen = eb$listen;
