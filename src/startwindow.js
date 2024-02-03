@@ -48,7 +48,8 @@ eb$formReset = function() { print("reset")}
 eb$listen = eb$unlisten = addEventListener = removeEventListener = eb$voidfunction;
 my$win = function() { return window}
 my$doc = function() { return document}
-document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
+eb$hasFocus = eb$write = eb$writeln = eb$apch1 = eb$apch2 = eb$rmch2 = eb$insbf = eb$voidfunction;
+// document.eb$apch2 = function(c) { alert("append " + c.nodeName  + " to " + this.nodeName); this.childNodes.push(c); }
 // other browsers don't have querySelectorAll under window
 querySelectorAll = function() { return [] }
 querySelector = function() { return {} }
@@ -166,6 +167,16 @@ swm1("self", window)
 Object.defineProperty(window, "parent", {get: eb$parent,enumerable:true});
 Object.defineProperty(window, "top", {get: eb$top,enumerable:true});
 Object.defineProperty(window, "frameElement", {get: eb$frameElement,enumerable:true});
+
+sdm("write", eb$write)
+sdm("writeln", eb$writeln)
+sdm("hasFocus", eb$hasFocus)
+sdm("eb$apch1", eb$apch1)
+sdm("eb$apch2", eb$apch2)
+sdm("eb$insbf", eb$insbf)
+sdm("eb$rmch2", eb$rmch2)
+sdm("eb$ctx", eb$ctx)
+sdm("eb$seqno", 0)
 
 /* An ok (object keys) function for javascript/dom debugging.
  * This is in concert with the jdb command in edbrowse.
@@ -532,6 +543,22 @@ spdc("Node", null)
 // I'll just have it inherit from array, until someone tells me I'm wrong.
 swm("NodeList", function(){})
 spdc("NodeList", Array)
+
+swm("EventTarget", function() {})
+spdc("EventTarget", Node)
+EventTarget.prototype.eb$listen = eb$listen;
+EventTarget.prototype.eb$unlisten = eb$unlisten;
+EventTarget.prototype.addEventListener = addEventListener;
+EventTarget.prototype.removeEventListener = removeEventListener;
+EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
+
+swm("Document", function(){this.children=[]})
+spdc("Document", EventTarget)
+Document.prototype.activeElement = null;
+Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
+Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
+Document.prototype.querySelector = querySelector;
+Document.prototype.querySelectorAll = querySelectorAll;
 
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
 swm("HTMLElement", function(){})
@@ -1317,15 +1344,6 @@ this.suspend = eb$voidfunction;
 this.close = eb$voidfunction;
 })
 spdc("AudioContext", null)
-
-// Document class, I don't know what to make of this.
-swm("Document", function(){this.children=[]})
-spdc("Document", null)
-Document.prototype.activeElement = null;
-Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
-Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
-Document.prototype.querySelector = querySelector;
-Document.prototype.querySelectorAll = querySelectorAll;
 
 swm("DocumentFragment", function(){})
 spdc("DocumentFragment", HTMLElement)
@@ -2385,13 +2403,6 @@ doc.documentElement = below;
 return doc;
 }
 })
-
-swm("EventTarget", function() {})
-EventTarget.prototype.eb$listen = eb$listen;
-EventTarget.prototype.eb$unlisten = eb$unlisten;
-EventTarget.prototype.addEventListener = addEventListener;
-EventTarget.prototype.removeEventListener = removeEventListener;
-EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
 
 swm("XMLHttpRequestEventTarget", function(){})
 XMLHttpRequestEventTarget.prototype = new EventTarget;

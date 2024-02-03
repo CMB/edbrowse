@@ -3648,26 +3648,22 @@ JS_NewCFunction(cx, nat_cssText, "cssText", 1), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$playAudio",
 JS_NewCFunction(cx, nat_playAudio, "play_audio", 0), 0);
 
-// native document methods
-    JS_DefinePropertyValueStr(cx, d, "hasFocus",
+// these really belong in document, but I'm putting them in
+// window and we can copy them to document later.
+    JS_DefinePropertyValueStr(cx, g, "eb$hasFocus",
 JS_NewCFunction(cx, nat_hasFocus, "hasFocus", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "write",
+    JS_DefinePropertyValueStr(cx, g, "eb$write",
 JS_NewCFunction(cx, nat_doc_write, "doc_write", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "writeln",
+    JS_DefinePropertyValueStr(cx, g, "eb$writeln",
 JS_NewCFunction(cx, nat_doc_writeln, "doc_writeln", 0), 0);
-    JS_DefinePropertyValueStr(cx, d, "eb$apch1",
+    JS_DefinePropertyValueStr(cx, g, "eb$apch1",
 JS_NewCFunction(cx, nat_apch1, "apch1", 1), 0);
-    JS_DefinePropertyValueStr(cx, d, "eb$apch2",
+    JS_DefinePropertyValueStr(cx, g, "eb$apch2",
 JS_NewCFunction(cx, nat_apch2, "apch2", 1), 0);
-    JS_DefinePropertyValueStr(cx, d, "eb$insbf",
+    JS_DefinePropertyValueStr(cx, g, "eb$insbf",
 JS_NewCFunction(cx, nat_insbf, "insbf", 2), 0);
-    JS_DefinePropertyValueStr(cx, d, "eb$rmch2",
+    JS_DefinePropertyValueStr(cx, g, "eb$rmch2",
 JS_NewCFunction(cx, nat_rmch2, "removeChild", 1), 0);
-
-// document.eb$ctx is the context number
-	JS_DefinePropertyValueStr(cx, d, "eb$ctx", JS_NewInt32(cx, f->gsn), 0);
-// document.eb$seqno = 0
-	JS_DefinePropertyValueStr(cx, d, "eb$seqno", JS_NewInt32(cx, 0), 0);
 
 // Sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
