@@ -2466,9 +2466,9 @@ var cr = w.cel$registry;
 var ext = "";
 if(typeof options == "object" && options.extends) ext = options.extends;
 if(ext)
-alert3("defining custom element " + name + " extends " + ext);
+alert3("define custom element " + name + " extends " + ext);
 else
-alert3("defining custom element " + name);
+alert3("define custom element " + name);
 if(typeof name != "string" || !name.match(/.-./)) throw new Error("SyntaxError");
 if(cr[name]) throw new Error("NotSupportedError");
 if(typeof c != "function") throw new Error("DOMException");
@@ -2682,7 +2682,7 @@ this.href$val = h;
 }
 
 function url_hrefset(v) {
-var w = my$win(), d = my$doc(), inconstruct = true, firstassign = false;
+var w = my$win(), inconstruct = true, firstassign = false;
 // if passed a url, turn it back into a string
 if(v === null || v === undefined) v = "";
 if(v.dom$class == "URL" || v instanceof w.URL) v = v.toString();
@@ -2956,29 +2956,6 @@ this.status = 0;
 this.statusText = "network error";
 }
 };
-
-swm = function(k, v) { Object.defineProperty(self, k, {value:v})}
-spdc = function(c, inherit) { var v = c.replace(/^z\$/, "");
-if(inherit) Object.defineProperty(self[c], "prototype", {value:new inherit})
-Object.defineProperty(self[c].prototype, "dom$class", {value:v})}
-
-// This is the beginning of the standard classes; not sure how many
-// I will have in here. Everything starts with Node.
-swm("Node", function(){})
-spdc("Node", null)
-Node.prototype.toString = function(){
-return "[object " + (this.dom$class ? this.dom$class : "Object") + ']'; }
-
-swm("EventTarget", function() {})
-spdc("EventTarget", Node)
-EventTarget.prototype.eb$listen = eb$listen;
-EventTarget.prototype.eb$unlisten = eb$unlisten;
-EventTarget.prototype.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true)}
-EventTarget.prototype.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true)}
-EventTarget.prototype.dispatchEvent = dispatchEvent;
-
-swm("Document", function(){this.children=[]})
-spdc("Document", EventTarget)
 
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
@@ -5047,7 +5024,6 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "eb$newLocation","eb$logElement",
 "resolveURL", "eb$fetchHTTP",
 "setTimeout", "clearTimeout", "setInterval", "clearInterval",
-"swm", "spdc", "Node",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "getRootNode","wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
@@ -5089,8 +5065,7 @@ for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 // some class prototypes
-flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams,
-swm, spdc, Node];
+flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 

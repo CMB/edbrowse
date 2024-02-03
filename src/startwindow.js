@@ -110,16 +110,12 @@ Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){r
 Document.prototype.querySelector = querySelector;
 Document.prototype.querySelectorAll = querySelectorAll;
 
+swm1("document", new Document)
+
 // set document member, analogs of the set window member functions
 sdm = function(k, v) { Object.defineProperty(document, k, {value:v})}
 sdm1 = function(k, v) { Object.defineProperty(document, k, {value:v,enumerable:true})}
 sdm2 = function(k, v) { Object.defineProperty(document, k, {value:v, writable:true, configurable:true})}
-
-// if document becomes Document we won't need these
-sdm("eb$listen", mw$.eb$listen)
-sdm("eb$unlisten", mw$.eb$unlisten)
-sdm("addEventListener", addEventListener)
-sdm("removeEventListener", removeEventListener)
 
 if(mw$.share) { // point to native methods in the master window
 swm("my$win", mw$.my$win)
@@ -2519,8 +2515,6 @@ swm("$uv$sn", 0)
 swm2("$jt$c", 'z')
 swm2("$jt$sn", 0)
 
-sdm("querySelectorAll", querySelectorAll)
-sdm("querySelector", querySelector)
 sdm("childNodes", [])
 // We'll make another childNodes array belowe every node in the tree.
 // document should always and only have two children: DOCTYPE and HTML

@@ -18,7 +18,6 @@ you will need to include the MIT open source license.
 #include "quickjs-libc.h"
 
 // to track down memory leaks
-#define NO_LEAK
 // Warning, if you turn this feature on it slows things down.
 #ifdef LEAK
 // the quick js pointer
@@ -3580,7 +3579,7 @@ JS_NewCFunction(mwc, nat_jobs, "jobspending", 0), JS_PROP_ENUMERABLE);
 static void createJSContext_0(Frame *f)
 {
 	JSContext * cx;
-	JSValue g, d;
+	JSValue g;
 	if(!js_running)
 		return;
 	cx = f->cx = JS_NewContext(jsrt);
@@ -3592,11 +3591,6 @@ static void createJSContext_0(Frame *f)
 	f->winobj = allocMem(sizeof(JSValue));
 	*((JSValue*)f->winobj) = g = JS_GetGlobalObject(cx);
 	grab(g);
-	f->docobj = allocMem(sizeof(JSValue));
-	*((JSValue*)f->docobj) = d = JS_NewObject(cx);
-	grab(d);
-	JS_DefinePropertyValueStr(cx, g, "document", JS_DupValue(cx, d),
-	JS_PROP_ENUMERABLE);
 // link to the master window
 	JS_DefinePropertyValueStr(cx, g, "mw$", JS_GetGlobalObject(mwc), 0);
 
@@ -3665,7 +3659,7 @@ JS_NewCFunction(cx, nat_insbf, "insbf", 2), 0);
     JS_DefinePropertyValueStr(cx, g, "eb$rmch2",
 JS_NewCFunction(cx, nat_rmch2, "removeChild", 1), 0);
 
-// Sequence is to set f->fileName, then createContext(), so for a short time,
+// The sequence is to set f->fileName, then createContext(), so for a short time,
 // we can rely on that variable.
 // Let's make it more permanent, per context.
 // Has to be nonwritable for security reasons.
@@ -3696,9 +3690,9 @@ void createJSContext(Frame *f)
 
 static void setup_window_2(void)
 {
-	JSValue w = *((JSValue*)cf->winobj);	// window object
-	JSValue d = *((JSValue*)cf->docobj);	// document object
 	JSContext *cx = cf->cx;	// current context
+	JSValue w = *((JSValue*)cf->winobj);	// window object
+	JSValue d;
 	JSValue nav;		// navigator object
 	JSValue navpi;	// navigator plugins
 	JSValue navmt;	// navigator mime types
@@ -3714,6 +3708,13 @@ static void setup_window_2(void)
  * These are all the things that do not depend on the platform,
  * OS, configurations, etc. */
 	jsRunScriptWin(startWindowJS, "startwindow.js", 1);
+
+	d = JS_GetPropertyStr(cx, w, "document");
+	cf->docobj = allocMem(sizeof(JSValue));
+	*((JSValue*)cf->docobj) = d;
+// we are responsible for this js value, and will be using it
+// as long as this frame exists.
+	grab(d);
 
 	nav = get_property_object(cx, w, "navigator");
 	if (JS_IsUndefined(nav))
