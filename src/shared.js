@@ -2957,6 +2957,29 @@ this.statusText = "network error";
 }
 };
 
+swm = function(k, v) { Object.defineProperty(self, k, {value:v})}
+spdc = function(c, inherit) { var v = c.replace(/^z\$/, "");
+if(inherit) Object.defineProperty(self[c], "prototype", {value:new inherit})
+Object.defineProperty(self[c].prototype, "dom$class", {value:v})}
+
+// This is the beginning of the standard classes; not sure how many
+// I will have in here. Everything starts with Node.
+swm("Node", function(){})
+spdc("Node", null)
+Node.prototype.toString = function(){
+return "[object " + (this.dom$class ? this.dom$class : "Object") + ']'; }
+
+swm("EventTarget", function() {})
+spdc("EventTarget", Node)
+EventTarget.prototype.eb$listen = eb$listen;
+EventTarget.prototype.eb$unlisten = eb$unlisten;
+EventTarget.prototype.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true)}
+EventTarget.prototype.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true)}
+EventTarget.prototype.dispatchEvent = dispatchEvent;
+
+swm("Document", function(){this.children=[]})
+spdc("Document", EventTarget)
+
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
 // TextDecoder TextEncoder   https://github.com/anonyco/FastestSmallestTextEncoderDecoder
@@ -5024,6 +5047,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "eb$newLocation","eb$logElement",
 "resolveURL", "eb$fetchHTTP",
 "setTimeout", "clearTimeout", "setInterval", "clearInterval",
+"swm", "spdc", "Node",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "getRootNode","wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
@@ -5065,7 +5089,8 @@ for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 // some class prototypes
-flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams];
+flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams,
+swm, spdc, Node];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 

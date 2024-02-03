@@ -520,12 +520,9 @@ URL.prototype.trim = function() { return this.toString().trim(); }
 Object.defineProperty(URL.prototype, "trim", {enumerable:false});
 
 /*********************************************************************
-Here are the DOM classes with generic constructors.
-But first, the Node class, which is suppose to be the parent class
-of all the others.
-I include Node because some javascript will interrogate Node to see
-which methods all the nodes possess?
-Do we support appendchild?   etc.
+Here are the DOM classes with their constructors.
+Some live in shared.js.
+Not sure which ones will be here and which there.
 *********************************************************************/
 
 swm("Node", function(){})
