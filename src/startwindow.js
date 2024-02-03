@@ -2760,6 +2760,55 @@ Object.defineProperty(AbortController.prototype, "signal",
 AbortController.prototype.abort = function(){
 alert3("abort dom request not implemented"); }
 
+swm("IntersectionObserverEntry", function(){})
+swm("IntersectionObserver", function(callback, o){
+this.callback = callback, this.root = null;
+var h = 1.0;
+if(typeof o == "object") {
+if(o.root) this.root = o.root;
+if(o.threshold) h = o.threshold;
+}
+var alertstring = "intersecting " + (this.root ? this.root : "viewport");
+if(typeof h == "number") alertstring += " with threshold " + h;
+else if(Array.isArray(h)) {
+alertstring += " with threshold [";
+for(var i = 0; i < h.length; ++i) {
+var n = h[i];
+if(i) alertstring += ',';
+if(typeof n == "number") alertstring += n;
+}
+alertstring += ']';
+}
+alert3(alertstring);
+})
+/*********************************************************************
+This is just trying to get something off the ground.
+Assume our target is always visible.
+I don't even know what visible means in edbrowse.
+You have printed, or asked for, a line in the target area?
+And what percentage of that target area is visible,
+just because you printed a line therein?
+This stuff is so visual it's almost impossible to simulate with any fidelity.
+So for a start, everything is visible, and that might cause the
+website to load anything you might ever look at or scroll down to,
+making edbrowse even slower than it already is. But it's a start.
+*********************************************************************/
+IntersectionObserver.prototype.observe = function(t) {
+var e = new IntersectionObserverEntry;
+e.target = t;
+e.isIntersecting = true; // target is visible
+e.intersectingRatio = 1.0; // the whole target is visible
+// bounding rectangle is just the whole damn screen,
+// hope nobody ever looks at it or expects it to be real.
+e.boundingClientRect = this.root ? this.root.getBoundingClientRect() : document.getBoundingClientRect();
+// I don't even know what these are!
+e.rootBounds = e.intersectionRect = e.boundingClientRect;
+// I guess we're ready to roll
+this.callback([e]);
+// in edbrowse the target remains visible forever, callback will never be called again.
+// We don't have to remember target or the conditions of intersection etc.
+}
+
 // don't need these any more
 delete swm;
 delete sdm;
