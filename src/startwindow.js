@@ -2489,10 +2489,12 @@ return mw$.eb$gebtn(document.body, s.toLowerCase());
 
 swm("eb$demin", mw$.deminimize)
 swm("eb$watch", mw$.addTrace)
+/*
 swm("$uv", [])
 swm("$uv$sn", 0)
-swm("$jt$c", 'z')
-swm("$jt$sn", 0)
+*/
+swm2("$jt$c", 'z')
+swm2("$jt$sn", 0)
 
 sdm("querySelectorAll", querySelectorAll)
 sdm("querySelector", querySelector)
