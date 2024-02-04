@@ -444,12 +444,24 @@ if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
 }
-var w = my$win();
-var t = w.id$hash[s];
-return t && isRooted(t) ? t : null;
+return eb$gebi(this, s);
 }
 
-// this could stop when it finds the first match, it just doesn't
+function eb$gebi(top, s) {
+if(top.id && top.id == s) return top;
+if(top.childNodes) {
+// don't descend into another frame.
+// The frame has no children through childNodes, so we don't really need this line.
+if(top.is$frame) return null;
+for(var i=0; i<top.childNodes.length; ++i) {
+var c = top.childNodes[i];
+var res = eb$gebi(c, s);
+if(res) return res;
+}
+}
+return null;
+}
+
 function getElementsByClassName(s) {
 if(!s) { // missing or null argument
 alert3("getElementsByTagName(type " + typeof s + ")");
@@ -1574,7 +1586,6 @@ this.attributes.push(a);
 oldv = a.value;
 }
 a.value = v;
-if(name === "id") w.id$hash[v] = this;
 if(name.substr(0,5) == "data-") {
 // referencing dataset should create it on demand, but if it doesn't...
 if(!this.dataset) this.dataset$2 = {};
@@ -5027,7 +5038,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "getRootNode","wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
-"eb$gebtn","eb$gebn","eb$gebcn","eb$cont",
+"eb$gebi", "eb$gebtn","eb$gebn","eb$gebcn","eb$cont",
 "dispatchEvent","eb$listen","eb$unlisten",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",

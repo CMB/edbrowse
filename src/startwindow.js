@@ -102,14 +102,25 @@ EventTarget.prototype.addEventListener = addEventListener;
 EventTarget.prototype.removeEventListener = removeEventListener;
 EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
 
-swm("Document", function(){this.children=[]})
+swm("Document", function(){this.childNodes=[]})
 spdc("Document", EventTarget)
 Document.prototype.activeElement = null;
+Object.defineProperty(Document.prototype, "children", {get:function(){return this.childNodes}})
 Object.defineProperty(Document.prototype, "childElementCount", {get:function(){return this.children.length}})
-Object.defineProperty(Document.prototype, "firstElementChild", {get:function(){return this.children.length?this.children[0]:null}})
 Document.prototype.querySelector = querySelector;
 Document.prototype.querySelectorAll = querySelectorAll;
+Object.defineProperty(Document.prototype, "documentElement", {get: mw$.getElement});
+Object.defineProperty(Document.prototype, "head", {get: mw$.getHead,set:mw$.setHead});
+Object.defineProperty(Document.prototype, "body", {get: mw$.getBody,set:mw$.setBody});
+// scrollingElement makes no sense in edbrowse, I think body is our best bet
+Object.defineProperty(Document.prototype, "scrollingElement", {get: mw$.getBody});
+Document.prototype.getElementById = mw$.getElementById
+// the other getElementsBy we inherit from Node
+Document.prototype.nodeName = "#document"
+Document.prototype.tagName = "document"
+Document.prototype.nodeType = 9
 
+// the most important line is right here
 swm1("document", new Document)
 
 // set document member, analogs of the set window member functions
@@ -151,10 +162,6 @@ swm("showarg", mw$.showarg)
 swm("showarglist", mw$.showarglist)
 swm("set_location_hash", mw$.set_location_hash)
 sdm("getRootNode", mw$.getRootNode)
-sdm("getElementsByTagName", mw$.getElementsByTagName)
-sdm("getElementsByName", mw$.getElementsByName)
-sdm("getElementsByClassName", mw$.getElementsByClassName)
-sdm("getElementById", mw$.getElementById)
 sdm("nodeContains", mw$.nodeContains)
 sdm("dispatchEvent", mw$.dispatchEvent)
 swm("NodeFilter", mw$.NodeFilter)
@@ -213,9 +220,6 @@ swm2("ok", Object.keys)
 swm2("$ok", ok)
 
 swm("nodeName", "WINDOW") // in case you want to start at the top.
-sdm("nodeName", "#document") // in case you want to start at document.
-sdm("tagName", "document")
-sdm("nodeType", 9)
 sdm2("ownerDocument", null)
 sdm("defaultView", window)
 
@@ -307,15 +311,8 @@ timeStamp: function(label) { if(label === undefined) label = "x"; return label.t
 Object.defineProperty(document, "cookie", {
 get: eb$getcook, set: eb$setcook});
 
-Object.defineProperty(document, "documentElement", {get: mw$.getElement});
-Object.defineProperty(document, "head", {get: mw$.getHead,set:mw$.setHead});
-Object.defineProperty(document, "body", {get: mw$.getBody,set:mw$.setBody});
-// scrollingElement makes no sense in edbrowse, I think body is our best bet
-Object.defineProperty(document, "scrollingElement", {get: mw$.getBody});
 // document should always have children, but...
 sdm("hasChildNodes", mw$.hasChildNodes)
-// This is set to body after browse.
-sdm2("activeElement", null)
 
 swm1("navigator", {})
 navigator.appName = "edbrowse";
@@ -579,7 +576,6 @@ if(!f.elements[n]) f.elements[n] = this;
 }
 this.setAttribute("name", n);
 }});
-swm("id$hash", {})
 Object.defineProperty(HTMLElement.prototype, "id", {
 get:function(){ var t = this.getAttribute("id");
 return typeof t == "string" ? t : undefined; },
@@ -2299,6 +2295,8 @@ c = new CSSStyleDeclaration; c.element = null; break;
 case "style": c = new HTMLStyleElement; break;
 case "script": c = new HTMLScriptElement; break;
 case "template": c = new HTMLTemplateElement; break;
+// this isn't standard; it is mine
+case "newdocument": c = new Document; break;
 case "div": c = new HTMLDivElement; break;
 case "span": c = new HTMLSpanElement; break;
 case "label": c = new HTMLLabelElement; break;
@@ -2396,11 +2394,10 @@ return d;
 },
 createDocument: function(uri, str, t) {
 // I don't know if this is right at all, but it's quick and easy
-var doc = document.createElementNS(uri, "document");
+var doc = document.createElementNS(uri, "newdocument");
 var below = document.createElementNS(uri, str);
 if(!doc || !below) { alert3("createDocument unable to create document or " + str + " tag for namespace " + uri); return null; }
 doc.appendChild(below);
-doc.documentElement = below;
 return doc;
 }
 })
