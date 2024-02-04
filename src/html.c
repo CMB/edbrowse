@@ -2316,7 +2316,8 @@ Here is a small page to test some of these select option cases.
 			if((z = attribVal(t, "size")) && (zv = stringIsNum(z)) && zv > 1)
 				goto options_ok;
 			const Tag *u = locateOptionByNum(t, 1);
-			if(u && stringEqual(u->textval, display) && !*u->value) {
+			if(u && stringEqual(u->textval, display) && !*u->value &&
+			!(u->parent && u->parent->action == TAGACT_OPTG)) {
 				nzFree(display);
 				goto required;
 			}

@@ -773,7 +773,7 @@ return t === null || t === false || t === "false" || t === 0 || t === '0' ? fals
 set:function(v) { this.setAttribute("multiple", v);}});
 Object.defineProperty(HTMLSelectElement.prototype, "size", {
 get:function(){ var t = this.getAttribute("size");
-if(typeof t == "number") return t;
+if(typeof t == "number" || typeof t == "string" && t.match(/^\d+$/)) return t;
 return this.multiple ? 4 : 1;},
 set:function(v) { this.setAttribute("size", v);}});
 Object.defineProperty(HTMLSelectElement.prototype, "required", {
