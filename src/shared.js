@@ -398,10 +398,10 @@ alert3("getElementsByTagName(type " + typeof s + ")");
 return new (my$win().Array);
 }
 s = s.toLowerCase();
-return eb$gebtn(this, s, true);
+return gebtn(this, s, true);
 }
 
-function eb$gebtn(top, s, first) {
+function gebtn(top, s, first) {
 var a = new (my$win().Array);
 if(!first && (s === '*' || (top.nodeName && top.nodeName.toLowerCase() === s)))
 a.push(top);
@@ -411,7 +411,7 @@ if(top.childNodes) {
 if(!top.is$frame)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebtn(c, s, false));
+a = a.concat(gebtn(c, s, false));
 }
 }
 return a;
@@ -422,10 +422,10 @@ if(!s) { // missing or null argument
 alert3("getElementsByName(type " + typeof s + ")");
 return new (my$win().Array);
 }
-return eb$gebn(this, s, true);
+return gebn(this, s, true);
 }
 
-function eb$gebn(top, s, first) {
+function gebn(top, s, first) {
 var a = new (my$win().Array);
 if(!first && (s === '*' || top.name === s))
 a.push(top);
@@ -433,7 +433,7 @@ if(top.childNodes) {
 if(!top.is$frame)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebn(c, s, false));
+a = a.concat(gebn(c, s, false));
 }
 }
 return a;
@@ -444,10 +444,10 @@ if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
 }
-return eb$gebi(this, s);
+return gebi(this, s);
 }
 
-function eb$gebi(top, s) {
+function gebi(top, s) {
 if(top.id && top.id == s) return top;
 if(top.childNodes) {
 // don't descend into another frame.
@@ -455,7 +455,7 @@ if(top.childNodes) {
 if(top.is$frame) return null;
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-var res = eb$gebi(c, s);
+var res = gebi(c, s);
 if(res) return res;
 }
 }
@@ -470,10 +470,10 @@ return new (my$win().Array);
 s = s . replace (/^\s+/, '') . replace (/\s+$/, '');
 if(s === "") return new (my$win().Array);
 var sa = s.split(/\s+/);
-return eb$gebcn(this, sa, true);
+return gebcn(this, sa, true);
 }
 
-function eb$gebcn(top, sa, first) {
+function gebcn(top, sa, first) {
 var a = new (my$win().Array);
 if(!first && top.cl$present) {
 var ok = true;
@@ -488,20 +488,20 @@ if(top.childNodes) {
 if(!top.is$frame)
 for(var i=0; i<top.childNodes.length; ++i) {
 var c = top.childNodes[i];
-a = a.concat(eb$gebcn(c, sa, false));
+a = a.concat(gebcn(c, sa, false));
 }
 }
 return a;
 }
 
-function nodeContains(n) {  return eb$cont(this, n); }
+function nodeContains(n) {  return cont(this, n); }
 
-function eb$cont(top, n) {
+function cont(top, n) {
 if(top === n) return true;
 if(!top.childNodes) return false;
 if(top.is$frame) return false;
 for(var i=0; i<top.childNodes.length; ++i)
-if(eb$cont(top.childNodes[i], n)) return true;
+if(cont(top.childNodes[i], n)) return true;
 return false;
 }
 
@@ -722,7 +722,7 @@ if(typeof mask != "number")
 mask = 0xffffffff;
 // let's reuse some software
 if(typeof root == "object") {
-o.list = eb$gebtn(root, "*");
+o.list = gebtn(root, "*");
 if(!root.nodeType)
 alert3("NodeIterator root object is not a node");
 } else {
@@ -769,7 +769,7 @@ o.callback = callback;
 if(typeof mask != "number")
 mask = 0xffffffff;
 if(typeof root == "object") {
-o.list = eb$gebtn(root, "*");
+o.list = gebtn(root, "*");
 if(!root.nodeType)
 alert3("TreeWalker root object is not a node");
 o.currentNode = root;
@@ -1182,7 +1182,7 @@ break;
 
 function hasChildNodes() { return (this.childNodes.length > 0); }
 
-function eb$getSibling (obj,direction) {
+function getSibling (obj,direction) {
 var pn = obj.parentNode;
 if(!pn) return null;
 var j, l;
@@ -1204,7 +1204,7 @@ return null;
 }
 }
 
-function eb$getElementSibling (obj,direction) {
+function getElementSibling (obj,direction) {
 var pn = obj.parentNode;
 if(!pn) return null;
 var j, l;
@@ -5038,7 +5038,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "getElement", "getHead", "setHead", "getBody", "setBody",
 "getRootNode","wrapString",
 "getElementsByTagName", "getElementsByClassName", "getElementsByName", "getElementById","nodeContains",
-"eb$gebi", "eb$gebtn","eb$gebn","eb$gebcn","eb$cont",
+"gebi", "gebtn","gebn","gebcn","cont",
 "dispatchEvent","eb$listen","eb$unlisten",
 "NodeFilter","createNodeIterator","createTreeWalker",
 "logtime","defport","setDefaultPort","camelCase","dataCamel","isabove",
@@ -5048,7 +5048,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "appendFragment", "insertFragment",
 "isRooted", "frames$rebuild",
 "appendChild", "prependChild", "insertBefore", "removeChild", "replaceChild", "hasChildNodes",
-"eb$getSibling", "eb$getElementSibling", "insertAdjacentElement",
+"getSibling", "getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",
 "formname", "formAppendChild", "formInsertBefore", "formRemoveChild",
 "implicitMember", "spilldown","spilldownResolve","spilldownResolveURL","spilldownBool",
