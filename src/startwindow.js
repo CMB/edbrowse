@@ -2837,6 +2837,11 @@ ResizeObserver.prototype.disconnect = eb$voidfunction;
 ResizeObserver.prototype.observe = eb$voidfunction;
 ResizeObserver.prototype.unobserve = eb$voidfunction;
 
+// Trivial implementation of queueMicrotask that completely destroys the
+// reason for its existence.
+swm1("queueMicrotask", function(f) {
+if(typeof f == "function") f()})
+
 // don't need these any more
 delete swm;
 delete sdm;
