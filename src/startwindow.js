@@ -556,7 +556,7 @@ URL.prototype.trim = function() { return this.toString().trim(); }
 Object.defineProperty(URL.prototype, "trim", {enumerable:false});
 
 // Is Element a synonym for HTMLElement? nasa.gov acts like it is.
-swm("HTMLElement", function(){})
+swm2("HTMLElement", function(){})
 swm2("Element", HTMLElement)
 spdc("HTMLElement", Node)
 Object.defineProperty(HTMLElement.prototype, "name", {
