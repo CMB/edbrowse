@@ -114,6 +114,13 @@ Object.defineProperty(Document.prototype, "head", {get: mw$.getHead,set:mw$.setH
 Object.defineProperty(Document.prototype, "body", {get: mw$.getBody,set:mw$.setBody});
 // scrollingElement makes no sense in edbrowse, I think body is our best bet
 Object.defineProperty(Document.prototype, "scrollingElement", {get: mw$.getBody});
+Object.defineProperty(Document.prototype, "URL", {get: function(){return this.location ? this.location.toString() : null}})
+Object.defineProperty(Document.prototype, "documentURI", {get: function(){return this.URL}})
+Object.defineProperty(Document.prototype, "cookie", {
+get: eb$getcook, set: eb$setcook});
+Document.prototype.defaultView = window
+Document.prototype.readyState = "interactive"
+Document.prototype.visibilityState = "visible"
 Document.prototype.getElementById = mw$.getElementById
 // the other getElementsBy we inherit from Node
 Document.prototype.nodeName = "#document"
@@ -221,7 +228,6 @@ swm2("$ok", ok)
 
 swm("nodeName", "WINDOW") // in case you want to start at the top.
 sdm2("ownerDocument", null)
-sdm("defaultView", window)
 
 // produce a stack for debugging purposes
 swm("step$stack", function(){
@@ -282,8 +288,6 @@ Object.defineProperty(window, "name", {get:function(){return frameElement.name}}
 
 sdm("bgcolor", "white")
 sdm("contentType", "text/html")
-sdm("visibilityState", "visible")
-sdm2("readyState", "interactive");
 function readyStateComplete() { document.readyState = "complete"; document.activeElement = document.body;
 if(document.onreadystatechange$$fn) {
 var e = new Event;
@@ -307,9 +311,6 @@ warn: function(obj) { mw$.logtime(3, "warn", obj)},
 error: function(obj) { mw$.logtime(3, "error", obj)},
 timeStamp: function(label) { if(label === undefined) label = "x"; return label.toString() + (new Date).getTime(); }
 })
-
-Object.defineProperty(document, "cookie", {
-get: eb$getcook, set: eb$setcook});
 
 // document should always have children, but...
 sdm("hasChildNodes", mw$.hasChildNodes)

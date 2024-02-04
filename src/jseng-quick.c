@@ -3779,7 +3779,6 @@ static void setup_window_2(void)
 	JS_Release(cx, hist);
 
 	set_property_string(cx, d, "referrer", cw->referrer);
-	set_property_string(cx, d, "URL", cf->fileName);
 	char *wpc; // webpage with secret code
 	asprintf(&wpc, "Wp`Set@%s", cf->fileName);
 	set_property_string(cx, w, "location", wpc);
