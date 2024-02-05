@@ -102,7 +102,7 @@ EventTarget.prototype.addEventListener = addEventListener;
 EventTarget.prototype.removeEventListener = removeEventListener;
 EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
 
-swm("Document", function(){this.childNodes=[]})
+swm("Document", function(){Object.defineProperty(this, "childNodes", {value:[],writable:true,configurable:true})})
 spdc("Document", EventTarget)
 Document.prototype.activeElement = null;
 Object.defineProperty(Document.prototype, "children", {get:function(){return this.childNodes}})
@@ -181,7 +181,9 @@ swm("makeSheets", mw$.makeSheets)
 }
 
 swm("dom$class", "Window")
-sdm("dom$class", "HTMLDocument")
+// next two are overwritten if xml
+sdm2("eb$xml", false)
+sdm2("dom$class", "HTMLDocument")
 // use dom$class to make our own toString function, so that
 // document.createElement("div").toString() says "[object HTMLDiv?Element]" as it should
 // This is important to some websites!

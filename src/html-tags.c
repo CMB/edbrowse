@@ -4890,7 +4890,10 @@ static void pushAttributes(const Tag *t)
 void decorate(void)
 {
 	currentOG = 0;
-	if(isXML) set_property_bool_doc(cf, "eb$xml", true);
+	if(isXML) {
+		set_property_bool_doc(cf, "eb$xml", true);
+		set_property_string_doc(cf, "dom$class", "XMLDocument");
+	}
 	traverse_callback = jsNode;
 	traverseAll();
 }
