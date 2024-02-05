@@ -993,6 +993,12 @@ swm("z$Footer", function(){})
 spdc("z$Footer", HTMLElement)
 swm("HTMLScriptElement", function(){})
 spdc("HTMLScriptElement", HTMLElement)
+HTMLScriptElement.supports = function(t) {
+if(typeof t != "string") return false;
+t = t.toLowerCase();
+if(t.match(/\bjavascript\b/)) return true;
+if(t.match(/\bjson\b/)) return true;
+return false}
 Object.defineProperty(HTMLScriptElement.prototype, "async", {
 get:function(){ var t = this.getAttribute("async");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
