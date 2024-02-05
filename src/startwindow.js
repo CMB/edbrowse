@@ -359,6 +359,8 @@ replaceState: eb$voidfunction,
 toString: function() {  return "Sorry, edbrowse does not maintain a browsing history."}
 })
 
+swm("CSS", mw$.CSS)
+
 // some base arrays - lists of things we'll probably need
 sdm("heads", [])
 sdm("bases", [])

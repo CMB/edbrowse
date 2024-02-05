@@ -2968,6 +2968,14 @@ this.statusText = "network error";
 }
 };
 
+CSS = {
+supports:function(){ return false},
+escape:function(s) {
+if(typeof s == "number") s = s.toString();
+if(typeof s != "string") return null;
+return s.replace(/([\\()\[\]{}.#])/g, function(a,b){ return "\\"+b})
+}}
+
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
 // TextDecoder TextEncoder   https://github.com/anonyco/FastestSmallestTextEncoderDecoder
@@ -5057,7 +5065,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "setAttribute",  "setAttributeNS",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
-"compareDocumentPosition", "generalbar",
+"compareDocumentPosition", "generalbar", "CSS",
 "cssGather", "cssApply", "cssDocLoad",
 "makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "injectSetup", "eb$visible",

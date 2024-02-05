@@ -5,6 +5,8 @@ toString shows the correct object classes.
 
 Simplistic simulation of IntersectionObserver and ResizeObserver.
 
+document is an instance of Document, as it should be.
+
 3.8.9
 dx to specify hard delete in imap folders.
 
