@@ -4520,8 +4520,9 @@ bool mailDescend(const char *title, char cmd)
 	mailstring = 0;
 	cw->changeMode = false;
 
-	if(!emode)
+	if(!emode) {
 		browseCurrentBuffer(NULL, (cmd == 't'));
+	}
 	if(!showcount) fileSize = -1; // don't print byte count
 	return true;
 }

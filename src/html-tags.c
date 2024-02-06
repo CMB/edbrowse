@@ -17,6 +17,7 @@ which we must then import into the edbrowse tree of tags.
 
 // This makes a lot of output; maybe it should go to a file like debug css does
 bool debugScanner;
+bool browseMail;
 static bool isXML; // parse as xml
 
 static const char htmltag[] = "html";
@@ -134,14 +135,19 @@ static const struct specialtag {
 The next line allows <br> in the head section, and that is a kludge,
 because of the way I crank out an email in html.
 I want to put a header in front, and allow their html to run,
-and they might start with a head section, so I don't want to distrupt that.
+and they might start with a head section, so I don't want to disrupt that.
 Any tag I include in my header has to be allowed in <head>,
 so it doesn't push us over into <body>, whence their <head> would be invalid.
-I also use <pre> so that has to be allowed.
+I also use <pre> and <p> so that has to be allowed.
+And even <a> for the attachments.
+But these only live in <head> if browseMail is true.
 *********************************************************************/
-{"br", 1, 0, 1, 0},
-{"pre", 0, 0, 1, 0},
+{"br", 1, 0, 2, 0},
+{"pre", 0, 0, 2, 0},
+{"a", 0, 0, 2, 0},
+{"p",0,0, 2, "blockquote"},
 {"hr", 1, 0, 0, 0},
+{"blockquote", 0, 1, 0, 0},
 {"img", 1, 0, 0, 0},
 {"area", 1, 0, 0, 0},
 {"image", 1, 0, 0, 0},
@@ -164,7 +170,6 @@ I also use <pre> so that has to be allowed.
 {"span",0,1, 0, 0},
 {"sub",0,1, 0, 0},
 {"sup",0,1, 0, 0},
-{"p",0,0, 1, "blockquote"},
 {0, 0,0,0, 0},
 };
 
@@ -181,8 +186,11 @@ static int isInhead(const char *name)
 {
 	const struct specialtag *y;
 	for(y = specialtags; y->name; ++y)
-		if(stringEqual(name, y->name))
-			return y->inhead;
+		if(stringEqual(name, y->name)) {
+			uchar c = y->inhead;
+			if(c == 2 && !browseMail) c = 0;
+			return c;
+		}
 	return false;
 }
 
@@ -1338,6 +1346,8 @@ past_html_final_semantics:
 		free(stack);
 		stack = hold;
 	}
+
+	browseMail = false;
 }
 
 static void pushState(const char *start, bool head_ok)

@@ -8987,6 +8987,7 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 		if (memEqualCI(newbuf, "<html>\n", 7) && allowRedirection) {
 /* double browse, mail then html */
 			bmode = 2;
+			browseMail = true;
 			remote = true;
 			rawbuf = newbuf;
 			rawsize = j;

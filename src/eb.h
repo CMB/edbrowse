@@ -297,6 +297,7 @@ extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
 extern bool curlActive; // is curl running?
 extern bool ismc;		// Is the program running as a mail client?
+extern bool browseMail;		// Are we browsing a mail in html?
 extern bool passMail;		// pass mail across the filters
 extern bool attimg; // show atached images
 extern bool down_bg;		// download in background
