@@ -8937,10 +8937,10 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 	}
 
 	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
-		return false;	/* should never happen */
+		return false;	// should never happen
 
 	if (bmode == 3) {
-/* convert raw text via a plugin */
+// convert raw text via a plugin
 		if (remote)
 			rc = runPluginCommand(mt, cf->fileName, 0, rawbuf,
 					      rawsize, &rawbuf, &rawsize);

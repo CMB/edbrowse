@@ -5071,7 +5071,7 @@ suffix = pdf
 content = application/pdf
 #  file must be local
 down_url
-program = pdftohtml -i -q -noframes %i %o
+program = pdftohtml -i -q -stdout -noframes %i
 outtype = H
 }
 <!--</font>--></PRE>
@@ -5088,6 +5088,8 @@ suffix = doc
 content = application/msword
 down_url
 #  without %o, the output is piped directly into the buffer
+# with %o, the output is sent to a temp file, then read back into the buffer
+# not every program can send its output to stdout
 program = catdoc %i
 outtype = T
 }
@@ -5112,7 +5114,7 @@ In this case the parameter is the password.
 type = pdf
 desc = pdf file with password
 suffix = pdfp
-program = pdftohtml -opw %p -i -q -noframes %i %o
+program = pdftohtml -opw %p -i -q -stdout -noframes %i
 outtype = H
 }
 <!--</font>--></PRE>

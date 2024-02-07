@@ -3028,40 +3028,22 @@ For a player, play the stream, then return nothing, which tells edbrowse
 not to push a new buffer, because no data is involved.
 We check for plugins after each http redirection, as that will be a new url.
 
-If a new buffer, (not an r command or fetching javascript
-in the background or some such),
-or if the match is on protocol and the plugin is a converter,
-(whence the plugin is necessary just to get the data),
-then httpConnect sets the plugin cf->mt,
-if such can be determine from protocol or content type or suffix.
-If this plugin is url allowed, and does not require url download,
-then run the plugin. Set cf->render1 if it's a rendering plugin.
-If rendered by suffix, then so indicate, but I've never seen this happen.
-Music players can take a url, converters not.
-pdftohtml for instance, doesn't take a url,
-you have to download the data from the internet,
-whence this plugin does not run, at least not here, not from httpConnect.
-
-When browsing a new buffer, b whatever, and it's a local file,
-in readFile() in buffers.c, set cf->mt by suffix, and if it's rendering,
-call the plugin so we don't have to pull the entire file into memory,
-just the output of the plugin's converter.
-Change b to e if the output is text, cause there's no html to browse.
-This rendering will always be by suffix, there is no protocol or content type.
-Mark it accordingly.
-
-If we're browsing a new buffer, and httpConnect hasn't already rendered,
-and http code is 200 or 201,
-and cf->mt indicates render, then do so in readFile().
-Mark as rendered by url or by suffix.
-Again, if outtype is t then change b to e.
-
-If we're browsing a new buffer, and http code is 200 or 201,
-and suffix indicates play, then do so in readFile().
-Return nothing, so we don't push a new buffer.
-
-If we're browsing a new buffer, and a suffix plugin would render,
-but plugins are inactive, change b to e so we don't go through browseCurrentBuffer().
+The next three calls are in readFile().
+The first two happen after httpConnect().
+We have downloaded the data, but that doesn't mean there isn't a plugin
+involved; simply that the plugin can't take a stream.
+Perhaps down_url is set, to so indicate.
+The command is b, for browse, and this is a new window,
+not reading data into an existing buffer.
+If a converter, data is sent through the converter,
+and then put into the edbrowse buffer.
+render1 is true, and render2 is true if we matched on suffix.
+If outtype is h then continue browseing, as we have html.
+If mt is a player and command is b then play the buffer.
+The third call is optimization for a local file.   b thisfile.pdf
+If it has a converter than don't read the data into the buffer and then spit it
+back out again; call the converter on the file and read that data in instead.
+If it is html then continue on to browse.
 
 In browseCurrentBuffer():
 If this has not yet been rendered via suffix,
