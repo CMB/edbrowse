@@ -3640,7 +3640,7 @@ static void formatMail(struct MHINFO *w, bool top)
 				}
 			}
 			if (mailShowsHtml && ct == CT_TEXT) {
-				stringAndString(&fm, &fm_l, "<!-- text section converted to html -->\n<pre>\n ");
+				stringAndString(&fm, &fm_l, "<!-- text section converted to html -->\n<forceBody/><pre>\n ");
 // This null termination is only needed if breakLine fails.
 				char endc = *end;
 				*end = 0;
