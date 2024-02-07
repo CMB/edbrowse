@@ -2980,10 +2980,10 @@ is wrong or missing, and hope the player can figure it out. (saving resources)
 It usually does, based on the magic number or the contents of the file.
 mpg123 does the right thing, and so does ffmpeg, if you need to convert to
 audio before playing.
-If you need to force a temp file with the correct suffix,
-you might wish there was a command to clear the filename, then pb.xxx
-would do the trick, but there is no such command.
-Perhaps w99  e99  pb.xxx  eret
+If you need to force a temp file having the correct suffix,
+use f clear to clear the filename, then pb.xxx will do the trick.
+If you don't want to clear the filename, then
+w99  e99  pb.xxx  eret
 
 g in directory mode if the file is playable, also goes through playBuffer().
 (I'm assuming plugins are on, and you didn't type g-)

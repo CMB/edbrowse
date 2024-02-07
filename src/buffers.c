@@ -7653,7 +7653,10 @@ dest_ok:
 				return false;
 			}
 			nzFree(cf->fileName);
-			cf->fileName = cloneString(line);
+			if(stringEqual(line, "clear"))
+				cf->fileName = 0;
+			else
+				cf->fileName = cloneString(line);
 		}
 		s = cf->fileName;
 		if(!first || debugLevel >= 1) {
