@@ -2955,13 +2955,14 @@ if it is null we are playing the current buffer.
 In other words, the pb command always passes playfile = null.
 .xxx will override the implied suffix.
 You'll see this in the first parameter to playBuffer().
-If you override with .xxx, with playfile null, I spin the buffer data out to a
-temp file. I assume this is necessary, as the player might not accept the file
-with the "wrong" suffix, or missing suffix, or perhaps you downloaded it
-from the internet and the player does not accept a url.
-If you type pb, and the file is a url,
-I simply pass the url to the player and hope it works.
-It often does, as with mpg123, however, you don't get the random access digits
+If you override with .xxx, with playfile null,
+and there is no filename, or the file is a url,
+I spin the buffer data out to a temp file.
+I assume this is necessary, as the player requires a filename,
+and not all players accept a url to play from a stream.
+If you type pb alone, and the file is a url,
+I pass the url to the player and hope it works.
+It usually does, as with mpg123, however, you don't get the random access digits
 1 through 0, or comma to back up, or other conveniences whem mpg123
 plays a local file. So in this case you may want to specify pb.mp3,
 even though the url already ends in .mp3.
@@ -2969,11 +2970,20 @@ One wonders why you have this music in buffer in the first plays, since
 accessing the url will play the stream automatically,
 (see below), but maybe you had pg-, or you type g-.
 In any case, you have the music in buffer,
-and pb plays it from the filename, which is the url, whence mpg123 plays
-it as streaming music, whereas pb.mp3 puts it in a temp file, whence you can
-play it locally.
+and pb plays it from the url, whence mpg123 plays it as streaming music,
+or, pb.mp3 puts it in a temp file, whence you can play it locally.
 If your data is in buffer from a local file, and the suffix is correct,
-just type pb, since pb.mp3 copies the data to a temp file for no reason.
+type pb and off you go.
+Type pb.xxx for a different suffix.
+I still pass the filename to the player directly, even though the suffix
+is wrong or missing, and hope the player can figure it out. (saving resources)
+It usually does, based on the magic number or the contents of the file.
+mpg123 does the right thing, and so does ffmpeg, if you need to convert to
+audio before playing.
+If you need to force a temp file with the correct suffix,
+you might wish there was a command to clear the filename, then pb.xxx
+would do the trick, but there is no such command.
+Perhaps w99  e99  pb.xxx  eret
 
 g in directory mode if the file is playable, also goes through playBuffer().
 (I'm assuming plugins are on, and you didn't type g-)
@@ -2981,18 +2991,16 @@ The playfile parameter is the filename.
 You have the file locally, so we don't have to wonder whether the player
 accepts a stream from a url.
 The filename is passed to the player, even for g.xxx.
-We don't spin off a temp file.
-We assume the player will know what to do, even if the suffix is wrong or missing.
-It usually does, based on the magic number or the contents of the file.
-mpg123 does the right thing, and so does ffmpeg, if you need to convert to
-audio before playing.
+As mentioned above, we assume the player will know what to do,
+even if the suffix is wrong or missing.
 
 edbrowse -b url or file
 -b is the autobrowse feature, which browses local files,
-but also plays a file or url if it is playaable.
+but also plays a file or url if it is playable.
 This is a call to playBuffer() from main.c.
 The second parameter is the file or url.
-This will not create a temp file.
+There is no .xxx capability here; the file or url must determine the mime type.
+After playing, the corresponding buffer is empty, with no filename.
 
 If a new buffer, (not an r command or fetching javascript
 in the background or some such),
@@ -3290,8 +3298,6 @@ int playBuffer(const char *line, const char *playfile)
 	}
 
 	if (c) {
-		char *buf;
-		int buflen;
 		suffix = line + 3;
 		mt = findMimeBySuffix(suffix);
 		if (!mt) {
@@ -3302,7 +3308,12 @@ int playBuffer(const char *line, const char *playfile)
 			setError(MSG_NotPlayer);
 			return 0;
 		}
-// If you had to specify suffix then we have to run from the buffer.
+		if(cf->fileName && !isURL(cf->fileName))
+			return runPluginCommand(mt, 0, cf->fileName, 0, 0, 0, 0);
+// You specified the suffix, and there is no filename,
+// or the file is a url, so create a temp file.
+		char *buf;
+		int buflen;
 		if (!unfoldBuffer(context, false, &buf, &buflen))
 			return 0;
 // runPluginCommand always frees the input data.
