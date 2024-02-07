@@ -8936,17 +8936,21 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 		return false;
 	}
 
-	if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
-		return false;	// should never happen
+	if(bmode != 3 || remote) {
+		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+			return false;	// should never happen
+	}
 
 	if (bmode == 3) {
 // convert raw text via a plugin
-		if (remote)
+		if (remote) {
 			rc = runPluginCommand(mt, cf->fileName, 0, rawbuf,
 					      rawsize, &rawbuf, &rawsize);
-		else
-			rc = runPluginCommand(mt, 0, cf->fileName, rawbuf,
-					      rawsize, &rawbuf, &rawsize);
+		} else {
+// Pass the file directly to the converter
+			rc = runPluginCommand(mt, 0, cf->fileName, 0, 0,
+					      &rawbuf, &rawsize);
+		}
 		if (!rc)
 			return false;
 		if (!cf->render1)
@@ -8958,18 +8962,18 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 			rawbuf = tbuf;
 			rawsize = tlen;
 		}
-/* make it look like remote html, so we don't get a lot of errors printed */
+// make it look like remote html, so we don't get a lot of errors printed
 		remote = true;
 		bmode = (mt->outtype == 'h' ? 2 : 0);
 		if (!allowRedirection)
 			bmode = 0;
 	}
 
-/* this shouldn't do any harm if the output is text */
+// this shouldn't do any harm if the output is text
 	prepareForBrowse(rawbuf, rawsize);
 
-/* No harm in running this code in mail client, but no help either,
- * and it begs for bugs, so leave it out. */
+// No harm in running this code in mail client, but no help either,
+// and it begs for bugs, so leave it out.
 	if (!ismc) {
 		undoCompare();
 		cw->undoable = false;

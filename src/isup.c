@@ -3056,6 +3056,8 @@ httpConnect might find it by content = application/pdf.
 That's not by suffix, so render2 is not set.
 Here we are and we find it by suffix, but it's the same plugin,
 so don't render it again.
+If we are browsing a local file then pass that filename to the converter,
+no need to push it out to a temp file.
 *********************************************************************/
 
 bool runPluginCommand(const struct MIMETYPE * m,
