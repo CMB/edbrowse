@@ -1347,6 +1347,9 @@ past_html_final_semantics:
 		stack = hold;
 	}
 
+// javascript could set innerHTML = blah, which induces another call to this
+// function, all within the same browse routine, and that second call should
+// not be treated as browsing an email.
 	browseMail = false;
 }
 

@@ -2385,8 +2385,8 @@ static bool dataConnect(struct i_get *g)
 	g->hcl = g->length;
 	debugPrint(4, "content length %lld", g->hcl);
 	nzFree(copy);
-	g->cfn = cloneString("data:");
 	g->cfn = suggestedDownloadName(g->gotag);
+	if(!g->cfn) g->cfn = cloneString("data:");
 	return true;
 }
 
