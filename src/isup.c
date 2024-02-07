@@ -2998,9 +2998,35 @@ edbrowse -b url or file
 -b is the autobrowse feature, which browses local files,
 but also plays a file or url if it is playable.
 This is a call to playBuffer() from main.c.
-The second parameter is the file or url.
+The second parameter to playBuffer() is the file or url.
 There is no .xxx capability here; the file or url must determine the mime type.
 After playing, the corresponding buffer is empty, with no filename.
+
+Go, in directory mode, to a file that has a converter,
+based on its suffix, or you specified a suffix by g.xxx.
+The file is local, and exists, and has a name, so pass it directly to the plugin.
+The converter receives this filename, whence its output pipes back into edbrowse,
+to fill up the new buffer.
+If outtype is h, then the result is browsed as html.
+No temp files are needed here.
+
+htp.c, fetch data from the internet, but in some cases it doesn't pay to fetch it.
+This is part of httpConnect().
+Plugins must be enabled, but also a foreground fetch.
+If javascript is fetching data by XMLHttpRequest, then plugins will be off.
+The url determines a mime type, and that type can't have down_url set.
+We use down_url to say the player or converter can't handle a url,
+can't process a stream. The data must be downloaded in the usual way.
+So no down_url, and if g->playonly is set, then it must be a player.
+We get past these tests and call runPluginCommand in one of two ways.
+For a converter, call the plugin with the url, and pipe the output
+back into edbrowse, as though it were fetched from the internet.
+In other words, it looks like it came from the internet
+already converted to text or html.
+render1 is set to true, and if done by suffix, render2 is set to true.
+For a player, play the stream, then return nothing, which tells edbrowse
+not to push a new buffer, because no data is involved.
+We check for plugins after each http redirection, as that will be a new url.
 
 If a new buffer, (not an r command or fetching javascript
 in the background or some such),
