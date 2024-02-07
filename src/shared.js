@@ -444,11 +444,30 @@ if(!s) { // missing or null argument
 alert3("getElementById(type " + typeof s + ")");
 return null;
 }
+gebi_hash = this.id$hash;
+if(gebi_hash) { // should always be there
+// efficiency, see if we have hashed this id
+var t = gebi_hash[s];
+if(t) {
+// is it still rooted?
+for(var u = t.parentNode; u; u = u.parentNode)
+if(u == this) return t;
+delete gebi_hash[s];
+}}
+if(!gebi_hash) {
+// look the traditional way
 return gebi(this, s);
+}
+// look for nonsense to build up the hash
+gebi(this, "*@%impossible`[]")
+return gebi_hash[s] ? gebi_hash[s] : null;
 }
 
 function gebi(top, s) {
-if(top.id && top.id == s) return top;
+if(top.id) {
+if(gebi_hash) gebi_hash[top.id] = top;
+if(top.id == s) return top;
+}
 if(top.childNodes) {
 // don't descend into another frame.
 // The frame has no children through childNodes, so we don't really need this line.

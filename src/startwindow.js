@@ -102,7 +102,8 @@ EventTarget.prototype.addEventListener = addEventListener;
 EventTarget.prototype.removeEventListener = removeEventListener;
 EventTarget.prototype.dispatchEvent = mw$.dispatchEvent;
 
-swm("Document", function(){Object.defineProperty(this, "childNodes", {value:[],writable:true,configurable:true})})
+swm("Document", function(){Object.defineProperty(this, "childNodes", {value:[],writable:true,configurable:true})
+Object.defineProperty(this, "id$hash", {value:{}})})
 spdc("Document", EventTarget)
 Document.prototype.activeElement = null;
 Object.defineProperty(Document.prototype, "children", {get:function(){return this.childNodes}})
