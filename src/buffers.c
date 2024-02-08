@@ -8351,6 +8351,65 @@ past_js:
 		}
 	}
 
+	if(cmd == 'e' && first == '!') {
+// did you make changes that you didn't write?
+		if (!cxQuit(context, 0)) return false;
+		undoCompare();
+		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
+		char *outdata;
+		int outlen, pexit;
+		FILE *p;
+		char *newline = bangbang(line + 1);
+		eb_variables();
+		newline = apostropheMacros(newline);
+		p = popen(newline, "r");
+		nzFree(newline);
+		if (!p) {
+			setError(MSG_NoSpawn, line + 1, errno);
+			return false;
+		}
+		rc = fdIntoMemory(fileno(p), &outdata, &outlen, 0);
+		if(!rc) {
+			pclose(p);
+			return false;
+		}
+		pexit = pclose(p);
+		if(pexit) {
+			setError(MSG_CmdFail);
+			nzFree(outdata);
+			return false;
+		}
+// Warning, we don't convert output from iso8859 or other formats to utf8,
+// like we do when reading from a file; just assume it is proper.
+		if(!noStack) freeWindows(context, false);
+		w = createWindow();
+		w->sno = context;
+		cw = w;		// we might wind up putting this back
+		selfFrame();
+		rc = addTextToBuffer((pst)outdata, outlen, 0, true);
+		nzFree(outdata);
+		if(!rc) return rc; // should never happen
+		debugPrint(1, "%d", outlen);
+		w->undoable = w->changeMode = false;
+		cw = cs->lw;	// put it back, for now
+		selfFrame();
+		if (noStack) {
+			w->prev = cw->prev;
+			nzFree(w->f0.firstURL);
+			w->f0.firstURL = cf->firstURL;
+			cf->firstURL = 0;
+			cxQuit(context, 1);
+		} else {
+			w->prev = cw;
+		}
+		cs->lw = cw = w;
+		selfFrame();
+		if (!w->prev)
+			cs->fw = w;
+		return rc;
+	}
+
 rebrowse:
 	debugPrint(4, "edbrowse command %c %s first %c count %d", cmd, line, first, redirect_count);
 	if (cmd == 'e' || (cmd == 'b' && first && first != '#')) {
@@ -8397,8 +8456,7 @@ rebrowse:
 
 // Different URL, go get it.
 // did you make changes that you didn't write?
-		if (!cxQuit(context, 0))
-			return false;
+		if (!cxQuit(context, 0)) return false;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		uchar prebrowse = cw->browseMode;
@@ -8410,7 +8468,7 @@ rebrowse:
 		jumptag = 0;
 		w = createWindow();
 		w->sno = context;
-		cw = w;		/* we might wind up putting this back */
+		cw = w;		// we might wind up putting this back
 		selfFrame();
 		cf->uriEncoded = uriEncoded;
 /* Check for sendmail link */

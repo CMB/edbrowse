@@ -625,6 +625,11 @@ f : print the name of the current file
 <br>enew : create a new empty buffer in the current session
 <br>etmp : like enew but don't check for buffer written
 <br>e foo : edit the file named foo
+<br>^ e foo : edit foo but don't push the stack, replace the current file. ^ can be prepended to the following e commands as well.
+<br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
+<br>e $EBSRC/buf*.c : variable expansion
+<br> e !command : create a new buffer with the output of the shell command
+<br>e http://this.that.com : http or https download
 <br>e ftp://login:password@example.com/file  ftp download
 <br>e scp://login:password@example.com/absolute-path  scp download
 <br>r foo : read the contents of foo into the current buffer
@@ -641,6 +646,7 @@ f : print the name of the current file
 <br>r-2@$ : read the last line of text from the buffer down 2 levels in the stack
 <br>r-2@, : read in the entire buffer from below
 <br>r-2 : shorthand for r-2@,
+<br>11r !command : put the output of the shell command after line 11
 <br> w : write the changes you have made to the current file
 <br>w foo : write the current buffer to foo
 <br>w+ foo : append to foo
@@ -657,13 +663,10 @@ f : print the name of the current file
 <br>.w-2@0 : write the current line at the start of the buffer down 2 levels in the stack
 <br>.w-2 : syntax error, @ is necessary for on-stack write, to set the location
 <br>5,7w !command : send lines 5 through 7 to a shell command
-<br>11r !command : put the output of the shell command after line 11
 <br>'a,'bW !command : run a range of lines through a shell command and replace them
 <br>W !sort : sort the lines in the buffer
 <br>w ftp://login:password@example.com/file :  ftp upload
 <br>w scp://login:password@example.com/absolute-path :  scp upload
-<br>e ~/projects/edbrowse/src/buf*.c : expand wildcards if exactly one match
-<br>e $EBSRC/buf*.c : variable expansion
 <br>bflist : buffer list, all edbrowse sessions and their file names or titles
 <br>bflist/foo : list each edbrowse session whose file name or title contains the substring foo
 <br>bflist?foo : list in reverse each edbrowse session whose file name or title contains the substring foo
