@@ -1586,7 +1586,7 @@ bool receiveCookie(const char *url, const char *str)
 
 	if (!curlActive)
 		return false;
-	debugPrint(3, "set cookie %s", str);
+	debugPrint(3, "receiveCookie(%s, %s)", url, str);
 
 	server = getHostURL(url);
 	if (server == 0 || !*server)

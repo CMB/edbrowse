@@ -2937,6 +2937,7 @@ static JSValue nat_setcook(JSContext * cx, JSValueConst this, int argc, JSValueC
 		if(s && s > newcook) {
 			JSValue v = JS_GetPropertyStr(cx, *((JSValue*)cf->winobj), "eb$url");
 			const char *u = JS_ToCString(cx, v);
+			debugPrint(5, "receiveCookie(%s, %s)", u, newcook);
 			receiveCookie(u, newcook);
 			JS_FreeCString(cx, u);
 			JS_FreeValue(cx, v);
@@ -3665,7 +3666,7 @@ JS_NewCFunction(cx, nat_rmch2, "removeChild", 1), 0);
 // Has to be nonwritable for security reasons.
 // Could be null, e.g. an empty frame, but we can't pass null to quick.
 	JS_DefinePropertyValueStr(cx, g, "eb$url",
-	JS_NewAtomString(cx, (f->fileName ? f->fileName : emptyString)), 0);
+	JS_NewAtomString(cx, (f->fileName ? f->fileName : emptyString)), JS_PROP_WRITABLE);
 	JS_DefinePropertyValueStr(cx, g, "eb$ctx", JS_NewInt32(cx, f->gsn), 0);
 }
 
@@ -4446,8 +4447,15 @@ void set_basehref(const char *h)
 		set_property_string(cx, d, "location", wpc);
 		free(wpc);
 		set_property_string(cx, d, "URL", h);
+		set_property_string(cx, w, "eb$url", h);
 		nzFree(cf->fileName);
 		cf->fileName = cloneString(h);
+// need curl to be active even if it's a local snapshot - for cookies
+		if (!curlActive) {
+			eb_curl_global_init();
+			cookiesFromJar();
+			setupEdbrowseCache();
+		}
 	}
 }
 
