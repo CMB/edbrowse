@@ -363,6 +363,7 @@ toString: function() {  return "Sorry, edbrowse does not maintain a browsing his
 })
 
 swm("CSS", mw$.CSS)
+swm("Intl", mw$.Intl)
 
 // some base arrays - lists of things we'll probably need
 sdm("heads", [])

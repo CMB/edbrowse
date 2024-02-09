@@ -2988,12 +2988,63 @@ this.statusText = "network error";
 };
 
 CSS = {
-supports:function(){ return false},
+supports:function(w){ alert3("CSS.supports("+w+")"); return false},
 escape:function(s) {
 if(typeof s == "number") s = s.toString();
 if(typeof s != "string") return null;
 return s.replace(/([\\()\[\]{}.#])/g, function(a,b){ return "\\"+b})
 }}
+
+// Internationalization method, this is a stub, English only.
+// Only date and numbers, the most common.
+
+function Intl_dt(w) {
+alert3("Int_datetime("+w+")");
+this.locale = w;
+}
+Object.defineProperty(Intl_dt.prototype, "format", {value:function(d) {
+if(typeof d != "object") return ""
+if(typeof d.getYear != "function") return ""
+return `${d.getMonth()+1}/${d.getDate()}/${d.getYear()+1900}`;
+}})
+
+function Intl_num(w) {
+alert3("Int_number("+w+")");
+this.locale = w;
+}
+Object.defineProperty(Intl_num.prototype, "format", {value:function(n) {
+if(typeof n != "number") return "NaN";
+var sign = '';
+if(n < 0) sign = '-', n = -n;
+var m = Math.floor(n), r = n - m, s = "";
+if(r) {
+s = r + "", s = s.substr(1);
+// lots of possible round off errors here
+// 37.40000000000238 becomes 37.4
+s = s.replace(/\.*000000.*/, "")
+// 54.99999999373 becomes 55
+if(s.match(/^\.999999/))
+s = "", ++m;
+// 37.39999999378 becomes 37.4, not so easy to do
+if(s.match(/999999/)) {
+s = s.replace(/999999.*/, "")
+var l = s.length - 1;
+s = s.substr(0,l) + (1 + parseInt(s.substr(l)));
+}
+}
+while(m >= 1000) {
+r = m % 1000;
+r = r + "";
+while(r.length < 3) r = '0' + r;
+s = ',' + r + s;
+m = Math.floor(m/1000)
+}
+return sign + m + s;
+}})
+
+function Intl() {}
+Object.defineProperty(Intl, "DateTimeFormat", {value:Intl_dt})
+Object.defineProperty(Intl, "NumberFormat", {value:Intl_num})
 
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
@@ -5085,6 +5136,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "removeAttribute", "removeAttributeNS", "getAttributeNode",
 "clone1", "findObject", "correspondingObject",
 "compareDocumentPosition", "generalbar", "CSS",
+"Intl", "Intl_dt", "Intl_num",
 "cssGather", "cssApply", "cssDocLoad",
 "makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "injectSetup", "eb$visible",
@@ -5103,7 +5155,8 @@ for(var i=0; i<flist.length; ++i)
 Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 
 // some class prototypes
-flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams];
+flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams,
+Intl_dt, Intl_num];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 
