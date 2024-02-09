@@ -1196,8 +1196,12 @@ sendMail(int account, const char **recipients, const char *body,
 		stringAndBytes(&out, &j, refline, s - refline);
 		stringAndString(&out, &j, eol);
 	}
+// why should we tell them who we are?
+// I've never received an email that contained User-Agent
+#if 0
 	sprintf(serverLine, "User-Agent: %s%s", currentAgent, eol);
 	stringAndString(&out, &j, serverLine);
+#endif
 	if (subjectLine[0]) {
 		sprintf(serverLine, "Subject: %s%s", subjectLine, eol);
 		stringAndString(&out, &j, serverLine);
