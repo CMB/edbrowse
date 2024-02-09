@@ -4088,28 +4088,38 @@ static bool tableUnder(const Tag *top)
 	return false;
 }
 
-// Is this table a matrix of data, or just for layout purposes?
-// 0 means we can't tell, 1 is data, 2 is presentation
-// t is a cell or a row.
+/*********************************************************************
+Is this table a matrix of data, or just for layout purposes?
+0 means we can't tell, 1 is data, 2 is presentation
+t is a cell or a row.
+This is pretty slow, so when we get an answer we remember it.
+Then we can refer to it on the next cell.
+This means javascript can't change it after the fact; it's type is set.
+I use the much overloaded variable lic for the type,
+and post to indicate it was set.
+*********************************************************************/
+
 int tableType(const Tag *t)
 {
 	const char *role;
-const Tag *v; // table tag above
+Tag *v; // table tag above
 	const Tag *b; // tbody
 // find the containing table
-	for(v = t; v; v = v->parent)
+	for(v = (Tag*)t; v; v = v->parent)
 		if(v->action == TAGACT_TABLE) break;
 	if(!v) return 0; // this should never happen
+	if(v->post) return v->lic;
+
 	role = attribVal(v, "role");
-	if(stringEqual(role, "presentation")) return 2;
-	if(stringEqual(role, "table")) return 1;
+	if(stringEqual(role, "presentation")) goto presentation;
+	if(stringEqual(role, "table")) goto data;
 // if this table contains another one it has to be presentation
-	if(tableUnder(v)) return 2;
+	if(tableUnder(v)) goto presentation;
 // if there is a caption or thead section, probably data
 	for(b = v->firstchild; b; b = b->sibling) {
 		if(b->action == TAGACT_THEAD ||
 		stringEqual(b->info->name, "caption"))
-			return 1;
+			goto data;
 		if(b->action == TAGACT_TBODY) break;
 	}
 	if(!b) b = v;
@@ -4118,9 +4128,19 @@ const Tag *v; // table tag above
 	&& (t = t->firstchild) && t->action == TAGACT_TD
 	&& t->info->name[1] == 'h' && (t = t->sibling)
 	&& t->action == TAGACT_TD && t->info->name[1] == 'h')
-		return 1;
+		goto data;
+
 // I give up
-	return 0;
+	v->post = true;
+	return (v->lic = 0);
+
+data:
+	v->post = true;
+	return (v->lic = 1);
+
+presentation:
+	v->post = true;
+	return (v->lic = 2);
 }
 
 static char *td_text;
