@@ -3016,7 +3016,7 @@ top:
 
 // Messages in your host language.
 static const char **messageArray;
-char eb_language[9];
+char eb_language[8];
 int eb_lang;
 const char *const supported_languages[] = { 0,
 	"english", "french", "portuguese", "polish",
@@ -3074,8 +3074,9 @@ According to the rfc standards. So LC_TIME needs to be C.
 	eb_language[7] = 0;
 	caseShift(eb_language, 'l');
 	dot = strchr(eb_language, '.');
-	if (dot)
-		*dot = 0;
+	if (dot) *dot = 0;
+	for(s = eb_language; *s; ++s)
+		if(*s == '_') *s = '-';
 
 	if (!strncmp(eb_language, "en", 2))
 		return;		// english is already default

@@ -3719,7 +3719,7 @@ static void setup_window_2(void)
 		return;
 /* some of the navigator is in startwindow.js; the runtime properties are here. */
 	set_property_string(cx, nav, "userLanguage", supported_languages[eb_lang]);
-	set_property_string(cx, nav, "language", supported_languages[eb_lang]);
+	set_property_string(cx, nav, "language", eb_language);
 	set_property_string(cx, nav, "appVersion", version);
 	set_property_string(cx, nav, "vendorSub", version);
 	set_property_string(cx, nav, "userAgent", currentAgent);
