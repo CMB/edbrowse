@@ -1101,7 +1101,7 @@ action:
 		if(isInteractive) printf("? ");
 		fflush(stdout);
 // include +-^$ for some other options
-		key = getLetter("h?qvbe=lfdsmnp gtwWuUa/");
+		key = getLetter("h?qvbe=lfdsmnp gtrRwWuUa/");
 		printf("\b");
 		if(isInteractive) printf("\b\b");
 		fflush(stdout);
@@ -1335,6 +1335,23 @@ re_move:
 				goto reaction;
 			}
 		}
+
+	if(key == 'r' || key == 'R') {
+		i_puts(MSG_MailRead + (key == 'R'));
+reunread:
+		sprintf(cust_cmd, "UID STORE %d %cFlags \\Seen", mif->uid, (key == 'r' ? '+' : '-'));
+		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, cust_cmd);
+		res = getMailData(handle);
+		nzFree(mailstring);
+		if (res != CURLE_OK) {
+			if(retry || !refolder(handle, f, res))
+				goto abort;
+			retry = true;
+			goto reunread;
+		}
+		mif->seen = (key == 'r');
+		goto reaction;
+	}
 
 		if (key == 'd') {
 			delflag = true;

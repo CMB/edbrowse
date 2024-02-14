@@ -851,4 +851,6 @@ MSG_ImaskOn,
 	MSG_NoDelete3,
 	MSG_NoRename3,
 	MSG_FolderNameBad,
+	MSG_MailRead,
+	MSG_MailUnread,
 };
