@@ -573,11 +573,13 @@ static void folderlistByName(const char *line, uchar *list, uchar *first)
 
 /* data block for the curl ccallback write function in http.c */
 static struct i_get callback_data;
+static char cerror[CURL_ERROR_SIZE + 1];
 
 static CURLcode getMailData(CURL * h)
 {
 	CURLcode res;
 //  puts("get data");
+	cerror[0] = 0;
 	callback_data.buffer = initString(&callback_data.length);
 	callback_data.move_capable = false;
 	res = curl_easy_perform(h);
@@ -905,7 +907,7 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 // We should check here that res1 is the right kind of error,
 // If some other error code then return false;
 // Let's at least print it out.
-	if(res1 != CURLE_OK && debugLevel >= 3) ebcurl_setError(res1, "mail://url-unspecified", 1, "fetchmail_ssl");
+	if(res1 != CURLE_OK && debugLevel >= 3) ebcurl_setError(res1, "mail://url-unspecified", 1, cerror);
 	asprintf(&t, "SELECT \"%s\"", f->path);
 	curl_easy_setopt(h, CURLOPT_CUSTOMREQUEST, t);
 	free(t);
@@ -916,7 +918,7 @@ static bool refolder(CURL *h, struct FOLDER *f, CURLcode res1)
 		return true;
 	}
 	debugPrint(1, "reconnect to %s failed", withoutSubstring(f));
-	if(debugLevel >= 1) ebcurl_setError(res2, "mail://url-unspecified", 1, "fetchmail_ssl");
+	if(debugLevel >= 1) ebcurl_setError(res2, "mail://url-unspecified", 1, cerror);
 	return false;
 }
 
@@ -947,7 +949,7 @@ again:
 return true;
 
 abort:
-	ebcurl_setError(res, cf->firstURL, 0, emptyString);
+	ebcurl_setError(res, cf->firstURL, 0, cerror);
 	return false;
 }
 
@@ -1082,7 +1084,7 @@ static void scanFolder(CURL * handle, struct FOLDER *f)
 	nzFree(mailstring);
 	if (res != CURLE_OK) {
 abort:
-		ebcurl_setError(res, mailbox_url, 1, emptyString);
+		ebcurl_setError(res, mailbox_url, 1, cerror);
 		i_puts(MSG_EndFolder);
 		return;
 	}
@@ -1565,7 +1567,7 @@ I have to use a stub function. You'll see below.
 	if (res != CURLE_OK) {
 abort:
 		nzFree(imapLines);
-		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
+		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), cerror);
 		nzFree(mailstring), mailstring = 0;
 		return false;
 	}
@@ -1776,7 +1778,7 @@ again:
 	if (res != CURLE_OK) {
 		nzFree(mailstring), mailstring = 0;
 		if(!retry) { retry = true; goto again; }
-		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), emptyString);
+		ebcurl_setError(res, mailbox_url, (ismc ? 2 : 0), cerror);
 		return false;
 	}
 
@@ -1894,6 +1896,7 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 	if (!handle)
 		i_printfExit(MSG_LibcurlNoInit);
 
+	curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, cerror);
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);
@@ -1903,11 +1906,11 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 
 	res = curl_easy_setopt(handle, CURLOPT_USERNAME, username);
 	if (res != CURLE_OK)
-		ebcurl_setError(res, mailbox_url, 1, emptyString);
+		ebcurl_setError(res, mailbox_url, 1, cerror);
 
 	res = curl_easy_setopt(handle, CURLOPT_PASSWORD, password);
 	if (res != CURLE_OK)
-		ebcurl_setError(res, mailbox_url, 2, emptyString);
+		ebcurl_setError(res, mailbox_url, 2, cerror);
 
 	return handle;
 }
@@ -2214,7 +2217,7 @@ fetchmail_cleanup:
 	if (message_url)
 		url_for_error = message_url;
 	if (res != CURLE_OK)
-		ebcurl_setError(res, url_for_error, 1, emptyString);
+		ebcurl_setError(res, url_for_error, 1, cerror);
 	curl_easy_cleanup(mail_handle);
 	nzFree(message_url);
 	nzFree(mailbox_url);
@@ -4204,7 +4207,7 @@ usage:
 	return false;
 
 login_error:
-	ebcurl_setError(res, mailbox_url, 0, emptyString);
+	ebcurl_setError(res, mailbox_url, 0, cerror);
 	imapCleanupInBackground(h);
 	return false;
 }
@@ -4228,7 +4231,7 @@ again:
 		nzFree(mailstring), mailstring = 0;
 		if(!retry) { retry = true; goto again; }
 // error getting the folders, revert back to an empty buffer
-		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		ebcurl_setError(res, cf->firstURL, 0, cerror);
 teardown:
 		imapCleanupInBackground(h);
 		cw->imap_h = 0;
@@ -4369,7 +4372,7 @@ again:
 	nzFree(mailstring), mailstring = 0;
 	if(res != CURLE_OK) {
 		if(!retry) { retry = true; goto again; }
-		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		ebcurl_setError(res, cf->firstURL, 0, cerror);
 		return false;
 	}
 
@@ -4379,7 +4382,7 @@ again:
 	if(imapSearch(h, &f0, search + unseen, unseen, &res) <= 0) {
 		cleanFolder(&f0);
 		if(res != CURLE_OK)
-			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			ebcurl_setError(res, cf->firstURL, 0, cerror);
 		return false;
 	}
 
@@ -4505,7 +4508,7 @@ bool mailDescend(const char *title, char cmd)
 	if(res != CURLE_OK) {
 // A partial read of a big email doesn't return the error, though it does print an error.
 // In other words, we march along.
-		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		ebcurl_setError(res, cf->firstURL, 0, cerror);
 		imapCleanupInBackground(h);
 		cw->imap_h = 0;
 		cw->imapMode2 = false;
@@ -4613,7 +4616,7 @@ baddest:
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) {
-			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			ebcurl_setError(res, cf->firstURL, 0, cerror);
 			return false;
 		}
 	expunge(h);
@@ -4749,7 +4752,7 @@ baddest:
 		res = getMailData(h);
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) {
-			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			ebcurl_setError(res, cf->firstURL, 0, cerror);
 			return false;
 		}
 		expunge(h);
@@ -4927,7 +4930,7 @@ bool addFolders()
 		nzFree(mailstring), mailstring = 0;
 		if (res != CURLE_OK) {
 			i_printf(MSG_NoCreate3, line2);
-			ebcurl_setError(res, cf->firstURL, 0, emptyString);
+			ebcurl_setError(res, cf->firstURL, 0, cerror);
 			nzFree(line2);
 			goto done;
 		}
@@ -4983,7 +4986,7 @@ bool deleteFolder(int ln)
 	if (res != CURLE_OK) {
 		i_printf(MSG_NoDelete3, p);
 		p[l] = ':';
-		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		ebcurl_setError(res, cf->firstURL, 0, cerror);
 		return false;
 	}
 	p[l] = ':';
@@ -5004,7 +5007,7 @@ bool renameFolder(const char *src, const char *dest)
 	nzFree(mailstring), mailstring = 0;
 	if (res != CURLE_OK) {
 		i_printf(MSG_NoRename3, src);
-		ebcurl_setError(res, cf->firstURL, 0, emptyString);
+		ebcurl_setError(res, cf->firstURL, 0, cerror);
 		return false;
 	}
 	return true;
