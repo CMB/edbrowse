@@ -2489,7 +2489,7 @@ static CURL *http_curl_init(struct i_get *g)
 #endif
 	curl_easy_setopt(h, CURLOPT_HTTPAUTH, curl_auth);
 
-#if 0
+#if 1
 // in case you run into DH key too small
 // This may not be portable, e.g. curl compiled with gnutls;
 // though it is usually compiled with openssl.

@@ -906,6 +906,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 		return NULL;
 	}
 
+	curl_easy_setopt(handle, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	res = setCurlURL(handle, outurl);
 	if (res != CURLE_OK) {
