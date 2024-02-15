@@ -2838,6 +2838,7 @@ alert3(">>>");
 return d.createTextNode("DOMParser not yet implemented");
 }}}
 
+// various XMLHttpRequest methods
 function xml_open(method, url, async, user, password){
 if(user || password) alert3("xml user and password ignored");
 this.readyState = 1;
@@ -2986,6 +2987,60 @@ this.status = 0;
 this.statusText = "network error";
 }
 };
+
+// this is a minimal EventTarget class. It has the listeners but doesn't
+// inherit all the stuff from Node, like it should.
+// It is here so XMLHttpRequest can inherit its listeners.
+function EventTarget(){}
+EventTarget.prototype.eb$listen = eb$listen;
+EventTarget.prototype.eb$unlisten = eb$unlisten;
+EventTarget.prototype.addEventListener = function(ev, handler, iscapture) { this.eb$listen(ev,handler, iscapture, true); }
+EventTarget.prototype.removeEventListener = function(ev, handler, iscapture) { this.eb$unlisten(ev,handler, iscapture, true); }
+EventTarget.prototype.dispatchEvent = dispatchEvent;
+
+function XMLHttpRequestEventTarget(){}
+XMLHttpRequestEventTarget.prototype = new EventTarget;
+
+function XMLHttpRequestUpload(){}
+XMLHttpRequestUpload.prototype = new XMLHttpRequestEventTarget;
+
+// Originally implemented by Yehuda Katz
+// And since then, from envjs, by Thatcher et al
+function XMLHttpRequest() {
+    this.headers = {};
+    this.responseHeaders = {};
+    this.aborted = false;//non-standard
+    this.withCredentials = true;
+this.upload = new XMLHttpRequestUpload;
+}
+XMLHttpRequest.prototype = new EventTarget;
+XMLHttpRequest.prototype.dom$class = "XMLHttpRequest";
+// defined by the standard: http://www.w3.org/TR/XMLHttpRequest/#xmlhttprequest
+// but not provided by Firefox.  Safari and others do define it.
+XMLHttpRequest.UNSENT = 0;
+XMLHttpRequest.OPEN = 1;
+XMLHttpRequest.HEADERS_RECEIVED = 2;
+XMLHttpRequest.LOADING = 3;
+XMLHttpRequest.DONE = 4;
+XMLHttpRequest.prototype.open = xml_open;
+XMLHttpRequest.prototype.setRequestHeader = xml_srh;
+XMLHttpRequest.prototype.getResponseHeader = xml_grh;
+XMLHttpRequest.prototype.getAllResponseHeaders = xml_garh;
+XMLHttpRequest.prototype.send = xml_send;
+XMLHttpRequest.prototype.parseResponse = xml_parse;
+XMLHttpRequest.prototype.abort = function(){ this.aborted = true}
+XMLHttpRequest.prototype.onreadystatechange = XMLHttpRequest.prototype.onload = XMLHttpRequest.prototype.onerror = function(){}
+XMLHttpRequest.prototype.overrideMimeType = function(t) {
+if(typeof t == "string") this.eb$mt = t;
+}
+XMLHttpRequest.prototype.eb$mt = null;
+XMLHttpRequest.prototype.async = false;
+XMLHttpRequest.prototype.readyState = 0;
+XMLHttpRequest.prototype.responseText = "";
+XMLHttpRequest.prototype.response = "";
+XMLHttpRequest.prototype.responseXML = null;
+XMLHttpRequest.prototype.status = 0;
+XMLHttpRequest.prototype.statusText = "";
 
 CSS = {
 supports:function(w){ alert3("CSS.supports("+w+")"); return false},
@@ -5830,6 +5885,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "makeSheets", "getComputedStyle", "computeStyleInline", "cssTextGet",
 "injectSetup", "eb$visible",
 "insertAdjacentHTML", "htmlString", "outer$1", "textUnder", "newTextUnder",
+"EventTarget", "XMLHttpRequestEventTarget", "XMLHttpRequestUpload", "XMLHttpRequest",
 "URL", "File", "FileReader", "Blob", "FormData",
 "Headers", "Request", "Response", "fetch",
 "TextEncoder", "TextDecoder",
@@ -5847,10 +5903,17 @@ Object.defineProperty(this, flist[i], {writable:false,configurable:false});
 // some class prototypes
 flist = [Date, Promise, Array, Uint8Array, Error, String, URL, URLSearchParams,
 Intl_dt, Intl_num,
+EventTarget, XMLHttpRequestEventTarget, XMLHttpRequestUpload, XMLHttpRequest,
 Blob, FormData, Request, Response, Headers];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false});
 
+flist = ["eb$listen", "eb$unlisten", "addEventListener", "removeEventListener", "dispatchEvent"];
+for(var i=0; i<flist.length; ++i)
+Object.defineProperty(EventTarget.prototype, flist[i], {writable:false,configurable:false});
+flist = ["open", "setRequestHeader", "getResponseHeader", "getAllResponseHeaders", "send", "parseResponse", "abort", "onerror", "onload", "onreadystatechange", "overrideMimeType"]
+for(var i=0; i<flist.length; ++i)
+Object.defineProperty(XMLHttpRequest.prototype, flist[i], {writable:false,configurable:false});
 Object.defineProperty(URL, "createObjectURL", {writable:false,configurable:false});
 Object.defineProperty(URL, "revokeObjectURL", {writable:false,configurable:false});
 flist = ["text", "slice", "stream", "arrayBuffer"];
