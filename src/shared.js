@@ -3048,6 +3048,7 @@ Object.defineProperty(Intl, "NumberFormat", {value:Intl_num})
 
 // Code beyond this point is third party, but necessary for the operation of the browser.
 
+// NextCode
 // TextDecoder TextEncoder   https://github.com/anonyco/FastestSmallestTextEncoderDecoder
 // There is a minimized version, which I don't use here.
 
@@ -3505,6 +3506,7 @@ var ENCODEINTO_BUILD = false;
 	}
 })(typeof global == "" + void 0 ? typeof self == "" + void 0 ? this : self : global);
 
+// NextCode
 /* Blob.js
  * A Blob, File, FileReader & URL implementation.
  * 2019-04-19
@@ -4190,6 +4192,8 @@ var ENCODEINTO_BUILD = false;
   }
 })()
 
+// NextCode
+// Ok this is my function, but it blends with the message port functions below.
 function onmessage$$running() { 
 if(this.eb$pause && !this.onmessage) return;
 if(this.onmessage || (this.onmessage$$array && this.onmessage$$array.length)) { // handlers are ready
@@ -4215,6 +4219,7 @@ alert3("process message complete");
 }
 }
 
+// NextCode
 /*********************************************************************
 MessagePort and MessageChannel
 https://github.com/rocwind/message-port-polyfill
@@ -4275,6 +4280,7 @@ this.port2.otherPort = this.port1;
 return MessageChannel;
 }());
 
+// NextCode
 /**!
  * url-search-params-polyfill
  *
@@ -4630,6 +4636,7 @@ return MessageChannel;
 
 })(typeof global !== 'undefined' ? global : (typeof window !== 'undefined' ? window : this));
 
+// NextCode
 // https://raw.githubusercontent.com/jimmywarting/FormData/master/FormData.js
 // jimmy@warting.se
 
@@ -5077,7 +5084,7 @@ if (typeof Blob !== 'undefined' && (typeof FormData === 'undefined' || !FormData
 
 // end third party code.
 
-// lock down, for security.
+// lock down for security
 
 for(var k in URLSearchParams.prototype)
 Object.defineProperty(URLSearchParams.prototype, k,{writable:false,configurable:false});

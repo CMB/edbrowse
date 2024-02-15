@@ -985,6 +985,7 @@ You'll see this after the perform function runs.
 //	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, imap_null_callback);
 	curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, imap_header_callback);
 	callback_data.buffer = initString(&callback_data.length);
+	cerror[0] = 0;
 	res = curl_easy_perform(h);
 // and put things back
 //	curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, eb_curl_callback);
