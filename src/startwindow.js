@@ -2481,10 +2481,15 @@ Object.defineProperty(Response.prototype, "statusText", {get:function(){return t
 Object.defineProperty(Response.prototype, "type", {get:function(){alert3("Response.type always basic");return "basic";}})
 // should this beUrl or response URL?
 Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr.url;}})
-// json is the only method so far; I guess we write them as we need them.
+// json and text methods; are there others?
 Response.prototype.json = function(){return Promise.resolve(JSON.parse(this.body))}
+Response.prototype.text = function(){return Promise.resolve(this.body)}
 
 swm1("fetch", function(url, o) {
+if(typeof url != "string") {
+alert3("fetch parameter type " + typeof url +", I'm returning null");
+return null;
+}
 var dopost = false;
 if(o && o.method && o.method.toLowerCase() == "post") dopost = true;
 var body = "";

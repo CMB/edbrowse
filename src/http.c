@@ -2494,6 +2494,8 @@ static CURL *http_curl_init(struct i_get *g)
 // This may not be portable, e.g. curl compiled with gnutls;
 // though it is usually compiled with openssl.
 // Not sure of the best solution here.
+// Without this line, you are at the whim of /etc/ssl/openssl.cnf, which might
+// set a smaller key size, which most servers don't care about, but some do.
 	curl_easy_setopt(h, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
 #endif
 

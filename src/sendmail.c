@@ -894,6 +894,8 @@ static struct curl_slist *buildRecipientSList(const char **recipients)
 	return recipient_slist;
 }
 
+static char cerror[CURL_ERROR_SIZE + 1];
+
 static CURL *newSendmailHandle(const struct MACCOUNT *account,
 			       const char *outurl, const char *reply,
 			       struct curl_slist *recipients)
@@ -906,6 +908,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 		return NULL;
 	}
 
+	curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, cerror);
 	curl_easy_setopt(handle, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	res = setCurlURL(handle, outurl);
@@ -948,7 +951,7 @@ static CURL *newSendmailHandle(const struct MACCOUNT *account,
 
 new_handle_cleanup:
 	if (res != CURLE_OK) {
-		ebcurl_setError(res, outurl, 0, emptyString);
+		ebcurl_setError(res, outurl, 0, cerror);
 		curl_easy_cleanup(handle);
 		handle = NULL;
 	}
@@ -989,6 +992,7 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 		debugPrint(6, "%s", message);
 		puts("debug don't send");
 	} else {
+		cerror[0] = 0;
 		res = curl_easy_perform(handle);
 	}
 	if (res == CURLE_OK)
@@ -996,7 +1000,7 @@ sendMailSMTP(const struct MACCOUNT *account, const char *reply,
 
 smtp_cleanup:
 	if (res != CURLE_OK)
-		ebcurl_setError(res, smtp_url, 0, emptyString);
+		ebcurl_setError(res, smtp_url, 0, cerror);
 	if (handle)
 		curl_easy_cleanup(handle);
 	curl_slist_free_all(recipient_slist);
