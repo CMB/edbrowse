@@ -5732,7 +5732,6 @@ function fetch(input, init) {
     }
 
     xhr.onload = function() {
-  alert("running onload code " + this.responseURL)
       var options = {
         statusText: xhr.statusText,
         headers: parseHeaders(xhr.getAllResponseHeaders() || '')
@@ -5938,7 +5937,7 @@ Object.defineProperty(FormData.prototype, flist[i], {writable:false,configurable
 flist = ["delete", "append", "get", "has", "set", "foreach", "keys", "values", "entries", "toString"];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(Headers.prototype, flist[i], {writable:false,configurable:false});
-flist = ["bodyUsed", "_initBody", "blob", "arrayBuffer", "text", "formData", "json", "clone", "toString"];
+flist = ["_initBody", "blob", "arrayBuffer", "text", "formData", "json", "clone", "toString"];
 for(var i=0; i<flist.length; ++i) {
 Object.defineProperty(Request.prototype, flist[i], {writable:false,configurable:false});
 Object.defineProperty(Response.prototype, flist[i], {writable:false,configurable:false});

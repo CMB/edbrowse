@@ -851,6 +851,13 @@ function greeting() { alert("done waiting"); return ", Baby"}
 alert(await resolveAfter5Seconds("your 5 seconds are up") + greeting())
 } // returns the Promise object
 
+async function awaitFetchTest() {
+function showcamp(o) { alert("camp " + o.camp); }
+// p_json is the promise of the json object
+const p_json = (await mw$.fetch("http://www.eklhad.net/jscamp.json")).json();
+p_json.then(showcamp);
+}
+
 function test_siblings() {
 var x1 = document.createElement("div");
 var x2 = document.createElement("span");
