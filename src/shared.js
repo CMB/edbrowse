@@ -4149,7 +4149,7 @@ var ENCODEINTO_BUILD = false;
   var stream
 
   function promisify(obj) {
-    return new my$win().Promise(function(resolve, reject) {
+    return new (my$win().Promise)(function(resolve, reject) {
       obj.onload =
       obj.onerror = function(evt) {
         obj.onload =
@@ -5185,6 +5185,11 @@ Within fetch, I changed xhr.open to async = false.
 I can't run an asynchronous xhr from the master window, it does it
 by a timer, and we can't do that.
 This isn't an issue with jsbg-, but just incase you have jsbg+
+
+Promise has to run in its frame, not here in the shared window.
+I changed Promise to my$win().Promise
+
+Added toString functions so shows [object Response] etc.
 */
 
 /* eslint-disable no-prototype-builtins */
@@ -5356,13 +5361,13 @@ if (support.iterable) {
 function consumed(body) {
   if (body._noBody) return
   if (body.bodyUsed) {
-    return Promise.reject(new TypeError('Already read'))
+    return my$win().Promise.reject(new TypeError('Already read'))
   }
   body.bodyUsed = true
 }
 
 function fileReaderReady(reader) {
-  return new Promise(function(resolve, reject) {
+  return new (my$win().Promise)(function(resolve, reject) {
     reader.onload = function() {
       resolve(reader.result)
     }
@@ -5465,13 +5470,13 @@ function Body() {
       }
 
       if (this._bodyBlob) {
-        return Promise.resolve(this._bodyBlob)
+        return my$win().Promise.resolve(this._bodyBlob)
       } else if (this._bodyArrayBuffer) {
-        return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+        return my$win().Promise.resolve(new Blob([this._bodyArrayBuffer]))
       } else if (this._bodyFormData) {
         throw new Error('could not read FormData body as blob')
       } else {
-        return Promise.resolve(new Blob([this._bodyText]))
+        return my$win().Promise.resolve(new Blob([this._bodyText]))
       }
     }
   }
@@ -5482,14 +5487,14 @@ function Body() {
       if (isConsumed) {
         return isConsumed
       } else if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
-        return Promise.resolve(
+        return my$win().Promise.resolve(
           this._bodyArrayBuffer.buffer.slice(
             this._bodyArrayBuffer.byteOffset,
             this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
           )
         )
       } else {
-        return Promise.resolve(this._bodyArrayBuffer)
+        return my$win().Promise.resolve(this._bodyArrayBuffer)
       }
     } else if (support.blob) {
       return this.blob().then(readBlobAsArrayBuffer)
@@ -5507,11 +5512,11 @@ function Body() {
     if (this._bodyBlob) {
       return readBlobAsText(this._bodyBlob)
     } else if (this._bodyArrayBuffer) {
-      return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+      return my$win().Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
     } else if (this._bodyFormData) {
       throw new Error('could not read FormData body as text')
     } else {
-      return Promise.resolve(this._bodyText)
+      return my$win().Promise.resolve(this._bodyText)
     }
   }
 
@@ -5713,7 +5718,7 @@ try {
 }
 
 function fetch(input, init) {
-  return new Promise(function(resolve, reject) {
+  return new (my$win().Promise)(function(resolve, reject) {
     var request = new Request(input, init)
 
     if (request.signal && request.signal.aborted) {
@@ -5727,6 +5732,7 @@ function fetch(input, init) {
     }
 
     xhr.onload = function() {
+  alert("running onload code " + this.responseURL)
       var options = {
         statusText: xhr.statusText,
         headers: parseHeaders(xhr.getAllResponseHeaders() || '')
@@ -5821,6 +5827,10 @@ if (!g.fetch) {
   g.Request = Request
   g.Response = Response
 }
+
+Headers.prototype.toString = function(){return "[object Headers]"}
+Request.prototype.toString = function(){return "[object Request]"}
+Response.prototype.toString = function(){return "[object Response]"}
 
 // end third party code.
 
@@ -5925,10 +5935,10 @@ Object.defineProperty(Blob.prototype, flist[i], {writable:false,configurable:fal
 flist = ["append", "delete", "entries", "foreach", "get", "getAll", "has", "keys", "set", "values", "_asNative", "_blob", "toString"];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(FormData.prototype, flist[i], {writable:false,configurable:false});
-flist = ["delete", "append", "get", "has", "set", "foreach", "keys", "values", "entries"];
+flist = ["delete", "append", "get", "has", "set", "foreach", "keys", "values", "entries", "toString"];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(Headers.prototype, flist[i], {writable:false,configurable:false});
-flist = ["bodyUsed", "_initBody", "blob", "arrayBuffer", "text", "formData", "json", "clone"];
+flist = ["bodyUsed", "_initBody", "blob", "arrayBuffer", "text", "formData", "json", "clone", "toString"];
 for(var i=0; i<flist.length; ++i) {
 Object.defineProperty(Request.prototype, flist[i], {writable:false,configurable:false});
 Object.defineProperty(Response.prototype, flist[i], {writable:false,configurable:false});
