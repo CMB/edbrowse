@@ -2852,7 +2852,7 @@ this.statusText = "";
 // a website might use this to set something up, before send
 // warning: if you don't call open, just set variables, this won't be called;
 // but I think you're suppose to call open
-this.onreadystatechange();
+if(typeof this.onreadystatechange == "function") this.onreadystatechange();
 };
 
 function xml_srh(header, value){
@@ -2981,7 +2981,7 @@ this.dispatchEvent(e);
 this.upload.dispatchEvent(e);
 
 // does anyone call addEventListener for readystatechange? Hope not.
-this.onreadystatechange();
+if(typeof this.onreadystatechange == "function") this.onreadystatechange();
 } else {
 this.status = 0;
 this.statusText = "network error";
@@ -3014,7 +3014,6 @@ function XMLHttpRequest() {
 this.upload = new XMLHttpRequestUpload;
 }
 XMLHttpRequest.prototype = new EventTarget;
-XMLHttpRequest.prototype.dom$class = "XMLHttpRequest";
 // defined by the standard: http://www.w3.org/TR/XMLHttpRequest/#xmlhttprequest
 // but not provided by Firefox.  Safari and others do define it.
 XMLHttpRequest.UNSENT = 0;
@@ -3022,14 +3021,17 @@ XMLHttpRequest.OPEN = 1;
 XMLHttpRequest.HEADERS_RECEIVED = 2;
 XMLHttpRequest.LOADING = 3;
 XMLHttpRequest.DONE = 4;
+XMLHttpRequest.prototype.toString = function(){return "[object XMLHttpRequest]"}
 XMLHttpRequest.prototype.open = xml_open;
+// FormData takes over this function, and sets _hasContentType
+// if we are setting "Content-Type"
 XMLHttpRequest.prototype.setRequestHeader = xml_srh;
 XMLHttpRequest.prototype.getResponseHeader = xml_grh;
 XMLHttpRequest.prototype.getAllResponseHeaders = xml_garh;
+// FormData takes over this function and sends it a different way
+//if the data is an instance of FormDataPolyfill
 XMLHttpRequest.prototype.send = xml_send;
 XMLHttpRequest.prototype.parseResponse = xml_parse;
-XMLHttpRequest.prototype.abort = function(){ this.aborted = true}
-XMLHttpRequest.prototype.onreadystatechange = XMLHttpRequest.prototype.onload = XMLHttpRequest.prototype.onerror = function(){}
 XMLHttpRequest.prototype.overrideMimeType = function(t) {
 if(typeof t == "string") this.eb$mt = t;
 }
@@ -5174,6 +5176,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 3.3 Replace the existing fetch code with the contents of fetch.js
 
 Last update for fetch: 20240215
+
+I got rid of the setTimeout(blah, 0), to do something in 0 seconds.
+Now it just does it.
 */
 
 /* eslint-disable no-prototype-builtins */
@@ -5729,27 +5734,19 @@ function fetch(input, init) {
       }
       options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
       var body = 'response' in xhr ? xhr.response : xhr.responseText
-      setTimeout(function() {
         resolve(new Response(body, options))
-      }, 0)
     }
 
     xhr.onerror = function() {
-      setTimeout(function() {
         reject(new TypeError('Network request failed'))
-      }, 0)
     }
 
     xhr.ontimeout = function() {
-      setTimeout(function() {
         reject(new TypeError('Network request timed out'))
-      }, 0)
     }
 
     xhr.onabort = function() {
-      setTimeout(function() {
         reject(new DOMException('Aborted', 'AbortError'))
-      }, 0)
     }
 
     function fixUrl(url) {
@@ -5911,7 +5908,7 @@ Object.defineProperty(flist[i], "prototype", {writable:false,configurable:false}
 flist = ["eb$listen", "eb$unlisten", "addEventListener", "removeEventListener", "dispatchEvent"];
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(EventTarget.prototype, flist[i], {writable:false,configurable:false});
-flist = ["open", "setRequestHeader", "getResponseHeader", "getAllResponseHeaders", "send", "parseResponse", "abort", "onerror", "onload", "onreadystatechange", "overrideMimeType"]
+flist = ["toString", "open", "setRequestHeader", "getResponseHeader", "getAllResponseHeaders", "send", "parseResponse", "overrideMimeType"]
 for(var i=0; i<flist.length; ++i)
 Object.defineProperty(XMLHttpRequest.prototype, flist[i], {writable:false,configurable:false});
 Object.defineProperty(URL, "createObjectURL", {writable:false,configurable:false});

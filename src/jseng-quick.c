@@ -3204,6 +3204,7 @@ void my_ExecutePendingJobs(void)
 	ctx = e->ctx;
 // This line resets cw and cf, and we don't put it back, so the calling routine must restore it.
 	if (!frameFromContext(ctx)) {
+	debugPrint(3, "Promise job deleted because its frame could not be found");
 delete_and_go:
 	    list_del(&e->link);
 	    for(i = 0; i < e->argc; i++)
