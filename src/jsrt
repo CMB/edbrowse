@@ -780,9 +780,7 @@ fail(154);
 }
 
 
-test_cloneNode();
-function test_cloneNode()
-{
+function test_cloneNode() {
 var x1  = document.createElement("div");
 var x2  = document.createElement("div");
 var x3  = document.createElement("div");
@@ -806,10 +804,9 @@ fail(157);
 if (test_anchor.href.host != "water.com")
 fail(158);
 }
+test_cloneNode();
 
-test_removeListener();
-function test_removeListener()
-{
+function test_removeListener() {
 var x1 = document.createElement("a");
 var x1click = function(){ alert('ok') };
 x1.addEventListener("click",x1click,0);
@@ -819,6 +816,7 @@ x1.removeEventListener("click",x1click);
 if(x1.onclick$$array.length)
 fail(160);
 }
+test_removeListener();
 
 // This comes after the original onsubmit function
 document.forms[0].addEventListener("submit", function(e) { alert("submit phase "+e.eventPhase);});
@@ -842,9 +840,18 @@ if(xhr.responseText.indexOf("100% text based") > 0) alert("looks good"); else al
 }
 // xhrTest()
 
-test_siblings();
-function test_siblings()
-{
+async function awaitTest() {
+function resolveAfter5Seconds(x) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(x);
+    }, 5000);   });
+}
+function greeting() { alert("done waiting"); return ", Baby"}
+alert(await resolveAfter5Seconds("your 5 seconds are up") + greeting())
+} // returns the Promise object
+
+function test_siblings() {
 var x1 = document.createElement("div");
 var x2 = document.createElement("span");
 var x3 = document.createElement("table");
@@ -868,6 +875,7 @@ if (testchild.value == 123)
 fail(162);
 }
 }
+test_siblings();
 
 if(document.metas[0].getAttribute("content") != "Snoopy")
 fail(163);
