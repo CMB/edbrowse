@@ -2482,7 +2482,7 @@ key_command:
 /* interactive prompt depends on whether there is more text or not */
 		if(isInteractive) printf("%c ", displine > cw->dol ? '?' : '*');
 		fflush(stdout);
-		key = getLetter((isimap ? "qvbfh? gtnpwWuUasdm" : "qh? gtnwud"));
+		key = getLetter((isimap ? "qvbfh? gtnprRwWuUasdm" : "qh? gtnwud"));
 		printf("\b");
 		if(isInteractive) printf("\b\b");
 		fflush(stdout);
@@ -2516,6 +2516,8 @@ key_command:
 	case 'v':
 	case 'f':
 	case 'b':
+	case 'r':
+	case 'R':
 		goto afterinput;
 
 	case 'd':
@@ -2618,7 +2620,7 @@ afterinput:
 
 	if (delflag)
 		return 'd';
-	return strchr("smvbfpguwa", key) ? key : 'n';
+	return strchr("smvbfpgrRuwa", key) ? key : 'n';
 }
 
 /* Here are the common keywords for mail header lines.
