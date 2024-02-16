@@ -2845,6 +2845,8 @@ this.callback([e]);
 // in edbrowse the target remains visible forever, callback will never be called again.
 // We don't have to remember target or the conditions of intersection etc.
 }
+IntersectionObserver.prototype.disconnect = eb$voidfunction
+IntersectionObserver.prototype.unobserve = eb$voidfunction
 
 // more visual stuff. But nothing resizes in edbrowse, ever,
 // so this should be easy to stub out.

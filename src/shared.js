@@ -5179,6 +5179,12 @@ Last update for fetch: 20240215
 
 I got rid of the setTimeout(blah, 0), to do something in 0 seconds.
 Now it just does it.
+I can't call set"Timeout form the master window; there is no frame.
+
+Within fetch, I changed xhr.open to async = false.
+I can't run an asynchronous xhr from the master window, it does it
+by a timer, and we can't do that.
+This isn't an issue with jsbg-, but just incase you have jsbg+
 */
 
 /* eslint-disable no-prototype-builtins */
@@ -5757,7 +5763,7 @@ function fetch(input, init) {
       }
     }
 
-    xhr.open(request.method, fixUrl(request.url), true)
+    xhr.open(request.method, fixUrl(request.url), false)
 
     if (request.credentials === 'include') {
       xhr.withCredentials = true
