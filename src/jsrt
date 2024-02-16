@@ -854,7 +854,7 @@ alert(await resolveAfter5Seconds("your 5 seconds are up") + greeting())
 async function awaitFetchTest() {
 function showcamp(o) { alert("camp " + o.camp); }
 // p_json is the promise of the json object
-const p_json = (await mw$.fetch("http://www.eklhad.net/jscamp.json")).json();
+const p_json = (await mw$.fetch("http://www.edbrowse.org/jscamp.json")).json();
 p_json.then(showcamp);
 }
 
