@@ -3025,6 +3025,9 @@ XMLHttpRequest.prototype.toString = function(){return "[object XMLHttpRequest]"}
 XMLHttpRequest.prototype.open = xml_open;
 // FormData takes over this function, and sets _hasContentType
 // if we are setting "Content-Type"
+// If even one website anywhere wants to take over this method, as FormData does,
+// then we have to move this XMLHttpRequest stuff back to startwindow.
+// See the comments on the URL class and why it has to be there.
 XMLHttpRequest.prototype.setRequestHeader = xml_srh;
 XMLHttpRequest.prototype.getResponseHeader = xml_grh;
 XMLHttpRequest.prototype.getAllResponseHeaders = xml_garh;

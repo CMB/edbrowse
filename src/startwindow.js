@@ -2416,94 +2416,13 @@ return doc;
 }
 })
 
-swm("XMLHttpRequestEventTarget", function(){})
-XMLHttpRequestEventTarget.prototype = new EventTarget;
-
-swm("XMLHttpRequestUpload", function(){})
-XMLHttpRequestUpload.prototype = new XMLHttpRequestEventTarget;
-
-// @author Originally implemented by Yehuda Katz
-// And since then, from envjs, by Thatcher et al
-
-swm("XMLHttpRequest", function(){
-    this.headers = {};
-    this.responseHeaders = {};
-    this.aborted = false;//non-standard
-    this.withCredentials = true;
-this.upload = new XMLHttpRequestUpload;
-})
-spdc("XMLHttpRequest", null)
-// this form of XMLHttpRequest is deprecated, but still used in places.
-XDomainRequest = XMLHttpRequest;
-
-// defined by the standard: http://www.w3.org/TR/XMLHttpRequest/#xmlhttprequest
-// but not provided by Firefox.  Safari and others do define it.
-XMLHttpRequest.UNSENT = 0;
-XMLHttpRequest.OPEN = 1;
-XMLHttpRequest.HEADERS_RECEIVED = 2;
-XMLHttpRequest.LOADING = 3;
-XMLHttpRequest.DONE = 4;
-// see shared.js for these methods
-XMLHttpRequest.prototype.open = mw$.xml_open;
-XMLHttpRequest.prototype.setRequestHeader = mw$.xml_srh;
-XMLHttpRequest.prototype.getResponseHeader = mw$.xml_grh;
-XMLHttpRequest.prototype.getAllResponseHeaders = mw$.xml_garh;
-XMLHttpRequest.prototype.send = mw$.xml_send;
-XMLHttpRequest.prototype.parseResponse = mw$.xml_parse;
-XMLHttpRequest.prototype.abort = function(){ this.aborted = true}
-XMLHttpRequest.prototype.onreadystatechange = XMLHttpRequest.prototype.onload = XMLHttpRequest.prototype.onerror = eb$voidfunction;
-XMLHttpRequest.prototype.overrideMimeType = function(t) {
-if(typeof t == "string") this.eb$mt = t;
-}
-XMLHttpRequest.prototype.eb$listen = eb$listen;
-XMLHttpRequest.prototype.eb$unlisten = eb$unlisten;
-XMLHttpRequest.prototype.addEventListener = addEventListener;
-XMLHttpRequest.prototype.removeEventListener = removeEventListener;
-XMLHttpRequest.prototype.dispatchEvent = mw$.dispatchEvent;
-XMLHttpRequest.prototype.eb$mt = null;
-XMLHttpRequest.prototype.async = false;
-XMLHttpRequest.prototype.readyState = 0;
-XMLHttpRequest.prototype.responseText = "";
-XMLHttpRequest.prototype.response = "";
-XMLHttpRequest.prototype.responseXML = null;
-XMLHttpRequest.prototype.status = 0;
-XMLHttpRequest.prototype.statusText = "";
-
-// response to a fetch() request
-swm("Response", function(){this.xhr = null, this.bodyUsed = false})
-Object.defineProperty(Response.prototype, "body", {get:function(){this.bodyUsed=true;return this.xhr.responseText;}})
-Object.defineProperty(Response.prototype, "headers", {get:function(){return this.xhr.responseHeaders;}})
-Object.defineProperty(Response.prototype, "ok", {get:function(){return this.xhr.status >= 200 && this.xhr.status <= 299;}})
-Object.defineProperty(Response.prototype, "redirect", {get:function(){return this.xhr.responseURL != this.xhr.url;}})
-Object.defineProperty(Response.prototype, "status", {get:function(){return this.xhr.status;}})
-Object.defineProperty(Response.prototype, "statusText", {get:function(){return this.xhr.statusText;}})
-// this one isn't right; just a stub for now
-Object.defineProperty(Response.prototype, "type", {get:function(){alert3("Response.type always basic");return "basic";}})
-// should this beUrl or response URL?
-Object.defineProperty(Response.prototype, "url", {get:function(){return this.xhr.url;}})
-// json and text methods; are there others?
-Response.prototype.json = function(){return Promise.resolve(JSON.parse(this.body))}
-Response.prototype.text = function(){return Promise.resolve(this.body)}
-
-swm1("fetch", function(url, o) {
-if(typeof url != "string") {
-alert3("fetch parameter type " + typeof url +", I'm returning null");
-return null;
-}
-var dopost = false;
-if(o && o.method && o.method.toLowerCase() == "post") dopost = true;
-var body = "";
-if(o && typeof o.body == "string") body = o.body;
-var xhr = new XMLHttpRequest;
-// don't run this async, it needs to complete and then we set Response.ok and other response variables.
-xhr.open(dopost?"POST":"GET",url, false);
-if(o && typeof o.headers == "object") xhr.headers = o.headers;
-if(o && o.credentials) alert3("fetch credentials " + o.credentials + " not supported.");
-xhr.send(body, 0);
-var r = new Response; r.xhr = xhr;
-return Promise.resolve(r);
-})
-
+swm("XMLHttpRequest", mw$.XMLHttpRequest)
+// Request, Response, Headers, fetch; link to third party code in master window.
+// fetch calls XMLHttpRequest, but puts the Response in a Promise
+swm("Headers", mw$.Headers)
+swm("Request", mw$.Request)
+swm("Response", mw$.Response)
+swm("fetch", mw$.fetch)
 // pages seem to want document.style to exist
 sdm("style", new CSSStyleDeclaration)
 document.style.element = document;

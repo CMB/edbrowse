@@ -825,7 +825,7 @@ document.forms[0].addEventListener("submit", function(e) { alert("submit phase "
 // Not that I want it to fail if allowXHR is off either. IDK
 // and not sure I want to run this internet test every time.
 function xhrTest() {
-var xhr = new mw$.XMLHttpRequest;
+var xhr = new XMLHttpRequest;
 // let's test arrow functions
 xhr.onload = () => alert("base onload");
 // but this doesn't work as an arrow function, this isn't the xhr object
@@ -854,7 +854,7 @@ alert(await resolveAfter5Seconds("your 5 seconds are up") + greeting())
 async function awaitFetchTest() {
 function showcamp(o) { alert("camp " + o.camp); }
 // p_json is the promise of the json object
-const p_json = (await mw$.fetch("http://www.edbrowse.org/jscamp.json")).json();
+const p_json = (await fetch("http://www.edbrowse.org/jscamp.json")).json();
 p_json.then(showcamp);
 }
 
