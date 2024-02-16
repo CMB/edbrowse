@@ -1162,6 +1162,7 @@ dispmail:
 
 			key = presentMail(&plain);
 // presentMail has already freed mailstring
+			mif->seen = true;
 			retry = false; // user has issued another command
 			postkey = 0;
 			if(partread && !refolder(handle, f, res)) key = 's';
