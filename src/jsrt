@@ -823,26 +823,23 @@ fail(160);
 // This comes after the original onsubmit function
 document.forms[0].addEventListener("submit", function(e) { alert("submit phase "+e.eventPhase);});
 
-// test_xhr() succeeds even if allowXHR is off, which is weird.
+// xhrTest() succeeds even if allowXHR is off, which is weird.
 // Not that I want it to fail if allowXHR is off either. IDK
-// and not sure I want to run this internet test every time. Maybe.
-// test_xhr()
-function test_xhr()
-{
-var xhr = new XMLHttpRequest;
-xhr.url = "http://edbrowse.org";
-xhr.method = "GET";
+// and not sure I want to run this internet test every time.
+function xhrTest() {
+var xhr = new mw$.XMLHttpRequest;
+// let's test arrow functions
+xhr.onload = () => alert("base onload");
+// but this doesn't work as an arrow function, this isn't the xhr object
+// xhr.addEventListener("load", (e)=> alert(`target ${e.target} phase ${e.eventPhase} see response length ${this.responseText.length}`).)
+xhr.addEventListener("load", function(e){ alert(`target ${e.target} phase ${e.eventPhase} response length ${this.responseText.length}`)})
+// I'll set async, which does nothing with jsbg-,
+// but you can set jsbg+ and thereby test asynchronous xhr
+xhr.open("get", "http://edbrowse.org", true);
 xhr.send("", 0);
-var rt = xhr.responseText.split("edbrowse").length;
-if (rt > 0)
-{
-// as the responseText contains one or more instances
-// of 'edbrowse', barring some kind of confounding reason,
-// this means that a real GET fired and retrieved the page
-} else {
-fail(161);
+if(xhr.responseText.indexOf("100% text based") > 0) alert("looks good"); else alert("search text not found");
 }
-}
+// xhrTest()
 
 test_siblings();
 function test_siblings()
