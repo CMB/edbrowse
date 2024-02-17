@@ -1899,7 +1899,8 @@ static CURL *newFetchmailHandle(const char *username, const char *password)
 		i_printfExit(MSG_LibcurlNoInit);
 
 	curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, cerror);
-	curl_easy_setopt(handle, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
+	if(curlOpen)
+		curl_easy_setopt(handle, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, mailTimeout);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, eb_curl_callback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &callback_data);

@@ -5,7 +5,7 @@
 #include <signal.h>
 #include <time.h>
 
-bool curlActive;
+bool curlActive, curlOpen;
 int redirect_count = 0;
 char *serverData;
 int serverDataLen;
@@ -56,17 +56,25 @@ void eb_curl_global_init(void)
 	const unsigned int least_acceptable_version =
 	    (major << 16) | (minor << 8) | patch;
 	curl_version_info_data *version_data = NULL;
+
+// Try to use openSSL if we can.
+// It gives us more control over ciphers and keys etc.
+	if(curl_global_sslset(CURLSSLBACKEND_OPENSSL, NULL, NULL) == CURLSSLSET_OK) {
+		curlOpen = true;
+	} else {
+		debugPrint(3, "unable to linke curl to openSSL");
+		curlOpen = false;
+	}
+
 	CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
-	if (curl_init_status != 0)
-		goto libcurl_init_fail;
+	if (curl_init_status != 0) goto libcurl_init_fail;
 	version_data = curl_version_info(CURLVERSION_NOW);
 	if (version_data->version_num < least_acceptable_version)
 		i_printfExit(MSG_CurlVersion, major, minor, patch);
 
 // Initialize the global handle, to manage the cookie space.
 	global_share_handle = curl_share_init();
-	if (global_share_handle == NULL)
-		goto libcurl_init_fail;
+	if (global_share_handle == NULL) goto libcurl_init_fail;
 
 	curl_share_setopt(global_share_handle, CURLSHOPT_LOCKFUNC, lock_share);
 	curl_share_setopt(global_share_handle, CURLSHOPT_UNLOCKFUNC,
@@ -79,31 +87,25 @@ void eb_curl_global_init(void)
 			  CURL_LOCK_DATA_SSL_SESSION);
 
 	global_http_handle = curl_easy_init();
-	if (global_http_handle == NULL)
-		goto libcurl_init_fail;
+	if (global_http_handle == NULL) goto libcurl_init_fail;
 	if (cookieFile && !ismc) {
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEFILE,
 				     "");
-		if (curl_init_status != CURLE_OK) {
-			goto libcurl_init_fail;
-		}
+		if (curl_init_status != CURLE_OK) goto libcurl_init_fail;
 		curl_init_status =
 		    curl_easy_setopt(global_http_handle, CURLOPT_COOKIEJAR,
 				     cookieFile);
-		if (curl_init_status != CURLE_OK)
-			goto libcurl_init_fail;
+		if (curl_init_status != CURLE_OK) goto libcurl_init_fail;
 	}
 	curl_init_status =
 	    curl_easy_setopt(global_http_handle, CURLOPT_ENCODING, "");
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
+	if (curl_init_status != CURLE_OK) goto libcurl_init_fail;
 
 	curl_init_status =
 	    curl_easy_setopt(global_http_handle, CURLOPT_SHARE,
 			     global_share_handle);
-	if (curl_init_status != CURLE_OK)
-		goto libcurl_init_fail;
+	if (curl_init_status != CURLE_OK) goto libcurl_init_fail;
 	curlActive = true;
 	return;
 
@@ -2489,15 +2491,12 @@ static CURL *http_curl_init(struct i_get *g)
 #endif
 	curl_easy_setopt(h, CURLOPT_HTTPAUTH, curl_auth);
 
-#if 1
-// in case you run into DH key too small
-// This may not be portable, e.g. curl compiled with gnutls;
-// though it is usually compiled with openssl.
-// Not sure of the best solution here.
+// If you run into DH key too small, set SECLEVEL = 1.
+// However, this only works for openssl.
 // Without this line, you are at the whim of /etc/ssl/openssl.cnf, which might
 // set a smaller key size, which most servers don't care about, but some do.
-	curl_easy_setopt(h, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
-#endif
+	if(curlOpen)
+		curl_easy_setopt(h, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
 
 /* The next few setopt calls could allocate or perform file I/O. */
 	g->error[0] = '\0';

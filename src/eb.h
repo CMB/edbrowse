@@ -295,7 +295,8 @@ extern bool formatOverflow;
 extern int webTimeout, mailTimeout;
 extern uchar browseLocal;
 extern bool sqlPresent;		/* Was edbrowse compiled with SQL built in? */
-extern bool curlActive; // is curl running?
+extern bool curlActive; // curl is running?
+extern bool curlOpen; // curl uses openSSL
 extern bool ismc;		// Is the program running as a mail client?
 extern bool browseMail;		// Are we browsing a mail in html?
 extern bool passMail;		// pass mail across the filters
