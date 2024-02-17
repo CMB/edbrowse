@@ -5,7 +5,8 @@
 #include <signal.h>
 #include <time.h>
 
-bool curlActive, curlOpen;
+bool curlActive;
+const char *curlCiphers;
 int redirect_count = 0;
 char *serverData;
 int serverDataLen;
@@ -56,15 +57,6 @@ void eb_curl_global_init(void)
 	const unsigned int least_acceptable_version =
 	    (major << 16) | (minor << 8) | patch;
 	curl_version_info_data *version_data = NULL;
-
-// Try to use openSSL if we can.
-// It gives us more control over ciphers and keys etc.
-	if(curl_global_sslset(CURLSSLBACKEND_OPENSSL, NULL, NULL) == CURLSSLSET_OK) {
-		curlOpen = true;
-	} else {
-		debugPrint(3, "unable to linke curl to openSSL");
-		curlOpen = false;
-	}
 
 	CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
 	if (curl_init_status != 0) goto libcurl_init_fail;
@@ -2495,8 +2487,8 @@ static CURL *http_curl_init(struct i_get *g)
 // However, this only works for openssl.
 // Without this line, you are at the whim of /etc/ssl/openssl.cnf, which might
 // set a smaller key size, which most servers don't care about, but some do.
-	if(curlOpen)
-		curl_easy_setopt(h, CURLOPT_SSL_CIPHER_LIST, "DEFAULT@SECLEVEL=1");
+	if(curlCiphers)
+		curl_easy_setopt(h, CURLOPT_SSL_CIPHER_LIST, curlCiphers);
 
 /* The next few setopt calls could allocate or perform file I/O. */
 	g->error[0] = '\0';
