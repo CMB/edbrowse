@@ -6,6 +6,9 @@
 
 open FH, $ARGV[0];
 while(<FH>) {
+# "foo", function(params) {
+# for swm and sdm in startwindow
+s/"([\w\$]+)", *function *\(([\w\$, ]*)\) *{$/"$1", function($2) {alert3("enter $1");/;
 # foo = function(params) {
 s/([\w\$]+) = function *\(([\w\$, ]*)\) *{$/$1 = function($2) {alert3("enter $1");/;
 # function foo(params) {
