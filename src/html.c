@@ -3600,16 +3600,11 @@ struct listHead timerList = {
 
 /*********************************************************************
 the spec says you can't run a timer less than 10 ms but here we currently use
-3000 ms. This really should be a configurable limit.
-If less than 200ms the load average jumps way up.  e.g.nasa.gov
+200 ms. This really should be a configurable limit.
+Timers often run faster than that but edbrowse can't keep up.
 We only rerender the screen every 20 seconds or so anyways.
-But, the acid test uses a timer to schedule each of its 100 tests,
-and is crazy slow if we throttle them.
-So ... the first few timers can run as fast  as they like,and we're ok
-with that, then timers slow down as we proceed.
 *********************************************************************/
-static const int timerSpread = 3000;
-static const int timerStep = 7;
+static const int timerSpread = 100;
 int timer_sn;			// timer sequence number
 
 void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterval)
@@ -3650,12 +3645,8 @@ void domSetsTimeout(int n, const char *jsrc, const char *backlink, bool isInterv
 	if(stringEqual(jsrc, "@@pending"))
 		jt->pending = true;
 	else {
-		if(n < cf->jtmin)
-			n = cf->jtmin;
-		if(!n)
-			n = 10;
 		if (n < timerSpread)
-			cf->jtmin = n += timerStep;
+			n = timerSpread;
 	}
 	if ((jt->isInterval = isInterval))
 		jt->jump_sec = n / 1000, jt->jump_ms = n % 1000;
@@ -3932,12 +3923,8 @@ skip_execution:
 		}
 	} else {
 		int n = jt->jump_sec * 1000 + jt->jump_ms;
-		if(n < cf->jtmin)
-			n = cf->jtmin;
-		if(!n)
-			n = 10;
 		if (n < timerSpread)
-			cf->jtmin = n += timerStep;
+			n = timerSpread;
 		if(timerspeed > 1 && !jt->pending && !jt->t &&
 		0x40000000 / timerspeed >= n)
 			n *= timerspeed;

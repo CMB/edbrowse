@@ -420,7 +420,6 @@ struct ebFrame {
 	bool jslink; // linke to javascript
 	bool browseMode;
 	bool xmlMode;
-	short jtmin;
 	char *dw;		// document.write string
 	int dw_l;		// length of the above
 // document.writes go under the body.
