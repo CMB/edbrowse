@@ -2544,6 +2544,32 @@ In this case you'll want to retain the public url,
 which will always work, even if the company relocates its web server.
 Use your best judgment.
 
+<p>
+When fetching by https, or imaps or pop3s or ftps or any of those protocols that end in s, a secure socket layer (ssl) is used to encrypt the data.
+edbrowse can use any of several ssl engines to perform the encryption and decryption.
+The most common engines are openssl and gnutls.
+This is at the whim of curl, a library that edbrowse uses to communicate over the internet.
+In other words, edbrowse does not select the ssl engine.
+For the most part, it doesn't matter.
+However, once in a while, one ssl engine might encounter a problem, where another would have no trouble.
+Thus edbrowse may work fine on a given website, on one machine, but not on another.
+It takes a bit of detective work to track down the problem - even to know which engine you are using.
+
+<p>
+One problem that pops up occasionally is: "dh key too short".
+This is from openssl, and can be caused by a low security seting in /etc/ssl/openssl.cnf.
+You could update that file, but if you don't have permission to do so,
+edbrowse responds to the environment variable EBCIPHERS.
+Set this to the list of cifers that you want the ssl engine to use.
+This string is opaque to edbrowse, and to curl; it is simply passed on to ssl.
+However, there is a shortcut.
+EBCIPHERS=1 becomes DEFAULT@SECLEVEL=1, which is what openssl needs to generate the larger keys, to solve the "short key" problem.
+But don't set this variable on another machine, because it completely derails the other ssl engines.
+They may need a different setting for EBCIPHERS, or more likely, they will run just fine out of the box.
+
+<p>
+We may add other shortcuts, EBCIPHERS=2 etc, as we discover other configuration issues in other ssl engines.
+
 <h2 id="browse">Browse Mode</h2>
 
 <p>

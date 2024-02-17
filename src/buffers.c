@@ -8114,6 +8114,7 @@ past_g_file:
 			else if (first == '$')
 				j = -1, ++s;
 		}
+		cw->nextrender = 0;
 		if (*s == '?' || *s == '-')
 			++s;
 		if (!*s) {

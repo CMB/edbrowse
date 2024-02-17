@@ -2479,6 +2479,8 @@ bool infPush(int tagno, char **post_string)
 // At this point onclick has run, be it button or submit or reset
 	}
 
+	cw->nextrender = 0;
+
 	if (itype == INP_BUTTON) {
 /* I use to error here, but click could be captured by a node higher up in the tree
 	and do what it is suppose to do, so we might not want an error here.
