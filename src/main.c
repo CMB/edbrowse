@@ -1214,7 +1214,6 @@ ahead:
 			if (now >= cw->nextrender)
 				rerender(-1);
 		}
-		jClearSync();
 		ok = edbrowseCommand(new, true);
 		free(new);
 

@@ -1676,6 +1676,11 @@ bool infReplace(int tagno, char *newtext, bool notify)
 		}
 	}
 
+// It looks like the input field change is going to work.
+// Clear the sank bit so we sync up this change with javascript before
+// it runs again.
+	jClearSync();
+
 	if (itype == INP_SELECT) {
 		if (!locateOptions(t, newtext, 0, 0, false))
 			return false;

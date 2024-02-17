@@ -526,7 +526,6 @@ thus the call to ircReadlineControl().
 		}
 	}
 
-	jClearSync();
 	if (cw->mustrender) {
 /* in case jSyncup runs again */
 		rebuildSelectors();
