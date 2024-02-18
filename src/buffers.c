@@ -1156,10 +1156,6 @@ void cxSwitch(int cx, bool interactive)
 	} else {
 		saveSubstitutionStrings();
 		restoreSubstitutionStrings(nw);
-// You could switch sessions, update a textarea, which is technically an input
-// field, then switch back to the window that contains that form.
-// We need to sync up javascript before taking any action.
-		jClearSync();
 	}
 
 	if (cw) {
@@ -1170,6 +1166,10 @@ void cxSwitch(int cx, bool interactive)
 	selfFrame();
 	cs = sessionList + cx;
 	cx_previous = context, context = cx;
+// You could switch sessions, update a textarea, which is technically an input
+// field, then switch back to the window that contains that form.
+// We need to sync up javascript before taking any action.
+	jClearSync();
 	if (interactive && debugLevel) {
 		if (created)
 			i_printf(MSG_SessionNew);
