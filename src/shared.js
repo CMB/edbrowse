@@ -262,7 +262,7 @@ exp$$ = "for(var i=" + s$$ +"; i<" + t$$ +"; ++i){" + exp$$ + "}";
 my$win().eval(exp$$);
 }
 
-function showarg(x) {
+function showarg(x) { 
 var l, w = my$win ? my$win() : window;
 // null comes out as an object
 if(x === null) return "null";
@@ -304,7 +304,7 @@ default: return "?";
 }
 }
 
-function showarglist(a) {
+function showarglist(a) { 
 if(typeof a != "object" ||
 typeof a.length != "number")
 return "not an array";

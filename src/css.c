@@ -2658,11 +2658,9 @@ static Tag **qsa1(const struct sel *sel)
 		return a;
 	}
 	n = 0;
+	for (i = 0; (t = list[i]); ++i) {
 // querySelectorAll does not match the root, only everything below.
-	i = 0;
-	if (skiproot && list[i])
-		++i;
-	for (; (t = list[i]); ++i) {
+		if(skiproot && list[i] == rootnode) continue;
 		if (qsaMatchChain(t, sel->chain)) {
 			a[n++] = t;
 			if (sel->spec > t->highspec)
