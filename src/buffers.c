@@ -1148,7 +1148,7 @@ bool cxQuit(int cx, int action)
 void cxSwitch(int cx, bool interactive)
 {
 	bool created = false;
-	Window *nw = sessionList[cx].lw;	/* the new window */
+	Window *nw = sessionList[cx].lw;	// the new window
 	if (!nw) {
 		cxInit(cx);
 		nw = sessionList[cx].lw;
@@ -1156,6 +1156,10 @@ void cxSwitch(int cx, bool interactive)
 	} else {
 		saveSubstitutionStrings();
 		restoreSubstitutionStrings(nw);
+// You could switch sessions, update a textarea, which is technically an input
+// field, then switch back to the window that contains that form.
+// We need to sync up javascript before taking any action.
+		jClearSync();
 	}
 
 	if (cw) {
@@ -2576,6 +2580,10 @@ static bool writeContext(int cx, Window *w, int writeLine)
 	pst p;
 	int fardol = endRange - startRange + 1;
 	bool at_the_end, lost_nl;
+
+// You might be writing into a textarea, which is an input field on the
+// current page. We need to sync this change with javascript.
+	jClearSync();
 
 	if(writeLine < 0) {
 		if (!cxCompare(cx))
