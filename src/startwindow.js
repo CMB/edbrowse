@@ -2423,6 +2423,10 @@ swm("Headers", mw$.Headers)
 swm("Request", mw$.Request)
 swm("Response", mw$.Response)
 swm("fetch", mw$.fetch)
+// Next function is needed to support await fetch asynchronous
+// See the comments in shared.js - look for fetch$onload.
+swm("fetch$onload", function(resolve, x){resolve(x)})
+
 // pages seem to want document.style to exist
 sdm("style", new CSSStyleDeclaration)
 document.style.element = document;

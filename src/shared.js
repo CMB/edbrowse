@@ -5182,15 +5182,32 @@ Last update for fetch: 20240215
 
 I got rid of the setTimeout(blah, 0), to do something in 0 seconds.
 Now it just does it.
-I can't call set"Timeout form the master window; there is no frame.
+I can't call setTimeout from the master window; there is no frame.
 
-Within fetch, I changed xhr.open to async = false.
-I can't run an asynchronous xhr from the master window, it does it
-by a timer, and we can't do that.
-This isn't an issue with jsbg-, but just incase you have jsbg+
+fetch resolves the Promise object when the file is retrieved, and that's fine
+for synchronous, but doesn't work for await asynchronous.
+Asyncronous fetch only happens with jsbg+ but let's say you're doing that.
+fetch doesn't resolve but rather returns the Promise object unresolved.
+await knows what to do with that, it suspendes, and then resumes upon resolve,
+creating its own then to pass the result back through await and to the calling function.
+As best I can guess, by reverse engineering,
+await uses the context of the function that issues the resolve.
+If it is here, the context is the master window, and that's wrong.
+the promise job won't even run.
+It has to be a function in startwindow.
+Thus I have fetch$onload over there, and all it does is call resolve on my behalf.
+resolve(new Response(body, options))
+becomes
+        my$win().fetch$onload(resolve, new Response(body, options))
+that's it, and yet that seems to play nicely with await
+in the asynchronous case where resolve is called later,
+and spins off its own then job to pass back to await.
+Don't feel bad, I don't understand it either, it just works.
+If it ever doesn't work, turn jsbg off and you're back to synchronous.
 
 Promise has to run in its frame, not here in the shared window.
 I changed Promise to my$win().Promise
+I don't know if I really needed to do this or not.
 
 Added toString functions so shows [object Response] etc.
 */
@@ -5748,7 +5765,7 @@ function fetch(input, init) {
       }
       options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL')
       var body = 'response' in xhr ? xhr.response : xhr.responseText
-        resolve(new Response(body, options))
+        my$win().fetch$onload(resolve, new Response(body, options))
     }
 
     xhr.onerror = function() {
@@ -5771,7 +5788,7 @@ function fetch(input, init) {
       }
     }
 
-    xhr.open(request.method, fixUrl(request.url), false)
+    xhr.open(request.method, fixUrl(request.url), true)
 
     if (request.credentials === 'include') {
       xhr.withCredentials = true
