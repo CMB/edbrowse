@@ -2641,7 +2641,8 @@ the result is an allocated array of nodes from the list that match.
 Only called from qsa2.
 *********************************************************************/
 
-static Tag **qsa1(const struct sel *sel)
+// selstring is null except for querySelectorAll call, and only for debugging
+static Tag **qsa1(const struct sel *sel, const char *selstring)
 {
 	int i, n = 1;
 	Tag *t;
@@ -2657,16 +2658,25 @@ static Tag **qsa1(const struct sel *sel)
 		a[0] = 0;
 		return a;
 	}
+
+	if(selstring) {
+		if(rootnode) debugPrint(4, "qsa %s,%d (%s) across %d nodes", rootnode->info->name, rootnode->seqno, selstring, n);
+		else debugPrint(4, "qsa NULL (%s) across %d nodes", selstring, n);
+	}
+
 	n = 0;
 	for (i = 0; (t = list[i]); ++i) {
 // querySelectorAll does not match the root, only everything below.
-		if(skiproot && list[i] == rootnode) continue;
+		if(skiproot && t == rootnode) {
+			if(selstring) debugPrint(4, "qsa skip %s,%d", t->info->name, t->seqno);
+			continue;
+		}
 		if (qsaMatchChain(t, sel->chain)) {
+			if(selstring) debugPrint(4, "qsa match %s,%d", t->info->name, t->seqno);
 			a[n++] = t;
 			if (sel->spec > t->highspec)
 				t->highspec = sel->spec;
-			if (onematch)
-				break;
+			if (onematch) break;
 		}
 	}
 	a[n] = 0;
@@ -2730,7 +2740,8 @@ static Tag **qsaMerge(Tag **list1, Tag **list2)
 // querySelectorAll on a group, uses merge above.
 // Called from javascript querySelectorAll and from cssEverybody.
 
-static Tag **qsa2(struct desc *d)
+// selstring is null except for querySelectorAll call, and only for debugging
+static Tag **qsa2(struct desc *d, const char *selstring)
 {
 	Tag **a = 0, **a2, **a_new;
 	struct sel *sel;
@@ -2743,7 +2754,7 @@ static Tag **qsa2(struct desc *d)
 			continue;
 		if (sel->hover ^ matchhover)
 			continue;
-		a2 = qsa1(sel);
+		a2 = qsa1(sel, selstring);
 		if (a) {
 			a_new = qsaMerge(a, a2);
 			nzFree(a);
@@ -2817,21 +2828,18 @@ static Tag **qsaInternal(const char *selstring, Tag *top)
 	struct desc *d0;
 	Tag **a;
 	char *s;
+	if (!selstring) selstring = emptyString;
 // Compile the selector. The string has to be allocated.
-	if (!selstring)
-		selstring = emptyString;
 	s = allocMem(strlen(selstring) + 20);
 	sprintf(s, "%s{c:g}", selstring);
 	d0 = cssPieces(s);
 	if (!d0) {
-		debugPrint(3, "querySelectorAll(%s) yields no descriptors",
-			   selstring);
+		debugPrint(3, "querySelectorAll(%s) yields no descriptors", selstring);
 		return 0;
 	}
 	if (d0->next) {
 		debugPrint(3,
-			   "querySelectorAll(%s) yields multiple descriptors",
-			   selstring);
+			   "querySelectorAll(%s) yields multiple descriptors", selstring);
 		cssPiecesFree(d0);
 		return 0;
 	}
@@ -2843,9 +2851,8 @@ static Tag **qsaInternal(const char *selstring, Tag *top)
 	}
 	build_doclist(top);
 	skiproot = ! !top;
-	if (topmatch)
-		skiproot = false;
-	a = qsa2(d0);
+	if (topmatch) skiproot = false;
+	a = qsa2(d0, selstring);
 	nzFree(doclist);
 	doclist = 0;
 	cssPiecesFree(d0);
@@ -3484,7 +3491,7 @@ static void cssEverybody(void)
 		for (d = d0; d; d = d->next) {
 			if (d->error)
 				continue;
-			a = qsa2(d);
+			a = qsa2(d, NULL);
 			if (!a)
 				continue;
 			for (u = a; (t = *u); ++u) {

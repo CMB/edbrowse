@@ -13,6 +13,8 @@ Intl: just English and just date and numbers.
 
 Use third party software for Headers, Request, Response, fetch.
 
+EBCIPHERS passed to the ssl engine.
+
 3.8.9
 dx to specify hard delete in imap folders.
 
