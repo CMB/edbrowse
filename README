@@ -556,6 +556,19 @@ We have to run all the javascript, on the browser, within that frame.
 We do this in our world, we know the context,
 just not sure how to convey that to the headless browser as we interact.
 
+IntersectionObserver is a particularly vexing concept.
+This is relatively new, but I think it will catch on.
+A website can bring in resources: images, submenus, control panels, etc,
+as the user scrolls down to see them. This is the pay-to-play philosophy,
+and it makes perfect sense in the visual world.
+But there is no scrolling in headless Chrome.
+The top of the website is in the viewport, and those resources are fetched,
+but none below. Perhaps just a framework.
+The page that edbrowse presents could be lacking,
+relative to what the user sees as he scrolls down or right or left.
+IntersectionObserver is so visual, it is difficult to simulate in edbrowse
+today, even more challenging when Chrome is rendering the page from afar.
+
 This is the beginning of the thought process. 🐣
 I don't know if it would come out better or worse than the path we are currently on.
 And the only way to find out might be to do it.  😱
