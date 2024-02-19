@@ -574,5 +574,5 @@ I don't know if it would come out better or worse than the path we are currently
 And the only way to find out might be to do it.  😱
 I love the idea of not maintaining all this js and dom client and interactions with the page and so on,
 but I'm concerned about coordinating with the asynchronous browser,
-and maintaining the text-based approach, that makes edbrowse great.
+and maintaining the text-based approach that makes edbrowse unique.
 

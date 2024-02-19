@@ -140,6 +140,12 @@ static void grabover(void)
 #define JS_Release(c, v) JS_FreeValue(c, v)
 #endif
 
+const char *jsSourceFile;	// sourcefile providing the javascript
+int jsLineno;			// line number
+static JSRuntime *jsrt;
+static bool js_running;
+static JSContext *mwc; // master window context
+
 // Find window and frame based on the js context. Set cw and cf accordingly.
 // This is inefficient, but is not called very often.
 static bool frameFromContext(jsobjtype cx)
@@ -147,6 +153,10 @@ static bool frameFromContext(jsobjtype cx)
 	int i;
 	Window *w;
 	Frame *f;
+	if(cx == mwc) {
+		debugPrint(3, "frameFromContext is master window, job is not executed");
+		return false;
+	}
 	for (i = 1; i <= maxSession; ++i) {
 		for (w = sessionList[i].lw; w; w = w->prev) {
 			for (f = &(w->f0); f; f = f->next) {
@@ -1547,12 +1557,6 @@ static JSValue nat_array(JSContext * cx, JSValueConst this, int argc, JSValueCon
 {
 	return JS_NewArray(cx);
 }
-
-const char *jsSourceFile;	// sourcefile providing the javascript
-int jsLineno;			// line number
-static JSRuntime *jsrt;
-static bool js_running;
-static JSContext *mwc; // master window context
 
 // base64 encode
 static JSValue nat_btoa(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
