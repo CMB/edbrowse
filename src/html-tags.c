@@ -461,19 +461,65 @@ Tag *newTag(const Frame *f, const char *name)
 	return t;
 }
 
-// Back up over dead tags, and reuse the slots in the array.
+/*********************************************************************
+Delete dead tags at the end of the line before we create new ones.
+This saves resources, particularly on websites that insist on updating
+information every 5 seconds via innerHTML.
+The prior tags are dead, but live on in our array of tags,
+unless we delete them here.
+Certain tags we might not want to delete, and hope they don't come up
+in the block of updated information very often.
+Look for Tag * in eb.h.
+frameTag indicates <frame> above that created this frame.
+Not sure how this tag could be dead but the frame still lives on and points
+back to this tag. Let's not test it.
+cw->htmltag cw->headtag cw->bodytag I think they are always alive.
+When they appear from innerHTML or from document.write they are killed
+before they are decorated,
+so cw->htmltag cw->headtag cw->bodytag won't point to them.
+These are especially important to delete; they appear in every innerHTML.
+Link lists for efficiency: don't delete script input option link,
+unless some day you want to remove them from the chain as well.
+Remember that prerender turns textarea and select into input.
+dead means taken out of the tree, so no worries about parent or firstchild.
+There are a few controllers: table section row form select svg
+but can any of these tags be dead while a subordinate tag is still alive?
+I don't think so.
+*********************************************************************/
+
 void backupTags(void)
 {
+	static const short forbidden[] = {
+	TAGACT_FRAME, TAGACT_SCRIPT, TAGACT_LINK, TAGACT_INPUT, TAGACT_OPTION, 0};
 	Tag *t;
+	bool delmessage = false;
+	int i, n = 0;
 	while(cw->numTags &&
-	(t = tagList[cw->numTags-1]) &&
-	t->dead) {
+	(t = tagList[cw->numTags-1]) && t->dead) {
+		if(!delmessage) { debugPrint(5, "deleting dead tags"); delmessage = true; }
+		for(i = 0; forbidden[i]; ++i)
+			if(t->action == forbidden[i]) {
+stop:
+				debugPrint(5, "stop at %s", t->info->name);
+				return;
+			}
 // unlikely case where html ends in </pre>, which is always a dead tag.
 		if(t->action == TAGACT_PRE && t->slash
-		&&cw->numTags >= 2 && !tagList[cw->numTags-2]->dead)
-			break;
+		&& !tagList[cw->numTags-2]->dead)
+			goto stop;
 		freeTag(t);
-		--cw->numTags;
+		--cw->numTags, ++n;
+	}
+	if(delmessage) debugPrint(5, "stop at live after %d", n);
+}
+
+// for debugging
+static void printTags(void)
+{
+	int i;
+	for(i = 0; i < cw->numTags; ++i) {
+		const Tag *t = tagList[i];
+		printf("%d %s%s%s\n", i, t->info->name, (t->slash ? "/" : ""), (t->dead ? "*" : ""));
 	}
 }
 
@@ -781,9 +827,8 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	const struct opentag *k;
 	static const char texttag[] = "text";
 
-/* I don't think this accomplishes anything.
 	backupTags();
-*/
+//	printTags();
 
 	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
