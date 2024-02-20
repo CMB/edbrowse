@@ -5184,12 +5184,17 @@ I got rid of the setTimeout(blah, 0), to do something in 0 seconds.
 Now it just does it.
 I can't call setTimeout from the master window; there is no frame.
 
-fetch resolves the Promise object when the file is retrieved, and that's fine
+Promise has to run in its frame, not here in the shared window.
+I changed Promise to my$win().Promise
+
+I added toString functions to return [object Response] etc.
+
+fetch resolves its Promise object once the file is retrieved, and that's fine
 for synchronous, but doesn't work for await asynchronous.
 Asyncronous fetch only happens with jsbg+ but let's say you're doing that.
-fetch doesn't resolve but rather returns the Promise object unresolved.
+fetch doesn't resolve directly but rather returns the Promise object unresolved.
 await knows what to do with that, it suspendes, and then resumes upon resolve,
-creating its own then to pass the result back through await and to the calling function.
+creating its own then() to pass the result back through await and to the calling function.
 As best I can guess, by reverse engineering,
 await uses the context of the function that issues the resolve.
 If it is here, the context is the master window, and that's wrong.
@@ -5201,15 +5206,61 @@ becomes
         my$win().fetch$onload(resolve, new Response(body, options))
 that's it, and yet that seems to play nicely with await
 in the asynchronous case where resolve is called later,
-and spins off its own then job to pass back to await.
+and spins off its own then() job to pass back to await.
 Don't feel bad, I don't understand it either, it just works.
 If it ever doesn't work, turn jsbg off and you're back to synchronous.
+You realize, we wouldn't have any of these headaches if we just put everything
+in startwindow and didn't try to make a shared window for efficiency.
 
-Promise has to run in its frame, not here in the shared window.
-I changed Promise to my$win().Promise
-I don't know if I really needed to do this or not.
+Let's review the order of things.
+The website, in context 1, calls await fetch(url).
+First the synchronous case.
 
-Added toString functions so shows [object Response] etc.
+fetch creates a new Promise object in context 1.
+As mentioned earlier, I call my$win().Promise so it is promise in context 1.
+Pass in a support function to the constructor.
+Promise runs the function.
+Create XMLHttpRequest and open with the url.
+Open with asynchronous flag, which is honored if jsbg+
+but this is the synchronous case, jsbg-
+Call xhr.send, page comes back success,
+call parseRespohnse, dispatch load event,
+and run the onload function that is supplied by fetch.
+onload creates a Response object and uses that to resolve the Promise
+that fetch made earlier.
+Thus the promise is already resolved by the time we get back to await.
+await sees the promise, already resolved, creates a then job internally,
+which passes response back to the calling function, which resumes execution
+at the point of await.
+All is well.
+
+Asynchronous case.
+fetch creates a new Promise object in context 1.
+Pass in the support function to the constructor.
+Promise runs the function.
+Create XMLHttpRequest and open with the url.
+Open with asynchronous flag, which is honored in this case.
+Call xhr.send, which spins off a thread to do the work.
+Create an interval in context 1 to monitor this thread.
+xhr.send returns, constructor returns, and fetch returns the promise object.
+await sees it is not resolved and does something magical to the resolve function
+so it immediately calls then() once this promise is resolved.
+The then so created is in the wrong context, unless we issue
+the resolve in the actual frame, as described above.
+We'll get to that in a minute; for now the promise is not resolved.
+await suspends execution at this point and returns a promise object in the foreground.
+Page comes back from the internet.
+Thread closes down and the monitoring interval sees that.
+The timer fires in context 1, call parseResponse,
+dispatch load event,
+and call the onload function that fetch provides.
+This resolves the Promise but we can't do it here;
+call fetch$onload in window 1.
+Now resolved, await creates a then job in context 1.
+It runs on the next tick, passes response back through await,
+and resumes execution in the calling function.
+This will make more sense when you read the fetch code below,
+which is, fortunately, clear and well written.
 */
 
 /* eslint-disable no-prototype-builtins */
