@@ -5205,15 +5205,17 @@ resolve(new Response(body, options))
 becomes
         my$win().fetch$onload(resolve, new Response(body, options))
 that's it, and yet that seems to play nicely with await
-in the asynchronous case where resolve is called later,
+in the asynchronous case, where resolve is called later,
 and spins off its own then() job to pass back to await.
 Don't feel bad, I don't understand it either, it just works.
 If it ever doesn't work, turn jsbg off and you're back to synchronous.
-You realize, we wouldn't have any of these headaches if we just put everything
-in startwindow and didn't try to make a shared window for efficiency.
+You realize, we wouldn't have any of these headaches, nor the security concerns,
+if we just put everything in startwindow and didn't try
+to maintain a shared window for efficiency.
 
 Let's review the order of things.
 The website, in context 1, calls await fetch(url).
+It happens all the time.
 First the synchronous case.
 
 fetch creates a new Promise object in context 1.
@@ -5222,10 +5224,10 @@ Pass in a support function to the constructor.
 Promise runs the function.
 Create XMLHttpRequest and open with the url.
 Open with asynchronous flag, which is honored if jsbg+
-but this is the synchronous case, jsbg-
+but this is the synchronous case, jsbg-, so on we go.
 Call xhr.send, page comes back success,
-call parseRespohnse, dispatch load event,
-and run the onload function that is supplied by fetch.
+call parseResponse, dispatch load event,
+and run the onload function that is provided by fetch.
 onload creates a Response object and uses that to resolve the Promise
 that fetch made earlier.
 Thus the promise is already resolved by the time we get back to await.
@@ -5261,6 +5263,7 @@ It runs on the next tick, passes response back through await,
 and resumes execution in the calling function.
 This will make more sense when you read the fetch code below,
 which is, fortunately, clear and well written.
+Remind me to use open source whenever possible.
 */
 
 /* eslint-disable no-prototype-builtins */

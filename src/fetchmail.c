@@ -4065,7 +4065,7 @@ reading your email from within an edbrowse buffer.
 *********************************************************************/
 
 // bad utf8 disrupts searching through the buffer, but sometimes isoDecode()
-// creaates it. Here line could end in null or \n
+// creates it. Here line could end in null or \n
 static void stripBadUtf8(uchar *line)
 {
 	uchar *s, *t, c, e;

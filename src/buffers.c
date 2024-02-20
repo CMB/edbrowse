@@ -441,7 +441,7 @@ It responds to each character, and can complete words or lines based on earlier
 input, and other such magic.
 But readline is not in control when we are waiting in select,
 and we are waiting in select whenever there is a timer pending,
-and thanks to promise polling aand interframe messages and such,
+and thanks to promise polling and interframe messages and such,
 there is always a timer pending, thus we are always in select.
 The tty is in cooked mode, and readline is not doing its job.
 Finally, with none of the readline features working, and in frustration,

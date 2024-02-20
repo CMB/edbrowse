@@ -329,7 +329,7 @@ package:
 
 /*********************************************************************
 Return a string that defines the charset of the outgoing mail.
-This just looks at your language setting - reaaly dumb.
+This just looks at your language setting - really dumb.
 It should interrogate each file/attachment.
 Well, this will get us started.
 *********************************************************************/

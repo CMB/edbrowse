@@ -487,7 +487,7 @@ but can any of these tags be dead while a subordinate tag is still alive?
 I don't think so.
 *********************************************************************/
 
-void backupTags(void)
+static void backupTags(void)
 {
 	static const short forbidden[] = {
 	TAGACT_FRAME, TAGACT_SCRIPT, TAGACT_LINK, TAGACT_INPUT, TAGACT_OPTION, 0};
@@ -828,7 +828,6 @@ void htmlScanner(const char *htmltext, Tag *above, bool isgen)
 	static const char texttag[] = "text";
 
 	backupTags();
-//	printTags();
 
 	headbody = 0, bodycount = htmlcount = 0;
 	stack = 0;
@@ -1396,6 +1395,8 @@ past_html_final_semantics:
 // function, all within the same browse routine, and that second call should
 // not be treated as browsing an email.
 	browseMail = false;
+
+//	printTags();
 }
 
 static void pushState(const char *start, bool head_ok)
