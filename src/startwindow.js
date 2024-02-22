@@ -2510,35 +2510,23 @@ return cf;
 // Then there's sessionStorage, and honestly I don't understand the difference.
 // This is NamedNodeMap, to take advantage of preexisting methods.
 swm("localStorage", {})
-localStorage.attributes = new NamedNodeMap;
-localStorage.attributes.owner = localStorage;
-// tell me we don't have to do NS versions of all these.
-localStorage.getAttribute = mw$.getAttribute;
-localStorage.getItem = localStorage.getAttribute;
-localStorage.setAttribute = mw$.setAttribute;
-localStorage.setItem = localStorage.setAttribute;
-localStorage.removeAttribute = mw$.removeAttribute;
-localStorage.removeItem = localStorage.removeAttribute;
-localStorage.clear = function() {
-var l;
-while(l = localStorage.attributes.length)
-localStorage.removeItem(localStorage.attributes[l-1].name);
-}
-
 swm("sessionStorage", {})
-sessionStorage.attributes = new NamedNodeMap;
-sessionStorage.attributes.owner = sessionStorage;
-sessionStorage.getAttribute = mw$.getAttribute;
-sessionStorage.getItem = sessionStorage.getAttribute;
-sessionStorage.setAttribute = mw$.setAttribute;
-sessionStorage.setItem = sessionStorage.setAttribute;
-sessionStorage.removeAttribute = mw$.removeAttribute;
-sessionStorage.removeItem = sessionStorage.removeAttribute;
-sessionStorage.clear = function() {
+; (function() {
+var cnlist = [localStorage, sessionStorage];
+for(var i=0; i<cnlist.length; ++i) {
+var cn = cnlist[i];
+Object.defineProperty( cn, "attributes", { get: function(){ if(!this.attributes$2) this.attributes$2 = new NamedNodeMap, this.attributes$2.owner = this, this.attributes$2.ownerDocument = document; return this.attributes$2}})
+// tell me we don't have to do NS versions of all these.
+cn.getAttribute = cn.getItem = mw$.getAttribute;
+cn.setAttribute = cn.setItem = mw$.setAttribute;
+cn.removeAttribute = cn.removeItem = mw$.removeAttribute;
+cn.clear = function() {
 var l;
-while(l = sessionStorage.attributes.length)
-sessionStorage.removeItem(sessionStorage.attributes[l-1].name);
+while(l = this.attributes.length)
+this.removeItem(this.attributes[l-1].name);
 }
+}
+})()
 
 /*********************************************************************
 I don't need to do any of these Array methods for mozjs or v8 or quick,
