@@ -4888,7 +4888,7 @@ static int twoLetter(const char *line, const char **runThis)
 		return true;
 	}
 
-	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'l' && line[1] == ' ') {
+	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'l' && (line[1] == ' ' || line[1] == '=')) {
 		const char *p = line + 2;
 		skipWhite(&p);
 		if(*p == '-') ++p;
@@ -4904,7 +4904,7 @@ static int twoLetter(const char *line, const char **runThis)
 		}
 	}
 
-	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'e' && line[1] == ' ') {
+	if((cw->imapMode1 | cw->imapMode2) && line[0] == 'e' && (line[1] == ' ' || line[1] == '=')) {
 	const char *p = line + 2;
 	while(*p) {
 		if(!strchr("fstzdu", *p)) break;
@@ -5210,7 +5210,7 @@ pwd:
 			printf("%d\n", displayLength);
 			return true;
 		}
-		if (isspaceByte(c) && isdigitByte(line[3])) {
+		if ((isspaceByte(c) || c == '=') && isdigitByte(line[3])) {
 			displayLength = atoi(line + 3);
 			if (displayLength < 80)
 				displayLength = 80;
@@ -5228,7 +5228,7 @@ pwd:
 			       (formatOverflow ? "+" : ""));
 			return true;
 		}
-		if (isspaceByte(c) && isdigitByte(line[4])) {
+		if ((isspaceByte(c) || c == '=') && isdigitByte(line[4])) {
 			formatLineLength = strtol(line + 4, &s, 10);
 			if (formatLineLength < 32)
 				formatLineLength = 32;

@@ -2528,12 +2528,7 @@ this.removeItem(this.attributes[l-1].name);
 }
 })()
 
-/*********************************************************************
-I don't need to do any of these Array methods for mozjs or v8 or quick,
-because these methods are inbuilt.
-The only one they don't have is item, so I better leave that one in.
-*********************************************************************/
-
+// we seem to be missing Array.item
 Array.prototype.item = function(x) { return this[x] };
 Object.defineProperty(Array.prototype, "item", { enumerable: false});
 

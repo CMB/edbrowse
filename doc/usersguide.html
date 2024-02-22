@@ -540,9 +540,9 @@ p : print the current line
 <br>endm : show end markers ^$ on listed lines (toggle)
 <br>lna : expand all nonascii chars into hex when a line is listed (toggle)
 <br>n : print the current line with its line number
-<br>ll 1000 : line length 1000, show the first 1000 chars of each line
+<br>ll=1000 : line length 1000, show the first 1000 chars of each line
 <br> ll : print the current line length
-<br>fll 80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
+<br>fll=80 : format line length 80, cut lines to 80 chars, perhaps to fit the terminal
 <br>fll 80+ : cut lines to 80 chars but allow some overflow so the next line isn't just one or two words
 <br>fll : print the format line length
 <br>z22 : print the next 22 lines
@@ -837,8 +837,8 @@ sm : send mail [account number]
 <br>imap n : establish an imap connection
 <br>imap 0 : tear down the imap connection
 <br>rf : refresh the folders and their message counts
-<br>l 40 : fetch 40 envelopes at a time
-<br>e ufs : envelope format is unseen, from, subject
+<br>l=40 : fetch 40 envelopes at a time
+<br>e=ufs : envelope format is unseen, from, subject
 <br>a : add folders, like append mode, . when finished
 <br>s/x/y/ : rename a folder - but not a system folder!
 <br>d : delete a folder - but not a system folder! All email in that folder is lost.
