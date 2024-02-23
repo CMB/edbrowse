@@ -2410,7 +2410,7 @@ This is a must-have program for people who want a command line environment.
 This function is also used to format html text into sentences and phrases, as part of the browse process, producing lines no longer than 80 columns, or 80 utf8 characters.
 Again, the fll command changes the format line length.
 Each character counts as one column, so wide characters, e.g. a line with several emojis, might cause an overflow on your terminal.
-Try fll 78 to give yourself some breathing room.
+Try fll=78 to give yourself some breathing room.
 
 <h2 id="race">Race Conditions</h2>
 
@@ -5898,10 +5898,10 @@ Back up to folders and the message count is still what it was before.
 Type rf to get a new, accurate message count on all the folders.
 
 <p>
-When viewing the folders or the envelopes, "l number" will change the fetch limit, how many envelopes fetched at a time,
-and "e format" changes the format of the envelope.
+When viewing the folders or the envelopes, "l=number" will change the fetch limit, how many envelopes fetched at a time,
+and "e=format" changes the format of the envelope.
 These are the same as the imap client.
-For instance, "e fstd" shows from,
+For instance, "e=fstd" shows from,
 subject, to, and date.
 The n attribute is not meaningful here, since edbrowse already maintains line numbers for you.
 If you are on the envelopes page, you might want to refresh, so you can see them in the new format.

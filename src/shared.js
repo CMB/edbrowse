@@ -2709,6 +2709,10 @@ if(this.hash$val) {
 h += this.hash$val;
 }
 this.href$val = h;
+if(this.eb$ctx) {
+// replace the web page
+eb$newLocation('r' + this.eb$ctx + this.href$val + '\n');
+}
 }
 
 function url_hrefset(v) {
