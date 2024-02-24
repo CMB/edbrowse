@@ -936,6 +936,7 @@ dynamically with s.text set.
 An internet script is loaded, that is, fetched from the internet and then run,
 and after that, it's onload handler is run.
 An inline script does not run its onload handler, even if it has one.
+See jsRunData() for executing the script and then its onload handler.
 
 2. <style> is inline, but <link href=url rel=stylesheet> is internet.
 As above, onload code is run after an internet css page is fetched.

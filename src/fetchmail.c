@@ -2060,7 +2060,7 @@ refresh:
 			goto input;
 		}
 
-		if (*t == 'l' && isspaceByte(t[1])) {
+		if (*t == 'l' && (isspaceByte(t[1]) || t[1] == '=')) {
 			setFetchLimit(t + 2);
 			fl = fetchLimit;
 			earliest = false;
@@ -2073,7 +2073,7 @@ refresh:
 			goto input;
 		}
 
-		if (*t == 'e' && isspaceByte(t[1])) {
+		if (*t == 'e' && (isspaceByte(t[1]) || t[1] == '=')) {
 			setEnvelopeFormat(t + 2);
 			goto input;
 		}
