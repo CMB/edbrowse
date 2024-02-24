@@ -1011,7 +1011,9 @@ Object.defineProperty(HTMLScriptElement.prototype, "defer", {
 get:function(){ var t = this.getAttribute("defer");
 return t === null || t === false || t === "false" || t === 0 || t === '0' ? false : true},
 set:function(v) { this.setAttribute("defer", v);}});
-HTMLScriptElement.prototype.type = "";
+Object.defineProperty(HTMLScriptElement.prototype, "type", {
+get:function(){ var t = this.getAttribute("type"); if(!t) t = ""; return t;},
+set:function(v) { this.setAttribute("type", v)}});
 HTMLScriptElement.prototype.text = "";
 
 swm("z$Timer", function(){this.nodeName = "TIMER"})
