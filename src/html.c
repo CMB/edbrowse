@@ -738,11 +738,17 @@ void prepareScript(Tag *t)
 	char *js_text = 0;
 	const char *filepart;
 	char *b;
-	int blen;
+	int blen, n;
 	Frame *f = t->f0;
 
-	if (intFlag)
-		goto fail;
+// If <script> is under <template>, and we clone it again and again,
+// we could be asked to prepare it again and again.
+	if((n = get_property_number_t(t, "eb$step")) > 0) {
+		t->step = n;
+		return;
+	}
+
+	if (intFlag) goto fail;
 
 	if (f->fileName && !t->scriptgen)
 		js_file = f->fileName;
@@ -758,10 +764,6 @@ void prepareScript(Tag *t)
 			t->href = new_url;
 		}
 	}
-
-// If <script> is under <template>, and we clone it again and again,
-// we could be asked to prepare it again and again.
-	if(get_property_bool_t(t, "eb$prep")) goto success;
 
 	if (t->href) {		/* fetch the javascript page */
 		const char *altsource = 0, *realsource = 0;
@@ -892,7 +894,7 @@ void prepareScript(Tag *t)
 
 success:
 	t->step = 4;
-	set_property_bool_t(t, "eb$prep", true);
+	set_property_number_t(t, "eb$step", 4);
 	return;
 
 fail:
@@ -1050,6 +1052,7 @@ top:
 	change = false;
 
 	for (t = cw->scriptlist; t; t = t->same) {
+//		printf("script %d step %d\n", t->seqno, t->step);
 		if (t->dead || !t->jslink || t->step >= 3)
 			continue;
 // don't execute a script until it is linked into the tree.

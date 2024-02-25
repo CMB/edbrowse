@@ -4513,6 +4513,7 @@ static void link_css(Tag *t)
 	const char *a2 = attribVal(t, "rel");
 	const char *altsource, *realsource;
 
+// If we find these are spilldown then we don't need these lines
 	if (a1)
 		set_property_string_t(t, "type", a1);
 	if (a2)
@@ -4655,8 +4656,8 @@ Needless to say that's not good!
 	case TAGACT_STYLE:
 		domLink(t, "HTMLStyleElement", "styles", 0, 4);
 		a = attribVal(t, "type");
-		if (!a)
-			a = emptyString;
+		if (!a) a = emptyString;
+// if type is spilldown then we don't need this line.
 		set_property_string_t(t, "type", a);
 		break;
 
@@ -4671,9 +4672,6 @@ Needless to say that's not good!
 
 	case TAGACT_SCRIPT:
 		domLink(t, "HTMLScriptElement", "scripts", 0, 4);
-		a = attribVal(t, "type");
-		if (a)
-			set_property_string_t(t, "type", a);
 		a = attribVal(t, "text");
 		if (a) set_property_string_t(t, "text", a);
 		else set_property_string_t(t, "text", "");
