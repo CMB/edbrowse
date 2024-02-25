@@ -766,7 +766,7 @@ static void urlSanitize(struct i_get *g, const char *post)
 
 	if (g->uriEncoded && !looksPercented(url, post)) {
 // this test is limited to characters that really really shouldn't be there.
-		debugPrint(2, "Warning, url %s doesn't look encoded", url);
+		debugPrint(3, "Warning, url %s doesn't look encoded", url);
 		g->uriEncoded = false;
 	}
 

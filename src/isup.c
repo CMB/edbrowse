@@ -1066,13 +1066,13 @@ bool sameURL(const char *s, const char *t)
 	if (!stringEqual(p, q))
 		return false;
 
-/* lop off hash */
+// lop off hash
 	if ((u = findHash(s)))
 		p = u;
 	if ((u = findHash(t)))
 		q = u;
 
-/* It's ok if one says http and the other implies it. */
+// It's ok if one says http and the other implies it.
 	if (memEqualCI(s, "http://", 7))
 		s += 7;
 	if (memEqualCI(t, "http://", 7))
@@ -1082,9 +1082,19 @@ bool sameURL(const char *s, const char *t)
 		p -= 7;
 	if (q - t >= 7 && stringEqual(q - 7, ".browse"))
 		q -= 7;
+
+// trailing / indicates a directory, but is optional
+	if(p > s && p[-1] == '/') {
+		u = strpbrk(s, "?#\1");
+		if(!u || u >= p) --p;
+	}
+	if(q > t && q[-1] == '/') {
+		u = strpbrk(t, "?#\1");
+		if(!u || u >= q) --q;
+	}
+
 	l = p - s;
-	if (l != q - t)
-		return false;
+	if (l != q - t) return false;
 	return !memcmp(s, t, l);
 }
 
@@ -1119,8 +1129,7 @@ char *altText(const char *base)
 /* Ok, now we believe it's a pathname or url */
 /* get rid of post or get data */
 		s = strpbrk(buf, "?\1");
-		if (s)
-			*s = 0;
+		if (s) *s = 0;
 /* get rid of common suffix */
 		s = strrchr(buf, '.');
 		if (s) {

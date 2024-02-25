@@ -8460,6 +8460,7 @@ rebrowse:
 			first = '#';
 			cmd = 'b';
 			emode = false;
+			debugPrint(2, " hash replace %s", line);
 			goto browse;
 		}
 
