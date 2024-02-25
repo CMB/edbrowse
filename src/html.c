@@ -677,7 +677,7 @@ This is managed by httpConnectBack1, conect in background.
 The first function to manage a background connect.
 There will be two more.
 So the file just downloads by child thread, and finishes,
-and pritns a success message, and records the success for the bglist command,
+and prints a success message, and records the success for the bglist command,
 and has no interaction with the foreground thread.
 In fact you can run this test wherein the foreground window
 completely goes away, and the child marches on.
@@ -1023,7 +1023,7 @@ void runScriptsPending(bool startbrowse)
 	Tag *t;
 	char *js_file;
 	const char *a;
-	int ln;
+	int ln, n;
 	bool change, async;
 	Frame *f, *save_cf = cf;
 
@@ -1068,6 +1068,11 @@ passes:
 	for (t = cw->scriptlist; t; t = t->same) {
 		if (t->dead || !t->jslink || t->step >= 5 || t->step <= 2)
 			continue;
+// js may have upgraded step
+		if((n = get_property_number_t(t, "eb$step")) > 4) {
+			t->step = n;
+			continue;
+		}
 		if(!isRooted(t)) continue;
 // defer is equivalent to async in edbrowse
 // these are not meaningful on inline stcipts

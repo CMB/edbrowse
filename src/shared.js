@@ -1143,17 +1143,40 @@ For now I don't run it if we are still browsing.
 I assume the scripts so attached are going to stay in the tree,
 and will be found by html.c.
 Thus the first check is on readyState, to see if we are browsing.
+What happens, you may ask, if they call getScript from one of the scripts
+in the base - that is, while we are still browsing.
+We don't run it here, and it isn't in the tree for runScriptsPending().
+Well, I don't think people do that, and if they do,
+we'll cross that bridge when we come to it.
+It seems like we should just run it all the time,
+but then it could run out of order relative to the other scripts in the base.
+It's complicated!
 *********************************************************************/
 
 function runScriptWhenAttached(s) {
 if(s.dom$class != "HTMLScriptElement") return; // not a script
 var w = isRooted(s); // the rooting window
 if(!w) return;
+var d = w.document;
 var n = s.eb$step
-var inbrowse = (w.document.readyState != "complete");
+var inbrowse = (d.readyState != "complete");
 // backslashes are needed to suppress my code complression feature
-alert3(`script ${s.eb$seqno}\ attached ${inbrowse?"during":"after"}\ browse step ${n}`);
+alert3(`script ${s.eb$seqno}\ attached ${inbrowse?"during":"after"}\ browse type ${s.type}\ step ${n}`);
 if(n >= 5) return; // already run
+if(inbrowse) return;
+s.eb$step = 5
+if(s.type && !s.type.match(/javascript$/i)) {
+alert3(`script type ${s.type}\ not executed`);
+return;
+}
+alert3("exec attached at 1")
+d.currentScript = s;
+w.eval(s.text)
+d.currentScript = null
+alert3("exec complete")
+// in case the script has an onload handler
+var e = new w.Event("load")
+s.dispatchEvent(e)
 }
 
 /*********************************************************************
