@@ -1110,6 +1110,7 @@ passes:
 		}
 
 		t->step = 5;	// now running the script
+		set_property_number_t(t, "eb$step", 5);
 
 		if (t->inxhr) {
 // xhr looks like an asynchronous script before browse

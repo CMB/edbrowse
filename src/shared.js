@@ -1094,9 +1094,12 @@ function appendFragment(p,  frag) { var c; while(c = frag.firstChild) p.appendCh
 function insertFragment(p, frag, l) { var c; while(c = frag.firstChild) p.insertBefore(c, l); return frag; }
 
 // if t is linkd into the tree, return the containing window
+// This is similar to though not identical to the C version in html.c
 function isRooted(t) {
 while(t) {
 if(t.nodeName == "HTML") return t.eb$win;
+// don't break out of a template
+if(t.dom$class == "HTMLTemplateElement") return undefined;
 t = t.parentNode;
 }
 return undefined;
@@ -1125,6 +1128,35 @@ w.frames$2 = f2;
 }
 
 /*********************************************************************
+If a script is attached to the tree, it is suppose to be executed right then.
+The getScript functioni in the jquery library builds a script, attaches
+it to document.head, then removes it, all in one js statement.
+That action runs the script.
+We can't drop back and wait for html.c to see it in the tree and run it
+in its next cycle, we have to run it now.
+This is called from appendChild and insertBefore.
+eval() is the key, but there are a lot of details.
+We can't run it twice, so set eb$step = 5, so that runScriptsPending()
+in html.c doesn't see it and run it again; after all, we might not detach it.
+It might still be hanging around. Or we might attach it again later.
+For now I don't run it if we are still browsing.
+I assume the scripts so attached are going to stay in the tree,
+and will be found by html.c.
+Thus the first check is on readyState, to see if we are browsing.
+*********************************************************************/
+
+function runScriptWhenAttached(s) {
+if(s.dom$class != "HTMLScriptElement") return; // not a script
+var w = isRooted(s); // the rooting window
+if(!w) return;
+var n = s.eb$step
+var inbrowse = (w.document.readyState != "complete");
+// backslashes are needed to suppress my code complression feature
+alert3(`script ${s.eb$seqno}\ attached ${inbrowse?"during":"after"}\ browse step ${n}`);
+if(n >= 5) return; // already run
+}
+
+/*********************************************************************
 Here comes a bunch of stuff regarding the childNodes array,
 holding the children under a given html node.
 The functions eb$apch1 and eb$apch2 are native. They perform appendChild in js.
@@ -1148,6 +1180,7 @@ if(c.nodeType == 11) return appendFragment(this, c);
 isabove(c, this);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$apch2(c);
+runScriptWhenAttached(r);
 if(r) mutFixup(this, false, c, null);
 return r;
 }
@@ -1167,6 +1200,7 @@ isabove(c, this);
 if(c.nodeType == 11) return insertFragment(this, c, t);
 if(c.parentNode) c.parentNode.removeChild(c);
 var r = this.eb$insbf(c, t);
+runScriptWhenAttached(r);
 if(r) mutFixup(this, false, r, null);
 return r;
 }
@@ -5920,6 +5954,7 @@ var flist = [
 getElementsByTagName, getElementsByClassName, getElementsByName, getElementById,nodeContains,
 dispatchEvent,
 NodeFilter,createNodeIterator,createTreeWalker,
+runScriptWhenAttached,
 appendChild, prependChild, insertBefore, removeChild, replaceChild, hasChildNodes,
 insertAdjacentElement,append, prepend, before, after, replaceWith,
 getAttribute, getAttributeNames, getAttributeNS,
@@ -5959,6 +5994,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "insertCell", "deleteCell",
 "appendFragment", "insertFragment",
 "isRooted", "frames$rebuild",
+"runScriptWhenAttached",
 "appendChild", "prependChild", "insertBefore", "removeChild", "replaceChild", "hasChildNodes",
 "getSibling", "getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",

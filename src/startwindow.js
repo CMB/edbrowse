@@ -1014,6 +1014,7 @@ set:function(v) { this.setAttribute("defer", v);}});
 Object.defineProperty(HTMLScriptElement.prototype, "type", {
 get:function(){ var t = this.getAttribute("type"); if(!t) t = ""; return t;},
 set:function(v) { this.setAttribute("type", v)}});
+HTMLScriptElement.prototype.eb$step = 0;
 HTMLScriptElement.prototype.text = "";
 
 swm("z$Timer", function(){this.nodeName = "TIMER"})
