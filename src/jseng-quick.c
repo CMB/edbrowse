@@ -1334,28 +1334,30 @@ static void uptrace(JSContext * cx, JSValueConst node)
 	while (true) {
 		const char *nn = 0, *cn = 0;	// node name class name
 		JSValue nnv, cnv;
-		char nnbuf[20];
+		char buf[120];
 		nnv = JS_GetPropertyStr(cx, node, "nodeName");
 		grab(nnv);
 		if(JS_IsString(nnv))
 			nn = JS_ToCString(cx, nnv);
-		nnbuf[0] = 0;
 		if(nn) {
-			strncpy(nnbuf, nn, 20);
-			nnbuf[20 - 1] = 0;
+			strcpy(buf, nn);
 			JS_FreeCString(cx, nn);
-		}
-		if (!nnbuf[0])
-			strcpy(nnbuf, "?");
+		} else strcpy(buf, "?");
 		JS_Release(cx, nnv);
 		cnv = JS_GetPropertyStr(cx, node, "class");
 		grab(cnv);
-		if(JS_IsString(cnv))
+		if(JS_IsString(cnv)) {
 			cn = JS_ToCString(cx, cnv);
-		debugPrint(3, "%s.%s", nnbuf,
-		((cn && cn[0]) ? cn : "?"));
-		if(cn)
+			int l = strlen(cn);
+			int k = strlen(buf);
+			if(k + 1 + l >= (int)sizeof(buf))
+				l = sizeof(buf) - k - 2;
+			buf[k] = '.';
+			strncpy(buf + k + 1, cn, l);
+			buf[k + 1 + l] = 0;
 			JS_FreeCString(cx, cn);
+		}
+		debugPrint(3, "%s", buf);
 		JS_Release(cx, cnv);
 		pn = JS_GetPropertyStr(cx, node, "parentNode");
 		grab(pn);

@@ -90,13 +90,15 @@ return r;
 }
 
 function uptrace(t) {
+var r = "";
 while(t) {
 var msg = t.nodeName;
 if(t.class) msg += "." + t.class;
 if(t.id) msg += "#" + t.id;
-alert(msg);
+r += msg + '\n'
 t = t.parentNode;
 }
+return r;
 }
 
 function by_esn(n) {
