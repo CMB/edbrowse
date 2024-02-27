@@ -1163,7 +1163,7 @@ var d = w.document;
 var n = s.eb$step
 var inbrowse = (d.readyState != "complete");
 // backslashes are needed to suppress my code complression feature
-alert3(`script ${s.eb$seqno}\ attached ${inbrowse?"during":"after"}\ browse type ${s.type}\ step ${n}`);
+alert3(`script ${s.eb$seqno}\ attached ${inbrowse?"during":"after"}\ browse type ${s.type}\ src ${s.src}\ length ${s.text.length}\ step ${n}`);
 if(n >= 5) return; // already run
 if(inbrowse) return;
 s.eb$step = 5
@@ -1176,9 +1176,15 @@ d.currentScript = s;
 w.eval(s.text)
 d.currentScript = null
 alert3("exec complete")
-// in case the script has an onload handler
+/*
+in case the script has an onload handler
+but this doesn't run unless, perhaps, the script is loaded from src,
+which we don't even support at this time.
+If you need to support that some day, use XMLHttpRequest.
+Then execute then follow up with this onload code.
 var e = new w.Event("load")
 s.dispatchEvent(e)
+*/
 }
 
 /*********************************************************************
