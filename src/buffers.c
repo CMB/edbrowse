@@ -7996,60 +7996,63 @@ dest_ok:
 		}
 		cw->dot = endRange, cmd = 'e';
 		stripDotDot(dirline);
-		if (!emode)
-			gmt = findMimeByFile(dirline);
+		if (emode) goto regular_g_file;
+		if(!pluginsOn) goto regular_g_file;
+// don't run a plugin on directory or special file
+		char ftype = fileTypeByName(dirline, 0);
+		if (ftype && ftype != 'f') goto regular_g_file;
 		if(browseSuffix)
 			gmt = findMimeBySuffix(browseSuffix);
-		if (pluginsOn && gmt) {
-			if (gmt->outtype) {
-// need to call runPluginCommand directly here, because the data is already in a local file
-				char *outbuf;
-				int outlen;
-				if (!cxQuit(context, 0))
-					return false;
-				undoCompare();
-				cw->undoable = cw->changeMode = false;
-				undoSpecialClear();
-				if(!noStack) freeWindows(context, false);
-				if(!runPluginCommand(gmt, 0, dirline, 0, 0, &outbuf, &outlen))
-					return false;
-// unfortunately this replicates some push&load code below
-				w = createWindow();
-				w->sno = context;
-				cw = w;		// we might wind up putting this back
-				selfFrame();
-					cf->fileName = (char*)fetchLine(endRange, 0);
-					cf->fileName[j] = 0;
-				addTextToBuffer((uchar*)outbuf, outlen, 0, false);
-				debugPrint(1, "%d", outlen); fileSize = -1;
-				cw->undoable = cw->changeMode = false;
-				nzFree(outbuf);
-				cw = cs->lw;	// put it back, for now
-				selfFrame();
-				if (noStack) {
-					w->prev = cw->prev;
-					nzFree(w->f0.firstURL);
-					w->f0.firstURL = cf->firstURL;
-					cf->firstURL = 0;
-					cxQuit(context, 1);
-				} else {
-					w->prev = cw;
-				}
-				cs->lw = cw = w;
-				selfFrame();
-				if (!w->prev)
-					cs->fw = w;
-				cf->render2 = cf->render3 = true;
-				if(gmt->outtype == 'h') browseCurrentBuffer(NULL, false);
-				return true;
-			} else {
-				char pb_how[12];
-				strcpy(pb_how, "pb");
-				if(browseSuffix)
-					sprintf(pb_how, "pb.%s", browseSuffix);
-				return playBuffer(pb_how, dirline);
-			}
+		else
+			gmt = findMimeByFile(dirline);
+		if (!gmt) goto regular_g_file;
+		if (!gmt->outtype) {
+			char pb_how[12];
+			strcpy(pb_how, "pb");
+			if(browseSuffix)
+				sprintf(pb_how, "pb.%s", browseSuffix);
+			return playBuffer(pb_how, dirline);
 		}
+// need to call runPluginCommand directly here, because the data is already in a local file
+		char *outbuf;
+		int outlen;
+		if (!cxQuit(context, 0)) return false;
+		undoCompare();
+		cw->undoable = cw->changeMode = false;
+		undoSpecialClear();
+		if(!noStack) freeWindows(context, false);
+		if(!runPluginCommand(gmt, 0, dirline, 0, 0, &outbuf, &outlen))
+			return false;
+// unfortunately this replicates some push&load code below
+		w = createWindow();
+		w->sno = context;
+		cw = w;		// we might wind up putting this back
+		selfFrame();
+			cf->fileName = (char*)fetchLine(endRange, 0);
+			cf->fileName[j] = 0;
+		addTextToBuffer((uchar*)outbuf, outlen, 0, false);
+		debugPrint(1, "%d", outlen); fileSize = -1;
+		cw->undoable = cw->changeMode = false;
+		nzFree(outbuf);
+		cw = cs->lw;	// put it back, for now
+		selfFrame();
+		if (noStack) {
+			w->prev = cw->prev;
+			nzFree(w->f0.firstURL);
+			w->f0.firstURL = cf->firstURL;
+			cf->firstURL = 0;
+			cxQuit(context, 1);
+		} else {
+			w->prev = cw;
+		}
+		cs->lw = cw = w;
+		selfFrame();
+		if (!w->prev)
+			cs->fw = w;
+		cf->render2 = cf->render3 = true;
+		if(gmt->outtype == 'h') browseCurrentBuffer(NULL, false);
+		return true;
+regular_g_file:
 // I don't think we need to make a copy here
 		line = dirline;
 		first = *line;
