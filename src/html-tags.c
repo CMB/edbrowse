@@ -5037,7 +5037,7 @@ static void rowspan3(Tag *tr, int ri);
 void rowspan(void)
 {
 	const Tag *table, *section;
-	Tag *tr, *last_tr = 0;
+	Tag *tr, *last_tr;
 	int i, ri;
 
 	for(i = 0; i < cw->numTags; ++i) {
@@ -5045,12 +5045,18 @@ void rowspan(void)
 		if(table->action != TAGACT_TABLE || table->dead || table->deleted)
 			continue;
 
+// I set last_tr here assuming rowspans and such carry through
+// from head to body to foot, and are not independent in each section.
+// If rather each section is independent then move this line down.
+		last_tr = 0;
+
 		ri = 0;
 		for(section = table->firstchild; section; section = section->sibling) {
 			if(section->action != TAGACT_THEAD && 
 			section->action != TAGACT_TBODY &&
 			section->action != TAGACT_TFOOT)
 				continue;
+//			last_tr = 0;
 			for(tr = section->firstchild; tr; tr = tr->sibling) {
 				if(tr->action != TAGACT_TR) continue;
 // link to previous row
