@@ -15,21 +15,26 @@ INCLUDES = $(shell ./make-helper.sh pkg-config-includes $(DEPENDENCIES))
 LINKER_LIBS = $(shell ./make-helper.sh pkg-config-libs $(DEPENDENCIES))
 CFLAGS += $(INCLUDES)
 
-#  Set EBDEMIN to a nonempty string to support dynamic js deminimization
+#  Set EBDEMIN=on to support dynamic js deminimization
 ifneq ($(EBDEMIN),)
 	EDBR_JS_ASSETS = shared.js startwindow.js demin.js
 else
 	EDBR_JS_ASSETS = shared.js startwindow.js endwindow.js
 endif
 
-# If EBDEBUG is set to a non-empty string, build with debug flags and
+# If EBDEBUG is set to on, or a non-empty string, build with debug flags and
 # don't strip executables.
-ifneq ($(EBDEBUG),)
-	DEBUGFLAGS = -g -ggdb -Wextra
-else
 	STRIP = -s
+ifneq ($(EBDEBUG),)
+	CFLAGS += -g -ggdb -Wextra
+	STRIP =
 endif
-CFLAGS += $(DEBUGFLAGS)
+
+#  EBPROF=on for profiling, probably shouldn't combine with EBDEBUG
+ifneq ($(EBPROF),)
+	CFLAGS += -g -pg
+	STRIP = -pg
+endif
 
 #  Libraries and linker flags for edbrowse.
 LDFLAGS = $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
