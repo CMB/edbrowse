@@ -1153,7 +1153,28 @@ we'll cross that bridge when we come to it.
 It seems like we should just run it all the time,
 but then it could run out of order relative to the other scripts in the base.
 It's complicated!
+For you developers, you might want to use our breakpoint trace feature,
+and that means you can't just shove the script through eval.
+You have to do the macro expansion that is done in jseng-quick.c.
+Look for bp_string and trace_string.
+I do that here, using the power of js regexp, somewhat easier.
+The script could be megabytes long, so I don't do it unless I have to,
+just like the C version, pay-to-play.
+This should mirror what happens in C, so if you change something in one place,
+change it in the other.
 *********************************************************************/
+
+function traceBreakReplace(all, precomma, operator, name, postcomma) {
+const bp_string =
+	  "(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
+const trace_string =
+	  "(function(arg$,l$ne){ var c$ne=($zct[l$ne]>=0?++$zct[l$ne]:($zct[l$ne]=1)); if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne+':'+c$ne); return; } if(l$ne) alert('break at line ' + l$ne+':'+c$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
+var r = precomma ? precomma : ';'
+r += operator == "bp" ? bp_string : trace_string
+r += name + "\")";
+r += postcomma ? postcomma : ';'
+return r
+}
 
 function runScriptWhenAttached(s) {
 if(s.dom$class != "HTMLScriptElement") return; // not a script
@@ -1171,9 +1192,14 @@ if(s.type && !s.type.match(/javascript$/i)) {
 alert3(`script type ${s.type}\ not executed`);
 return;
 }
-alert3("exec attached at 1")
+alert3("exec attached")
 d.currentScript = s;
+if(s.text.match(/(bp|trace)@\(/)) {
+// Oops, have to expand for tracing
+w.eval(s.text.replace(/(,?)\ *(trace|bp)@\((\w+)\)\ *([,;]?)/g, traceBreakReplace))
+} else {
 w.eval(s.text)
+}
 d.currentScript = null
 alert3("exec complete")
 /*
@@ -5985,7 +6011,7 @@ var flist = [
 getElementsByTagName, getElementsByClassName, getElementsByName, getElementById,nodeContains,
 dispatchEvent,
 NodeFilter,createNodeIterator,createTreeWalker,
-runScriptWhenAttached,
+runScriptWhenAttached, traceBreakReplace,
 appendChild, prependChild, insertBefore, removeChild, replaceChild, hasChildNodes,
 insertAdjacentElement,append, prepend, before, after, replaceWith,
 getAttribute, getAttributeNames, getAttributeNS,
@@ -6025,7 +6051,7 @@ flist = ["Math", "Date", "Promise", "eval", "Array", "Uint8Array",
 "insertCell", "deleteCell",
 "appendFragment", "insertFragment",
 "isRooted", "frames$rebuild",
-"runScriptWhenAttached",
+"runScriptWhenAttached", "traceBreakReplace",
 "appendChild", "prependChild", "insertBefore", "removeChild", "replaceChild", "hasChildNodes",
 "getSibling", "getElementSibling", "insertAdjacentElement",
 "append", "prepend", "before", "after", "replaceWith",

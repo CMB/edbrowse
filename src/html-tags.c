@@ -5004,16 +5004,16 @@ So, represent the location of the cells,
 and the propagation of the cells by rowspan, using edbrowse variables only,
 then figure out what to do about it in render().
 I'm overloading 3 variables in Tag, and I know that's ugly,
-but I don't feel like creating new ones just for <tr>,
-and these three aren't being used by <tr>, so here we go.
-lic is rowspan, js_ln is colspan, and js_file is the cellstring.
+but I don't feel like creating new ones just for this feature,
+and these three aren't being used by <tr> or <td>, so here we go.
+lic is rowspan and js_ln is colspan, (on td), and js_file is the cellstring.
 What is a cellstring?
 It is a comma separated list of cells, or merged cells, or inherited cells,
 on that row.
 If the cell is a simple <td></td>, then we don't need anything,
 and we can just append a comma.
 If rowspan = 7, append 1/7/seqno, the first row of 7,
-and the sequence number of this tag.
+and the sequence number of this tag in its row.
 The next row will inherit this, in position, and will show 2/7/seqno.
 The next row 3/7/seqno and so on.
 If colspan=3, we append @3.
