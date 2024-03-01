@@ -6877,7 +6877,7 @@ range2:
 /* change uc into a substitute command, converting the whole line */
 	if ((first == 'u' || first == 'l' || first == 'm') && line[1] == 'c' &&
 	    line[2] == 0) {
-		sprintf(newline, "s/.*/%cc/", first);
+		sprintf(newline, "s/.*/%cc/fp", first);
 		line = newline;
 	}
 
