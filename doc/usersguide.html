@@ -521,9 +521,12 @@ q : quit the current session
 <p>
 Input
 <p>
-P : show prompt (toggle)
-<br>P foo : set prompt to foo
-<br>P=~01~05~02 : set prompt to bracketed control e, encourages some screen readers to talk, and does not derail readline
+~c2~b1 : enter bytes as hex, in this case utf8 for plussminus
+<br>~u1f600 : enter a unicode as hex, in this case the symbol for grin
+<br>~jfood.carrot : enter the carrot emoji from the food group
+<br>~~ : enter a literal tilde, only necessary when the following character is hex or u or j
+<br>P : show prompt (toggle)
+<br>P=foo : set prompt to foo
 <br>rl : use readline() on input (toggle), respects $HISTCONTROL
 <p>
 Display Lines in the Buffer

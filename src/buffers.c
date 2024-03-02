@@ -4639,30 +4639,25 @@ like rf (refresh), which could be a long url.
 static char *allocatedLine = 0;
 /*********************************************************************
 Uses of allocatedLine:
+At the top of runCommand we free allocatedLine if it was hanging around
+from before, and set it to 0.
 rf sets allocatedLine to b currentFile
 f/  becomes  f lastComponent
 w/  becomes  w lastComponent
 w+/  becomes  w+ lastComponent
 g becomes b url  (going to a hyperlink)
-i<7 becomes i=contents of session 7
-i<file becomes i=contents of file
-f<file becomes f contents of file
-e<file becomes e contents of file
-b<file becomes b contents of file
-w<file becomes w contents of file
-r<file becomes r contents of file
 i* becomes b url  for a submit button
+i<7 becomes i=contents of session 7
+e<7 f<7 r<7 w<7 command with contents of session 7 but these are not implemented
 new location from javascript becomes b new url,
 	This one frees the old allocatedLine if it was present.
 	g could allocate a line for b url but then after browse
-	there is a new location to go to so must free that allocated line
-	and set the next one.
+  	there is a new location to go to so must free that allocated line
+  	and set the next one.
 e url without http:// becomes http://url
 	This one frees the old allocatedLine if it was present.
-	e<file could have made a new line with the contents of file,
-	now we have to free it and build another one.
-Speaking of e<file and its ilk, here is the function that
-reads in the data.
+img3 becomes e url for the image
+Here is the function for i<7 or i<file etc.
 *********************************************************************/
 
 static char *lessFile(const char *line, bool tamode)
@@ -5473,7 +5468,7 @@ et_go:
 		char *t;
 		cmd = line[0];
 		if (!cf->fileName) {
-			setError(MSG_NoRefresh);
+			setError(MSG_NoFileName);
 			return false;
 		}
 		t = strrchr(cf->fileName, '/');
@@ -5496,6 +5491,7 @@ et_go:
 		*runThis = allocatedLine;
 		return 2;
 	}
+
 // If you want this feature, e< f< b< w< r<, uncomment this,
 // and be sure to document it in usersguide.
 #if 0
