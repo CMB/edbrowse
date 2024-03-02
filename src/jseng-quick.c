@@ -2803,7 +2803,18 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 		debugPrint(3, "xhr uses %s", altsource);
 		rc = fileIntoMemory(altsource, &g.buffer, &g.length, 0);
 		g.code = 200;
-		outgoing_xhrheaders = cloneString("Content-Type: text/unknown\r\n\r\n");
+// see if we can infer content type
+		const char *v = strrchr(altsource, '.');
+		if(stringEqual(v, ".js"))
+			outgoing_xhrheaders = cloneString("Content-Type: text/javascript\r\n\r\n");
+		else if(stringEqual(v, ".css"))
+			outgoing_xhrheaders = cloneString("Content-Type: text/css\r\n\r\n");
+		else if(stringEqual(v, ".html"))
+			outgoing_xhrheaders = cloneString("Content-Type: text/html\r\n\r\n");
+		else if(stringEqual(v, ".xml"))
+			outgoing_xhrheaders = cloneString("Content-Type: text/xml\r\n\r\n");
+		else
+			outgoing_xhrheaders = cloneString("Content-Type: text/unknown\r\n\r\n");
 	} else {
 		rc = httpConnect(&g);
 	}
