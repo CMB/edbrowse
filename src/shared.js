@@ -1165,10 +1165,6 @@ change it in the other.
 *********************************************************************/
 
 function traceBreakReplace(all, precomma, operator, name, postcomma) {
-const bp_string =
-	  "(function(arg$,l$ne){if(l$ne) alert('break at line ' + l$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
-const trace_string =
-	  "(function(arg$,l$ne){ var c$ne=($zct[l$ne]>=0?++$zct[l$ne]:($zct[l$ne]=1)); if(l$ne === step$go||typeof step$exp==='string'&&eval(step$exp)) step$l = 2; if(step$l == 0) return; if(step$l == 1) { alert3(l$ne+':'+c$ne); return; } if(l$ne) alert('break at line ' + l$ne+':'+c$ne); while(true){var res = prompt('bp'); if(!res) continue; if(res === '.') break; try { res = eval(res); alert(res); } catch(e) { alert(e.toString()); }}}).call(this,(typeof arguments=='object'?arguments:[]),\"";
 var r = precomma ? precomma : ';'
 r += operator == "bp" ? bp_string : trace_string
 r += name + "\")";
