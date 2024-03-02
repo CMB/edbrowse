@@ -2805,16 +2805,22 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 		g.code = 200;
 // see if we can infer content type
 		const char *v = strrchr(altsource, '.');
+		 int ol;
+		outgoing_xhrheaders = initString(&ol);
+		stringAndString(&outgoing_xhrheaders, &ol, "Content-Type: text/");
 		if(stringEqual(v, ".js"))
-			outgoing_xhrheaders = cloneString("Content-Type: text/javascript\r\n\r\n");
+			stringAndString(&outgoing_xhrheaders, &ol, "javascript");
 		else if(stringEqual(v, ".css"))
-			outgoing_xhrheaders = cloneString("Content-Type: text/css\r\n\r\n");
+			stringAndString(&outgoing_xhrheaders, &ol, "css");
 		else if(stringEqual(v, ".html"))
-			outgoing_xhrheaders = cloneString("Content-Type: text/html\r\n\r\n");
+			stringAndString(&outgoing_xhrheaders, &ol, "html");
 		else if(stringEqual(v, ".xml"))
-			outgoing_xhrheaders = cloneString("Content-Type: text/xml\r\n\r\n");
+			stringAndString(&outgoing_xhrheaders, &ol, "xml");
 		else
-			outgoing_xhrheaders = cloneString("Content-Type: text/unknown\r\n\r\n");
+			stringAndString(&outgoing_xhrheaders, &ol, "unknown");
+		stringAndString(&outgoing_xhrheaders, &ol, "\r\nContent-Length: ");
+		stringAndNum(&outgoing_xhrheaders, &ol, g.length);
+		stringAndString(&outgoing_xhrheaders, &ol, "\r\n\r\n");
 	} else {
 		rc = httpConnect(&g);
 	}
