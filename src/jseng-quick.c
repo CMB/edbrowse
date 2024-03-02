@@ -2753,7 +2753,10 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 
 	debugPrint(3, "xhr send %s", incoming_url);
 
-// async and sync are completely different
+	const char *altsource = fetchReplace(incoming_url);
+	if(altsource) async = false;
+
+// async and sync are completely different pathways
 	if (async) {
 // I'm going to put the tag in cf, the current frame, and hope that's right,
 // hope that xhr runs in a script that runs in the current frame.
@@ -2792,9 +2795,19 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 // you should never intercept it with a plugin or a download
 // These are already false because of memset above, I'm just sayin...
 	g.down_ok = g.pg_ok = false;
-	rc = httpConnect(&g);
+// Do you want to use your own version of a script, with tracing etc?
+// If the url is reliable, you can put an entry in jslocal, and it will be
+// honored here, but, you won't get the http headers, such as content-type,
+// which could be important for the functioning of the website.
+	if(altsource) {
+		debugPrint(3, "xhr uses %s", altsource);
+		rc = fileIntoMemory(altsource, &g.buffer, &g.length, 0);
+		g.code = 200;
+		outgoing_xhrheaders = cloneString("Content-Type: text/unknown\r\n\r\n");
+	} else {
+		rc = httpConnect(&g);
+	}
 	outgoing_xhrbody = g.buffer;
-	cnzFree(incoming_url);
 	JS_FreeCString(cx, incoming_headers);
 	if (outgoing_xhrheaders == NULL)
 		outgoing_xhrheaders = emptyString;
@@ -2806,12 +2819,13 @@ static JSValue nat_fetchHTTP(JSContext * cx, JSValueConst this, int argc, JSValu
 	stringAndNum(&s, &s_l, g.code);
 	stringAndString(&s, &s_l, "\r\n\r\n");
 	stringAndString(&s, &s_l, g.cfn ? g.cfn : incoming_url);
+	cnzFree(incoming_url);
+	nzFree(g.cfn);
 	stringAndString(&s, &s_l, "\r\n\r\n");
 	stringAndString(&s, &s_l, outgoing_xhrheaders);
-	stringAndString(&s, &s_l, outgoing_xhrbody);
 	nzFree(outgoing_xhrheaders);
+	stringAndString(&s, &s_l, outgoing_xhrbody);
 	nzFree(outgoing_xhrbody);
-	nzFree(g.cfn);
 	nzFree(g.referrer);
 
 	debugPrint(5, "xhr out");
