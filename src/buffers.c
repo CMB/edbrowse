@@ -4653,8 +4653,13 @@ new location from javascript becomes b new url,
 e url without http:// becomes http://url
 img3 becomes e url for the image
 Just to be safe, we free the old one before allocating the new one.
-Sometims we don't have to, it is 0 from the start of runCommand,
-but it's hard to keep track, so just to be safe...
+Sometimes we don't have to, it is 0 from the start of runCommand,
+but it's hard to keep track, so call nzFree() just to be safe.
+You never want to use allocatedLine to build a g// command.
+The second half of that line is the subcommand, and is passed to runCommand(),
+which frees allocatedLine, frees the very line it is working on.
+If you want to do this, don't free allocatedLine at the top of runCommand,
+and make sure none of the allocating commands can be a subcommand of g.
 Here is the function for i<7 or i<file etc.
 *********************************************************************/
 
