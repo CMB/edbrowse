@@ -4648,15 +4648,13 @@ w+/  becomes  w+ lastComponent
 g becomes b url  (going to a hyperlink)
 i* becomes b url  for a submit button
 i<7 becomes i=contents of session 7
-e<7 f<7 r<7 w<7 command with contents of session 7 but these are not implemented
+e<7 f<7 r<7 w<7 pastes in the contents of session 7 but these are not implemented
 new location from javascript becomes b new url,
-	This one frees the old allocatedLine if it was present.
-	g could allocate a line for b url but then after browse
-  	there is a new location to go to so must free that allocated line
-  	and set the next one.
 e url without http:// becomes http://url
-	This one frees the old allocatedLine if it was present.
 img3 becomes e url for the image
+Just to be safe, we free the old one before allocating the new one.
+Sometims we don't have to, it is 0 from the start of runCommand,
+but it's hard to keep track, so just to be safe...
 Here is the function for i<7 or i<file etc.
 *********************************************************************/
 
@@ -5266,6 +5264,7 @@ pwd:
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = 2;
+		nzFree(allocatedLine);
 		allocatedLine = allocMem(strlen(cf->fileName) + 3);
 		sprintf(allocatedLine, "%c %s", cmd, cf->fileName);
 		debrowseSuffix(allocatedLine);
@@ -5310,6 +5309,7 @@ pwd:
 		*runThis = "?";
 		return 2;
 	}
+	nzFree(allocatedLine);
 	allocatedLine = allocMem(strlen(h) + 3);
 	sprintf(allocatedLine, "e %s", h);
 	*runThis = allocatedLine;
@@ -5482,6 +5482,7 @@ et_go:
 			return false;
 		}
 		t = getFileURL(cf->fileName, false);
+		nzFree(allocatedLine);
 		allocatedLine = allocMem(strlen(t) + 8);
 /* ` prevents wildcard expansion, which normally happens on an f command */
 		if (line[1] == '+')
@@ -5496,6 +5497,7 @@ et_go:
 // and be sure to document it in usersguide.
 #if 0
 	if (strchr("bwref", line[0]) && line[1] == '<') {
+		nzFree(allocatedLine);
 		allocatedLine = lessFile(line + 2, false);
 		if (allocatedLine == 0)
 			return false;
@@ -6726,8 +6728,7 @@ bool runCommand(const char *line)
 	static char newline[MAXTTYLINE];
 
 	selfFrame();
-	nzFree(allocatedLine);
-	allocatedLine = 0;
+	nzFree(allocatedLine), allocatedLine = 0;
 	redirect_count = 0;
 	js_redirects = false;
 	cmd = icmd = 'p';
@@ -8190,6 +8191,7 @@ past_g_file:
 				jsgo = jsh = false;
 			}
 // because I am setting allocatedLine to h, it will get freed on the next go round.
+			nzFree(allocatedLine);
 			line = allocatedLine = h;
 			first = *line;
 			setError(-1);
@@ -8320,6 +8322,7 @@ past_js:
 						setError(MSG_IG);
 						return (globSub = false);
 					}
+					nzFree(allocatedLine);
 					allocatedLine = lessFile(line, (t->itype == INP_TA));
 					if (!allocatedLine)
 						return false;
@@ -8337,6 +8340,7 @@ past_js:
 				if (c == '*') {
 					Frame *save_cf = cf;
 					jSyncup(false, tagList[tagno]);
+					nzFree(allocatedLine);
 					c = infPush(tagno, &allocatedLine);
 					jSideEffects();
 					cf = save_cf;
