@@ -1419,6 +1419,180 @@ bool htmlTest(void)
 	return (cnt >= 4 && cnt * 300 >= fsize);
 }
 
+bool browseCurrentBuffer(const char *suffix, bool plain)
+{
+	char *rawbuf, *newbuf, *tbuf;
+	int rawsize, tlen, j;
+	bool rc, remote;
+	uchar sxfirst = 1;
+	bool save_ch = cw->changeMode;
+	uchar bmode = 0;
+	const struct MIMETYPE *mt = 0;
+
+	remote = isURL(cf->fileName);
+
+	if (!(cf->render2|cf->render3) && (cf->fileName || suffix)) {
+		if (remote) {
+			mt = findMimeByURL(cf->fileName, &sxfirst);
+		} else if(suffix) {
+// we already checked for valid suffix
+			mt = findMimeBySuffix(suffix);
+		} else {
+			mt = findMimeByFile(cf->fileName);
+		}
+	}
+
+	if (mt && !mt->outtype) {
+		setError(MSG_NotConverter);
+		return false;
+	}
+
+	if (mt && mt->from_file) {
+		setError(MSG_PluginFile);
+		return false;
+	}
+
+	if (mt) {
+		if (cf->render1 && mt == cf->mt)
+			cf->render2 = true;
+		else
+			bmode = 3;
+	}
+
+	if (!bmode && cw->binMode) {
+		setError(MSG_BrowseBinary);
+		return false;
+	}
+
+	if (bmode) ;		// ok
+	else
+/* A mail message often contains lots of html tags,
+ * so we need to check for email headers first. */
+	if (!remote && emailTest())
+		bmode = 1;
+	else if (htmlTest())
+		bmode = 2;
+	else {
+		setError(MSG_Unbrowsable);
+		return false;
+	}
+
+	if(bmode != 3 || remote) {
+		if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+			return false;	// should never happen
+	}
+
+	if (bmode == 3) {
+// convert raw text via a plugin
+		if (remote) {
+			rc = runPluginCommand(mt, cf->fileName, 0, rawbuf,
+					      rawsize, &rawbuf, &rawsize);
+		} else {
+// Pass the file directly to the converter
+			rc = runPluginCommand(mt, 0, cf->fileName, 0, 0,
+					      &rawbuf, &rawsize);
+		}
+		if (!rc)
+			return false;
+		if (!cf->render1)
+			cf->render1b = true;
+		cf->render1 = cf->render2 = true;
+		iuReformat(rawbuf, rawsize, &tbuf, &tlen);
+		if (tbuf) {
+			nzFree(rawbuf);
+			rawbuf = tbuf;
+			rawsize = tlen;
+		}
+// make it look like remote html, so we don't get a lot of errors printed
+		remote = true;
+		bmode = (mt->outtype == 'h' ? 2 : 0);
+		if (!allowRedirection)
+			bmode = 0;
+	}
+
+// this shouldn't do any harm if the output is text
+	prepareForBrowse(rawbuf, rawsize);
+
+// No harm in running this code in mail client, but no help either,
+// and it begs for bugs, so leave it out.
+	if (!ismc) {
+		undoCompare();
+		cw->undoable = false;
+	}
+
+	if (bmode == 1) {
+		newbuf = emailParse(rawbuf, plain);
+		j = strlen(newbuf);
+
+/* mail could need utf8 conversion, after qp decode */
+		iuReformat(newbuf, j, &tbuf, &tlen);
+		if (tbuf) {
+			nzFree(newbuf);
+			newbuf = tbuf;
+			j = tlen;
+		}
+
+		if (memEqualCI(newbuf, "<html>\n", 7) && allowRedirection) {
+/* double browse, mail then html */
+			bmode = 2;
+			browseMail = true;
+			remote = true;
+			rawbuf = newbuf;
+			rawsize = j;
+			prepareForBrowse(rawbuf, rawsize);
+		}
+	}
+
+	if (bmode == 2) {
+		if (javaOK(cf->fileName))
+			createJSContext(cf);
+		nzFree(newlocation);	/* should already be 0 */
+		newlocation = 0;
+		newbuf = htmlParse(rawbuf, remote);
+	}
+
+	if (bmode == 0)
+		newbuf = rawbuf;
+
+	cw->rnlMode = cw->nlMode;
+	cw->nlMode = false;
+/* I'm gonna assume it ain't binary no more */
+	cw->binMode = false;
+	cw->r_dot = cw->dot, cw->r_dol = cw->dol;
+	cw->dot = cw->dol = 0;
+	cw->r_map = cw->map;
+	cw->map = 0;
+	memcpy(cw->r_labels, cw->labels, sizeof(cw->labels));
+	memset(cw->labels, 0, sizeof(cw->labels));
+	j = strlen(newbuf);
+	rc = addTextToBuffer((pst) newbuf, j, 0, false);
+	free(newbuf);
+	cw->undoable = false;
+	cw->changeMode = save_ch;
+
+	if (cf->fileName) {
+		j = strlen(cf->fileName);
+		cf->fileName = reallocMem(cf->fileName, j + 8);
+		strcat(cf->fileName, ".browse");
+	}
+
+	if (!rc) {
+/* should never happen */
+		fileSize = -1;
+		cw->browseMode = cf->browseMode = true;
+		return false;
+	}
+
+	if (bmode == 2)
+		cw->dot = cw->dol;
+	cw->browseMode = cf->browseMode = true;
+	fileSize = bufferSize(context, true);
+	cw->mustrender = false;
+	time(&cw->nextrender);
+	cw->nextrender += 2;
+	return true;
+}
+
 // Connect an input field to its datalist.
 // I use the field ninp for this, rather nonobvious, sorry.
 static void connectDatalist(Tag *t)
