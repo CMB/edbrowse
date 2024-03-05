@@ -2919,7 +2919,7 @@ static bool shellEscape(const char *line)
 	line2 = apostropheMacros(line1);
 	eb_variables();
 
-	rc =  !eb_system(line2, !globSub);
+	rc = !eb_system(line2, !globSub);
 	free(line2);
 	return rc;
 }
@@ -4626,43 +4626,6 @@ cw->dol = ln2 - 1;
 	return true;
 }
 
-/*********************************************************************
-Implement various two letter commands.
-Most of these set and clear modes.
-Return 1 or 0 for success or failure as usual.
-But return 2 if there is a new command to run.
-The second parameter is a result parameter, the new command to run.
-In rare cases we might allocate a new (longer) command line to run,
-like rf (refresh), which could be a long url.
-*********************************************************************/
-
-static char *allocatedLine = 0;
-/*********************************************************************
-Uses of allocatedLine:
-At the top of runCommand we free allocatedLine if it was hanging around
-from before, and set it to 0.
-rf sets allocatedLine to b currentFile
-f/  becomes  f lastComponent
-w/  becomes  w lastComponent
-w+/  becomes  w+ lastComponent
-g becomes b url  (going to a hyperlink)
-i* becomes b url  for a submit button
-i<7 becomes i=contents of session 7
-e<7 f<7 r<7 w<7 pastes in the contents of session 7 but these are not implemented
-new location from javascript becomes b new url,
-e url without http:// becomes http://url
-img3 becomes e url for the image
-Just to be safe, we free the old one before allocating the new one.
-Sometimes we don't have to, it is 0 from the start of runCommand,
-but it's hard to keep track, so call nzFree() just to be safe.
-You never want to use allocatedLine to build a g// command.
-The second half of that line is the subcommand, and is passed to runCommand(),
-which frees allocatedLine, frees the very line it is working on.
-If you want to do this, don't free allocatedLine at the top of runCommand,
-and make sure none of the allocating commands can be a subcommand of g.
-Here is the function for i<7 or i<file etc.
-*********************************************************************/
-
 static char *lessFile(const char *line, bool tamode)
 {
 	bool fromfile = false;
@@ -4825,12 +4788,23 @@ fail:
 	return 0;
 }
 
+/*********************************************************************
+Implement various two letter commands.
+Most of these set and clear modes.
+Return 1 or 0 for success or failure as usual.
+But return 2 if there is a new command to run.
+The second parameter is a result parameter, the new command to run.
+In rare cases we might allocate a new (longer) command line to run,
+like rf (refresh), which could be a long url.
+*********************************************************************/
+
 static char shortline[60];
 static int twoLetter(const char *line, const char **runThis)
 {
 	char c;
 	bool rc, ub;
 	int i, n;
+	char *allocatedLine;
 
 	*runThis = shortline;
 
@@ -5269,13 +5243,12 @@ pwd:
 		if (cw->browseMode)
 			cmd = 'b';
 		noStack = 2;
-		nzFree(allocatedLine);
 		allocatedLine = allocMem(strlen(cf->fileName) + 3);
 		sprintf(allocatedLine, "%c %s", cmd, cf->fileName);
 		debrowseSuffix(allocatedLine);
 		*runThis = allocatedLine;
 		uriEncoded = cf->uriEncoded;
-		return 2;
+		return 3;
 	}
 
 	if(!strncmp(line, "img", 3) &&
@@ -5314,12 +5287,11 @@ pwd:
 		*runThis = "?";
 		return 2;
 	}
-	nzFree(allocatedLine);
 	allocatedLine = allocMem(strlen(h) + 3);
 	sprintf(allocatedLine, "e %s", h);
 	*runThis = allocatedLine;
 	nzFree(h);
-		return 2;
+		return 3;
 	}
 
 	if (stringEqual(line, "config")) {
@@ -5487,22 +5459,20 @@ et_go:
 			return false;
 		}
 		t = getFileURL(cf->fileName, false);
-		nzFree(allocatedLine);
 		allocatedLine = allocMem(strlen(t) + 8);
-/* ` prevents wildcard expansion, which normally happens on an f command */
+// ` prevents wildcard expansion, which normally happens on an f command
 		if (line[1] == '+')
 			sprintf(allocatedLine, "%c+ `%s", cmd, t);
 		else
 			sprintf(allocatedLine, "%c `%s", cmd, t);
 		*runThis = allocatedLine;
-		return 2;
+		return 3;
 	}
 
 // If you want this feature, e< f< b< w< r<, uncomment this,
 // and be sure to document it in usersguide.
 #if 0
 	if (strchr("bwref", line[0]) && line[1] == '<') {
-		nzFree(allocatedLine);
 		allocatedLine = lessFile(line + 2, false);
 		if (allocatedLine == 0)
 			return false;
@@ -5515,7 +5485,7 @@ et_go:
 		if (!isURL(allocatedLine + 3))
 			allocatedLine[2] = '`';	// suppress wildcard expansion
 		*runThis = allocatedLine;
-		return 2;
+		return 3;
 	}
 #endif
 
@@ -6699,7 +6669,7 @@ hashnotfound:
 
 /*********************************************************************
 Run the entered edbrowse command.
-This is indirectly recursive, as in g/x/d
+This is recursive, as in g/x/d or <func
 Pass in the ed command, and return success or failure.
 We assume it has been turned into a C string.
 This means no embedded nulls.
@@ -6733,7 +6703,7 @@ bool runCommand(const char *line)
 	static char newline[MAXTTYLINE];
 
 	selfFrame();
-	nzFree(allocatedLine), allocatedLine = 0;
+		char *allocatedLine = 0;
 	redirect_count = 0;
 	js_redirects = false;
 	cmd = icmd = 'p';
@@ -6756,7 +6726,7 @@ bool runCommand(const char *line)
 	}
 
 		if (first == '#')
-			return true;
+			goto success;
 
 	if (!globSub) {
 		madeChanges = false;
@@ -6772,16 +6742,18 @@ bool runCommand(const char *line)
 
 /* special 2 letter commands - most of these change operational modes */
 		j = twoLetter(line, &line);
-		if (j != 2)
-			return j;
+		if (j < 2) goto donej;
+		if(j == 3) allocatedLine = (char*)line;
 	}
 
 	j = twoLetterG(line, &line);
-	if (j != 2)
-		return j;
+	if (j < 2) goto donej;
+	if(j == 3) allocatedLine = (char*)line;
 
-	if (first == '!')
-		return shellEscape(line + 1);
+	if (first == '!') {
+		rc = shellEscape(line + 1);
+		goto done;
+	}
 
 	if(stringEqual(line, "eret")) {
 		sprintf(newline, "e%d", cx_previous);
@@ -6795,7 +6767,7 @@ bool runCommand(const char *line)
 		++startRange, ++endRange;
 		if (endRange > cw->dol) {
 			setError(MSG_EndBuffer);
-			return false;
+			goto fail;
 		}
 	}
 
@@ -6805,7 +6777,8 @@ bool runCommand(const char *line)
 	(stringEqual(line, "/u") ||
 	(line[1] && strchr("fstb", line[1]) && line[2] == ' ')  ||
 	(line[1] == 'u' && line[2] && strchr("fstb", line[2]) && line[3] == ' '))) {
-		return folderSearch((char*)cw->r_map[cw->dot].text, (char*)line + 1, false);
+		rc = folderSearch((char*)cw->r_map[cw->dot].text, (char*)line + 1, false);
+		goto done;
 	}
 
 	if (first == ',') {
@@ -6827,7 +6800,7 @@ bool runCommand(const char *line)
 		endRange = startRange + 1;
 		if (endRange > cw->dol) {
 			setError(MSG_EndJoin);
-			return false;
+			goto fail;
 		}
 	}
 
@@ -6849,13 +6822,13 @@ bool runCommand(const char *line)
 
 	if (!didRange) {
 		if (!getRangePart(line, &startRange, &line))
-			return (globSub = false);
+			goto failg;
 		endRange = startRange;
 		if(line[0] == 'j' || line[0] == 'J') { // special case, 5j
 			endRange = startRange + 1;
 			if (endRange > cw->dol) {
 				setError(MSG_EndJoin);
-				return false;
+				goto fail;
 			}
 		}
 		if (line[0] == ',') {
@@ -6865,13 +6838,13 @@ range2:
 			first = *line;
 			if (first && strchr(valid_laddr, first)) {
 				if (!getRangePart(line, &endRange, &line))
-					return (globSub = false);
+					goto failg;
 			}
 		}
 	}
 	if (endRange < startRange) {
 		setError(MSG_BadRange);
-		return false;
+		goto fail;
 	}
 
 	skipWhite(&line);
@@ -6891,15 +6864,15 @@ range2:
 		cmd = 'e'; // trick to always show the errors
 		if(!cw->dot) {
 			setError(MSG_EmptyBuffer);
-			return 0;
+			goto fail;
 		}
 		if (cw->sqlMode) {
 			sql_unfold(startRange, endRange, c);
-			return true;
+			goto success;
 		}
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
-			return false;
+			goto fail;
 		}
 		for(i = startRange; i <= endRange; ++i)
 			if((w = line2tr(i)))
@@ -6917,30 +6890,30 @@ range2:
 					w->ur = 0;
 			}
 		rerender(1);
-		return true;
+		goto success;
 	}
 
 // Breakline is actually a substitution of lines
 	if (stringEqual(line, "bl")) {
 		if (cw->dirMode) {
 			setError(MSG_BreakDir);
-			return false;
+			goto fail;
 		}
 		if (cw->sqlMode) {
 			setError(MSG_BreakDB);
-			return false;
+			goto fail;
 		}
 		if (cw->ircoMode) {
 			setError(MSG_BreakIrc);
-			return false;
+			goto fail;
 		}
 		if (cw->imapMode1 || cw->imapMode2) {
 			setError(MSG_BreakImap);
-			return false;
+			goto fail;
 		}
 		if (cw->browseMode) {
 			setError(MSG_BreakBrowse);
-			return false;
+			goto fail;
 		}
 		line = "s`bl";
 	}
@@ -6949,7 +6922,7 @@ range2:
 	if((first == 'e' || first == 'q') && (line[1] == '/' || line[1] == '?')) {
 		cmd = 'e';
 		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
-		if(!n) return globSub = 0;
+		if(!n) goto failg;
 		sprintf(newline, "%c%d", first, n);
 		line = newline;
 	}
@@ -6960,7 +6933,7 @@ range2:
 		cmd = 'e';
 		n = sessionByText(line + 2, line[1] == '/' ? 1 : -1);
 		if(at) *at = '@';
-		if(!n) return globSub = 0;
+		if(!n) goto failg;
 		sprintf(newline, "%c%d", first, n);
 		if(at) {
 // check for buffer overrun, albeit extremely unlikely
@@ -6981,7 +6954,7 @@ range2:
 		cmd = 'e';
 		n = sessionByText(line + 3, line[1] == '/' ? 1 : -1);
 		if(at) *at = '@';
-		if(!n) return globSub = 0;
+		if(!n) goto failg;
 		sprintf(newline, "<*%d", n);
 		if(at) {
 // check for buffer overrun, albeit extremely unlikely
@@ -7002,16 +6975,16 @@ expctr:
 		if (globSub) {
 			cmd = 'g';
 			setError(MSG_GlobalCommand2, line);
-			return false;
+			goto fail;
 		}
 		cmd = 'e';
 		if (endRange == 0) {
 			setError(MSG_EmptyBuffer);
-			return false;
+			goto fail;
 		}
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
-			return false;
+			goto fail;
 		}
 		jSyncup(false, 0);
 		undoSpecialClear();
@@ -7035,7 +7008,7 @@ replaceframe:
 /* even if one frame failed to expand, another might, so always rerender */
 		selfFrame();
 		rerender(0);
-		return true;
+		goto success;
 	}
 
 	// special command for hidden input
@@ -7045,11 +7018,11 @@ replaceframe:
 		bool old_masked;
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
-			return false;
+			goto fail;
 		}
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "ipass");
-			return false;
+			goto fail;
 		}
 
 		s = line + 5;
@@ -7065,7 +7038,7 @@ replaceframe:
 		debugPrint(5, "findField returns %d.%d", n, tagno);
 		if (!tagno) {
 			fieldNumProblem(0, "ipass", cx, n, realtotal);
-			return false;
+			goto fail;
 		}
 
 		undoSpecialClear();
@@ -7078,7 +7051,7 @@ replaceframe:
 		rc = infReplace(tagno, buffer, true);
 		if (!rc)
 			tagList[tagno]->masked = old_masked;
-		return rc;
+		goto done;
 	}
 
 // special code for textareas into sessions
@@ -7093,26 +7066,27 @@ replaceframe:
 		cmd = 'e';
 		if (!cw->browseMode) {
 			setError(MSG_NoBrowse);
-			return false;
+			goto fail;
 		}
 		if (globSub) {
 			setError(MSG_GlobalCommand2, "ib");
-			return false;
+			goto fail;
 		}
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "ib");
-			return false;
+			goto fail;
 		}
 		cw->dot = endRange;
 		if (!cw->dot) {	// should never happen
 			setError(MSG_EmptyBuffer);
-			return false;
+			goto fail;
 		}
 		if(d) {
 			if(!cxCompare(d) || (cxActive(d, false) && !cxQuit(d, 0)))
-				return false;
+				goto fail;
 		}
-		return itext(d);
+		rc = itext(d);
+		goto done;
 	}
 after_ib:
 
@@ -7125,32 +7099,33 @@ after_ib:
 
 	if (!strchr(valid_cmd, cmd)) {
 		setError(MSG_UnknownCommand, cmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if (cw->irciMode && !strchr(irci_cmd, cmd)) {
 		setError(MSG_IrcCommand, cmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if (cw->ircoMode && !strchr(irco_cmd, cmd)) {
 		setError(MSG_IrcCommand, cmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if (cw->imapMode1 && !strchr(imap1_cmd, cmd)) {
 		setError(MSG_ImapCommand, cmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if(cmd == 'r' && cw->imapMode2 && (!*line || (*line == '-' && !line[1]))) {
 		cw->dot = endRange;
-		return imapMarkRead(startRange, endRange, *line);
+		rc = imapMarkRead(startRange, endRange, *line);
+		goto done;
 	}
 
 	if (cw->imapMode2 && !strchr(imap2_cmd, cmd)) {
 		setError(MSG_ImapCommand, cmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	first = *line;
@@ -7162,14 +7137,14 @@ after_ib:
 		int writeLine2;
 		if(*p == '@') {
 			if(!atPartCracker(0, sno, true, p, &writeLine, &writeLine2))
-				return false;
+				goto fail;
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
-				return globSub = false;
+				goto failg;
 			}
 			if(atWindow->dirMode | atWindow->binMode | atWindow->browseMode | atWindow->sqlMode | atWindow->ircoMode) {
 				setError(MSG_TextRec, sno);
-				return globSub = false;
+				goto failg;
 			}
 			writeLine = writeLine2;
 // by being positive, writeLine will remember that this happened.
@@ -7186,14 +7161,14 @@ after_ib:
 		int writeLine2;
 		if(*p == '@') {
 			if(!atPartCracker(first, sno, true, p, &writeLine, &writeLine2))
-				return false;
+				goto fail;
 			if(!cw->dol) {
 				setError(MSG_EmptyBuffer);
-				return globSub = false;
+				goto failg;
 			}
 			if(atWindow->dirMode | atWindow->binMode | atWindow->browseMode | atWindow->sqlMode | atWindow->ircoMode) {
 				setError(MSG_TextRecBuf);
-				return globSub = false;
+				goto failg;
 			}
 			writeLine = writeLine2;
 // by being positive, writeLine will remember that this happened.
@@ -7215,7 +7190,7 @@ after_ib:
 		int sno = strtol(line, &p, 10);
 		if(*p == '@') { // at syntax
 			if(!atPartCracker(0, sno, false, p, &readLine1, &readLine2))
-				return false;
+				goto fail;
 // by being positive, readLine1 will remember that this happened.
 // Clobber @, so it looks like reading from a session,
 // and we'll set cx and go down that path,
@@ -7233,7 +7208,7 @@ after_ib:
 		}
 		if(*p == '@') { // at syntax
 			if(!atPartCracker(first, sno, false, p, &readLine1, &readLine2))
-				return false;
+				goto fail;
 // by being positive, readLine1 will remember that this happened.
 // Clobber @, so it looks like reading from a session,
 // and we'll set cx and go down that path,
@@ -7256,18 +7231,18 @@ after_ib:
 		t = makeAbsPath(p);
 		p[len - 1] = '\n';
 		if (!t)
-			return false;
+			goto fail;
 		strcpy(src, t);
 		dest = makeAbsPath(oldline);
 		if (!dest)
-			return false;
+			goto fail;
 		if (fileTypeByName(dest, 1)) {
 			setError(MSG_DestFileExists, dest);
-			return false;
+			goto fail;
 		}
 		if (rename(src, dest)) {
 			setError(MSG_NoRename, dest);
-			return false;
+			goto fail;
 		}
 		p[len - 1] = 0;
 		undoSpecial = cloneString(p);
@@ -7277,17 +7252,17 @@ after_ib:
 		oldline[len] = '\n';
 		mptr->text = (pst)oldline;
 		printDot();
-		return true;
+		goto success;
 	}
 
 	if (cw->dirMode && !strchr(dir_cmd, cmd)) {
 		setError(MSG_DirCommand, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if (cw->sqlMode && !strchr(sql_cmd, cmd)) {
 		setError(MSG_DBCommand, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if(cmd == 'u' && cw->browseMode && undoSpecial) {
@@ -7301,35 +7276,35 @@ after_ib:
 		findInputField(p, 1, undoField, &total,        &realtotal, &tagno);
 		if (!tagno) {
 			fieldNumProblem(0, "i", undoField, total, realtotal);
-			return false;
+			goto fail;
 		}
 		sprintf(search, "%c%d<", InternalCodeChar, tagno);
 		sprintf(searchend, "%c0>", InternalCodeChar);
 		if(!(s = strstr(p, search)))
-			return false;
+			goto fail;
 		s = strchr(s, '<') + 1;
 		if(!(t = strstr(s, searchend)))
-			return false;
+			goto fail;
 		undoSpecial = getFieldFromBuffer(tagno, 0);
-		j = infReplace(tagno, oldline, true);
+		rc = infReplace(tagno, oldline, true);
 		nzFree(oldline);
-		if(!j)
+		if(!rc)
 			undoSpecialClear();
-		return j;
+		goto done;
 	}
 
 	if (cw->browseMode && !strchr(browse_cmd, cmd)) {
 		setError(MSG_BrowseCommand, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 	if (cw->browseMode && (cmd  == 'm' || cmd == 't') && !cw->imapMode3) {
 		setError(MSG_BrowseCommand, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if (startRange == 0 && !strchr(zero_cmd, cmd)) {
 		setError(MSG_AtLine0);
-		return (globSub = false);
+		goto failg;
 	}
 
 // code for b.pdf and g.pdf
@@ -7343,14 +7318,14 @@ after_ib:
 		if(strlen(browseSuffix) > 5) {
 			setError(MSG_SuffixLong);
 			cmd = 'e';
-			return false;
+			goto fail;
 		}
 		if(stringEqual(browseSuffix, "plain"))
 			browseSuffix = NULL, plainMail = true;
 		else if(!findMimeBySuffix(browseSuffix)) {
 			setError(MSG_SuffixBad, browseSuffix);
 			cmd = 'e';
-			return false;
+			goto fail;
 		}
 	}
 
@@ -7366,13 +7341,13 @@ after_ib:
 			++s;
 		if (*s) {
 			setError(MSG_NoSpaceAfter);
-			return (globSub = false);
+			goto failg;
 		}
 	}
 
 	if (globSub && !strchr(global_cmd, cmd)) {
 		setError(MSG_GlobalCommand, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 // i as text insert cannot be global, but i for a fill-out form can.
@@ -7380,7 +7355,7 @@ after_ib:
 // However, g/re/ i* probably should be disallowed. We need to refine this a bit.
 	if (globSub && icmd == 'i' && (!cw->browseMode || line[0] == '*')) {
 		setError(MSG_GlobalCommand, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 
@@ -7391,36 +7366,36 @@ after_ib:
 		if(cw->imapMode2 && postSpace) {
 			rc = imapMovecopy(startRange, endRange, cmd, (char*)line);
 			if(!rc) globSub = false;
-			return rc;
+			goto done;
 		}
 
 // move or copy the current mail to another folder
 		if(cw->imapMode3 && postSpace) {
 			rc = imapMovecopyWhileReading(cmd, (char*)line);
 			if(!rc) globSub = false;
-			return rc;
+			goto done;
 		}
 
 		if(cw->imapMode2) {
 			setError(MSG_ImapCommand, cmd);
-			return (globSub = false);
+			goto failg;
 		}
 
 		if(cw->browseMode) {
 			setError(MSG_BrowseCommand, cmd);
-			return (globSub = false);
+			goto failg;
 		}
 
 		if (!first) {
 			if (cw->dirMode) {
 				setError(MSG_BadDest);
-				return (globSub = false);
+				goto failg;
 			}
 			destLine = cw->dot;
 		} else {
 			if (!strchr(valid_laddr, first)) {
 				setError(MSG_BadDest);
-				return (globSub = false);
+				goto failg;
 			}
 
 // destination has special meaning in directory mode
@@ -7432,20 +7407,20 @@ after_ib:
 				}
 				if(!isdigitByte(first) || (j = stringIsNum(line)) < 0) {
 					setError(MSG_BadDest);
-					return (globSub = false);
+					goto failg;
 				}
 dest_ok:
 				cmd = 'e';
-				j = moveFiles(startRange, endRange, j, icmd, relative);
+				rc = moveFiles(startRange, endRange, j, icmd, relative);
 				undoCompare();
 				cw->undoable = false;
 				undoSpecialClear();
-				return j;
+				goto done;
 			}
 
 // normal destination for move or copy in a text file
 			if (!getRangePart(line, &destLine, &line))
-				return (globSub = false);
+				goto failg;
 			first = *line;
 		}		// was there something after m or t
 	} // m or t
@@ -7453,7 +7428,7 @@ dest_ok:
 	if(cmd == 'W') {
 		if(first != '!') {
 			setError(MSG_WBang);
-			return (globSub = false);
+			goto failg;
 		}
 		wrc = true;
 		wrc_file = edbrowseTempFilename("txt", true);
@@ -7462,7 +7437,7 @@ dest_ok:
 
 	if((cmd == 'e' || cmd == 'b') && (cw->irciMode | cw->ircoMode) && postSpace) {
 		setError(MSG_IrcCommand, cmd);
-		return false;
+		goto fail;
 	}
 
 /* -c is the config file */
@@ -7480,7 +7455,7 @@ dest_ok:
 // let the shell do it via popen().
 	(first != '!' || strchr("bef", cmd))) {
 		if (!envFile(line, &line))
-			return false;
+			goto fail;
 		first = *line;
 	}
 
@@ -7496,7 +7471,7 @@ dest_ok:
 		if (startRange > cw->dol) {
 			startRange = endRange = 0;
 			setError(MSG_LineHigh);
-			return false;
+			goto fail;
 		}
 		cmd = 'p';
 		endRange += last_z - 1;
@@ -7517,17 +7492,17 @@ dest_ok:
 
 	if (first && strchr(nofollow_cmd, cmd)) {
 		setError(MSG_TextAfter, icmd);
-		return (globSub = false);
+		goto failg;
 	}
 
 	if (cmd == 'h') {
 		showError();
-		return true;
+		goto success;
 	}
 
 	if (cmd == 'X') {
 		cw->dot = endRange;
-		return true;
+		goto success;
 	}
 
 	if (strchr("Llpn", cmd)) {
@@ -7537,16 +7512,17 @@ dest_ok:
 			if (intFlag)
 				break;
 		}
-		return true;
+		goto success;
 	}
 
 	if (cmd == '=') {
 		printf("%d\n", endRange);
-		return true;
+		goto success;
 	}
 
 	if (cmd == 'B') {
-		return balanceLine(line, endRange);
+		rc = balanceLine(line, endRange);
+		goto done;
 	}
 
 	if (cmd == 'u') {
@@ -7554,7 +7530,7 @@ dest_ok:
 		struct lineMap *swapmap;
 		if (!cw->undoable) {
 			setError(MSG_NoUndo);
-			return false;
+			goto fail;
 		}
 /* swap, so we can undo our undo, if need be */
 		i = uw->dot, uw->dot = cw->dot, cw->dot = i;
@@ -7564,20 +7540,20 @@ dest_ok:
 			    cw->labels[j], cw->labels[j] = i;
 		}
 		swapmap = uw->map, uw->map = cw->map, cw->map = swapmap;
-		return true;
+		goto success;
 	}
 
 	if (cmd == 'k') {
 		if (!islowerByte(first) || line[1]) {
 			setError(MSG_EnterKAZ);
-			return false;
+			goto fail;
 		}
 		if (startRange < endRange) {
 			setError(MSG_RangeLabel);
-			return false;
+			goto fail;
 		}
 		cw->labels[first - 'a'] = endRange;
-		return true;
+		goto success;
 	}
 
 	/* Find suffix, as in 27,59w2 */
@@ -7587,7 +7563,7 @@ dest_ok:
 		strchr("qwer^&", cmd)) {
 			setError((cmd == '^'
 				  || cmd == '&') ? MSG_Backup0 : MSG_Session0);
-			return false;
+			goto fail;
 		}
 		if (cx < 0)
 			cx = 0;
@@ -7596,20 +7572,20 @@ dest_ok:
 	if (cmd == 'q') {
 		if (cx) {
 			if (!cxCompare(cx))
-				return false;
+				goto fail;
 			if (!cxActive(cx, true))
-				return false;
+				goto fail;
 		} else {
 			cx = context;
 			if (first) {
 				setError(MSG_QAfter);
-				return false;
+				goto fail;
 			}
 		}
 		saveSubstitutionStrings();
-		if (!cxQuit(cx, 2)) return false;
+		if (!cxQuit(cx, 2)) goto fail;
 		if (cx != context)
-			return true;
+			goto success;
 /* look around for another active session */
 		while (true) {
 			if (++cx > maxSession)
@@ -7622,7 +7598,7 @@ dest_ok:
 			if (!sessionList[cx].lw)
 				continue;
 			cxSwitch(cx, true);
-			return true;
+			goto success;
 		}		/* loop over sessions */
 	}
 
@@ -7630,9 +7606,9 @@ dest_ok:
 		selfFrame();
 		if (cx) {
 			if (!cxCompare(cx))
-				return false;
+				goto fail;
 			if (!cxActive(cx, true))
-				return false;
+				goto fail;
 			s = sessionList[cx].lw->f0.fileName;
 			if (s)
 				i_printf(MSG_String, s);
@@ -7643,24 +7619,24 @@ dest_ok:
 			if (cw->jdb_frame)
 				i_printf(MSG_String, " jdb");
 			eb_puts("");
-			return true;
+			goto success;
 		}		// another session
 		if (first) {
 			if (cw->dirMode) {
 				setError(MSG_DirRename);
-				return false;
+				goto fail;
 			}
 			if (cw->sqlMode) {
 				setError(MSG_TableRename);
-				return false;
+				goto fail;
 			}
 			if (cw->irciMode | cw->ircoMode) {
 				setError(MSG_IrcRename);
-				return false;
+				goto fail;
 			}
 			if (cw->imapMode1 | cw->imapMode2 | cw->imapMode3) {
 				setError(MSG_ImapRename);
-				return false;
+				goto fail;
 			}
 			nzFree(cf->fileName);
 			if(stringEqual(line, "clear"))
@@ -7678,17 +7654,18 @@ dest_ok:
 				i_printf(MSG_BinaryBrackets);
 			nl();
 		}
-		return true;
+		goto success;
 	}
 
 	if (cmd == 'w') {
 		if (cx) {	// write to another session
 			if (writeMode == O_APPEND) {
 				setError(MSG_NoSpaceAfter);
-				return false;
+				goto fail;
 			}
 			if(atsave) *atsave = '@';
-			return writeContext(cx, atWindow, writeLine);
+			rc = writeContext(cx, atWindow, writeLine);
+			goto done;
 		}
 		selfFrame();
 
@@ -7708,7 +7685,7 @@ dest_ok:
 			nzFree(newline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
-				return false;
+				goto fail;
 			}
 // Compute file size ahead of time; shell command could start
 // printing stuff before we send it all the lines.
@@ -7749,12 +7726,12 @@ dest_ok:
 			if(pexit) {
 				if(wrc) unlink(wrc_file);
 				setError(MSG_CmdFail);
-				return false;
+				goto fail;
 			}
-			if(!wrc) return true;
+			if(!wrc) goto success;
 			rc = fileIntoMemory(wrc_file, &outdata, &outlen, 0);
 			unlink(wrc_file);
-			if(!rc) return false;
+			if(!rc) goto fail;
 			delText(startRange, endRange);
 // Warning, we don't convert output from iso8859 or other formats to utf8,
 // like we do when reading from a file; just assume it is proper.
@@ -7762,46 +7739,47 @@ dest_ok:
 			nzFree(outdata);
 			if(rc)
 				debugPrint(1, "%d", outlen);
-			return true;
+			goto success;
 		}
 
 		if(!first && cw->irciMode) {
 // write the buffer to the irc server
 			if(!startRange) {
 				setError(MSG_AtLine0);
-				return false;
+				goto fail;
 			}
 			if(startRange != 1 || endRange != cw->dol || globSub) {
 				setError(MSG_IrcEntire);
-				return false;
+				goto fail;
 			}
-			if(!ircWrite()) return false;
+			if(!ircWrite()) goto fail;
 			delText(startRange, endRange);
 			cw->changeMode = cw->undoable = false;
-			return true;
+			goto success;
 		}
 
 		if (!first)
 			line = cf->fileName;
 		if (!line) {
 			setError(MSG_NoFileSpecified);
-			return false;
+			goto fail;
 		}
 		if (cw->dirMode && stringEqual(line, cf->fileName)) {
 			setError(MSG_NoDirWrite);
-			return false;
+			goto fail;
 		}
 		if (cw->sqlMode && stringEqual(line, cf->fileName)) {
 			setError(MSG_NoDBWrite);
-			return false;
+			goto fail;
 		}
-		return writeFile(line, writeMode);
+		rc = writeFile(line, writeMode);
+		goto done;
 	}
 
 	if (cmd == '&') {	// jump back key
 		if (first && !cx) {
 			setError(MSG_ArrowAfter);
-			return false;
+			goto fail;
 		}
 		if (!cx)
 			cx = 1;
@@ -7809,7 +7787,7 @@ dest_ok:
 			struct histLabel *label = cw->histLabel;
 			if (!label) {
 				setError(MSG_NoPrevious);
-				return false;
+				goto fail;
 			}
 			cw->histLabel = label->prev;
 			if (label->label)	/* this could be 0 because of line deletion */
@@ -7818,14 +7796,14 @@ dest_ok:
 		}
 		if(debugLevel >= 1)
 			printDot();
-		return true;
+		goto success;
 
 	}
 
 	if (cmd == '^') {	// back key, pop the stack
 		if (first && !cx) {
 			setError(MSG_ArrowAfter);
-			return false;
+			goto fail;
 		}
 		if (!cx)
 			cx = 1;
@@ -7834,11 +7812,11 @@ dest_ok:
 			Window *prev = cw->prev;
 			if (!prev) {
 				setError(MSG_NoPrevious);
-				return false;
+				goto fail;
 			}
 			saveSubstitutionStrings();
 			if (!cxQuit(context, 1))
-				return false;
+				goto fail;
 			sessionList[context].lw = cw = prev;
 			selfFrame();
 			restoreSubstitutionStrings(cw);
@@ -7846,30 +7824,30 @@ dest_ok:
 		}
 		if(debugLevel >= 1)
 			printDot();
-		return true;
+		goto success;
 	}
 
 	if (cmd == 'M') {	// move this to another session
 		int scx = cx; // remember
 		if (first && (first != '0' || line[1]) && !cx) {
 			setError(MSG_MAfter);
-			return false;
+			goto fail;
 		}
 		if (!cw->prev) {
 			setError(MSG_NoBackup);
-			return false;
+			goto fail;
 		}
 		if (cx) {
 			if (!cxCompare(cx))
-				return false;
+				goto fail;
 		} else {
 			cx = sideBuffer(0, emptyString, 0, NULL);
 			if (cx == 0)
-				return false;
+				goto fail;
 		}
 /* we likely just created it; now quit it */
 		if (cxActive(cx, false) && !cxQuit(cx, 2))
-			return false;
+			goto fail;
 // If changes were made to this buffer, they are undoable after the move
 		undoCompare();
 		cw->undoable = false;
@@ -7887,15 +7865,15 @@ dest_ok:
 		selfFrame();
 		if(debugLevel >= 1)
 			printDot();
-		return true;
+		goto success;
 	}
 
 	if (cmd == 'A') {
 		char *a;
 		if (!cxQuit(context, 0))
-			return false;
+			goto fail;
 		if (!(a = showLinks()))
-			return false;
+			goto fail;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		undoSpecialClear();
@@ -7909,7 +7887,7 @@ dest_ok:
 		nzFree(a);
 		cw->changeMode = false;
 		fileSize = bufferSize(context, false);
-		return rc;
+		goto done;
 	}
 
 	if (cmd == '<') {	// run a function
@@ -7931,7 +7909,7 @@ dest_ok:
 			}
 			if(*p == '@') {
 				if(!atPartCracker(relative, b, false, p, &ln1, &ln2))
-					return false;
+					goto fail;
 			}
 			j = runBuffer(b, atWindow, stopflag, ln1, ln2);
 			if(!j) j = -1;
@@ -7940,32 +7918,34 @@ dest_ok:
 		}
 		if(j < 0)
 			globSub = false, j = 0;
-		return j;
+		goto donej;
 	}
 
 	// go to a folder in an imap listing
 	if (cmd == 'g' && cw->imapMode1 && !first) {
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "g");
-			return false;
+			goto fail;
 		}
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // path for the folder
 		cmd = 'e';
-		return folderDescend(p, false);
+		rc = folderDescend(p, false);
+		goto done;
 	}
 
 	// go to an email in an envelope listing
 	if (cmd == 'g' && cw->imapMode2 && (!first || (first == '-' && !line[1]))) {
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "g");
-			return false;
+			goto fail;
 		}
 		cw->dot = endRange;
 		p = (char *)cw->r_map[endRange].text; // uid and subject for the email
 		cmd = 'e';
 		if(first) icmd = 'u'; // code to leave the email unformatted
-		return mailDescend(p, icmd);
+		rc = mailDescend(p, icmd);
+		goto done;
 	}
 
 // Go to a file if in directory mode, or text mode and the line
@@ -7978,7 +7958,7 @@ dest_ok:
 		if (endRange > startRange) {
 			setError(MSG_RangeCmd, "g");
 			cmd = 'e';
-			return false;
+			goto fail;
 		}
 		p = (char *)fetchLine(endRange, -1);
 		j = pstLength((pst) p);
@@ -7991,7 +7971,7 @@ dest_ok:
 		p[j] = '\n';
 		if(cw->dirMode) {
 			cw->dot = endRange, cmd = 'e';
-			if(!dirline) return false;
+			if(!dirline) goto fail;
 		} else {
 			if(!dirline || access(dirline, 4))
 				goto past_g_file;
@@ -8013,18 +7993,19 @@ dest_ok:
 			strcpy(pb_how, "pb");
 			if(browseSuffix)
 				sprintf(pb_how, "pb.%s", browseSuffix);
-			return playBuffer(pb_how, dirline);
+			rc = playBuffer(pb_how, dirline);
+			goto done;
 		}
 // need to call runPluginCommand directly here, because the data is already in a local file
 		char *outbuf;
 		int outlen;
-		if (!cxQuit(context, 0)) return false;
+		if (!cxQuit(context, 0)) goto fail;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		undoSpecialClear();
 		if(!noStack) freeWindows(context, false);
 		if(!runPluginCommand(gmt, 0, dirline, 0, 0, &outbuf, &outlen))
-			return false;
+			goto fail;
 // unfortunately this replicates some push&load code below
 		w = createWindow();
 		w->sno = context;
@@ -8053,7 +8034,7 @@ dest_ok:
 			cs->fw = w;
 		cf->render2 = cf->render3 = true;
 		if(gmt->outtype == 'h') browseCurrentBuffer(NULL, false);
-		return true;
+		goto success;
 regular_g_file:
 // I don't think we need to make a copy here
 		line = dirline;
@@ -8065,14 +8046,14 @@ past_g_file:
 		if (cx) {
 // switchsession:
 			if (!cxCompare(cx))
-				return false;
+				goto fail;
 			undoSpecialClear();
 			cxSwitch(cx, true);
-			return true;
+			goto success;
 		}
 		if (!first) {
 			i_printf(MSG_SessionX, context);
-			return true;
+			goto success;
 		}
 /* more e to come */
 	}
@@ -8115,7 +8096,8 @@ past_g_file:
 					}
 					cw->dot = startRange;
 				}
-				return j ? true : false;
+				rc = !!j;
+				goto done;
 			}
 		}
 
@@ -8134,7 +8116,7 @@ past_g_file:
 		if (!*s) {
 			if (cw->sqlMode) {
 				setError(MSG_DBG);
-				return false;
+				goto fail;
 			}
 			jsh = jsgo = nogo = false;
 			jsdead = !isJSAlive;
@@ -8145,7 +8127,7 @@ past_g_file:
 			uriEncoded = true;
 			if (endRange > startRange) {
 				setError(MSG_RangeCmd, "g");
-				return false;
+				goto fail;
 			}
 			p = (char *)fetchLine(endRange, -1);
 			findField(p, 0, j, &n, 0, &tagno, &h, &tag);
@@ -8153,7 +8135,7 @@ past_g_file:
 
 			if (!h) {
 				fieldNumProblem(1, "g", j, n, n);
-				return false;
+				goto fail;
 			}
 			cw->dot = endRange;
 			jumptag = gotag = tag;
@@ -8165,7 +8147,7 @@ past_g_file:
 				puts(h);
 				nzFree(h);
 				if(debugLevel >= 3) printf("%d\n", tag->seqno);
-				return true;
+				goto success;
 			}
 
 			if (tag && tag->action == TAGACT_FRAME) {
@@ -8216,7 +8198,7 @@ past_g_file:
 		if (newlocation)
 				goto redirect;
 			if (!rc)
-				return true;
+				goto success;
 
 			if (jsh) {
 /* actually running the url, not passing it to http etc, need to unescape */
@@ -8226,12 +8208,12 @@ past_g_file:
 				jSideEffects();
 				if (newlocation)
 					goto redirect;
-				return true;
+				goto success;
 			}
 
 past_js:
 			if (nogo)
-				return true;
+				goto success;
 // to access local files
 // but not for a fragment
 			if (!isURL(h) && *h != '#')
@@ -8281,11 +8263,11 @@ past_js:
 		     (cmd == 'i' && strchr("*<?=", c)))) {
 			if (!cw->browseMode && (cmd == 'i' || cx)) {
 				setError(MSG_NoBrowse);
-				return false;
+				goto fail;
 			}
 			if (endRange > startRange && cmd == 'i') {
 				setError(MSG_RangeI, c);
-				return false;
+				goto fail;
 			}
 
 			if (cmd == 'i' && strchr("?=<*", c)) {
@@ -8309,13 +8291,13 @@ past_js:
 				if (!tagno) {
 					fieldNumProblem((c == '*' ? 2 : 0), "i",
 							cx, n, realtotal);
-					return false;
+					goto fail;
 				}
 
 				if (scmd == '?') {
 					infShow(tagno, line);
 					if(debugLevel >= 3) printf("%d\n", tagList[tagno]->seqno);
-					return true;
+					goto success;
 				}
 
 				cw->undoable = false;
@@ -8325,12 +8307,12 @@ past_js:
 					Tag *t = tagList[tagno];
 					if (globSub) {
 						setError(MSG_IG);
-						return (globSub = false);
+						goto failg;
 					}
 					nzFree(allocatedLine);
 					allocatedLine = lessFile(line, (t->itype == INP_TA));
 					if (!allocatedLine)
-						return false;
+						goto fail;
 					line = allocatedLine;
 					scmd = '=';
 				}
@@ -8339,7 +8321,7 @@ past_js:
 					rc = infReplace(tagno, (char*)line, true);
 					if (newlocation)
 						goto redirect;
-					return rc;
+					goto done;
 				}
 
 				if (c == '*') {
@@ -8350,10 +8332,10 @@ past_js:
 					jSideEffects();
 					cf = save_cf;
 					if (!c)
-						return false;
+						goto fail;
 					if (newlocation) goto redirect;
 // No url means it was a reset button
-					if (!allocatedLine) return true;
+					if (!allocatedLine) goto success;
 					line = allocatedLine;
 					first = *line;
 					cmd = 'b';
@@ -8364,13 +8346,13 @@ past_js:
 				cmd = 's';
 		} else {
 			setError(MSG_TextAfter, icmd);
-			return false;
+			goto fail;
 		}
 	}
 
 	if(cmd == 'e' && first == '!') {
 // did you make changes that you didn't write?
-		if (!cxQuit(context, 0)) return false;
+		if (!cxQuit(context, 0)) goto fail;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		undoSpecialClear();
@@ -8384,18 +8366,18 @@ past_js:
 		nzFree(newline);
 		if (!p) {
 			setError(MSG_NoSpawn, line + 1, errno);
-			return false;
+			goto fail;
 		}
 		rc = fdIntoMemory(fileno(p), &outdata, &outlen, 0);
 		if(!rc) {
 			pclose(p);
-			return false;
+			goto fail;
 		}
 		pexit = pclose(p);
 		if(pexit) {
 			setError(MSG_CmdFail);
 			nzFree(outdata);
-			return false;
+			goto fail;
 		}
 // Warning, we don't convert output from iso8859 or other formats to utf8,
 // like we do when reading from a file; just assume it is proper.
@@ -8406,7 +8388,7 @@ past_js:
 		selfFrame();
 		rc = addTextToBuffer((pst)outdata, outlen, 0, true);
 		nzFree(outdata);
-		if(!rc) return rc; // should never happen
+		if(!rc) goto done; // should never happen
 		debugPrint(1, "%d", outlen);
 		w->undoable = w->changeMode = false;
 		cw = cs->lw;	// put it back, for now
@@ -8424,7 +8406,7 @@ past_js:
 		selfFrame();
 		if (!w->prev)
 			cs->fw = w;
-		return rc;
+		goto done;
 	}
 
 rebrowse:
@@ -8438,7 +8420,7 @@ rebrowse:
 		if (noStack < 2 && sameURL(line, cf->fileName) && !cw->dirMode) {
 			if (stringEqual(line, cf->fileName)) {
 				setError(MSG_AlreadyInBuffer);
-				return false;
+				goto fail;
 			}
 /* Same url, but a different #section */
 			s = findHash(line);
@@ -8447,12 +8429,12 @@ rebrowse:
 				if(!cw->dot) {
 					if(debugLevel >= 1)
 						i_puts(MSG_Empty);
-					return true;
+					goto success;
 				}
 				if(cw->dot == 1) {
 					if(debugLevel >= 1)
 						printDot();
-					return true;
+					goto success;
 				}
 				struct histLabel *label =
 				    allocMem(sizeof(struct histLabel));
@@ -8462,7 +8444,7 @@ rebrowse:
 				cw->dot = 1;
 				if(debugLevel >= 1)
 					printDot();
-				return true;
+				goto success;
 			}
 			line = s;
 			first = '#';
@@ -8474,7 +8456,7 @@ rebrowse:
 
 // Different URL, go get it.
 // did you make changes that you didn't write?
-		if (!cxQuit(context, 0)) return false;
+		if (!cxQuit(context, 0)) goto fail;
 		undoCompare();
 		cw->undoable = cw->changeMode = false;
 		uchar prebrowse = cw->browseMode;
@@ -8560,7 +8542,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 				cs->lw = cw;
 				freeWindow(w);
 			}
-			return j;
+			goto donej;
 		}
 		if (noStack) {
 			w->prev = cw->prev;
@@ -8576,7 +8558,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 		if (!w->prev)
 			cs->fw = w;
 		if (!j)
-			return false;
+			goto fail;
 		if (changeFileName) {
 // If not browsing, and redriected here by 302, lop of the hash,
 // only cause that is consistent with no redirection.
@@ -8594,7 +8576,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 		if (cw->binMode && (!cf->mt || !cf->mt->outtype))
 			cmd = 'e';
 		if (cmd == 'e')
-			return true;
+			goto success;
 	}
 
 browse:
@@ -8602,13 +8584,13 @@ browse:
 		char *newhash;
 		if (cw->dirMode) {
 			setError(MSG_DirCommand, cmd);
-			return false;
+			goto fail;
 		}
 		if (!cw->browseMode) {
 			int save_count = redirect_count;
 			if (!cw->dol) {
 				setError(MSG_BrowseEmpty);
-				return false;
+				goto fail;
 			}
 			if (fileSize >= 0) {
 				debugPrint(1, "%lld", fileSize);
@@ -8616,15 +8598,15 @@ browse:
 			}
 			if (!browseCurrentBuffer(browseSuffix, plainMail)) {
 				if (icmd == 'b')
-					return false;
-				return true;
+					goto fail;
+				goto success;
 			}
 			redirect_count = save_count;
 			if(cw->f_dot && cw->f_dot <= cw->dol)
 				cw->dot = cw->f_dot;
 		} else if (!first) {
 			setError(MSG_BrowseAlready);
-			return false;
+			goto fail;
 		}
 
 		if (newlocation) {
@@ -8637,7 +8619,7 @@ redirect:
 				if(++newloc_count == 3) {
 				debugPrint(1, "more than 2 redirects, stop at %s", newlocation);
 				nzFree(newlocation), newlocation = 0;
-				return true;
+				goto success;
 			}
 				selfFrame();
 				noStack = newloc_r;
@@ -8652,7 +8634,7 @@ redirect:
 				first = *line;
 				if (intFlag) {
 					i_puts(MSG_RedirectionInterrupted);
-					return true;
+					goto success;
 				}
 				goto rebrowse;
 			}
@@ -8661,15 +8643,15 @@ redirect:
 /* Jump to the #section if specified in the url */
 		if(!redirect_count) {
 			if(!(p = findHash(line)))
-				return true;
+				goto success;
 			newhash = cloneString(p + 1);
 		} else {
 			if(!(p = findHash(cw->f0.fileName)))
-				return true;
+				goto success;
 // have to pull #stuff out and still leave the .browse at the end.
 			s = p + strlen(p) - 7;
 			if(s <= p) // should never happen
-				return true;
+				goto success;
 			newhash = pullString1(p + 1, s);
 			strmove(p, s);
 		}
@@ -8684,23 +8666,25 @@ redirect:
 		unpercentString(newhash);
 		rc = jump2anchor(jumptag, newhash);
 		nzFree(newhash);
-		return rc;
+		goto done;
 	}
 
 	if (cmd == 'g' || cmd == 'v') {
 		undoSpecialClear();
-		rc =  doGlobal(line);
+		rc = doGlobal(line);
 		nzFree(gflag), gflag = 0;
-		return rc;
+		goto done;
 	}
 
-	if (cmd == 'm' || cmd == 't')
-		return moveCopy();
+	if (cmd == 'm' || cmd == 't') {
+		rc = moveCopy();
+		goto done;
+	}
 
 	if (cmd == 'i') {
 		if (cw->browseMode) {
 			setError(MSG_BrowseCommand, 'i');
-			return false;
+			goto fail;
 		}
 		cmd = 'a';
 		--startRange, --endRange;
@@ -8715,44 +8699,51 @@ redirect:
 	if (cmd == 'a') {
 		if (inscript && cw->sqlMode) {
 			setError(MSG_InsertFunction);
-			return false;
+			goto fail;
 		}
 
-		if (cw->sqlMode)
-			return sqlAddRows(endRange);
+		if (cw->sqlMode) {
+			rc = sqlAddRows(endRange);
+			goto done;
+		}
 
-		if (cw->imapMode1)
-			return addFolders();
+		if (cw->imapMode1) {
+			rc = addFolders();
+			goto done;
+		}
 
-		return inputLinesIntoBuffer();
+		rc = inputLinesIntoBuffer();
+		goto done;
 	}
 
 	if (cmd == 'd' || cmd == 'D') {
 		if (cw->imapMode1) {
 			if (globSub) {
 				setError(MSG_GlobalCommand, icmd);
-				return (globSub = false);
+				goto failg;
 			}
 			if (endRange > startRange) {
 				setError(MSG_RangeCmd, "d");
-				return false;
+				goto fail;
 			}
-			return deleteFolder(endRange);
+			rc = deleteFolder(endRange);
+			goto done;
 		}
 
 		if (cw->imapMode2) {
 			rc = imapDelete(startRange, endRange, cmd);
 			if(!rc) globSub = false;
-			return rc;
+			goto done;
 		}
 
 		if (cw->imapMode3) {
 			globSub = false;
 			if(endRange > startRange) {
 				setError(MSG_RangeCmd, "d");
-				return false;
+				goto fail;
 			}
-			return imapDeleteWhileReading();
+			rc = imapDeleteWhileReading();
+			goto done;
 		}
 
 		if (cw->dirMode) {
@@ -8783,17 +8774,19 @@ afterdelete:
 		else if (cmd == 'D')
 			printDot();
 		if(cw->ircoMode) cw->undoable = true;
-		return j;
+		goto donej;
 	}
 
 	if (cmd == 'j' || cmd == 'J') {
-		return joinText(line);
+		rc = joinText(line);
+		goto done;
 	}
 
 	if (cmd == 'r') {
 		if (cx) {
 			if(atsave) *atsave = '@';
-			return readContext(cx, atWindow, readLine1, readLine2);
+			rc = readContext(cx, atWindow, readLine1, readLine2);
+			goto done;
 		}
 
 		if(first == '!') { // read from a command, like ed
@@ -8807,18 +8800,18 @@ afterdelete:
 			nzFree(newline);
 			if (!p) {
 				setError(MSG_NoSpawn, line + 1, errno);
-				return false;
+				goto fail;
 			}
 			rc = fdIntoMemory(fileno(p), &outdata, &outlen, 0);
 			if(!rc) {
 				pclose(p);
-				return false;
+				goto fail;
 			}
 			pexit = pclose(p);
 			if(pexit) {
 				setError(MSG_CmdFail);
 				nzFree(outdata);
-				return false;
+				goto fail;
 			}
 // Warning, we don't convert output from iso8859 or other formats to utf8,
 // like we do when reading from a file; just assume it is proper.
@@ -8826,7 +8819,7 @@ afterdelete:
 			nzFree(outdata);
 			if(rc)
 				debugPrint(1, "%d", outlen);
-			return rc;
+			goto done;
 		}
 
 		if (first) {
@@ -8835,30 +8828,31 @@ afterdelete:
 				strmove(strchr(newline + 1, ']') + 1, line);
 				line = newline;
 			}
-			j = readFile(line, false, 0, 0, 0, cw->browseMode, 0);
+			rc = readFile(line, false, 0, 0, 0, cw->browseMode, 0);
 			if (!serverData)
 				fileSize = -1;
-			return j;
+			goto done;
 		}
 		setError(MSG_NoFileSpecified);
-		return false;
+		goto fail;
 	}
 
 	if (cmd == 's') {
 		if (cw->imapMode1) {
 			if (globSub) {
 				setError(MSG_GlobalCommand, icmd);
-				return (globSub = false);
+				goto failg;
 			}
 			if (endRange > startRange) {
 				setError(MSG_RangeCmd, "s");
-				return false;
+				goto fail;
 			}
 // substituteText will handle the imap folder rename
 			j = substituteText(line);
-			if(j <= 0) return false;
+			if(j <= 0) goto fail;
 // success, but we have to refresh.
-			return imap1rf();
+			rc = imap1rf();
+			goto done;
 		}
 
 		pst p;
@@ -8873,11 +8867,32 @@ afterdelete:
 		}
 		if (newlocation)
 			goto redirect;
-		return j;
+		goto donej;
 	}
 
 	setError(MSG_CNYI, icmd);
-	return (globSub = false);
+	goto failg;
+
+// If this was C++ then I'd set this up so return would free allocatedLine,
+// but it's not so we have to jump to one of these cases.
+
+success:
+	nzFree(allocatedLine);
+	return true;
+
+fail:
+	nzFree(allocatedLine);
+	return false;
+
+failg:
+	nzFree(allocatedLine);
+	return globSub = false;
+
+donej:
+	rc = j;
+done:
+	nzFree(allocatedLine);
+	return rc;
 }
 
 bool edbrowseCommand(const char *line, bool script)
