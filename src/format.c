@@ -1988,9 +1988,13 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 	char *tbuf;
 	int i, j;
 	bool crlf_yes = false, crlf_no = false, dosmode = false;
+	bool is8859 = false, isutf8 = false;
+	int bom = 0;
+// Classify this incoming text as ascii or 8859 or utf-x
+	if(firstPart) bom = byteOrderMark((uchar *) rbuf, (int)fileSize);
 
 // undos, only if each \n has \r preceeding.
-	if (iuConvert) {
+	if (iuConvert && !bom) {
 		for (i = 0; i < *partSize_p; ++i) {
 			if (rbuf[i] != '\n') continue;
 			if (i && rbuf[i - 1] == '\r') crlf_yes = true;
@@ -2016,10 +2020,6 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 
 	if (!iuConvert) return;
 
-/* Classify this incoming text as ascii or 8859 or utf-x */
-	bool is8859 = false, isutf8 = false;
-	int bom = 0;
-	if(firstPart) bom = byteOrderMark((uchar *) rbuf, (int)fileSize);
 	if (bom) {
 // bom implies not reading by parts, so don't worry about that any more.
 		debugPrint(3, "text type is %s%s",
