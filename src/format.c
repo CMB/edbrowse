@@ -1,6 +1,6 @@
 // format.c, Format text, establish line breaks, manage whitespace,
 // iso8859, utf8, utf16, utf32, base64, color codes,
-// emojis, messages in your local language.
+// emojis, messages in your local language, edbrowse variables.
 
 #include "eb.h"
 
@@ -3313,5 +3313,80 @@ bool helpUtility(void)
 	browseCurrentBuffer(NULL, false);
 	cw->dot = 1;
 	return true;
+}
+
+// An edbrowse variable, primarily for scripting
+static struct EBVAR {
+	struct EBVAR *next;
+	const char *name, *value;
+	} *varhead;
+
+static const char *varLookup(const char *name)
+{
+	const struct EBVAR *v;
+	for(v = varhead; v; v = v->next)
+		if(stringEqual(name, v->name)) return v->value;
+	return NULL;
+}
+
+static void varSet(const char *name, const char *value)
+{
+	struct EBVAR *v, *v1 = 0;
+	bool isclear = stringEqual(value, "clear");
+	for(v = varhead; v; v1 = v, v = v->next)
+		if(stringEqual(name, v->name)) break;
+	if(v) {
+		cnzFree(v->value);
+		if(!isclear) {
+			v->value = cloneString(value);
+			return;
+		}
+// clear this variable
+		cnzFree(v->name);
+		if(v1) v1->next = v->next;
+		else varhead = v->next;
+		nzFree(v);
+		return;
+	}
+	if(isclear) return;
+	v = allocMem(sizeof(struct EBVAR));
+	v->next = varhead, varhead = v;
+	v->name = cloneString(name);
+	v->value = cloneString(value);
+}
+
+bool varCommand(const char *line)
+{
+	const char *v;
+	char cut;
+// I will cast to char * to blank out a character; but I'll put it back.
+	char *t;
+	skipWhite(&line);
+	t = (char*)line;
+	if(!isalpha(*t)) goto fail;
+	while(isalpha(*t) || isdigit(*t)) ++t;
+	cut = *t;
+	if(cut != '=' && cut != ':') goto fail;
+	v = t + 1;
+	if(cut == ':') {
+// set environment variable
+		if(*v != '=') goto fail;
+		++v;
+		*t = 0;
+		if(stringEqual(v, "clear"))
+			unsetenv(line);
+		else
+			setenv(line, v, 1);
+		*t = cut;
+		return true;
+	}
+	*t = 0;
+	varSet(line, v);
+	*t = cut;
+	return true;
+
+fail:
+	setError(MSG_VarSyntax);
+	return false;
 }
 

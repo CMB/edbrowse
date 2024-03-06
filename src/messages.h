@@ -853,4 +853,5 @@ MSG_ImaskOn,
 	MSG_FolderNameBad,
 	MSG_MailRead,
 	MSG_MailUnread,
+	MSG_VarSyntax,
 };

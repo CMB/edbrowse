@@ -140,6 +140,7 @@ void showErrorConditional(char cmd);
 void showErrorAbort(void);
 void eb_puts(const char *s);
 bool helpUtility(void);
+bool varCommand(const char *line);
 
 // sourcefile=html.c
 void dwStart(void);

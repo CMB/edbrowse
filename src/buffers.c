@@ -4811,6 +4811,9 @@ static int twoLetter(const char *line, const char **runThis)
 	if (stringEqual(line, "qt"))
 		ebClose(0);
 
+	if(!strncmp(line, "var ", 4))
+		return varCommand(line + 4);
+
 	if(!strncmp(line, "sleep", 5) && (line[5] == 0 || line[5] == ' ')) {
 		int pause, rc;
 		time_t start, now;
