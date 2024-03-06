@@ -2375,7 +2375,7 @@ badwrite:
 				if (cw->utf16Mode || cw->utf32Mode) {
 					utfHigh((char *)p, len, &tp, &tlen,
 						cons_utf8, cw->utf32Mode,
-						cw->bigMode);
+						cw->bigMode, cw->dosMode);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;

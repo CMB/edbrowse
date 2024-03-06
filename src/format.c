@@ -1729,7 +1729,7 @@ since it will contain nulls, plenty of them in the case of utf32.
 *********************************************************************/
 
 void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
-	     bool inutf8, bool out32, bool outbig)
+	     bool inutf8, bool out32, bool outbig, bool dosmode)
 {
 	uchar *outbuf;
 	unsigned int unicode;
@@ -1742,7 +1742,9 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 		return;
 	}
 
-	outbuf = allocMem(inbuflen * 4);	// worst case
+// worst case is a string of newlines converted to dos and then to utf32
+// we could perhaps make this more efficient by counting newlines beforehand
+	outbuf = allocMem(inbuflen * (dosmode ? 2 : 1) * (out32 ? 4 : 2));
 
 	i = j = 0;
 	while (i < inbuflen) {
@@ -1768,6 +1770,12 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 			}
 		}
 
+		bool pre_cr = false;
+		if(unicode == '\n' && dosmode)
+			unicode = '\r', pre_cr = true;
+
+output:
+
 		if (out32) {
 			if (outbig) {
 				outbuf[j++] = ((unicode >> 24) & 0xff);
@@ -1780,8 +1788,11 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 				outbuf[j++] = ((unicode >> 16) & 0xff);
 				outbuf[j++] = ((unicode >> 24) & 0xff);
 			}
+doscheck:
+			if(pre_cr) { pre_cr = false; unicode = '\n'; goto output; }
 			continue;
 		}
+
 // utf16, a bit trickier but not too bad.
 		if (unicode <= 0xd7ff
 		    || (unicode >= 0xe000 && unicode <= 0xffff)) {
@@ -1792,7 +1803,7 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 				outbuf[j++] = (unicode & 0xff);
 				outbuf[j++] = ((unicode >> 8) & 0xff);
 			}
-			continue;
+			goto doscheck;
 		}
 
 		if (unicode >= 0x10000 && unicode <= 0x10ffff) {
