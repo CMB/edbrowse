@@ -854,4 +854,7 @@ MSG_ImaskOn,
 	MSG_MailRead,
 	MSG_MailUnread,
 	MSG_VarSyntax,
+	MSG_NoEbVar,
+	MSG_VarNumber,
+	MSG_Div0,
 };

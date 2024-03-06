@@ -6692,7 +6692,7 @@ bool runCommand(const char *line)
 	bool emode = false;	// force e, not browse
 	bool postSpace = false, didRange = false;
 	char first;
-	int cx = 0;		/* numeric suffix as in s/x/y/3 or w2 */
+	int cx = 0;		// numeric suffix as in s/x/y/3 or w2
 	const Tag *gotag = 0;
 	int tagno;
 	int newloc_count = 0;
@@ -6701,15 +6701,22 @@ bool runCommand(const char *line)
 	char *thisfile;
 	const char *browseSuffix = 0;
 	bool plainMail = false;
+		char *allocatedLine;
 	static char newline[MAXTTYLINE];
 
 	selfFrame();
-		char *allocatedLine = 0;
 	redirect_count = 0;
 	js_redirects = false;
 	cmd = icmd = 'p';
 	uriEncoded = false;
 	if(!globSub) bad_utf8_alert = false;
+
+// Here is where we initialize allocatedLine, by possibly expanding variables
+// the actual command may reallocate it
+	if(!varExpand(line, &allocatedLine))
+		return false;
+	if(allocatedLine) line = allocatedLine;
+
 	skipWhite(&line);
 	first = *line;
 	noStack = 0;

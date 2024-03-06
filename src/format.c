@@ -3390,3 +3390,150 @@ fail:
 	return false;
 }
 
+// expand variables, result is allocated as it could be considerably longer
+bool varExpand(const char *line, char **newline)
+{
+	*newline = 0;
+// high runner case first
+	if(!strstr(line, "$(")) return true;
+
+// ok folks, there is something to look at
+	char *ns; // new string
+	int ns_l; // length of new string
+	ns = initString(&ns_l);
+	const char *l1 = line, *l2, *l3, *lv;
+	char *t; // I may cast to char*, to blank out something, but I'll put it back
+	char cut, op1, op2;
+	const char *value;
+	int total, side, n, sign;
+
+top:
+	l2 = strstr(l1, "$(");
+	if(!l2) { // done
+		stringAndString(&ns, &ns_l, l1);
+		if(stringEqual(ns, line)) {
+			nzFree(ns);
+			return true;
+		}
+		*newline = ns;
+		return true;
+	}
+
+	if(l2 > l1) stringAndBytes(&ns, &ns_l, l1, l2 - l1);
+	l1 = l2;
+	l3 = (l2 += 2);
+	if(*l3 == ':') ++l3;
+	lv = l3;
+	if(!isalpha(*l3)) {
+syntax:
+// doesn't look right, just step ahead.
+		stringAndString(&ns, &ns_l, "$(");
+		l1 += 2;
+		goto top;
+	}
+	while(isalnum(*l3)) ++l3;
+	cut = *l3;
+	if(!cut) goto syntax;
+	if(!strchr(")+-*/", cut)) goto syntax;
+	t = (char*)l3, *t = 0;
+	if(*l2 == ':') value = getenv(lv);
+	else value = varLookup(lv);
+	if(!value) {
+reference:
+		nzFree(ns);
+		setError(MSG_NoEbVar, lv);
+		*t = cut;
+		return false;
+	}
+
+	if(cut == ')') { // simple variable reference
+		*t = cut;
+		stringAndString(&ns, &ns_l, value);
+		l1 = l3 + 1;
+		goto top;
+	}
+
+// an arithmetic expression begins here, every value henceforth
+// has to be a number
+	sign = 1;
+	if(*value == '+') side = stringIsNum(value + 1);
+	else if(*value == '-') sign = -1, side = stringIsNum(value + 1);
+	else side = stringIsNum(value);
+	if(side < 0) {
+notnumber:
+		nzFree(ns);
+		setError(MSG_VarNumber, lv);
+		*t = cut;
+		return false;
+	}
+	side *= sign;
+	total = 0, op1 = '+', op2 = cut;
+	*t = cut;
+
+nextarg:
+	l2 = ++l3;
+	if(*l3 == ':') ++l3;
+	lv = l3;
+	if(isdigit(*l3)) {
+		n = strtol(l3, (char**)&l3, 10);
+	} else {
+		if(!isalpha(*l3)) goto syntax;
+		while(isalnum(*l3)) ++l3;
+	}
+	cut = *l3;
+	if(!cut) goto syntax;
+	if(!strchr(")+-*/", cut)) goto syntax;
+	t = (char*)l3, *t = 0;
+	if(isalpha(*lv)) {
+		if(*l2 == ':') value = getenv(lv);
+		else value = varLookup(lv);
+		if(!value) goto reference;
+		sign = 1;
+		if(*value == '+') n = stringIsNum(value + 1);
+		else if(*value == '-') sign = -1, n = stringIsNum(value + 1);
+		else n = stringIsNum(value);
+		if(n < 0) goto notnumber;
+		n *= sign;
+	}
+
+// total op1 side op2 n cut
+// op1 is always + or -
+	if(op2 == '*') {
+		side *= n;
+	}
+
+	if(op2 == '/') {
+		if(!n) {
+			nzFree(ns);
+			setError(MSG_Div0);
+			*t = cut;
+			return false;
+		}
+// simulate $((x/y)) in the shell
+// there's no floating point here
+		int side1 = side, n1 = n;
+		if(side1 < 0) side1 = -side1;
+		if(n1 < 0) n1 = -n1;
+		side1 /= n1;
+		if(side < 0) side1 = -side1;
+		if(n < 0) side1 = -side1;
+		side = side1;
+	}
+
+	if(op2 != '*' && op2 != '/') {
+		if(op1 == '+') total += side; else total -= side;
+		side = n;
+		op1 = op2;
+	}
+
+	*t = cut;
+	if(cut == ')') { // end of expression
+		if(op1 == '+') total += side; else total -= side;
+		stringAndNum(&ns, &ns_l, total);
+		l1 = l3 + 1;
+		goto top;
+	}
+	op2 = cut;
+	goto nextarg;
+}
+

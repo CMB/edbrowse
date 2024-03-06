@@ -141,6 +141,7 @@ void showErrorAbort(void);
 void eb_puts(const char *s);
 bool helpUtility(void);
 bool varCommand(const char *line);
+bool varExpand(const char *line, char **newline);
 
 // sourcefile=html.c
 void dwStart(void);

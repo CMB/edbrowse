@@ -754,9 +754,9 @@ invalid characters in the folder name
 read
 unread
 invalid var syntax
-0
-0
-0
+$(%s) is not defined
+%s is not a number
+division by 0
 0
 0
 0
