@@ -2335,7 +2335,6 @@ badwrite:
 
 			if (name == cf->fileName && iuConvert) {
 				if (cw->dosMode && len && p[len - 1] == '\n') {
-// dos mode should not be set with utf16 or utf32; I hope.
 					tp = allocMem(len + 2);
 					memcpy(tp, p, len - 1);
 					memcpy(tp + len - 1, "\r\n", 3);
@@ -2374,8 +2373,7 @@ badwrite:
 
 				if (cw->utf16Mode || cw->utf32Mode) {
 					utfHigh((char *)p, len, &tp, &tlen,
-						cons_utf8, cw->utf32Mode,
-						cw->bigMode, cw->dosMode);
+						cons_utf8, cw->utf32Mode, cw->bigMode);
 					if (alloc_p)
 						free(p);
 					alloc_p = true;

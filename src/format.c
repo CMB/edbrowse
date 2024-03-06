@@ -1729,7 +1729,7 @@ since it will contain nulls, plenty of them in the case of utf32.
 *********************************************************************/
 
 void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
-	     bool inutf8, bool out32, bool outbig, bool dosmode)
+	     bool inutf8, bool out32, bool outbig)
 {
 	uchar *outbuf;
 	unsigned int unicode;
@@ -1742,9 +1742,8 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 		return;
 	}
 
-// worst case is a string of newlines converted to dos and then to utf32
-// we could perhaps make this more efficient by counting newlines beforehand
-	outbuf = allocMem(inbuflen * (dosmode ? 2 : 1) * (out32 ? 4 : 2));
+// worst case is utf32
+	outbuf = allocMem(inbuflen * 4);
 
 	i = j = 0;
 	while (i < inbuflen) {
@@ -1770,12 +1769,6 @@ void utfHigh(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 			}
 		}
 
-		bool pre_cr = false;
-		if(unicode == '\n' && dosmode)
-			unicode = '\r', pre_cr = true;
-
-output:
-
 		if (out32) {
 			if (outbig) {
 				outbuf[j++] = ((unicode >> 24) & 0xff);
@@ -1788,8 +1781,6 @@ output:
 				outbuf[j++] = ((unicode >> 16) & 0xff);
 				outbuf[j++] = ((unicode >> 24) & 0xff);
 			}
-doscheck:
-			if(pre_cr) { pre_cr = false; unicode = '\n'; goto output; }
 			continue;
 		}
 
@@ -1803,7 +1794,7 @@ doscheck:
 				outbuf[j++] = (unicode & 0xff);
 				outbuf[j++] = ((unicode >> 8) & 0xff);
 			}
-			goto doscheck;
+			continue;
 		}
 
 		if (unicode >= 0x10000 && unicode <= 0x10ffff) {
@@ -1995,6 +1986,8 @@ void utfLow(const char *inbuf, int inbuflen, char **outbuf_p, int *outbuflen_p,
 // This is called by readFile in buffers.c, so has some
 void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, const bool firstPart, const bool showMessage)
 {
+	if (!iuConvert) return;
+
 	char *rbuf = *rbuf_p;
 	char *tbuf;
 	int i, j;
@@ -2003,33 +1996,6 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 	int bom = 0;
 // Classify this incoming text as ascii or 8859 or utf-x
 	if(firstPart) bom = byteOrderMark((uchar *) rbuf, (int)fileSize);
-
-// undos, only if each \n has \r preceeding.
-	if (iuConvert && !bom) {
-		for (i = 0; i < *partSize_p; ++i) {
-			if (rbuf[i] != '\n') continue;
-			if (i && rbuf[i - 1] == '\r') crlf_yes = true;
-			else crlf_no = true;
-		}
-		if (crlf_yes && !crlf_no) dosmode = true;
-	} // iuConvert
-
-	if (dosmode) {
-		if ((debugLevel >= 2 || (debugLevel == 1 && showMessage))
-		&& firstPart)
-			i_puts(MSG_ConvUnix);
-		for (i = j = 0; i < *partSize_p; ++i) {
-			char c = rbuf[i];
-			if (c == '\r' && rbuf[i + 1] == '\n')
-				continue;
-			rbuf[j++] = c;
-		}
-		rbuf[j] = 0;
-		fileSize -= (*partSize_p - j);
-		*partSize_p = j;
-	}
-
-	if (!iuConvert) return;
 
 	if (bom) {
 // bom implies not reading by parts, so don't worry about that any more.
@@ -2081,6 +2047,29 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 				memmove(rbuf, rbuf + 3, *partSize_p);
 			}
 		}
+	}
+
+// undos, only if each \n has \r preceeding.
+	for (i = 0; i < *partSize_p; ++i) {
+		if (rbuf[i] != '\n') continue;
+		if (i && rbuf[i - 1] == '\r') crlf_yes = true;
+		else crlf_no = true;
+	}
+	if (crlf_yes && !crlf_no) dosmode = true;
+
+	if (dosmode) {
+		if ((debugLevel >= 2 || (debugLevel == 1 && showMessage))
+		&& firstPart)
+			i_puts(MSG_ConvUnix);
+		for (i = j = 0; i < *partSize_p; ++i) {
+			char c = rbuf[i];
+			if (c == '\r' && rbuf[i + 1] == '\n')
+				continue;
+			rbuf[j++] = c;
+		}
+		rbuf[j] = 0;
+		fileSize -= (*partSize_p - j);
+		*partSize_p = j;
 	}
 
 // if reading into an empty buffer, set the mode and print message
