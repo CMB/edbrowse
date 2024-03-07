@@ -917,6 +917,8 @@ Edbrowse Functions
 <br>$(x) : expand the variable x
 <br>$(:LANG) : expand the environment variable LANG
 <br>$(x+3*y-7) : perform basic arithmetic
+<br>[ $(x) = $(y) ] : test for equality
+<br>[ $(x) != $(y) and friends ] : test for inequality
 <p>
 Debug
 <p>
@@ -5047,6 +5049,26 @@ var z:=$(z)
 
 <p>
 An arithmetic expression can include variables from both arenas, as in $(jj+7-3*:kk)
+
+<p>
+there is a test command, which is similar in syntax and function to that found in the shell.
+If the line comprises [ expression = expression ], then it quietly returns success if the expressions are equal,
+and returns error if they are not.
+The != operator does the opposite.
+Here is a goofy little function that counts to 17.
+
+<PRE>
+function+count17 {
+    db0
+    var i=0
+    while(*) {
+        var i=$(i+1)
+        !echo $(i)
+        [ $(i) != 17 ]
+    }
+    var i=clear
+}
+</PRE>
 
 <h2 id="ma">Mail Accounts</h2>
 

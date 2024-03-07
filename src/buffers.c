@@ -4812,6 +4812,44 @@ static int twoLetter(const char *line, const char **runThis)
 	if(!strncmp(line, "var ", 4))
 		return varCommand(line + 4);
 
+	if(line[0] == '[' && line[1] == ' ' &&
+	(n = strlen(line)) >= 5 &&
+	line[n-1] == ']' && line[n - 2] == ' ') {
+		const char *eq = strstr(line, " = ");
+		const char *neq = strstr(line, " != ");
+		int sign = 0;
+		if(eq && (!neq || neq > eq)) sign = 1;
+		if(neq && (!eq || eq > neq)) sign = -1;
+		if(sign) {
+			if(sign < 0) eq = neq;
+			const char *s = eq + 3;
+			while(isspace(eq[-1])) --eq;
+			while(isspace(*s)) ++s;
+			bool emptyleft = (eq == line + 1);
+			bool emptyright = (s == line + n - 1);
+			if(emptyleft & emptyright) {
+				if(sign > 0) return true;
+test_false:
+				setError(MSG_False);
+				return false;
+			}
+			if(emptyleft | emptyright) {
+				if(sign > 0) goto test_false;
+				return true;
+			}
+			const char *t = line + n - 2;
+			while(isspace(t[-1])) --t;
+			const char *u = line + 2;
+			while(isspace(*u)) ++u;
+			if(eq - u == t - s && !memcmp(u, s, t-s)) {
+				if(sign > 0) return true;
+				goto test_false;
+			}
+			if(sign > 0) goto test_false;
+			return true;
+		}
+	}
+
 	if(!strncmp(line, "sleep", 5) && (line[5] == 0 || line[5] == ' ')) {
 		int pause, rc;
 		time_t start, now;

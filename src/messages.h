@@ -857,4 +857,5 @@ MSG_ImaskOn,
 	MSG_NoEbVar,
 	MSG_VarNumber,
 	MSG_Div0,
+	MSG_False,
 };
