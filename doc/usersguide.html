@@ -120,6 +120,7 @@ p.cen { text-align: center; }
 <LI><A HREF=#agent> User Agent </A>
 <LI><A HREF=#script> Edbrowse Functions </A>
 <LI><A HREF=#init> The Init Function </A>
+<LI><A HREF=#var> Edbrowse Variables </A>
 <LI><A HREF=#ma> Mail Accounts </A>
 <LI><A HREF=#mt> Plugin Descriptors </A>
 <LI><A HREF=#sampcfg> A Sample Config File </A>
@@ -909,6 +910,13 @@ Edbrowse Functions
 <br>&lt;/foo@22,29 : run the commands from lines 22 through 29
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
+<br> var x=7 : set the variable x to 7
+<br> var x=clear : clear the variable x
+<br> var x:=7 : set x in the environment
+<br> var x:=clear : clear x from the environment
+<br>$(x) : expand the variable x
+<br>$(:LANG) : expand the environment variable LANG
+<br>$(x+3*y-7) : perform basic arithmetic
 <p>
 Debug
 <p>
@@ -4979,6 +4987,66 @@ or leave it out altogether if you are happy with edbrowse out of the box.
 <p>
 The -d option on the command line overrides any db settings that are made by the init script.
 Thus edbrowse -d4 could make a lot of noise, even if db0 is the first entry in your init script.
+
+<h2 id="var">Edbrowse Variables</h2>
+
+<p>
+Variables can be set and accessed, usually for scripting purposes.
+The following sets jj to the string "hello world".
+<p>
+var jj=hello world
+
+<p>
+The syntax of setting and referencing variables is quite rigid, just as it is in the shell.
+There can be no whitespace before the equals sign, and any whitespace following is significant.
+A variable begins with a letter, and contains only letters and digits.
+Variable names are case sensitive.
+
+<p>
+$(jj) expands the variable jj inline.
+This is the makefile syntax, rather than the simpler shell syntax $jj, which you might stumble upon by accident.
+There is no escape character to prevent the expansion.
+If you want to replace x with $(jj), you must do something like this.
+<p>
+s/x/$(jj
+<br>
+s/jj/jj)
+
+<p>
+Fortunately this does not come up very often.
+Variables are not set or expanded during text entry, so you can type a and write your edbrowse scripts, or makefiles, as you please.
+
+<p>
+A modest amount of arithmetic is supported, similar to $((expression)) in the shell.
+Here an expression is a sequence of variables or numbers, separated by the operators +, -, *, and /.
+The following evaluates to 49.
+<p>
+var jj=7
+<br>
+!echo $(jj+3*4+5*6)
+
+<p>
+var jj=clear will clear the variable jj from the cache.
+This is similar to the "f clear" command, which clears the filename.
+
+<p>
+The edbrowse cache of variables is similar to, but completely separate from, the environment.
+Use : to access the environment.
+The following also produces 49, but the variable jj is in the environment, and will be passed down to any shell commands.
+<p>
+var jj:=7
+<br>
+!echo $(:jj+3*4+5*6)
+
+<p>
+A variable can exist in both worlds if you wish.
+<p>
+var z=elephant
+<br>
+var z:=$(z)
+
+<p>
+An arithmetic expression can include variables from both arenas, as in $(jj+7-3*:kk)
 
 <h2 id="ma">Mail Accounts</h2>
 
