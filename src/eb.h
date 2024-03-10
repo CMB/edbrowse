@@ -494,6 +494,7 @@ int ehsn;
 /* Various text modes, these are incompatible with binMode */
 /* All modes convert to utf8, as that is what pcre understands. */
 	bool utf8Mode:1;
+	bool utf8Mark:1;
 	bool utf16Mode:1;
 	bool utf32Mode:1;
 	bool bigMode:1; // big-endian

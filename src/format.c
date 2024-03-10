@@ -2040,11 +2040,15 @@ void diagnoseAndConvert (char **rbuf_p, bool *isAllocated_p, int *partSize_p, co
 			fileSize += (*partSize_p - oldSize);
 		}
 		if (cons_utf8 && isutf8 && firstPart) {
-// Strip off the leading bom, if any, and no we're not going to put it back.
+// Strip off the leading bom, if any.
 			if (fileSize >= 3 &&
 			    !memcmp(rbuf, "\xef\xbb\xbf", 3)) {
+				if ((debugLevel >= 2 || (debugLevel == 1 && showMessage)))
+					i_puts(MSG_RemovingBOM);
 				fileSize -= 3, *partSize_p -= 3;
 				memmove(rbuf, rbuf + 3, *partSize_p);
+				if (!cw->dol)
+					cw->utf8Mark = true;
 			}
 		}
 	}

@@ -758,8 +758,8 @@ $(%s) is not defined
 %s is not a number
 division by 0
 false
-0
-0
+removing byte order mark
+restoring byte order mark
 0
 0
 0

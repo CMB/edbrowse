@@ -858,4 +858,6 @@ MSG_ImaskOn,
 	MSG_VarNumber,
 	MSG_Div0,
 	MSG_False,
+	MSG_RemovingBOM,
+	MSG_RestoringBOM,
 };

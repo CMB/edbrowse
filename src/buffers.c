@@ -2288,6 +2288,12 @@ bool writeFile(const char *name, int mode)
 		if (cw->utf8Mode && !cons_utf8)
 			if (debugLevel >= 1)
 				i_puts(MSG_ConvUtf8);
+		if (cw->utf8Mark) {
+			if (debugLevel >= 1)
+				i_puts(MSG_RestoringBOM);
+			if (fwrite    ("\xef\xbb\xbf", 3, 1, fh) <= 0)
+				goto badwrite;
+		}
 		if (cw->utf16Mode) {
 			if (debugLevel >= 1)
 				i_puts(MSG_ConvUtf16);
