@@ -6755,8 +6755,7 @@ bool runCommand(const char *line)
 	uriEncoded = false;
 	if(!globSub) bad_utf8_alert = false;
 
-// Here is where we initialize allocatedLine, by possibly expanding variables
-// the actual command may reallocate it
+// Here is where we initialize allocatedLine, by possibly expanding variables.
 	if(!varExpand(line, &allocatedLine))
 		return false;
 	if(allocatedLine) line = allocatedLine;
@@ -8379,7 +8378,7 @@ past_js:
 				if (c == '*') {
 					Frame *save_cf = cf;
 					jSyncup(false, tagList[tagno]);
-					nzFree(allocatedLine);
+					nzFree(allocatedLine), allocatedLine = 0;
 					c = infPush(tagno, &allocatedLine);
 					jSideEffects();
 					cf = save_cf;
