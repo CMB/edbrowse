@@ -751,7 +751,8 @@ b : browse the current file, either html, or email, or rendered by plugin
 <br>b foo.html : edit the file foo.html and browse it
 <br>b url : fetch url from the Internet and browse it
 <br>nostack b url : don't push a new window, replace the current window using the new url
-<br>^ b url : same as nostack
+<br>^ b url : same as above
+<br>attimg : show all images even those without alt attributes (toggle)
 <br>ub : unbrowse a file
 <br>ft : show the title of the current web page (file title)
 <br>fa : show the author of the current web page
@@ -2571,7 +2572,7 @@ It takes a bit of detective work to track down the problem - even to know which 
 
 <p>
 One problem that pops up occasionally is: "dh key too short".
-This is from openssl, and can be caused by a low security seting in /etc/ssl/openssl.cnf.
+This is from openssl, and can be caused by a low security setting in /etc/ssl/openssl.cnf.
 You could update that file, but if you don't have permission to do so,
 edbrowse responds to the environment variable EBCIPHERS.
 Set this to the list of cifers that you want the ssl engine to use.
@@ -3051,6 +3052,7 @@ In this case you will have to go to the web page to find out what it contains.
 <p>
 Note, an image that is not part of a hyperlink has its alt text enclosed in brackets,
 as in [girl with a long red braid].
+Images with no alt text are omitted, unless you have enabled attached images via attimg+.
 
 <p>
 To follow a link, enter the `g' (go) command.

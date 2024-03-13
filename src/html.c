@@ -5430,9 +5430,11 @@ unparen:
 		liCheck(t);
 		tagInStream(tagno);
 		if (!currentA) {
-			if (!invisible && (a = imageAlt(t))) {
+			if (invisible) break;
+			a = imageAlt(t);
+			if(a || attimg) {
 				stringAndChar(&ns, &ns_l, '[');
-				stringAndString(&ns, &ns_l, a);
+				if(a) stringAndString(&ns, &ns_l, a);
 				stringAndChar(&ns, &ns_l, ']');
 			}
 			break;
