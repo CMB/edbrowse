@@ -154,16 +154,8 @@ static void writeAttachments(struct MHINFO *w)
 static void linkAttachment(struct MHINFO *w)
 {
 	char *e;
-	if(w->ct == CT_TEXT && w->ce <= CE_8BIT) {
-		debugPrint(3, "text attachment length %d is presented inline", w->end - w->start);
-		return;
-	}
 	        if (w->start == w->end) {
 		debugPrint(3, "skipping empty attachment");
-		return;
-	}
-	if(!attimg && w->atimage) {
-		debugPrint(3, "skipping image attachment");
 		return;
 	}
 // The irony - it probably came in base64, I turned it into binary,
@@ -199,18 +191,20 @@ static void linkAttachment(struct MHINFO *w)
 		stringAndString(&imapLines, &iml_l,  e);
 		nzFree(e);
 	}
-	stringAndString(&imapLines, &iml_l, "'>Attachment");
+	stringAndString(&imapLines, &iml_l, "' attimg=");
+	stringAndChar(&imapLines, &iml_l, (w->atimage ? 'y' : 'n'));
+	stringAndString(&imapLines, &iml_l, ">Attachment");
 	if (w->cfn[0]) {
 		stringAndChar(&imapLines, &iml_l,  ' ');
 		e = htmlEscape(w->cfn);
 		stringAndString(&imapLines, &iml_l,  e);
 		nzFree(e);
 	}
-	stringAndString(&imapLines, &iml_l,  "</a> ");
+	stringAndChar(&imapLines, &iml_l, ' ');
 	stringAndString(&imapLines, &iml_l,  conciseSize(w->end - w->start));
 	if(w->error64)
 		stringAndString(&imapLines, &iml_l, " with base64 encoding errors");
-	stringAndChar(&imapLines, &iml_l,  '\n');
+	stringAndString(&imapLines, &iml_l, "</a>\n");
 }
 
 static void linkAttachments(struct MHINFO *w)
@@ -3283,7 +3277,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		printf("boundary: %d|%s\n", w->boundlen, w->boundary);
 		printf("filename: %s\n", w->cfn);
 		printf("length %d\n", (int)(w->end - w->start));
-		printf("content %d/%d\n", w->ct, w->ce);
+		printf("content %d/%d/%d\n", w->ct, w->ce, w->dispat);
 	}
 
 // look for line of equals separating successive emails in the same file.
@@ -3294,7 +3288,6 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 		t = strstr(w->start, "\n======================================================================\n");
 		if(t && t < w->end) w->end = t + 1;
 	}
-
 
 	if (w->ce == CE_QP)
 		unpackQP(w);
@@ -3322,6 +3315,7 @@ static struct MHINFO *headerGlean(char *start, char *end, bool top)
 			if (!w->atimage && nattach == nimages + 1)
 				firstAttach = w->cfn;
 		}
+		debugPrint(5, "attach %d%s", nattach, (w->atimage ? "i" : ""));
 		return w;
 	}
 

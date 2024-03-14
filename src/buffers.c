@@ -6178,6 +6178,7 @@ et_go:
 		attimg ^= 1;
 		if (helpMessagesOn || debugLevel >= 1)
 			i_puts(attimg + MSG_AttImgOff);
+		rerender(1);
 		return true;
 	}
 
@@ -6185,6 +6186,7 @@ et_go:
 		attimg = (line[6] == '+');
 		if (helpMessagesOn)
 			i_puts(attimg + MSG_AttImgOff);
+		rerender(1);
 		return true;
 	}
 

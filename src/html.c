@@ -4840,6 +4840,13 @@ nocolor:
 
 	case TAGACT_A:
 		liCheck(t);
+// special code for attached images from an email
+		if(opentag && !attimg &&
+		(a = attribVal(t, "attimg")) &&
+		*a == 'y') {
+			deltag = t;
+			break;
+		}
 		currentA = (opentag ? t : 0);
 		if (!retainTag) break;
 // Javascript might have set this url.
@@ -5431,6 +5438,9 @@ unparen:
 		tagInStream(tagno);
 		if (!currentA) {
 			if (invisible) break;
+// images with cid: protocol do not need to appear
+// these come from emails, with embedded images
+			if(t->href && !strncmp(t->href, "cid:", 4)) break;
 			a = imageAlt(t);
 			if(a || attimg) {
 				stringAndChar(&ns, &ns_l, '[');
