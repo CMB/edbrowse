@@ -3463,7 +3463,17 @@ void rerender(int rr_command)
 	bool z;
 	void (*say_fn) (int, ...);
 
+	if(!cw->browseMode) return;
 	debugPrint(4, "rerender(%d)", rr_command);
+// it's possible to be in browse mode with no tags to traverse.
+// Example, browse an email file with hr-
+// Then rerender clears the page, which is bad!
+	if(!cw->tags) {
+		if (rr_command > 0)
+			i_puts(MSG_NoChange);
+		return;
+	}
+
 	cw->mustrender = false;
 	time(&cw->nextrender);
 	cw->nextrender += rr_interval;
@@ -3510,8 +3520,8 @@ void rerender(int rr_command)
 			debugPrint(3, "%s", buf);
 	}
 
-/* the high runner case, most of the time nothing changes,
- * and we can check that efficiently with strcmp */
+// the high runner case, most of the time nothing changes,
+// and we can check that efficiently with strcmp
 	if (stringEqual(newbuf, snap)) {
 		if (rr_command > 0)
 			i_puts(MSG_NoChange);
