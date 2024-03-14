@@ -751,15 +751,15 @@ impossível criar %s\n
 impossível apagar %s\n
 impossível renomear %s\n
 caracteres inválidos no nome da pasta
-0
-0
+lida
+não lida
 var sintaxe na linha
 $(%s) não definida
-0
-0
-0
-0
-0
+%s não é um número
+divisão por 0
+falso
+removendo marca de byte order
+restaurando marca de byte order
 0
 0
 0

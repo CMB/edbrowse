@@ -5102,10 +5102,6 @@ down_again:
 			setError(MSG_NoBrowse);
 			return false;
 		}
-		if (!isJSAlive) {
-			setError(MSG_JavaOff);
-			return false;
-		}
 		rerender(1);
 		return true;
 	}
@@ -6507,6 +6503,11 @@ static int twoLetterG(const char *line, const char **runThis)
 		nzFree(promptString);
 		if(line[2]) promptString = cloneString(line+2);
 		else promptString = 0;
+		return true;
+	}
+
+	if(!strncmp(line, "p ", 2)) {
+		puts(line + 2);
 		return true;
 	}
 

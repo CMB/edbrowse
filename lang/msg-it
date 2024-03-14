@@ -71,7 +71,7 @@ invio il form
 %s: riga %d, outtype deve essere settato a t o h
 molti
  raccomandato
-0
+imap NumeroAccountMail
 non ci sono opzioni che contengano la stringa %s\n
 invio mail a %s\n
 La tua informazione è stata inviata; attendi la risposta tramite una mail di ritorno.
@@ -206,7 +206,7 @@ avviso: non ci sono buffers disponibili per gestire la finestra ausiliaria
 testo non atteso dopo il comando q
 impossibile cambiare il nome di una cartella
 impossibile cambiare il nome di una tavola
-0
+l'account non è imap
 nessun file specificato
 impossibile scrivere sulla cartella; i files saranno modificati durante le operazioni
 impossibile scrivere sul database; le righe saranno modificate durante le operazioni
@@ -326,7 +326,7 @@ l'ultima riga nella tua rubrica non è terminata
 non ci sono cartelle che contengano %s\n
 folders multipli contengono %s\n
 cerca 
-0
+envelope
 sposta in 
 attenzione: l'url della form specifica una sezione %s, che sarà ignorata\n
 il file %s è vuoto
@@ -595,7 +595,7 @@ stringInListCI(null,...)
 charInList(null,...)
 puntatore nullo in pstLength
 impossibile usare ioctl() per gestire il terminale (tty)
-0
+!comando deve seguire W
 impossibile creare, o scrivere su, %s
 chiamata a fopen() con modalità non valida %s
 / fuori posto in getDirURL(%s)
@@ -718,18 +718,18 @@ non aggiornare le variabili d'ambiente
 aggiorna le variabili d'ambiente
 comando shell fallito
 stesso folder
-0
-0
-0
-0
-0
+internet http
+http locale
+modalità non corretta, sessione %d
+nessun autore
+nessun generatore
 testo non atteso dopo il comando bw
 imask disabilitato
 imask abilitato
 nessun imask
 buffer non può ricevere testo
-0
-0
+Attenzione! Il messaggio mail è parzialmente letto, i dati potrebbero essere incompleti.\n
+Attenzione! Il componente mime è parzialmente letto, i dati potrebbero essere incompleti.\n
 la sessione non è compatibile con imap
 %c non disponibile in modalità imap
 %s non disponibile in modalità imap
@@ -738,28 +738,28 @@ impossibile rispondere in modalità imap
 impossibile attivare il playing dell'audio in modalità imap
 impossibile rompere righe in modalità imap
 impossibile cambiare il nome di imap
-0
-0
+non è possibile una riconfigurazione mentre delle sessioni imap sono in esecuzione
+non supporta move
 la sessione non è compatibile con imap 0
-0
-0
-0
-0
-0
-0
+ignora immagini allegate
+mostra immagini allegate
+non visualizzare canali
+visualizza canali
+Non in modalità invio IRC
+dot (linea corrente) spostato
 impossibile creare %s\n
 impossibile elimina %s\n
 impossibile rinominare %s\n
-0
-0
-0
+caratteri non validi nel nome del folder
+letto
+non letto
 var sintassi non corretta
 $(%s) non è definito
-0
-0
-0
-0
-0
+%s non è un numero
+divisione per 0
+falso
+rimuovo marcatore byte order
+ripristino marcatore byte order
 0
 0
 0

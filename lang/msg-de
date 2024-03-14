@@ -751,15 +751,15 @@ kann %s nicht erstellen
 kann %s nicht Löschen
 kann %s nicht umbenennen
 ungültige Zeichen im Ordnernamen
-0
-0
+gelesen
+ungelesen
 fehlerhafte var syntax
 $(%s) ungültige
-0
-0
-0
-0
-0
+%s ist keine Zahl
+Division durch null
+falsch
+entferne Byte-Order-Mark
+stelle Byte-Order-Mark wieder her
 0
 0
 0

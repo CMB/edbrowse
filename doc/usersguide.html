@@ -917,6 +917,8 @@ Edbrowse Functions
 <br> var x:=clear : clear x from the environment
 <br>$(x) : expand the variable x
 <br>$(:LANG) : expand the environment variable LANG
+<br>p text : print text
+<br>p $(x) : print the variable x
 <br>$(x+3*y-7) : perform basic arithmetic
 <br>[ $(x) = $(y) ] : test for equality
 <br>[ $(x) != $(y) and friends ] : test for inequality
@@ -1109,6 +1111,7 @@ Thus .. is always the physical parent directory.
 If the string contains $ [] * ? or a leading ~,
 environment variables are expanded, and globbing is performed.
 Thus cd ~/work takes you to the work directory under your home directory.
+This is performed by the shell, and is separate from edbrowse variables, which will be described later.
 
 <p>
 This command does not change any filenames that may be active.
@@ -1146,6 +1149,7 @@ Also, a leading ~/ is replaced with $HOME/,
 making it easy to edit files in your home directory
 such as ~/.profile.
 Or use ~user for another user's home directory.
+This is once again separate from edbrowse variables.
 
 <p>
 Shell meta characters are expanded, provided the result is one file name.
@@ -1159,6 +1163,10 @@ and get all the C source files in the current directory.
 Variable substitution and globbing of filenames can be completely suppressed by a leading backquote.
 If you really want to read a file called *a?, type r `*a?.
 You can escape an individual shell meta character with the backslash, as in fun\*house.
+
+<LI><p>
+p text will print the text, basically an echo.
+p without anything following prints the line as usual.
 
 <LI><p>
 Many versions of ed place a $ at the end of a listed line,
@@ -1181,6 +1189,7 @@ Type qt to quit absolute.
 Capital J joins lines together with spaces between them.
 J: joins lines using a colon separator.
 Any string can be used here.
+Whitespace is significant here, as in J : .
 
 <LI><p>
 0kx unsets the label x.
@@ -5027,7 +5036,7 @@ The following evaluates to 49.
 <p>
 var jj=7
 <br>
-!echo $(jj+3*4+5*6)
+p $(jj+3*4+5*6)
 
 <p>
 var jj=clear will clear the variable jj from the cache.
@@ -5040,7 +5049,7 @@ The following also produces 49, but the variable jj is in the environment, and w
 <p>
 var jj:=7
 <br>
-!echo $(:jj+3*4+5*6)
+p $(:jj+3*4+5*6)
 
 <p>
 A variable can exist in both worlds if you wish.
@@ -5065,7 +5074,7 @@ function+count17 {
     var i=0
     while(*) {
         var i=$(i+1)
-        !echo $(i)
+        p $(i)
         [ $(i) != 17 ]
     }
     var i=clear
