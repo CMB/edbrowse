@@ -741,25 +741,25 @@ nie można zmienić nazwy serwera IMAP
 nie można rekonfigurować przy aktywnych sesjach IMAP
 nie można przenieść
 sesja niekompatybilna z imap 0
-0
-0
-0
-0
-0
-0
+ignoruj dołączone obrazy
+pokazuj dołączone obrazy
+nie pokazuj kanałów
+pokazuj kanały
+nie jesteś w trybie wysyłania IRC
+bieżący wiersz (kropka) uległ przemieszczeniu
 nie można utworzyć %s\n
-nie można usuńć %s\n
-nie można zmienić nazwyć %s\n
-0
-0
-0
+nie można usunąć %s\n
+nie można zmienić nazwy %s\n
+niepoprawne znaki w nazwie katalogu
+przeczytane
+nieprzeczytane
 nieprawidłowa var-składnia
 $(%s) nie jest zdefiniowane
-0
-0
-0
-0
-0
+%s nie jest liczbą
+dzielenie przez 0
+fałsz
+usuwanie znacznika kolejności bajtów
+przywracanie znacznika kolejności bajtów
 0
 0
 0
