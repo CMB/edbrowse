@@ -751,15 +751,15 @@ no se puede crear %s\n
 no se puede borrar %s\n
 no se puede renombrar %s\n
 caracteres no válidos en el nombre de la carpeta
-0
-0
+leido
+no leido
 sintaxis var inválida
 $(%s) no está definida
-0
-0
-0
-0
-0
+%s no es un número
+división por 0
+falso
+eliminar la marca de orden de byte
+restaurar la marca de orden de byte
 0
 0
 0
