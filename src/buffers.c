@@ -6731,6 +6731,7 @@ bool runCommand(const char *line)
 	int writeLine = -1; // write text into a session
 	int readLine1 = -1, readLine2 = -1; // read lines from a session
 	bool wrc = false; // read write command
+	bool wq = false; // the wq command, as in ed
 	const char *wrc_file = 0;
 	char *atsave = 0;
 	Window *w = NULL;
@@ -7185,6 +7186,11 @@ after_ib:
 	first = *line;
 	atWindow = 0;
 
+	if(cmd == 'w' && first == 'q' && !line[1]) {
+		wq = true;
+		++line, first = 0;
+	}
+
 	if(cmd == 'w' && isdigitByte(first)) {
 // check for at syntax
 		int sno = strtol(line, &p, 10);
@@ -7624,6 +7630,7 @@ dest_ok:
 	}
 
 	if (cmd == 'q') {
+doquit:
 		if (cx) {
 			if (!cxCompare(cx))
 				goto fail;
@@ -7827,7 +7834,11 @@ dest_ok:
 			goto fail;
 		}
 		rc = writeFile(line, writeMode);
-		goto done;
+		if(!wq) goto done;
+		if(!rc) goto done;
+		debugPrint(1, "%lld", fileSize);
+		fileSize = -1;
+		goto doquit;
 	}
 
 	if (cmd == '&') {	// jump back key
