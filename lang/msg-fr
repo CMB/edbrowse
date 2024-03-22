@@ -751,15 +751,15 @@ création du %s impossible\n
 effacement du %s impossible\n
 renommer du %s impossible\n
 caractères invalides dans le nom du répertoire
-0
-0
+ lu
+non lu
 erreur de var syntax
 $(%s) n'est pas définie
-0
-0
-0
-0
-0
+%s n'est pas un nombre
+division par zéro
+faux
+suppression du Byte-Order-Mark
+restauration du Byte-Order-Mark
 0
 0
 0

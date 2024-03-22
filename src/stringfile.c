@@ -729,8 +729,9 @@ functionality, such as edpager.
 inpart = 0: read the whole file
 inpart = 1: read the first part
 inpart = 2: read the next part
+It is more efficient if PARTSIZE is a multiple of the page size.
 *********************************************************************/
-#define FILEPARTSIZE 10000000
+#define FILEPARTSIZE 0x1000000
 
 int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 {
