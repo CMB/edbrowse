@@ -97,7 +97,7 @@ content = application/pdf
 program = pdftohtml -i -q -noframes %i %o
 #  indicate the output is in html, rather than text
 outtype = H
-#  indicate the data must be downoaded; pdftohtml does not take a url
+#  indicate the data must be downloaded; pdftohtml does not take a url
 down_url
 }
 

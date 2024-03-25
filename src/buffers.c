@@ -2149,7 +2149,12 @@ badfile:
 
 		char *h = 0;
 		inparts = 1, fileSize = 0;
-// set inparts to 0 if you don't want this feature or if it causes trouble
+// set inparts to 0 if you don't want reading by parts or if it causes trouble,
+// as it can when a single line is 100 megabytes long. So turn it off?
+// Careful! We need integration by parts if the file is more than 2 gig, and
+// an int is 4 bytes. On my pi, size_t is also 4 bytes, so switching my string
+// management system over to size_t wouldn't help.
+
 nextpart:
 // some code to lop of hash for a local file when browsing locally,
 // <a href=foo.html#bar>go to the bar section</a>
@@ -5319,7 +5324,8 @@ pwd:
 		return false;
 	}
 	if(lookmode) {
-		puts(h);
+		if(!strncmp(h, "data:", 5)) puts("data:");
+		else puts(h);
 		if(debugLevel >= 3) printf("%d\n", tagList[tagno]->seqno);
 		return true;
 	}
@@ -8209,7 +8215,8 @@ past_g_file:
 			jsh = memEqualCI(h, "javascript:", 11);
 
 			if (lookmode) {
-				puts(h);
+				if(!strncmp(h, "data:", 5)) puts("data:");
+				else puts(h);
 				nzFree(h);
 				if(debugLevel >= 3) printf("%d\n", tag->seqno);
 				goto success;
