@@ -1489,13 +1489,26 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 
 	if (bmode == 3) {
 // convert raw text via a plugin
-		if (remote) {
+		if(remote) {
 			rc = runPluginCommand(mt, cf->fileName, 0, rawbuf,
-					      rawsize, &rawbuf, &rawsize);
-		} else {
-// Pass the file directly to the converter
+			      rawsize, &rawbuf, &rawsize);
+		} else if(cf->fileName && !access(cf->fileName, 4)) {
+// Pass the file directly to the converter for efficiency
 			rc = runPluginCommand(mt, 0, cf->fileName, 0, 0,
-					      &rawbuf, &rawsize);
+			      &rawbuf, &rawsize);
+		} else {
+// no filename or file not present, many ways this could happen.
+// YOu might have changed the filename, whence you should be hit with a rolled
+// up newspaper. Or this could be an attachment, prenamed, but not saved
+// to your computer yet.
+			char standin[20];
+			if(suffix) sprintf(standin, "standin.%s", suffix);
+			else strcpy(standin, "nosuffix");
+// we haven't unfolded the buffer yet
+			if (!unfoldBuffer(context, false, &rawbuf, &rawsize))
+				return false;
+			rc = runPluginCommand(mt, 0, standin, rawbuf,
+			      rawsize, &rawbuf, &rawsize);
 		}
 		if (!rc)
 			return false;
