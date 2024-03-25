@@ -2347,8 +2347,10 @@ static bool dataConnect(struct i_get *g)
 	if(!comma) { // should never happen
 		debugPrint(3, "data has no comma");
 		nzFree(copy);
+		g->code = 403;
 		return false;
 	}
+	g->code = 200;
 	*comma++ = 0;
 	unpercentString(comma);
 	if(comma - copy >= 8 && stringEqual(comma - 8, ";base64")) {

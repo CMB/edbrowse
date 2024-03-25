@@ -1431,6 +1431,11 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 
 	remote = isURL(cf->fileName);
 
+	debugPrint(4, "browseCurrent suffix %s plain %d render %d%d%d imap %d remote %d",
+	suffix, plain,
+	cf->render1, cf->render2, cf->render3,
+	(cw->imapMode1 ? 1 : cw->imapMode2 ? 2 : cw->imapMode3 ? 3: 0),
+	remote);
 	if (!(cf->render2|cf->render3) && (cf->fileName || suffix)) {
 		if (remote) {
 			mt = findMimeByURL(cf->fileName, &sxfirst);
