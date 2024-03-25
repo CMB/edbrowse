@@ -3088,6 +3088,8 @@ bool runPluginCommand(const struct MIMETYPE * m,
 	if(outlength)
 		*outlength = 0;
 
+	debugPrint(3, "plugin %s|%s|%s|%d",
+	inurl, infile, (indata? "indata" : ""), inlength);
 	if (indata) {
 // calling function has gathered the data for us,
 // maybe we could pipe it to the program but for now

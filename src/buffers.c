@@ -8588,7 +8588,7 @@ we have to make sure it has a protocol. Every url needs a protocol.
 			if (isSQL(line))
 				cw->sqlMode = true;
 			if (icmd == 'g' && !nogo && isURL(line))
-				debugPrint(2, "*%s", line);
+				debugPrint(2, "*%s", (strncmp(line, "data:", 5) ? line : "data:"));
 // emode suppresses plugins, as well as browsing
 			save_pg = pluginsOn;
 			if (emode) pluginsOn = false;
