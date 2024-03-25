@@ -2775,10 +2775,11 @@ const struct MIMETYPE *findMimeBySuffix(const char *suffix)
 	return NULL;
 }
 
-static char *file2suffix(const char *filename)
+char *file2suffix(const char *filename)
 {
 	static char suffix[12];
 	const char *post, *s;
+	if(!filename) return 0;
 	post = filename + strlen(filename);
 	for (s = post - 1; s >= filename && *s != '.' && *s != '/'; --s) ;
 	if (s < filename || *s != '.')

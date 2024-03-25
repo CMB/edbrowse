@@ -1502,6 +1502,7 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 // up newspaper. Or this could be an attachment, prenamed, but not saved
 // to your computer yet.
 			char standin[20];
+			if(!suffix) suffix = file2suffix(cf->fileName);
 			if(suffix) sprintf(standin, "standin.%s", suffix);
 			else strcpy(standin, "nosuffix");
 // we haven't unfolded the buffer yet
