@@ -3270,6 +3270,8 @@ int playBuffer(const char *line, const char *playfile)
 {
 	const struct MIMETYPE *mt = 0;
 	const char *suffix = NULL;
+	char *buf;
+	int buflen;
 	bool rc;
 	char c = line[2];
 	if (c && c != '.')
@@ -3330,19 +3332,18 @@ int playBuffer(const char *line, const char *playfile)
 			setError(MSG_NotPlayer);
 			return 0;
 		}
-		if(cf->fileName && !isURL(cf->fileName))
+		if(cf->fileName && !isURL(cf->fileName) &&
+		!access(cf->fileName, 4))
 			return runPluginCommand(mt, 0, cf->fileName, 0, 0, 0, 0);
 // You specified the suffix, and there is no filename,
-// or the file is a url, so create a temp file.
-		char *buf;
-		int buflen;
+// or the file is a url, or the file isn't there, so create a temp file.
 		if (!unfoldBuffer(context, false, &buf, &buflen))
 			return 0;
 // runPluginCommand always frees the input data.
 		return runPluginCommand(mt, 0, line, buf, buflen, 0, 0);
 	}
 
-	if (!mt && cf->fileName) {
+	if (cf->fileName) {
 		if (isURL(cf->fileName)) {
 			uchar sxfirst = 1;
 			suffix = url2suffix(cf->fileName);
@@ -3365,11 +3366,20 @@ int playBuffer(const char *line, const char *playfile)
 		return 0;
 	}
 
+// this line assumes the music player can handle a stream, from a url.
+// If not, you can force a temp file with pb.mp3
 	if (isURL(cf->fileName))
-		rc = runPluginCommand(mt, cf->fileName, 0, 0, 0, 0, 0);
-	else
-		rc = runPluginCommand(mt, 0, cf->fileName, 0, 0, 0, 0);
-	return rc;
+		return runPluginCommand(mt, cf->fileName, 0, 0, 0, 0, 0);
+
+	if(!access(cf->fileName, 4))
+		return runPluginCommand(mt, 0, cf->fileName, 0, 0, 0, 0);
+
+	char standin[20];
+	if(suffix) sprintf(standin, "standin.%s", suffix);
+	else strcpy(standin, "nosuffix");
+	if (!unfoldBuffer(context, false, &buf, &buflen))
+		return false;
+	return runPluginCommand(mt, 0, standin, buf,       buflen, 0, 0);
 }
 
 /*********************************************************************
