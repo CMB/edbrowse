@@ -871,9 +871,16 @@ between:
 				if(*u == '\n') ++ln;
 				if(!isspaceByte(*u)) ws = false;
 			}
+
 // Ignore whitespace that is not in the head or the body.
-// Ignore text after body
-			if(headbody < 5 && (!ws || (headbody == 4 && !atWall))) {
+// We use to ignore text after body, but then:
+// https://rocksolid.sybershock.com/common/grouplist.php
+// This is terrible html, it has </body> with stuff after it,
+// so we have to march along.
+// But if this ever happens in concert with js, it's bad, because the stuff
+// after </body> is under document and not under document.body
+// So this is a patch and not a great solution.
+			if((!ws || (headbody >= 4 && !atWall))) {
 				if(!isXML) pushState(seek, true);
 				w = pullAnd(seek, lt);
 				if(!premode) compress(w);

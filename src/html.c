@@ -1498,7 +1498,7 @@ bool browseCurrentBuffer(const char *suffix, bool plain)
 			      &rawbuf, &rawsize);
 		} else {
 // no filename or file not present, many ways this could happen.
-// YOu might have changed the filename, whence you should be hit with a rolled
+// You might have changed the filename, whence you should be hit with a rolled
 // up newspaper. Or this could be an attachment, prenamed, but not saved
 // to your computer yet.
 			char standin[20];
