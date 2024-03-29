@@ -811,7 +811,10 @@ int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 	}
 	fh = open(filename, O_RDONLY | O_BINARY);
 	if (fh < 0) {
-		setError(MSG_NoOpen, filename);
+		if(errno == EACCES)
+			setError(MSG_Permission, filename);
+		else
+			setError(MSG_NoOpen, filename);
 		return 0;
 	}
 
@@ -831,11 +834,17 @@ bool memoryOutToFile(const char *filename, const char *data, int len,
 	int fh =
 	    open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, MODE_rw);
 	if (fh < 0) {
-		setError(msgcreate, filename, errno);
+		if(errno == EACCES)
+			setError(MSG_Permission, filename);
+		else
+			setError(msgcreate, filename, errno);
 		return false;
 	}
 	if (write(fh, data, len) < len) {
-		setError(msgwrite, filename, errno);
+		if(errno == ENOSPC)
+			setError(MSG_NoSpace, filename);
+		else
+			setError(msgwrite, filename, errno);
 		close(fh);
 		return false;
 	}

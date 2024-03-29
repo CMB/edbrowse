@@ -2281,6 +2281,9 @@ bool writeFile(const char *name, int mode)
 	fh = fopen(name, modeString);
 	nzFree(modeString);
 	if (fh == NULL) {
+		if(errno == EACCES)
+			setError(MSG_Permission, name);
+		else
 		setError(MSG_NoCreate2, name);
 		return false;
 	}
@@ -2306,7 +2309,10 @@ bool writeFile(const char *name, int mode)
 			    ((cw->bigMode ? "\xfe\xff" : "\xff\xfe"), 2, 1,
 			     fh) <= 0) {
 badwrite:
-				setError(MSG_NoWrite2, name);
+				if(errno == ENOSPC)
+					setError(MSG_NoSpace, name);
+				else
+					setError(MSG_NoWrite2, name);
 				fclose(fh);
 				return false;
 			}

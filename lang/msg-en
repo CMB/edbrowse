@@ -760,8 +760,8 @@ division by 0
 false
 removing byte order mark
 restoring byte order mark
-0
-0
+permission denied for %s
+cannot write to %s, no space on device
 0
 0
 0
