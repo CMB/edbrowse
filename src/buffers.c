@@ -2283,6 +2283,8 @@ bool writeFile(const char *name, int mode)
 	if (fh == NULL) {
 		if(errno == EACCES)
 			setError(MSG_Permission, name);
+		else if(errno == EROFS)
+			setError(MSG_RoFs, name);
 		else
 		setError(MSG_NoCreate2, name);
 		return false;
@@ -4470,7 +4472,12 @@ static int substituteText(const char *line)
 					goto abort;
 				}
 				if (rename(src, dest)) {
-					setError(MSG_NoRename, dest);
+					if(errno == EACCES)
+						setError(MSG_RenamePerm, dest);
+					else if(errno == EROFS)
+						setError(MSG_RenameRo, dest);
+					else
+						setError(MSG_NoRename, dest);
 					goto abort;
 				}
 // if substituting one line, remember it for undo
@@ -7313,7 +7320,12 @@ after_ib:
 			goto fail;
 		}
 		if (rename(src, dest)) {
-			setError(MSG_NoRename, dest);
+			if(errno == EACCES)
+				setError(MSG_RenamePerm, dest);
+			else if(errno == EROFS)
+				setError(MSG_RenameRo, dest);
+			else
+				setError(MSG_NoRename, dest);
 			goto fail;
 		}
 		p[len - 1] = 0;

@@ -836,6 +836,8 @@ bool memoryOutToFile(const char *filename, const char *data, int len,
 	if (fh < 0) {
 		if(errno == EACCES)
 			setError(MSG_Permission, filename);
+		else if(errno == EROFS)
+			setError(MSG_RoFs, filename);
 		else
 			setError(msgcreate, filename, errno);
 		return false;
@@ -1941,7 +1943,12 @@ abort:
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
 unlink:
 			if (unlink(path)) {
-				setError(MSG_NoRemove, file);
+				if(errno == EACCES)
+					setError(MSG_RemovePerm, file);
+				else if(errno == EROFS)
+					setError(MSG_RemoveRo, file);
+				else
+					setError(MSG_NoRemove, file);
 				goto abort;
 			}
 		} else {
@@ -1983,7 +1990,12 @@ unlink:
 				}
 
 // some other rename error
-				setError(MSG_NoMoveToTrash, file);
+				if(errno == EACCES)
+					setError(MSG_TrashPerm, file);
+				else if(errno == EROFS)
+					setError(MSG_TrashRo, file);
+				else
+					setError(MSG_NoMoveToTrash, file);
 				goto abort;
 			}
 		}
@@ -2156,7 +2168,12 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 				goto moved;
 			}
 
-			setError(MSG_MoveError, file, errno);
+			if(errno == EACCES)
+				setError(MSG_MovePerm, file);
+			else if(errno == EROFS)
+				setError(MSG_MoveRo, file);
+			else
+				setError(MSG_MoveError, file, errno);
 			free(file);
 			free(path1);
 			return false;

@@ -116,8 +116,8 @@ Your limit of 250 million lines has been reached.\nSave your files, then exit an
 absolute path name too long, limit %d chars
 directories are readonly, type dw to enable directory changes
 could not create .Trash under your home directory, to hold the deleted files
-could not remove file %s
-Could not move %s to the trash bin, set dx mode to actually remove the file
+cannot remove file %s
+cannot move %s to the trash bin, set dx mode to actually remove the file
 destination lies inside the block to be moved
 no change
 cannot join one line
@@ -762,15 +762,15 @@ removing byte order mark
 restoring byte order mark
 permission denied for %s
 cannot write to %s, no space on device
-0
-0
-0
-0
-0
-0
-0
-0
-0
+cannot write to %s, readonly filesystem
+cannot remove file %s, permission denied
+cannot remove file %s, readonly filesystem
+cannot move %s, permission denied
+cannot move %s, readonly filesystem
+cannot move %s to the trash bin, permission denied
+cannot move %s to the trash bin, readonly filesystem
+cannot rename file to %s, permission denied
+cannot rename file to %s, readonly filesystem
 0
 0
 0
