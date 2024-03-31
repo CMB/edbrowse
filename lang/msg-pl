@@ -116,8 +116,8 @@ Twój limit 250 milionów wierszy został osiągnięty.\nZapisz swoje pliki, po 
 długość ścieżki bezwzględnej zbyt duża, limit: %d znaków
 katalogi są tylko do odczytu, wpisz 'dw' by uaktywnić zapis
 nie można utworzyć katalogu '.Trash' w Twoim katalogu domowym
-nie można usunąć pliku %s
-Nie można przenieść %s do śmieci, ustaw tryb 'dx' aby rzeczywiście usunąć plik
+nie można usunąć pliku %s; %s
+Nie można przenieść %s do śmieci; %s; ustaw tryb 'dx' aby rzeczywiście usunąć plik
 lokalizacja docelowa znajduje się w przenoszonym obszarze
 brak zmian
 nie można dołączyć wiersza
@@ -221,7 +221,7 @@ nie można zastosować polecenia 'i%c' do zakresu
 nie można użyć 'i<' w poleceniu globalnym
 sesja %d jest pusta
 sesja %d zawiera więcej niż jeden wiersz
-nie można otworzyć %s
+nie można otworzyć %s; %s
 nie można wczytać %s
 protokół %s nie jest wspierany przez %s
 wiersz zawiera znak powrotu karetki
@@ -273,7 +273,7 @@ dane podstawiane zawierają znaki końca linii
 dane podstawiane zawierają puste znaki
 nazwa katalogu nie może zawierać ukośnika, znaku końca linii ani znaku zerowego
 plik docelowy już %s istnieje
-nie można zmienić nazwy pliku na %s
+nie można zmienić nazwy pliku na %s; %s
 pole wprowadzania nie może zawierać znaków zerowych
 pole wprowadzania nie może zawierać znaków końca linii
 błąd połączenia SSL %d
@@ -464,7 +464,7 @@ polecenie %s nie może być wykonane globalnie
 uwaga, JavaScript nie może być wywołany podwójnym kliknięciem
 błąd użycia opcji %s podczas synchronizacji lub wysyłania formularza
 nie można przenieś %s innego systemu plik
-nie można przenieś %s, errno %d
+nie można przenieś %s; %s
 nie można pobrać lokalnego JavaScriptu\n
 nie można pobrać JavaScriptu z %s, kod %ld\n
 nie można pobrać JavaScriptu\n

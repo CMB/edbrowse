@@ -17,6 +17,8 @@ EBCIPHERS passed to the ssl engine.
 
 edbrowse variables and/or variables in the environment.
 
+Print strerror values when certain system calls fail.
+
 3.8.9
 dx to specify hard delete in imap folders.
 

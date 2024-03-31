@@ -116,8 +116,8 @@ Die Obergrenze von 250 Millionen Zeilen wurde erreicht.\nSpeichern Sie Ihre Date
 absoluter Pfadname zu lang, maximal %d Zeichen
 Verzeichnisse sind nur lesbar, tippen Sie dw um schreibbare Verzeichnisse zu aktivieren
 Konnte .Trash im persönlichen Ordner nicht anlegen, um gelöschte Dateien dort abzulegen.
-konnte Datei %s nicht entfernen
-Konnte %s nicht in den Mülleimer verschieben, aktivieren Sie den dx-Modus, um die Datei zu löschen
+konnte Datei %s nicht entfernen; %s
+Konnte %s nicht in den Mülleimer verschieben; %s; aktivieren Sie den dx-Modus, um die Datei zu löschen
 Ziel liegt in dem Block, welcher verschoben werden soll
 keine Änderung
 kann eine einzige Zeile nicht zusammenführen
@@ -221,7 +221,7 @@ kann das i%c Kommando nicht auf einen Bereich anwenden
 kann i< nicht in einem globalen Kommando verwenden
 Puffer %d ist leer
 Puffer %d enthält mehr als eine Zeile
-kann %s nicht öffnen
+kann %s nicht öffnen; %s
 kann %s nicht lesen
 Protokoll %s wird von %s nicht unterstützt
 Zeile enthält einen Zeilenumbruch
@@ -273,7 +273,7 @@ Ersatzdaten enthalten Zeilenumbrüche
 Ersetzung enthalten Nullbytes
 kann weder /, ein Nullbyte noch einen Zeilenumbruch in einem Dateinamen verwenden
 Zieldatei %s existiert bereits
-kann Datei nicht in %s umbenennen
+kann Datei nicht in %s umbenennen; %s
 kann Nullbytes nicht in ein Eingabefeld einfügen
 kann Zeilenumbrüche nicht in ein Eingabefeld einfügen
 SSL-Verbindungsfehler %d
@@ -464,7 +464,7 @@ Kommando %s kann nicht global angewandt werden
 Warnung, JavaScript kann nicht durch einen Doppelklick aktiviert werden
 Fehler beim Auflösen der Option %s beim Synchronisieren oder Versand des Formularfelds
 kann verschiebe nicht %s von einem anderen Dateisystem
-kann verschiebe nicht %s, errno %d
+kann verschiebe nicht %s; %s
 konnte lokales JavaScript nicht abrufen\n
 konnte JavaScript von %s nicht abrufen, Code %ld\n
 konnte JavaScript nicht abrufen\n

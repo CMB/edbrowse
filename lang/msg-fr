@@ -116,8 +116,8 @@ Vous avez atteint la limite d'250 million de lignes.\nSauvegardez vos fichiers, 
 chemin du répertoire trop long, la limite est de %d caractères
 répertoires en lecture seule, tapez dw pour autoriser l'écriture
 impossible de créer le fichier corbeille .Trash, pour contenir vos fichiers effacés
-effacement du fichier %s impossible
-impossible de mettre %s à la corbeille, passez en mode dx pour l'effacer
+effacement du fichier %s impossible; %s
+impossible de mettre %s à la corbeille; %s; passez en mode dx pour l'effacer
 destination à l'intérieur du bloc à déplacer
 pas de modification
 ne peut fusionner une seule ligne
@@ -221,7 +221,7 @@ impossible d'appliquer la commande i%c à un intervalle
 impossible d'utiliser i< dans une commande globale
 le tampon %d est vide
 le tampon %d contient plus d'une ligne
-impossible d'ouvrir %s
+impossible d'ouvrir %s; %s
 impossible de lire %s
 le protocole %s n'est pas supporté par %s
 il y a un retour-chariot dans la ligne
@@ -273,7 +273,7 @@ les données de remplacement contiennent des sauts de ligne
 les données de remplacement contiennent des caractères nuls
 un nom de répertoire ne peut contenir un slash, un saut de ligne ou un caractère nul
 le fichier destination %s existe déjà
-impossible de renommer le fichier à %s
+impossible de renommer le fichier à %s; %s
 une zone de saisie ne peut contenir des caractères nuls
 une zone de saisie ne peut contenir des sauts de ligne
 Erreur de connexion SSL %d
@@ -464,7 +464,7 @@ caractères invalides dans la pièce jointe encodée
 attention, javascript ne peut être invoqué par un double clic
 erreur de détermination de l'option %s pendant la synchronisation ou la soumission du formulaire
 impossible de déplacer %s sur un autre système de fichiers
-impossible de déplacer %s, erreur %d
+impossible de déplacer %s; %s
 impossible de charger localement javascript\n
 impossible de charger javascript depuis %s, code %ld\n
 impossible de charger javascript\n

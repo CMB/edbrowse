@@ -811,10 +811,7 @@ int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 	}
 	fh = open(filename, O_RDONLY | O_BINARY);
 	if (fh < 0) {
-		if(errno == EACCES)
-			setError(MSG_Permission, filename);
-		else
-			setError(MSG_NoOpen, filename);
+		setError(MSG_NoOpen, filename, strerror(errno));
 		return 0;
 	}
 
@@ -1943,12 +1940,7 @@ abort:
 		if (dirWrite == 2 || (*ftype && strchr("@<*^|", *ftype))) {
 unlink:
 			if (unlink(path)) {
-				if(errno == EACCES)
-					setError(MSG_RemovePerm, file);
-				else if(errno == EROFS)
-					setError(MSG_RemoveRo, file);
-				else
-					setError(MSG_NoRemove, file);
+				setError(MSG_NoRemove, file, strerror(errno));
 				goto abort;
 			}
 		} else {
@@ -1990,12 +1982,7 @@ unlink:
 				}
 
 // some other rename error
-				if(errno == EACCES)
-					setError(MSG_TrashPerm, file);
-				else if(errno == EROFS)
-					setError(MSG_TrashRo, file);
-				else
-					setError(MSG_NoMoveToTrash, file);
+				setError(MSG_NoMoveToTrash, file, strerror(errno));
 				goto abort;
 			}
 		}
@@ -2168,12 +2155,7 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 				goto moved;
 			}
 
-			if(errno == EACCES)
-				setError(MSG_MovePerm, file);
-			else if(errno == EROFS)
-				setError(MSG_MoveRo, file);
-			else
-				setError(MSG_MoveError, file, errno);
+			setError(MSG_MoveError, file, strerror(errno));
 			free(file);
 			free(path1);
 			return false;
@@ -2446,7 +2428,7 @@ FILE *efopen(const char *name, const char *mode)
 		return f;
 
 	if (*mode == 'r')
-		i_printfExit(MSG_NoOpen, name);
+		i_printfExit(MSG_NoOpen, name, strerror(errno));
 	else if (*mode == 'w' || *mode == 'a')
 		i_printfExit(MSG_CreateFail, name);
 	else
@@ -2463,7 +2445,7 @@ int eopen(const char *name, int mode, int perms)
 	if (mode & O_WRONLY)
 		i_printfExit(MSG_CreateFail, name);
 	else
-		i_printfExit(MSG_NoOpen, name);
+		i_printfExit(MSG_NoOpen, name, strerror(errno));
 	return -1;
 }
 

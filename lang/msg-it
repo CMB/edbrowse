@@ -116,8 +116,8 @@ Il tuo limite di 250 millioni di righe è stato raggiunto.\nSalva il tuo file, q
 nome di percorso assoluto troppo lungo, limite di %d caratteri
 le cartelle sono in sola lettura, digita dw per abilitare le scritture sulle cartelle
 impossibile creare la cartella .Trash nella tua cartella home, per contenere i files eliminati
-impossibile rimuovere il file %s
-Impossibile muovere il file %s nel cestino, attiva la modalità dx per rimuovere attualmente il file
+impossibile rimuovere il file %s; %s
+Impossibile muovere il file %s nel cestino; %s; attiva la modalità dx per rimuovere attualmente il file
 la destinazione si trova nel blocco che stiamo muovendo
 nessuna modifica
 non posso unire una riga
@@ -221,7 +221,7 @@ impossibile applicare il comando i%c ad un range
 impossibile usare i< in un comando globale
 il buffer %d è vuoto
 il buffer %d contiene più di una riga
-impossibile aprire %s
+impossibile aprire %s; %s
 impossibile leggere da %s
 il protocollo %s non è supportato da %s
 la riga contiene un carriage return
@@ -273,7 +273,7 @@ i dati di sostituzione contengono caratteri newline
 i dati di sostituzione contengono caratteri nulli
 un nome di directory non può contenere uno slash, un carattere newline o nullo
 il file di destinazione %s esiste già
-impossibile rinominare il file come %s
+impossibile rinominare il file come %s; %s
 impossibile inserire valori nulli in un campo di input
 impossibile inserire newlines in un campo di input
 errore durante la connessione SSL %d
@@ -464,7 +464,7 @@ il comando %s non può essere applicato globalmente
 attenzione, il javascript non può essere invocato mediante un doppio click
 errore durante la risoluzione dell'opzione %s durante un sync o il submit di una form
 impossibile spostare %s in un altro file system
-impossibile spostare %s, errno %d
+impossibile spostare %s; %s
 impossibile acquisire javascript locale\n
 impossibile scaricare javascript da %s, codice %ld\n
 impossibile scaricare javascript\n

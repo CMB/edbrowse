@@ -116,8 +116,8 @@ Tu límite de 250 millones de lineas ha sido superado.\nGuarda tus archivos, ent
 camino al archivo absoluto demasiado largo, el límite de caracteres es de %d
 los directorios son sólo de lectura, escribe dw para habilitar cambios.
 no se puede crear .Trash en tu directorio local, guarda tus archivos borrados.
-no se puede borrar el archivo %s
-No se puede mover %s a la trash bin, cambia a dx modo para remover el archivo
+no se puede borrar el archivo %s; %s
+No se puede mover %s a la trash bin; %s; cambia a dx modo para remover el archivo
 el destino se encuentra dentro del bloque que se va a mover
 sin cambios
 no se puede unir una linea
@@ -221,7 +221,7 @@ no se puede aplicar el comando i%c al rango
 no se puede usar i< en un comando global
 sesión %d está vacía
 sesión %d contiene más de una linea
-no se puede abrir %s
+no se puede abrir %s; %s
 no se puede leer de %s
 el protocolo %s no es soportado por %s
 no se puede incrustar retorno de carro en un campo de entrada
@@ -273,7 +273,7 @@ datos de reemplazo contienen nuevas lineas
 datos de reemplazo contienen carácteres vacíos
 no se puede incluir el caracter de barra inclinada, nueva linea o vacío en un nombre de directorio
 el archivo de destino ya %s existe
-no se puede renombrar el archivo a %s
+no se puede renombrar el archivo a %s; %s
 no se puede insertar carácter de vacío en un campo de entrada
 no se puede insertar carácter de nueva linea en un campo de entrada
 error de conexión % de SSL
@@ -464,7 +464,7 @@ el %s comando no puede ser aplicado globálmente
 cuidado, javascript no puede ser invocado con un doble click
 ocurrió un error mientras se resolvía la opción %s durante la sincronicación o el envío de formulario
 no se puede mover %s a otro archivo del sistema
-no se puede mover %s, errno %d
+no se puede mover %s; %s
 no se puede obtener el javascript local\n
 no se puede obtener el javascript de %s, codigo %ld\n
 no se puiede obtener javascript\n

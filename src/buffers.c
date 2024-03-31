@@ -4472,12 +4472,7 @@ static int substituteText(const char *line)
 					goto abort;
 				}
 				if (rename(src, dest)) {
-					if(errno == EACCES)
-						setError(MSG_RenamePerm, dest);
-					else if(errno == EROFS)
-						setError(MSG_RenameRo, dest);
-					else
-						setError(MSG_NoRename, dest);
+					setError(MSG_NoRename, dest, strerror(errno));
 					goto abort;
 				}
 // if substituting one line, remember it for undo
@@ -7320,12 +7315,7 @@ after_ib:
 			goto fail;
 		}
 		if (rename(src, dest)) {
-			if(errno == EACCES)
-				setError(MSG_RenamePerm, dest);
-			else if(errno == EROFS)
-				setError(MSG_RenameRo, dest);
-			else
-				setError(MSG_NoRename, dest);
+			setError(MSG_NoRename, dest, strerror(errno));
 			goto fail;
 		}
 		p[len - 1] = 0;

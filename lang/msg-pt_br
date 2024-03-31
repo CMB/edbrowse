@@ -116,8 +116,8 @@ limite de 250 milhão de linhas alcansado.\nSalve os arquivos, saia e reinicie o
 caminho absoluto comprido demais; o limite é de %d caracteres
 os diretórios são somente leitura; digite dw para ativar a escrita em diretórios
 não foi possível criar o .Trash no seu diretório home para armazenar arquivos apagados
-não foi possível remover o arquivo %s
-não foi possível mover %s para a lixeira; ative o modo dx para remover permanentemente o arquivo
+não foi possível remover o arquivo %s; %s
+não foi possível mover %s para a lixeira; %s; ative o modo dx para remover permanentemente o arquivo
 local de destino fica dentro do bloco a mover
 sem mudança
 impossível juntar uma linha
@@ -221,7 +221,7 @@ impossível aplicar comando i%c a um intervalo
 impossível usar i< num comando global
 o buffer %d está vazio
 o buffer %d contém mais que uma linha
-impossível abrir %s
+impossível abrir %s; %s
 impossível ler a partir de %s
 o protocolo %s não é suportado pelo %s
 a linha possui um retorno de carro embutido
@@ -273,7 +273,7 @@ dados de substituição contêm linhas novas
 dados de substituição contêm caracteres nulos
 impossível embutir barra, nova linha ou caractere nulo num nome de diretório
 arquivo destino já %s existe
-impossível renomear o arquivo para %s
+impossível renomear o arquivo para %s; %s
 impossível embutir caracteres nulos num campo de entrada
 impossível embutir novas linhas num campo de entrada
 Erro de conexão SSL %d
@@ -464,7 +464,7 @@ o comando %s não se aplica globalmente
 aviso: o javascript não pode ser invocado por duplo clique
 erro a resolver a opção %s durante um sync ou submissão de formulário
 não posso mover %s para outro sistema de arquivos
-impossível mover %s, errno %d
+impossível mover %s; %s
 não consegui trazer o javascript local\n
 não consegui trazer o javascript de %s; código %ld\n
 não consegui trazer o javascript\n

@@ -1041,6 +1041,7 @@ if(typeof t == "object") this.src = t.toString();
 })
 swm("Audio", HTMLAudioElement)
 spdc("HTMLAudioElement", HTMLMediaElement)
+HTMLAudioElement.prototype.nodeName = "AUDIO"
 
 swm("HTMLTemplateElement", function(){})
 spdc("HTMLTemplateElement", HTMLElement)

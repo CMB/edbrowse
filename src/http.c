@@ -2154,7 +2154,7 @@ We don't need to do that either.
 
 	f = fopen(tempfile, (cw->binMode ? "rb" : "r"));
 	if(!f) { // this should never happen
-		setError(MSG_NoOpen, tempfile);
+		setError(MSG_NoOpen, tempfile, strerror(errno));
 		goto fail;
 	}
 	curl_easy_setopt(h, CURLOPT_UPLOAD, 1L);
