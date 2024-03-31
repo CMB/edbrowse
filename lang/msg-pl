@@ -384,7 +384,7 @@ nie można utworzyć tymczasowego pliku %s, błąd %d
 zbyt wiele tabel SQL w pamięci podręcznej, limit %d
 %s nie jest regularnym plikiem
 konwersja do UTF-32
-nie można wczytać zawartości %s
+nie można wczytać zawartości %s; %s
 nie można odczytać %s
 $%s nie jest zdefiniowane
 ~%s nie jest zdefiniowane

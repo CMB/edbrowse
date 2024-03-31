@@ -384,7 +384,7 @@ impossibile creare il file temporaneo %s, errno %d
 troppoe tavole sql nella cache, limite %d
 %s non è un normale file
 converto in utf32
-impossibile leggere il contenuto di %s
+impossibile leggere %s; %s
 impossibile accedere a %s
 $%s non è definito
 ~%s non è definito

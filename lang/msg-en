@@ -384,7 +384,7 @@ could not create temp file %s, errno %d
 too many sql tables in cache, limit %d
 %s is not a regular file
 converting to utf32
-cannot read the contents of %s
+cannot read from %s; %s
 cannot access %s
 $%s is not defined
 ~%s is not defined

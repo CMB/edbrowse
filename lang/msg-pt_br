@@ -384,7 +384,7 @@ não consegui criar o arquivo temporário %s; erro %d
 tabelas SQL demais no cache; limite é %d
 %s não é um arquivo regular
 convertendo para utf32
-impossível ler o conteúdo do %s
+impossível ler do %s; %s
 impossível acessar %s
 $%s não definida
 ~%s não definida

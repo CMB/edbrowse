@@ -753,7 +753,9 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 			nzFree(chunk);
 			*data = emptyString;
 			*len = 0;
+// fileIntoMemory improves on this error message
 			setError(MSG_BigFile);
+			errno = EFBIG;
 			return 0;
 		}
 		n = read(fd, chunk, blocksize);
@@ -762,6 +764,7 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 			nzFree(chunk);
 			*data = emptyString;
 			*len = 0;
+// fileIntoMemory improves on this error message
 			setError(MSG_NoRead, "file descriptor");
 			return 0;
 		}
@@ -818,7 +821,7 @@ int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 fh_set:
 	ret = fdIntoMemory(fh, data, len, inparts);
 	if (ret == 0 && filename)
-		setError(MSG_NoRead2, filename);
+		setError(MSG_NoRead2, filename, strerror(errno));
 	if(ret <= 1) close(fh);
 	return ret;
 }

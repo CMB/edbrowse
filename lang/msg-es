@@ -384,7 +384,7 @@ no se puede crear el archivo temporal %, errno %d
 demasiadas tablas sql en memoria, límite %d
 %s no es un archivo regular
 convirtiendo a utf32
-no se puede leer los contenidos de %s
+no se puede leer %s; %s
 no se puede acceder a %s
 $%s no está definida
 ~%s no está definida

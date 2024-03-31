@@ -384,7 +384,7 @@ konnte temporär Datei %s nicht anlegen, Erno %d
 zu viele SQL-Tabellen im Cache, Grenze %d
 %s ist keine reguläre Datei
 konvertiere in utf32
-kann Inhalt von %s nicht lesen
+kann %s nicht lesen; %s
 kann auf %s nicht zugreifen
 $%s ungültige
 ~%s ungültige
