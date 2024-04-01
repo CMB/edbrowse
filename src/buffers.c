@@ -2281,12 +2281,7 @@ bool writeFile(const char *name, int mode)
 	fh = fopen(name, modeString);
 	nzFree(modeString);
 	if (fh == NULL) {
-		if(errno == EACCES)
-			setError(MSG_Permission, name);
-		else if(errno == EROFS)
-			setError(MSG_RoFs, name);
-		else
-		setError(MSG_NoCreate2, name);
+	setError(MSG_NoCreate2, name, strerror(errno));
 		return false;
 	}
 // If writing to the same file and converting, print message,

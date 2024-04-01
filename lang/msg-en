@@ -128,7 +128,7 @@ empty domain in url
 cannot write to a url
 cannot write to a database table
 %c not available in irc mode
-cannot create %s
+cannot create %s; %s
 cannot write to %s; %s
 session is not interactive
 line %c is out of range
@@ -222,7 +222,7 @@ cannot use i< in a global command
 session %d is empty
 session %d contains more than one line
 cannot open %s; %s
-cannot read from %s
+0
 the %s protocol is not supported by %s
 cannot embed carriage return in an input field
 gopher download: 
@@ -760,9 +760,9 @@ division by 0
 false
 removing byte order mark
 restoring byte order mark
-permission denied for %s
-cannot write to %s, no space on device
-cannot write to %s, readonly filesystem
+0
+0
+0
 0
 0
 0

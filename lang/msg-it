@@ -128,7 +128,7 @@ dominio vuoto nell'url
 non posso scrivere su un url
 non posso scrivere su una tavola del database
 %c non disponibile in modalità irc
-impossibile creare %s
+impossibile creare %s; %s
 impossibile scrivere su %s; %s
 la sessione non è interattiva
 riga %c fuori range
@@ -222,7 +222,7 @@ impossibile usare i< in un comando globale
 il buffer %d è vuoto
 il buffer %d contiene più di una riga
 impossibile aprire %s; %s
-impossibile leggere da %s
+0
 il protocollo %s non è supportato da %s
 la riga contiene un carriage return
 download gopher: 

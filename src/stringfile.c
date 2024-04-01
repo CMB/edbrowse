@@ -765,7 +765,7 @@ int fdIntoMemory(int fd, char **data, int *len, bool inparts)
 			*data = emptyString;
 			*len = 0;
 // fileIntoMemory improves on this error message
-			setError(MSG_NoRead, "file descriptor");
+			setError(MSG_NoRead2, "file descriptor", strerror(errno));
 			return 0;
 		}
 

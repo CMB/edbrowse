@@ -2879,11 +2879,11 @@ got_answer:
 	g->down_fd = creat(answer, MODE_rw);
 	if (g->down_fd < 0) {
 		if(!preset) {
-			i_printf(MSG_NoCreate2, answer);
+			i_printf(MSG_NoCreate2, answer, strerror(errno));
 			nl();
 			goto top;
 		}
-		setError(MSG_NoCreate2, answer);
+		setError(MSG_NoCreate2, answer, strerror(errno));
 		nzFree(fp2), nzFree(down_prefile), down_prefile = 0;
 		g->down_state = -1;
 		return;

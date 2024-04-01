@@ -128,7 +128,7 @@ dominio vacío en la url
 no se puede escribir en la url
 no se puede escribir en una tabla de una base de datos
 %c no está disponible en modo irc
-no se puede crear %s
+no se puede crear %s; %s
 no se puede escribir %s; %s
 la sesión no es interactiva
 la linea %c está fuera de rango
@@ -222,7 +222,7 @@ no se puede usar i< en un comando global
 sesión %d está vacía
 sesión %d contiene más de una linea
 no se puede abrir %s; %s
-no se puede leer de %s
+0
 el protocolo %s no es soportado por %s
 no se puede incrustar retorno de carro en un campo de entrada
 bajando gopher:

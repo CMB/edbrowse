@@ -128,7 +128,7 @@ domínio vazio na URL
 impossível adicionar numa URL
 impossível escrever numa tabela do banco de dados
 %c não disponível em modo irc
-impossível criar %s
+impossível criar %s; %s
 impossível escrever em %s; %s
 sessão não interativa
 linha %c fora do intervalo
@@ -222,7 +222,7 @@ impossível usar i< num comando global
 o buffer %d está vazio
 o buffer %d contém mais que uma linha
 impossível abrir %s; %s
-impossível ler a partir de %s
+0
 o protocolo %s não é suportado pelo %s
 a linha possui um retorno de carro embutido
 download via gopher: 

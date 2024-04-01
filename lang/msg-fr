@@ -128,7 +128,7 @@ nom de domaine vide dans l'url
 impossible d'écrire sur une url
 impossible d'écrire dans une table de base de données
 %c impossible en mode irc
-impossible de créer %s
+impossible de créer %s; %s
 ne peut écrire dans %s; %s
 session non interactive
 ligne %c trop grande
@@ -222,7 +222,7 @@ impossible d'utiliser i< dans une commande globale
 le tampon %d est vide
 le tampon %d contient plus d'une ligne
 impossible d'ouvrir %s; %s
-impossible de lire %s
+0
 le protocole %s n'est pas supporté par %s
 il y a un retour-chariot dans la ligne
 téléchargement gopher: 

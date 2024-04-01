@@ -2084,7 +2084,7 @@ refresh:
 			free(w);
 			nzFree(mailstring), mailstring = 0;
 			if (res != CURLE_OK) {
-				i_printf(MSG_NoCreate2, t);
+				i_printf(MSG_NoCreate2, t, "imap");
 				nl();
 				goto input;
 			}

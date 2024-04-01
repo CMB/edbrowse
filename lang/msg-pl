@@ -128,7 +128,7 @@ pusta domena w adresie URL
 nie można zapisać pod adresem URL
 nie można zapisać do tabeli bazy danych
 %c niedostępne w trybie irc
-nie można utworzyć %s
+nie można utworzyć %s; %s
 nie można zapisać %s; %s
 sesja nie jest interaktywna
 wiersz %c jest poza zakresem
@@ -222,7 +222,7 @@ nie można użyć 'i<' w poleceniu globalnym
 sesja %d jest pusta
 sesja %d zawiera więcej niż jeden wiersz
 nie można otworzyć %s; %s
-nie można wczytać %s
+0
 protokół %s nie jest wspierany przez %s
 wiersz zawiera znak powrotu karetki
 ściąganie przez protokół gopher: 
