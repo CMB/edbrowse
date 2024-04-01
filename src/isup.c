@@ -2452,9 +2452,8 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 	else
 		filenum = generateFileNumber();
 	sprintf(cacheFile, "%s/%05d", cacheDir, filenum);
-	if (!memoryOutToFile(cacheFile, data, datalen,
-			     MSG_TempNoCreate2, MSG_NoWrite2)) {
-/* oops, can't write the file */
+	if (!memoryOutToFile(cacheFile, data, datalen)) {
+// oops, can't write the file
 		unlink(cacheFile);
 		debugPrint(3, "cannot write web page into cache");
 		free(cache_data);
@@ -3105,8 +3104,7 @@ bool runPluginCommand(const struct MIMETYPE * m,
 			cnzFree(indata);
 			return false;
 		}
-		if (!memoryOutToFile(tempin, indata, inlength,
-				     MSG_TempNoCreate2, MSG_NoWrite2)) {
+		if (!memoryOutToFile(tempin, indata, inlength)) {
 			cnzFree(indata);
 			return false;
 		}

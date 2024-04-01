@@ -129,7 +129,7 @@ no se puede escribir en la url
 no se puede escribir en una tabla de una base de datos
 %c no está disponible en modo irc
 no se puede crear %s
-no se puede escribir %s
+no se puede escribir %s; %s
 la sesión no es interactiva
 la linea %c está fuera de rango
 no se puede insertar (vacío) en un comando del shell
@@ -380,7 +380,7 @@ no existe la función %s
 demasiados argumentos
 ~%d no tiene su argumento correspondiente
 no se puede generar el subcomando %s, errno %d
-no se puede crear el archivo temporal %, errno %d
+no se puede crear el archivo temporal %s; %s
 demasiadas tablas sql en memoria, límite %d
 %s no es un archivo regular
 convirtiendo a utf32

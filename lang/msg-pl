@@ -129,7 +129,7 @@ nie można zapisać pod adresem URL
 nie można zapisać do tabeli bazy danych
 %c niedostępne w trybie irc
 nie można utworzyć %s
-nie można zapisać %s
+nie można zapisać %s; %s
 sesja nie jest interaktywna
 wiersz %c jest poza zakresem
 nie można włączać pustych znaków (null) do poleceń
@@ -380,7 +380,7 @@ funkcja %s nie istnieje
 zbyt wiele argumentów
 ~%d nie posiada odpowiadającego argumentu
 nie można wywołać subpolecenia %s, błąd %d
-nie można utworzyć tymczasowego pliku %s, błąd %d
+nie można utworzyć tymczasowego pliku %s; %s
 zbyt wiele tabel SQL w pamięci podręcznej, limit %d
 %s nie jest regularnym plikiem
 konwersja do UTF-32

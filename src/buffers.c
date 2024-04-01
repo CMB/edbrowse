@@ -2311,10 +2311,7 @@ bool writeFile(const char *name, int mode)
 			    ((cw->bigMode ? "\xfe\xff" : "\xff\xfe"), 2, 1,
 			     fh) <= 0) {
 badwrite:
-				if(errno == ENOSPC)
-					setError(MSG_NoSpace, name);
-				else
-					setError(MSG_NoWrite2, name);
+					setError(MSG_NoWrite2, name, strerror(errno));
 				fclose(fh);
 				return false;
 			}

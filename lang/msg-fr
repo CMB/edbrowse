@@ -129,7 +129,7 @@ impossible d'écrire sur une url
 impossible d'écrire dans une table de base de données
 %c impossible en mode irc
 impossible de créer %s
-ne peut écrire dans %s
+ne peut écrire dans %s; %s
 session non interactive
 ligne %c trop grande
 une commande shell ne peut contenir des caractères nuls
@@ -380,7 +380,7 @@ fonction %s non trouvée
 trop d'arguments
 ~%d n'a pas d'argument correspondant
 impossible de créer la sous-commande %s, erreur numéro %d
-impossible de créer le fichier temporaire %s, erreur numéro %d
+impossible de créer le fichier temporaire %s; %s
 trop de tables sql dans le cache, la limite est de %d
 %s n'est pas un fichier régulier
 converti en utf32

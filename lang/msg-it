@@ -129,7 +129,7 @@ non posso scrivere su un url
 non posso scrivere su una tavola del database
 %c non disponibile in modalità irc
 impossibile creare %s
-impossibile scrivere su %s
+impossibile scrivere su %s; %s
 la sessione non è interattiva
 riga %c fuori range
 impossibile inserire valori nulli su un comando shell
@@ -380,7 +380,7 @@ nessuna funzione %s
 troppi argomenti
 ~%d non ha argomento corrispondente
 impossibile lanciare (spawn) il sottocomando %s, errno %d
-impossibile creare il file temporaneo %s, errno %d
+impossibile creare il file temporaneo %s; %s
 troppoe tavole sql nella cache, limite %d
 %s non è un normale file
 converto in utf32

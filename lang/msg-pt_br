@@ -129,7 +129,7 @@ impossível adicionar numa URL
 impossível escrever numa tabela do banco de dados
 %c não disponível em modo irc
 impossível criar %s
-impossível escrever em %s
+impossível escrever em %s; %s
 sessão não interativa
 linha %c fora do intervalo
 impossível embutir caracteres nulos num comando de shell
@@ -380,7 +380,7 @@ função %s não existe
 argumentos demais
 ~%d não possui argumento correspondente
 não consegui executar o subcomando %s; erro %d
-não consegui criar o arquivo temporário %s; erro %d
+não consegui criar o arquivo temporário %s; %s
 tabelas SQL demais no cache; limite é %d
 %s não é um arquivo regular
 convertendo para utf32

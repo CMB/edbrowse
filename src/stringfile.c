@@ -827,26 +827,16 @@ fh_set:
 }
 
 // inverse of the above
-bool memoryOutToFile(const char *filename, const char *data, int len,
-/* specify the error messages */
-		     int msgcreate, int msgwrite)
+bool memoryOutToFile(const char *filename, const char *data, int len)
 {
 	int fh =
 	    open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, MODE_rw);
 	if (fh < 0) {
-		if(errno == EACCES)
-			setError(MSG_Permission, filename);
-		else if(errno == EROFS)
-			setError(MSG_RoFs, filename);
-		else
-			setError(msgcreate, filename, errno);
+			setError(MSG_TempNoCreate2, filename, strerror(errno));
 		return false;
 	}
 	if (write(fh, data, len) < len) {
-		if(errno == ENOSPC)
-			setError(MSG_NoSpace, filename);
-		else
-			setError(msgwrite, filename, errno);
+			setError(MSG_NoWrite2, filename, strerror(errno));
 		close(fh);
 		return false;
 	}
@@ -1974,9 +1964,7 @@ unlink:
 					}
 					if (!fileIntoMemory    (path, &rmbuf, &rmlen, 0))
 						goto abort;
-					if (!memoryOutToFile(bin, rmbuf, rmlen,
-							     MSG_TempNoCreate2,
-							     MSG_NoWrite2)) {
+					if (!memoryOutToFile(bin, rmbuf, rmlen)) {
 						nzFree(rmbuf);
 						goto abort;
 					}
@@ -2131,9 +2119,7 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 					free(path1);
 					return false;
 				}
-				if (!memoryOutToFile(path2, rmbuf, rmlen,
-						     MSG_TempNoCreate2,
-						     MSG_NoWrite2)) {
+				if (!memoryOutToFile(path2, rmbuf, rmlen)) {
 					free(file);
 					free(path1);
 					nzFree(rmbuf);

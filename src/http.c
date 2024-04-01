@@ -385,11 +385,11 @@ eb_curl_callback(char *incoming, size_t size, size_t nitems, struct i_get * g)
 			goto showdots;
 		}
 		if (g->down_state == 2) {
-// has to be the foreground http thread, so ok to call setErro,
+// has to be the foreground http thread, so ok to call setError,
 // which is not threadsafe.
-			setError(MSG_NoWrite2, g->down_file);
+			setError(MSG_NoWrite2, g->down_file, strerror(errno));
 		} else {
-			i_printf(MSG_NoWrite2, g->down_file);
+			i_printf(MSG_NoWrite2, g->down_file, strerror(errno));
 			printf(", ");
 			i_puts(MSG_DownAbort);
 		}

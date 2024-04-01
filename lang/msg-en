@@ -129,7 +129,7 @@ cannot write to a url
 cannot write to a database table
 %c not available in irc mode
 cannot create %s
-cannot write to %s
+cannot write to %s; %s
 session is not interactive
 line %c is out of range
 cannot embed null in a shell command
@@ -380,7 +380,7 @@ no such function %s
 too many arguments
 ~%d has no corresponding argument
 could not spawn subcommand %s, errno %d
-could not create temp file %s, errno %d
+could not create temp file %s; %s
 too many sql tables in cache, limit %d
 %s is not a regular file
 converting to utf32

@@ -420,9 +420,8 @@ void writeShortCache(void)
 		char filename[20];
 		++n;
 		sprintf(filename, "i%d.css", n);
-		if (!memoryOutToFile(filename, c->data, strlen(c->data),
-				     MSG_TempNoCreate2, MSG_NoWrite2)) {
-/* oops, can't write the file */
+		if (!memoryOutToFile(filename, c->data, strlen(c->data))) {
+// oops, can't write the file
 			unlink(filename);
 			showError();
 			continue;

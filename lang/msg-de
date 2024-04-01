@@ -129,7 +129,7 @@ kann eine URL nicht schreiben
 kann in eine Datenbanktabelle nicht schreiben
 %c im irc Modes nicht verfügbar
 kann %s nicht anlegen
-kann %s nicht schreiben
+kann %s nicht schreiben; %s
 Sitzung ist nicht interaktiv
 Zeile %c ist außerhalb des Bereichs
 kann nullen nicht in ein Shell-Kommando einbetten
@@ -380,7 +380,7 @@ keine solche Funktion %s
 zu viele Parameter
 ~%d hat keinen passenden Parameter
 konnte Subkommando %s nicht ausführen, Erno %d
-konnte temporär Datei %s nicht anlegen, Erno %d
+konnte temporär Datei %s nicht anlegen; %s
 zu viele SQL-Tabellen im Cache, Grenze %d
 %s ist keine reguläre Datei
 konvertiere in utf32
