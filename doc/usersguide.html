@@ -402,8 +402,10 @@ Some edbrowse messages include the output of strerror, e.g. when opening, readin
 These text fragments are also internationalized, if you have installed the appropriate libc configuration module for your language.
 This is probably installed on your behalf if you specified a preferred language when setting up the operating system.
 However, other language modules may not be present.
-LANG=es_ES.UTF8 edbrowse causes all the edbrowse messages to display in Spanish, however, if the libc Spanish module is not installed, because your native language is German, then the strerror portion might appear in English.
-Most users will use edbrowse consistent with the language of their operating system, and this issue will not arise.
+LANG=es_ES.UTF8 edbrowse causes all the edbrowse messages to display in Spanish, however, if the libc Spanish module is not installed, because your native language is German, then the strerror portion might appear in English,
+as that is the default for strerror when the module corresponding to LANG is not present.
+That could indeed be confusing.
+That said, most users will use edbrowse consistently with the language of their operating system, and this issue will not arise.
 
 <p>
 When an output or error message is displayed,

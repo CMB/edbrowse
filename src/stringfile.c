@@ -1851,6 +1851,7 @@ bool readDirectory(const char *filename, int endline, char cmd, struct lineMap *
 	if(dmap) {
 		cw->dmap = allocMem((linecount + 1) * DTSIZE);
 		memcpy(cw->dmap + DTSIZE, dmap, linecount*DTSIZE);
+		free(dmap);
 	}
 
 success:
