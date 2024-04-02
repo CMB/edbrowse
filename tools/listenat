@@ -1,0 +1,71 @@
+#  listenat:  listen at a particular port.
+#  example:   perl listenat 1500
+#  Unless you are root, the port has to be > 1000.
+#  This is a mock server, satisfying a one-time request, not a persistent
+#  connection. Typical is http.
+#  It prints the connect message then everything the client sends,
+#  then sends your input back to the client, ending in eof.
+#  You can send a prepared file via <headstart
+#  Sometimes you have quite a few headers you want to send back,
+#  so this way you don't have to type them all in perfectly.
+#  Under http, or most protocols, each line in that file should end in \r
+#  If your input does not start with <, it is simply an interactive text.
+#  This program appends \r and sends it on to the client.
+#  I don't know if the added \r here is a convenience or an annoyance.
+#  You can send a file, your own lines, another file, more text, etc.
+#  eof or ^c to terminate the session.
+#  This program does not handle secure sockets, but could be upgraded to do so,
+#  with the understanding that the client would not be able to certify the connection.
+#  vs- in edbrowse.
+
+use IO::Socket;
+use IO::Handle;
+
+$#ARGV == 0 &&
+$ARGV[0] =~ /^[0-9]+$/ or
+print("usage:  listenat portNumber\n"), exit 1;
+
+$port = $ARGV[0];
+$proto = getprotobyname('tcp');
+socket(Server, PF_INET, SOCK_STREAM, $proto)        or die "socket: $!";
+setsockopt(Server, SOL_SOCKET, SO_REUSEADDR,
+pack("l", 1))   or die "setsockopt: $!";
+bind(Server, sockaddr_in($port, INADDR_ANY))        or die "bind: $!";
+listen(Server,SOMAXCONN)                            or die "listen: $!";
+
+print "listening on $port.\n";
+
+my $paddr = accept(Client,Server) or die "accept $!";
+($port,$iaddr) = sockaddr_in($paddr);
+$name = gethostbyaddr($iaddr,AF_INET);
+print "connection from $name [",
+inet_ntoa($iaddr), "] at port $port\n";
+Client->autoflush(1);
+
+$pid = fork();
+$pid >= 0 or die "fork: $!";
+
+if(!$pid) { # child
+print while <Client>;
+print "EOF\n";
+sleep 2;
+kill 15, getppid;
+} else {
+while(<STDIN>) {
+if(s/^<//) {
+$file = $_;
+if(open(FH, $file)) {
+print Client while <FH>;
+close FH;
+} else {
+print "cannot open $file\n";
+}
+} else {
+s/$/\r/;
+print Client;
+}
+}
+sleep 2;
+kill 15, $pid;
+}
+exit 0;
