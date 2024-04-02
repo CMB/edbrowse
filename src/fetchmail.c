@@ -3782,7 +3782,7 @@ Also, if mailing to all, stick in the other recipients.
 bool setupReply(bool all)
 {
 	int subln, repln;
-	char linetype[8];
+	char linetype[12];
 	int j;
 	char *out, *s, *t;
 	bool rc;
@@ -3792,12 +3792,10 @@ bool setupReply(bool all)
 		setError(MSG_ReDir);
 		return false;
 	}
-
 	if (cw->sqlMode) {
 		setError(MSG_ReDB);
 		return false;
 	}
-
 	if (cw->irciMode | cw->ircoMode) {
 		setError(MSG_ReIrc);
 		return false;
@@ -3806,20 +3804,18 @@ bool setupReply(bool all)
 		setError(MSG_ReImap);
 		return false;
 	}
-
 	if (!cw->dol) {
 		setError(MSG_ReEmpty);
 		return false;
 	}
-
 	if (cw->binMode) {
 		setError(MSG_ReBinary);
 		return false;
 	}
 
 	subln = repln = 0;
-	strcpy(linetype, " xxxxxx");
-	for (j = 1; j <= 6; ++j) {
+	strcpy(linetype, " xxxxxxxxxx");
+	for (j = 1; j <= 10; ++j) {
 		char *p;
 		if (j > cw->dol)
 			break;
@@ -3858,7 +3854,6 @@ bool setupReply(bool all)
 			goto nextline;
 		}
 
-/* This one has to be last. */
 		s = p;
 		while (isdigitByte(*s))
 			++s;
@@ -3868,7 +3863,17 @@ bool setupReply(bool all)
 			goto nextline;
 		}
 
-/* line doesn't match anything we know */
+// the missing subject at the end of the block
+		if(*p == '\n' && repln && !subln) {
+			static const char blank[] = "Subject:\n";
+			nzFree(p);
+			if(!addTextToBuffer((const uchar*)blank, strlen(blank), j - 1, false))
+				return false;
+			subln = j, linetype[j++] = 's';
+			break;
+		}
+
+// line doesn't match anything we know
 		nzFree(p);
 		break;
 
@@ -3881,8 +3886,8 @@ nextline:
 		return false;
 	}
 
-/* delete the lines we don't need */
 	linetype[j] = 0;
+// delete the lines we don't need
 	for (--j; j >= 1; --j) {
 		if (strchr("srv", linetype[j]))
 			continue;
@@ -3890,7 +3895,7 @@ nextline:
 		strmove(linetype + j, linetype + j + 1);
 	}
 
-/* move reply to 1, if it isn't already there */
+// move reply to 1, if it isn't already there
 	repln = strchr(linetype, 'r') - linetype;
 	subln = strchr(linetype, 's') - linetype;
 	if (repln != 1) {
@@ -3927,7 +3932,7 @@ nextline:
 		return true;	/* that's all we can do */
 	}
 
-/* Build the header lines and put them in the buffer */
+// Build the header lines and put them in the buffer
 	out = initString(&j);
 /* step through the to list */
 	s = strchr(cw->mailInfo, '>') + 1;
@@ -3941,7 +3946,7 @@ nextline:
 		s = t + 1;
 	}
 
-/* step through the cc list */
+// step through the cc list
 	++s;
 	while (*s != '>') {
 		t = strchr(s, ',');
