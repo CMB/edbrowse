@@ -2387,11 +2387,9 @@ static int saveFormattedMail(int fh)
 // assumes lastMailInfo has been created, and is present
 static const char*defaultSaveFilename(char *key_p, bool *delflag_p)
 {
-	const char *redirect;
-	if (!passMail) {
+	const char *redirect = 0;
+	if (!passMail)
 		redirect = mailRedirect(lastMailInfo->to, lastMailInfo->from, lastMailInfo->reply, lastMailInfo->subject);
-	}
-
 	if (redirect) {
 		if (!isimap) {
 // pop3 client
@@ -2413,7 +2411,6 @@ static const char*defaultSaveFilename(char *key_p, bool *delflag_p)
 			if (stringEqual(redirect, "x")) redirect = NULL;
 		}
 	}
-
 	return redirect;
 }
 
