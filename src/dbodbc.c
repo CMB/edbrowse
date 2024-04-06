@@ -823,8 +823,8 @@ static void retsFromOdbc(void)
 	bool yearfirst, indata = false;
 	long dt;		/* temporarily hold date or time */
 	char *s;
-	short c_type;		/* C data type */
-	long input_length, output_length;
+	short c_type = 0;		/* C data type */
+	long input_length = 0, output_length;
 	char tbuf[20];		/* temp buf, for dates and times */
 	double fmoney;		/* float version of money */
 	int blobcount = 0;
@@ -1092,9 +1092,9 @@ breakloop:
 static long oneRetValue(void *pre_x, ...)
 {
 	char coltype = rv_type[0];
-	char c;
-	long n;
-	double f;
+	char c = 0;
+	long n = 0;
+	double f = 0.0;
 	void **x = (void **)((char *)&pre_x + 4);
 
 	va_end(sqlargs);

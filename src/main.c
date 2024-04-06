@@ -378,7 +378,7 @@ const char *mailRedirect(const char *to, const char *from,
 	unsigned i;
 	int k;
 	struct ebhost *f = ebhosts;
-	const char *m, *r;	// match and redirect
+	const char *m = 0, *r = 0;	// match and redirect
 
 	for (i = 0; i < ebhosts_avail; ++i, ++f) {
 		char type = f->type;

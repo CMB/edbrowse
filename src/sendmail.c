@@ -362,7 +362,7 @@ bool *long_p)
 {
 	char *buf;
 	char c;
-	bool longline, longword, cr, endlinespace, startlinedot, flowed;
+	bool longline, longword, cr, endlinespace, startlinedot, flowed = false;
 	char *s, *t, *v;
 	char *ct, *ce;		// content type, content encoding
 	int buflen, i, cx;

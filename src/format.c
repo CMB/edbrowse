@@ -286,7 +286,7 @@ static void anchorSwap(char *buf)
 	bool slash;		// closing tag
 	bool change;		// made a swap somewhere
 	bool strong;		// strong whitespace, newline or paragraph
-	int n, cnt, tagno;
+	int n = 0, cnt, tagno = 0;
 	char tag[20];
 
 	cnt = 0;
@@ -2229,7 +2229,7 @@ what was successfully decoded.
 int base64Decode(char *start, char **end)
 {
 	char *b64_end = *end;
-	uchar val, leftover, mod;
+	uchar val, leftover = 0, mod;
 	bool equals;
 	int ret = GOOD_BASE64_DECODE;
 	char c, *q, *r;
@@ -2537,7 +2537,7 @@ char *closeColor(const char *s)
 		"yellowgreen", 0x9a, 0xcd, 0x32}, {
 		0}
 	};
-	const struct reserved *c, *best_c;
+	const struct reserved *c, *best_c = 0;
 	int best_val;
 	int r1, g1, b1;
 	const char *t;
@@ -3409,7 +3409,7 @@ bool varExpand(const char *line, char **newline)
 	char *t; // I may cast to char*, to blank out something, but I'll put it back
 	char cut, op1, op2;
 	const char *value;
-	int total, side, n, sign;
+	int total, side, n = 0, sign;
 
 top:
 	l2 = strstr(l1, "$(");

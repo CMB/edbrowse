@@ -1421,7 +1421,7 @@ bool htmlTest(void)
 
 bool browseCurrentBuffer(const char *suffix, bool plain)
 {
-	char *rawbuf, *newbuf, *tbuf;
+	char *rawbuf, *newbuf = 0, *tbuf;
 	int rawsize, tlen, j;
 	bool rc, remote;
 	uchar sxfirst = 1;
@@ -2058,7 +2058,7 @@ static void resetVar(Tag *t)
 {
 	int itype = t->itype;
 	const char *w = t->rvalue;
-	bool bval;
+	bool bval = false;
 
 /* This is a kludge - option looks like INP_SELECT */
 	if (t->action == TAGACT_OPTION)
@@ -3937,11 +3937,10 @@ bool timerWait(int *delay_sec, int *delay_ms)
 {
 	struct jsTimer *jt;
 	time_t now;
-	int remaining;
+	int remaining = 0;
 
 	if (allowJS && cw->mustrender) {
 		time(&now);
-		remaining = 0;
 		if (now < cw->nextrender)
 			remaining = cw->nextrender - now;
 	}
@@ -4466,7 +4465,7 @@ static void td2columnHeading(const Tag *tr, const Tag *td)
 	const Tag *v;
 	int j = 1, seqno, ics;
 	char *prior_p, *last_p;
-	int prior_j;
+	int prior_j = 0;
 	uchar ttype = tableType(tr);
 	char *cs = tr->js_file; // the cellstring
 	if(!cs) cs = emptyString;

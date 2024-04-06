@@ -97,8 +97,8 @@ char *lineFormatStack(const char *line,	/* the sprintf-like formatting string */
 		      va_list * parmv)
 {
 	short i, len, maxlen, len_given, flags;
-	long n;
-	double dn;		/* double number */
+	long n = 0;
+	double dn = 0.0;		/* double number */
 	char *q, *r, pdir, inquote;
 	const char *t, *perc;
 	char fmt[12];
@@ -590,7 +590,7 @@ interval stringTime(const char *t)
 {
 	short h, m, s;
 	bool ampm = false;
-	char c;
+	char c = 0;
 	char buf[12];
 	short i, l;
 	if (!t)
@@ -1832,11 +1832,11 @@ static void cursor_comm(const char *stmt1, const char *stmt2,	/* the two select 
 	char *line1, *line2, *s;	/* the two fetched rows */
 	void *blob1, *blob2;	/* one blob per table */
 	bool eof1, eof2, get1, get2;
-	int sortval1, sortval2;
+	int sortval1 = 0, sortval2 = 0;
 	char sortstring1[80], sortstring2[80];
 	int sortcol;
 	char sorttype;
-	long passkey1, passkey2;
+	long passkey1 = 0, passkey2 = 0;
 	static const char sortnull[] = "cursor_comm, sortval%d is null";
 	static const char sortlong[] =
 	    "cursor_comm cannot key on strings longer than %d";

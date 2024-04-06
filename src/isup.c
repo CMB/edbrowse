@@ -1236,7 +1236,7 @@ char *decodePostData(const char *data, const char *name, int seqno)
 	const char *s, *n, *t;
 	char *ns = 0, *w = 0;
 	int j = 0, j2;
-	char c;
+	char c = 0;
 
 	if (!seqno && !name)
 		i_printfExit(MSG_DecodePost);
@@ -2147,7 +2147,7 @@ static bool readControl(void)
 static char *record2string(const struct CENTRY *e)
 {
 	char *t;
-	asprintf(&t, "%s\t%05d\t%s\t%d\t%d\t%d\n",
+	ignore = asprintf(&t, "%s\t%05d\t%s\t%d\t%d\t%d\n",
 		 e->url, e->filenumber, e->etag, e->modtime, e->accesstime,
 		 e->pages);
 	return t;
@@ -2474,7 +2474,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 		if (newlen == e->textlength) {
 /* record is the same length, just update it */
 			lseek(control_fh, e->offset, 0);
-			write(control_fh, newrec, newlen);
+			ignore = write(control_fh, newrec, newlen);
 			debugPrint(3, "into cache");
 			free(cache_data);
 			free(newrec);
@@ -2532,7 +2532,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 		char *newrec = record2string(e);
 		e->textlength = strlen(newrec);
 		lseek(control_fh, 0L, 2);
-		write(control_fh, newrec, e->textlength);
+		ignore = write(control_fh, newrec, e->textlength);
 		debugPrint(3, "into cache");
 		free(cache_data);
 		free(newrec);
@@ -2540,7 +2540,7 @@ void storeCache(const char *url, const char *etag, time_t modtime,
 		return;
 	}
 
-/* have to rewrite the whole control file */
+// have to rewrite the whole control file
 	if (!writeControl())
 		clearCacheInternal();
 	else
@@ -3682,7 +3682,7 @@ static void ircSend(const Window *win, char *fmt, ...)
 	if(win->ircSecure)
 		SSL_write(win->irc_ssl, irc_out, l);
 	else
-		write(win->irc_fd, irc_out, l);
+		ignore = write(win->irc_fd, irc_out, l);
 }
 
 // skip ahead to c

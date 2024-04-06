@@ -848,9 +848,9 @@ bool memoryOutToFile(const char *filename, const char *data, int len)
 void truncate0(const char *filename, int fh)
 {
 	if (fh < 0)
-		truncate(filename, 0l);
+		ignore = truncate(filename, 0l);
 	else
-		ftruncate(fh, 0l);
+		ignore = ftruncate(fh, 0l);
 }
 
 long long bufferSizeW(const Window *w, bool browsing)
@@ -1381,7 +1381,7 @@ int getche(void)
 	if(!isInteractive) return getchar();
 	fflush(stdout);
 	ttyRaw(1, 0, true);
-	read(0, &c, 1);
+	ignore = read(0, &c, 1);
 	ttyRestoreSettings();
 	return c;
 }
@@ -1392,7 +1392,7 @@ int getch(void)
 	if(!isInteractive) return getchar();
 	fflush(stdout);
 	ttyRaw(1, 0, false);
-	read(0, &c, 1);
+	ignore = read(0, &c, 1);
 	ttyRestoreSettings();
 	return c;
 }
@@ -1650,7 +1650,7 @@ static int dircmp_st(const void *s, const void *t)
 {
 	const struct DSR *q = s;
 	const struct DSR *r = t;
-	int rc;
+	int rc = 0;
 	if (ls_sort == 1) {
 		rc = 0;
 		if (q->u.z < r->u.z)
@@ -1918,7 +1918,7 @@ abort:
 				setError(MSG_MetaChar);
 				goto abort;
 			}
-			asprintf(&a, "rm -rf %c%s%c",
+			ignore = asprintf(&a, "rm -rf %c%s%c",
 			qc, path, qc);
 			j = system(a);
 			free(a);
@@ -1951,7 +1951,7 @@ unlink:
 							setError(MSG_MetaChar);
 							goto abort;
 						}
-						asprintf(&a, "mv -n %c%s%c %c%s%c",
+						ignore = asprintf(&a, "mv -n %c%s%c %c%s%c",
 						qc, path, qc, qc, bin, qc);
 						j = system(a);
 						free(a);
@@ -1989,7 +1989,7 @@ unlink:
 // Move or copy files from one directory to another
 bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 {
-	Window *cw1 = cw, *cw2, *w;
+	Window *cw1 = cw, *cw2 = 0, *w;
 	char *path1, *path2;
 	int ln, cnt, dol;
 
@@ -2099,7 +2099,7 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 						free(path1);
 						return false;
 					}
-					asprintf(&a, "%s %c%s%c %c%s%c",
+					ignore = asprintf(&a, "%s %c%s%c %c%s%c",
 					(origcmd == 'm' ? "mv -n" : "cp -an"),
 					qc, path1, qc, qc, cw2->baseDirName, qc);
 					j = system(a);

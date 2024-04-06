@@ -144,7 +144,7 @@ I'll try to replace it with omitted when it's obscene, and preserve it when it i
 
 static void uncomment(char *s)
 {
-	char *w = s, *url0;
+	char *w = s, *url0 = 0;
 	int n;
 	char c, urlmode = 0, delimmode = 0;
 
@@ -1254,7 +1254,7 @@ static void cssParseLeft(struct desc *d)
 	char *a2, *t;
 	char c, last_c = 0, combin;
 	struct sel *sel = 0;	// the selector being built
-	struct sel *sel2;
+	struct sel *sel2 = 0;
 	struct asel *asel, *asel2;
 	int n;
 
@@ -2168,9 +2168,9 @@ if(!t) {
 
 		if (c == '[') {
 			bool valloc = false;
-			int l;
+			int l = 0;
 			char cutc = 0;
-			char *value, *v, *v0, *q;
+			char *value = 0, *v, *v0, *q;
 			char *cut = strchr(p, '=');
 			if (cut) {
 				value = cut + 1;
@@ -2958,7 +2958,7 @@ static void do_rules(const Tag *t, struct rule *r0, int highspec)
 	struct rule *r, *r1;
 	char *s, *s_attr;
 	int sl;
-	const Tag *tn; // the text node that holds before or after text
+	const Tag *tn = 0; // the text node that holds before or after text
 	char *a;
 	int spec;
 
@@ -3203,7 +3203,7 @@ static void hashSortCrunch(struct hashhead **hp, int *np, bool keyalloc)
 	struct hashhead *h = *hp;
 	int n = *np;
 	struct hashhead *mark = 0, *v;
-	int i, j, distinct = 0;
+	int i, j = 0, distinct = 0;
 
 	qsort(h, n, sizeof(struct hashhead), key_cmp);
 

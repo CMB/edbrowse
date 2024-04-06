@@ -1896,6 +1896,7 @@ uchar prebrowse, const Tag *gotag)
 	bool rc;		// return code
 	bool fileprot = false;
 	const char *hash;
+	char *h;
 	char filetype;
 	int inparts = 0;
 	int partSize = 0;
@@ -2147,7 +2148,6 @@ badfile:
 			cmd = 'e';
 	} else {
 
-		char *h = 0;
 		inparts = 1, fileSize = 0;
 // set inparts to 0 if you don't want reading by parts or if it causes trouble,
 // as it can when a single line is 100 megabytes long. So turn it off?
@@ -2156,8 +2156,9 @@ badfile:
 // management system over to size_t wouldn't help.
 
 nextpart:
-// some code to lop of hash for a local file when browsing locally,
+// some code to lop off hash for a local file when browsing locally,
 // <a href=foo.html#bar>go to the bar section</a>
+		h = 0;
 		if(prebrowse && icmd == 'g')
 			h = strchr(filename, '#');
 		if(h) *h = 0;
@@ -2811,7 +2812,7 @@ static char *bangbang(const char *line)
 // replace '. with $EB_DOT, '_ with $EB_FILE, etc
 static char *apostropheMacros(const char *line)
 {
-	char *newline = 0, *s;
+	char *newline = 0, *s = 0;
 	const char *t;
 	char key;
 	int linesize = 0, pass, n;
@@ -4335,7 +4336,7 @@ static int substituteText(const char *line)
 	ln2 = 0;
 	for (ln = startRange; ln <= endRange; ++ln) {
 		char *p;
-		int len, imaplen;
+		int len, imaplen = 0;
 
 		if(newmap) {
 			newmap[ln2] = cw->map[ln];

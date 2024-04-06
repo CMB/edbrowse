@@ -1715,7 +1715,7 @@ static void ftp_listing(struct i_get *g)
 /* Format a line from a gopher directory. */
 static void gopher_ls_line(struct i_get *g, char *line)
 {
-	int port;
+	int port = 0;
 	char first, *text, *pathname, *host, *s, *plus;
 	int l = strlen(line);
 	if (l && line[l - 1] == '\r')
