@@ -1653,12 +1653,22 @@ In duktape it does what you want; returns window for the named context.
 In quickjs, it returns the window of where it was compiled.
 That's no help; I could have just said window.
 I specifically set up cf->winobj for the window object, so use that.
+It is possible for cf->winobj to be null - though I ran for years
+without running into this corner case. Browse a page with no js.
+Then turn on js and expand a frame.
+The entire page is rendered in context 1, but there is no js there.
+Within the frame, js is active, so we use css and other things to see if
+various tags are visible. This calls eb$visible, which calls my$win().
+That's a null pointer.
+Not sure what to do here, so just return null.
 *********************************************************************/
+	if(!cf->winobj) return JS_NULL;
 	return JS_DupValue(cx, *(JSValue*)cf->winobj);
 }
 
 static JSValue nat_mydoc(JSContext * cx, JSValueConst this, int argc, JSValueConst *argv)
 {
+	if(!cf->docobj) return JS_NULL;
 	return JS_DupValue(cx, *(JSValue*)cf->docobj);
 }
 
