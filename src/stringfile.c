@@ -457,13 +457,13 @@ const char *stringInBufLine(const char *s, const char *t)
 {
 	int n = strlen(t);
 	int i;
-	for (i = 0; i < n; i++) {
-		if (s[i] == '\n')
-			return 0;
+	for (i = 0; i < n - 1; i++) {
+		if (s[i] == '\n') return 0; // too short
 	}
-	for (; s[n-1] != '\n'; ++s) {
-		if (!strncmp(s, t, n))
-			return s;
+	while(1) {
+		if (!strncmp(s, t, n)) return s;
+		if(s[n - 1] == '\n') return 0;
+		++s;
 	}
 	return 0;
 }
