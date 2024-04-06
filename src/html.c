@@ -5403,6 +5403,17 @@ unparen:
 		if (!retainTag)
 			break;
 
+// we call javascript to see if nodes are visible, acting through css,
+// these calls need to happen within the relevant frame.
+		if(t->f1 && opentag) {
+			if(t->f0 != cf)
+				debugPrint(3, "render frame mismatch: tag %d current %d owned by %d", t->seqno, cf->gsn, t->f0->gsn);
+			cf = t->f1;
+		}
+		if(t->f1 && !opentag) {
+			cf = t->f0;
+		}
+
 		if (t->f1 && !t->contracted) {	/* expanded frame */
 			sprintf(hnum, "\r%c%d*%s\r", InternalCodeChar, tagno,
 				(opentag ? "`--" : "--`"));
@@ -5410,7 +5421,7 @@ unparen:
 			break;
 		}
 
-/* back to unexpanded frame or area */
+/* back to unexpanded frame, or area */
 		if (!opentag)
 			break;
 		liCheck(t);
@@ -5515,8 +5526,12 @@ char *render(void)
 	inv2 = NULL;
 	listnest = 0;
 	currentForm = currentA = NULL;
+	if(cf != &cw->f0)
+		debugPrint(3, "render does not start at the top frame, context %d", cf->gsn);
 	traverse_callback = renderNode;
 	traverseAll();
+	if(cf != &cw->f0)
+		debugPrint(3, "render does not end at the top frame, context %d", cf->gsn);
 	return ns;
 }
 
