@@ -37,7 +37,7 @@ ifneq ($(EBPROF),)
 endif
 
 #  Libraries and linker flags for edbrowse.
-LDFLAGS = $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
+LDFLAGS += $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
 
 # LDFLAGS for quickjs loading.
 QUICKJS_LDFLAGS = $(QUICKJS_LIB)/libquickjs.a -ldl
@@ -73,7 +73,7 @@ msg-strings.c: ../lang/msg-*
 	cd .. ; $(PERL) ./tools/buildmsgstrings.pl
 
 jseng-quick.o : jseng-quick.c
-	$(CC) -I$(QUICKJS_INCLUDE) $(CFLAGS) -c jseng-quick.c
+	$(CC) -I$(QUICKJS_INCLUDE) $(CPPFLAGS) $(CFLAGS) -c jseng-quick.c
 
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
