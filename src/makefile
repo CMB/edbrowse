@@ -13,7 +13,7 @@ CFLAGS += $(PLATFORM_CFLAGS)
 DEPENDENCIES = libcurl:curl odbc libpcre2-8:pcre2-8 readline openssl
 INCLUDES = $(shell ./make-helper.sh pkg-config-includes $(DEPENDENCIES))
 LINKER_LIBS = $(shell ./make-helper.sh pkg-config-libs $(DEPENDENCIES))
-CFLAGS += $(INCLUDES)
+CPPFLAGS += $(INCLUDES) -I$(QUICKJS_INCLUDE)
 
 #  Set EBDEMIN=on to support dynamic js deminimization
 ifneq ($(EBDEMIN),)
@@ -40,11 +40,11 @@ endif
 LDFLAGS += $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
 
 # LDFLAGS for quickjs loading.
-QUICKJS_LDFLAGS = $(QUICKJS_LIB)/libquickjs.a -ldl
+QUICKJS_LDFLAGS = -L$(QUICKJS_LIB) -lquickjs -ldl
 ifeq ($(shell uname),Linux)
 	QUICKJS_LDFLAGS += -latomic
 endif
-
+LDFLAGS += $(QUICKJS_LDFLAGS)
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
 #  but it's better to put those two directories into /etc/ld.so.conf and then run ldconfig
@@ -56,11 +56,11 @@ all: edbrowse
 #  edbrowse objects
 EBOBJS = main.o buffers.o sendmail.o fetchmail.o \
 	html.o html-tags.o format.o stringfile.o ebrc.o \
-	msg-strings.o http.o isup.o css.o startwindow.o dbops.o dbodbc.o
+	msg-strings.o http.o isup.o css.o startwindow.o dbops.o dbodbc.o \
+	jseng-quick.o
 
 #  Header file dependencies.
 $(EBOBJS) : eb.h ebprot.h messages.h
-jseng-quick.o : eb.h ebprot.h messages.h
 dbodbc.o dbinfx.o dbops.o : dbapi.h
 
 startwindow.c: $(EDBR_JS_ASSETS)
@@ -72,13 +72,10 @@ ebrc.c: ../lang/ebrc-* ../doc/usersguide*.html
 msg-strings.c: ../lang/msg-*
 	cd .. ; $(PERL) ./tools/buildmsgstrings.pl
 
-jseng-quick.o : jseng-quick.c
-	$(CC) -I$(QUICKJS_INCLUDE) $(CPPFLAGS) $(CFLAGS) -c jseng-quick.c
-
 # The implicit linking rule isn't good enough, because we don't have an
 # edbrowse.o object, and it expects one.
-edbrowse: $(EBOBJS) jseng-quick.o
-	$(CC) $(EBOBJS) jseng-quick.o $(QUICKJS_LDFLAGS) $(LDFLAGS)  -o $@
+edbrowse: $(EBOBJS)
+	$(CC) $(EBOBJS) $(LDFLAGS)  -o $@
 
 PREFIX ?=	/usr/local
 #  You probably need to be root to do this.
