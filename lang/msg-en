@@ -222,7 +222,7 @@ cannot use i< in a global command
 session %d is empty
 session %d contains more than one line
 cannot open %s; %s
-0
+cannot link %s; %s
 the %s protocol is not supported by %s
 cannot embed carriage return in an input field
 gopher download: 

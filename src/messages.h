@@ -322,7 +322,7 @@ enum {
 	MSG_BufferXEmpty,
 	MSG_BufferXLines,
 	MSG_NoOpen,
-	MSG_notused225,
+	MSG_LinkError,
 	MSG_WebProtBad,
 	MSG_InputCR,
 	MSG_GopherDownload,

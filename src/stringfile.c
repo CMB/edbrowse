@@ -462,7 +462,7 @@ const char *stringInBufLine(const char *s, const char *t)
 	}
 	while(1) {
 		if (!strncmp(s, t, n)) return s;
-		if(s[n - 1] == '\n') return 0;
+		if(s[n - 1] == '\n') break;
 		++s;
 	}
 	return 0;
@@ -2077,6 +2077,17 @@ bool moveFiles(int start, int end, int dest, char origcmd, char relative)
 			return false;
 		}
 
+		if(tolower(origcmd) == 'l') {
+			if((origcmd == 'l' && link(path1, path2)) ||
+			(origcmd == 'L' && symlink(path1, path2))) {
+				setError(MSG_LinkError, file, strerror(errno));
+				free(file);
+			free(path1);
+				return false;
+			}
+			goto moved;
+		}
+
 		errno = EXDEV;
 		if (origcmd == 't' || rename(path1, path2)) {
 			if (errno == EXDEV) {
@@ -2180,7 +2191,7 @@ moved:
 			cw->r_map[dol].text = (uchar*)emptyString;
 		}
 		cw = cw1; // go back to original window
-		if(origcmd == 't') cw->dot = ln++;
+		if(origcmd != 'm') cw->dot = ln++;
 	}
 
 	return true;
