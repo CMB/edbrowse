@@ -2180,9 +2180,15 @@ moved:
 		else
 			cw->dmap = allocZeroMem(DTSIZE * (dol + 1));
 		memset(cw->dmap + DTSIZE*dol, 0, DTSIZE);
-		cw->dmap[DTSIZE*dol] = ftype[0];
-		if(ftype[0])
-		cw->dmap[DTSIZE*dol + 1] = ftype[1];
+		if(origcmd == 'L') { // creating symbolic link
+			cw->dmap[DTSIZE*dol] = '@';
+			if(ftype[0] && ftype[0] != '@')
+				cw->dmap[DTSIZE*dol + 1] = ftype[0];
+		} else {
+			cw->dmap[DTSIZE*dol] = ftype[0];
+			if(ftype[0])
+				cw->dmap[DTSIZE*dol + 1] = ftype[1];
+		}
 // if attributes were displayed in that directory - more work to do.
 // I just leave a space for them; I don't try to derive them.
 		if(cw->r_map) {

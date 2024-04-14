@@ -26,7 +26,7 @@ static const char browse_cmd[] = "AbBdDefghHiklmMnpPqtsvwXz=^&<";
 // Commands for sql mode
 static const char sql_cmd[] = "AadDefghHiklmnpPqrsvwXz=^<";
 // Commands for directory mode
-static const char dir_cmd[] = "AbdDefghHklMmnpPqstvwXz=^<";
+static const char dir_cmd[] = "AbdDefghHklLMmnpPqstvwXz=^<";
 // Commands for irc input mode
 static const char irci_cmd[] = "aBcdDefghHijJklmnpPrstuvwWXz=&<";
 // Commands for irc output mode
@@ -42,7 +42,7 @@ static const char spaceplus_cmd[] = "befPrwW";
 // Commands that should have no text after them
 static const char nofollow_cmd[] = "aAcdDhHjlmnptuX=";
 // Commands that can be done after a g// global directive
-static const char global_cmd[] = "<!dDijJlmnprstwWX=";
+static const char global_cmd[] = "<!dDijJlLmnprstwWX=";
 static bool *gflag;
 static Window *gflag_w;
 
@@ -7159,7 +7159,9 @@ after_ib:
 	icmd = cmd;
 	if(cw->imapMode2 && cmd == 't' && !*line) cmd = 'g';
 
-	if (!strchr(valid_cmd, cmd)) {
+	if(cw->dirMode && cmd == 'L') {
+		; // L is allowed here
+	} else if (!strchr(valid_cmd, cmd)) {
 		setError(MSG_UnknownCommand, cmd);
 		goto failg;
 	}
@@ -7425,7 +7427,6 @@ after_ib:
 		goto failg;
 	}
 
-
 // move/copy destination, the third address
 	if (cmd == 't' || cmd == 'm') {
 
@@ -7452,7 +7453,10 @@ after_ib:
 			setError(MSG_BrowseCommand, cmd);
 			goto failg;
 		}
+	} // m or t
 
+	if (cmd == 't' || cmd == 'm' ||
+	(cw->dirMode && ((cmd == 'l' && first) || cmd == 'L'))) {
 		if (!first) {
 			if (cw->dirMode) {
 				setError(MSG_BadDest);

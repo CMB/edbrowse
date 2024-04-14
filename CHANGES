@@ -19,6 +19,8 @@ edbrowse variables and/or variables in the environment.
 
 Print strerror values when certain system calls fail.
 
+l and L link commands in directory mode.
+
 3.8.9
 dx to specify hard delete in imap folders.
 

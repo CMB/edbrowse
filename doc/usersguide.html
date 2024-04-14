@@ -750,8 +750,11 @@ dr : directory is readonly
 <br> d : delete the file or move it to your trash can; there is no undo
 <br>g/\.o$/d : delete all the .o files
 <br>s/x/y : rename the file
-<br>.m3 : move this file to the directory in session 3
+<br>.m3 : move this file to the directory in session 3.
+You don't need the @ sign here as the file is always placed at the end of the listing. e3 and refresh if you want it in sorted order.
 <br>.t3 : copy this file to the directory in session 3
+<br>.l3 : link this file to the directory in session 3
+<br>.L3 : symlink this file to the directory in session 3, not recommended unless the current directory is an absolute path
 <br>.m+2 : move this file up 2 levels in your editing history. Destination must be a directory. You don't need the @ sign here as the file is always placed at the end of the listing. Go up2 and refresh if you want it in sorted order.
 <br>.t-3 : copy this file down 3 levels in your editing history
 <p>
