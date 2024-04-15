@@ -2215,8 +2215,28 @@ Recall that the hist command prints your editting history, so you can see which 
 Similarly, .t-3 copies a file into a directory that is 3 levels down.
 
 <p>
-"What's the point of all this?" you may ask.
-"What's wrong with the shell?"
+.l3 links the file to the directory in session 3. This is a hard link.
+If you want a different name for the second link, switch to session 3 and use the s command to rename that file.
+Similarly, .l+2 links this file into the directory two levels up in the edbrowse history.
+
+<p>
+.L3 creates a symbolic link.
+Again, you can switch to session 3 and rename it if you wish.
+For best results, the current directory should have an absolute path.
+If it does not, results can be unexpected.
+If you are in directory foo, and you edit . in session 1 and ../bar in session 2, ,L2 will not do what you want.
+A file j in foo will have a counterpart j in ../bar that is a symbolic link to ./j, because that is how it is seen from foo.
+j is symbolically linked to j.
+Accessing j in bar leads to infinite recursion.
+If you want all the files in foo symbolically linked to bar, in a relative way, do this.
+cd bar ; edbrowse ../foo .
+Now ,L2 sees the file j, which is ../foo/j, links it into the current directory, which is bar, thus bar has a file j which is a symbolic linke to ../foo/j.
+Switch to session 2, which is bar, and rename the links if you wish.
+,lc puts all the filenames in lower case; this is a way to access all the files in a directory without worrying about case, and without renaming those files.
+
+<p>
+“What's the point of all this?” you may ask.
+“What's wrong with the shell?”
 
 <p>
 Nothing, as long as the file names are small and familiar.
