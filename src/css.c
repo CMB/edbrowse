@@ -893,14 +893,11 @@ top:
 					a = emptyString;
 				intoShortCache(newurl, a);
 imported_data:
-				t = allocMem(strlen(s) + strlen(a) +
-					     strlen(newurl) + strlen(iu3) + 27);
-				sprintf(t,
+				ignore = asprintf(&t,
 					"%s\n@ebdelim1%s{}\n%s\n@ebdelim2{}\n%s",
 					s, newurl, a, iu3);
 				nzFree(newurl);
-				nzFree(s);
-				s = t;
+				nzFree(s), s = t;
 				goto top;
 			}
 		}
