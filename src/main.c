@@ -10,7 +10,6 @@
 Window *cw;
 Frame *cf;
 int gfsn; // global frame sequence number
-int ignore;
 const char *progname;
 const char eol[] = "\r\n";
 const char *version = "3.8.9+";
