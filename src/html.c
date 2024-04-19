@@ -4975,8 +4975,13 @@ nocolor:
 	case TAGACT_BQ:
 		if (invisible)
 			break;
-		if(!opentag)
-			while(ns_l && isspaceByte(ns[ns_l-1])) --ns_l;
+		while(ns_l && isspaceByte(ns[ns_l-1])) --ns_l;
+// compress adjacent blockquotes   '' ``
+		if(opentag && ns_l >= 2 && ns[ns_l-1] == '\'' && ns[ns_l-2] == '\'') {
+			ns_l--;
+			ns[ns_l-1] = '\f';
+			break;
+		}
 		stringAndString(&ns, &ns_l,
 		(opentag ? "\f``" : "''\f"));
 		break;
@@ -5506,7 +5511,7 @@ unparen:
 		if(opentag && t->id)
 			tagInStream(tagno);
 		break;
-	}			/* switch */
+	}			// switch
 
 #undef ns_hnum
 #undef ns_ic

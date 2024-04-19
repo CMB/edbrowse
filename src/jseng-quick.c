@@ -3971,7 +3971,7 @@ void domLink(Tag *t, const char *classname,	/* instantiate this class */
 		    const Tag * owntag, int extra)
 {
 	JSContext *cx = cf->cx;
-	JSValue owner;
+	JSValue owner = JS_NULL;
 	JSValue alist = JS_UNDEFINED;
 	JSValue io = JS_UNDEFINED;	// input object
 	int length;

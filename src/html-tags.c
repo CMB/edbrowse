@@ -5100,7 +5100,7 @@ static void rowspan2(Tag *tr, int ri)
 	int c1, c2; // column numbers
 	int irl, irs; // inherited row level and span
 	int ics; // inherited colspan
-	int seqno;
+	int seqno = 0;
 	bool needstring;
 	char b[32];
 
