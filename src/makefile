@@ -36,15 +36,15 @@ ifneq ($(EBPROF),)
 	STRIP = -pg
 endif
 
-#  Libraries and linker flags for edbrowse.
-LDFLAGS += $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
-
 # LDFLAGS for quickjs loading.
 QUICKJS_LDFLAGS = -L$(QUICKJS_LIB) -lquickjs -ldl
 ifeq ($(shell uname),Linux)
 	QUICKJS_LDFLAGS += -latomic
 endif
 LDFLAGS += $(QUICKJS_LDFLAGS)
+#  and the other loader flags
+LDFLAGS += $(STRIP) $(LINKER_LIBS) -lpthread -lm -lssl -lcrypto
+
 #  ESQL C load flags
 #ESQLDFLAGS = $(STRIP) -Xlinker -rpath -Xlinker $(INFORMIXDIR)/lib:$(INFORMIXDIR)/lib/esql
 #  but it's better to put those two directories into /etc/ld.so.conf and then run ldconfig
