@@ -12,7 +12,7 @@ Frame *cf;
 int gfsn; // global frame sequence number
 const char *progname;
 const char eol[] = "\r\n";
-const char *version = "3.8.9+";
+const char *version = "3.8.10";
 char *changeFileName;
 char *configFile, *addressFile, *cookieFile, *emojiFile;
 char *mailDir, *mailUnread, *mailStash, *mailReply;

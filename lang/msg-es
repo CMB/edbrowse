@@ -222,7 +222,7 @@ no se puede usar i< en un comando global
 sesión %d está vacía
 sesión %d contiene más de una linea
 no se puede abrir %s; %s
-0
+no se puede enlazar %s; %s
 el protocolo %s no es soportado por %s
 no se puede incrustar retorno de carro en un campo de entrada
 bajando gopher:

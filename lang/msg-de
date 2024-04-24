@@ -222,7 +222,7 @@ kann i< nicht in einem globalen Kommando verwenden
 Puffer %d ist leer
 Puffer %d enthält mehr als eine Zeile
 kann %s nicht öffnen; %s
-0
+kann keinen Link für %s erstellen; %s
 Protokoll %s wird von %s nicht unterstützt
 Zeile enthält einen Zeilenumbruch
 gopher download:

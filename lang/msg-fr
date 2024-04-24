@@ -222,7 +222,7 @@ impossible d'utiliser i< dans une commande globale
 le tampon %d est vide
 le tampon %d contient plus d'une ligne
 impossible d'ouvrir %s; %s
-0
+lien impossible entre %s; %s
 le protocole %s n'est pas supporté par %s
 il y a un retour-chariot dans la ligne
 téléchargement gopher: 

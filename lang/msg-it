@@ -222,7 +222,7 @@ impossibile usare i< in un comando globale
 il buffer %d è vuoto
 il buffer %d contiene più di una riga
 impossibile aprire %s; %s
-0
+cannot link %s; %s
 il protocollo %s non è supportato da %s
 la riga contiene un carriage return
 download gopher: 

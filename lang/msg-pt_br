@@ -222,7 +222,7 @@ impossível usar i< num comando global
 o buffer %d está vazio
 o buffer %d contém mais que uma linha
 impossível abrir %s; %s
-0
+não posso linkar %s; %s
 o protocolo %s não é suportado pelo %s
 a linha possui um retorno de carro embutido
 download via gopher: 
