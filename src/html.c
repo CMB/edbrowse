@@ -4927,12 +4927,6 @@ nocolor:
 // Same for div, maybe for others too.
 	case TAGACT_SPAN: case TAGACT_DIV:
 		a = 0, u = opentag ? arialabel(t) : 0;
-// If nothing in the span then the title becomes important.
-		if (!t->firstchild && opentag && !u) {
-			a = attribVal(t, "title");
-			if (allowJS && t->jslink)
-				u = get_property_string_t(t, "title");
-		}
 // If an onclick function, then turn this into a hyperlink, thus clickable.
 // At least one site adds the onclick function via javascript, not html.
 // But only at the start, so maybe we only need to check on the first render.
@@ -4954,6 +4948,12 @@ nocolor:
 		}
 // this span has click, so turn into {text}
 		if (opentag) {
+// If nothing in the span then the title becomes important.
+			if (!t->firstchild && !u) {
+				a = attribVal(t, "title");
+				if (allowJS && t->jslink)
+					u = get_property_string_t(t, "title");
+			}
 			if((u || a) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
