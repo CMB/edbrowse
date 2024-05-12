@@ -209,7 +209,7 @@ static int isCrossclose(const char *name)
 
 static int isCrossclose2(const char *name)
 {
-	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","table","ul","ol","dl","hr","div",0};
+	static const char * const list[] = {"h1","h2","h3","h4","h5","h6","table","ul","ol","dl","hr","div","form",0};
 	return stringInList(list, name) >= 0;
 }
 
