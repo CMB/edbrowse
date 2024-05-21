@@ -21,6 +21,7 @@ I can only hope this doesn't screw up some embedded javascript.
 void prepareForBrowse(char *h, int h_len)
 {
 	int i, j;
+	bool ab = false;
 
 	for (i = j = 0; i < h_len; ++i) {
 		if (h[i] == 0)
@@ -30,11 +31,14 @@ void prepareForBrowse(char *h, int h_len)
 				--j;
 			continue;
 		}
-		if (h[i] == InternalCodeChar)
+		if (h[i] == InternalCodeChar) {
 			h[i] = InternalCodeCharAlternate;
+			ab = true;
+		}
 		h[j++] = h[i];
 	}
 	h[j] = 0;		/* now it's a string */
+	if(ab) debugPrint(1, "changing ^b to ^a");
 
 /* undos the file */
 	for (i = j = 0; h[i]; ++i) {
@@ -48,13 +52,15 @@ void prepareForBrowse(char *h, int h_len)
 /* An input field cannot contain cr, lf, null, or the InternalCodeChar */
 void prepareForField(char *h)
 {
+	bool ab = false;
 	while (*h) {
 // this line is goofy cause null would terminate the loop
 		if (*h == 0) *h = ' ';
 		if (*h == '\n') *h = '\07'; // should never happen
-		if (*h == InternalCodeChar) *h = InternalCodeCharAlternate;
+		if (*h == InternalCodeChar) { *h = InternalCodeCharAlternate; ab = true; }
 		++h;
 	}
+	if(ab) debugPrint(1, "changing ^b to ^a");
 }
 
 /*********************************************************************
