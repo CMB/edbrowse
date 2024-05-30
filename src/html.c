@@ -5198,9 +5198,12 @@ past_cell_paragraph:
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
 		}
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
+#if 0
+// everything is https now adays
 			if (currentForm->secure)
 				stringAndString(&ns, &ns_l,
 						i_message(MSG_Secure));
+#endif
 			if (currentForm->bymail)
 				stringAndString(&ns, &ns_l,
 						i_message(MSG_Bymail));
