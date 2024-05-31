@@ -390,7 +390,7 @@ $%s is not defined
 ~%s is not defined
 Go
 frame data is not html
- secure
+0
  bymail
 Reset
 unexpected error while evaluating the shell pattern

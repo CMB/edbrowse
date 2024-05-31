@@ -490,7 +490,7 @@ enum {
 	MSG_NoTilde,
 	MSG_Submit,
 	MSG_FrameNotHTML,
-	MSG_Secure,
+	MSG_notused393,
 	MSG_Bymail,
 	MSG_Reset,
 	MSG_ShellExpand,

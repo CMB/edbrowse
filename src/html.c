@@ -1650,6 +1650,9 @@ void infShow(int tagno, const char *search)
 	printf("%s", s);
 	if (t->multiple)
 		printf(" multiple");
+	if(t->itype == INP_SUBMIT && t->controller &&
+	t->controller->href && !strncmp(t->controller->href, "https://", 8))
+		printf(" secure");
 	if (t->itype == INP_SELECT) {
 		for (v = cw->optlist; v; v = v->same) {
 			if (v->controller != t) continue;
@@ -5198,12 +5201,6 @@ past_cell_paragraph:
 			stringAndChar(&ns, &ns_l, (t->checked ? '+' : '-'));
 		}
 		if (currentForm && (itype == INP_SUBMIT || itype == INP_IMAGE)) {
-#if 0
-// everything is https now adays
-			if (currentForm->secure)
-				stringAndString(&ns, &ns_l,
-						i_message(MSG_Secure));
-#endif
 			if (currentForm->bymail)
 				stringAndString(&ns, &ns_l,
 						i_message(MSG_Bymail));
