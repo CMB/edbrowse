@@ -5054,8 +5054,10 @@ s/x/$(jj
 s/jj/jj)
 
 <p>
-Fortunately this does not come up very often.
-Variables are not set or expanded during text entry, so you can type a and write your edbrowse scripts, or makefiles, as you please.
+Variables are not set or expanded during text entry,
+so you can type a and write your edbrowse scripts or makefiles as you please.
+Also, expansion does not take place if jj is not defined.
+Thus you are unlikely to run into this unless you are writing scripts that use variables.
 
 <p>
 A modest amount of arithmetic is supported, similar to $((expression)) in the shell.

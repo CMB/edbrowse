@@ -3450,10 +3450,15 @@ syntax:
 	else value = varLookup(lv);
 	if(!value) {
 reference:
+#if 0
 		nzFree(ns);
 		setError(MSG_NoEbVar, lv);
 		*t = cut;
 		return false;
+#else
+		*t = cut;
+		goto syntax;
+#endif
 	}
 
 	if(cut == ')') { // simple variable reference
