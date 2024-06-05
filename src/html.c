@@ -4929,43 +4929,52 @@ nocolor:
 // check for span onclick and make it look like a link.
 // Same for div, maybe for others too.
 	case TAGACT_SPAN: case TAGACT_DIV:
-		a = 0, u = opentag ? arialabel(t) : 0;
+		a = 0; { // satisfy the compiler and scope the next 3 variables
+// next three variables will remain null if opentag is false
+		char *al = opentag ? arialabel(t) : 0;
+		const char *tit1 = 0;
+		char *tit2 = 0;
+// If nothing in the span then the title becomes important.
+		if (!t->firstchild && opentag && !al) {
+			tit1 = attribVal(t, "title");
+			if (allowJS && t->jslink)
+				tit2 = get_property_string_t(t, "title");
+		}
 // If an onclick function, then turn this into a hyperlink, thus clickable.
 // At least one site adds the onclick function via javascript, not html.
-// But only at the start, so maybe we only need to check on the first render.
-// But maybe some other site adds onclick later. Do we have to check every time?
-// This rerender function is getting more and more js intensive!
 		if (!t->onclick && opentag && t->jslink && handlerPresent(t, "onclick"))
 			t->onclick = true;
 		if (!(t->onclick & allowJS) || ahref_under(t) > 0) {
-// regular span
-			if((u || a) && action == TAGACT_DIV)
+// regular span, don't need title unless it is inside a link
+			if(opentag && !findOpenTag(t, TAGACT_A))
+				tit1 = 0, nzFree(tit2), tit2 = 0;
+			if((al || tit1 || tit2) && action == TAGACT_DIV)
 				stringAndChar(&ns, &ns_l, '\n');
-			if (u) // aria-label
-				stringAndString(&ns, &ns_l, u), nzFree(u);
-			else if (a)
-				stringAndString(&ns, &ns_l, a);
-			if((u || a) && t->firstchild)
+			j = ns_l;
+			if (al) // aria-label
+				stringAndString(&ns, &ns_l, al), nzFree(al);
+			if (tit2) // allocated title
+				stringAndString(&ns, &ns_l, tit2), nzFree(tit2);
+			else if (tit1)
+				stringAndString(&ns, &ns_l, tit1);
+			if(ns_l > j && t->firstchild)
 				stringAndChar(&ns, &ns_l, ' ');
 			goto nop;
 		}
 // this span has click, so turn into {text}
 		if (opentag) {
-// If nothing in the span then the title becomes important.
-			if (!t->firstchild && !u) {
-				a = attribVal(t, "title");
-				if (allowJS && t->jslink)
-					u = get_property_string_t(t, "title");
-			}
-			if((u || a) && action == TAGACT_DIV)
-				stringAndChar(&ns, &ns_l, '\n');
 			sprintf(hnum, "%c%d{", InternalCodeChar, tagno);
 			ns_hnum();
-			if (u)
-				stringAndString(&ns, &ns_l, u), nzFree(u);
-			else if (a)
-				stringAndString(&ns, &ns_l, a);
-			if((u || a) && t->firstchild)
+			if((al || tit1 || tit2) && action == TAGACT_DIV)
+				stringAndChar(&ns, &ns_l, '\n');
+			j = ns_l;
+			if (al)
+				stringAndString(&ns, &ns_l, al), nzFree(al);
+			if (tit2) // allocated title
+				stringAndString(&ns, &ns_l, tit2), nzFree(tit2);
+			else if (tit1)
+				stringAndString(&ns, &ns_l, tit1);
+			if((ns_l > j) && t->firstchild)
 				stringAndChar(&ns, &ns_l, ' ');
 		} else {
 			sprintf(hnum, "%c0}", InternalCodeChar);
@@ -4973,7 +4982,7 @@ nocolor:
 			if (endcolor)
 				swapArrow();
 		}
-		break;
+		}break;
 
 	case TAGACT_BQ:
 		if (invisible)
