@@ -98,10 +98,10 @@ We never want this to be true in the context of edbrowse.
 *********************************************************************/
 
 #define isspaceByte(c) (isspace((uchar)(c)) && !((c)&0x80))
-#define isalphaByte(c) isalpha((uchar)(c))
-#define isalnumByte(c) isalnum((uchar)(c))
-#define islowerByte(c) islower((uchar)(c))
-#define isupperByte(c) isupper((uchar)(c))
+#define isalphaByte(c) (isalpha((uchar)(c)) && !(c&0x80))
+#define isalnumByte(c) (isalnum((uchar)(c)) && !(c&0x80))
+#define islowerByte(c) (islower((uchar)(c)) && !(c&0x80))
+#define isupperByte(c) (isupper((uchar)(c)) && !(c&0x80))
 #define isdigitByte(c) isdigit((uchar)(c))
 #define ispunctByte(c) ispunct((uchar)(c))
 #define isprintByte(c) isprint((uchar)(c))

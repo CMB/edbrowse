@@ -943,7 +943,7 @@ closecomment:
 // for <!----> u could be less than t
 			w = (u <= t ? 0 : pullString(t, u - t));
 			if(w && headbody == 0 && memEqualCI(t, "doctype", 7) &&
-			!isalnumByte(t[7] && !isXML)) {
+			!isalnumByte(t[7]) && !isXML) {
 				scannerInfo1("doctype", 0);
 				makeTag("doctype", "doctype", false, 0);
 				working_t->textval = w;
