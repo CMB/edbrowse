@@ -19,6 +19,7 @@ pst fetchLine(int n, int show);
 void displayLine(int n);
 void printDot(void);
 void printPrompt(void);
+void passToJdb(char *s);
 void initializeReadline(void);
 pst inputLine(const bool textEntry);
 void saveSubstitutionStrings(void);

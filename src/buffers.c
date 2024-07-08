@@ -288,8 +288,8 @@ static bool jdb_passthrough(const char *s)
 		"bflist", "bglist", "hist", "help", 0
 	};
 	int i;
-	if (s[0] == '!')
-		return true;
+	if (s[0] == '!') return true;
+	if(s[0] == '<' && (s[1] == '+' || s[1] == '-' || isdigitByte(s[1]))) return true;
 	if (s[0] == 'd' && s[1] == 'b' && isdigitByte(s[2]) && s[3] == 0)
 		return true;
 	if (stringInList(oklist, s) >= 0)
@@ -316,6 +316,41 @@ static bool jdb_passthrough(const char *s)
 	!strncmp(s, "P ", 2) || !strncmp(s, "P=", 2))
 		return true;
 	return false;
+}
+
+void passToJdb(char *s)
+{
+	char *resfile = NULL;
+	char *result;
+	FILE *f = NULL;
+// ^> indicates redirection, since > might be a greater than operator.
+	resfile = strstr(s, "^>");
+	if (resfile) {
+		*resfile = 0;
+		resfile += 2;
+		while (isspaceByte(*resfile))
+			++resfile;
+	}
+	cf = cw->jdb_frame;
+	result = jsRunScriptWinResult(s, "jdb", 1);
+	if (resfile)
+		f = fopen(resfile, "w");
+	if (result) {
+		if (f) {
+			fprintf(f, "%s\n", result);
+			printf("%zu bytes\n", strlen(result));
+		} else
+			puts(result);
+	}
+	nzFree(result);
+	if (f)
+		fclose(f);
+	if (newlocation) {
+		puts("sorry, page redirection is not honored under jdb.");
+		nzFree(newlocation);
+		newlocation = 0;
+		newlocation = 0;
+	}
 }
 
 /* By default, readline's filename completion appends a single space
@@ -698,7 +733,6 @@ addchar:
 // some edbrowse commands pass through.
 		if (jdb_passthrough(s))
 			goto eb_line;
-		cf = cw->jdb_frame;
 		if (stringEqual(s, "bye")) {
 			cw->jdb_frame = NULL;
 			puts("bye");
@@ -706,36 +740,7 @@ addchar:
 // in case you changed objects that in turn change the screen.
 			rerender(0);
 		} else {
-			char *resfile = NULL;
-			char *result;
-			FILE *f = NULL;
-// ^> indicates redirection, since > might be a greater than operator.
-			resfile = strstr(s, "^>");
-			if (resfile) {
-				*resfile = 0;
-				resfile += 2;
-				while (isspaceByte(*resfile))
-					++resfile;
-			}
-			result = jsRunScriptWinResult(s, "jdb", 1);
-			if (resfile)
-				f = fopen(resfile, "w");
-			if (result) {
-				if (f) {
-					fprintf(f, "%s\n", result);
-					printf("%zu bytes\n", strlen(result));
-				} else
-					puts(result);
-			}
-			nzFree(result);
-			if (f)
-				fclose(f);
-			if (newlocation) {
-				puts("sorry, page redirection is not honored under jdb.");
-				nzFree(newlocation);
-				newlocation = 0;
-				newlocation = 0;
-			}
+			passToJdb(s);
 		}
 		printPrompt();
 		goto top;

@@ -1312,6 +1312,11 @@ bool runBuffer(int b, const Window *w, bool stopflag, int ln1, int ln2)
 			return false;
 		}
 		*s = 0;
+		if(cw->jdb_frame) {
+			passToJdb(p);
+			free(p);
+			continue;
+		}
 		rb_ln = &ln, rb_ln2 = &ln2, rb_b = &b, endl_ptr = 0;
 // Here we go!
 		debugPrint(3, "< %s", p);

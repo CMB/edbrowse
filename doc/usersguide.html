@@ -923,6 +923,9 @@ Edbrowse Functions
 <br>&lt;/foo : run the commands in session whose file name contains foo
 <br>&lt;*/foo : run commands but stop on error
 <br>&lt;/foo@22,29 : run the commands from lines 22 through 29
+<br>&lt;7 : pass the commands in session 7 to jdb if in jdb mode
+<br>&lt;-1 : runn the commands in the buffer down one on your stack
+<br>&lt;+2 : runn the commands in the buffer up two on your stack
 <br>X : silently make this the current line, often used in scripts
 <br>sleep n : sleep for n seconds, while some javascript runs in the background
 <br> var x=7 : set the variable x to 7
@@ -4995,6 +4998,9 @@ When complete, go down, and then ^ back up to get rid of the temp buffer.
 <p>
 Since this is not a function, changes are not local to this execution.
 If you modify a setting at the start, you should restore it at the end.
+
+<p>
+In jdb mode, &lt;7 passes the expressions in session 7 to javascript, as though you had typed them in.
 
 <h2 id="init">The Init Function</h2>
 
