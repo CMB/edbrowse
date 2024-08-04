@@ -1,5 +1,7 @@
 Here are some changes introduced by recent versions of edbrowse.
 
+3.8.11
+
 3.8.10
 toString shows the correct object classes.
 

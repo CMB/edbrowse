@@ -2842,8 +2842,9 @@ default_filename:
 		filepart = g->cdfn;
 	else
 		filepart = getFileURL(g->urlcopy, true);
-// transliterate to get rid of /
 	fp2 = cloneString(filepart);
+	unpercentURL(fp2);
+// transliterate to get rid of /
 	for (s = fp2; *s; ++s)
 		if (*s == '/' || *s == '\\')
 			*s = '_';
