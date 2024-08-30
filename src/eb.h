@@ -3,13 +3,9 @@
 #ifndef EB_H
 #define EB_H 1
 
-/* Define _GNU_SOURCE on Linux, so we don't have an implicit declaration
- * of asprintf, but only if we are not compiling C++.
- * Turns out that when compiling C++ on LInux, _GNU_SOURCE is helpfully
- * predefined, so defining it twice generates a nasty warning.
- */
-
-#if defined(EDBROWSE_ON_LINUX) && !defined(__cplusplus)
+// Define _GNU_SOURCE on Linux, so we don't have an implicit declaration
+// of asprintf and strcasestr.
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 
