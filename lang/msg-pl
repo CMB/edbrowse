@@ -282,7 +282,7 @@ koniec historii
 %s niedostępne w trybie irc
 nieprawidłowy kod UTF-8, rozważ ustawienie su8-
 nie można pobrać fragmentu HTML z %s, kod %ld\n
-nie udało się wczytać danych z serwera
+nie udało się wczytać danych z serwera, %s
 %s nie jest adresem URL
 pobieranie zakończone.
 nie można zidentyfikować %s w sieci

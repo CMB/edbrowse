@@ -282,7 +282,7 @@ fin de l'historique
 %s impossible en mode irc
 utf8 invalide, voyez su8-
 impossible de charger html fragment depuis %s, code %ld\n
-impossible de lire les données sur le serveur
+impossible de lire les données sur le serveur, %s
 %s n'est pas une url
 téléchargement terminé
 impossible d'identifier %s sur le réseau

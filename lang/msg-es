@@ -282,7 +282,7 @@ final del historial
 %s no está disponible en modo irc
 utf8 inválido, considere establecer su8-
 no se pudo obtener el fragmento html de %s, código %ld\n
-no se puede leer datos del servidor
+no se puede leer datos del servidor, %s
 %s no es una url
 descarga completa
 no se puede identificar %s en la red

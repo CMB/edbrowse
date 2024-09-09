@@ -282,7 +282,7 @@ bottom of history
 %s not available in irc mode
 invalid utf8, consider setting su8-
 could not fetch html fragment from %s, code %ld\n
-could not read the data from the server
+could not read the data from the server, %s
 %s is not a url
 download complete
 cannot identify %s on the network

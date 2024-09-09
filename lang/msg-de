@@ -282,7 +282,7 @@ Ende der Historie
 %s im irc Modes nicht verfügbar
 ungültiges UTF-8, setzen Sie su8-
 konnte html fragment von %s nicht abrufen, Code %ld\n
-konnte Daten nicht vom Server lesen
+konnte Daten nicht vom Server lesen, %s
 %s ist keine URL
 Download abgeschlossen
 kann %s nicht im Netzwerk finden

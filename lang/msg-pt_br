@@ -282,7 +282,7 @@ fim do histórico
 %s não disponível em modo irc
 UTF8 inválido; considere definir su8-
 não consegui trazer o html fragment de %s; código %ld\n
-não consegui ler os dados do servidor
+não consegui ler os dados do servidor, %s
 %s não é uma URL
 transferência completa
 impossível identificar %s na rede

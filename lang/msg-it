@@ -282,7 +282,7 @@ fine della cronologia
 %s non disponibile in modalità irc
 utf8 non valido, potresti settare su8-
 impossibile scaricare html fragment da %s, codice %ld\n
-impossibile leggere dati dal server
+impossibile leggere dati dal server, %s
 %s non è un url
 download completato
 impossibile identificare %s nella rete

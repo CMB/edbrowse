@@ -1902,7 +1902,7 @@ void ebcurl_setError(CURLcode curlret, const char *url, int action,
 
 	case CURLE_GOT_NOTHING:
 	case CURLE_RECV_ERROR:
-		(*fn) (MSG_WebRead);
+		(*fn) (MSG_WebRead, curl_error);
 		break;
 
 	case CURLE_SEND_ERROR:
