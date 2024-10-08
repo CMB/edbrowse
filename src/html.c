@@ -4465,6 +4465,10 @@ static void headingAndData(int j, const Tag *tr, int td_n, int ttype, bool close
 
 static void td2columnHeading(const Tag *tr, const Tag *td)
 {
+// unusual situations can cause tr to be 0
+// <html></html><td></td>
+	if(!tr) return;
+
 	const Tag *v;
 	int j = 1, seqno, ics;
 	char *prior_p, *last_p;
