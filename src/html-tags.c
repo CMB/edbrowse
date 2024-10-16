@@ -4187,7 +4187,7 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 		if (currentForm) {
 			++currentForm->ninp;
-			if (itype == INP_SUBMIT || itype == INP_IMAGE)
+			if (itype == INP_SUBMIT || itype == INP_IMAGE || itype == INP_RESET)
 				currentForm->submitted = true;
 			if (itype == INP_BUTTON && t->onclick)
 				currentForm->submitted = true;
