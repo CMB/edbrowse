@@ -3952,7 +3952,7 @@ void htmlInputHelper(Tag *t)
 	char *myname = (t->name ? t->name : t->id);
 	const char *s = attribVal(t, "type");
 	bool isbutton = stringEqual(t->info->name, "button");
-	t->itype = itype = (isbutton ? INP_BUTTON : INP_TEXT);
+	t->itype = itype = (isbutton ? INP_SUBMIT : INP_TEXT);
 	if (s && *s) {
 		n = stringInListCI(inp_types, s);
 		if (n < 0) {
@@ -3966,9 +3966,6 @@ void htmlInputHelper(Tag *t)
 		} else
 			t->itype = itype = n;
 	}
-// button no type means submit
-	if (!s && isbutton)
-		t->itype = itype = INP_SUBMIT;
 
 	s = attribVal(t, "maxlength");
 	len = 0;
@@ -4187,9 +4184,7 @@ static void prerenderNode(Tag *t, bool opentag)
 			break;
 		if (currentForm) {
 			++currentForm->ninp;
-			if (itype == INP_SUBMIT || itype == INP_IMAGE || itype == INP_RESET)
-				currentForm->submitted = true;
-			if (itype == INP_BUTTON && t->onclick)
+			if (itype == INP_SUBMIT || itype == INP_IMAGE || itype == INP_RESET || itype == INP_BUTTON)
 				currentForm->submitted = true;
 			if (itype > INP_HIDDEN && itype <= INP_SELECT
 			    && t->onchange)
