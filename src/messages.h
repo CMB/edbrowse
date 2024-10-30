@@ -860,4 +860,6 @@ MSG_ImaskOn,
 	MSG_False,
 	MSG_RemovingBOM,
 	MSG_RestoringBOM,
+	MSG_SearchSameModeOff,
+	MSG_SearchSameModeOn,
 };

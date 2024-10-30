@@ -4773,14 +4773,26 @@ static const char *windowTitle(const Window *w)
 	return emptyString;
 }
 
+// Check whether two sessions have the same mode.
+static bool sameMode(const Window *const w1, const Window *const w2)
+{
+	if (!w1 || !w2) return false;
+	if(w1->browseMode != w2->browseMode) return false;
+	if(w1->dirMode != w2->dirMode) return false;
+	if(w1->sqlMode != w2->sqlMode) return false;
+	if((w1->imapMode1 | w1->imapMode2 | w1->imapMode3) !=
+	(w2->imapMode1 | w2->imapMode2 | w2->imapMode3)) return false;
+	if((w1->irciMode | w1->ircoMode) !=
+	(w2->irciMode | w2->ircoMode)) return false;
+	return true;
+}
+
 // Search by substring. We could search by regexp, which brings more power,
 // but perhaps more confusion as well.
 static int sessionByText(const char *s, int dir)
 {
 	int n = context;
 	const Window *lw;
-	const char *title;
-	if(!s || !*s) goto fail; // empty string
 	while(true) {
 		if(dir > 0) {
 			if(++n > maxSession) {
@@ -4794,8 +4806,8 @@ static int sessionByText(const char *s, int dir)
 			}
 		}
 		if(!(lw = sessionList[n].lw)) continue;
-		title = windowTitle(lw);
-		if(strcasestr(title, s)) return n; // found it
+		if (searchSameMode && !sameMode(lw, cw)) continue;
+		if(!s || !*s || strcasestr(windowTitle(lw), s)) return n; // found it
 		if(n == context) break;
 	}
 fail:
@@ -4977,14 +4989,14 @@ test_false:
 			if (down) {
 				n = -1;
 				for(k = 0, w = s->lw2; w; w = w->prev, ++k)
-					if(!*v || strcasestr(windowTitle(w), v)) {
+					if((!searchSameMode || sameMode(w, cw)) && (!*v || strcasestr(windowTitle(w), v))) {
 						found = true;
 						n = k;
 					}
 				n = k - n;
 			} else { // up/
 				for(n = 1, w = cw->prev; w; w = w->prev, ++n)
-					if(!*v || strcasestr(windowTitle(w), v)) {
+					if((!searchSameMode || sameMode(w, cw)) && (!*v || strcasestr(windowTitle(w), v))) {
 						found = true;
 						break;
 					}
@@ -5755,6 +5767,7 @@ et_go:
 			n = (!c || c == '/') ? i : 1 + maxSession -i;
 			Window *lw = sessionList[n].lw;
 			if (!lw) continue;
+			if (searchSameMode && !sameMode(lw, cw)) continue;
 			title = windowTitle(lw);
 			if (c && *s && 			!strcasestr(title, s))
 				continue;
@@ -5774,7 +5787,7 @@ et_go:
 			w = s->fw;
 			while(true) {
 				const char *title = windowTitle(w);
-				if (!c || !*str || 			strcasestr(title, str))
+				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
 					printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
 				if(w == cw) break;
 				--n;
@@ -5785,7 +5798,7 @@ et_go:
 			if(!w) return true;
 			while(true) {
 				const char *title = windowTitle(w);
-				if (!c || !*str || 			strcasestr(title, str))
+				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
 					printf("-%d: %s\n", ++n, title);
 				if(w == s->lw2) break;
 				for(x = s->lw2; x->prev != w; x = x->prev) ;
@@ -5796,12 +5809,12 @@ et_go:
 			++n;
 			for(w = s->lw2; w; --n, w = w->prev) {
 				const char *title = windowTitle(w);
-				if (!c || !*str || 			strcasestr(title, str))
+				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
 					printf("-%d: %s\n", n, title);
 			}
 			for(n = 0, w = cw; w; ++n, w = w->prev) {
 				const char *title = windowTitle(w);
-				if (!c || !*str || 			strcasestr(title, str))
+				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
 					printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
 			}
 		}
@@ -5877,6 +5890,20 @@ et_go:
 		binaryDetect = (line[2] == '+');
 		if (helpMessagesOn)
 			i_puts(binaryDetect + MSG_BinaryIgnore);
+		return true;
+	}
+
+	if (stringEqual(line, "sss")) {
+		searchSameMode ^= 1;
+		if (helpMessagesOn || debugLevel >= 1)
+			i_puts(searchSameMode + MSG_SearchSameModeOff);
+		return true;
+	}
+
+	if (stringEqual(line, "sss+") || stringEqual(line, "sss-")) {
+		searchSameMode = (line[3] == '+');
+		if (helpMessagesOn)
+			i_puts(searchSameMode + MSG_SearchSameModeOff);
 		return true;
 	}
 
@@ -7480,6 +7507,11 @@ after_ib:
 				if(first == '+' || first == '-') {
 					relative = first, first = *++line;
 					if(!first) { j = 1; goto dest_ok; }
+				}
+				if (!relative && (first == '/' || first == '?')) {
+					j = sessionByText(line + 1, first == '/' ? 1 : -1);
+					if(!j) goto failg;
+					goto dest_ok;
 				}
 				if(!isdigitByte(first) || (j = stringIsNum(line)) < 0) {
 					setError(MSG_BadDest);

@@ -608,6 +608,7 @@ and print the result
 <br>sg : substitution strings are global across sessions (toggle)
 <br>su8 : search and substitute uses utf8 character sequences (toggle)
 <br>ebre : edbrowse modified regular expressions, to be more like ed (toggle)
+<br>sss : search similar sessions (sessions with the same mode) (toggle)
 <br>sw : search with wrap (toggle)
 <br>g/x/ p : print every line that has an x
 <br>g/x : same as above
@@ -752,7 +753,9 @@ dr : directory is readonly
 <br>s/x/y : rename the file
 <br>.m3 : move this file to the directory in session 3.
 You don't need the @ sign here as the file is always placed at the end of the listing. e3 and refresh if you want it in sorted order.
+<br>.m/foo : move this file to the session whose name contains the substring foo
 <br>.t3 : copy this file to the directory in session 3
+<br>.t/foo : copy this file to the session whose name contains the substring foo
 <br>.l3 : link this file to the directory in session 3
 <br>.L3 : symlink this file to the directory in session 3, not recommended unless the current directory is an absolute path
 <br>.m+2 : move this file up 2 levels in your editing history. Destination must be a directory. You don't need the @ sign here as the file is always placed at the end of the listing. Go up2 and refresh if you want it in sorted order.
@@ -1483,6 +1486,7 @@ eret returns to the previous editting session, like the button on your tv remote
 e/foo moves ahead to the session whose file name, or html title, contains the substring foo.
 The search is case insensitive.
 This search will wrap around if the sw (search with wrap) option is enabled.
+If sss (search similar sessions) is enabled, the search restricts to sessions of the same mode: directory, browse, imap, etc.
 e?foo moves back to the session whose file name, or html title, contains the substring foo.
 A script can create temp buffers, and name them, and move among them, without knowing their session numbers.
 Use enew to create a new empty buffer, f to name it, and M to move it to a new session.
@@ -2231,10 +2235,9 @@ If you are located in directory foo, and you edit . in session 1 and ../bar in s
 A file j in foo will have a counterpart j in ../bar that is a symbolic link to ./j, because that is how it is seen from foo.
 j is symbolically linked to j.
 Accessing j in bar leads to infinite recursion.
-If you want your files in foo symbolically linked to bar, using relative links, do this.
+If you want your files in foo symbolically linked to the parallel directory bar, using relative links, do this.
 cd bar ; edbrowse ../foo .
 Now .L2 sees the file j, which is ../foo/j, links it into the current directory, which is bar, thus bar has a file j which is a symbolic linke to ../foo/j.
-Switch to session 2, which is bar, and rename the links if you wish.
 This is the correct strategy for building relative symbolic links in edbrowse.
 
 <p>

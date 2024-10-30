@@ -48,7 +48,7 @@ bool ismc, passMail, attimg;
 bool inInput, inInitFunction, listNA;
 char *dbarea, *dblogin, *dbpw;	// to log into the database
 bool fetchBlobColumns;
-bool caseInsensitive, searchStringsAll, searchWrap = true, ebre = true;
+bool caseInsensitive, searchStringsAll, searchSameMode, searchWrap = true, ebre = true;
 bool binaryDetect = true;
 bool inputReadLine;
 bool curlAuthNegotiate = false;
@@ -911,7 +911,7 @@ static int *argl_ptr;
 static int *rb_ln, *rb_ln2, *rb_b;
 
 struct ebSettings {
-	bool rl, endm, lna, H, ci, sg, su8, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow, attimg;
+	bool rl, endm, lna, H, ci, sg, su8, ss, sw, ebre, bd, iu, hf, hr, vs, hlocal, sr, can, ftpa, bg, jsbg, js, showall, pg, fbc, ls_reverse, fllo, dno, ebvar, flow, attimg;
 	uchar dw, ls_sort;
 	char lsformat[12], showProgress;
 	char *currentAgent;
@@ -943,6 +943,7 @@ static void saveEbSettings(struct ebSettings *s)
 	s->lna = listNA;
 	s->fbc = fetchBlobColumns;
 	s->ls_reverse = ls_reverse;
+	s->ss = searchSameMode;
 	s->sw = searchWrap;
 	s->ebre = ebre;
 	s->hr = allowRedirection;
@@ -986,6 +987,7 @@ static void restoreEbSettings(struct ebSettings *s)
 	curlAuthNegotiate = s->can;
 	listNA = s->lna;
 	ls_reverse = s->ls_reverse;
+	searchSameMode = s->ss;
 	searchWrap = s->sw;
 	ebre = s->ebre;
 	allowRedirection = s->hr;
