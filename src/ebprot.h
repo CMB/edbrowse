@@ -139,6 +139,7 @@ void setError(int msg, ...); //? use these only in the foreground!
 void showError(void);
 void showErrorConditional(char cmd);
 void showErrorAbort(void);
+void eb_printf(const char *fmt, ...);
 void eb_puts(const char *s);
 bool helpUtility(void);
 bool varCommand(const char *line);

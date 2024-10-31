@@ -4932,7 +4932,7 @@ test_false:
 		const char *p = line + 2;
 		skipWhite(&p);
 		if(*p == '-') ++p;
-		if(	stringIsNum(p) >= 0) {
+		if(stringIsNum(p) >= 0) {
 			Window *w = 0;
 			setFetchLimit(line + 2);
 // find the other window
@@ -5060,7 +5060,7 @@ down_again:
 		selfFrame();
 		if (debugLevel >= 1) {
 			const char *title = windowTitle(cw);
-			if(title[0]) printf("%s", title);
+			if(title[0]) eb_printf("%s", title);
 			else i_printf(MSG_NoFile);
 			nl();
 		}
@@ -5137,7 +5137,7 @@ down_again:
 	}
 
 	if(stringEqual(line, "rr=")) {
-		printf("%d\n", rr_interval);
+		eb_printf("%d\n", rr_interval);
 		return true;
 	}
 
@@ -5159,7 +5159,7 @@ down_again:
 	}
 
 	if(stringEqual(line, "ua")) {
-		printf("%d: %s\n", agentIndex, currentAgent);
+		eb_printf("%d: %s\n", agentIndex, currentAgent);
 		return true;
 	}
 
@@ -5243,7 +5243,7 @@ pwd:
 	if (line[0] == 'l' && line[1] == 'l') {
 		c = line[2];
 		if (!c) {
-			printf("%d\n", displayLength);
+			eb_printf("%d\n", displayLength);
 			return true;
 		}
 		if ((isspaceByte(c) || c == '=') && isdigitByte(line[3])) {
@@ -5260,7 +5260,7 @@ pwd:
 		char *s;
 		c = line[3];
 		if (!c) {
-			printf("%d%s\n", formatLineLength,
+			eb_printf("%d%s\n", formatLineLength,
 			       (formatOverflow ? "+" : ""));
 			return true;
 		}
@@ -5344,7 +5344,7 @@ pwd:
 	if(lookmode) {
 		if(!strncmp(h, "data:", 5)) puts("data:");
 		else puts(h);
-		if(debugLevel >= 3) printf("%d\n", tagList[tagno]->seqno);
+		if(debugLevel >= 3) eb_printf("%d\n", tagList[tagno]->seqno);
 		return true;
 	}
 	uriEncoded = true;
@@ -5769,9 +5769,9 @@ et_go:
 			if (!lw) continue;
 			if (searchSameMode && !sameMode(lw, cw)) continue;
 			title = windowTitle(lw);
-			if (c && *s && 			!strcasestr(title, s))
+			if (c && *s && !strcasestr(title, s))
 				continue;
-			printf("%d%c %s\n", n, (n == context ? '*' : ':'), title);
+			eb_printf("%d%c %s\n", n, (n == context ? '*' : ':'), title);
 		}
 		return true;
 	}
@@ -5788,7 +5788,7 @@ et_go:
 			while(true) {
 				const char *title = windowTitle(w);
 				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
-					printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
+					eb_printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
 				if(w == cw) break;
 				--n;
 				for(x = s->lw; x->prev != w; x = x->prev) ;
@@ -5799,7 +5799,7 @@ et_go:
 			while(true) {
 				const char *title = windowTitle(w);
 				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
-					printf("-%d: %s\n", ++n, title);
+					eb_printf("-%d: %s\n", ++n, title);
 				if(w == s->lw2) break;
 				for(x = s->lw2; x->prev != w; x = x->prev) ;
 				w = x;
@@ -5810,12 +5810,12 @@ et_go:
 			for(w = s->lw2; w; --n, w = w->prev) {
 				const char *title = windowTitle(w);
 				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
-					printf("-%d: %s\n", n, title);
+					eb_printf("-%d: %s\n", n, title);
 			}
 			for(n = 0, w = cw; w; ++n, w = w->prev) {
 				const char *title = windowTitle(w);
 				if (!c || ((!searchSameMode || sameMode(w, cw)) && (!*str || strcasestr(title, str))))
-					printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
+					eb_printf("%c%d: %s\n", (n) ? '+' : '*', n, title);
 			}
 		}
 		return true;
@@ -6166,7 +6166,7 @@ et_go:
 	if(!strncmp(line, "selsep=", 7)) {
 		char oldsep = selsep;
 		if(!(c = line[7])) {
-			printf("%c\n", selsep);
+			eb_printf("%c\n", selsep);
 			return true;
 		}
 		if(c == selsep)
@@ -6189,7 +6189,7 @@ et_go:
 	if(!strncmp(line, "speed=", 6)) {
 		char *t;
 		if(!(c = line[6])) {
-			printf("%d\n", timerspeed);
+			eb_printf("%d\n", timerspeed);
 			return true;
 		}
 		n = strtol(line + 6, &t, 10);
@@ -6300,11 +6300,11 @@ et_go:
 			if (!dbarea || !*dbarea) {
 				i_puts(MSG_DBNoSource);
 			} else {
-				printf("%s", dbarea);
+				eb_printf("%s", dbarea);
 				if (dblogin)
-					printf(",%s", dblogin);
+					eb_printf(",%s", dblogin);
 				if (dbpw)
-					printf(",%s", dbpw);
+					eb_printf(",%s", dbpw);
 				nl();
 			}
 			return true;
@@ -6508,7 +6508,7 @@ static int twoLetterG(const char *line, const char **runThis)
 	}
 
 	if(stringEqual(line, "db")) {
-		printf("%d\n", debugLevel);
+		eb_printf("%d\n", debugLevel);
 		return true;
 	}
 
@@ -6548,7 +6548,7 @@ static int twoLetterG(const char *line, const char **runThis)
 	}
 
 	if(!strncmp(line, "p ", 2)) {
-		puts(line + 2);
+		eb_puts(line + 2);
 		return true;
 	}
 
@@ -7624,7 +7624,7 @@ dest_ok:
 	}
 
 	if (cmd == '=') {
-		printf("%d\n", endRange);
+		eb_printf("%d\n", endRange);
 		goto success;
 	}
 
@@ -7756,7 +7756,7 @@ doquit:
 		s = cf->fileName;
 		if(!first || debugLevel >= 1) {
 			if (s)
-				printf("%s", s);
+				eb_printf("%s", s);
 			else
 				i_printf(MSG_NoFile);
 			if (cw->binMode)
@@ -7810,7 +7810,7 @@ doquit:
 					free(s);
 			}
 			if(!globSub && debugLevel >= 1)
-				printf("%d\n", l);
+				eb_printf("%d\n", l);
 			for (i = startRange; i <= endRange; ++i) {
 				if(i == 0) // empty buffer
 					continue;
@@ -8260,7 +8260,7 @@ past_g_file:
 				if(!strncmp(h, "data:", 5)) puts("data:");
 				else puts(h);
 				nzFree(h);
-				if(debugLevel >= 3) printf("%d\n", tag->seqno);
+				if(debugLevel >= 3) eb_printf("%d\n", tag->seqno);
 				goto success;
 			}
 
@@ -8410,7 +8410,7 @@ past_js:
 
 				if (scmd == '?') {
 					infShow(tagno, line);
-					if(debugLevel >= 3) printf("%d\n", tagList[tagno]->seqno);
+					if(debugLevel >= 3) eb_printf("%d\n", tagList[tagno]->seqno);
 					goto success;
 				}
 

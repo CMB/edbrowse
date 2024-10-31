@@ -3284,6 +3284,19 @@ void showErrorAbort(void)
 	ebClose(99);
 }
 
+void eb_printf(const char *fmt, ...)
+{
+	va_list p;
+	va_start(p, fmt);
+	vprintf(fmt, p);
+	va_end(p);
+	if (debugFile) {
+		va_start(p, fmt);
+		vfprintf(debugFile, fmt, p);
+		va_end(p);
+	}
+}
+
 void eb_puts(const char *s)
 {
 	puts(s);
