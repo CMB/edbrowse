@@ -2146,7 +2146,8 @@ static void formReset(const Tag *form)
  * not going to check for that, or take advantage of it. */
 	}			/* loop over tags */
 
-	i_puts(MSG_FormReset);
+	if (debugLevel >= 1)
+		i_puts(MSG_FormReset);
 }
 
 /* Fetch a field value (from a form) to post. */
@@ -2374,8 +2375,12 @@ skip_encode:
 			int namelen;
 			char *nx;
 			value = t->value;
-			if (!value || !*value)
+			if (!value)
 				value = "Submit";
+			else if (!*value && stringEqual(t->info->name, "input"))
+				if (stringInListCI(t->attributes, "value") < 0)
+					value = "Submit";
+
 			if (t->itype != INP_IMAGE)
 				goto success;
 			namelen = strlen(name);
