@@ -1824,6 +1824,17 @@ updateFieldInBuffer(int tagno, const char *newtext, bool notify, bool fromForm)
 		i_printf(MSG_NoTagFound, tagno, newtext);
 }
 
+/* Count the number of UTF-8 characters in a string. */
+static size_t utf8length(const char *s)
+{
+	size_t len = 0;
+		while (*s) {
+			if ((*s & '\x7F') == *s || (*s & '\xBF') != *s) len++;
+			++s;
+		}
+	return len;
+}
+
 /* Update an input field. */
 bool infReplace(int tagno, char *newtext, bool notify)
 {
@@ -1959,7 +1970,7 @@ bool infReplace(int tagno, char *newtext, bool notify)
 			}
 		}
 
-		if (t->lic && newlen > t->lic) {
+		if (t->lic && (int)utf8length(newtext) > t->lic) {
 			setError(MSG_InputLong, t->lic);
 			goto fail;
 		}
