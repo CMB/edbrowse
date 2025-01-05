@@ -1778,7 +1778,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 			stringAndString(&g->buffer, &g->length, "<a href=x");
 		else
 			stringAndString(&g->buffer, &g->length,
-					"<form method='get' action=x");
+					"<form action=x");
 		g->buffer[g->length - 1] = qc;
 
 		if (!strncmp(pathname, "URL:", 4)) {
@@ -1814,7 +1814,7 @@ static void gopher_ls_line(struct i_get *g, char *line)
 	if (host) {
 		if (first == '7')
 			stringAndString(&g->buffer, &g->length,
-					" <input type='text' /> <input type='submit' /></form>");
+					" <input type='text'> <input type='submit'></form>");
 		else
 			stringAndString(&g->buffer, &g->length, "</a>");
 	}

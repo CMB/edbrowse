@@ -2228,7 +2228,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	if (!val)
 		val = emptyString;
 
-	if(fsep)
+	if(fsep && fsep != 'g')
 		postDelimiter(fsep);
 
 	switch (fsep) {
@@ -2271,6 +2271,11 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	case '\n': case 0:
 		stringAndString(&pfs, &pfs_l, val);
 		stringAndString(&pfs, &pfs_l, eol);
+		break;
+
+	case 'g':
+		if (pfs[pfs_l - 1] == '?')
+			stringAndString(&pfs, &pfs_l, val);
 		break;
 
 	case '-':
@@ -2316,7 +2321,7 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 	return true;
 }
 
-static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
+static bool formSubmit(const Tag *form, const Tag *submit, bool dopost, const char *const prot)
 {
 	const Tag *t;
 	int j, itype;
@@ -2324,6 +2329,7 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 /* dynamicvalue needs to be freed with nzFree. */
 	const char *value;
 	char fsep = '&';	/* field separator */
+	bool requireName = true; // only include form controls with a non-blank name attribute
 	bool rc;
 	bool bval;
 	const char *eo1; // enctype override from attribute
@@ -2373,6 +2379,10 @@ static bool formSubmit(const Tag *form, const Tag *submit, bool dopost)
 	}
 
 skip_encode:
+	if (stringEqualCI(prot, "gopher")) {
+		requireName = false;
+		fsep = 'g';
+	}
 
 	for (t = cw->inputlist; t; t = t->same) {
 		if (t->controller != form) continue;
@@ -2380,7 +2390,8 @@ skip_encode:
 		if (itype <= INP_SUBMIT && t != submit) continue;
 		if (inputDisabled(t)) continue;
 		name = t->name;
-		if (!name || !*name) continue;
+		if (requireName && (!name || !*name)) continue;
+		if (!name) name = emptyString;
 
 		if (t == submit) {	/* the submit button you pushed */
 			int namelen;
@@ -2868,7 +2879,7 @@ fail:
 	stringAndChar(&pfs, &pfs_l, (dopost ? '\1' : '?'));
 	actlen = strlen(pfs);
 
-	if (!formSubmit(form, t, dopost)) {
+	if (!formSubmit(form, t, dopost,    prot)) {
 		nzFree(pfs);
 		goto fail;
 	}
@@ -2921,10 +2932,6 @@ fail:
 		*post_string = 0;
 		return rc;
 	}
-// gopher submit is one input field with no name;
-// the leading = doesn't belong.
-	if (pfs[actlen] == '=' && stringEqualCI(prot, "gopher"))
-		strmove(pfs + actlen, pfs + actlen + 1);
 
 	*post_string = pfs;
 success:
