@@ -2468,7 +2468,7 @@ skip_encode:
 // do this as an attachment
 					char cxstring[12];
 					if(cx < 0) {
-						cx = sideBuffer(0, dynamicvalue, 0, NULL);
+						cx = sideBuffer(0, dynamicvalue, -1, NULL);
 						nzFree(dynamicvalue), dynamicvalue = 0;
 					}
 					sprintf(cxstring, "%d", cx);
