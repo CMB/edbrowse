@@ -650,7 +650,7 @@ void setDebugFile(const char *name)
 	if (!name || !*name)
 		return;
 	debugFileName = cloneString(name);
-	debugFile = fopen(name, "w");
+	debugFile = fopen(name, "we");
 	if (debugFile) {
 		setlinebuf(debugFile);
 	} else
@@ -813,7 +813,7 @@ int fileIntoMemory(const char *filename, char **data, int *len, bool inparts)
 		setError(MSG_RegularFile, filename);
 		return 0;
 	}
-	fh = open(filename, O_RDONLY | O_BINARY);
+	fh = open(filename, O_RDONLY | O_BINARY | O_CLOEXEC);
 	if (fh < 0) {
 		setError(MSG_NoOpen, filename, strerror(errno));
 		return 0;
@@ -831,7 +831,7 @@ fh_set:
 bool memoryOutToFile(const char *filename, const char *data, int len)
 {
 	int fh =
-	    open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY, MODE_rw);
+	    open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_BINARY | O_CLOEXEC, MODE_rw);
 	if (fh < 0) {
 			setError(MSG_TempNoCreate2, filename, strerror(errno));
 		return false;
@@ -1559,6 +1559,7 @@ const char *nextScanFile(const char *base)
 	if (!df) {
 		if (!base)
 			base = ".";
+		// Seems safe to assume opendir will O_CLOEXEC under the hood.
 		df = opendir(base);
 /* directory could be unreadable */
 		if (!df) {
@@ -2461,7 +2462,7 @@ void appendFile(const char *fname, const char *message, ...)
 {
 	FILE *f;
 	va_list p;
-	f = efopen(fname, "a");
+	f = efopen(fname, "ae");
 	va_start(p, message);
 	vfprintf(f, message, p);
 	va_end(p);
@@ -2472,7 +2473,7 @@ void appendFile(const char *fname, const char *message, ...)
 /* like the above, but no formatting */
 void appendFileNF(const char *filename, const char *msg)
 {
-	FILE *f = efopen(filename, "a");
+	FILE *f = efopen(filename, "ae");
 	fprintf(f, "%s\n", msg);
 	fclose(f);
 }

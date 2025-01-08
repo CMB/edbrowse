@@ -122,7 +122,7 @@ static void writeAttachment(struct MHINFO *w)
 		}
 	} else if (!stringEqual(atname, "x")) {
 		int fh =
-		    open(atname, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC,
+		    open(atname, O_WRONLY | O_BINARY | O_CREAT | O_TRUNC | O_CLOEXEC,
 			 MODE_rw);
 		if (fh < 0) {
 			i_printf(MSG_AttNoSave, atname);
@@ -1009,7 +1009,7 @@ You'll see this after the perform function runs.
 	}
 afterfetch:
 #if 0
-	t = 0; FILE *z; z = fopen("msb", "w"); fprintf(z, "%s", mailstring); fclose(z);
+	t = 0; FILE *z; z = fopen("msb", "we"); fprintf(z, "%s", mailstring); fclose(z);
 #endif
 
 // have to strip fetch BODY line off the front,
@@ -1500,7 +1500,7 @@ range:
 	res = getMailData(handle);
 	if (res != CURLE_OK) goto abort;
 #if 0
-	FILE *z; z = fopen("ms1", "w"); fprintf(z, "%s", mailstring); fclose(z);
+	FILE *z; z = fopen("ms1", "we"); fprintf(z, "%s", mailstring); fclose(z);
 #endif
 
 	t = mailstring;
@@ -1568,7 +1568,7 @@ abort:
 		return false;
 	}
 #if 0
-	FILE *z; z = fopen("ms2", "w"); fprintf(z, "%s", mailstring); fclose(z);
+	FILE *z; z = fopen("ms2", "we"); fprintf(z, "%s", mailstring); fclose(z);
 #endif
 
 // Don't free mailstring, we're using pieces of it
@@ -1947,7 +1947,7 @@ static CURLcode fetchOneMessage(CURL * handle, int message_number)
 
 /* got the file, save it in unread */
 	sprintf(umf_end, "%d", unreadMax + message_number);
-	umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT, MODE_rw);
+	umfd = open(umf, O_WRONLY | O_TEXT | O_CREAT | O_CLOEXEC, MODE_rw);
 	if (umfd < 0)
 		i_printfExit(MSG_NoCreate, umf);
 	if (write(umfd, mailstring, mailstring_l) < mailstring_l)
@@ -2336,7 +2336,7 @@ static void saveRawMail(const char *buf, int length)
 		sprintf(rmf, "%s/%05d", mailStash, rn);
 		if (fileTypeByName(rmf, 0)) continue;
 // dump the original mail into the file
-		rmfh =     open(rmf,  O_WRONLY | O_TEXT | O_CREAT | O_APPEND,  MODE_rw);
+		rmfh =     open(rmf,  O_WRONLY | O_TEXT | O_CREAT | O_APPEND | O_CLOEXEC,  MODE_rw);
 		if (rmfh < 0)
 			break;
 		if (write(rmfh, buf, length) <     length) {
@@ -2564,7 +2564,7 @@ saveMail:
 		goto afterinput;
 
 	exists = fileTypeByName(atname, 0);
-	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, MODE_rw);
+	fh = open(atname, O_WRONLY | O_TEXT | O_CREAT | O_APPEND | O_CLOEXEC, MODE_rw);
 	if (fh < 0) {
 		i_printf(MSG_NoCreate, atname);
 		atname = 0;
@@ -3992,7 +3992,7 @@ static void writeReplyInfo(const char *addstring)
 {
 	int rfh;		/* reply file handle */
 	if(!mailReply) return;
-	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
+	rfh = open(mailReply, O_WRONLY | O_APPEND | O_CREAT | O_CLOEXEC, MODE_private);
 	if (rfh < 0)
 		return;
 	ignore = write(rfh, addstring, 12);
@@ -4032,7 +4032,7 @@ static void readReplyInfo(void)
 found:
 /* prestring is the key */
 	sprintf(prestring, "%05d.%05d:", major, minor);
-	rfh = open(mailReply, O_RDONLY);
+	rfh = open(mailReply, O_RDONLY | O_CLOEXEC);
 	if (rfh < 0)
 		return;
 	if (!fdIntoMemory(rfh, &buf, &buflen, 0))
@@ -4843,7 +4843,7 @@ saveMail:
 	if (stringEqual(name, "x"))
 		return true;
 	exists = fileTypeByName(name, 0);
-	fh = open(name, O_WRONLY | O_TEXT | O_CREAT | O_APPEND, MODE_rw);
+	fh = open(name, O_WRONLY | O_TEXT | O_CREAT | O_APPEND | O_CLOEXEC, MODE_rw);
 	if (fh < 0) {
 		i_printf(MSG_NoCreate, name);
 		name = 0;

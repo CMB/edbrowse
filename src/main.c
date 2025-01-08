@@ -1896,7 +1896,7 @@ inside:
 			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_JarNotFile, v);
-			j = open(v, O_WRONLY | O_APPEND | O_CREAT,
+			j = open(v, O_WRONLY | O_APPEND | O_CREAT | O_CLOEXEC,
 				 MODE_private);
 			if (j < 0)
 				cfgAbort1(MSG_EBRC_JarNoWrite, v);
@@ -1935,7 +1935,7 @@ inside:
 			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_SSLNoFile, v);
-			j = open(v, O_RDONLY);
+			j = open(v, O_RDONLY | O_CLOEXEC);
 			if (j < 0)
 				cfgAbort1(MSG_EBRC_SSLNoRead, v);
 			close(j);
@@ -2064,7 +2064,7 @@ inside:
 			ftype = fileTypeByName(v, 0);
 			if (ftype && ftype != 'f')
 				cfgAbort1(MSG_EBRC_KeyNoFile, v);
-			j = open(v, O_RDONLY);
+			j = open(v, O_RDONLY | O_CLOEXEC);
 			if (j < 0)
 				cfgAbort1(MSG_EBRC_KeyNoRead, v);
 			close(j);
@@ -2317,7 +2317,7 @@ const char *fetchReplace(const char *u)
 
 static void loadReplacements(void)
 {
-	FILE *f = fopen("jslocal", "r");
+	FILE *f = fopen("jslocal", "re");
 	struct JSR *j;
 	char *s;
 	int n = 0;

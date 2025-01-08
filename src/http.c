@@ -2152,7 +2152,7 @@ Custom headers to upload to a different name, and then rename the local file.
 We don't need to do that either.
 *********************************************************************/
 
-	f = fopen(tempfile, (cw->binMode ? "rb" : "r"));
+	f = fopen(tempfile, (cw->binMode ? "rbe" : "re"));
 	if(!f) { // this should never happen
 		setError(MSG_NoOpen, tempfile, strerror(errno));
 		goto fail;

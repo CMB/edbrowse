@@ -2066,7 +2066,7 @@ void setupEdbrowseCache(void)
 	cacheControl = allocMem(strlen(cacheDir) + 11);
 	sprintf(cacheControl, "%s/control%02d", cacheDir, CACHECONTROLVERSION);
 // make sure the control file exists, just for grins
-	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT, MODE_private);
+	fh = open(cacheControl, O_WRONLY | O_APPEND | O_CREAT | O_CLOEXEC, MODE_private);
 	if (fh >= 0)
 		close(fh);
 
@@ -2224,12 +2224,12 @@ top:
 /* try every 10 ms, 100 times, for a total of 1 second */
 	for (i = 0; i < 100; ++i) {
 		lock_fh =
-		    open(cacheLock, O_WRONLY | O_EXCL | O_CREAT, MODE_private);
+		    open(cacheLock, O_WRONLY | O_EXCL | O_CREAT | O_CLOEXEC, MODE_private);
 		if (lock_fh >= 0) {	/* got it */
 			close(lock_fh);
 			if (control_fh < 0) {
 				control_fh =
-				    open(cacheControl, O_RDWR | O_BINARY, 0);
+				    open(cacheControl, O_RDWR | O_BINARY | O_CLOEXEC, 0);
 				if (control_fh < 0) {
 // got the lock but couldn't open the database
 					unlink(cacheLock);
@@ -3211,7 +3211,7 @@ fragment to use popen, which can be more efficient.
 		FILE *p;
 		bool rc;
 		debugPrint(3, "plugin %s", cmd);
-		p = popen(cmd, "r");
+		p = popen(cmd, "re");
 		if (!p) {
 			setError(MSG_NoSpawn, cmd, errno);
 			goto fail;
@@ -3485,6 +3485,22 @@ static char *tcp_dots_name(const char *s)
 	return tcp_ip_name(tcp_dots_ip(s));
 }
 
+// Open a socket and set close-on-exec.
+// Linux has SOCK_CLOEXEC, but the manpage says "Linux only" so we'll
+// do the old-school thing with fcntl that we did in src/http.c.
+static int safe_socket(int domain, int type, int protocol)
+{
+	int fd = socket(domain, type, protocol);
+	if (fd == -1) {
+		return fd;
+	}
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		close(fd);
+		return -1;
+	}
+	return fd;
+}
+
 // establish a tcp connection, this is outside of curl.
 static int tcp_connect(char *host, int port)
 {
@@ -3505,7 +3521,7 @@ static int tcp_connect(char *host, int port)
 		return -1;
 	}
 	for(r = res; r; r = r->ai_next) {
-		if((srv = socket(r->ai_family, r->ai_socktype, r->ai_protocol)) == -1)
+		if((srv = safe_socket(r->ai_family, r->ai_socktype, r->ai_protocol)) == -1)
 			continue;
 
 // set some socket options.
@@ -3619,7 +3635,7 @@ static void ircLoad(void)
 	const char *timestring;
 
 	if(!irclog) return; // no log file
-	if(!(f = fopen(irclog, "r"))) return; // cannot open
+	if(!(f = fopen(irclog, "re"))) return; // cannot open
 
 #define CHUNK 200
 	time_t stamps[CHUNK];
@@ -3748,7 +3764,7 @@ regular:
 // opening the log every time is a bit inefficient, but this doesnn't
 // happen very often.
 	FILE *f;
-	if(irclog && (f = fopen(irclog, "a"))) {
+	if(irclog && (f = fopen(irclog, "ae"))) {
 		time_t now;
 		time(&now);
 // chop off \n so we can add in the time stamp

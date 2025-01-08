@@ -334,7 +334,7 @@ void passToJdb(char *s)
 	cf = cw->jdb_frame;
 	result = jsRunScriptWinResult(s, "jdb", 1);
 	if (resfile)
-		f = fopen(resfile, "w");
+		f = fopen(resfile, "we");
 	if (result) {
 		if (f) {
 			fprintf(f, "%s\n", result);
@@ -2284,6 +2284,7 @@ bool writeFile(const char *name, int mode)
 	if (cw->binMode | cw->utf16Mode | cw->utf32Mode)
 		stringAndChar(&modeString, &modeString_l, 'b');
 
+	stringAndChar(&modeString, &modeString_l, 'e'); // O_CLOEXEC
 	fh = fopen(name, modeString);
 	nzFree(modeString);
 	if (fh == NULL) {
@@ -7789,7 +7790,7 @@ doquit:
 // W command must write to a temp file, then read back in
 			if(wrc)
 				ignore = asprintf(&wrapline, "( %s ) > %s", newline, wrc_file);
-			p = popen(wrapline ? wrapline : newline, "w");
+			p = popen(wrapline ? wrapline : newline, "we");
 			nzFree(wrapline);
 			nzFree(newline);
 			if (!p) {
@@ -8476,7 +8477,7 @@ past_js:
 		char *newline = bangbang(line + 1);
 		eb_variables();
 		newline = apostropheMacros(newline);
-		p = popen(newline, "r");
+		p = popen(newline, "re");
 		nzFree(newline);
 		if (!p) {
 			setError(MSG_NoSpawn, line + 1, errno);

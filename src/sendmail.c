@@ -485,7 +485,7 @@ empty:
 				n = fileSizeByName(sigFile);
 				if (n > 0) {
 					buf = reallocMem(buf, buflen + n + 1);
-					fd = open(sigFile, O_RDONLY);
+					fd = open(sigFile, O_RDONLY | O_CLOEXEC);
 					if (fd < 0) {
 						setError(MSG_SigAccess);
 						goto freefail;

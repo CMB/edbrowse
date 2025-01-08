@@ -413,7 +413,7 @@ void writeShortCache(void)
 	struct cssmaster *cm = cf->cssmaster;
 	if (!cm)
 		return;
-	f = fopen("implocal", "w");
+	f = fopen("implocal", "we");
 	if (!f)
 		return;
 	for (c = cm->cache; c; c = c->next) {
@@ -433,7 +433,7 @@ void writeShortCache(void)
 
 static void readShortCache(struct cssmaster *cm)
 {
-	FILE *f = fopen("implocal", "r");
+	FILE *f = fopen("implocal", "re");
 	struct shortcache *c;
 	char *s;
 	int length, n = 0;
@@ -1689,7 +1689,7 @@ void cssDocLoad(int frameNumber, char *start, bool pageload)
 	if (!cm->descriptors)
 		goto done;
 	if (debugCSS) {
-		FILE *f = fopen(cssDebugFile, "a");
+		FILE *f = fopen(cssDebugFile, "ae");
 		if (f) {
 			fprintf(f, "%s end\n", errorMessage[CSS_ERROR_DELIM]);
 			fclose(f);
@@ -1824,7 +1824,7 @@ static void cssPiecesPrint(const struct desc *d)
 
 	if (!debugCSS)
 		return;
-	cssfile = fopen(cssDebugFile, "a");
+	cssfile = fopen(cssDebugFile, "ae");
 	if (!cssfile)
 		return;
 	if (!d) {
@@ -2604,7 +2604,7 @@ static bool qsaMatchGroup(Tag *t, struct desc *d)
 		return false;
 	d->highspec = 0;
 	if (debugCSS)
-		f = fopen(cssDebugFile, "a");
+		f = fopen(cssDebugFile, "ae");
 	for (sel = d->selectors; sel; sel = sel->next) {
 		if (sel->error)
 			continue;
@@ -3380,7 +3380,7 @@ static void hashPrint(void)
 	int i;
 	if (!debugCSS)
 		return;
-	f = fopen(cssDebugFile, "a");
+	f = fopen(cssDebugFile, "ae");
 	if (!f)
 		return;
 	fprintf(f, "nodes %d\n", doclist_n);

@@ -1709,7 +1709,7 @@ static JSValue nat_wlf(JSContext * cx, JSValueConst this, int argc, JSValueConst
 	}
 	if (!safe)
 		goto done;
-	fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, MODE_rw);
+	fh = open(filename, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT | O_CLOEXEC, MODE_rw);
 	if (fh < 0) {
 		printf("cannot create file %s\n", filename);
 		goto done;

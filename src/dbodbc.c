@@ -704,7 +704,7 @@ sql_blobInsert(const char *tabname, const char *colname, int rowid,
 			    ("2blobInsert is given null filename and null buffer");
 	} else {
 		offset = blobbuf;
-		fd = eopen(filename, O_RDONLY | O_BINARY, 0);
+		fd = eopen(filename, O_RDONLY | O_BINARY | O_CLOEXEC, 0);
 		length = fileSizeByHandle(fd);
 		if (length == 0) {
 			isfile = false;
@@ -1046,7 +1046,7 @@ static void retsFromOdbc(void)
 			flags = O_WRONLY | O_BINARY | O_CREAT | O_TRUNC;
 			if (rv_blobAppend)
 				flags =
-				    O_WRONLY | O_BINARY | O_CREAT | O_APPEND;
+				    O_WRONLY | O_BINARY | O_CREAT | O_APPEND | O_CLOEXEC;
 			fd = eopen(rv_blobFile, flags, MODE_rw);
 			rc = SQL_SUCCESS;
 			while (true) {
