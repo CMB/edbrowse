@@ -3211,7 +3211,7 @@ fragment to use popen, which can be more efficient.
 		FILE *p;
 		bool rc;
 		debugPrint(3, "plugin %s", cmd);
-		p = popen(cmd, "re");
+		p = popen(cmd, "r");
 		if (!p) {
 			setError(MSG_NoSpawn, cmd, errno);
 			goto fail;

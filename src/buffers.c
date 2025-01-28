@@ -7790,7 +7790,7 @@ doquit:
 // W command must write to a temp file, then read back in
 			if(wrc)
 				ignore = asprintf(&wrapline, "( %s ) > %s", newline, wrc_file);
-			p = popen(wrapline ? wrapline : newline, "we");
+			p = popen(wrapline ? wrapline : newline, "w");
 			nzFree(wrapline);
 			nzFree(newline);
 			if (!p) {
@@ -8477,7 +8477,7 @@ past_js:
 		char *newline = bangbang(line + 1);
 		eb_variables();
 		newline = apostropheMacros(newline);
-		p = popen(newline, "re");
+		p = popen(newline, "r");
 		nzFree(newline);
 		if (!p) {
 			setError(MSG_NoSpawn, line + 1, errno);
