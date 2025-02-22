@@ -2274,8 +2274,10 @@ postNameVal(const char *name, const char *val, char fsep, uchar isfile)
 		break;
 
 	case 'g':
-		if (pfs[pfs_l - 1] == '?')
+		if (pfs[pfs_l - 1] == '?') {
+			pfs[pfs_l - 1] = '\t';
 			stringAndString(&pfs, &pfs_l, val);
+		}
 		break;
 
 	case '-':
