@@ -5352,8 +5352,8 @@ pwd:
 		return false;
 	}
 	if(lookmode) {
-		if(!strncmp(h, "data:", 5)) puts("data:");
-		else puts(h);
+		if(!strncmp(h, "data:", 5)) eb_puts("data:");
+		else eb_puts(h);
 		if(debugLevel >= 3) eb_printf("%d\n", tagList[tagno]->seqno);
 		return true;
 	}
@@ -8267,8 +8267,8 @@ past_g_file:
 			jsh = memEqualCI(h, "javascript:", 11);
 
 			if (lookmode) {
-				if(!strncmp(h, "data:", 5)) puts("data:");
-				else puts(h);
+				if(!strncmp(h, "data:", 5)) eb_puts("data:");
+				else eb_puts(h);
 				nzFree(h);
 				if(debugLevel >= 3) eb_printf("%d\n", tag->seqno);
 				goto success;

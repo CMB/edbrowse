@@ -1647,41 +1647,41 @@ void infShow(int tagno, const char *search)
 	s = inp_types[t->itype];
 	if(t->ninp && t->itype == INP_TEXT)
 		s = "suggested select";
-	printf("%s", s);
+	eb_printf("%s", s);
 	if (t->multiple)
-		printf(" multiple");
+		eb_printf(" multiple");
 	if(t->itype == INP_SUBMIT && t->controller &&
 	t->controller->href && !strncmp(t->controller->href, "https://", 8))
-		printf(" secure");
+		eb_printf(" secure");
 	if (t->itype == INP_SELECT) {
 		for (v = cw->optlist; v; v = v->same) {
 			if (v->controller != t) continue;
 			if (!v->textval) continue;
 			if(inputHidden(v)) break;
 		}
-		if(v) printf(" with hidden options");
+		if(v) eb_printf(" with hidden options");
 	}
 	if (t->itype == INP_TEXT && t->lic)
-		printf("[%d]", t->lic);
+		eb_printf("[%d]", t->lic);
 	if (t->itype_minor != INP_NO_MINOR)
-		printf(" (%s)", inp_others[t->itype_minor]);
+		eb_printf(" (%s)", inp_others[t->itype_minor]);
 	if (t->itype == INP_TA) {
 		const char *rows = attribVal(t, "rows");
 		const char *cols = attribVal(t, "cols");
 		const char *wrap = attribVal(t, "wrap");
 		if (rows && cols) {
-			printf("[%s×%s", rows, cols);
+			eb_printf("[%s×%s", rows, cols);
 			if (wrap && stringEqualCI(wrap, "virtual"))
 				i_printf(MSG_Recommended);
-			printf("]");
+			eb_printf("]");
 		}
 	}			// text area
 	if (inputReadonly(t))
-		printf(" readonly");
+		eb_printf(" readonly");
 	if (inputDisabled(t))
-		printf(" disabled");
+		eb_printf(" disabled");
 	if (t->name)
-		printf(" %s", t->name);
+		eb_printf(" %s", t->name);
 	nl();
 
 	if(t->ninp && t->itype == INP_TEXT)
@@ -1701,15 +1701,15 @@ void infShow(int tagno, const char *search)
 		if (*search && !strcasestr(v->textval, search))
 			continue;
 		if(v->custom_h) {
-			printf("    %s", v->custom_h);
+			eb_printf("    %s", v->custom_h);
 			if(v->parent && v->parent->action == TAGACT_OPTG && inputDisabled(v->parent))
-				printf("🛑");
-			printf("\n");
+				eb_printf("🛑");
+			eb_printf("\n");
 		}
 		show = true;
-		printf("%3d %s", cnt, v->textval);
-		if(inputDisabled(v)) printf(" 🛑");
-		printf("\n");
+		eb_printf("%3d %s", cnt, v->textval);
+		if(inputDisabled(v)) eb_printf(" 🛑");
+		eb_printf("\n");
 	}
 	if (!show) {
 		if (!*search)
