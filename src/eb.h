@@ -47,7 +47,7 @@ typedef unsigned short ushort;
 typedef unsigned char uchar;
 
 /* We use unsigned char for boolean fields. */
-#ifndef __cplusplus
+#if !defined(__cplusplus) && __STDC_VERSION__ < 202311L
 typedef uchar bool;
 #define false 0
 #define true 1
