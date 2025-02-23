@@ -1625,12 +1625,13 @@ static void ftp_ls_line(struct i_get *g, char *line)
 			break;
 
 	if (j == 10 && line[j] == ' ') {	/* long list */
-		int fsize, nlinks;
+		long long fsize;
+		int nlinks;
 		char user[42], group[42];
 		char month[8];
 		int day;
 		char *q, *t;
-		sscanf(line + j, " %d %40s %40s %d %3s %d",
+		sscanf(line + j, " %d %40s %40s %lld %3s %d",
 		       &nlinks, user, group, &fsize, month + 1, &day);
 		q = strchr(line, ':');
 		if (q) {
@@ -1673,7 +1674,9 @@ static void ftp_ls_line(struct i_get *g, char *line)
 			if (line[0] == 'd')
 				stringAndChar(&g->buffer, &g->length, '/');
 			stringAndString(&g->buffer, &g->length, ": ");
-			stringAndNum(&g->buffer, &g->length, fsize);
+			char a[30];
+			sprintf(a, "%lld", fsize);
+			stringAndString(&g->buffer, &g->length, a);
 			stringAndChar(&g->buffer, &g->length, '\n');
 			return;
 		}
