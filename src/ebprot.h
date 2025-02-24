@@ -283,6 +283,7 @@ void stringAndString(char **s, int *l, const char *t) ;
 void stringAndBytes(char **s, int *l, const char *t, int cnt) ;
 void stringAndChar(char **s, int *l, char c) ;
 void stringAndNum(char **s, int *l, int n) ;
+void stringAndLongLong(char **s, int *l, long long n) ;
 #define stringAndMessage(s, l, m) stringAndString(s, l, i_message(m))
 char *cloneString(const char *s) ;
 char *cloneMemory(const char *s, int n) ;

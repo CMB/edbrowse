@@ -1674,9 +1674,7 @@ static void ftp_ls_line(struct i_get *g, char *line)
 			if (line[0] == 'd')
 				stringAndChar(&g->buffer, &g->length, '/');
 			stringAndString(&g->buffer, &g->length, ": ");
-			char a[30];
-			sprintf(a, "%lld", fsize);
-			stringAndString(&g->buffer, &g->length, a);
+			stringAndLongLong(&g->buffer, &g->length, fsize);
 			stringAndChar(&g->buffer, &g->length, '\n');
 			return;
 		}

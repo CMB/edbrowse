@@ -267,6 +267,13 @@ void stringAndNum(char **s, int *l, int n)
 	stringAndString(s, l, a);
 }
 
+void stringAndLongLong(char **s, int *l, long long n)
+{
+	char a[32];
+	sprintf(a, "%lld", n);
+	stringAndString(s, l, a);
+}
+
 char *cloneString(const char *s)
 {
 	char *t;
