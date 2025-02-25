@@ -2763,6 +2763,10 @@ static void eb_variables(void)
 	strcpy(var, "EB_LINES");
 	p_setenv(var, numbuf);
 
+	sprintf(numbuf, "%d", context);
+	strcpy(var, "EB_SESSION");
+	p_setenv(var, numbuf);
+
 	strcpy(var, "EB_PLUS");
 	unsetenv(var);
 	n = cw->dot + 1;
