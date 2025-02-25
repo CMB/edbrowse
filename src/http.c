@@ -57,7 +57,7 @@ void eb_curl_global_init(void)
 	const unsigned int least_acceptable_version =
 	    (major << 16) | (minor << 8) | patch;
 	curl_version_info_data *version_data = NULL;
-
+	curlActive = true;
 	CURLcode curl_init_status = curl_global_init(CURL_GLOBAL_ALL);
 	if (curl_init_status != 0) goto libcurl_init_fail;
 	version_data = curl_version_info(CURLVERSION_NOW);
@@ -98,7 +98,6 @@ void eb_curl_global_init(void)
 	    curl_easy_setopt(global_http_handle, CURLOPT_SHARE,
 			     global_share_handle);
 	if (curl_init_status != CURLE_OK) goto libcurl_init_fail;
-	curlActive = true;
 	return;
 
 libcurl_init_fail:
