@@ -1101,7 +1101,12 @@ perform:
 			g->buffer = initString(&g->length);
 			g->headers = initString(&g->headers_len);
 			g->code = 200;
-			curlret = (head_request ? CURLE_OK : CURLE_COULDNT_CONNECT);
+			if(head_request) {
+				curlret = CURLE_OK;
+			} else {
+				curlret = CURLE_COULDNT_CONNECT;
+				i_puts(MSG_NotInCache);
+			}
 		} else {
 			curlret = fetch_internet(g);
 		}
