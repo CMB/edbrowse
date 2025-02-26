@@ -2233,30 +2233,30 @@ You already saw this; it is inside_mex above.
 But that's not good enough.
 Multiple edbrowse processes could be running, perhaps on different consoles,
 and they all need exclusive access to the cache.
-So I do something I've been doing since 1980, when that was the only option.
+So I do something I've been doing since 1982, when that was the only option.
 open(lockfile, ... O_EXCL);
 The lockfile is in the cache with the other files.
 There might be a better way to do this, like ipc semaphore, but hey,
-those didn't exist in 1980, and I'm an old dog.
+those didn't exist in 1982, and I'm an old dog.
 So there we have it, the combination of mutex and open(O_EXCL).
 Now with that in mind, why not just use the lockfile?
 Why do we also need the mutex?
-Because once, just once, after using edbrowse heavily for ten years,
+Because once, just once, after using edbrowse cache heavily for ten years,
 I saw the lockfile mechanism break through.
 It's an exclusive create, but apparently not guaranteed to be a mutex in the OS.
 If you race down to the microsecond, two threads can both test
 for the file, see it is not there, and then create it.
 Yeah I'm surprised too, but I saw it happen and it generated a core dump.
 Thank goodness I always run with symbols, so I could debug it with gdb,
-cause I'm never going to create that condition again.
+cause I'm never going to create that race condition again.
 So I use both mechanisms.
 Also, there is a check in writeControl, so if there is another breakthrough,
 ever again, it won't generate a seg fault.
 As I write this, www.planes.com is a good test. It fetches a dozen scripts.
-Run with db3 and timers-
+Run with jsbg+ and db3 and timers-
 The first fetch spins off the threads, grabs the scripts,
 and puts most of them in the cache.
-Unbrowse and browse, and note that these scripts now come from the cache.
+Unbrowse and browse, and note that these scripts now come from the cache. Nice.
 *********************************************************************/
 
 static bool setLock(void)

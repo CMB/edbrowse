@@ -2736,8 +2736,8 @@ static void eb_file_name_variables(const char *file_name, const bool browsing, c
 }
 
 // Set environment variables for filename, content of the current line,
-// etc, before running a shell command.
-static void eb_variables(void)
+// etc, before running a shell command, or expanding env variables inline.
+void eb_variables(void)
 {
 	if(!ebvar) return;
 	pst p;

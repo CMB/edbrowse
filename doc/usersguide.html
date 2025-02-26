@@ -2320,6 +2320,14 @@ You may be editing a simple file,
 but you can still paste the contents of a line into your shell command.
 
 <p>
+These EB_ assignments also occur when expanding environment variables directly in an edbrowse command,
+e.g. p $(:EB_SESSION)
+
+<p>
+These EB_ assignments can be enabled or disabled by the ebvar command.
+
+<p>
+Returning to shell escape,
 '. is shorthand for "$EB_DOT".
 '- becomes "$EB_MINUS", '+ becomes "$EB_PLUS", 't becomes "$EB_LNt",
 and '_ becomes "$EB_FILE".

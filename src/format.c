@@ -3454,12 +3454,12 @@ syntax:
 		l1 += 2;
 		goto top;
 	}
-	while(isalnum(*l3)) ++l3;
+	while(isalnum(*l3) || *l3 == '_') ++l3;
 	cut = *l3;
 	if(!cut) goto syntax;
 	if(!strchr(")+-*/", cut)) goto syntax;
 	t = (char*)l3, *t = 0;
-	if(*l2 == ':') value = getenv(lv);
+	if(*l2 == ':') eb_variables(), value = getenv(lv);
 	else value = varLookup(lv);
 	if(!value) {
 reference:
@@ -3513,7 +3513,7 @@ nextarg:
 	if(!strchr(")+-*/", cut)) goto syntax;
 	t = (char*)l3, *t = 0;
 	if(isalpha(*lv)) {
-		if(*l2 == ':') value = getenv(lv);
+		if(*l2 == ':') eb_variables(), value = getenv(lv);
 		else value = varLookup(lv);
 		if(!value) goto reference;
 		sign = 1;
