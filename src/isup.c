@@ -2038,16 +2038,21 @@ struct CENTRY {
 
 static struct CENTRY *entries;
 static int numentries;
+static pthread_mutex_t inside_mex;
 
 void setupEdbrowseCache(void)
 {
 	int fh;
 
+	pthread_mutex_init(&inside_mex, NULL);
+
 	if (control_fh >= 0) {
+// this should never happen
 		close(control_fh);
 		control_fh = -1;
 	}
 	if (!cacheDir) {
+// this should always happen
 		cacheDir = allocMem(strlen(home) + 10);
 		sprintf(cacheDir, "%s/.ebcache", home);
 	}
@@ -2162,6 +2167,16 @@ static bool writeControl(void)
 	int i;
 	FILE *f;
 
+	if(control_fh < 0) {
+// This should never happen, but I saw it happen once.
+// See the comments just before setLock().
+		control_fh =     open(cacheControl, O_RDWR | O_BINARY | O_CLOEXEC, 0);
+		if (control_fh < 0) {
+			truncate0(cacheControl, -1);
+			return false;
+		}
+	}
+
 	lseek(control_fh, 0L, 0);
 	truncate0(cacheControl, control_fh);
 /* buffered IO is more efficient */
@@ -2206,7 +2221,44 @@ static int generateFileNumber(void)
 	}
 }
 
-/* get exclusive access to the cache */
+/*********************************************************************
+If jsbg is active, a dozen threads could be downloading scripts in parallel.
+That is efficient, but tricky.
+curl is threadsafe, thanks to each job having its own curl handle.
+If we're careful with httpConnect(), that should be no trouble.
+However, each job might try to access the cache to obtain this file,
+or store it in the cache when fetched from the internet.
+Thus we need a mutex to control access to the cache.
+You already saw this; it is inside_mex above.
+But that's not good enough.
+Multiple edbrowse processes could be running, perhaps on different consoles,
+and they all need exclusive access to the cache.
+So I do something I've been doing since 1980, when that was the only option.
+open(lockfile, ... O_EXCL);
+The lockfile is in the cache with the other files.
+There might be a better way to do this, like ipc semaphore, but hey,
+those didn't exist in 1980, and I'm an old dog.
+So there we have it, the combination of mutex and open(O_EXCL).
+Now with that in mind, why not just use the lockfile?
+Why do we also need the mutex?
+Because once, just once, after using edbrowse heavily for ten years,
+I saw the lockfile mechanism break through.
+It's an exclusive create, but apparently not guaranteed to be a mutex in the OS.
+If you race down to the microsecond, two threads can both test
+for the file, see it is not there, and then create it.
+Yeah I'm surprised too, but I saw it happen and it generated a core dump.
+Thank goodness I always run with symbols, so I could debug it with gdb,
+cause I'm never going to create that condition again.
+So I use both mechanisms.
+Also, there is a check in writeControl, so if there is another breakthrough,
+ever again, it won't generate a seg fault.
+As I write this, www.planes.com is a good test. It fetches a dozen scripts.
+Run with db3 and timers-
+The first fetch spins off the threads, grabs the scripts,
+and puts most of them in the cache.
+Unbrowse and browse, and note that these scripts now come from the cache.
+*********************************************************************/
+
 static bool setLock(void)
 {
 	int i;
@@ -2218,6 +2270,7 @@ static bool setLock(void)
 	if (!cacheSize)
 		return false;
 
+	pthread_mutex_lock(&inside_mex);
 top:
 	time(&now_t);
 
@@ -2228,22 +2281,26 @@ top:
 		if (lock_fh >= 0) {	/* got it */
 			close(lock_fh);
 			if (control_fh < 0) {
-				control_fh =
-				    open(cacheControl, O_RDWR | O_BINARY | O_CLOEXEC, 0);
+				control_fh =     open(cacheControl, O_RDWR | O_BINARY | O_CLOEXEC, 0);
 				if (control_fh < 0) {
 // got the lock but couldn't open the database
 					unlink(cacheLock);
+					pthread_mutex_unlock(&inside_mex);
 					return false;
 				}
 			}
 			if (!readControl()) {
 				unlink(cacheLock);
+				pthread_mutex_unlock(&inside_mex);
 				return false;
 			}
+			pthread_mutex_unlock(&inside_mex);
 			return true;
 		}
-		if (errno != EEXIST)
+		if (errno != EEXIST) {
+			pthread_mutex_unlock(&inside_mex);
 			return false;
+		}
 		USLEEP(10000);
 	}
 
@@ -2255,6 +2312,7 @@ top:
 			goto top;
 	}
 
+	pthread_mutex_unlock(&inside_mex);
 	return false;
 }
 
