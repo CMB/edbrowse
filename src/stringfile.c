@@ -1117,31 +1117,39 @@ time_t fileTimeByName(const char *name)
 char *conciseSize(size_t n)
 {
 	static char buf[32];
-	unsigned long u, v;
-	if (n >= 1000000000) {
+	size_t u;
+	unsigned int v;
+	if (n >= 1000000000000) {
+		u = n/1000000000000;
+		v = n/100000000000 % 10;
+		if(u >= 10 || !v)
+			sprintf(buf, "%zuT", u);
+		else
+			sprintf(buf, "%zu.%0uT", u, v);
+	} else if (n >= 1000000000) {
 		u = n/1000000000;
 		v = n/100000000 % 10;
 		if(u >= 10 || !v)
-			sprintf(buf, "%luG", u);
+			sprintf(buf, "%zuG", u);
 		else
-			sprintf(buf, "%lu.%0luG", u, v);
+			sprintf(buf, "%zu.%0uG", u, v);
 	} else if (n >= 1000000) {
 		u = n/1000000;
 		v = n/100000 % 10;
 		if(u >= 10 || !v)
-			sprintf(buf, "%luM", u);
+			sprintf(buf, "%zuM", u);
 		else
-			sprintf(buf, "%lu.%0luM", u, v);
+			sprintf(buf, "%zu.%0uM", u, v);
 	} else if (n >= 1000) {
 		u = n/1000;
 		v = n/100 % 10;
 		if(u >= 10 || !v)
-			sprintf(buf, "%luK", u);
+			sprintf(buf, "%zuK", u);
 		else
-			sprintf(buf, "%lu.%0luK", u, v);
+			sprintf(buf, "%zu.%0uK", u, v);
 	} else {
-		u = n;
-		sprintf(buf, "%lu", u);
+		v = n;
+		sprintf(buf, "%u", v);
 	}
 	return buf;
 }
