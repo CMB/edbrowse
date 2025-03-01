@@ -1114,7 +1114,7 @@ time_t fileTimeByName(const char *name)
 	return buf.st_mtime;
 }
 
-char *conciseSize(size_t n)
+char *conciseSize(long long n)
 {
 	static char buf[32];
 	size_t u;

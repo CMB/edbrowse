@@ -337,7 +337,7 @@ char fileTypeByHandle(int fd) ;
 off_t fileSizeByName(const char *name) ;
 off_t fileSizeByHandle(int fd) ;
 time_t fileTimeByName(const char *name) ;
-char *conciseSize(size_t n); //?
+char *conciseSize(long long n); //?
 char *conciseTime(time_t t); //?
 bool lsattrChars(const char *buf, char *dest);
 char *lsattr(const char *path, const char *flags); //?
